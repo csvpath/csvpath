@@ -1,4 +1,5 @@
 import json
+import re
 
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
@@ -21,16 +22,28 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 # result directory within the selected run(s).
 #
 #  - root_major is a literal named-results name (the same name as the named-
-#    paths group that was run). "*" (every named-results group) is a
-#    different traversal problem, not yet built.
+#    paths group that was run), or "*" (every named-results group). "*" has
+#    two exceptions carved out before general traversal (Rule 1a/1b, a
+#    bare/ordinal-indexed :manifest() reads the global archive ledger); any
+#    other use of "*" goes through _query_star_traversal(), which is
+#    deliberately the narrowest of the three datatypes' traversals (bare
+#    pointer only, no path narrowing/:all()/name_three/:manifest()/field
+#    accessors) -- see that method's own docstring for why the wider cases
+#    are genuinely harder here, not just unbuilt yet.
 #  - name_one has TWO legal shapes, matching the spec's own examples
 #    ("$acme.results.:all()"/"$acme.results.:last()" alongside
 #    "$acme.results.customers/2025:first()"):
 #      (a) bare/function-only, no literal path at all (mirrors csvpaths --
 #          the sole path "segment" is itself a version-selecting function,
-#          e.g. :all()/:first()/:last()/:index(n)). Used when there is no
-#          template, or the caller does not care about path narrowing at
-#          all -- every run discovered for the group is a candidate.
+#          e.g. :all()/:first()/:last()/:index(n)). A bare POINTER alone
+#          (no :all()/:flatten()) means zero-level only -- direct children
+#          of the group's own root, no template -- settled 2026-08-10. A
+#          bare ':all()' means exactly one level, wildcarded -- the same
+#          restriction '*' has, and unaffected by whether a pointer
+#          follows it (settled 2026-08-11, correcting an earlier version
+#          that let a pointer-less ':all()' fall through to any-depth
+#          behavior). ':flatten()' is the any-depth case -- see that
+#          function's own docstring.
 #      (b) literal/"*"/:name("...") path segments (same semantics as files
 #          -- see ReferenceFinder3._compile_path_pattern) PLUS its own
 #          trailing function chain -- narrows to runs whose own prefix
@@ -90,8 +103,15 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 # this exact same manifest+run_home+existence-check approach rather than
 # directory-walking. Stale entries are handled by an existence check
 # (Nos(run_home).exists()), same as v2 does. Run directories are named
-# "%Y-%m-%d_%H-%M-%S[_N]" (RunHomeMaker), lexicographically sortable =
-# chronological (confirmed separately by direct experiment). Each run
+# "%Y-%m-%d_%H-%M-%S[_N]" (RunHomeMaker) -- the timestamp itself is
+# fixed-width/zero-padded, so plain lexicographic sort is safe for it,
+# but "_N" (RunHomeMaker.get_run_dir, appended starting at "_0" when a
+# run collides with one already claimed for the same group+prefix
+# within the same second -- confirmed by David not to be rare during
+# test suite runs) is a plain, unpadded integer -- lexicographic sort
+# of THAT alone is not safe ("_10" sorts before "_9" as strings). See
+# _run_dir_sort_key(), used everywhere a list of run_home paths/
+# segments needs true chronological order. Each run
 # directory has its own manifest.json (a single dict; "run_uuid" identifies
 # the run itself). Each run directory contains one subdirectory per csvpath
 # statement, named by that statement's own identity
@@ -101,6 +121,31 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 
 
 class ResultsReferenceFinder3(ReferenceFinder3):
+    #
+    # matches a run directory's disambiguating "_N" suffix (RunHomeMaker
+    # -- appended starting at "_0" when a run collides with one already
+    # claimed for the same group+prefix within the same second). Requires
+    # the WHOLE tail after the last "_" to be digits, which the plain
+    # "%H-%M-%S" timestamp tail (always containing "-") never is -- so
+    # this only ever matches a genuine disambiguation suffix, never a
+    # bare timestamp.
+    #
+    _RUN_SUFFIX_RE = re.compile(r"^(.*)_(\d+)$")
+
+    @classmethod
+    def _run_dir_sort_key(cls, run_home: str) -> tuple:
+        """true chronological sort key for a run directory path or bare
+        segment -- see this module's own docstring for why plain
+        lexicographic sort of the full string is not safe once a "_N"
+        disambiguation suffix is involved. A run with no suffix at all
+        sorts before any suffixed collision for the same timestamp
+        (suffixes start at "_0", so -1 correctly sorts before 0)."""
+        seg = run_home.rstrip("/").rsplit("/", 1)[-1]
+        m = cls._RUN_SUFFIX_RE.match(seg)
+        if m:
+            return (m.group(1), int(m.group(2)))
+        return (seg, -1)
+
     def query(self) -> ReferenceResults3:
         reference = self.ref.parsed
         root_major = reference.root_major
@@ -132,13 +177,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return ReferenceResults3(
                     results=[ReferenceResult3(path=path, uuid=selected["run_uuid"])]
                 )
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 does not yet support '*' as "
-                "root_major (querying every named-results group) -- use a "
-                "literal group name, or a bare ':manifest()' to read the "
-                "global archive ledger, optionally with a pointer "
-                "(:first()/:last()/:index(n)) to pick one entry by ordinal."
-            )
+            return self._query_star_traversal(reference)
 
         name_one = reference.name_one
         if name_one.name_two is not None:
@@ -148,22 +187,142 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
 
         home = self.csvpaths.results_manager.get_named_results_home(root_major)
-        run_homes = self._discover_run_homes(root_major)
+        run_homes = [rh for rh, _ in self._discover_run_homes(root_major)]
+        calls = self._combined_name_one_calls(name_one)
+        pointer = self._pointer_from_calls(calls)
+        is_grouped = any(
+            isinstance(c, FunctionCall3) and c.name == "all" for c in calls
+        )
+        # group_key_for: set only when ':all()' partitions candidates by
+        # observed value AND a pointer exists to reduce each partition
+        # (David's three-templates example -- three different one-level
+        # templates all group correctly by whatever directory each run
+        # actually landed in, not by which template produced it). Left
+        # None when there is no pointer -- grouping only matters at the
+        # reduce step, so with no pointer the "grouped" and "pooled"
+        # candidate sets are identical anyway (every one-level match,
+        # unreduced).
+        group_key_for = None
 
         if self._is_bare_function_only(name_one):
-            # mirrors csvpaths: no literal path at all, e.g.
-            # "$acme.results.:all()"/"$acme.results.:last()" -- every run
-            # discovered for the group is a candidate, no prefix narrowing.
-            candidates = run_homes
+            is_flattened = any(
+                isinstance(c, FunctionCall3) and c.name == "flatten" for c in calls
+            )
+            if is_grouped and is_flattened:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 does not support combining "
+                    "':all()' and ':flatten()' -- one level, grouped, or "
+                    "any depth, pooled, but not both at once."
+                )
+            if is_grouped:
+                # bare ':all()' -- exactly one level, wildcarded, peer of
+                # a bare '*' (illegal on its own, but this is the same
+                # one-level restriction) -- settled 2026-08-11,
+                # regardless of whether a pointer follows. Corrected
+                # from an earlier version that let a pointer-less
+                # ':all()' fall through to ':flatten()'s any-depth
+                # candidate set by mistake, mirroring csvpaths' own
+                # depth-less ':all()' precedent -- which does not apply
+                # here, since csvpaths has no path dimension at all to
+                # be wrong about, but results does.
+                pattern = [Star3()]
+                candidates = [
+                    rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
+                ]
+                if pointer is not None:
+                    group_key_for = {
+                        rh: self._prefix_segments(rh, home)[-1] for rh in candidates
+                    }
+            elif is_flattened:
+                # ':flatten()', with or without a pointer -- every run
+                # discovered for the group is a candidate, any depth, no
+                # prefix narrowing.
+                candidates = run_homes
+            else:
+                # a plain pointer alone, e.g. "$acme.results.:last()" --
+                # zero-level (direct children of the group's own root)
+                # only, NOT "ignore depth entirely" -- settled
+                # 2026-08-10. ':flatten()' above is the new home for
+                # the any-depth case this used to cover. A bare
+                # ':home()' ALONE (no pointer/:all()/:flatten() also
+                # present) reaches this same branch and needs no
+                # special-casing at all -- settled 2026-08-11: ':home()'
+                # is a VALUE-role field accessor, never a POINTER, so
+                # _pointer_from_calls() below naturally finds none,
+                # leaving every zero-level candidate unreduced -- "every
+                # run whose home is right here" (David's own framing).
+                # The moment a real pointer joins the chain (either
+                # order -- ":home():last()" or ":last():home()"), that
+                # pointer reduces to one and ':home()' reverts to its
+                # ordinary job (reading the field off whatever got
+                # selected) -- no order-sensitivity trap, since nothing
+                # here depends on which of the two is written first.
+                # There is NO prefixed equivalent ("beta/:home()") --
+                # considered and removed 2026-08-12: a literal prefix
+                # segment with nothing trailing already means "every
+                # run under this exact prefix, unreduced" (long-
+                # standing, pre-dates this whole depth refactor --
+                # confirmed "$acme.results.beta" and
+                # "$acme.results.beta/:home()" give identical results
+                # in every case tested). ':home()' is only load-bearing
+                # at the bare/root position, where the grammar cannot
+                # express "zero segments" any other way -- a literal
+                # prefix already covers every other depth, so adding
+                # ':home()' there would just be a second, more
+                # confusing spelling of something that already has one
+                # (David: explicit felt "more mysterious than the
+                # default," and collided with the unrelated ":run_dir"
+                # template token in a reader's head).
+                candidates = [
+                    rh for rh in run_homes if self._matches_prefix(rh, home, [])
+                ]
+        elif isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
+            -1
+        ].name == "flatten":
+            # a literal/wildcard prefix, then ':flatten()' as the last
+            # segment, e.g. "beta/:flatten():last()" -- matches this
+            # prefix, then anything, at any remaining depth, instead of
+            # requiring an exact segment count the way a plain literal/
+            # '*' pattern does.
+            if name_one.path[-1].arg is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3's ':flatten()' does not take "
+                    "an argument."
+                )
+            prefix_pattern = self._compile_path_pattern(name_one.path[:-1])
+            candidates = [
+                rh
+                for rh in run_homes
+                if self._matches_prefix_at_least(rh, home, prefix_pattern)
+            ]
+        elif isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
+            -1
+        ].name == "all":
+            # a literal/wildcard prefix, then ':all()' as the last
+            # segment, e.g. "beta/:all():last()" -- matches exactly one
+            # level beyond the prefix (like "beta/*" would), grouped by
+            # the run's own actual value at that position instead of
+            # pooled.
+            if name_one.path[-1].arg is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3's ':all()' does not take an "
+                    "argument."
+                )
+            pattern = self._compile_path_pattern(name_one.path[:-1]) + [Star3()]
+            candidates = [
+                rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
+            ]
+            if pointer is not None:
+                group_key_for = {
+                    rh: self._prefix_segments(rh, home)[-1] for rh in candidates
+                }
         else:
             pattern = self._compile_path_pattern(name_one.path)
             candidates = [
                 rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
             ]
-        candidates = sorted(candidates)
+        candidates = sorted(candidates, key=self._run_dir_sort_key)
 
-        calls = self._combined_name_one_calls(name_one)
-        pointer = self._pointer_from_calls(calls)
         identity, match_all, accessor, _ = self._name_three_selector(
             reference.name_three
         )
@@ -173,8 +332,30 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             if isinstance(seg, FunctionCall3)
         )
         wants_full_content = has_manifest or accessor is not None
+        if group_key_for and (
+            wants_full_content or self._find_field_function_call(calls) is not None
+        ):
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not yet support combining "
+                "':all()' grouping with :manifest() or a run-level field "
+                "accessor -- resolve the grouped runs on their own first."
+            )
 
-        if pointer is not None:
+        if group_key_for:
+            # partition candidates by their own observed group key,
+            # apply the pointer independently within each partition --
+            # one result per distinct value observed. candidates is
+            # already sorted by _run_dir_sort_key, so each partition
+            # keeps correct arrival order internally.
+            groups: dict = {}
+            for rh in candidates:
+                groups.setdefault(group_key_for[rh], []).append(rh)
+            selected_runs = []
+            for key in sorted(groups):
+                selected = self._apply_pointer(pointer, groups[key])
+                if selected is not None:
+                    selected_runs.append(selected)
+        elif pointer is not None:
             selected = self._apply_pointer(pointer, candidates)
             selected_runs = [selected] if selected is not None else []
         else:
@@ -211,6 +392,122 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         for run_dir in selected_runs:
             results.extend(self._results_for_run(run_dir, identity, match_all))
         return ReferenceResults3(results=results)
+
+    def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
+        """root_major == "*" -- query across every named-results group,
+        not just one. Deliberately the narrowest '*' traversal of the
+        three datatypes: only a bare pointer (:first()/:last()/
+        :index(n)), no literal/'*' path narrowing, no name_three, no
+        ':all()', no :manifest()/a field-accessor function. A bare
+        pointer here means the same zero-level-only ("direct children
+        of each run's own group's home") restriction the literal-root
+        query() case now applies -- settled 2026-08-10, see that
+        method's own comments and :flatten() for the any-depth case.
+        Two things make the wider cases genuinely harder here, not just
+        unbuilt yet (unlike files/csvpaths, where the same shapes were
+        straightforward generalizations):
+
+        - RESULTS' own ':all()' already means something different --
+          pooling every csvpath-statement instance WITHIN one already-
+          selected run, at name_three (see _name_three_selector) -- so
+          there is no existing syntactic home for a "group by named-
+          results-group" trigger the way files/csvpaths both have via
+          a bare ':all()' in name_one. (Grouping by observed template
+          value WITHIN one already-literal group, David's three-
+          templates example, is a different, narrower thing and is
+          handled in the literal-root query() case, not here.)
+        - Literal/'*' path narrowing (_matches_prefix) needs a
+          candidate's own group's home directory to compute a relative
+          match -- a bare run_home string, once pooled from
+          _discover_run_homes(), no longer carries which group it came
+          from on its own. _discover_run_homes() now keeps each pair's
+          group name specifically so the zero-level check above can
+          compute the right home per candidate; genuine non-zero path
+          narrowing across every group still needs more design work
+          than reusing that, and stays out of scope here.
+
+        So this only generalizes _discover_run_homes() (root_major=None
+        skips its group filter -- it already reads the same archive-
+        wide ledger Rule 1a/1b use, so no separate group-name
+        enumeration is needed at all) and reuses _results_for_run()'s
+        existing no-name_three case unchanged. One real design
+        decision, independent of the zero-level change: chronological
+        order across every group cannot use a full-path string sort the
+        way one group's own query() case can get away with (different
+        groups' run directories live under different prefixes, so a
+        full-path sort would sort by group name first, not by
+        timestamp) -- _run_dir_sort_key() extracts just the trailing
+        directory-name segment, AND handles that segment's own
+        disambiguating "_N" suffix numerically rather than as a string
+        (see this module's own docstring for why that suffix
+        specifically cannot be sorted as a plain string).
+        """
+        name_one = reference.name_one
+        if name_one.name_two is not None:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not support the '#worksheet' "
+                "marker (name_two) -- it is files-only."
+            )
+        if not self._is_bare_function_only(name_one):
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not yet support path "
+                "narrowing combined with '*' traversal -- only a bare "
+                "pointer (:first()/:last()/:index(n)) is supported so "
+                "far, e.g. '$*.results.:last()'."
+            )
+        if reference.name_three is not None:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not yet support name_three "
+                "(an instance selector) combined with '*' traversal."
+            )
+        calls = self._combined_name_one_calls(name_one)
+        built = ReferenceFunctionFactory.build_chain(calls)
+        if any(f.name in ("all", "flatten", "manifest") for f in built):
+            # ':flatten()' would be a no-op here anyway -- traversal
+            # already pools every discovered run at the same (zero)
+            # level, unlike the literal-root case's plain bare pointer
+            # -- but rejecting it explicitly avoids silently applying
+            # the zero-level filter to what should be an any-depth
+            # query, rather than quietly doing the wrong thing.
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not yet support ':all()', "
+                "':flatten()', or ':manifest()' combined with '*' "
+                "traversal -- only a bare pointer (:first()/:last()/"
+                ":index(n)) is supported so far."
+            )
+        if self._find_field_function_call(calls) is not None:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not yet support a field-"
+                "accessor function combined with '*' traversal."
+            )
+        pointer = self._pointer_from_calls(calls)
+        if pointer is None:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 requires a pointer (:first()/"
+                ":last()/:index(n)) when traversing every named-results "
+                "group with '*'."
+            )
+
+        # zero-level (direct children of each run's own group's home)
+        # only -- same restriction the literal-root query() case now
+        # applies to a plain bare pointer, settled 2026-08-10. Each
+        # candidate's own group name (kept by _discover_run_homes since
+        # this is the traversal case) is needed to compute the right
+        # "home" per candidate -- different groups have different homes.
+        run_homes = [
+            rh
+            for rh, group in self._discover_run_homes(None)
+            if self._matches_prefix(
+                rh, self.csvpaths.results_manager.get_named_results_home(group), []
+            )
+        ]
+        run_homes = sorted(run_homes, key=self._run_dir_sort_key)
+        selected = self._apply_pointer(pointer, run_homes)
+        if selected is None:
+            return ReferenceResults3(results=[])
+        return ReferenceResults3(
+            results=self._results_for_run(selected, None, False)
+        )
 
     _JSON_ACCESSOR_FILES = {
         "errors": "errors.json",
@@ -370,14 +667,25 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         path = Nos(instance_dir).join(accessor.arg)
         return cls._read_well_known_file(path)
 
-    def _discover_run_homes(self, root_major: str) -> list[str]:
-        """every distinct, still-existing run_home for this group, read
-        from the archive-root manifest.json -- see this module's own
-        docstring for why this replaces directory-walking entirely (no
-        need to know/guess the group's template depth). Many entries can
-        share the same run_home (one entry per csvpath-statement
-        execution, several statements per run), so dedupe; a stale entry
-        (the run since deleted) is dropped via an existence check."""
+    def _discover_run_homes(self, root_major: str | None) -> list[tuple[str, str]]:
+        """every distinct, still-existing (run_home, named_paths_name)
+        pair, read from the archive-root manifest.json -- see this
+        module's own docstring for why this replaces directory-walking
+        entirely (no need to know/guess a group's template depth).
+        root_major is a literal group name to filter to (the ordinary,
+        single-group case), or None to skip the filter entirely and
+        discover across every group -- used by '*' traversal, which
+        already has this same archive-wide ledger in hand for Rule
+        1a/1b, so no separate group-name enumeration is needed. Each
+        pair's own group name is kept (not just the run_home) so '*'
+        traversal can tell whether a given run is a direct child of
+        *its own* group's home -- needed once a plain bare pointer
+        means zero-level-only (settled 2026-08-10, see :flatten() for
+        the any-depth case) rather than "ignore depth entirely." Many
+        entries can share the same run_home (one entry per csvpath-
+        statement execution, several statements per run), so dedupe; a
+        stale entry (the run since deleted) is dropped via an
+        existence check."""
         archive = self.csvpaths.config.get(section="results", name="archive")
         manifest_path = Nos(archive).join("manifest.json")
         if not Nos(manifest_path).exists():
@@ -385,13 +693,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         with DataFileReader(manifest_path) as reader:
             entries = json.load(reader.source)
         homes = []
+        seen = set()
         for entry in entries:
-            if entry.get("named_paths_name") != root_major:
+            group = entry.get("named_paths_name")
+            if root_major is not None and group != root_major:
                 continue
             run_home = entry.get("run_home")
-            if run_home and run_home not in homes:
-                homes.append(run_home)
-        return [h for h in homes if Nos(h).exists()]
+            if run_home and run_home not in seen:
+                seen.add(run_home)
+                homes.append((run_home, group))
+        return [pair for pair in homes if Nos(pair[0]).exists()]
 
     def _results_for_run(
         self, run_dir: str, identity: str | None, match_all: bool
@@ -522,21 +833,51 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         return body, match_all, accessor, field_call
 
     @staticmethod
-    def _matches_prefix(run_home: str, home: str, pattern: list) -> bool:
-        """true if run_home's own prefix -- everything between `home`
-        and the run directory's own name (the last path segment) --
-        matches `pattern` position-by-position (Star3 as wildcard).
-        Similar in spirit to FilesReferenceFinder3._matches, but the run
-        directory's own name is excluded from the comparison first,
-        since (unlike a file's file_home) run_home already includes
-        that final, version-identifying segment itself."""
+    def _prefix_segments(run_home: str, home: str) -> "list[str] | None":
+        """everything between `home` and the run directory's own name
+        (the last path segment), split into segments -- None if
+        run_home is not even under `home` at all. Shared by
+        _matches_prefix/_matches_prefix_at_least (matching) and
+        query()'s ':all()' grouping (extracting the actual value at a
+        wildcarded position, once a candidate is already known to
+        match)."""
         home = home.rstrip("/")
         if not run_home.startswith(home):
-            return False
+            return None
         rel = run_home[len(home) :].lstrip("/")
         segments = rel.split("/") if rel else []
-        prefix_segments = segments[:-1]
-        if len(prefix_segments) != len(pattern):
+        return segments[:-1]
+
+    @classmethod
+    def _matches_prefix(cls, run_home: str, home: str, pattern: list) -> bool:
+        """true if run_home's own prefix matches `pattern` position-by-
+        position (Star3 as wildcard), with EXACTLY len(pattern) segments
+        -- no more, no fewer. Similar in spirit to
+        FilesReferenceFinder3._matches, but the run directory's own name
+        is excluded from the comparison first, since (unlike a file's
+        file_home) run_home already includes that final, version-
+        identifying segment itself."""
+        prefix_segments = cls._prefix_segments(run_home, home)
+        if prefix_segments is None or len(prefix_segments) != len(pattern):
+            return False
+        for actual, expected in zip(prefix_segments, pattern):
+            if isinstance(expected, Star3):
+                continue
+            if actual != expected:
+                return False
+        return True
+
+    @classmethod
+    def _matches_prefix_at_least(cls, run_home: str, home: str, pattern: list) -> bool:
+        """like _matches_prefix, but matches when run_home's own prefix
+        has AT LEAST len(pattern) segments matching `pattern` position-
+        by-position, with any number of additional segments (including
+        zero) allowed after them before the run's own trailing name --
+        the ':flatten()' case (see that function and its own docstring):
+        match this literal/wildcard prefix, then anything, at any
+        remaining depth, instead of requiring an exact segment count."""
+        prefix_segments = cls._prefix_segments(run_home, home)
+        if prefix_segments is None or len(prefix_segments) < len(pattern):
             return False
         for actual, expected in zip(prefix_segments, pattern):
             if isinstance(expected, Star3):

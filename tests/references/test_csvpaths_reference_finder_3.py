@@ -48,18 +48,35 @@ class _FakePathsDescriber:
 
 class _FakePathsManager:
     def __init__(
-        self, manifest, home=GROUP_HOME, definition: dict | None = None, ledger=None
+        self,
+        manifest,
+        home=GROUP_HOME,
+        definition: dict | None = None,
+        ledger=None,
+        by_name: dict | None = None,
     ):
         self._manifest = manifest
         self._home = home
         self._definition = definition or {}
         self._ledger = manifest if ledger is None else ledger
+        # by_name: {name: manifest} -- only used by '*' traversal tests,
+        # which need more than one distinct named-paths group. Every
+        # other test uses the single manifest above.
+        self._by_name = by_name
 
     def get_manifest_for_name(self, name):
+        if self._by_name is not None:
+            return self._by_name[name]
         return self._manifest
 
     def named_paths_home(self, name):
         return self._home
+
+    @property
+    def named_paths_names(self):
+        if self._by_name is not None:
+            return list(self._by_name.keys())
+        return []
 
     @property
     def paths_root_manifest(self):
@@ -87,9 +104,10 @@ def _finder(
     definition: dict | None = None,
     inputs_csvpaths_path: str | None = None,
     ledger: list | None = None,
+    by_name: dict | None = None,
 ) -> CsvpathsReferenceFinder3:
     csvpaths = _FakeCsvPaths(
-        _FakePathsManager(manifest, definition=definition, ledger=ledger),
+        _FakePathsManager(manifest, definition=definition, ledger=ledger, by_name=by_name),
         inputs_csvpaths_path=inputs_csvpaths_path,
     )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
@@ -267,12 +285,14 @@ class TestGlobalLoadsLedger:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_star_with_version_pointer_is_still_not_supported(self):
+    def test_star_root_major_with_no_named_paths_groups_gives_empty_results(self):
+        # '*' traversal is supported now (see TestStarTraversal below) --
+        # with zero named-paths groups to enumerate (no by_name given
+        # here), it correctly finds nothing rather than raising.
         finder = _finder(
             "$*.csvpaths.:last()", inputs_csvpaths_path="inputs/named_paths"
         )
-        with pytest.raises(ReferenceException3):
-            finder.query()
+        assert finder.query().results == []
 
 
 LOADS_LEDGER = [
@@ -322,6 +342,109 @@ class TestGlobalLoadsLedgerOrdinalIndexing:
         results = finder.query()
         assert results.files == ["inputs/named_paths/manifest.json"]
         assert results.results[0].uuid == "u-loads-3"
+
+    def test_manifest_then_pointer_order_also_works(self):
+        # order-insensitivity was missing on _pointer_before_manifest
+        # and fixed 2026-08-10.
+        finder = _finder(
+            "$*.csvpaths.:manifest():last()",
+            inputs_csvpaths_path="inputs/named_paths",
+            ledger=LOADS_LEDGER,
+        )
+        results = finder.query()
+        assert results.results[0].uuid == "u-loads-3"
+
+
+#
+# named-paths group alpha (2 versions) + beta (1 version). beta is
+# listed FIRST in STAR_BY_NAME on purpose -- naive concatenation with no
+# time-sort would put alpha's own last entry last in the pooled list, so
+# a test asserting beta's true-latest entry wins would fail if the
+# flatten case's time-sort were ever removed/broken.
+#
+STAR_ALPHA_MANIFEST = [
+    {
+        "group_file_path": "named_paths/alpha/group.csvpath",
+        "uuid": "a-v1",
+        "time": "2026-01-01T00:00:00+00:00",
+    },
+    {
+        "group_file_path": "named_paths/alpha/group.csvpath",
+        "uuid": "a-v2",
+        "time": "2026-01-02T00:00:00+00:00",
+    },
+]
+STAR_BETA_MANIFEST = [
+    {
+        "group_file_path": "named_paths/beta/group.csvpath",
+        "uuid": "b-v1",
+        "time": "2026-01-03T00:00:00+00:00",
+    },
+]
+STAR_BY_NAME = {"beta": STAR_BETA_MANIFEST, "alpha": STAR_ALPHA_MANIFEST}
+
+
+def _star_finder(reference: str) -> CsvpathsReferenceFinder3:
+    return _finder(reference, by_name=STAR_BY_NAME)
+
+
+class TestStarTraversalFlatten:
+    # bare pointer, no ':all()' -- every named-paths group's whole
+    # manifest pools into one combined list, sorted by true
+    # chronological order (each entry's own "time"), reduced by one
+    # terminal pointer.
+    def test_last_across_every_group_is_the_true_most_recent(self):
+        # beta's only version (2026-01-03) is the global most-recent,
+        # not alpha's own last version (2026-01-02) -- proves pooling
+        # crosses groups and is truly time-sorted, not just
+        # concatenated in enumeration order.
+        results = _star_finder("$*.csvpaths.:last()").query()
+        assert results.uuids == ["b-v1"]
+
+    def test_first_across_every_group_is_the_true_earliest(self):
+        results = _star_finder("$*.csvpaths.:first()").query()
+        assert results.uuids == ["a-v1"]
+
+    def test_index_selects_by_chronological_position(self):
+        # chronological order: a-v1, a-v2, b-v1
+        results = _star_finder("$*.csvpaths.:index(1)").query()
+        assert results.uuids == ["a-v2"]
+
+    def test_combining_with_manifest_is_not_yet_supported(self):
+        # note: a plain pointer + :manifest() (e.g. ":last():manifest()")
+        # is intercepted earlier by Rule 1b (the global-ledger ordinal
+        # case, same structural shape) before ever reaching traversal --
+        # :all():manifest() is not a pointer-first shape, so it reaches
+        # _query_star_traversal's own combining-guard instead.
+        with pytest.raises(ReferenceException3):
+            _star_finder("$*.csvpaths.:all():manifest()").query()
+
+    def test_name_three_combined_with_traversal_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _star_finder("$*.csvpaths.:last().0").query()
+
+
+class TestStarTraversalGroup:
+    # ':all()' present in the combined name_one chain -- the pointer is
+    # applied independently within each group's own manifest, one
+    # result per group.
+    def test_all_with_last_gives_one_result_per_group(self):
+        results = _star_finder("$*.csvpaths.:all():last()").query()
+        assert len(results.results) == 2
+        assert set(results.uuids) == {"a-v2", "b-v1"}
+
+    def test_all_with_first_gives_each_groups_earliest_version(self):
+        results = _star_finder("$*.csvpaths.:all():first()").query()
+        assert len(results.results) == 2
+        assert set(results.uuids) == {"a-v1", "b-v1"}
+
+    def test_all_with_no_pointer_gives_every_version_unreduced(self):
+        # extends csvpaths' own existing single-group precedent (bare
+        # :all() with no pointer -- test_bare_all_returns_every_version
+        # above) across every group, rather than deduping to anything.
+        results = _star_finder("$*.csvpaths.:all()").query()
+        assert len(results.results) == 3
+        assert set(results.uuids) == {"a-v1", "a-v2", "b-v1"}
 
 
 class TestDefinitionFunction:

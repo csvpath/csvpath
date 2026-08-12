@@ -122,37 +122,34 @@ class ReferenceFinder3(ABC):
     def _pointer_before_manifest(
         reference: Reference3, name: str
     ) -> "FunctionCall3 | None":
-        """returns the pointer function call riding immediately before a
-        bare ":name()" call in name_one (e.g. "$*.files.:last():manifest()"
-        parses as name_one.path == [:last()], name_one.functions ==
-        [:manifest()]), or None if this reference is not shaped that
-        way. Ordinal indexing into a global ledger (Rule 1b,
-        manifest_field_functions_proposal.md) -- a pointer here selects
-        one entry out of the whole ledger array, same position-based
-        selection _apply_pointer() already does for a named entitys own
-        manifest, just applied to the ledger instead. Shared by files/
-        csvpaths/results since all three ledgers are flat arrays in
-        arrival order."""
+        """returns the pointer function call riding alongside a bare
+        ":name()" call in name_one -- in either order (both
+        "$*.files.:last():manifest()" and "$*.files.:manifest():last()"
+        parse to one segment in name_one.path and one in
+        name_one.functions, just swapped), or None if this reference is
+        not shaped that way. Ordinal indexing into a global ledger (Rule
+        1b, manifest_field_functions_proposal.md) -- a pointer here
+        selects one entry out of the whole ledger array, same
+        position-based selection _apply_pointer() already does for a
+        named entity's own manifest, just applied to the ledger instead.
+        Shared by files/csvpaths/results since all three ledgers are
+        flat arrays in arrival order. Order-insensitive on purpose,
+        matching every literal-root query() path, which never cares
+        which of pointer/:name() came first in a combined chain --
+        confirmed missing here and fixed 2026-08-10."""
         name_one = reference.name_one
         if reference.name_three is not None:
             return None
         if len(name_one.path) != 1 or len(name_one.functions) != 1:
             return None
-        pointer_call = name_one.path[0]
-        manifest_call = name_one.functions[0]
-        if not isinstance(pointer_call, FunctionCall3) or pointer_call.name not in (
-            "first",
-            "last",
-            "index",
-        ):
+        calls = (name_one.path[0], name_one.functions[0])
+        if not all(isinstance(c, FunctionCall3) for c in calls):
             return None
-        if (
-            not isinstance(manifest_call, FunctionCall3)
-            or manifest_call.name != name
-            or manifest_call.arg is not None
-        ):
+        pointer_calls = [c for c in calls if c.name in ("first", "last", "index")]
+        manifest_calls = [c for c in calls if c.name == name and c.arg is None]
+        if len(pointer_calls) != 1 or len(manifest_calls) != 1:
             return None
-        return pointer_call
+        return pointer_calls[0]
 
     @staticmethod
     def _query_well_known_file(home: str, filename: str) -> ReferenceResults3:

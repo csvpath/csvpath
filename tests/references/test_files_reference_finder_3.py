@@ -425,6 +425,20 @@ class TestGlobalArrivalsLedgerOrdinalIndexing:
         assert results.files == ["inputs/named_files/manifest.json"]
         assert results.results[0].uuid == "u-ledger-3"
 
+    def test_manifest_then_pointer_order_also_works(self):
+        # ":manifest():last()" means the same as ":last():manifest()" --
+        # order-insensitivity was missing on _pointer_before_manifest
+        # and fixed 2026-08-10.
+        finder = _finder(
+            "$*.files.:manifest():last()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=LEDGER,
+        )
+        results = finder.query()
+        assert results.results[0].uuid == "u-ledger-3"
+
 
 #
 # matches the spec compendium's own EXAMPLE SCENARIO exactly ("Why a

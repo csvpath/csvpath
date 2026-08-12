@@ -13,8 +13,14 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     # first pass, deliberately narrow, mirroring FilesReferenceFinder3's
     # scoping approach -- but note the roles of name_one/name_three are
     # REVERSED from files here:
-    #  - root_major is a literal named-paths group name. "*" (every
-    #    group) is a different traversal problem, not yet built.
+    #  - root_major is a literal named-paths group name, or "*" (every
+    #    group). "*" has two exceptions carved out before general
+    #    traversal (Rule 1a/1b, a bare/ordinal-indexed :manifest() reads
+    #    the global loads ledger); any other use of "*" goes through
+    #    _query_star_traversal(), which generalizes name_one's own
+    #    version-selecting chain across every group -- see that
+    #    method's docstring for the flatten-vs-group distinction and
+    #    its own narrower scope.
     #  - name_one IS the version selector for csvpaths (STRUCTURE table:
     #    "name_one is always one or more versions of a named-paths
     #    group's group.csvpaths file"). Its combined function chain
@@ -86,13 +92,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 return ReferenceResults3(
                     results=[ReferenceResult3(path=path, uuid=selected["uuid"])]
                 )
-            raise ReferenceException3(
-                "CsvpathsReferenceFinder3 does not yet support '*' as "
-                "root_major (querying every named-paths group) -- use a "
-                "literal group name, or a bare ':manifest()' to read the "
-                "global loads ledger, optionally with a pointer "
-                "(:first()/:last()/:index(n)) to pick one entry by ordinal."
-            )
+            return self._query_star_traversal(reference)
 
         name_one = reference.name_one
         if name_one.name_two is not None:
@@ -168,6 +168,113 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 )
             )
         return ReferenceResults3(results=results)
+
+    def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
+        """root_major == "*" -- query across every named-paths group,
+        not just one. Unlike FILES, csvpaths' version-selecting pointer
+        and ':all()' both already live in name_one's own combined chain
+        (see _resolve_versions) -- there is no separate name_three
+        pointer slot to borrow the way FILES uses. Two semantics, each
+        generalizing this datatype's own existing single-group
+        precedent rather than copying FILES' shape verbatim:
+
+        - bare pointer, no ':all()' (FLATTEN): every named-paths
+          group's whole manifest pools into one combined list, sorted
+          by each entry's own "time" so the pointer means true
+          chronological order across everything, not enumeration order
+          (csvpaths has no path dimension the way files does, so there
+          is nothing to pattern-match -- every entry in every group's
+          manifest is a candidate).
+        - ':all()' present in the combined chain (GROUP): the pointer
+          is applied independently within each group's own manifest
+          (plain array order -- no time-sort needed within one group)
+          -- one result per group. With ':all()' and no pointer, this
+          extends csvpaths' own existing single-group precedent
+          (_resolve_versions: no pointer means every version,
+          unreduced) across every group instead of deduping to
+          anything -- there is no path dimension to dedupe to, unlike
+          FILES.
+
+        Deliberately narrow, matching FILES' own scoping: combining '*'
+        traversal with :manifest()/a field-accessor function, or
+        name_three, is not yet supported -- raises clearly rather than
+        guessing (this also avoids a real bug: those code paths call
+        get_manifest_for_name(reference.root_major), which would break
+        if root_major were the '*' token instead of a literal name).
+        """
+        name_one = reference.name_one
+        if name_one.name_two is not None:
+            raise ReferenceException3(
+                "CsvpathsReferenceFinder3 does not support the '#worksheet' "
+                "marker (name_two) -- it is files-only."
+            )
+        if reference.name_three is not None:
+            raise ReferenceException3(
+                "CsvpathsReferenceFinder3 does not yet support name_three "
+                "(a statement identity lookup) combined with '*' traversal."
+            )
+        if len(name_one.path) != 1 or not isinstance(name_one.path[0], FunctionCall3):
+            raise ReferenceException3(
+                "CsvpathsReferenceFinder3 requires name_one to be a version-"
+                "selecting function chain (e.g. :last(), :all()) when "
+                "traversing every named-paths group with '*'."
+            )
+        # a plain pointer + :manifest() (e.g. ":last():manifest()") never
+        # reaches this method at all -- query()'s own _pointer_before_
+        # manifest() check above already claims that exact shape as
+        # Rule 1b (the global-ledger ordinal case). Only a manifest
+        # combined with ':all()' (not a pointer-first shape) or a
+        # 3+-function chain reaches the guard below.
+        calls = [name_one.path[0], *name_one.functions]
+        built = ReferenceFunctionFactory.build_chain(calls)
+        is_grouped = any(f.name == "all" for f in built)
+        pointers = [f for f in built if f.ROLE == Function3.POINTER]
+        unsupported = (
+            any(f.name == "manifest" for f in built)
+            or self._find_field_function_call(calls) is not None
+        )
+        if unsupported:
+            raise ReferenceException3(
+                "CsvpathsReferenceFinder3 does not yet support combining "
+                "'*' traversal with :manifest() or a field-accessor "
+                "function -- only a plain pointer (:first()/:last()/"
+                ":index(n)), optionally combined with :all() for one "
+                "result per group, is supported so far."
+            )
+
+        if is_grouped:
+            selected_versions = []
+            for name in self.csvpaths.paths_manager.named_paths_names:
+                manifest = self.csvpaths.paths_manager.get_manifest_for_name(name)
+                if pointers:
+                    selected = self._apply_pointer(pointers[0], manifest)
+                    if selected is not None:
+                        selected_versions.append(selected)
+                else:
+                    selected_versions.extend(manifest)
+        else:
+            if not pointers:
+                raise ReferenceException3(
+                    "CsvpathsReferenceFinder3 requires a pointer (:first()/"
+                    ":last()/:index(n)) when traversing every named-paths "
+                    "group with '*' -- use :all() for one result per "
+                    "group instead."
+                )
+            pooled = []
+            for name in self.csvpaths.paths_manager.named_paths_names:
+                pooled.extend(
+                    self.csvpaths.paths_manager.get_manifest_for_name(name)
+                )
+            pooled.sort(key=lambda e: e["time"])
+            selected = self._apply_pointer(pointers[0], pooled)
+            selected_versions = [selected] if selected is not None else []
+
+        return ReferenceResults3(
+            results=[
+                ReferenceResult3(path=c["group_file_path"], uuid=c["uuid"])
+                for c in selected_versions
+            ]
+        )
 
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed

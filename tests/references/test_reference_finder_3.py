@@ -147,10 +147,12 @@ class TestIsBarePointerReference:
 class TestPointerBeforeManifest:
     # shared by every finder that supports ordinal indexing into a
     # global ledger (Rule 1b) -- files/csvpaths/results all read a flat
-    # array in arrival order, so a pointer riding before the bare
+    # array in arrival order, so a pointer riding alongside the bare
     # :manifest() (e.g. ":last():manifest()", parsed as name_one.path
     # == [:last()], name_one.functions == [:manifest()]) means the same
-    # thing everywhere.
+    # thing everywhere -- in either order (see
+    # test_true_for_manifest_then_pointer below; order-insensitivity
+    # was missing and fixed 2026-08-10).
     @staticmethod
     def _ref(name_one, name_three=None) -> Reference3:
         return Reference3(
@@ -184,6 +186,29 @@ class TestPointerBeforeManifest:
 
     def test_none_when_no_trailing_function(self):
         r = self._ref(NameOne3(path=[FunctionCall3(name="last")]))
+        assert ReferenceFinder3._pointer_before_manifest(r, "manifest") is None
+
+    def test_true_for_manifest_then_pointer(self):
+        # the reverse order -- ":manifest():last()" -- means the same
+        # thing as ":last():manifest()". Confirmed missing 2026-08-10:
+        # this used to only recognize pointer-first.
+        r = self._ref(
+            NameOne3(
+                path=[FunctionCall3(name="manifest")],
+                functions=[FunctionCall3(name="last")],
+            )
+        )
+        pointer = ReferenceFinder3._pointer_before_manifest(r, "manifest")
+        assert pointer is not None
+        assert pointer.name == "last"
+
+    def test_none_when_both_positions_are_pointers(self):
+        r = self._ref(
+            NameOne3(
+                path=[FunctionCall3(name="last")],
+                functions=[FunctionCall3(name="first")],
+            )
+        )
         assert ReferenceFinder3._pointer_before_manifest(r, "manifest") is None
 
     def test_none_when_path_segment_is_not_a_pointer(self):
