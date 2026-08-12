@@ -157,6 +157,55 @@ class TestEveryVersionUnreduced:
         assert results.files == ["inputs/named_files/alpha/orders.csv"]
 
 
+class TestAllOnNameThree:
+    # doc line "### ':all()' in name_three" -- mirrors CSVPATHS' own
+    # ':all()' precedent: not a POINTER, so its whole effect is simply
+    # NOT reducing -- every matched version, unreduced, real uuids.
+    def test_all_gives_every_matched_version_with_real_uuids(self):
+        results = _finder(
+            '$alpha.files.:name("orders.csv").:all()', ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert set(results.uuids) == {"u-orders-1", "u-orders-2", "u-orders-3"}
+
+
+HOME_TEST_HOME = "inputs/named_files/homer"
+HOME_TEST_MANIFEST = [
+    {
+        "file": "inputs/named_files/homer/aaa.csv",
+        "file_home": "inputs/named_files/homer",
+        "uuid": "u-zero-1",
+    },
+    {
+        "file": "inputs/named_files/homer/bbb.csv",
+        "file_home": "inputs/named_files/homer",
+        "uuid": "u-zero-2",
+    },
+    {
+        "file": "inputs/named_files/homer/orders.csv/ccc.csv",
+        "file_home": "inputs/named_files/homer/orders.csv",
+        "uuid": "u-one-level",
+    },
+]
+
+
+class TestHomeAsAZeroLevelSelector:
+    # doc lines "### ':home()' as a zero-level selector" -- mirrors
+    # RESULTS' own ':home()'.
+    def test_home_then_pointer_gives_the_latest_zero_level_entry(self):
+        results = _finder(
+            "$homer.files.:home().:last()", HOME_TEST_HOME, HOME_TEST_MANIFEST
+        ).query()
+        assert results.uuids == ["u-zero-2"]
+
+    def test_bare_home_dedupes_to_the_named_files_own_home_unreduced(self):
+        results = _finder(
+            "$homer.files.:home()", HOME_TEST_HOME, HOME_TEST_MANIFEST
+        ).query()
+        assert results.files == [HOME_TEST_HOME]
+        assert results.results[0].uuid is None
+        assert "u-one-level" not in results.uuids
+
+
 class TestPoolAcrossOneNamedFileExactlyOneLevel:
     # doc line "$alpha.files.*.:last()" -- pools every EXACTLY-one-level
     # path under alpha (orders.csv AND returns.csv) into one list, in

@@ -60,7 +60,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    the matched version's own manifest entry) or appear alone with
     #    no pointer at all (e.g. ":manifest()" alone -- every matching
     #    version's entry, unreduced) -- it never narrows/selects itself,
-    #    see functions/manifest_3.py. name_three is
+    #    see functions/manifest_3.py. ":all()" is also legal in
+    #    name_three -- settled 2026-08-12, mirroring CSVPATHS' own
+    #    ":all()" precedent exactly (it is not a POINTER, so its whole
+    #    effect is simply NOT reducing -- "$alpha.files.:name(...).
+    #    :all()" gives every matched version, unreduced, with real
+    #    paths/uuids -- unlike name_three being absent entirely, which
+    #    dedupes to directory-level results with uuid=None instead).
+    #    name_three is
     #    optional: when absent, name_one alone is a prefix search that
     #    returns zero or more paths to file-home directories (one per
     #    distinct file matched, deduplicated across versions) -- per
@@ -170,6 +177,27 @@ class FilesReferenceFinder3(ReferenceFinder3):
             candidates = self._candidates_for_name(root_major, [Star3()])
         elif is_flattened or is_deep_grouped:
             candidates = self._all_candidates_for_name(root_major)
+        elif self._is_bare_home_reference(name_one):
+            # ':home()' as name_one's entire content -- a zero-level
+            # selector, added 2026-08-12, mirroring RESULTS' own
+            # ':home()' (David: keep functions meaning the same thing
+            # across datatypes). Unlike RESULTS, this does NOT fall out
+            # for free -- name_one can never be empty for FILES (the
+            # grammar requires something after the last "."), so there
+            # is no pre-existing "no pattern" code path for a bare
+            # pointer to piggyback on the way RESULTS' bare pointer did.
+            # Reuses the existing exact-length _matches machinery with
+            # an EMPTY pattern (already correctly requires zero
+            # intermediate segments, i.e. file_home == root_major's own
+            # home directory exactly) -- no new matching primitive
+            # needed. Does not collide with ':home()'s ordinary job as
+            # a field accessor in name_three (SOURCE == "manifest",
+            # reading the "file_home" key off a matched candidate) --
+            # different position, different code path, and bare
+            # ':home()' in name_one was previously unreachable/
+            # undefined (only SOURCE == "definition" functions get bare
+            # treatment via _bare_definition_field_call).
+            candidates = self._candidates_for_name(root_major, [])
         elif self._is_flatten_prefixed_reference(name_one):
             # ':flatten()' as name_one's FIRST segment, followed by more
             # path -- settled 2026-08-12, David: "the last version of
@@ -230,12 +258,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
         has_manifest = any(f.name == "manifest" for f in built)
         has_field_function = self._find_field_function_call(built) is not None
         has_path = self._find_path_call(built) is not None
-        if not pointers and not has_manifest and not has_field_function and not has_path:
+        has_all = any(f.name == "all" for f in built)
+        if (
+            not pointers
+            and not has_manifest
+            and not has_field_function
+            and not has_path
+            and not has_all
+        ):
             raise ReferenceException3(
                 "FilesReferenceFinder3 requires name_three to resolve to "
                 "exactly one pointer function (:first()/:last()/:index(n)), "
-                "optionally combined with :manifest(), :path(), or a "
-                "registered field-accessor function (e.g. :uuid())."
+                "optionally combined with :manifest(), :path(), :all(), or "
+                "a registered field-accessor function (e.g. :uuid())."
             )
 
         if partitioned and pointers and (has_manifest or has_field_function or has_path):
@@ -520,6 +555,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
             and len(name_one.path) == 1
             and isinstance(name_one.path[0], FunctionCall3)
             and name_one.path[0].name == "groups"
+            and name_one.path[0].arg is None
+        )
+
+    @staticmethod
+    def _is_bare_home_reference(name_one) -> bool:
+        """same shape as _is_bare_all_reference/_is_bare_flatten_
+        reference/_is_bare_groups_reference, for ':home()' -- a zero-
+        level selector when it is name_one's entire content (settled
+        2026-08-12). Structurally exclusive with all three siblings."""
+        return (
+            not name_one.functions
+            and len(name_one.path) == 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == "home"
             and name_one.path[0].arg is None
         )
 

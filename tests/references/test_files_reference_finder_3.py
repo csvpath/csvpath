@@ -885,6 +885,113 @@ class TestFlattenPrefixedWithSuffix:
             ).query()
 
 
+HOME_TEST_HOME = "inputs/named_files/homer"
+HOME_TEST_MANIFEST = [
+    {
+        "file": "inputs/named_files/homer/aaa.csv",
+        "file_home": "inputs/named_files/homer",
+        "uuid": "u-zero-1",
+    },
+    {
+        "file": "inputs/named_files/homer/bbb.csv",
+        "file_home": "inputs/named_files/homer",
+        "uuid": "u-zero-2",
+    },
+    {
+        "file": "inputs/named_files/homer/orders.csv/ccc.csv",
+        "file_home": "inputs/named_files/homer/orders.csv",
+        "uuid": "u-one-level",
+    },
+]
+
+
+class TestHomeAsAZeroLevelSelector:
+    # bare ':home()' as name_one's entire content -- added 2026-08-12,
+    # a zero-level selector mirroring ResultsReferenceFinder3's own
+    # ':home()' (David: keep functions meaning the same thing across
+    # datatypes). Unlike RESULTS, this needed real new code -- FILES'
+    # name_one can never be empty, so there is no pre-existing "no
+    # pattern" path for a bare pointer to fall into the way RESULTS'
+    # did. HOME_TEST_MANIFEST has both zero-level entries (directly at
+    # homer's own home) and a one-level "orders.csv" entry that must be
+    # excluded.
+    def test_home_then_pointer_gives_the_latest_zero_level_entry(self):
+        results = _finder(
+            "$homer.files.:home().:last()", HOME_TEST_HOME, HOME_TEST_MANIFEST
+        ).query()
+        assert results.uuids == ["u-zero-2"]
+
+    def test_bare_home_dedupes_to_the_named_files_own_home_directory(self):
+        results = _finder(
+            "$homer.files.:home()", HOME_TEST_HOME, HOME_TEST_MANIFEST
+        ).query()
+        assert results.files == [HOME_TEST_HOME]
+        assert results.results[0].uuid is None
+
+    def test_home_excludes_the_one_level_entry(self):
+        results = _finder(
+            "$homer.files.:home()", HOME_TEST_HOME, HOME_TEST_MANIFEST
+        ).query()
+        assert "u-one-level" not in results.uuids
+
+    def test_home_rejects_an_argument(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$homer.files.:home("x").:last()', HOME_TEST_HOME, HOME_TEST_MANIFEST
+            ).query()
+
+    def test_home_in_name_three_position_is_unaffected(self):
+        # ':home()' keeps its ordinary field-accessor job (SOURCE ==
+        # "manifest", reading "file_home") when it appears in name_three
+        # instead of bare in name_one -- different position, no collision.
+        results = _finder(
+            '$homer.files.:name("orders.csv").:first():home()',
+            HOME_TEST_HOME,
+            HOME_TEST_MANIFEST,
+        ).resolve()
+        assert results.results[0].data == "inputs/named_files/homer/orders.csv"
+
+
+class TestAllOnNameThree:
+    # ':all()' as (part of) name_three's function chain -- added
+    # 2026-08-12, mirroring CsvpathsReferenceFinder3's own ':all()'
+    # precedent exactly: it is not a POINTER, so its whole effect is
+    # simply NOT reducing -- every matched candidate comes back with its
+    # own real path/uuid, unlike name_three being absent entirely (which
+    # dedupes to directory-level results with uuid=None instead).
+    def test_all_gives_every_matched_version_with_real_uuids(self):
+        results = _finder(
+            '$alpha.files.:name("one.csv").:all()', ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert set(results.uuids) == {"u-one-1", "u-one-2"}
+        assert None not in results.uuids
+
+    def test_all_differs_from_no_name_three_at_all(self):
+        # no name_three: deduped to ONE directory-level result, uuid=None.
+        no_name_three = _finder(
+            '$alpha.files.:name("one.csv")', ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert len(no_name_three.results) == 1
+        assert no_name_three.results[0].uuid is None
+        # :all(): every version, unreduced, real uuids.
+        with_all = _finder(
+            '$alpha.files.:name("one.csv").:all()', ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert len(with_all.results) == 2
+        assert all(u is not None for u in with_all.uuids)
+
+    def test_all_combined_with_a_pointer_is_redundant_pointer_wins(self):
+        # mirrors CSVPATHS' own "the same outcome as writing no pointer
+        # at all" framing -- :all() alongside a real pointer does not
+        # error, the pointer just reduces as normal.
+        results = _finder(
+            '$alpha.files.:name("one.csv").:all():last()',
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-one-2"]
+
+
 class TestGroupsForOneNamedFile:
     # bare ':groups()' as name_one's entire content, for a LITERAL
     # (non-'*') root_major -- added 2026-08-12, the any-depth GROUP peer
