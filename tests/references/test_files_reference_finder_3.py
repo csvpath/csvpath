@@ -566,9 +566,15 @@ class TestStarTraversalFlatten:
 
 class TestStarTraversalGroup:
     # bare ':all()' as name_one's entire content partitions every
-    # named-file's matches by file_home (already unique per named-file+
-    # path), applying the terminal pointer independently within each
-    # group -- one result per (named-file, path) pair.
+    # named-file's EXACTLY-one-level matches (corrected 2026-08-12 to
+    # require the same [Star3()] pattern '*' does -- an earlier version
+    # matched any depth, which diverged from ResultsReferenceFinder3's
+    # own ':all()'/'*' depth-peer vocabulary) by file_home (already
+    # unique per named-file+path), applying the terminal pointer
+    # independently within each group -- one result per (named-file,
+    # path) pair. STAR_ALPHA/STAR_BETA are already all one level deep,
+    # so these assertions are unaffected by the correction -- see
+    # TestStarTraversalFlattenAnyDepth below for the any-depth case.
     def test_all_with_last_gives_one_result_per_named_file_and_path(self):
         results = _star_finder("$*.files.:all().:last()").query()
         assert len(results.results) == 3
@@ -592,56 +598,161 @@ class TestStarTraversalGroup:
             _star_finder("$*.files.:all().:last():manifest()").query()
 
 
+#
+# adds one named-file ("gamma") with a TWO-level entry, chronologically
+# latest of everything, to STAR_ALPHA/STAR_BETA's existing one-level
+# fixtures -- '*'/':all()' (both restricted to exactly one level) never
+# see it; ':flatten()' (any depth, pooled across every named-file) does.
+#
+FLATTEN_GAMMA_HOME = "inputs/named_files/gamma"
+FLATTEN_GAMMA_MANIFEST = [
+    {
+        "file": "inputs/named_files/gamma/nested/deep.csv/fff.csv",
+        "file_home": "inputs/named_files/gamma/nested/deep.csv",
+        "uuid": "u-gamma-deep-1",
+        "time": "2026-01-06T00:00:00+00:00",
+    },
+]
+FLATTEN_BY_NAME = dict(STAR_BY_NAME, gamma=(FLATTEN_GAMMA_HOME, FLATTEN_GAMMA_MANIFEST))
+
+
+def _flatten_star_finder(reference: str) -> FilesReferenceFinder3:
+    csvpaths = _FakeCsvPaths(_FakeFileManager(None, None, by_name=FLATTEN_BY_NAME))
+    ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
+    return FilesReferenceFinder3(csvpaths=csvpaths, ref=ref)
+
+
+class TestStarTraversalFlattenAnyDepth:
+    # bare ':flatten()' as name_one's entire content -- added 2026-08-12,
+    # the any-depth POOL peer of '*' (one-level POOL)/':all()' (one-level
+    # GROUP) across every named-file, mirroring ResultsReferenceFinder3's
+    # own ':flatten()'. Pools every named-file's candidates at any depth
+    # into one combined list, time-sorted, same as '*' traversal's own
+    # pool branch -- just without the exact-one-level restriction.
+    def test_last_reaches_a_two_level_entry_star_cannot(self):
+        star_results = _flatten_star_finder("$*.files.*.:last()").query()
+        assert star_results.uuids == ["u-two-2"]
+        flatten_results = _flatten_star_finder("$*.files.:flatten().:last()").query()
+        assert flatten_results.uuids == ["u-gamma-deep-1"]
+
+    def test_first_across_every_named_file_and_depth(self):
+        results = _flatten_star_finder("$*.files.:flatten().:first()").query()
+        assert results.uuids == ["u-zero-1"]
+
+    def test_with_no_name_three_dedupes_to_file_home_directories_any_depth(self):
+        results = _flatten_star_finder("$*.files.:flatten()").query()
+        assert set(results.files) == {
+            "inputs/named_files/alpha/zero.csv",
+            "inputs/named_files/alpha/one.csv",
+            "inputs/named_files/beta/two.csv",
+            "inputs/named_files/gamma/nested/deep.csv",
+        }
+
+    def test_combining_with_manifest_is_not_yet_supported(self):
+        # same structural reason '*' traversal has this restriction --
+        # root_major is "*" here, so _extract_data() cannot know which
+        # named-file's manifest to re-read.
+        with pytest.raises(ReferenceException3):
+            _flatten_star_finder("$*.files.:flatten().:last():manifest()").query()
+
+
 class TestAllForOneNamedFile:
     # bare ':all()' as name_one's entire content, for a LITERAL (non-'*')
-    # root_major -- settled 2026-08-12. Mirrors TestStarTraversalGroup's
-    # own semantics exactly, just scoped to one named-file: every
-    # distinct file_home under this name, at ANY depth (not the exact
-    # one-level match a literal/'*' pattern always requires), each
-    # independently reduced by name_three's own pointer.
-    def test_all_with_last_gives_each_distinct_paths_own_latest(self):
+    # root_major -- settled 2026-08-12, CORRECTED same day: ':all()' is
+    # a one-level GROUP, an exact peer of '*' (same [Star3()] pattern),
+    # not an any-depth match -- kept in lockstep with
+    # ResultsReferenceFinder3's own ':all()'/'*' depth-peer vocabulary.
+    # ALPHA_MANIFEST has two distinct one-level paths (zero.csv x1
+    # version, one.csv x2) -- exactly what ':all()' groups by.
+    def test_all_with_last_gives_each_paths_own_latest(self):
+        results = _finder("$alpha.files.:all().:last()", ALPHA_HOME, ALPHA_MANIFEST)
+        r = results.query()
+        assert set(r.uuids) == {"u-zero-1", "u-one-2"}
+
+    def test_all_with_first_gives_each_paths_own_earliest(self):
+        results = _finder("$alpha.files.:all().:first()", ALPHA_HOME, ALPHA_MANIFEST)
+        r = results.query()
+        assert set(r.uuids) == {"u-zero-1", "u-one-1"}
+
+    def test_all_with_no_name_three_dedupes_to_file_home_directories(self):
+        results = _finder("$alpha.files.:all()", ALPHA_HOME, ALPHA_MANIFEST)
+        r = results.query()
+        assert set(r.files) == {
+            "inputs/named_files/alpha/zero.csv",
+            "inputs/named_files/alpha/one.csv",
+        }
+
+    def test_all_does_not_reach_a_two_level_entry(self):
+        # ':all()' is now restricted to exactly one level, same as '*'
+        # -- a two-level path is invisible to it, same as to '*'. Use
+        # ':flatten()' (TestFlattenForOneNamedFile below) to reach it.
         results = _finder("$mixed.files.:all().:last()", MIXED_HOME, MIXED_MANIFEST)
         r = results.query()
-        assert len(r.results) == 2
-        assert set(r.uuids) == {"u-zero-2", "u-deep-2"}
+        assert set(r.uuids) == {"u-zero-2"}
 
-    def test_all_with_first_gives_each_distinct_paths_own_earliest(self):
-        results = _finder("$mixed.files.:all().:first()", MIXED_HOME, MIXED_MANIFEST)
+    def test_all_combined_with_manifest_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:all().:last():manifest()", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
+    def test_all_combined_with_a_field_accessor_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:all().:last():uuid()", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
+
+class TestFlattenForOneNamedFile:
+    # bare ':flatten()' as name_one's entire content, for a LITERAL
+    # (non-'*') root_major -- added 2026-08-12, the any-depth POOL peer
+    # of ':all()' (one-level GROUP)/'*' (one-level POOL). MIXED_MANIFEST
+    # has two distinct file_homes at DIFFERENT depths (zero.csv one
+    # level, nested/deep.csv two levels) -- exactly what '*' cannot
+    # reach (an exact segment count) and ':flatten()' pools into one
+    # answer, in manifest-array order (arrival order for FILES, not a
+    # "time" field -- this is one already-known manifest, same as any
+    # other single-name pooled reduction).
+    def test_flatten_last_pools_across_every_depth(self):
+        results = _finder("$mixed.files.:flatten().:last()", MIXED_HOME, MIXED_MANIFEST)
         r = results.query()
-        assert len(r.results) == 2
-        assert set(r.uuids) == {"u-zero-1", "u-deep-1"}
+        assert r.uuids == ["u-deep-2"]
 
-    def test_all_with_no_name_three_dedupes_to_file_home_directories_any_depth(self):
-        results = _finder("$mixed.files.:all()", MIXED_HOME, MIXED_MANIFEST)
+    def test_flatten_first_pools_across_every_depth(self):
+        results = _finder(
+            "$mixed.files.:flatten().:first()", MIXED_HOME, MIXED_MANIFEST
+        )
+        r = results.query()
+        assert r.uuids == ["u-zero-1"]
+
+    def test_flatten_with_no_name_three_dedupes_to_file_homes_any_depth(self):
+        results = _finder("$mixed.files.:flatten()", MIXED_HOME, MIXED_MANIFEST)
         r = results.query()
         assert set(r.files) == {
             "inputs/named_files/mixed/zero.csv",
             "inputs/named_files/mixed/nested/deep.csv",
         }
 
-    def test_a_literal_star_misses_the_two_level_entry_all_does_not(self):
-        # proves ':all()' is genuinely reaching further than '*' can --
-        # '*' requires exactly one level, so it only ever sees zero.csv.
+    def test_a_literal_star_misses_the_two_level_entry_flatten_does_not(self):
         star_results = _finder(
             "$mixed.files.*.:last()", MIXED_HOME, MIXED_MANIFEST
         ).query()
         assert star_results.uuids == ["u-zero-2"]
-        all_results = _finder(
-            "$mixed.files.:all().:last()", MIXED_HOME, MIXED_MANIFEST
+        flatten_results = _finder(
+            "$mixed.files.:flatten().:last()", MIXED_HOME, MIXED_MANIFEST
         ).query()
-        assert set(all_results.uuids) == {"u-zero-2", "u-deep-2"}
+        assert flatten_results.uuids == ["u-deep-2"]
 
-    def test_all_combined_with_manifest_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$mixed.files.:all().:last():manifest()", MIXED_HOME, MIXED_MANIFEST
-            ).query()
-
-    def test_all_combined_with_a_field_accessor_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$mixed.files.:all().:last():uuid()", MIXED_HOME, MIXED_MANIFEST
-            ).query()
+    def test_flatten_combined_with_manifest_is_supported(self):
+        # unlike ':all()' grouping, ':flatten()' pooling has no
+        # under-specified-interaction restriction -- root_major is
+        # always known here (unlike '*' traversal), so it reduces to
+        # one entity same as an ordinary pointer would.
+        results = _finder(
+            "$mixed.files.:flatten().:last():manifest()", MIXED_HOME, MIXED_MANIFEST
+        )
+        r = results.resolve()
+        assert r.results[0].data == MIXED_MANIFEST[3]
 
 
 class TestManifestCombinedWithNameThree:

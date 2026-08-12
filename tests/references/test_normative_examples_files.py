@@ -199,22 +199,49 @@ MIXED_MANIFEST = [
 
 class TestAllForOneNamedFile:
     # doc lines "### ':all()' for ONE named-file" -- every distinct path
-    # under one named-file, at ANY depth (unlike '*' above, which
-    # requires exactly one level), each independently reduced.
+    # under one named-file, EXACTLY one level deep (same match as '*'),
+    # each independently reduced -- corrected 2026-08-12 to stay a
+    # one-level peer of '*', matching RESULTS' own vocabulary. Uses
+    # ALPHA_MANIFEST (orders.csv x3, returns.csv x1, both one level).
     def test_all_last_gives_each_paths_own_latest(self):
         results = _finder(
-            "$mixed.files.:all().:last()", MIXED_HOME, MIXED_MANIFEST
+            "$alpha.files.:all().:last()", ALPHA_HOME, ALPHA_MANIFEST
         ).query()
-        assert set(results.uuids) == {"u-zero-2", "u-deep-2"}
+        assert set(results.uuids) == {"u-orders-3", "u-returns-1"}
 
     def test_all_first_gives_each_paths_own_earliest(self):
         results = _finder(
-            "$mixed.files.:all().:first()", MIXED_HOME, MIXED_MANIFEST
+            "$alpha.files.:all().:first()", ALPHA_HOME, ALPHA_MANIFEST
         ).query()
-        assert set(results.uuids) == {"u-zero-1", "u-deep-1"}
+        assert set(results.uuids) == {"u-orders-1", "u-returns-1"}
 
-    def test_all_alone_gives_every_distinct_path_at_any_depth_unreduced(self):
-        results = _finder("$mixed.files.:all()", MIXED_HOME, MIXED_MANIFEST).query()
+    def test_all_alone_gives_every_distinct_one_level_path_unreduced(self):
+        results = _finder("$alpha.files.:all()", ALPHA_HOME, ALPHA_MANIFEST).query()
+        assert set(results.files) == {
+            "inputs/named_files/alpha/orders.csv",
+            "inputs/named_files/alpha/returns.csv",
+        }
+
+
+class TestFlattenForOneNamedFile:
+    # doc lines "### ':flatten()' for ONE named-file" -- the any-depth
+    # POOL peer of ':all()' (one-level GROUP)/'*' (one-level POOL),
+    # added 2026-08-12. MIXED_MANIFEST has two distinct file_homes at
+    # DIFFERENT depths -- exactly what '*'/':all()' cannot reach.
+    def test_flatten_last_pools_across_every_depth(self):
+        results = _finder(
+            "$mixed.files.:flatten().:last()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert results.uuids == ["u-deep-2"]
+
+    def test_flatten_first_pools_across_every_depth(self):
+        results = _finder(
+            "$mixed.files.:flatten().:first()", MIXED_HOME, MIXED_MANIFEST
+        ).query()
+        assert results.uuids == ["u-zero-1"]
+
+    def test_flatten_alone_gives_every_distinct_path_any_depth_unreduced(self):
+        results = _finder("$mixed.files.:flatten()", MIXED_HOME, MIXED_MANIFEST).query()
         assert set(results.files) == {
             "inputs/named_files/mixed/zero.csv",
             "inputs/named_files/mixed/nested/deep.csv",
@@ -422,10 +449,39 @@ class TestStarTraversalPool:
 
 class TestStarTraversalGroup:
     # doc line "### '*' traversal, GROUP -- one result per (named-file,
-    # path) pair"
+    # path) pair, each match still exactly one level deep"
     def test_all_last_gives_one_result_per_named_file_and_path(self):
         results = _star_finder("$*.files.:all().:last()").query()
         assert set(results.uuids) == {"u-zero-1", "u-one-2", "u-two-2"}
+
+
+FLATTEN_GAMMA_HOME = "inputs/named_files/gamma"
+FLATTEN_GAMMA_MANIFEST = [
+    {
+        "file": "inputs/named_files/gamma/nested/deep.csv/fff.csv",
+        "file_home": "inputs/named_files/gamma/nested/deep.csv",
+        "uuid": "u-gamma-deep-1",
+        "time": "2026-01-06T00:00:00+00:00",
+    },
+]
+FLATTEN_BY_NAME = dict(STAR_BY_NAME, gamma=(FLATTEN_GAMMA_HOME, FLATTEN_GAMMA_MANIFEST))
+
+
+def _flatten_star_finder(reference: str) -> FilesReferenceFinder3:
+    csvpaths = _FakeCsvPaths(_FakeFileManager(None, None, by_name=FLATTEN_BY_NAME))
+    ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
+    return FilesReferenceFinder3(csvpaths=csvpaths, ref=ref)
+
+
+class TestStarTraversalFlattenAnyDepth:
+    # doc line "### '*' traversal, POOL, any depth" -- gamma's two-level
+    # entry (chronologically latest) is reachable only by ':flatten()',
+    # not by '*' (exactly one level).
+    def test_last_reaches_a_two_level_entry_star_cannot(self):
+        star_results = _flatten_star_finder("$*.files.*.:last()").query()
+        assert star_results.uuids == ["u-two-2"]
+        flatten_results = _flatten_star_finder("$*.files.:flatten().:last()").query()
+        assert flatten_results.uuids == ["u-gamma-deep-1"]
 
 
 class TestFieldAccessorsOnOneMatchedVersion:

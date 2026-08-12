@@ -10,7 +10,7 @@ def test_metadata():
     f = Flatten3()
     assert f.name == "flatten"
     assert f.ROLE == Function3.CONTEXT_SETTER
-    assert f.DATATYPES == (Reference3.RESULTS,)
+    assert f.DATATYPES == (Reference3.FILES, Reference3.RESULTS)
 
 
 def test_no_arg_is_valid():

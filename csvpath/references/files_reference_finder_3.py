@@ -25,19 +25,30 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    method's own docstring.
     #  - name_one is "*", a literal path segment, :name("...") (for a
     #    literal name containing characters -- e.g. a real filename's
-    #    "." -- that cannot appear in a bare PATH_SEGMENT), or a bare
-    #    ':all()' -- settled 2026-08-12: every distinct file_home under
-    #    this ONE named-file, at any depth, each independently reduced
-    #    by name_three's own pointer (mirrors _query_star_traversal's
-    #    own is_grouped branch, just scoped to one name instead of
-    #    every named-file). A literal/'*' pattern always requires an
-    #    EXACT segment count, so ':all()' is the only way to reach a
-    #    file whose depth is not known/uniform in advance. Combining it
-    #    with :manifest()/:path()/a field-accessor function is not yet
+    #    "." -- that cannot appear in a bare PATH_SEGMENT), a bare
+    #    ':all()', or a bare ':flatten()' -- these last two settled/
+    #    corrected 2026-08-12, kept deliberately in lockstep with
+    #    ResultsReferenceFinder3's own depth vocabulary (David: keep
+    #    functions meaning the same thing across datatypes wherever the
+    #    underlying structure supports it -- FILES has the same
+    #    "variable, not-known-in-advance path depth" structure RESULTS
+    #    does): ':all()' is a one-level GROUP, an exact peer of '*'
+    #    (same [Star3()] pattern, but partitioned by file_home and
+    #    reduced independently per partition instead of pooled) --
+    #    reaches each distinct one-level path's own latest version.
+    #    ':flatten()' is the any-depth POOL peer -- every distinct
+    #    file_home under this name, at any depth, into ONE pooled
+    #    answer. Any-depth GROUPED (reaching a mixed-depth name's every
+    #    distinct path independently) is deliberately NOT built --
+    #    that would be a ':groups()' analog, deferred here exactly like
+    #    ResultsReferenceFinder3 defers it. ':all()' combined with
+    #    :manifest()/:path()/a field-accessor function is not yet
     #    supported (same under-specified-interaction reasoning as
-    #    ResultsReferenceFinder3's own ':all()' restriction). Any other
-    #    function-valued segment (e.g. :quarter()) and the "#worksheet"
-    #    marker (name_two) are not yet supported.
+    #    ResultsReferenceFinder3's own ':all()' restriction) --
+    #    ':flatten()' has no such restriction here, since root_major is
+    #    always known at this position (unlike '*' traversal below).
+    #    Any other function-valued segment (e.g. :quarter()) and the
+    #    "#worksheet" marker (name_two) are not yet supported.
     #  - name_three, if present, must resolve to exactly one pointer
     #    function (:first()/:last()/:index(n)) -- matching the
     #    STRUCTURE table: name_one picks *which file*, name_three picks
@@ -121,18 +132,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "directly to name_one -- put the version-selecting function in "
                 "name_three instead."
             )
-        # bare ':all()' for ONE named-file (settled 2026-08-12) -- every
-        # distinct file_home under root_major, at ANY depth, each
-        # reduced independently by name_three's own pointer (if any).
-        # Fills the same real gap '*' traversal's own is_grouped branch
-        # already fills across every named-file: a literal/'*' pattern
-        # here always requires an EXACT segment count (via _matches), so
-        # there was no way to ask for "each distinct path's own latest
-        # version" for a single named-file whose files do not all sit at
-        # the same depth. Mirrors _query_star_traversal's grouping
-        # exactly, just scoped to one name instead of every name.
+        # bare ':all()'/':flatten()' for ONE named-file -- see the class
+        # docstring's 2026-08-12 note. ':all()' is a one-level GROUP,
+        # exactly the pattern '*' already matches, just partitioned by
+        # file_home and reduced per-partition below instead of pooled.
+        # ':flatten()' is the any-depth POOL peer, filling the real gap
+        # a literal/'*' pattern cannot (an exact segment count) without
+        # over-reaching into "group at any depth too," which stays
+        # deferred (':groups()', not built).
         is_grouped = self._is_bare_all_reference(name_one)
+        is_flattened = self._is_bare_flatten_reference(name_one)
         if is_grouped:
+            candidates = self._candidates_for_name(root_major, [Star3()])
+        elif is_flattened:
             candidates = self._all_candidates_for_name(root_major)
         else:
             pattern = self._compile_path_pattern(name_one.path)
@@ -236,14 +248,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
     def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
         """root_major == "*" -- query across every named-file, not just
-        one. Two distinct semantics (per "Why a trailing bare '*' is
-        illegal but bare ':all()' is fine" in the spec compendium):
+        one. Three distinct semantics, corrected/extended 2026-08-12 to
+        match ResultsReferenceFinder3's own depth vocabulary exactly
+        (David: keep functions meaning the same thing across datatypes):
 
-        - bare '*'/literal path narrowing (FLATTEN): every named-file's
-          matching candidates pool into one combined list, sorted by
-          each entry's own "time" so a terminal pointer means true
-          chronological order across everything, not enumeration order.
-        - bare ':all()' as name_one's entire content (GROUP): every
+        - bare '*'/literal path narrowing (POOL, exactly one level):
+          every named-file's matching candidates pool into one combined
+          list, sorted by each entry's own "time" so a terminal pointer
+          means true chronological order across everything, not
+          enumeration order.
+        - bare ':all()' as name_one's entire content (GROUP, exactly one
+          level -- matches the SAME [Star3()] pattern '*' does, NOT any
+          depth as an earlier version of this method did): every
           matching candidate across every named-file is partitioned by
           its own "file_home" (already unique per named-file+path, since
           file_home embeds the named-file's name as a path prefix), and
@@ -251,13 +267,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
           group -- one result per (named-file, path) pair, each that
           pair's own last/first/nth version in its own array order (no
           time-sort needed within one already-single-manifest group).
+        - bare ':flatten()' as name_one's entire content (POOL, any
+          depth): every named-file's candidates AT ANY DEPTH pool into
+          one combined list, time-sorted and reduced exactly like the
+          '*' case above -- the any-depth counterpart '*' cannot reach
+          (an exact segment count). Any-depth GROUPED stays deferred
+          (a ':groups()' analog, not built), matching
+          ResultsReferenceFinder3's own deferral.
 
         Deliberately narrow for now, matching only the spec's own worked
-        examples: combining '*' traversal with :manifest()/:path()/a
-        field-accessor function in name_three is not yet supported --
-        those all assume exactly one already-known manifest to re-read
-        in _extract_data(), which does not hold when a result could have
-        come from any of several named-files' manifests.
+        examples: combining '*'/':flatten()' traversal with :manifest()/
+        :path()/a field-accessor function in name_three is not yet
+        supported -- those all assume exactly one already-known manifest
+        to re-read in _extract_data(), which does not hold when a result
+        could have come from any of several named-files' manifests.
         """
         name_one = reference.name_one
         if name_one.name_two is not None:
@@ -266,7 +289,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "marker (name_two)."
             )
         is_grouped = self._is_bare_all_reference(name_one)
+        is_flattened = self._is_bare_flatten_reference(name_one)
         if is_grouped:
+            candidates = []
+            for name in self.csvpaths.file_manager.named_file_names:
+                candidates.extend(self._candidates_for_name(name, [Star3()]))
+        elif is_flattened:
             candidates = []
             for name in self.csvpaths.file_manager.named_file_names:
                 candidates.extend(self._all_candidates_for_name(name))
@@ -347,19 +375,21 @@ class FilesReferenceFinder3(ReferenceFinder3):
     def _candidates_for_name(self, name: str, pattern: list) -> list:
         """every manifest entry for one named-file whose file_home
         matches `pattern` relative to that name's own home directory --
-        the per-name-file work shared by both the literal-root_major
-        path and '*' traversal's flatten mode."""
+        the per-name-file work shared by the literal-root_major path,
+        '*' traversal's pool mode, and both ':all()' branches (which
+        also match this exact-one-level pattern, just with the results
+        partitioned rather than pooled afterward)."""
         manifest = self.csvpaths.file_manager.get_manifest(name)
         home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
         return [entry for entry in manifest if self._matches(entry, home, pattern)]
 
     def _all_candidates_for_name(self, name: str) -> list:
         """every manifest entry for one named-file, at any path depth --
-        ':all()' matches unconditionally, unlike a pattern (which must
-        match an exact segment count), so this skips _matches entirely.
-        Shared by '*' traversal's own is_grouped branch (every named-
-        file) and query()'s literal-root_major is_grouped branch (this
-        one named-file only)."""
+        ':flatten()' matches unconditionally, unlike a pattern (which
+        must match an exact segment count), so this skips _matches
+        entirely. Shared by '*' traversal's own is_flattened branch
+        (every named-file) and query()'s literal-root_major is_flattened
+        branch (this one named-file only)."""
         manifest = self.csvpaths.file_manager.get_manifest(name)
         home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
         return [
@@ -379,6 +409,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
             and len(name_one.path) == 1
             and isinstance(name_one.path[0], FunctionCall3)
             and name_one.path[0].name == "all"
+            and name_one.path[0].arg is None
+        )
+
+    @staticmethod
+    def _is_bare_flatten_reference(name_one) -> bool:
+        """same shape as _is_bare_all_reference, for ':flatten()'
+        instead of ':all()' -- the two are structurally exclusive (a
+        single FunctionCall3 cannot be named both at once), so callers
+        never need to guard against both being true together."""
+        return (
+            not name_one.functions
+            and len(name_one.path) == 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == "flatten"
             and name_one.path[0].arg is None
         )
 
