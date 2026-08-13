@@ -391,8 +391,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # arrival date instead, via _apply_date_range() below --
             # comparing POSITIONS would be meaningless for a date bound.
             # Mixing the two modes in one :from()/:to() pair is rejected
-            # -- there is no coherent single meaning for e.g.
-            # ":from(2):to(:date('2025-01-01'))".
+            # -- not because it is meaningless (e.g.
+            # ":from(:date('2025-01-01')):to(:index(10))" is a
+            # reasonable ask: "10 runs starting from this date"), but
+            # because it is AMBIGUOUS and undecided which of at least
+            # two readings is meant -- is the index bound absolute
+            # position in the full candidate list, or relative to
+            # wherever the date bound starts matching? Nothing here
+            # picks one, so mixing is rejected until that anchor
+            # semantics question is deliberately settled, not attempted
+            # here for lack of a driving use case.
             if group_key_for:
                 raise ReferenceException3(
                     "ResultsReferenceFinder3 does not yet support combining "

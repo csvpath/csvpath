@@ -516,6 +516,18 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             if (from_bound is not None and to_bound is not None) and (
                 from_is_date != to_is_date
             ):
+                # rejected -- not because it is meaningless (e.g.
+                # ":from(:date('2025-01-01')):to(:index(10))" is a
+                # reasonable ask: "10 versions starting from this
+                # date"), but because it is AMBIGUOUS and undecided
+                # which of at least two readings is meant -- is the
+                # index bound absolute position in the full version
+                # list, or relative to wherever the date bound starts
+                # matching? Nothing here picks one, so mixing is
+                # rejected until that anchor semantics question is
+                # deliberately settled, not attempted here for lack of
+                # a driving use case (same reasoning as RESULTS'/FILES'
+                # own version-level ranges).
                 raise ReferenceException3(
                     "CsvpathsReferenceFinder3 does not support mixing "
                     "index-mode and date-mode ':from()'/':to()' bounds in "

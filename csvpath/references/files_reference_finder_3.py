@@ -351,9 +351,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # RESULTS already filters run-level ranges by) FILTERS by
             # each version's own "time" manifest field instead, via the
             # shared _apply_manifest_date_range(). Mixing the two modes
-            # in one ':from()'/':to()' pair is rejected -- there is no
-            # coherent single meaning for e.g.
-            # ":from(2):to(:date('2025-01-01'))".
+            # in one ':from()'/':to()' pair is rejected -- not because
+            # it is meaningless (e.g.
+            # ":from(:date('2025-01-01')):to(:index(10))" is a
+            # reasonable ask: "10 versions starting from this date"),
+            # but because it is AMBIGUOUS and undecided which of at
+            # least two readings is meant -- is the index bound
+            # absolute position in the full version list, or relative
+            # to wherever the date bound starts matching? Nothing here
+            # picks one, so mixing is rejected until that anchor
+            # semantics question is deliberately settled, not attempted
+            # here for lack of a driving use case.
             from_bound = self._range_bound(from_call) if from_call is not None else None
             to_bound = self._range_bound(to_call) if to_call is not None else None
             from_is_date = isinstance(from_bound, str)
