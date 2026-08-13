@@ -1070,6 +1070,29 @@ class TestBareFingerprintLookup:
                 FINGERPRINT_MANIFEST,
             ).query()
 
+    def test_two_different_logical_files_sharing_one_fingerprint_both_come_back(self):
+        # confirms the "at most one match is expected in practice... not
+        # specially guarded against" comment in query() -- two DIFFERENT
+        # logical files (different file_home) with byte-identical content
+        # share one fingerprint here; the lookup is not artificially
+        # restricted to one result, it returns every real match.
+        shared_manifest = FINGERPRINT_MANIFEST + [
+            {
+                "file": "inputs/named_files/finn/backups/orders.csv/aaaa.csv",
+                "file_home": "inputs/named_files/finn/backups/orders.csv",
+                "uuid": "u-orders-backup-1",
+                "fingerprint": "aaaa",
+            }
+        ]
+        results = _finder(
+            '$finn.files.:fingerprint("aaaa")', FINGERPRINT_HOME, shared_manifest
+        ).query()
+        assert results.files == [
+            "inputs/named_files/finn/orders.csv/aaaa.csv",
+            "inputs/named_files/finn/backups/orders.csv/aaaa.csv",
+        ]
+        assert results.uuids == ["u-orders-1", "u-orders-backup-1"]
+
 
 RANGE_HOME = "inputs/named_files/ranger"
 RANGE_MANIFEST = [
