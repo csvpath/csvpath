@@ -646,6 +646,128 @@ class TestRunLevelRange:
             ).query()
 
 
+class TestStatementLevelRange:
+    # ':from()'/':to()' as a name_three statement-level range -- added
+    # 2026-08-13. David: ":from(:index(2)):unmatched() should definitely
+    # not work" -- a range is "more than one entity" the same way
+    # ':all()' already is, so it gets the same restriction combined with
+    # a content accessor -- but count-DEPENDENT (checked per run), not
+    # ':all()'s own blanket rejection, mirroring the run-level "more
+    # than one candidate" check this file already uses elsewhere.
+    #
+    # Fixture deliberately writes instances in a NON-declaration-order
+    # sequence (both dict order and directory-write order scrambled) --
+    # this exercises the 2026-08-13 ordering fix to
+    # _list_instance_identities (it used to trust raw filesystem
+    # listdir() order, which is NOT declaration order; now sorts by
+    # each instance's own "instance_index", confirmed via
+    # csvpaths.py -> Result -> ResultRegistrar -> ResultMetadata to be
+    # the real, written declaration-order field). Without that fix this
+    # whole class would be testing filesystem-dependent noise instead
+    # of real statement position.
+    @pytest.fixture
+    def one_run_five_statements(self, tmp_path):
+        base = tmp_path / "acme" / "customers" / "2025"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        # identity -> (uuid, instance_index); written out of order on
+        # purpose.
+        scrambled = {
+            "four": ("f-uuid", 4),
+            "zero": ("z-uuid", 0),
+            "two": ("t-uuid", 2),
+            "one": ("o-uuid", 1),
+            "three": ("th-uuid", 3),
+        }
+        for identity, (uuid, idx) in scrambled.items():
+            _write_json(
+                run_dir / identity / "manifest.json",
+                {"uuid": uuid, "instance_index": idx},
+            )
+        _write_archive_manifest(tmp_path, "acme", [str(run_dir)])
+        return str(tmp_path)
+
+    def test_from_gives_statements_in_true_declaration_order(
+        self, one_run_five_statements
+    ):
+        results = _finder(
+            "$acme.results.customers/2025:first().:from(2)",
+            one_run_five_statements,
+        ).query()
+        assert results.uuids == ["t-uuid", "th-uuid", "f-uuid"]
+
+    def test_from_and_to_together_is_an_inclusive_range(
+        self, one_run_five_statements
+    ):
+        results = _finder(
+            "$acme.results.customers/2025:first().:from(1):to(3)",
+            one_run_five_statements,
+        ).query()
+        assert results.uuids == ["o-uuid", "t-uuid", "th-uuid"]
+
+    def test_open_ended_range_combined_with_content_accessor_raises(
+        self, one_run_five_statements
+    ):
+        # the exact case David flagged: ":from(2):unmatched()" matches
+        # 3 statements here, "more than one entity" -- must raise, the
+        # doc's own original example describing this as working was
+        # wrong.
+        finder = _finder(
+            "$acme.results.customers/2025:first().:from(2):unmatched()",
+            one_run_five_statements,
+        )
+        with pytest.raises(ReferenceException3):
+            finder.resolve()
+
+    def test_range_narrowed_to_exactly_one_with_accessor_is_fine(
+        self, one_run_five_statements
+    ):
+        # a degenerate single-item range is fine with a content
+        # accessor, same as a pointer narrowing a run-list to one
+        # already is -- count-dependent, not a blanket rejection.
+        results = _finder(
+            "$acme.results.customers/2025:first().:from(2):to(2):unmatched()",
+            one_run_five_statements,
+        ).resolve()
+        assert results.results[0].data is None  # never written, not an error
+
+    def test_range_combined_with_a_field_accessor_is_poolable(
+        self, one_run_five_statements
+    ):
+        # field accessors are exempt from the single-entity rule, same
+        # exemption ':all()' + a field accessor already gets.
+        results = _finder(
+            "$acme.results.customers/2025:first().:from(2):uuid()",
+            one_run_five_statements,
+        ).resolve()
+        assert [r.data for r in results.results] == ["t-uuid", "th-uuid", "f-uuid"]
+
+    def test_range_alone_with_no_accessor_lists_unreduced(
+        self, one_run_five_statements
+    ):
+        results = _finder(
+            "$acme.results.customers/2025:first().:from(2)",
+            one_run_five_statements,
+        ).query()
+        assert len(results.results) == 3
+
+    def test_range_cannot_combine_with_a_literal_identity(
+        self, one_run_five_statements
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.results.customers/2025:first().two:from(2)",
+                one_run_five_statements,
+            ).query()
+
+    def test_range_cannot_combine_with_all(self, one_run_five_statements):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.results.customers/2025:first().:all():from(2)",
+                one_run_five_statements,
+            ).query()
+
+
 class TestHomeAsAZeroLevelSelector:
     # settled 2026-08-11: bare ':home()' (David's own framing --
     # "everything that has its home here") fills the one real gap left

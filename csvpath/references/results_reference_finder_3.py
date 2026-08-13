@@ -390,7 +390,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             candidates = self._apply_range(candidates, from_call, to_call)
 
-        identity, match_all, accessor, _ = self._name_three_selector(
+        identity, match_all, accessor, _, range_bounds = self._name_three_selector(
             reference.name_three
         )
         has_manifest = any(
@@ -458,7 +458,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
         results = []
         for run_dir in selected_runs:
-            results.extend(self._results_for_run(run_dir, identity, match_all))
+            results.extend(
+                self._results_for_run(
+                    run_dir, identity, match_all, range_bounds, accessor
+                )
+            )
         return ReferenceResults3(results=results)
 
     def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
@@ -676,7 +680,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # _read_accessor already handles the idchain-filtering
             # internally based on accessor.arg, so both kinds resolve
             # identically from here.
-            _, _, accessor, field_call = self._name_three_selector(
+            _, _, accessor, field_call, _ = self._name_three_selector(
                 reference.name_three
             )
             if accessor is not None:
@@ -773,9 +777,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         return [pair for pair in homes if Nos(pair[0]).exists()]
 
     def _results_for_run(
-        self, run_dir: str, identity: str | None, match_all: bool
+        self,
+        run_dir: str,
+        identity: str | None,
+        match_all: bool,
+        range_bounds: tuple | None = None,
+        accessor=None,
     ) -> list[ReferenceResult3]:
-        if identity is None and not match_all:
+        if identity is None and not match_all and range_bounds is None:
             uuid = self._read_json_field(
                 Nos(run_dir).join("manifest.json"), "run_uuid"
             )
@@ -784,6 +793,29 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         instances = self._list_instance_identities(run_dir)
         if match_all:
             matched = instances
+        elif range_bounds is not None:
+            # ':from()'/':to()' as a statement-level range -- added
+            # 2026-08-13, David: ":from(:index(2)):unmatched() should
+            # definitely not work" -- a range is "more than one entity"
+            # the same way ':all()' already is, so it gets the same
+            # restriction combined with a content accessor. Unlike
+            # ':all()'s own BLANKET rejection there, this is count-
+            # DEPENDENT (checked per run, since different runs can have
+            # different statement counts) -- mirrors query()'s own
+            # run-level "more than one candidate" check exactly, rather
+            # than introducing a second style of restriction. A range
+            # that happens to narrow to exactly one statement in THIS
+            # run is fine with an accessor, same as a bare pointer
+            # narrowing a run-list to one already is.
+            from_call, to_call = range_bounds
+            matched = self._apply_range(instances, from_call, to_call)
+            if len(matched) > 1 and accessor is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 requires ':from()'/':to()' to "
+                    "narrow to exactly one statement to read full well-"
+                    "known-file content -- resolving full content always "
+                    "touches exactly one entity, same as ':all()'."
+                )
         else:
             index = self._find_by_identity(identity, instances)
             matched = [instances[index]] if index is not None else []
@@ -856,36 +888,57 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     _ACCESSOR_NAMES = ("errors", "vars", "meta", "data", "unmatched", "file")
 
     @staticmethod
-    def _name_three_selector(name_three) -> tuple[str | None, bool, object, object]:
-        """returns (identity, match_all, accessor, field_call) for
-        name_three -- identity is a literal statement-identity string to
-        look up (None if match_all, or if no identity/:all() selector is
-        present at all); match_all is True for :all() (every instance in
-        the run); accessor is the built well-known-file Function3 riding
-        alongside the identity/:all() selector; field_call is a
-        registered field-accessor Function3 (e.g. :uuid()) riding there
-        instead -- kept separate from accessor rather than one shared
-        variable, since field accessors are exempt from the single-
-        entity pooling rule (see query()) and content accessors are not;
-        conflating them would risk the same "field accessor accidentally
-        restricted like a content accessor" bug already hit twice during
-        the #228 merge. Resolving with neither present gives None -- "no
-        default". An unrecognized function raises via build_chain()
-        itself ("Unknown reference function") if it is not registered at
-        all, or is rejected here directly if it is registered but not
-        meaningful as a name_three function (e.g. :manifest())."""
+    def _name_three_selector(
+        name_three,
+    ) -> tuple[str | None, bool, object, object, tuple]:
+        """returns (identity, match_all, accessor, field_call,
+        range_bounds) for name_three -- identity is a literal statement-
+        identity string to look up (None if match_all/range_bounds, or
+        if no selector is present at all); match_all is True for :all()
+        (every instance in the run); range_bounds is (from_call, to_call)
+        for ':from()'/':to()' (a positional slice of instances -- added
+        2026-08-13, David: ":from(:index(2)):unmatched() should
+        definitely not work" -- confirmed a range is "more than one
+        entity" the same way :all() already is, see query()'s own
+        per-run count check for how this is enforced; unlike :all()'s
+        blanket rejection there, though, a range's rejection is count-
+        DEPENDENT, mirroring the run-level "more than one candidate"
+        check this whole file already uses elsewhere -- a range that
+        happens to narrow to exactly one instance is fine with an
+        accessor, same as a bare pointer narrowing to one run already
+        is), None if absent; accessor is the built well-known-file
+        Function3 riding alongside the identity/:all()/range selector;
+        field_call is a registered field-accessor Function3 (e.g.
+        :uuid()) riding there instead -- kept separate from accessor
+        rather than one shared variable, since field accessors are
+        exempt from the single-entity pooling rule (see query()) and
+        content accessors are not; conflating them would risk the same
+        "field accessor accidentally restricted like a content
+        accessor" bug already hit twice during the #228 merge.
+        Resolving with none of identity/match_all/range_bounds present
+        gives None -- "no default". An unrecognized function raises via
+        build_chain() itself ("Unknown reference function") if it is
+        not registered at all, or is rejected here directly if it is
+        registered but not meaningful as a name_three function (e.g.
+        :manifest())."""
         if name_three is None:
-            return None, False, None, None
+            return None, False, None, None, None
 
         match_all = False
         accessor = None
         field_call = None
+        from_call = None
+        to_call = None
         if name_three.functions:
             built = ReferenceFunctionFactory.build_chain(name_three.functions)
             field_call = ResultsReferenceFinder3._find_field_function_call(built)
             for f in built:
                 if f.name == "all":
                     match_all = True
+                elif f.name == "from":
+                    from_call = f
+                elif f.name == "to":
+                    to_call = f
                 elif f.name in ResultsReferenceFinder3._ACCESSOR_NAMES:
                     accessor = f
                 elif f is field_call:
@@ -895,6 +948,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         f"ResultsReferenceFinder3 does not yet support "
                         f":{f.name}() as a name_three function."
                     )
+        range_bounds = (from_call, to_call) if (from_call or to_call) else None
 
         body = name_three.body
         if isinstance(body, Star3):
@@ -902,19 +956,20 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "ResultsReferenceFinder3 does not support a bare '*' as "
                 "name_three's body -- use :all() instead."
             )
-        if body is not None and match_all:
+        if sum([body is not None, match_all, range_bounds is not None]) > 1:
             raise ReferenceException3(
                 "ResultsReferenceFinder3 cannot combine a literal "
-                "identity with :all() -- they select instances two "
-                "different, contradictory ways."
+                "identity, :all(), and ':from()'/':to()' -- each selects "
+                "instances a different, contradictory way; use only one."
             )
-        if body is None and not match_all:
+        if body is None and not match_all and range_bounds is None:
             raise ReferenceException3(
                 "ResultsReferenceFinder3 requires name_three to be a "
-                "literal statement identity or :all() to select which "
-                "instance(s) a well-known-file function applies to."
+                "literal statement identity, :all(), or ':from()'/':to()' "
+                "to select which instance(s) a well-known-file function "
+                "applies to."
             )
-        return body, match_all, accessor, field_call
+        return body, match_all, accessor, field_call, range_bounds
 
     @classmethod
     def _group_key(cls, run_home: str, home: str, prefix_len: int = 0) -> tuple:
@@ -991,17 +1046,42 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return False
         return True
 
-    @staticmethod
-    def _list_instance_identities(run_dir: str) -> list[str]:
+    @classmethod
+    def _list_instance_identities(cls, run_dir: str) -> list[str]:
         """every csvpath statement's own result subdirectory within a
-        run, named by that statement's identity -- "_extra_data" is the
-        one non-instance directory a run dir can contain (manifest.json
-        is a file, already excluded by dirs_only)."""
-        return [
+        run, named by that statement's identity, sorted into real
+        DECLARATION order -- "_extra_data" is the one non-instance
+        directory a run dir can contain (manifest.json is a file,
+        already excluded by dirs_only).
+
+        Fixed 2026-08-13: this used to return raw directory-listing
+        order, which is filesystem-implementation-defined, NOT
+        declaration order -- a real, latent bug that ':all()' never
+        surfaced (it does not care about order) but ':from()'/':to()'
+        absolutely does ("the 3rd through last statement" is meaningless
+        without real order). Confirmed by tracing csvpaths.py's own
+        enumerate(paths)/enumerate(csvpath_objects) through Result/
+        ResultRegistrar/ResultMetadata to the actual written JSON key:
+        each instance's own manifest.json carries its declaration-order
+        position as "instance_index" (an int, stringified into the
+        directory name itself for unnamed statements, but always present
+        as this field regardless of whether the statement has an
+        explicit identity). Sorting by it, rather than trusting listdir
+        order, is the fix."""
+        names = [
             name
             for name in Nos(run_dir).listdir(dirs_only=True)
             if name != "_extra_data"
         ]
+
+        def _index(name: str) -> int:
+            inst_dir = Nos(run_dir).join(name)
+            idx = cls._read_json_field(
+                Nos(inst_dir).join("manifest.json"), "instance_index"
+            )
+            return int(idx) if idx is not None else 0
+
+        return sorted(names, key=_index)
 
     @classmethod
     def _read_json_field(cls, path: str, field: str):
