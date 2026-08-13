@@ -98,6 +98,41 @@ class ReferenceFinder3(ABC):
         raise ReferenceException3(f"Unsupported pointer function: {pointer.name}")
 
     @staticmethod
+    def _range_bound(function) -> int:
+        """the plain int a built ':from()'/':to()' function's arg
+        represents -- handles both a bare int (":from(-3)") and a
+        nested ":index(n)" (":from(:index(-3))"), which
+        ReferenceFunctionFactory.build() already recursively compiled
+        into a real Index3 instance (not a plain int) by the time this
+        function exists -- see From3/To3's own comments for why both
+        shapes must be accepted."""
+        return function.arg if isinstance(function.arg, int) else function.arg.arg
+
+    @classmethod
+    def _apply_range(cls, items: list, from_call, to_call) -> list:
+        """slices `items` (already in the scope's own natural order)
+        using ':from()'/':to()' -- added 2026-08-13, RESULTS' index-mode
+        range selector, David's own framing: "our version of BETWEEN in
+        SQL or range() in Python." ':to()' is INCLUSIVE of its own
+        position (matches SQL BETWEEN and :index(n) itself pointing AT a
+        position -- ':from(2):to(5)' is positions 2 through 5, both
+        ends included). Either bound may be absent (an open range on
+        that side); negative bounds count from the end, same convention
+        :index(n) already has -- Python slicing already does the right
+        thing there natively, no special-casing needed except when
+        :to()'s own bound is exactly -1 (the last item): "+1" for
+        inclusivity would otherwise wrap -1 to 0, which means "nothing"
+        in a slice, not "to the end" -- that one case needs an explicit
+        fix, everything else falls out of ordinary slice semantics."""
+        start = cls._range_bound(from_call) if from_call is not None else None
+        if to_call is None:
+            return items[start:]
+        end = cls._range_bound(to_call)
+        if end == -1:
+            return items[start:]
+        return items[start : end + 1]
+
+    @staticmethod
     def _is_bare_pointer_reference(reference: Reference3, name: str) -> bool:
         """true when name_one's entire content is a single, argument-
         less ":name()" call -- no other path segments, no trailing

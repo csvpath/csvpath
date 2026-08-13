@@ -374,6 +374,22 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             ]
         candidates = sorted(candidates, key=self._run_dir_sort_key)
 
+        from_call, to_call = self._range_calls_from_calls(calls)
+        if from_call is not None or to_call is not None:
+            # ':from()'/':to()' as a run-level index range -- added
+            # 2026-08-13, e.g. "customers:from(:index(-3))" -- "the
+            # last three runs with template customers." Stays a LIST
+            # (not reduced to one) unless a real pointer also rides
+            # alongside it, same as ':all()'/':groups()' already do --
+            # the pointer, if present, reduces the SLICE, not the full
+            # candidate set.
+            if group_key_for:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 does not yet support combining "
+                    "':from()'/':to()' with ':all()'/':groups()' grouping."
+                )
+            candidates = self._apply_range(candidates, from_call, to_call)
+
         identity, match_all, accessor, _ = self._name_three_selector(
             reference.name_three
         )
@@ -820,6 +836,22 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         built = ReferenceFunctionFactory.build_chain(calls)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         return pointers[0] if pointers else None
+
+    @staticmethod
+    def _range_calls_from_calls(calls: list) -> tuple:
+        """(from_call, to_call) -- the built ':from()'/':to()' Function3
+        instances among the combined chain, or None for whichever is
+        absent. Neither is a POINTER (both ROLE == CONTEXT_SETTER), so
+        they never compete with a real pointer for build_chain()'s "at
+        most one pointer" rule -- a pointer riding alongside either one
+        reduces the SLICE ':from()'/':to()' already narrowed to, same as
+        it already does for ':all()'/':groups()'."""
+        if not calls:
+            return None, None
+        built = ReferenceFunctionFactory.build_chain(calls)
+        from_call = next((f for f in built if f.name == "from"), None)
+        to_call = next((f for f in built if f.name == "to"), None)
+        return from_call, to_call
 
     _ACCESSOR_NAMES = ("errors", "vars", "meta", "data", "unmatched", "file")
 

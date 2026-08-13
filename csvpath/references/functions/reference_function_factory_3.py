@@ -19,10 +19,12 @@ class ReferenceFunctionFactory:
         from .selectors.all_3 import All3
         from .selectors.first_3 import First3
         from .selectors.flatten_3 import Flatten3
+        from .selectors.from_3 import From3
         from .selectors.groups_3 import Groups3
         from .selectors.index_3 import Index3
         from .selectors.last_3 import Last3
         from .selectors.name_3 import Name3
+        from .selectors.to_3 import To3
 
         from .well_known_files.data_3 import Data3
         from .well_known_files.definition_3 import Definition3
@@ -83,6 +85,8 @@ class ReferenceFunctionFactory:
             All3.NAME: All3,
             Flatten3.NAME: Flatten3,
             Groups3.NAME: Groups3,
+            From3.NAME: From3,
+            To3.NAME: To3,
             Manifest3.NAME: Manifest3,
             Definition3.NAME: Definition3,
             Errors3.NAME: Errors3,

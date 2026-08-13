@@ -568,6 +568,84 @@ class TestGroups:
             ).query()
 
 
+class TestRunLevelRange:
+    # ':from()'/':to()' as a run-level index range -- added 2026-08-13,
+    # David: "our version of BETWEEN in SQL or range() in Python," built
+    # together since both slice the same already-ordered candidate list
+    # (no implementation reason to split them). ':to()' is INCLUSIVE of
+    # its own position. Index-mode only for this pass -- date-mode
+    # (":from(:date(...))"/":from(:yesterday())") is deliberately
+    # deferred, needs :date()/:yesterday() first.
+    @pytest.fixture
+    def five_runs(self, tmp_path):
+        base = tmp_path / "acme" / "customers"
+        runs = [
+            _make_run(base, f"2026-01-0{i}_00-00-00", f"run-{i}", {})
+            for i in range(1, 6)
+        ]
+        _write_archive_manifest(tmp_path, "acme", runs)
+        return str(tmp_path)
+
+    def test_from_index_negative_gives_the_last_n(self, five_runs):
+        results = _finder(
+            "$acme.results.customers:from(:index(-3))", five_runs
+        ).query()
+        assert results.uuids == ["run-3", "run-4", "run-5"]
+
+    def test_from_bare_int_is_identical_to_from_index(self, five_runs):
+        # doc's own NOTES block: ":from(:index(-3))" is identical to
+        # ":from(-3))" -- both legal, both must give the same answer.
+        via_index = _finder(
+            "$acme.results.customers:from(:index(-3))", five_runs
+        ).query()
+        via_int = _finder("$acme.results.customers:from(-3)", five_runs).query()
+        assert via_index.uuids == via_int.uuids == ["run-3", "run-4", "run-5"]
+
+    def test_from_and_to_together_is_an_inclusive_range(self, five_runs):
+        results = _finder(
+            "$acme.results.customers:from(1):to(3)", five_runs
+        ).query()
+        assert results.uuids == ["run-2", "run-3", "run-4"]
+
+    def test_to_alone_is_open_at_the_start(self, five_runs):
+        results = _finder("$acme.results.customers:to(1)", five_runs).query()
+        assert results.uuids == ["run-1", "run-2"]
+
+    def test_to_with_negative_one_reaches_the_true_end(self, five_runs):
+        # the one edge case _apply_range's own docstring calls out: a
+        # naive "end + 1" would wrap -1 to 0 and give an empty slice.
+        results = _finder(
+            "$acme.results.customers:from(1):to(-1)", five_runs
+        ).query()
+        assert results.uuids == ["run-2", "run-3", "run-4", "run-5"]
+
+    def test_a_pointer_reduces_the_slice_not_the_full_candidate_set(
+        self, five_runs
+    ):
+        results = _finder(
+            "$acme.results.customers:from(-3):last()", five_runs
+        ).query()
+        assert results.uuids == ["run-5"]
+
+    def test_from_rejects_a_non_int_non_index_argument(self, five_runs):
+        with pytest.raises(ReferenceException3):
+            _finder('$acme.results.customers:from("x")', five_runs).query()
+
+    def test_from_combined_with_all_grouping_is_not_yet_supported(
+        self, five_runs
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.results.:all():from(1):last()", five_runs).query()
+
+    def test_from_with_manifest_and_more_than_one_run_requires_a_pointer(
+        self, five_runs
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.results.customers:from(-3):manifest()", five_runs
+            ).query()
+
+
 class TestHomeAsAZeroLevelSelector:
     # settled 2026-08-11: bare ':home()' (David's own framing --
     # "everything that has its home here") fills the one real gap left
