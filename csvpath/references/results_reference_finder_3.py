@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import datetime
 
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
@@ -376,19 +377,48 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
         from_call, to_call = self._range_calls_from_calls(calls)
         if from_call is not None or to_call is not None:
-            # ':from()'/':to()' as a run-level index range -- added
-            # 2026-08-13, e.g. "customers:from(:index(-3))" -- "the
-            # last three runs with template customers." Stays a LIST
-            # (not reduced to one) unless a real pointer also rides
-            # alongside it, same as ':all()'/':groups()' already do --
-            # the pointer, if present, reduces the SLICE, not the full
-            # candidate set.
+            # ':from()'/':to()' as a run-level range -- added 2026-08-13,
+            # e.g. "customers:from(:index(-3))" -- "the last three runs
+            # with template customers." Stays a LIST (not reduced to
+            # one) unless a real pointer also rides alongside it, same
+            # as ':all()'/':groups()' already do -- the pointer, if
+            # present, reduces the RANGE, not the full candidate set.
+            #
+            # Two independent MODES, picked by each bound's own value
+            # type: index-mode (int/:index(n)) POSITIONALLY slices, via
+            # the shared _apply_range(); date-mode (str/:date(...),
+            # added the same day, David: "arrival and run order is even
+            # more important than indexing") FILTERS by each run's own
+            # arrival date instead, via _apply_date_range() below --
+            # comparing POSITIONS would be meaningless for a date bound.
+            # Mixing the two modes in one :from()/:to() pair is rejected
+            # -- there is no coherent single meaning for e.g.
+            # ":from(2):to(:date('2025-01-01'))".
             if group_key_for:
                 raise ReferenceException3(
                     "ResultsReferenceFinder3 does not yet support combining "
                     "':from()'/':to()' with ':all()'/':groups()' grouping."
                 )
-            candidates = self._apply_range(candidates, from_call, to_call)
+            from_bound = self._range_bound(from_call) if from_call is not None else None
+            to_bound = self._range_bound(to_call) if to_call is not None else None
+            from_is_date = isinstance(from_bound, str)
+            to_is_date = isinstance(to_bound, str)
+            if (from_bound is not None and to_bound is not None) and (
+                from_is_date != to_is_date
+            ):
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 does not support mixing index-"
+                    "mode and date-mode ':from()'/':to()' bounds in the "
+                    "same range."
+                )
+            if from_is_date or to_is_date:
+                if from_is_date:
+                    self._validate_date_format(from_bound)
+                if to_is_date:
+                    self._validate_date_format(to_bound)
+                candidates = self._apply_date_range(candidates, from_bound, to_bound)
+            else:
+                candidates = self._apply_range(candidates, from_call, to_call)
 
         identity, match_all, accessor, _, range_bounds = self._name_three_selector(
             reference.name_three
@@ -884,6 +914,64 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         from_call = next((f for f in built if f.name == "from"), None)
         to_call = next((f for f in built if f.name == "to"), None)
         return from_call, to_call
+
+    @staticmethod
+    def _validate_date_format(value: str) -> None:
+        """raises unless `value` is a real calendar date in "YYYY-MM-DD"
+        form -- added 2026-08-13 alongside date-mode ':from()'/':to()'.
+        Function3.check_valid()'s own generic ARG_TYPES check only
+        confirms an arg is A str, not that its CONTENT is a valid date
+        (same as it never validates an int's semantic meaningfulness
+        either) -- a malformed date bound would otherwise be silently
+        compared as an ordinary string (no crash, just a meaningless
+        answer), which is worse than a clear, immediate rejection.
+        Checked once here, covering both the bare-string and
+        ':date(...)'-wrapped shapes identically, since _range_bound()
+        already unwraps both down to a plain string before this runs."""
+        try:
+            datetime.strptime(value, "%Y-%m-%d")
+        except ValueError:
+            raise ReferenceException3(
+                f"ResultsReferenceFinder3's date-mode ':from()'/':to()' "
+                f"requires a real calendar date in 'YYYY-MM-DD' form, got "
+                f"{value!r}."
+            ) from None
+
+    @classmethod
+    def _apply_date_range(
+        cls, run_homes: list, from_date: str | None, to_date: str | None
+    ) -> list:
+        """filters `run_homes` to those whose own arrival date (parsed
+        from each directory's own fixed-width timestamp prefix, see
+        _run_dir_date) falls within [from_date, to_date], both
+        INCLUSIVE -- date-mode ':from()'/':to()', added 2026-08-13.
+        Unlike index-mode (_apply_range, a POSITIONAL slice), this is a
+        FILTER, not a slice -- comparing run positions would be
+        meaningless for a date bound. run_homes is not assumed to
+        already be date-sorted (though in practice it always is, via
+        _run_dir_sort_key, since this runs after that sort in query())."""
+        result = []
+        for rh in run_homes:
+            d = cls._run_dir_date(rh)
+            if from_date is not None and d < from_date:
+                continue
+            if to_date is not None and d > to_date:
+                continue
+            result.append(rh)
+        return result
+
+    @staticmethod
+    def _run_dir_date(run_home: str) -> str:
+        """the run's own arrival date ("YYYY-MM-DD"), parsed from its
+        directory name's own fixed-width timestamp prefix -- RunHomeMaker
+        always writes "%Y-%m-%d_%H-%M-%S[_N]", so the first 10
+        characters are always the date, regardless of any "_N"
+        disambiguation suffix. ISO date strings sort/compare
+        lexicographically in true chronological order, so plain string
+        comparison (see _apply_date_range) is correct, not just
+        convenient."""
+        seg = run_home.rstrip("/").rsplit("/", 1)[-1]
+        return seg[:10]
 
     _ACCESSOR_NAMES = ("errors", "vars", "meta", "data", "unmatched", "file")
 

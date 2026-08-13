@@ -98,15 +98,19 @@ class ReferenceFinder3(ABC):
         raise ReferenceException3(f"Unsupported pointer function: {pointer.name}")
 
     @staticmethod
-    def _range_bound(function) -> int:
-        """the plain int a built ':from()'/':to()' function's arg
-        represents -- handles both a bare int (":from(-3)") and a
-        nested ":index(n)" (":from(:index(-3))"), which
+    def _range_bound(function) -> "int | str":
+        """the plain int/str value a built ':from()'/':to()' function's
+        arg represents -- handles bare leaf values (int for index-mode,
+        str for date-mode, added 2026-08-13) and nested wrapper
+        functions (":index(n)"/":date(...)"), which
         ReferenceFunctionFactory.build() already recursively compiled
-        into a real Index3 instance (not a plain int) by the time this
-        function exists -- see From3/To3's own comments for why both
-        shapes must be accepted."""
-        return function.arg if isinstance(function.arg, int) else function.arg.arg
+        into a real Index3/Date3 instance (not a plain int/str) by the
+        time this function exists -- see From3/To3's own comments for
+        why every shape must be accepted."""
+        arg = function.arg
+        if isinstance(arg, (int, str)):
+            return arg
+        return arg.arg
 
     @classmethod
     def _apply_range(cls, items: list, from_call, to_call) -> list:

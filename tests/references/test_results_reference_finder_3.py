@@ -627,9 +627,22 @@ class TestRunLevelRange:
         ).query()
         assert results.uuids == ["run-5"]
 
-    def test_from_rejects_a_non_int_non_index_argument(self, five_runs):
+    def test_from_rejects_a_malformed_date_string_argument(self, five_runs):
+        # settled 2026-08-13: a bare str arg is now date-mode's leaf
+        # shape (":from('2025-01-01')" == ":from(:date('2025-01-01'))"),
+        # not simply rejected -- but its CONTENT must be a real calendar
+        # date, see TestRunLevelDateRange for the date-mode cases
+        # themselves.
         with pytest.raises(ReferenceException3):
             _finder('$acme.results.customers:from("x")', five_runs).query()
+
+    def test_from_rejects_an_unrelated_nested_function_argument(
+        self, five_runs
+    ):
+        # ':uuid()' is a real, registered function, so this parses fine
+        # -- but it is neither Index3 nor Date3, so ARG_TYPES rejects it.
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.results.customers:from(:uuid())", five_runs).query()
 
     def test_from_combined_with_all_grouping_is_not_yet_supported(
         self, five_runs
@@ -643,6 +656,86 @@ class TestRunLevelRange:
         with pytest.raises(ReferenceException3):
             _finder(
                 "$acme.results.customers:from(-3):manifest()", five_runs
+            ).query()
+
+
+class TestRunLevelDateRange:
+    # ':from()'/':to()' date-mode -- added 2026-08-13, David: "arrival
+    # and run order is even more important than indexing." A FILTER by
+    # each run's own arrival date (parsed from its directory name's own
+    # timestamp prefix), not a positional slice -- ':to()' is INCLUSIVE
+    # of its own date, same convention as index-mode. A bare date string
+    # (no ':date(...)' wrapper) must give identical results to the
+    # wrapped form, same "wrapper optional but must be possible" pattern
+    # already established for index-mode.
+    @pytest.fixture
+    def dated_runs(self, tmp_path):
+        base = tmp_path / "acme" / "customers"
+        runs = {
+            "run-before": _make_run(
+                base, "2024-12-31_00-00-00", "run-before", {}
+            ),
+            "run-jan1": _make_run(base, "2025-01-01_00-00-00", "run-jan1", {}),
+            "run-jan15": _make_run(
+                base, "2025-01-15_00-00-00", "run-jan15", {}
+            ),
+            "run-feb1": _make_run(base, "2025-02-01_00-00-00", "run-feb1", {}),
+        }
+        _write_archive_manifest(tmp_path, "acme", list(runs.values()))
+        return str(tmp_path)
+
+    def test_from_date_is_inclusive_and_open_ended(self, dated_runs):
+        results = _finder(
+            '$acme.results.customers:from(:date("2025-01-01"))', dated_runs
+        ).query()
+        assert set(results.uuids) == {"run-jan1", "run-jan15", "run-feb1"}
+
+    def test_to_date_is_inclusive_and_open_started(self, dated_runs):
+        results = _finder(
+            '$acme.results.customers:to(:date("2025-01-15"))', dated_runs
+        ).query()
+        assert set(results.uuids) == {"run-before", "run-jan1", "run-jan15"}
+
+    def test_from_and_to_date_together_is_an_inclusive_range(self, dated_runs):
+        results = _finder(
+            '$acme.results.customers:from(:date("2025-01-01")):to(:date("2025-01-15"))',
+            dated_runs,
+        ).query()
+        assert set(results.uuids) == {"run-jan1", "run-jan15"}
+
+    def test_bare_date_string_is_identical_to_wrapped(self, dated_runs):
+        wrapped = _finder(
+            '$acme.results.customers:from(:date("2025-01-01"))', dated_runs
+        ).query()
+        bare = _finder(
+            '$acme.results.customers:from("2025-01-01")', dated_runs
+        ).query()
+        assert set(wrapped.uuids) == set(bare.uuids) == {
+            "run-jan1",
+            "run-jan15",
+            "run-feb1",
+        }
+
+    def test_a_pointer_reduces_the_dated_range_not_the_full_set(
+        self, dated_runs
+    ):
+        results = _finder(
+            '$acme.results.customers:from(:date("2025-01-01")):last()',
+            dated_runs,
+        ).query()
+        assert results.uuids == ["run-feb1"]
+
+    def test_malformed_date_raises_clearly(self, dated_runs):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$acme.results.customers:from("not-a-date")', dated_runs
+            ).query()
+
+    def test_mixing_index_and_date_modes_is_rejected(self, dated_runs):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$acme.results.customers:from(1):to(:date("2025-01-01"))',
+                dated_runs,
             ).query()
 
 

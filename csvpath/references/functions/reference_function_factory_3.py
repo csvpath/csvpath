@@ -17,6 +17,7 @@ class ReferenceFunctionFactory:
     @classmethod
     def _load(cls) -> None:
         from .selectors.all_3 import All3
+        from .selectors.date_3 import Date3
         from .selectors.first_3 import First3
         from .selectors.flatten_3 import Flatten3
         from .selectors.from_3 import From3
@@ -89,6 +90,7 @@ class ReferenceFunctionFactory:
             From3.NAME: From3,
             To3.NAME: To3,
             Having3.NAME: Having3,
+            Date3.NAME: Date3,
             Manifest3.NAME: Manifest3,
             Definition3.NAME: Definition3,
             Errors3.NAME: Errors3,
