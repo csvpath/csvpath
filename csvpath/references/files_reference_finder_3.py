@@ -67,6 +67,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    :all()" gives every matched version, unreduced, with real
     #    paths/uuids -- unlike name_three being absent entirely, which
     #    dedupes to directory-level results with uuid=None instead).
+    #    ":from()'/':to()' (added 2026-08-13, David: rewind/replay and
+    #    comparing versions) window the ordered VERSION list the same
+    #    way a pointer does -- "the last N versions"/"version M through
+    #    N," unreduced unless a real pointer also rides alongside it (it
+    #    then reduces the RANGE, not the full candidate set). Index-mode
+    #    only here (int/:index(n)) -- date-mode is RESULTS-only, FILES
+    #    has no arrival-date comparison wired up. Combining with
+    #    ':all()'/':groups()' grouping in name_one is not yet supported.
     #    name_three is
     #    optional: when absent, name_one alone is a prefix search that
     #    returns zero or more paths to file-home directories (one per
@@ -312,21 +320,47 @@ class FilesReferenceFinder3(ReferenceFinder3):
         has_field_function = self._find_field_function_call(built) is not None
         has_path = self._find_path_call(built) is not None
         has_all = any(f.name == "all" for f in built)
+        from_call = next((f for f in built if f.name == "from"), None)
+        to_call = next((f for f in built if f.name == "to"), None)
+        has_range = from_call is not None or to_call is not None
+        if has_range:
+            # ':from()'/':to()' as a name_three version range -- added
+            # 2026-08-13, David: rewind/replay and version comparison
+            # need "the last N versions of orders.csv" the same way
+            # RESULTS' own run-level range does, plus "version M through
+            # N." Windows the ordered VERSION list of the already
+            # name_one-matched file(s), same position :first()/:last()/
+            # :index(n) already occupy -- a pointer riding alongside
+            # either one reduces the RANGE, not the full candidate set
+            # (identical pattern to RESULTS). Index-mode only for FILES
+            # -- there is no "arrival date" comparison wired up here
+            # (unlike RESULTS' own run-directory timestamps), so a
+            # date-mode bound (str/:date(...)) is rejected explicitly
+            # rather than silently doing nothing useful.
+            for f in (from_call, to_call):
+                if f is not None and isinstance(self._range_bound(f), str):
+                    raise ReferenceException3(
+                        "FilesReferenceFinder3's ':from()'/':to()' only "
+                        "supports index-mode bounds (int/:index(n)) -- "
+                        "date-mode is RESULTS-only for now."
+                    )
         if (
             not pointers
             and not has_manifest
             and not has_field_function
             and not has_path
             and not has_all
+            and not has_range
         ):
             raise ReferenceException3(
                 "FilesReferenceFinder3 requires name_three to resolve to "
                 "exactly one pointer function (:first()/:last()/:index(n)), "
-                "optionally combined with :manifest(), :path(), :all(), or "
-                "a registered field-accessor function (e.g. :uuid())."
+                "optionally combined with :manifest(), :path(), :all(), "
+                "':from()'/':to()', or a registered field-accessor "
+                "function (e.g. :uuid())."
             )
 
-        if partitioned and pointers and (has_manifest or has_field_function or has_path):
+        if partitioned and (has_range or (pointers and (has_manifest or has_field_function or has_path))):
             # mirrors ResultsReferenceFinder3's own ':all()'-grouping
             # restriction (settled 2026-08-11 there): grouping (one-
             # level ':all()' or any-depth ':groups()') plus :manifest()/
@@ -341,6 +375,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "or a field-accessor function -- resolve the grouped "
                 "versions on their own first."
             )
+
+        if has_range:
+            # narrow to the RANGE first -- a pointer riding alongside it
+            # (below) then reduces that range, not the full candidate
+            # set, same as RESULTS' own run-level range does. `partitioned`
+            # combined with `has_range` already raised above, so this
+            # never runs concurrently with the by_file_home partition
+            # branch below.
+            candidates = self._apply_range(candidates, from_call, to_call)
 
         if pointers:
             if partitioned:

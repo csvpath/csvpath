@@ -211,10 +211,90 @@ class TestIdentityLookupOnNameThree:
         # (path, uuid) as name_one alone for csvpaths -- name_three only
         # adds an existence constraint, it does not select a different
         # physical thing (there isn't one -- one file, one uuid per
-        # version, regardless of which statement within it).
+        # version, regardless of which statement within it). identity
+        # DOES differ (added 2026-08-13, see ReferenceResult3.identity's
+        # own docstring) -- that is the whole point of it, not a bug.
         with_three = _finder("$acme.csvpaths.:first().company_names").query()
         without_three = _finder("$acme.csvpaths.:first()").query()
-        assert with_three.results == without_three.results
+        assert with_three.files == without_three.files
+        assert with_three.uuids == without_three.uuids
+        assert with_three.results[0].identity == "company_names"
+        assert without_three.results[0].identity is None
+
+
+RANGE_GROUP_FILE_PATH = "named_paths/ranger/group.csvpath"
+RANGE_MANIFEST = [
+    {
+        "group_file_path": RANGE_GROUP_FILE_PATH,
+        "uuid": "range-uuid",
+        "named_paths": [
+            "stmt one text",
+            "stmt two text",
+            "stmt three text",
+            "stmt four text",
+            "stmt five text",
+        ],
+        "named_paths_identities": ["one", "two", "three", "four", "five"],
+    },
+]
+
+
+class TestNameThreeRange:
+    # ':from()'/':to()' as a name_three statement range -- added
+    # 2026-08-13, David's own FlightPath v2 use case: rewind/replay
+    # starting from a specific csvpath statement (e.g.
+    # "$acme.csvpaths.:last().:from(:index(2))"). Windows the matched
+    # version's own ordered "named_paths_identities" list; each windowed
+    # result carries its OWN identity since csvpaths has no per-
+    # statement uuid (see ReferenceResult3.identity's own docstring).
+    def test_from_index_negative_gives_the_last_n(self):
+        results = _finder(
+            "$ranger.csvpaths.:first().:from(-2)", RANGE_MANIFEST
+        ).query()
+        assert [r.identity for r in results.results] == ["four", "five"]
+        assert results.uuids == ["range-uuid", "range-uuid"]
+        assert results.files == [RANGE_GROUP_FILE_PATH, RANGE_GROUP_FILE_PATH]
+
+    def test_from_and_to_together_is_an_inclusive_range(self):
+        results = _finder(
+            "$ranger.csvpaths.:first().:from(:index(1)):to(:index(3))",
+            RANGE_MANIFEST,
+        ).query()
+        assert [r.identity for r in results.results] == ["two", "three", "four"]
+
+    def test_resolve_gives_each_windowed_statements_own_text(self):
+        results = _finder(
+            "$ranger.csvpaths.:first().:from(:index(1)):to(:index(2))",
+            RANGE_MANIFEST,
+        ).resolve()
+        assert [r.data for r in results.results] == [
+            "stmt two text",
+            "stmt three text",
+        ]
+
+    def test_date_mode_is_not_supported(self):
+        # csvpaths statements have no arrival date of their own -- only
+        # index-mode bounds are meaningful.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$ranger.csvpaths.:first().:from(:date("2025-01-01"))',
+                RANGE_MANIFEST,
+            ).query()
+
+    def test_combining_a_literal_identity_with_a_range_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$ranger.csvpaths.:first().one:from(-1)", RANGE_MANIFEST
+            ).query()
+
+    def test_an_unrecognized_function_on_name_three_is_rejected(self):
+        # anything other than a literal identity or ':from()'/':to()'
+        # is not yet supported on name_three -- e.g. a pointer riding
+        # alongside the range, which FILES allows but csvpaths does not.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$ranger.csvpaths.:first().:from(-2):last()", RANGE_MANIFEST
+            ).query()
 
 
 class TestResolve:

@@ -44,15 +44,22 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     #    for csvpaths and are rejected. :uuid() is not yet a registered
     #    function, so it is "not yet supported" for now like any other
     #    unbuilt function.
-    #  - name_three, if present, is an identity lookup into that
-    #    version's named_paths_identities list -- matched by identity
-    #    string, or by the stringified index an unnamed statement is
-    #    given at load time (both already live in
+    #  - name_three, if present, is either a literal identity lookup
+    #    into that version's named_paths_identities list -- matched by
+    #    identity string, or by the stringified index an unnamed
+    #    statement is given at load time (both already live in
     #    named_paths_identities, so a single exact-match lookup covers
-    #    both cases). A function chain on name_three is not yet
-    #    supported -- no metadata-access functions exist yet for
-    #    csvpaths (see "creating references v3.txt"'s † footnote on
-    #    this).
+    #    both cases) -- OR ":from()'/':to()' (added 2026-08-13),
+    #    windowing that same ordered identities list to a positional
+    #    range (index-mode only -- csvpaths has no arrival-date concept,
+    #    date-mode bounds are rejected). A literal identity and a range
+    #    are mutually exclusive on the same name_three. Because
+    #    csvpaths has no per-statement uuid (only the whole GROUP
+    #    VERSION has one), a range's results share identical path/uuid
+    #    across every matched statement -- ReferenceResult3.identity
+    #    (see its own docstring) is what _extract_data() uses to tell
+    #    them apart. No other function chain on name_three is supported
+    #    yet (see "creating references v3.txt"'s † footnote on this).
     #
     # storage facts this relies on (confirmed against PathsManager/
     # PathsRegistrar and the real per-group manifest schema, not
@@ -147,30 +154,86 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 )
 
         name_three = reference.name_three
+        from_call = to_call = None
         if name_three is not None:
             if name_three.functions:
-                raise ReferenceException3(
-                    "CsvpathsReferenceFinder3 does not yet support functions "
-                    "on name_three -- no metadata-access functions are "
-                    "registered for csvpaths yet."
-                )
-            if name_three.body is None or isinstance(name_three.body, Star3):
+                built = ReferenceFunctionFactory.build_chain(name_three.functions)
+                from_call = next((f for f in built if f.name == "from"), None)
+                to_call = next((f for f in built if f.name == "to"), None)
+                unrecognized = [
+                    f for f in built if f.name not in ("from", "to")
+                ]
+                if unrecognized:
+                    raise ReferenceException3(
+                        "CsvpathsReferenceFinder3 does not yet support "
+                        f":{unrecognized[0].name}() on name_three -- only "
+                        "a literal statement identity/index, or "
+                        "':from()'/':to()', are supported."
+                    )
+                for f in (from_call, to_call):
+                    if f is not None and isinstance(self._range_bound(f), str):
+                        raise ReferenceException3(
+                            "CsvpathsReferenceFinder3's ':from()'/':to()' "
+                            "only supports index-mode bounds (int/:index(n)) "
+                            "-- statements have no arrival date of their own."
+                        )
+                if name_three.body is not None and (from_call or to_call):
+                    raise ReferenceException3(
+                        "CsvpathsReferenceFinder3 cannot combine a literal "
+                        "identity with ':from()'/':to()' -- they select "
+                        "statements two different, contradictory ways."
+                    )
+            if (
+                name_three.body is None
+                and from_call is None
+                and to_call is None
+            ) or isinstance(name_three.body, Star3):
                 raise ReferenceException3(
                     "CsvpathsReferenceFinder3 requires name_three to be a "
-                    "literal statement identity or index."
+                    "literal statement identity/index, or ':from()'/':to()'."
                 )
 
         results = []
         for selected in selected_versions:
-            if name_three is not None:
-                identities = selected.get("named_paths_identities") or []
+            if name_three is None:
+                results.append(
+                    ReferenceResult3(
+                        path=selected["group_file_path"], uuid=selected["uuid"]
+                    )
+                )
+                continue
+            identities = selected.get("named_paths_identities") or []
+            if from_call is not None or to_call is not None:
+                # ':from()'/':to()' as a name_three statement range --
+                # added 2026-08-13, David's own FlightPath v2 use case:
+                # rewind/replay starting from a specific csvpath
+                # statement (e.g. "$acme.csvpaths.:last().:from(:index(2))").
+                # Windows THIS version's own ordered statement-identity
+                # list, one ReferenceResult3 per identity in the window
+                # -- each carries its OWN identity (see
+                # ReferenceResult3.identity's docstring for why this is
+                # necessary: path/uuid are identical across every
+                # statement in ONE version, CSVPATHS has no per-
+                # statement uuid at all).
+                windowed = self._apply_range(identities, from_call, to_call)
+                for identity in windowed:
+                    results.append(
+                        ReferenceResult3(
+                            path=selected["group_file_path"],
+                            uuid=selected["uuid"],
+                            identity=identity,
+                        )
+                    )
+            else:
                 if self._find_by_identity(name_three.body, identities) is None:
                     continue
-            results.append(
-                ReferenceResult3(
-                    path=selected["group_file_path"], uuid=selected["uuid"]
+                results.append(
+                    ReferenceResult3(
+                        path=selected["group_file_path"],
+                        uuid=selected["uuid"],
+                        identity=name_three.body,
+                    )
                 )
-            )
         return ReferenceResults3(results=results)
 
     def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
@@ -363,6 +426,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # the same "no default" rule as a directory-level, name_one-
             # terminal result in FilesReferenceFinder3.
             return None
+        if result.identity is None:
+            # should not happen once every name_three-bearing result
+            # carries its own identity (query() sets it unconditionally
+            # now, both for the literal-identity case and the
+            # ':from()'/':to()' range case, added 2026-08-13) -- guarded
+            # defensively rather than assumed.
+            return None
 
         manifest = self.csvpaths.paths_manager.get_manifest_for_name(
             reference.root_major
@@ -371,7 +441,14 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         if selected is None:
             return None
         identities = selected.get("named_paths_identities") or []
-        index = self._find_by_identity(name_three.body, identities)
+        # uses result.identity, NOT name_three.body -- settled 2026-08-13:
+        # a ':from()'/':to()' range produces several results sharing one
+        # version's path/uuid, each identified only by its OWN identity
+        # (see ReferenceResult3.identity's docstring). name_three.body is
+        # only ever set for the single-literal-identity shape, so it
+        # cannot distinguish results in a range the way result.identity
+        # already does for every shape.
+        index = self._find_by_identity(result.identity, identities)
         if index is None:
             return None
         statements = selected.get("named_paths") or []

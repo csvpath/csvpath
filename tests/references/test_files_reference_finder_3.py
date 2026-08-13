@@ -1071,6 +1071,61 @@ class TestBareFingerprintLookup:
             ).query()
 
 
+RANGE_HOME = "inputs/named_files/ranger"
+RANGE_MANIFEST = [
+    {
+        "file": f"inputs/named_files/ranger/orders.csv/v{i}.csv",
+        "file_home": "inputs/named_files/ranger/orders.csv",
+        "uuid": f"v{i}",
+    }
+    for i in range(5)
+]
+
+
+class TestNameThreeRange:
+    # ':from()'/':to()' as a name_three version range -- added
+    # 2026-08-13, David: rewind/replay and comparing versions need "the
+    # last N versions of a named-file" the same way RESULTS' own
+    # run-level range does. Windows the ordered version list of the
+    # already name_one-matched file, same position :first()/:last()/
+    # :index(n) already occupy.
+    def test_from_index_negative_gives_the_last_n(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:from(-3)', RANGE_HOME, RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v2", "v3", "v4"]
+
+    def test_from_and_to_together_is_an_inclusive_range(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:from(1):to(3)',
+            RANGE_HOME,
+            RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v1", "v2", "v3"]
+
+    def test_a_pointer_reduces_the_range_not_the_full_candidate_set(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:from(-3):last()',
+            RANGE_HOME,
+            RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v4"]
+
+    def test_date_mode_is_not_supported_for_files(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$ranger.files.:name("orders.csv").:from(:date("2025-01-01"))',
+                RANGE_HOME,
+                RANGE_MANIFEST,
+            ).query()
+
+    def test_range_combined_with_grouping_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$ranger.files.:all().:from(-1)", RANGE_HOME, RANGE_MANIFEST
+            ).query()
+
+
 class TestGroupsForOneNamedFile:
     # bare ':groups()' as name_one's entire content, for a LITERAL
     # (non-'*') root_major -- added 2026-08-12, the any-depth GROUP peer

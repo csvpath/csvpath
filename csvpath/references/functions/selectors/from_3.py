@@ -6,10 +6,12 @@ from .index_3 import Index3
 
 class From3(Function3):
     #
-    # a range selector -- added 2026-08-13, RESULTS only for now (the
-    # doc's own confirmed examples are all RESULTS; FILES/CSVPATHS get
-    # this later if a concrete need shows up, per this session's own
-    # "build only what's confirmed" discipline). Packaged together with
+    # a range selector -- added 2026-08-13 for RESULTS, extended the
+    # same day to FILES (David: rewind/replay and comparing versions
+    # need "the last N versions of a named-file" the same way). CSVPATHS
+    # windows an ordered statement list instead of a version list --
+    # see CsvpathsReferenceFinder3's own comments for why that needed a
+    # ReferenceResult3 change first, not just DATATYPES. Packaged together with
     # :to() on purpose (David: "our version of BETWEEN in SQL or
     # range() in Python... I'd only separate them if there is some
     # underlying implementation detail that makes them better tackled
@@ -49,6 +51,6 @@ class From3(Function3):
         "run's own arrival date."
     )
     ROLE = Function3.CONTEXT_SETTER
-    DATATYPES = (Reference3.RESULTS,)
+    DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
     ARG_TYPES = (int, Index3, str, Date3)
     ARG_REQUIRED = True

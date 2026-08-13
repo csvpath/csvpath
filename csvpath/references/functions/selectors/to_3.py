@@ -25,6 +25,6 @@ class To3(Function3):
         "date."
     )
     ROLE = Function3.CONTEXT_SETTER
-    DATATYPES = (Reference3.RESULTS,)
+    DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
     ARG_TYPES = (int, Index3, str, Date3)
     ARG_REQUIRED = True

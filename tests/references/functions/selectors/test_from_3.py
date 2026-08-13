@@ -12,7 +12,7 @@ def test_metadata():
     f = From3(arg=1)
     assert f.name == "from"
     assert f.ROLE == Function3.CONTEXT_SETTER
-    assert f.DATATYPES == (Reference3.RESULTS,)
+    assert f.DATATYPES == (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
 
 
 def test_int_arg_is_valid():
