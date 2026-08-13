@@ -71,10 +71,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    comparing versions) window the ordered VERSION list the same
     #    way a pointer does -- "the last N versions"/"version M through
     #    N," unreduced unless a real pointer also rides alongside it (it
-    #    then reduces the RANGE, not the full candidate set). Index-mode
-    #    only here (int/:index(n)) -- date-mode is RESULTS-only, FILES
-    #    has no arrival-date comparison wired up. Combining with
-    #    ':all()'/':groups()' grouping in name_one is not yet supported.
+    #    then reduces the RANGE, not the full candidate set). Two modes,
+    #    picked by each bound's own value type: index-mode (int/
+    #    :index(n)) POSITIONALLY slices; date-mode (str/:date(...),
+    #    broadened from RESULTS-only 2026-08-13 -- a named-file
+    #    version's own registration/load "time" is a real arrival-date
+    #    concept, same as RESULTS' run start time) FILTERS by each
+    #    version's own "time" manifest field. Mixing modes in one pair
+    #    is rejected. Combining with ':all()'/':groups()' grouping in
+    #    name_one is not yet supported.
     #    name_three is
     #    optional: when absent, name_one alone is a prefix search that
     #    returns zero or more paths to file-home directories (one per
@@ -323,6 +328,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
         from_call = next((f for f in built if f.name == "from"), None)
         to_call = next((f for f in built if f.name == "to"), None)
         has_range = from_call is not None or to_call is not None
+        from_is_date = to_is_date = False
+        from_bound = to_bound = None
         if has_range:
             # ':from()'/':to()' as a name_three version range -- added
             # 2026-08-13, David: rewind/replay and version comparison
@@ -332,18 +339,37 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # name_one-matched file(s), same position :first()/:last()/
             # :index(n) already occupy -- a pointer riding alongside
             # either one reduces the RANGE, not the full candidate set
-            # (identical pattern to RESULTS). Index-mode only for FILES
-            # -- there is no "arrival date" comparison wired up here
-            # (unlike RESULTS' own run-directory timestamps), so a
-            # date-mode bound (str/:date(...)) is rejected explicitly
-            # rather than silently doing nothing useful.
-            for f in (from_call, to_call):
-                if f is not None and isinstance(self._range_bound(f), str):
-                    raise ReferenceException3(
-                        "FilesReferenceFinder3's ':from()'/':to()' only "
-                        "supports index-mode bounds (int/:index(n)) -- "
-                        "date-mode is RESULTS-only for now."
-                    )
+            # (identical pattern to RESULTS).
+            #
+            # Two independent MODES, picked by each bound's own value
+            # type, same as RESULTS' own run-level range: index-mode
+            # (int/:index(n)) POSITIONALLY slices via the shared
+            # _apply_range(); date-mode (str/:date(...), broadened from
+            # RESULTS-only 2026-08-13 -- David: a named-file version's
+            # own registration/load "time" (see functions/fields/
+            # time_3.py) is a real arrival-date concept, the same one
+            # RESULTS already filters run-level ranges by) FILTERS by
+            # each version's own "time" manifest field instead, via the
+            # shared _apply_manifest_date_range(). Mixing the two modes
+            # in one ':from()'/':to()' pair is rejected -- there is no
+            # coherent single meaning for e.g.
+            # ":from(2):to(:date('2025-01-01'))".
+            from_bound = self._range_bound(from_call) if from_call is not None else None
+            to_bound = self._range_bound(to_call) if to_call is not None else None
+            from_is_date = isinstance(from_bound, str)
+            to_is_date = isinstance(to_bound, str)
+            if (from_bound is not None and to_bound is not None) and (
+                from_is_date != to_is_date
+            ):
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not support mixing index-"
+                    "mode and date-mode ':from()'/':to()' bounds in the "
+                    "same range."
+                )
+            if from_is_date:
+                self._validate_date_format(from_bound)
+            if to_is_date:
+                self._validate_date_format(to_bound)
         if (
             not pointers
             and not has_manifest
@@ -383,7 +409,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # combined with `has_range` already raised above, so this
             # never runs concurrently with the by_file_home partition
             # branch below.
-            candidates = self._apply_range(candidates, from_call, to_call)
+            if from_is_date or to_is_date:
+                candidates = self._apply_manifest_date_range(
+                    candidates, from_bound, to_bound
+                )
+            else:
+                candidates = self._apply_range(candidates, from_call, to_call)
 
         if pointers:
             if partitioned:

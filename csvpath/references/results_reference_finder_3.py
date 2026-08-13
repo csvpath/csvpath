@@ -1,6 +1,5 @@
 import json
 import re
-from datetime import datetime
 
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
@@ -914,28 +913,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         from_call = next((f for f in built if f.name == "from"), None)
         to_call = next((f for f in built if f.name == "to"), None)
         return from_call, to_call
-
-    @staticmethod
-    def _validate_date_format(value: str) -> None:
-        """raises unless `value` is a real calendar date in "YYYY-MM-DD"
-        form -- added 2026-08-13 alongside date-mode ':from()'/':to()'.
-        Function3.check_valid()'s own generic ARG_TYPES check only
-        confirms an arg is A str, not that its CONTENT is a valid date
-        (same as it never validates an int's semantic meaningfulness
-        either) -- a malformed date bound would otherwise be silently
-        compared as an ordinary string (no crash, just a meaningless
-        answer), which is worse than a clear, immediate rejection.
-        Checked once here, covering both the bare-string and
-        ':date(...)'-wrapped shapes identically, since _range_bound()
-        already unwraps both down to a plain string before this runs."""
-        try:
-            datetime.strptime(value, "%Y-%m-%d")
-        except ValueError:
-            raise ReferenceException3(
-                f"ResultsReferenceFinder3's date-mode ':from()'/':to()' "
-                f"requires a real calendar date in 'YYYY-MM-DD' form, got "
-                f"{value!r}."
-            ) from None
 
     @classmethod
     def _apply_date_range(

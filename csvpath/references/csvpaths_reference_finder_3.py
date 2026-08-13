@@ -33,7 +33,16 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     #    actually reached. ":having('identity')' (added 2026-08-13)
     #    filters the version list down to versions whose own
     #    named_paths_identities actually contains that identity, before
-    #    any pointer reduces further -- see _resolve_versions.
+    #    any pointer reduces further. ":from()'/':to()' (also added
+    #    2026-08-13, David: a named-paths group's own load time is a
+    #    real arrival-date concept, "give me the versions loaded between
+    #    date-one and date-two") then windows the (possibly ':having()'-
+    #    filtered) version list to a RANGE, before any pointer reduces
+    #    that -- index-mode (int/:index(n)) POSITIONALLY slices;
+    #    date-mode (str/:date(...)) FILTERS by each version's own "time"
+    #    manifest field (see functions/fields/time_3.py). Mixing modes
+    #    in one pair is rejected. Not yet supported combined with '*'
+    #    traversal -- see _resolve_versions/_query_star_traversal.
     #    ":manifest()" may ride alongside the version
     #    pointer in this same combined chain (e.g. ":last():manifest()")
     #    -- it never narrows/selects itself (see functions/manifest_3.py),
@@ -51,9 +60,11 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     #    named_paths_identities, so a single exact-match lookup covers
     #    both cases) -- OR ":from()'/':to()' (added 2026-08-13),
     #    windowing that same ordered identities list to a positional
-    #    range (index-mode only -- csvpaths has no arrival-date concept,
-    #    date-mode bounds are rejected). A literal identity and a range
-    #    are mutually exclusive on the same name_three. Because
+    #    range (index-mode only -- unlike name_one's own ':from()'/
+    #    ':to()' above, an individual STATEMENT has no arrival time of
+    #    its own, only the GROUP VERSION it belongs to does, so date-
+    #    mode bounds are rejected here specifically). A literal identity
+    #    and a range are mutually exclusive on the same name_three. Because
     #    csvpaths has no per-statement uuid (only the whole GROUP
     #    VERSION has one), a range's results share identical path/uuid
     #    across every matched statement -- ReferenceResult3.identity
@@ -298,15 +309,16 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         unsupported = (
             any(f.name == "manifest" for f in built)
+            or any(f.name in ("from", "to") for f in built)
             or self._find_field_function_call(calls) is not None
         )
         if unsupported:
             raise ReferenceException3(
                 "CsvpathsReferenceFinder3 does not yet support combining "
-                "'*' traversal with :manifest() or a field-accessor "
-                "function -- only a plain pointer (:first()/:last()/"
-                ":index(n)), optionally combined with :all() for one "
-                "result per group, is supported so far."
+                "'*' traversal with :manifest(), ':from()'/':to()', or a "
+                "field-accessor function -- only a plain pointer "
+                "(:first()/:last()/:index(n)), optionally combined with "
+                ":all() for one result per group, is supported so far."
             )
 
         if is_grouped:
@@ -463,11 +475,21 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         `manifest` down to versions whose own "named_paths_identities"
         list contains that identity, BEFORE any pointer reduces further
         -- e.g. ":having('my_validations'):last()" is "the last version
-        that actually has a my_validations statement." At most one
-        pointer function is allowed among the combined chain
-        (build_chain() enforces this): if present, it reduces the
-        (possibly ':having()'-filtered) list to that one version; if
-        absent (e.g. a bare :all()), every version in the list is
+        that actually has a my_validations statement." ':from()'/':to()'
+        (added 2026-08-13, David: a named-paths group's own load time is
+        a real arrival-date concept -- "give me the versions loaded
+        between date-one and date-two") window the (possibly
+        ':having()'-filtered) manifest to a RANGE next, same position
+        RESULTS'/FILES' own version-level range occupies -- index-mode
+        (int/:index(n)) POSITIONALLY slices via the shared
+        _apply_range(); date-mode (str/:date(...)) FILTERS by each
+        version's own "time" manifest field via the shared
+        _apply_manifest_date_range(). At most one pointer function is
+        allowed among the combined chain (build_chain() enforces this):
+        if present, it reduces the (possibly filtered/windowed) list to
+        that one version -- riding alongside ':from()'/':to()', it
+        reduces the RANGE, not the full candidate set, same as FILES.
+        If absent (e.g. a bare :all()), every version in the list is
         returned, unreduced."""
         if len(name_one.path) != 1 or not isinstance(name_one.path[0], FunctionCall3):
             raise ReferenceException3(
@@ -484,6 +506,31 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 for entry in manifest
                 if having_call.arg in (entry.get("named_paths_identities") or [])
             ]
+        from_call = next((f for f in built if f.name == "from"), None)
+        to_call = next((f for f in built if f.name == "to"), None)
+        if from_call is not None or to_call is not None:
+            from_bound = self._range_bound(from_call) if from_call is not None else None
+            to_bound = self._range_bound(to_call) if to_call is not None else None
+            from_is_date = isinstance(from_bound, str)
+            to_is_date = isinstance(to_bound, str)
+            if (from_bound is not None and to_bound is not None) and (
+                from_is_date != to_is_date
+            ):
+                raise ReferenceException3(
+                    "CsvpathsReferenceFinder3 does not support mixing "
+                    "index-mode and date-mode ':from()'/':to()' bounds in "
+                    "the same range."
+                )
+            if from_is_date or to_is_date:
+                if from_is_date:
+                    self._validate_date_format(from_bound)
+                if to_is_date:
+                    self._validate_date_format(to_bound)
+                manifest = self._apply_manifest_date_range(
+                    manifest, from_bound, to_bound
+                )
+            else:
+                manifest = self._apply_range(manifest, from_call, to_call)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         if not pointers:
             return manifest

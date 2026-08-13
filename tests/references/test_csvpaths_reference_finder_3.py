@@ -193,6 +193,90 @@ class TestHaving:
             _finder("$acme.csvpaths.:having():last()").query()
 
 
+VERSION_RANGE_GROUP_FILE_PATH = "named_paths/dater/group.csvpath"
+VERSION_RANGE_MANIFEST = [
+    {
+        "group_file_path": VERSION_RANGE_GROUP_FILE_PATH,
+        "uuid": f"v{i}-uuid",
+        "named_paths": [f"stmt {i} text"],
+        "named_paths_identities": [str(i)],
+        "time": f"2026-01-0{i + 1}T00:00:00+00:00",
+    }
+    for i in range(5)
+]
+
+
+class TestVersionRange:
+    # ':from()'/':to()' as a name_one VERSION range -- added 2026-08-13,
+    # David: a named-paths group's own load time is a real arrival-date
+    # concept ("give me the versions loaded between date-one and
+    # date-two"), the same one RESULTS'/FILES' own version-level ranges
+    # already filter by. Windows the (possibly ':having()'-filtered)
+    # manifest -- a real pointer riding alongside reduces the RANGE, not
+    # the full candidate set, same as RESULTS/FILES.
+    def test_from_index_negative_gives_the_last_n_versions(self):
+        results = _finder(
+            "$dater.csvpaths.:from(-2)", VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v3-uuid", "v4-uuid"]
+
+    def test_from_and_to_together_is_an_inclusive_range(self):
+        results = _finder(
+            "$dater.csvpaths.:from(1):to(3)", VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v1-uuid", "v2-uuid", "v3-uuid"]
+
+    def test_a_pointer_reduces_the_range_not_the_full_candidate_set(self):
+        results = _finder(
+            "$dater.csvpaths.:from(-3):last()", VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v4-uuid"]
+
+    def test_date_mode_from_filters_by_the_versions_own_load_time(self):
+        results = _finder(
+            '$dater.csvpaths.:from(:date("2026-01-03"))', VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v2-uuid", "v3-uuid", "v4-uuid"]
+
+    def test_date_mode_from_and_to_together_is_an_inclusive_range(self):
+        results = _finder(
+            '$dater.csvpaths.:from("2026-01-02"):to("2026-01-04")',
+            VERSION_RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v1-uuid", "v2-uuid", "v3-uuid"]
+
+    def test_mixing_index_mode_and_date_mode_bounds_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$dater.csvpaths.:from(1):to(:date("2026-01-01"))',
+                VERSION_RANGE_MANIFEST,
+            ).query()
+
+    def test_a_malformed_date_bound_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$dater.csvpaths.:from("not-a-date")', VERSION_RANGE_MANIFEST
+            ).query()
+
+    def test_having_filters_before_the_range_windows(self):
+        # ':having("4")' only matches v4, so the range (last 3) has just
+        # that one entry to window -- confirms the two compose in the
+        # order the docstring describes (having, then range, then
+        # pointer), not independently.
+        results = _finder(
+            '$dater.csvpaths.:having("4"):from(-3)', VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v4-uuid"]
+
+    def test_range_combined_with_star_traversal_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$*.csvpaths.:from(-2):last()",
+                VERSION_RANGE_MANIFEST,
+                by_name={"dater": VERSION_RANGE_MANIFEST},
+            ).query()
+
+
 class TestIdentityLookupOnNameThree:
     def test_matches_named_identity(self):
         results = _finder("$acme.csvpaths.:first().company_names").query()

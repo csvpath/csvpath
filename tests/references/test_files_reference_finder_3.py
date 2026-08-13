@@ -1077,6 +1077,7 @@ RANGE_MANIFEST = [
         "file": f"inputs/named_files/ranger/orders.csv/v{i}.csv",
         "file_home": "inputs/named_files/ranger/orders.csv",
         "uuid": f"v{i}",
+        "time": f"2026-01-0{i + 1}T00:00:00+00:00",
     }
     for i in range(5)
 ]
@@ -1111,10 +1112,39 @@ class TestNameThreeRange:
         ).query()
         assert results.uuids == ["v4"]
 
-    def test_date_mode_is_not_supported_for_files(self):
+    def test_date_mode_from_filters_by_the_versions_own_arrival_time(self):
+        # broadened from RESULTS-only 2026-08-13 -- David: a named-file
+        # version's own registration/load "time" is a real arrival-date
+        # concept, same as RESULTS' run start time.
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:from(:date("2026-01-03"))',
+            RANGE_HOME,
+            RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v2", "v3", "v4"]
+
+    def test_date_mode_from_and_to_together_is_an_inclusive_range(self):
+        # the bare-string shape (no ':date()' wrapper) is also valid,
+        # same as RESULTS' own date-mode.
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:from("2026-01-02"):to("2026-01-04")',
+            RANGE_HOME,
+            RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v1", "v2", "v3"]
+
+    def test_mixing_index_mode_and_date_mode_bounds_is_rejected(self):
         with pytest.raises(ReferenceException3):
             _finder(
-                '$ranger.files.:name("orders.csv").:from(:date("2025-01-01"))',
+                '$ranger.files.:name("orders.csv").:from(1):to(:date("2026-01-01"))',
+                RANGE_HOME,
+                RANGE_MANIFEST,
+            ).query()
+
+    def test_a_malformed_date_bound_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$ranger.files.:name("orders.csv").:from("not-a-date")',
                 RANGE_HOME,
                 RANGE_MANIFEST,
             ).query()
