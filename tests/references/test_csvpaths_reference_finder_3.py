@@ -164,6 +164,35 @@ class TestNoPointerReturnsEveryVersion:
         assert results.files == []
 
 
+class TestHaving:
+    # ':having("identity")' -- added 2026-08-13, filters the version
+    # list down to versions whose own "named_paths_identities" actually
+    # contains that identity, before any pointer reduces further --
+    # "company_names" only exists in ACME_MANIFEST's v0.
+    def test_having_then_pointer_reduces_the_filtered_list(self):
+        results = _finder("$acme.csvpaths.:having(\"company_names\"):last()").query()
+        assert results.uuids == ["v0-uuid"]
+
+    def test_having_alone_lists_matching_versions_unreduced(self):
+        results = _finder('$acme.csvpaths.:having("company_names")').query()
+        assert results.uuids == ["v0-uuid"]
+
+    def test_having_with_no_matching_version_is_empty(self):
+        results = _finder('$acme.csvpaths.:having("nope")').query()
+        assert results.uuids == []
+
+    def test_having_matches_an_unnamed_statements_stringified_index_too(self):
+        # v1's sole statement is unnamed -- its identity is "0" (the
+        # stringified load-time index), same convention name_three
+        # identity lookups already use.
+        results = _finder('$acme.csvpaths.:having("0"):last()').query()
+        assert results.uuids == ["v1-uuid"]
+
+    def test_having_requires_an_argument(self):
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.csvpaths.:having():last()").query()
+
+
 class TestIdentityLookupOnNameThree:
     def test_matches_named_identity(self):
         results = _finder("$acme.csvpaths.:first().company_names").query()

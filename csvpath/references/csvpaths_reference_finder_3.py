@@ -30,7 +30,11 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     #    absent (e.g. a bare :all()), every version in the manifest is
     #    returned, unreduced -- this is how "list of versions in the
     #    form: (path-to-group.csvpaths, uuid)" (STRUCTURE table) is
-    #    actually reached. ":manifest()" may ride alongside the version
+    #    actually reached. ":having('identity')' (added 2026-08-13)
+    #    filters the version list down to versions whose own
+    #    named_paths_identities actually contains that identity, before
+    #    any pointer reduces further -- see _resolve_versions.
+    #    ":manifest()" may ride alongside the version
     #    pointer in this same combined chain (e.g. ":last():manifest()")
     #    -- it never narrows/selects itself (see functions/manifest_3.py),
     #    it just changes what _extract_data() resolves to: the matched
@@ -378,11 +382,16 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         version(s) to work with, so its path_prefix must reduce to
         exactly one function-segment (no literal/"*" path-building, no
         worksheet marker) -- combined with its own trailing function
-        chain, if any. At most one pointer function is allowed among
-        the combined chain (build_chain() enforces this): if present,
-        it reduces `manifest` to that one version; if absent (e.g. a
-        bare :all()), every version in `manifest` is returned,
-        unreduced."""
+        chain, if any. ':having("identity")' (added 2026-08-13) filters
+        `manifest` down to versions whose own "named_paths_identities"
+        list contains that identity, BEFORE any pointer reduces further
+        -- e.g. ":having('my_validations'):last()" is "the last version
+        that actually has a my_validations statement." At most one
+        pointer function is allowed among the combined chain
+        (build_chain() enforces this): if present, it reduces the
+        (possibly ':having()'-filtered) list to that one version; if
+        absent (e.g. a bare :all()), every version in the list is
+        returned, unreduced."""
         if len(name_one.path) != 1 or not isinstance(name_one.path[0], FunctionCall3):
             raise ReferenceException3(
                 "CsvpathsReferenceFinder3 requires name_one to be a version-"
@@ -391,6 +400,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             )
         calls = [name_one.path[0], *name_one.functions]
         built = ReferenceFunctionFactory.build_chain(calls)
+        having_call = next((f for f in built if f.name == "having"), None)
+        if having_call is not None:
+            manifest = [
+                entry
+                for entry in manifest
+                if having_call.arg in (entry.get("named_paths_identities") or [])
+            ]
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         if not pointers:
             return manifest

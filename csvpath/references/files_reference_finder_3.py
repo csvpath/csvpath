@@ -198,6 +198,43 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # undefined (only SOURCE == "definition" functions get bare
             # treatment via _bare_definition_field_call).
             candidates = self._candidates_for_name(root_major, [])
+        elif self._is_bare_fingerprint_reference(name_one):
+            # bare ':fingerprint("hash...")' -- added 2026-08-13. Content-
+            # hash identity does not care which file/path slot a version
+            # happens to be registered under (unlike ':name()', which
+            # matches file_home, a path identity, not a content one), so
+            # this searches the WHOLE named-file's manifest directly --
+            # every file_home/path, not just a pattern-matched subset --
+            # for the entry whose own "fingerprint" field matches.
+            # Confirmed against FileRegistrar's real write path: the
+            # version file itself is literally stored/named by its own
+            # fingerprint, so an exact match here is reliable. At most
+            # one match is expected in practice (two DIFFERENT logical
+            # files sharing byte-identical content is the only way to
+            # get more than one) -- not specially guarded against.
+            #
+            # Returns the matched version(s) directly, with their real
+            # path/uuid, and does NOT fall through to the shared "no
+            # name_three -> dedupe to a directory, uuid=None" logic below
+            # -- unlike ':name()', a fingerprint already identifies one
+            # SPECIFIC version, there is no further "which version"
+            # narrowing step to defer. name_three combined with this
+            # shape is not yet supported (redundant by construction --
+            # there is nothing left to narrow).
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not yet support combining "
+                    "a bare ':fingerprint(...)' lookup with name_three -- "
+                    "it already identifies one specific version on its own."
+                )
+            manifest = self.csvpaths.file_manager.get_manifest(root_major)
+            fingerprint = name_one.path[0].arg
+            matched = [e for e in manifest if e.get("fingerprint") == fingerprint]
+            return ReferenceResults3(
+                results=[
+                    ReferenceResult3(path=e["file"], uuid=e["uuid"]) for e in matched
+                ]
+            )
         elif self._is_flatten_prefixed_reference(name_one):
             # ':flatten()' as name_one's FIRST segment, followed by more
             # path -- settled 2026-08-12, David: "the last version of
@@ -254,6 +291,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "(:first()/:last()/:index(n))."
             )
         built = ReferenceFunctionFactory.build_chain(name_three.functions)
+        for f in built:
+            if f.name == "fingerprint" and f.arg is not None:
+                # ':fingerprint(...)' only takes an argument in its bare,
+                # name_one lookup form (settled 2026-08-13) -- riding
+                # alongside a matched version here, in its ordinary
+                # field-accessor position, it takes none (it reads
+                # whatever the matched version's own fingerprint IS, it
+                # does not filter by a given one). Raising here avoids
+                # an arg being silently ignored, which ARG_TYPES = (str,)
+                # would otherwise allow through unnoticed.
+                raise ReferenceException3(
+                    "FilesReferenceFinder3's ':fingerprint()' only takes "
+                    "an argument in its bare, name_one lookup form -- "
+                    "riding alongside a matched version in name_three, "
+                    "it takes none."
+                )
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         has_manifest = any(f.name == "manifest" for f in built)
         has_field_function = self._find_field_function_call(built) is not None
@@ -570,6 +623,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
             and isinstance(name_one.path[0], FunctionCall3)
             and name_one.path[0].name == "home"
             and name_one.path[0].arg is None
+        )
+
+    @staticmethod
+    def _is_bare_fingerprint_reference(name_one) -> bool:
+        """same shape as _is_bare_home_reference, for ':fingerprint(...)'
+        -- settled 2026-08-13, but the OPPOSITE arg requirement: WITH an
+        arg (the hash to search for), not without -- a bare, argument-
+        less ':fingerprint()' has no candidate to read the field off of
+        at this position, so it is deliberately NOT recognized here and
+        falls through to the ordinary "not yet supported" rejection."""
+        return (
+            not name_one.functions
+            and len(name_one.path) == 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == "fingerprint"
+            and name_one.path[0].arg is not None
         )
 
     @staticmethod
