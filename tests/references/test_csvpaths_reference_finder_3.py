@@ -164,6 +164,119 @@ class TestNoPointerReturnsEveryVersion:
         assert results.files == []
 
 
+class TestHaving:
+    # ':having("identity")' -- added 2026-08-13, filters the version
+    # list down to versions whose own "named_paths_identities" actually
+    # contains that identity, before any pointer reduces further --
+    # "company_names" only exists in ACME_MANIFEST's v0.
+    def test_having_then_pointer_reduces_the_filtered_list(self):
+        results = _finder("$acme.csvpaths.:having(\"company_names\"):last()").query()
+        assert results.uuids == ["v0-uuid"]
+
+    def test_having_alone_lists_matching_versions_unreduced(self):
+        results = _finder('$acme.csvpaths.:having("company_names")').query()
+        assert results.uuids == ["v0-uuid"]
+
+    def test_having_with_no_matching_version_is_empty(self):
+        results = _finder('$acme.csvpaths.:having("nope")').query()
+        assert results.uuids == []
+
+    def test_having_matches_an_unnamed_statements_stringified_index_too(self):
+        # v1's sole statement is unnamed -- its identity is "0" (the
+        # stringified load-time index), same convention name_three
+        # identity lookups already use.
+        results = _finder('$acme.csvpaths.:having("0"):last()').query()
+        assert results.uuids == ["v1-uuid"]
+
+    def test_having_requires_an_argument(self):
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.csvpaths.:having():last()").query()
+
+
+VERSION_RANGE_GROUP_FILE_PATH = "named_paths/dater/group.csvpath"
+VERSION_RANGE_MANIFEST = [
+    {
+        "group_file_path": VERSION_RANGE_GROUP_FILE_PATH,
+        "uuid": f"v{i}-uuid",
+        "named_paths": [f"stmt {i} text"],
+        "named_paths_identities": [str(i)],
+        "time": f"2026-01-0{i + 1}T00:00:00+00:00",
+    }
+    for i in range(5)
+]
+
+
+class TestVersionRange:
+    # ':from()'/':to()' as a name_one VERSION range -- added 2026-08-13,
+    # David: a named-paths group's own load time is a real arrival-date
+    # concept ("give me the versions loaded between date-one and
+    # date-two"), the same one RESULTS'/FILES' own version-level ranges
+    # already filter by. Windows the (possibly ':having()'-filtered)
+    # manifest -- a real pointer riding alongside reduces the RANGE, not
+    # the full candidate set, same as RESULTS/FILES.
+    def test_from_index_negative_gives_the_last_n_versions(self):
+        results = _finder(
+            "$dater.csvpaths.:from(-2)", VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v3-uuid", "v4-uuid"]
+
+    def test_from_and_to_together_is_an_inclusive_range(self):
+        results = _finder(
+            "$dater.csvpaths.:from(1):to(3)", VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v1-uuid", "v2-uuid", "v3-uuid"]
+
+    def test_a_pointer_reduces_the_range_not_the_full_candidate_set(self):
+        results = _finder(
+            "$dater.csvpaths.:from(-3):last()", VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v4-uuid"]
+
+    def test_date_mode_from_filters_by_the_versions_own_load_time(self):
+        results = _finder(
+            '$dater.csvpaths.:from(:date("2026-01-03"))', VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v2-uuid", "v3-uuid", "v4-uuid"]
+
+    def test_date_mode_from_and_to_together_is_an_inclusive_range(self):
+        results = _finder(
+            '$dater.csvpaths.:from("2026-01-02"):to("2026-01-04")',
+            VERSION_RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v1-uuid", "v2-uuid", "v3-uuid"]
+
+    def test_mixing_index_mode_and_date_mode_bounds_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$dater.csvpaths.:from(1):to(:date("2026-01-01"))',
+                VERSION_RANGE_MANIFEST,
+            ).query()
+
+    def test_a_malformed_date_bound_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$dater.csvpaths.:from("not-a-date")', VERSION_RANGE_MANIFEST
+            ).query()
+
+    def test_having_filters_before_the_range_windows(self):
+        # ':having("4")' only matches v4, so the range (last 3) has just
+        # that one entry to window -- confirms the two compose in the
+        # order the docstring describes (having, then range, then
+        # pointer), not independently.
+        results = _finder(
+            '$dater.csvpaths.:having("4"):from(-3)', VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v4-uuid"]
+
+    def test_range_combined_with_star_traversal_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$*.csvpaths.:from(-2):last()",
+                VERSION_RANGE_MANIFEST,
+                by_name={"dater": VERSION_RANGE_MANIFEST},
+            ).query()
+
+
 class TestIdentityLookupOnNameThree:
     def test_matches_named_identity(self):
         results = _finder("$acme.csvpaths.:first().company_names").query()
@@ -182,10 +295,90 @@ class TestIdentityLookupOnNameThree:
         # (path, uuid) as name_one alone for csvpaths -- name_three only
         # adds an existence constraint, it does not select a different
         # physical thing (there isn't one -- one file, one uuid per
-        # version, regardless of which statement within it).
+        # version, regardless of which statement within it). identity
+        # DOES differ (added 2026-08-13, see ReferenceResult3.identity's
+        # own docstring) -- that is the whole point of it, not a bug.
         with_three = _finder("$acme.csvpaths.:first().company_names").query()
         without_three = _finder("$acme.csvpaths.:first()").query()
-        assert with_three.results == without_three.results
+        assert with_three.files == without_three.files
+        assert with_three.uuids == without_three.uuids
+        assert with_three.results[0].identity == "company_names"
+        assert without_three.results[0].identity is None
+
+
+RANGE_GROUP_FILE_PATH = "named_paths/ranger/group.csvpath"
+RANGE_MANIFEST = [
+    {
+        "group_file_path": RANGE_GROUP_FILE_PATH,
+        "uuid": "range-uuid",
+        "named_paths": [
+            "stmt one text",
+            "stmt two text",
+            "stmt three text",
+            "stmt four text",
+            "stmt five text",
+        ],
+        "named_paths_identities": ["one", "two", "three", "four", "five"],
+    },
+]
+
+
+class TestNameThreeRange:
+    # ':from()'/':to()' as a name_three statement range -- added
+    # 2026-08-13, David's own FlightPath v2 use case: rewind/replay
+    # starting from a specific csvpath statement (e.g.
+    # "$acme.csvpaths.:last().:from(:index(2))"). Windows the matched
+    # version's own ordered "named_paths_identities" list; each windowed
+    # result carries its OWN identity since csvpaths has no per-
+    # statement uuid (see ReferenceResult3.identity's own docstring).
+    def test_from_index_negative_gives_the_last_n(self):
+        results = _finder(
+            "$ranger.csvpaths.:first().:from(-2)", RANGE_MANIFEST
+        ).query()
+        assert [r.identity for r in results.results] == ["four", "five"]
+        assert results.uuids == ["range-uuid", "range-uuid"]
+        assert results.files == [RANGE_GROUP_FILE_PATH, RANGE_GROUP_FILE_PATH]
+
+    def test_from_and_to_together_is_an_inclusive_range(self):
+        results = _finder(
+            "$ranger.csvpaths.:first().:from(:index(1)):to(:index(3))",
+            RANGE_MANIFEST,
+        ).query()
+        assert [r.identity for r in results.results] == ["two", "three", "four"]
+
+    def test_resolve_gives_each_windowed_statements_own_text(self):
+        results = _finder(
+            "$ranger.csvpaths.:first().:from(:index(1)):to(:index(2))",
+            RANGE_MANIFEST,
+        ).resolve()
+        assert [r.data for r in results.results] == [
+            "stmt two text",
+            "stmt three text",
+        ]
+
+    def test_date_mode_is_not_supported(self):
+        # csvpaths statements have no arrival date of their own -- only
+        # index-mode bounds are meaningful.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$ranger.csvpaths.:first().:from(:date("2025-01-01"))',
+                RANGE_MANIFEST,
+            ).query()
+
+    def test_combining_a_literal_identity_with_a_range_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$ranger.csvpaths.:first().one:from(-1)", RANGE_MANIFEST
+            ).query()
+
+    def test_an_unrecognized_function_on_name_three_is_rejected(self):
+        # anything other than a literal identity or ':from()'/':to()'
+        # is not yet supported on name_three -- e.g. a pointer riding
+        # alongside the range, which FILES allows but csvpaths does not.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$ranger.csvpaths.:first().:from(-2):last()", RANGE_MANIFEST
+            ).query()
 
 
 class TestResolve:

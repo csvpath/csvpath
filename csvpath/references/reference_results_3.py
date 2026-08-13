@@ -15,7 +15,14 @@ from uuid import UUID
 
 
 class ReferenceResult3:
-    def __init__(self, *, path: str, uuid: str | None, data: Any = None) -> None:
+    def __init__(
+        self,
+        *,
+        path: str,
+        uuid: str | None,
+        data: Any = None,
+        identity: str | None = None,
+    ) -> None:
         if not path:
             raise ValueError("ReferenceResult3 path cannot be None or empty")
         if uuid is not None and not uuid:
@@ -24,9 +31,15 @@ class ReferenceResult3:
                 "is no uuid (e.g. a directory-level, name_three-absent result "
                 "has no single version/registration to identify)"
             )
+        if identity is not None and not identity:
+            raise ValueError(
+                "ReferenceResult3 identity cannot be empty -- use None if "
+                "there is none"
+            )
         self._path = path
         self._uuid = uuid
         self._data = data
+        self._identity = identity
 
     @property
     def path(self) -> str:
@@ -46,18 +59,32 @@ class ReferenceResult3:
         # fills data in afterward on the same instances.
         self._data = data
 
+    @property
+    def identity(self) -> str | None:
+        """which specific sub-entity, within path+uuid, this result is
+        for -- added 2026-08-13 for CSVPATHS' statement-level range
+        selector (":from()'/':to()"). Unlike FILES/RESULTS, CSVPATHS has
+        no per-statement uuid at all (only the whole GROUP VERSION has
+        one) -- path/uuid are identical across every statement matched
+        by one query(), so _extract_data() cannot tell them apart from
+        those two fields alone the way it can for the other two
+        datatypes. None for every other case (path/uuid alone are
+        already enough there)."""
+        return self._identity
+
     def __eq__(self, other) -> bool:
         return (
             isinstance(other, ReferenceResult3)
             and other.path == self._path
             and other.uuid == self._uuid
             and other.data == self._data
+            and other.identity == self._identity
         )
 
     def __repr__(self) -> str:
         return (
             f"ReferenceResult3(path={self._path!r}, uuid={self._uuid!r}, "
-            f"data={self._data!r})"
+            f"data={self._data!r}, identity={self._identity!r})"
         )
 
 
@@ -98,12 +125,17 @@ class ReferenceResults3:
         return None
 
     def select(self, identifiers: list) -> "ReferenceResults3":
-        """a new ReferenceResults3 holding only the entries whose path
-        or uuid matches one of `identifiers` -- how resolve_from() turns
-        a caller-narrowed list[str | UUID] back into a subset to
-        resolve, without re-touching storage."""
+        """a new ReferenceResults3 holding only the entries whose path,
+        uuid, or identity (added 2026-08-13, see ReferenceResult3.
+        identity's own docstring for why) matches one of `identifiers`
+        -- how resolve_from() turns a caller-narrowed list[str | UUID]
+        back into a subset to resolve, without re-touching storage."""
         wanted = {str(i) for i in identifiers}
-        selected = [r for r in self._results if r.path in wanted or r.uuid in wanted]
+        selected = [
+            r
+            for r in self._results
+            if r.path in wanted or r.uuid in wanted or r.identity in wanted
+        ]
         return ReferenceResults3(results=selected)
 
     def remove(self, result: ReferenceResult3) -> None:

@@ -36,6 +36,29 @@ class TestReferenceResult3:
         assert a == b
         assert a != c
 
+    def test_identity_defaults_to_none(self):
+        r = ReferenceResult3(path="p1", uuid="u1")
+        assert r.identity is None
+
+    def test_identity_is_settable_at_construction(self):
+        # added 2026-08-13 for CSVPATHS' statement-level range selector
+        # -- path/uuid alone are identical across every statement in a
+        # range (CSVPATHS has no per-statement uuid), so identity is
+        # what lets _extract_data() tell them apart.
+        r = ReferenceResult3(path="p1", uuid="u1", identity="my_validations")
+        assert r.identity == "my_validations"
+
+    def test_rejects_empty_identity(self):
+        with pytest.raises(ValueError):
+            ReferenceResult3(path="p1", uuid="u1", identity="")
+
+    def test_equality_considers_identity(self):
+        a = ReferenceResult3(path="p1", uuid="u1", identity="a")
+        b = ReferenceResult3(path="p1", uuid="u1", identity="a")
+        c = ReferenceResult3(path="p1", uuid="u1", identity="b")
+        assert a == b
+        assert a != c
+
 
 class TestReferenceResults3:
     def _results(self):
@@ -86,6 +109,19 @@ class TestReferenceResults3:
         r = self._results()
         selected = r.select(["nope"])
         assert len(selected) == 0
+
+    def test_select_by_identity(self):
+        # added 2026-08-13 -- needed when path/uuid are identical across
+        # results (CSVPATHS' statement-level range), identity is the
+        # only thing that can distinguish them for resolve_from().
+        results = [
+            ReferenceResult3(path="p1", uuid="u1", identity="a"),
+            ReferenceResult3(path="p1", uuid="u1", identity="b"),
+        ]
+        r = ReferenceResults3(results=results)
+        selected = r.select(["a"])
+        assert len(selected) == 1
+        assert selected.results[0].identity == "a"
 
     def test_len_and_iter(self):
         r = self._results()

@@ -22,6 +22,13 @@ def test_no_arg_is_valid():
     Fingerprint3().check_valid()  # should not raise
 
 
-def test_arg_is_rejected():
+def test_str_arg_is_valid():
+    # settled 2026-08-13: an optional str arg supports the bare-lookup
+    # shape for FILES ("$alpha.files.:fingerprint('hash...')") -- see
+    # FilesReferenceFinder3._is_bare_fingerprint_reference/query().
+    Fingerprint3(arg="x").check_valid()  # should not raise
+
+
+def test_non_str_arg_is_rejected():
     with pytest.raises(ReferenceException3):
-        Fingerprint3(arg="x").check_valid()
+        Fingerprint3(arg=1).check_valid()

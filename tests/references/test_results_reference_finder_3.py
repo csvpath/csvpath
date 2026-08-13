@@ -568,6 +568,299 @@ class TestGroups:
             ).query()
 
 
+class TestRunLevelRange:
+    # ':from()'/':to()' as a run-level index range -- added 2026-08-13,
+    # David: "our version of BETWEEN in SQL or range() in Python," built
+    # together since both slice the same already-ordered candidate list
+    # (no implementation reason to split them). ':to()' is INCLUSIVE of
+    # its own position. Index-mode only for this pass -- date-mode
+    # (":from(:date(...))"/":from(:yesterday())") is deliberately
+    # deferred, needs :date()/:yesterday() first.
+    @pytest.fixture
+    def five_runs(self, tmp_path):
+        base = tmp_path / "acme" / "customers"
+        runs = [
+            _make_run(base, f"2026-01-0{i}_00-00-00", f"run-{i}", {})
+            for i in range(1, 6)
+        ]
+        _write_archive_manifest(tmp_path, "acme", runs)
+        return str(tmp_path)
+
+    def test_from_index_negative_gives_the_last_n(self, five_runs):
+        results = _finder(
+            "$acme.results.customers:from(:index(-3))", five_runs
+        ).query()
+        assert results.uuids == ["run-3", "run-4", "run-5"]
+
+    def test_from_bare_int_is_identical_to_from_index(self, five_runs):
+        # doc's own NOTES block: ":from(:index(-3))" is identical to
+        # ":from(-3))" -- both legal, both must give the same answer.
+        via_index = _finder(
+            "$acme.results.customers:from(:index(-3))", five_runs
+        ).query()
+        via_int = _finder("$acme.results.customers:from(-3)", five_runs).query()
+        assert via_index.uuids == via_int.uuids == ["run-3", "run-4", "run-5"]
+
+    def test_from_and_to_together_is_an_inclusive_range(self, five_runs):
+        results = _finder(
+            "$acme.results.customers:from(1):to(3)", five_runs
+        ).query()
+        assert results.uuids == ["run-2", "run-3", "run-4"]
+
+    def test_to_alone_is_open_at_the_start(self, five_runs):
+        results = _finder("$acme.results.customers:to(1)", five_runs).query()
+        assert results.uuids == ["run-1", "run-2"]
+
+    def test_to_with_negative_one_reaches_the_true_end(self, five_runs):
+        # the one edge case _apply_range's own docstring calls out: a
+        # naive "end + 1" would wrap -1 to 0 and give an empty slice.
+        results = _finder(
+            "$acme.results.customers:from(1):to(-1)", five_runs
+        ).query()
+        assert results.uuids == ["run-2", "run-3", "run-4", "run-5"]
+
+    def test_a_pointer_reduces_the_slice_not_the_full_candidate_set(
+        self, five_runs
+    ):
+        results = _finder(
+            "$acme.results.customers:from(-3):last()", five_runs
+        ).query()
+        assert results.uuids == ["run-5"]
+
+    def test_from_rejects_a_malformed_date_string_argument(self, five_runs):
+        # settled 2026-08-13: a bare str arg is now date-mode's leaf
+        # shape (":from('2025-01-01')" == ":from(:date('2025-01-01'))"),
+        # not simply rejected -- but its CONTENT must be a real calendar
+        # date, see TestRunLevelDateRange for the date-mode cases
+        # themselves.
+        with pytest.raises(ReferenceException3):
+            _finder('$acme.results.customers:from("x")', five_runs).query()
+
+    def test_from_rejects_an_unrelated_nested_function_argument(
+        self, five_runs
+    ):
+        # ':uuid()' is a real, registered function, so this parses fine
+        # -- but it is neither Index3 nor Date3, so ARG_TYPES rejects it.
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.results.customers:from(:uuid())", five_runs).query()
+
+    def test_from_combined_with_all_grouping_is_not_yet_supported(
+        self, five_runs
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.results.:all():from(1):last()", five_runs).query()
+
+    def test_from_with_manifest_and_more_than_one_run_requires_a_pointer(
+        self, five_runs
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.results.customers:from(-3):manifest()", five_runs
+            ).query()
+
+
+class TestRunLevelDateRange:
+    # ':from()'/':to()' date-mode -- added 2026-08-13, David: "arrival
+    # and run order is even more important than indexing." A FILTER by
+    # each run's own arrival date (parsed from its directory name's own
+    # timestamp prefix), not a positional slice -- ':to()' is INCLUSIVE
+    # of its own date, same convention as index-mode. A bare date string
+    # (no ':date(...)' wrapper) must give identical results to the
+    # wrapped form, same "wrapper optional but must be possible" pattern
+    # already established for index-mode.
+    @pytest.fixture
+    def dated_runs(self, tmp_path):
+        base = tmp_path / "acme" / "customers"
+        runs = {
+            "run-before": _make_run(
+                base, "2024-12-31_00-00-00", "run-before", {}
+            ),
+            "run-jan1": _make_run(base, "2025-01-01_00-00-00", "run-jan1", {}),
+            "run-jan15": _make_run(
+                base, "2025-01-15_00-00-00", "run-jan15", {}
+            ),
+            "run-feb1": _make_run(base, "2025-02-01_00-00-00", "run-feb1", {}),
+        }
+        _write_archive_manifest(tmp_path, "acme", list(runs.values()))
+        return str(tmp_path)
+
+    def test_from_date_is_inclusive_and_open_ended(self, dated_runs):
+        results = _finder(
+            '$acme.results.customers:from(:date("2025-01-01"))', dated_runs
+        ).query()
+        assert set(results.uuids) == {"run-jan1", "run-jan15", "run-feb1"}
+
+    def test_to_date_is_inclusive_and_open_started(self, dated_runs):
+        results = _finder(
+            '$acme.results.customers:to(:date("2025-01-15"))', dated_runs
+        ).query()
+        assert set(results.uuids) == {"run-before", "run-jan1", "run-jan15"}
+
+    def test_from_and_to_date_together_is_an_inclusive_range(self, dated_runs):
+        results = _finder(
+            '$acme.results.customers:from(:date("2025-01-01")):to(:date("2025-01-15"))',
+            dated_runs,
+        ).query()
+        assert set(results.uuids) == {"run-jan1", "run-jan15"}
+
+    def test_bare_date_string_is_identical_to_wrapped(self, dated_runs):
+        wrapped = _finder(
+            '$acme.results.customers:from(:date("2025-01-01"))', dated_runs
+        ).query()
+        bare = _finder(
+            '$acme.results.customers:from("2025-01-01")', dated_runs
+        ).query()
+        assert set(wrapped.uuids) == set(bare.uuids) == {
+            "run-jan1",
+            "run-jan15",
+            "run-feb1",
+        }
+
+    def test_a_pointer_reduces_the_dated_range_not_the_full_set(
+        self, dated_runs
+    ):
+        results = _finder(
+            '$acme.results.customers:from(:date("2025-01-01")):last()',
+            dated_runs,
+        ).query()
+        assert results.uuids == ["run-feb1"]
+
+    def test_malformed_date_raises_clearly(self, dated_runs):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$acme.results.customers:from("not-a-date")', dated_runs
+            ).query()
+
+    def test_mixing_index_and_date_modes_is_rejected(self, dated_runs):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$acme.results.customers:from(1):to(:date("2025-01-01"))',
+                dated_runs,
+            ).query()
+
+
+class TestStatementLevelRange:
+    # ':from()'/':to()' as a name_three statement-level range -- added
+    # 2026-08-13. David: ":from(:index(2)):unmatched() should definitely
+    # not work" -- a range is "more than one entity" the same way
+    # ':all()' already is, so it gets the same restriction combined with
+    # a content accessor -- but count-DEPENDENT (checked per run), not
+    # ':all()'s own blanket rejection, mirroring the run-level "more
+    # than one candidate" check this file already uses elsewhere.
+    #
+    # Fixture deliberately writes instances in a NON-declaration-order
+    # sequence (both dict order and directory-write order scrambled) --
+    # this exercises the 2026-08-13 ordering fix to
+    # _list_instance_identities (it used to trust raw filesystem
+    # listdir() order, which is NOT declaration order; now sorts by
+    # each instance's own "instance_index", confirmed via
+    # csvpaths.py -> Result -> ResultRegistrar -> ResultMetadata to be
+    # the real, written declaration-order field). Without that fix this
+    # whole class would be testing filesystem-dependent noise instead
+    # of real statement position.
+    @pytest.fixture
+    def one_run_five_statements(self, tmp_path):
+        base = tmp_path / "acme" / "customers" / "2025"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        # identity -> (uuid, instance_index); written out of order on
+        # purpose.
+        scrambled = {
+            "four": ("f-uuid", 4),
+            "zero": ("z-uuid", 0),
+            "two": ("t-uuid", 2),
+            "one": ("o-uuid", 1),
+            "three": ("th-uuid", 3),
+        }
+        for identity, (uuid, idx) in scrambled.items():
+            _write_json(
+                run_dir / identity / "manifest.json",
+                {"uuid": uuid, "instance_index": idx},
+            )
+        _write_archive_manifest(tmp_path, "acme", [str(run_dir)])
+        return str(tmp_path)
+
+    def test_from_gives_statements_in_true_declaration_order(
+        self, one_run_five_statements
+    ):
+        results = _finder(
+            "$acme.results.customers/2025:first().:from(2)",
+            one_run_five_statements,
+        ).query()
+        assert results.uuids == ["t-uuid", "th-uuid", "f-uuid"]
+
+    def test_from_and_to_together_is_an_inclusive_range(
+        self, one_run_five_statements
+    ):
+        results = _finder(
+            "$acme.results.customers/2025:first().:from(1):to(3)",
+            one_run_five_statements,
+        ).query()
+        assert results.uuids == ["o-uuid", "t-uuid", "th-uuid"]
+
+    def test_open_ended_range_combined_with_content_accessor_raises(
+        self, one_run_five_statements
+    ):
+        # the exact case David flagged: ":from(2):unmatched()" matches
+        # 3 statements here, "more than one entity" -- must raise, the
+        # doc's own original example describing this as working was
+        # wrong.
+        finder = _finder(
+            "$acme.results.customers/2025:first().:from(2):unmatched()",
+            one_run_five_statements,
+        )
+        with pytest.raises(ReferenceException3):
+            finder.resolve()
+
+    def test_range_narrowed_to_exactly_one_with_accessor_is_fine(
+        self, one_run_five_statements
+    ):
+        # a degenerate single-item range is fine with a content
+        # accessor, same as a pointer narrowing a run-list to one
+        # already is -- count-dependent, not a blanket rejection.
+        results = _finder(
+            "$acme.results.customers/2025:first().:from(2):to(2):unmatched()",
+            one_run_five_statements,
+        ).resolve()
+        assert results.results[0].data is None  # never written, not an error
+
+    def test_range_combined_with_a_field_accessor_is_poolable(
+        self, one_run_five_statements
+    ):
+        # field accessors are exempt from the single-entity rule, same
+        # exemption ':all()' + a field accessor already gets.
+        results = _finder(
+            "$acme.results.customers/2025:first().:from(2):uuid()",
+            one_run_five_statements,
+        ).resolve()
+        assert [r.data for r in results.results] == ["t-uuid", "th-uuid", "f-uuid"]
+
+    def test_range_alone_with_no_accessor_lists_unreduced(
+        self, one_run_five_statements
+    ):
+        results = _finder(
+            "$acme.results.customers/2025:first().:from(2)",
+            one_run_five_statements,
+        ).query()
+        assert len(results.results) == 3
+
+    def test_range_cannot_combine_with_a_literal_identity(
+        self, one_run_five_statements
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.results.customers/2025:first().two:from(2)",
+                one_run_five_statements,
+            ).query()
+
+    def test_range_cannot_combine_with_all(self, one_run_five_statements):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.results.customers/2025:first().:all():from(2)",
+                one_run_five_statements,
+            ).query()
+
+
 class TestHomeAsAZeroLevelSelector:
     # settled 2026-08-11: bare ':home()' (David's own framing --
     # "everything that has its home here") fills the one real gap left
@@ -854,6 +1147,42 @@ class TestFieldAccessorFunctions:
             str(tmp_path),
         ).resolve()
         assert results.results[0].data == "run1-uuid"
+
+    def test_home_at_run_scope_reads_run_home(self, tmp_path):
+        # doc line ~171: "$widgets.results.:first():home() >> run_home"
+        # -- no committed test locked this in before (found during the
+        # 2026-08-12 normative-doc sweep); confirmed against
+        # results_registrar.py that "run_home" is a real, written field,
+        # not just documented.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json",
+            {"run_uuid": "run1-uuid", "run_home": str(run_dir)},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+        results = _finder(
+            "$widgets.results.:first():home()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data == str(run_dir)
+
+    def test_home_at_instance_scope_reads_instance_home(self, tmp_path):
+        # doc line ~192: "$widgets.results.:first().company_names:home()
+        # >> instance_home" -- same gap as above, confirmed against
+        # result_registrar.py that "instance_home" is a real field.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        instance_dir = run_dir / "company_names"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            instance_dir / "manifest.json",
+            {"uuid": "inst1-uuid", "instance_home": str(instance_dir)},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+        results = _finder(
+            "$widgets.results.:first().company_names:home()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data == str(instance_dir)
 
     def test_uuid_at_instance_scope(self, acme_archive):
         results = _finder(

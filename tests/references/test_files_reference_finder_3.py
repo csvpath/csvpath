@@ -992,6 +992,193 @@ class TestAllOnNameThree:
         assert results.uuids == ["u-one-2"]
 
 
+FINGERPRINT_HOME = "inputs/named_files/finn"
+FINGERPRINT_MANIFEST = [
+    {
+        "file": "inputs/named_files/finn/orders.csv/aaaa.csv",
+        "file_home": "inputs/named_files/finn/orders.csv",
+        "uuid": "u-orders-1",
+        "fingerprint": "aaaa",
+    },
+    {
+        "file": "inputs/named_files/finn/2025/returns.csv/cccc.csv",
+        "file_home": "inputs/named_files/finn/2025/returns.csv",
+        "uuid": "u-returns-1",
+        "fingerprint": "cccc",
+    },
+]
+
+
+class TestBareFingerprintLookup:
+    # bare ':fingerprint("hash...")' -- added 2026-08-13, a content-hash
+    # lookup across the WHOLE named-file's manifest, every file_home/
+    # path -- unlike ':name()' (a path identity), content identity does
+    # not care which slot a version is registered under.
+    # FINGERPRINT_MANIFEST deliberately has its match at TWO levels deep
+    # (2025/returns.csv), proving this is not just pattern-matching one
+    # level like ':name()' would be.
+    def test_finds_the_matching_version_with_real_path_and_uuid(self):
+        results = _finder(
+            '$finn.files.:fingerprint("cccc")', FINGERPRINT_HOME, FINGERPRINT_MANIFEST
+        ).query()
+        assert results.files == ["inputs/named_files/finn/2025/returns.csv/cccc.csv"]
+        assert results.uuids == ["u-returns-1"]
+
+    def test_no_match_gives_empty(self):
+        results = _finder(
+            '$finn.files.:fingerprint("nope")', FINGERPRINT_HOME, FINGERPRINT_MANIFEST
+        ).query()
+        assert results.results == []
+
+    def test_bare_no_arg_is_not_recognized_here(self):
+        # no arg means there is no candidate to read the field off of at
+        # this position -- falls through to the ordinary "not yet
+        # supported" rejection, not a silent no-op.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$finn.files.:fingerprint()", FINGERPRINT_HOME, FINGERPRINT_MANIFEST
+            ).query()
+
+    def test_combined_with_name_three_is_not_yet_supported(self):
+        # a fingerprint already identifies one specific version -- no
+        # further narrowing is meaningful.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$finn.files.:fingerprint("cccc").:last()',
+                FINGERPRINT_HOME,
+                FINGERPRINT_MANIFEST,
+            ).query()
+
+    def test_ordinary_field_accessor_usage_is_unaffected(self):
+        # riding alongside a matched version in name_three (its original,
+        # pre-existing job) still works exactly as before.
+        results = _finder(
+            '$finn.files.:name("orders.csv").:first():fingerprint()',
+            FINGERPRINT_HOME,
+            FINGERPRINT_MANIFEST,
+        ).resolve()
+        assert results.results[0].data == "aaaa"
+
+    def test_an_argument_in_the_field_accessor_position_is_rejected(self):
+        # ARG_TYPES now allows a str arg (for the bare lookup form) --
+        # confirm it does NOT get silently ignored when :fingerprint()
+        # rides in its ordinary field-accessor position instead.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$finn.files.:name("orders.csv").:first():fingerprint("x")',
+                FINGERPRINT_HOME,
+                FINGERPRINT_MANIFEST,
+            ).query()
+
+    def test_two_different_logical_files_sharing_one_fingerprint_both_come_back(self):
+        # confirms the "at most one match is expected in practice... not
+        # specially guarded against" comment in query() -- two DIFFERENT
+        # logical files (different file_home) with byte-identical content
+        # share one fingerprint here; the lookup is not artificially
+        # restricted to one result, it returns every real match.
+        shared_manifest = FINGERPRINT_MANIFEST + [
+            {
+                "file": "inputs/named_files/finn/backups/orders.csv/aaaa.csv",
+                "file_home": "inputs/named_files/finn/backups/orders.csv",
+                "uuid": "u-orders-backup-1",
+                "fingerprint": "aaaa",
+            }
+        ]
+        results = _finder(
+            '$finn.files.:fingerprint("aaaa")', FINGERPRINT_HOME, shared_manifest
+        ).query()
+        assert results.files == [
+            "inputs/named_files/finn/orders.csv/aaaa.csv",
+            "inputs/named_files/finn/backups/orders.csv/aaaa.csv",
+        ]
+        assert results.uuids == ["u-orders-1", "u-orders-backup-1"]
+
+
+RANGE_HOME = "inputs/named_files/ranger"
+RANGE_MANIFEST = [
+    {
+        "file": f"inputs/named_files/ranger/orders.csv/v{i}.csv",
+        "file_home": "inputs/named_files/ranger/orders.csv",
+        "uuid": f"v{i}",
+        "time": f"2026-01-0{i + 1}T00:00:00+00:00",
+    }
+    for i in range(5)
+]
+
+
+class TestNameThreeRange:
+    # ':from()'/':to()' as a name_three version range -- added
+    # 2026-08-13, David: rewind/replay and comparing versions need "the
+    # last N versions of a named-file" the same way RESULTS' own
+    # run-level range does. Windows the ordered version list of the
+    # already name_one-matched file, same position :first()/:last()/
+    # :index(n) already occupy.
+    def test_from_index_negative_gives_the_last_n(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:from(-3)', RANGE_HOME, RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v2", "v3", "v4"]
+
+    def test_from_and_to_together_is_an_inclusive_range(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:from(1):to(3)',
+            RANGE_HOME,
+            RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v1", "v2", "v3"]
+
+    def test_a_pointer_reduces_the_range_not_the_full_candidate_set(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:from(-3):last()',
+            RANGE_HOME,
+            RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v4"]
+
+    def test_date_mode_from_filters_by_the_versions_own_arrival_time(self):
+        # broadened from RESULTS-only 2026-08-13 -- David: a named-file
+        # version's own registration/load "time" is a real arrival-date
+        # concept, same as RESULTS' run start time.
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:from(:date("2026-01-03"))',
+            RANGE_HOME,
+            RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v2", "v3", "v4"]
+
+    def test_date_mode_from_and_to_together_is_an_inclusive_range(self):
+        # the bare-string shape (no ':date()' wrapper) is also valid,
+        # same as RESULTS' own date-mode.
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:from("2026-01-02"):to("2026-01-04")',
+            RANGE_HOME,
+            RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v1", "v2", "v3"]
+
+    def test_mixing_index_mode_and_date_mode_bounds_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$ranger.files.:name("orders.csv").:from(1):to(:date("2026-01-01"))',
+                RANGE_HOME,
+                RANGE_MANIFEST,
+            ).query()
+
+    def test_a_malformed_date_bound_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$ranger.files.:name("orders.csv").:from("not-a-date")',
+                RANGE_HOME,
+                RANGE_MANIFEST,
+            ).query()
+
+    def test_range_combined_with_grouping_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$ranger.files.:all().:from(-1)", RANGE_HOME, RANGE_MANIFEST
+            ).query()
+
+
 class TestGroupsForOneNamedFile:
     # bare ':groups()' as name_one's entire content, for a LITERAL
     # (non-'*') root_major -- added 2026-08-12, the any-depth GROUP peer

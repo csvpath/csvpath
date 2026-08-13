@@ -1,5 +1,6 @@
 import json
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
@@ -96,6 +97,93 @@ class ReferenceFinder3(ABC):
             except IndexError:
                 return None
         raise ReferenceException3(f"Unsupported pointer function: {pointer.name}")
+
+    @staticmethod
+    def _range_bound(function) -> "int | str":
+        """the plain int/str value a built ':from()'/':to()' function's
+        arg represents -- handles bare leaf values (int for index-mode,
+        str for date-mode, added 2026-08-13) and nested wrapper
+        functions (":index(n)"/":date(...)"), which
+        ReferenceFunctionFactory.build() already recursively compiled
+        into a real Index3/Date3 instance (not a plain int/str) by the
+        time this function exists -- see From3/To3's own comments for
+        why every shape must be accepted."""
+        arg = function.arg
+        if isinstance(arg, (int, str)):
+            return arg
+        return arg.arg
+
+    @classmethod
+    def _apply_range(cls, items: list, from_call, to_call) -> list:
+        """slices `items` (already in the scope's own natural order)
+        using ':from()'/':to()' -- added 2026-08-13, RESULTS' index-mode
+        range selector, David's own framing: "our version of BETWEEN in
+        SQL or range() in Python." ':to()' is INCLUSIVE of its own
+        position (matches SQL BETWEEN and :index(n) itself pointing AT a
+        position -- ':from(2):to(5)' is positions 2 through 5, both
+        ends included). Either bound may be absent (an open range on
+        that side); negative bounds count from the end, same convention
+        :index(n) already has -- Python slicing already does the right
+        thing there natively, no special-casing needed except when
+        :to()'s own bound is exactly -1 (the last item): "+1" for
+        inclusivity would otherwise wrap -1 to 0, which means "nothing"
+        in a slice, not "to the end" -- that one case needs an explicit
+        fix, everything else falls out of ordinary slice semantics."""
+        start = cls._range_bound(from_call) if from_call is not None else None
+        if to_call is None:
+            return items[start:]
+        end = cls._range_bound(to_call)
+        if end == -1:
+            return items[start:]
+        return items[start : end + 1]
+
+    @staticmethod
+    def _validate_date_format(value: str) -> None:
+        """raises unless `value` is a real calendar date in "YYYY-MM-DD"
+        form -- shared 2026-08-13 (previously RESULTS-only) alongside
+        FILES/CSVPATHS getting their own date-mode ':from()'/':to()'.
+        Function3.check_valid()'s own generic ARG_TYPES check only
+        confirms an arg is A str, not that its CONTENT is a valid date --
+        a malformed date bound would otherwise be silently compared as
+        an ordinary string (no crash, just a meaningless answer), which
+        is worse than a clear, immediate rejection."""
+        try:
+            datetime.strptime(value, "%Y-%m-%d")
+        except ValueError:
+            raise ReferenceException3(
+                "date-mode ':from()'/':to()' requires a real calendar "
+                f"date in 'YYYY-MM-DD' form, got {value!r}."
+            ) from None
+
+    @staticmethod
+    def _apply_manifest_date_range(
+        entries: list, from_date: str | None, to_date: str | None, key: str = "time"
+    ) -> list:
+        """filters `entries` (manifest-entry dicts) to those whose own
+        `entries[i][key]` (an ISO datetime string, e.g. FILES/CSVPATHS'
+        own "time" field -- registration/load time, see functions/
+        fields/time_3.py's own SUMMARY) falls within [from_date, to_date],
+        both INCLUSIVE -- date-mode ':from()'/':to()' for FILES/CSVPATHS,
+        added 2026-08-13. Unlike index-mode (_apply_range, a POSITIONAL
+        slice), this is a FILTER, not a slice -- comparing positions
+        would be meaningless for a date bound. Compares only the first
+        10 characters (the "YYYY-MM-DD" date portion) of the stored
+        timestamp -- ISO date strings sort/compare lexicographically in
+        true chronological order, so plain string comparison is correct,
+        not just convenient (same convention ResultsReferenceFinder3's
+        own _run_dir_date/_apply_date_range already use for run
+        directories -- here the date comes straight from a stored field
+        instead of being parsed from a path, since FILES/CSVPATHS
+        manifest entries already carry it directly)."""
+        result = []
+        for entry in entries:
+            d = str(entry.get(key, ""))[:10]
+            if from_date is not None and d < from_date:
+                continue
+            if to_date is not None and d > to_date:
+                continue
+            result.append(entry)
+        return result
 
     @staticmethod
     def _is_bare_pointer_reference(reference: Reference3, name: str) -> bool:
