@@ -30,3 +30,4 @@ class NamedFileName3(Function3):
         Reference3.RESULTS: "named_file_name",
         Reference3.RESULT: "named_file_name",
     }
+    POSITIONS = {Reference3.FILES: (Reference3.NAME_THREE,)}

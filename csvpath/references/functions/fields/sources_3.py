@@ -21,3 +21,7 @@ class Sources3(Function3):
     KEY = {
         Reference3.FILES: "sources",
     }
+    #
+    # BOTH positions -- see on_arrival_3.py's own POSITIONS comment.
+    #
+    POSITIONS = {Reference3.FILES: (Reference3.NAME_ONE, Reference3.NAME_THREE)}

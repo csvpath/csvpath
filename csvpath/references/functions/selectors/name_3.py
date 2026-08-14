@@ -35,4 +35,7 @@ class Name3(Function3):
     # csvpaths and are rejected"). This is the fix -- see
     # ReferenceFinder3._check_position().
     #
-    POSITIONS = {Reference3.CSVPATHS: ()}
+    POSITIONS = {
+        Reference3.FILES: (Reference3.NAME_ONE,),
+        Reference3.CSVPATHS: (),
+    }

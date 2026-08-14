@@ -44,4 +44,7 @@ class Uuid3(Function3):
         Reference3.RESULTS: "run_uuid",
         Reference3.RESULT: "uuid",
     }
-    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}
+    POSITIONS = {
+        Reference3.FILES: (Reference3.NAME_THREE,),
+        Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+    }

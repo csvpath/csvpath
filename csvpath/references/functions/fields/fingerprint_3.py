@@ -50,6 +50,11 @@ class Fingerprint3(Function3):
     }
     #
     # CSVPATHS has no bare-lookup shape (that's FILES-only, see above) --
-    # always the ordinary field-accessor position.
+    # always the ordinary field-accessor position. FILES has BOTH: the
+    # bare, name_one, content-hash lookup form, and the ordinary
+    # field-accessor position (name_three, beside a matched pointer).
     #
-    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}
+    POSITIONS = {
+        Reference3.FILES: (Reference3.NAME_ONE, Reference3.NAME_THREE),
+        Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+    }

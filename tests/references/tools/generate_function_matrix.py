@@ -24,18 +24,16 @@ datatypes, arg shape, source, unit-test-file-exists, integration-test-grep-
 hit-per-datatype, and position for every function.
 
 Position itself is a mix of two sources, preferring the real one whenever
-it exists: **CSVPATHS position is now real, ENFORCED declared data**
-(Function3.POSITIONS, added 2026-08-14 -- see ReferenceFinder3.
-_check_position(), called from CsvpathsReferenceFinder3) -- this script
-just reads it straight off each function class, same as DATATYPES/ROLE.
-**FILES/RESULTS position is still hand-curated** in SPECIAL_POSITIONS/
-SPECIAL_NOTES below (or mechanically guessed for plain field accessors via
-_default_position()) -- those two Finders have not been retrofitted to
-declare/enforce POSITIONS yet, so there is no real data to read for them.
-As FILES and then RESULTS get retrofitted the same way CSVPATHS was, their
-entries in SPECIAL_POSITIONS become dead (superseded by real data, same as
-CSVPATHS' already are) and can be deleted -- once all three are done, this
-whole hand-curated mechanism goes away entirely.
+it exists: **CSVPATHS and FILES position are now real, ENFORCED declared
+data** (Function3.POSITIONS, added 2026-08-14 -- see ReferenceFinder3.
+_check_position(), called from CsvpathsReferenceFinder3 and
+FilesReferenceFinder3) -- this script just reads it straight off each
+function class, same as DATATYPES/ROLE. **RESULTS position is still hand-
+curated** in SPECIAL_POSITIONS/SPECIAL_NOTES below (or mechanically
+guessed for plain field accessors via _default_position()) -- that Finder
+has not been retrofitted to declare/enforce POSITIONS yet, so there is no
+real data to read for it. Once RESULTS gets the same retrofit, this whole
+hand-curated mechanism goes away entirely.
 """
 
 import re
@@ -64,39 +62,35 @@ INTEGRATION_TEST_FILES = {
 }
 
 #
-# manually curated FILES/RESULTS positions for the ~20 functions that are
-# NOT plain field accessors -- see module docstring. No "csvpaths" key in
-# any entry below -- CSVPATHS position is now real declared data, read
+# manually curated RESULTS positions for the ~20 functions that are NOT
+# plain field accessors -- see module docstring. No "files"/"csvpaths"
+# keys in any entry below -- both are now real declared data, read
 # directly off each function class in main(), taking precedence over
-# anything here (these dicts are consulted only as a FILES/RESULTS
-# fallback). One entry per remaining datatype: a position string, or None
-# (not supported/not meaningful there).
+# anything here (this dict is consulted only as a RESULTS fallback). One
+# entry: a position string, or None (not supported/not meaningful there).
 #
 SPECIAL_POSITIONS = {
-    "first": {"files": "name_three", "results": "name_one"},
-    "last": {"files": "name_three", "results": "name_one"},
-    "index": {"files": "name_three", "results": "name_one"},
-    "name": {"files": "name_one", "results": None},
-    "all": {"files": "name_three", "results": "name_one"},
-    "flatten": {"files": "name_one", "results": "name_one"},
-    "groups": {"files": "name_one", "results": "name_one"},
-    "having": {"files": None, "results": None},
-    "from": {"files": "name_three", "results": "name_one, name_three"},
-    "to": {"files": "name_three", "results": "name_one, name_three"},
-    "date": {
-        "files": "argument (inside :from()/:to())",
-        "results": "argument (inside :from()/:to())",
-    },
-    "manifest": {"files": "name_three", "results": "name_one"},
-    "definition": {"files": "name_one (bare)", "results": None},
-    "path": {"files": "name_three", "results": None},
-    "errors": {"files": None, "results": "name_three (instance-level)"},
-    "vars": {"files": None, "results": "name_three (instance-level)"},
-    "meta": {"files": None, "results": "name_three (instance-level)"},
-    "data": {"files": None, "results": "name_three (instance-level)"},
-    "unmatched": {"files": None, "results": "name_three (instance-level)"},
-    "file": {"files": None, "results": "name_three (instance-level)"},
-    "idchain": {"files": None, "results": "argument (inside :errors())"},
+    "first": {"results": "name_one"},
+    "last": {"results": "name_one"},
+    "index": {"results": "name_one"},
+    "name": {"results": None},
+    "all": {"results": "name_one"},
+    "flatten": {"results": "name_one"},
+    "groups": {"results": "name_one"},
+    "having": {"results": None},
+    "from": {"results": "name_one, name_three"},
+    "to": {"results": "name_one, name_three"},
+    "date": {"results": "argument (inside :from()/:to())"},
+    "manifest": {"results": "name_one"},
+    "definition": {"results": None},
+    "path": {"results": None},
+    "errors": {"results": "name_three (instance-level)"},
+    "vars": {"results": "name_three (instance-level)"},
+    "meta": {"results": "name_three (instance-level)"},
+    "data": {"results": "name_three (instance-level)"},
+    "unmatched": {"results": "name_three (instance-level)"},
+    "file": {"results": "name_three (instance-level)"},
+    "idchain": {"results": "argument (inside :errors())"},
 }
 
 SPECIAL_NOTES = {
@@ -165,20 +159,14 @@ def _integration_hits(name: str, datatype: str) -> bool:
 
 def _default_position(cls, datatype: str) -> str | None:
     """mechanical GUESS at position for a plain field accessor (SOURCE
-    set, not in SPECIAL_POSITIONS), for FILES/RESULTS only -- neither is
-    retrofitted to enforce real POSITIONS data yet (main() never calls
-    this for CSVPATHS -- see its own comment). FILES mirrors its own
-    version-selector position (name_three); RESULTS is derived from
+    set, not in SPECIAL_POSITIONS), for RESULTS only -- that Finder is
+    not retrofitted to enforce real POSITIONS data yet (main() never
+    calls this for FILES/CSVPATHS -- see its own comment). Derived from
     whether the function's own KEY dict serves the run level
     (Reference3.RESULTS), the instance level (Reference3.RESULT), or
     both."""
     if datatype not in (cls.DATATYPES or ()):
         return None
-    if datatype == "files":
-        return "name_three"
-    # results -- datatype == "csvpaths" never reaches here, see main()'s
-    # own comment: that datatype is read straight from real POSITIONS
-    # data now, never guessed.
     has_run = Reference3.RESULTS in cls.KEY
     has_instance = Reference3.RESULT in cls.KEY
     if has_run and has_instance:
@@ -200,14 +188,15 @@ def main() -> None:
         note = SPECIAL_NOTES.get(name, DEFAULT_NOTE if positions is None else "")
         cells = {}
         for dt in ("files", "csvpaths", "results"):
-            if dt == Reference3.CSVPATHS:
+            if dt in (Reference3.FILES, Reference3.CSVPATHS):
                 # real, enforced data -- see module docstring. No
-                # fallback guessing here: since CsvpathsReferenceFinder3
-                # now fail-closes on anything without a POSITIONS entry
-                # (see ReferenceFinder3._check_position()), a guessed
-                # default could show "looks fine" for a function that
-                # would actually be rejected at runtime.
-                declared = cls.POSITIONS.get(Reference3.CSVPATHS)
+                # fallback guessing here: since FilesReferenceFinder3/
+                # CsvpathsReferenceFinder3 now fail-close on anything
+                # without a POSITIONS entry (see ReferenceFinder3.
+                # _check_position()), a guessed default could show
+                # "looks fine" for a function that would actually be
+                # rejected at runtime.
+                declared = cls.POSITIONS.get(dt)
                 pos = ", ".join(declared) if declared else None
             elif positions is not None:
                 pos = positions.get(dt)

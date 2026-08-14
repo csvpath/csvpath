@@ -29,3 +29,16 @@ class OnArrival3(Function3):
     KEY = {
         Reference3.FILES: "on_arrival",
     }
+    #
+    # BOTH positions -- bare, name_one (settled 2026-08-12, David: an
+    # arrival activation lives in the named-file's own definition.json,
+    # it "doesn't go to the version level" -- matches :definition()
+    # itself, see FilesReferenceFinder3._bare_definition_field_call()),
+    # AND the ordinary name_three field-accessor position beside a
+    # matched pointer (e.g. ":name('orders.csv').:first():on_arrival()")
+    # -- confirmed via existing passing tests, both give the identical
+    # answer regardless of which version is selected, since SOURCE ==
+    # "definition" means _extract_data() never reads result.uuid for
+    # this function either way.
+    #
+    POSITIONS = {Reference3.FILES: (Reference3.NAME_ONE, Reference3.NAME_THREE)}

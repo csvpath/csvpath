@@ -1631,3 +1631,43 @@ class TestExtractData:
         )
         with pytest.raises(ReferenceException3):
             finder._extract_data(ReferenceResult3(path="p", uuid="u"))
+
+
+class TestPositionEnforcement:
+    # ReferenceFinder3._check_position() -- added 2026-08-14, the
+    # enforced replacement for the scattered "is this recognized"
+    # guards each Finder used to hand-write on its own. FILES is the
+    # second Finder retrofitted to call it, after CSVPATHS.
+    def test_an_extra_unrecognized_function_on_name_three_is_rejected(self):
+        # the actual bug this closes for FILES: the old "at least one
+        # recognized category present" gate never rejected an
+        # individual EXTRA unrecognized function riding alongside a
+        # legitimate one -- confirmed via direct testing before this
+        # fix that ":last():name('y')" silently swallowed the stray
+        # :name() instead of raising, the same bug class already fixed
+        # for CSVPATHS' :name() on name_one.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$alpha.files.:name("one.csv").:last():name("y")',
+                ALPHA_HOME,
+                ALPHA_MANIFEST,
+            ).query()
+
+    def test_a_legal_function_is_unaffected(self):
+        # sanity check that the new check does not over-reject.
+        results = _finder(
+            '$alpha.files.:name("one.csv").:last()', ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert len(results.results) == 1
+        assert results.uuids[0] in ("u-one-1", "u-one-2")
+
+    def test_name_is_not_legal_at_name_three(self):
+        # :name() is FILES' own name_one path-building function -- it
+        # has never been meaningful riding beside a matched version at
+        # name_three.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$alpha.files.:name("one.csv").:name("y")',
+                ALPHA_HOME,
+                ALPHA_MANIFEST,
+            ).query()

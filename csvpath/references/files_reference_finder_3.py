@@ -305,6 +305,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         built = ReferenceFunctionFactory.build_chain(name_three.functions)
         for f in built:
+            # replaces the old "at least one recognized category
+            # present" gate below (settled 2026-08-14) -- that gate only
+            # checked for ABSENCE of every recognized category, it never
+            # rejected an individual EXTRA unrecognized function riding
+            # alongside a legitimate one (e.g. ":last():name('y')" --
+            # confirmed via direct testing this used to silently swallow
+            # the stray :name() instead of raising, the same bug class
+            # already fixed for CSVPATHS). name_three.functions is
+            # guaranteed non-empty here (NameThree3's own constructor
+            # requires a body or functions; body is already confirmed
+            # None above), so `built` can never be empty either -- every
+            # element passing this check already implies "at least one
+            # recognized thing," making the old gate's own "nothing
+            # recognized at all" case unreachable now, not just
+            # redundant.
+            self._check_position(f, Reference3.NAME_THREE, Reference3.FILES)
             if f.name == "fingerprint" and f.arg is not None:
                 # ':fingerprint(...)' only takes an argument in its bare,
                 # name_one lookup form (settled 2026-08-13) -- riding
@@ -378,21 +394,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 self._validate_date_format(from_bound)
             if to_is_date:
                 self._validate_date_format(to_bound)
-        if (
-            not pointers
-            and not has_manifest
-            and not has_field_function
-            and not has_path
-            and not has_all
-            and not has_range
-        ):
-            raise ReferenceException3(
-                "FilesReferenceFinder3 requires name_three to resolve to "
-                "exactly one pointer function (:first()/:last()/:index(n)), "
-                "optionally combined with :manifest(), :path(), :all(), "
-                "':from()'/':to()', or a registered field-accessor "
-                "function (e.g. :uuid())."
-            )
+        # the old "at least one recognized category present" gate that
+        # used to live here is now unreachable, not just redundant: the
+        # _check_position() loop above already guarantees every element
+        # of `built` (which is itself guaranteed non-empty, see that
+        # loop's own comment) is one of exactly the categories checked
+        # below (pointers/has_manifest/has_field_function/has_path/
+        # has_all/has_range cover the complete set of name_three-legal
+        # FILES functions), so at least one of them is always true here.
 
         if partitioned and (has_range or (pointers and (has_manifest or has_field_function or has_path))):
             # mirrors ResultsReferenceFinder3's own ':all()'-grouping
