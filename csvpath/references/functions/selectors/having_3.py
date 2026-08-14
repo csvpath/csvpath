@@ -31,3 +31,4 @@ class Having3(Function3):
     DATATYPES = (Reference3.CSVPATHS,)
     ARG_TYPES = (str,)
     ARG_REQUIRED = True
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}

@@ -54,3 +54,10 @@ class From3(Function3):
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
     ARG_TYPES = (int, Index3, str, Date3)
     ARG_REQUIRED = True
+    #
+    # CSVPATHS only, so far (2026-08-14) -- name_one (version-level
+    # range) and name_three (statement-level range) both. FILES/RESULTS
+    # entries deferred until those Finders are retrofitted to enforce
+    # POSITIONS the same way (see Function3.POSITIONS's own docstring).
+    #
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE, Reference3.NAME_THREE)}

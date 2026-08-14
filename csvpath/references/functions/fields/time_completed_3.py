@@ -24,3 +24,4 @@ class TimeCompleted3(Function3):
         Reference3.CSVPATHS: "time_completed",
         Reference3.RESULTS: "time_completed",
     }
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}

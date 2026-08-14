@@ -41,3 +41,9 @@ class Manifest3(Function3):
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
     ARG_TYPES = ()
     ARG_REQUIRED = False
+    #
+    # name_one covers both the bare/beside-a-pointer shape and the
+    # special root_major='*' global-ledger case for CSVPATHS -- root_major
+    # is a separate axis from position, not a different position.
+    #
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}

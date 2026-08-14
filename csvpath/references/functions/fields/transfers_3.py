@@ -30,3 +30,4 @@ class Transfers3(Function3):
     KEY = {
         Reference3.CSVPATHS: "transfers.path_transfers",
     }
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}

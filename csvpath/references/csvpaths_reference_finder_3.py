@@ -169,18 +169,19 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         if name_three is not None:
             if name_three.functions:
                 built = ReferenceFunctionFactory.build_chain(name_three.functions)
+                # replaces a hand-written "unrecognized" check (settled
+                # 2026-08-14) -- see _check_position()'s own docstring
+                # and _resolve_versions()'s equivalent check for
+                # name_one. Only :from()/:to() declare name_three as
+                # legal for csvpaths, so this rejects anything else
+                # (e.g. a literal identity's own function chain trying
+                # to add something other than a range) exactly as
+                # before, just via the shared mechanism instead of a
+                # local tuple.
+                for f in built:
+                    self._check_position(f, Reference3.NAME_THREE, Reference3.CSVPATHS)
                 from_call = next((f for f in built if f.name == "from"), None)
                 to_call = next((f for f in built if f.name == "to"), None)
-                unrecognized = [
-                    f for f in built if f.name not in ("from", "to")
-                ]
-                if unrecognized:
-                    raise ReferenceException3(
-                        "CsvpathsReferenceFinder3 does not yet support "
-                        f":{unrecognized[0].name}() on name_three -- only "
-                        "a literal statement identity/index, or "
-                        "':from()'/':to()', are supported."
-                    )
                 for f in (from_call, to_call):
                     if f is not None and isinstance(self._range_bound(f), str):
                         raise ReferenceException3(
@@ -471,7 +472,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         version(s) to work with, so its path_prefix must reduce to
         exactly one function-segment (no literal/"*" path-building, no
         worksheet marker) -- combined with its own trailing function
-        chain, if any. ':having("identity")' (added 2026-08-13) filters
+        chain, if any. Every function in that combined chain must
+        declare name_one as legal for csvpaths in its own POSITIONS
+        (added 2026-08-14, see ReferenceFinder3._check_position()) --
+        e.g. ":name()" is registered for csvpaths but has nowhere legal
+        to go there, so it now raises here instead of silently no-
+        opping the way it used to. ':having("identity")' (added
+        2026-08-13) filters
         `manifest` down to versions whose own "named_paths_identities"
         list contains that identity, BEFORE any pointer reduces further
         -- e.g. ":having('my_validations'):last()" is "the last version
@@ -499,6 +506,8 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             )
         calls = [name_one.path[0], *name_one.functions]
         built = ReferenceFunctionFactory.build_chain(calls)
+        for f in built:
+            self._check_position(f, Reference3.NAME_ONE, Reference3.CSVPATHS)
         having_call = next((f for f in built if f.name == "having"), None)
         if having_call is not None:
             manifest = [

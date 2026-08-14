@@ -27,3 +27,4 @@ class Time3(Function3):
         Reference3.RESULTS: "time",
         Reference3.RESULT: "time",
     }
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}

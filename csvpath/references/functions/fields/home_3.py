@@ -30,3 +30,9 @@ class Home3(Function3):
         Reference3.RESULTS: "run_home",
         Reference3.RESULT: "instance_home",
     }
+    #
+    # CSVPATHS has no "bare :home() as zero-level selector" case (that
+    # is FILES/RESULTS-only -- CSVPATHS' name_one has no path dimension
+    # to be zero-level of) -- always the ordinary field-accessor position.
+    #
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}

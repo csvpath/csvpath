@@ -25,3 +25,4 @@ class NamedPathsName3(Function3):
         Reference3.CSVPATHS: "named_paths_name",
         Reference3.RESULTS: "named_paths_name",
     }
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}

@@ -48,3 +48,8 @@ class Fingerprint3(Function3):
         Reference3.FILES: "fingerprint",
         Reference3.CSVPATHS: "fingerprint",
     }
+    #
+    # CSVPATHS has no bare-lookup shape (that's FILES-only, see above) --
+    # always the ordinary field-accessor position.
+    #
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}

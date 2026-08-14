@@ -31,3 +31,4 @@ class Origin3(Function3):
         Reference3.FILES: "from",
         Reference3.CSVPATHS: "source_path",
     }
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}

@@ -21,3 +21,4 @@ class NamedPathsCount3(Function3):
     KEY = {
         Reference3.CSVPATHS: "named_paths_count",
     }
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}
