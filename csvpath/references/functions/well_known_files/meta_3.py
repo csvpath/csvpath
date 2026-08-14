@@ -20,3 +20,4 @@ class Meta3(Function3):
     DATATYPES = (Reference3.RESULTS,)
     ARG_TYPES = ()
     ARG_REQUIRED = False
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_THREE,)}

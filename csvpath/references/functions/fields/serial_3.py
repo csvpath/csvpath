@@ -26,3 +26,4 @@ class Serial3(Function3):
         Reference3.RESULTS: "serial",
         Reference3.RESULT: "serial",
     }
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE)}

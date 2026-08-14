@@ -22,3 +22,4 @@ class Identity3(Function3):
     KEY = {
         Reference3.RESULT: "instance_identity",
     }
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_THREE,)}

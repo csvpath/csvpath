@@ -22,3 +22,4 @@ class ActualDataFile3(Function3):
     KEY = {
         Reference3.RESULT: "actual_data_file",
     }
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_THREE,)}

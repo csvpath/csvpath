@@ -1739,6 +1739,53 @@ class TestStarTraversal:
             _finder("$*.results.:last().0", two_group_archive).query()
 
 
+class TestPositionEnforcement:
+    # ReferenceFinder3._check_position() -- added 2026-08-14, the
+    # enforced replacement for the scattered "is this recognized"
+    # guards each Finder used to hand-write on its own. RESULTS is the
+    # third and last Finder retrofitted to call it, after CSVPATHS and
+    # FILES.
+    def test_an_unregistered_for_this_datatype_function_on_name_one_is_rejected(
+        self, acme_archive
+    ):
+        # the actual bug this closes: name_one's own handling only ever
+        # looked for SPECIFIC recognized names (all/flatten/groups/from/
+        # to/manifest/a field function) -- it never rejected an
+        # unrecognized extra riding alongside a legitimate pointer.
+        # Confirmed via direct testing before this fix that
+        # ":last():webhooks()" (a function registered for a DIFFERENT
+        # datatype entirely, not even results-relevant) silently
+        # no-opped instead of raising.
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.results.customers/2025:last():webhooks()", acme_archive).query()
+
+    def test_a_legal_function_is_unaffected(self, acme_archive):
+        # sanity check that the new check does not over-reject.
+        results = _finder("$acme.results.customers/2025:last()", acme_archive).query()
+        assert results.results[0].uuid == "run2-uuid"
+
+    def test_star_traversal_rejects_groups_not_just_all_flatten_manifest(
+        self, two_group_archive
+    ):
+        # the old star-traversal guard only named-checked
+        # "all"/"flatten"/"manifest" plus a separate field-function
+        # check -- neither caught ':groups()', confirmed via direct
+        # testing before this fix that it silently no-opped instead of
+        # raising. Replaced with one check covering everything that is
+        # not a bare pointer, matching the method's own documented
+        # restriction.
+        with pytest.raises(ReferenceException3):
+            _finder("$*.results.:last():groups()", two_group_archive).query()
+
+    def test_star_traversal_rejects_a_range_function_too(self, two_group_archive):
+        with pytest.raises(ReferenceException3):
+            _finder("$*.results.:last():from(1)", two_group_archive).query()
+
+    def test_star_traversal_bare_pointer_is_unaffected(self, two_group_archive):
+        results = _finder("$*.results.:last()", two_group_archive).query()
+        assert results.results[0].uuid == "widgets-run1-uuid"
+
+
 class TestScopeLimits:
     def test_star_root_major_not_yet_supported(self, acme_archive):
         finder = _finder("$*.results.customers/2025:last()", acme_archive)

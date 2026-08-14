@@ -23,3 +23,4 @@ class Status3(Function3):
     KEY = {
         Reference3.RESULTS: "status",
     }
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_ONE,)}

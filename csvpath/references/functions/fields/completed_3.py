@@ -24,3 +24,4 @@ class Completed3(Function3):
         Reference3.RESULTS: "all_completed",
         Reference3.RESULT: "completed",
     }
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE)}

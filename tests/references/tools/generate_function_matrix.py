@@ -23,17 +23,14 @@ Mechanically derived every run (always accurate, no manual upkeep): role,
 datatypes, arg shape, source, unit-test-file-exists, integration-test-grep-
 hit-per-datatype, and position for every function.
 
-Position itself is a mix of two sources, preferring the real one whenever
-it exists: **CSVPATHS and FILES position are now real, ENFORCED declared
-data** (Function3.POSITIONS, added 2026-08-14 -- see ReferenceFinder3.
-_check_position(), called from CsvpathsReferenceFinder3 and
-FilesReferenceFinder3) -- this script just reads it straight off each
-function class, same as DATATYPES/ROLE. **RESULTS position is still hand-
-curated** in SPECIAL_POSITIONS/SPECIAL_NOTES below (or mechanically
-guessed for plain field accessors via _default_position()) -- that Finder
-has not been retrofitted to declare/enforce POSITIONS yet, so there is no
-real data to read for it. Once RESULTS gets the same retrofit, this whole
-hand-curated mechanism goes away entirely.
+Position for EVERY datatype is now real, ENFORCED declared data
+(Function3.POSITIONS, added 2026-08-14 -- see ReferenceFinder3.
+_check_position(), called from all three Finders as of the same day RESULTS
+was retrofitted) -- this script just reads it straight off each function
+class, same as DATATYPES/ROLE. The SPECIAL_NOTES dict below is the one
+remaining hand-curated piece -- short semantic explanations that do not fit
+a position label (e.g. why a function is legal in two positions, or what it
+means at each), not a fallback data source.
 """
 
 import re
@@ -42,7 +39,6 @@ from pathlib import Path
 from csvpath.references.functions.reference_function_factory_3 import (
     ReferenceFunctionFactory as RFF,
 )
-from csvpath.references.reference_3 import Reference3
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -62,37 +58,11 @@ INTEGRATION_TEST_FILES = {
 }
 
 #
-# manually curated RESULTS positions for the ~20 functions that are NOT
-# plain field accessors -- see module docstring. No "files"/"csvpaths"
-# keys in any entry below -- both are now real declared data, read
-# directly off each function class in main(), taking precedence over
-# anything here (this dict is consulted only as a RESULTS fallback). One
-# entry: a position string, or None (not supported/not meaningful there).
+# short semantic explanations for functions whose position alone does not
+# tell the whole story -- keyed by NAME, applies across whichever
+# datatypes the function is registered for. Everything not listed here
+# gets DEFAULT_NOTE if it is a plain field accessor, or nothing.
 #
-SPECIAL_POSITIONS = {
-    "first": {"results": "name_one"},
-    "last": {"results": "name_one"},
-    "index": {"results": "name_one"},
-    "name": {"results": None},
-    "all": {"results": "name_one"},
-    "flatten": {"results": "name_one"},
-    "groups": {"results": "name_one"},
-    "having": {"results": None},
-    "from": {"results": "name_one, name_three"},
-    "to": {"results": "name_one, name_three"},
-    "date": {"results": "argument (inside :from()/:to())"},
-    "manifest": {"results": "name_one"},
-    "definition": {"results": None},
-    "path": {"results": None},
-    "errors": {"results": "name_three (instance-level)"},
-    "vars": {"results": "name_three (instance-level)"},
-    "meta": {"results": "name_three (instance-level)"},
-    "data": {"results": "name_three (instance-level)"},
-    "unmatched": {"results": "name_three (instance-level)"},
-    "file": {"results": "name_three (instance-level)"},
-    "idchain": {"results": "argument (inside :errors())"},
-}
-
 SPECIAL_NOTES = {
     "name": (
         "DATATYPES includes csvpaths, but name_one has no path-building "
@@ -157,51 +127,26 @@ def _integration_hits(name: str, datatype: str) -> bool:
     return False
 
 
-def _default_position(cls, datatype: str) -> str | None:
-    """mechanical GUESS at position for a plain field accessor (SOURCE
-    set, not in SPECIAL_POSITIONS), for RESULTS only -- that Finder is
-    not retrofitted to enforce real POSITIONS data yet (main() never
-    calls this for FILES/CSVPATHS -- see its own comment). Derived from
-    whether the function's own KEY dict serves the run level
-    (Reference3.RESULTS), the instance level (Reference3.RESULT), or
-    both."""
-    if datatype not in (cls.DATATYPES or ()):
-        return None
-    has_run = Reference3.RESULTS in cls.KEY
-    has_instance = Reference3.RESULT in cls.KEY
-    if has_run and has_instance:
-        return "name_one, name_three"
-    if has_instance:
-        return "name_three (instance-level only)"
-    if has_run:
-        return "name_one (run-level only)"
-    return "name_one"  # SOURCE="-" default-shape functions not otherwise flagged
-
-
 def main() -> None:
     RFF.get_registered_class("first")  # triggers _load() -- see factory's own laziness
     rows = []
     for name, cls in sorted(RFF._FUNCTIONS.items()):
         datatypes = cls.DATATYPES or ()
         unit_tested = _unit_test_path(cls).exists()
-        positions = SPECIAL_POSITIONS.get(name)
-        note = SPECIAL_NOTES.get(name, DEFAULT_NOTE if positions is None else "")
+        is_plain_field_accessor = cls.SOURCE is not None
+        note = SPECIAL_NOTES.get(
+            name, DEFAULT_NOTE if is_plain_field_accessor else ""
+        )
         cells = {}
         for dt in ("files", "csvpaths", "results"):
-            if dt in (Reference3.FILES, Reference3.CSVPATHS):
-                # real, enforced data -- see module docstring. No
-                # fallback guessing here: since FilesReferenceFinder3/
-                # CsvpathsReferenceFinder3 now fail-close on anything
-                # without a POSITIONS entry (see ReferenceFinder3.
-                # _check_position()), a guessed default could show
-                # "looks fine" for a function that would actually be
-                # rejected at runtime.
-                declared = cls.POSITIONS.get(dt)
-                pos = ", ".join(declared) if declared else None
-            elif positions is not None:
-                pos = positions.get(dt)
-            else:
-                pos = _default_position(cls, dt)
+            # real, enforced data for every datatype (see module
+            # docstring). No fallback guessing: since every Finder now
+            # fail-closes on anything without a POSITIONS entry (see
+            # ReferenceFinder3._check_position()), a guessed default
+            # could show "looks fine" for a function that would
+            # actually be rejected at runtime.
+            declared = cls.POSITIONS.get(dt)
+            pos = ", ".join(declared) if declared else None
             tested = _integration_hits(name, dt) if dt in datatypes else None
             cells[dt] = (pos, tested)
         rows.append(
@@ -229,8 +174,8 @@ def main() -> None:
     out.append(
         "Generated by `tests/references/tools/generate_function_matrix.py` -- "
         "re-run any time the function registry or test files change; do not "
-        "hand-edit the table below (edit the script's own `SPECIAL_POSITIONS`/"
-        "`SPECIAL_NOTES` dicts instead, for the manually-curated parts).\n\n"
+        "hand-edit the table below (edit the script's own `SPECIAL_NOTES` "
+        "dict instead, for the one remaining manually-curated part).\n\n"
     )
     out.append(
         "| Function | Role | Datatypes | Arg required | Source | Unit test | "

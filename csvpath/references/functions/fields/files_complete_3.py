@@ -25,3 +25,4 @@ class FilesComplete3(Function3):
         Reference3.RESULTS: "all_expected_files",
         Reference3.RESULT: "files_expected",
     }
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE)}

@@ -30,3 +30,4 @@ class Valid3(Function3):
         Reference3.RESULTS: "all_valid",
         Reference3.RESULT: "valid",
     }
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE)}

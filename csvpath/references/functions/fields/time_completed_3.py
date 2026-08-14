@@ -24,4 +24,10 @@ class TimeCompleted3(Function3):
         Reference3.CSVPATHS: "time_completed",
         Reference3.RESULTS: "time_completed",
     }
-    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}
+    POSITIONS = {
+        Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+        # RESULTS: KEY only has a RESULTS entry, no RESULT (instance)
+        # entry -- run scope only (matches the class's own docstring:
+        # "RESULTS instance scope is deliberately excluded").
+        Reference3.RESULTS: (Reference3.NAME_ONE,),
+    }

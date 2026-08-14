@@ -57,13 +57,12 @@ class From3(Function3):
     #
     # FILES: name_three only (its own version-selector position -- no
     # name_one range, unlike CSVPATHS/RESULTS' own version-level range,
-    # since FILES' version selector never lives in name_one). CSVPATHS:
-    # both name_one (version-level range) and name_three (statement-
-    # level range). RESULTS entries deferred until that Finder is
-    # retrofitted to enforce POSITIONS the same way (see
-    # Function3.POSITIONS's own docstring).
+    # since FILES' version selector never lives in name_one). CSVPATHS/
+    # RESULTS: both name_one (run/version-level range) and name_three
+    # (statement/instance-level range).
     #
     POSITIONS = {
         Reference3.FILES: (Reference3.NAME_THREE,),
         Reference3.CSVPATHS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
+        Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
     }

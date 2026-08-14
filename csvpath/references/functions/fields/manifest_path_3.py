@@ -26,4 +26,7 @@ class ManifestPath3(Function3):
         Reference3.RESULTS: "manifest_path",
         Reference3.RESULT: "manifest_path",
     }
-    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}
+    POSITIONS = {
+        Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+        Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
+    }

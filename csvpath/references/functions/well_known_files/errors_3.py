@@ -32,3 +32,4 @@ class Errors3(Function3):
     DATATYPES = (Reference3.RESULTS,)
     ARG_TYPES = (Idchain3,)
     ARG_REQUIRED = False
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_THREE,)}
