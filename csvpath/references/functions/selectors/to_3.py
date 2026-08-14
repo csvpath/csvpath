@@ -28,3 +28,7 @@ class To3(Function3):
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
     ARG_TYPES = (int, Index3, str, Date3)
     ARG_REQUIRED = True
+    #
+    # see From3's own POSITIONS comment -- always paired, same positions.
+    #
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE, Reference3.NAME_THREE)}

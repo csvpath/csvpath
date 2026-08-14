@@ -186,6 +186,28 @@ class ReferenceFinder3(ABC):
         return result
 
     @staticmethod
+    def _check_position(function, position: str, datatype: str) -> None:
+        """raises unless `function` declares `position` as legal for
+        `datatype` in its own Function3.POSITIONS -- added 2026-08-14,
+        the enforced replacement for the scattered, inconsistent "is
+        this recognized" guards each Finder used to hand-write on its
+        own (the gap that let "$acme.csvpaths.:name('x')" silently
+        no-op instead of raising -- CsvpathsReferenceFinder3.
+        _resolve_versions() had no such guard at all, while query()'s
+        name_three handling did). Rolled out incrementally per Finder
+        (CSVPATHS first) rather than all at once -- a function with no
+        POSITIONS entry for a given datatype has simply not been
+        migrated to this mechanism yet by that datatype's own Finder,
+        not necessarily rejected everywhere; only a Finder that
+        actually calls this method enforces it. See Function3.POSITIONS
+        and Reference3.NAME_ONE/TWO/THREE's own docstrings."""
+        legal = function.POSITIONS.get(datatype, ())
+        if position not in legal:
+            raise ReferenceException3(
+                f":{function.name}() is not legal at {position} for {datatype}."
+            )
+
+    @staticmethod
     def _is_bare_pointer_reference(reference: Reference3, name: str) -> bool:
         """true when name_one's entire content is a single, argument-
         less ":name()" call -- no other path segments, no trailing

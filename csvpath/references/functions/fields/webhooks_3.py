@@ -23,3 +23,4 @@ class Webhooks3(Function3):
     KEY = {
         Reference3.CSVPATHS: "webhooks",
     }
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}

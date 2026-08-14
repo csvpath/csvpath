@@ -9,3 +9,4 @@ class First3(Function3):
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
     ARG_TYPES = ()
     ARG_REQUIRED = False
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}

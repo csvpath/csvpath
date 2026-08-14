@@ -420,6 +420,21 @@ class Reference3:
     METADATA_FILE = "metadata_file"
     METADATA_FIELD = "metadata_field"
 
+    #
+    # position identity -- which of a reference's three name segments a
+    # function was found in. Added 2026-08-14 for Function3.POSITIONS
+    # (see that class's own docstring): the enforced, per-datatype
+    # source of truth for where a function is legal, replacing the
+    # scattered, inconsistent "is this recognized" guards each Finder
+    # used to hand-write on its own (the gap that let
+    # "$acme.csvpaths.:name(\"x\")" silently no-op instead of raising --
+    # CsvpathsReferenceFinder3._resolve_versions() had no such guard at
+    # all, while query()'s name_three handling did).
+    #
+    NAME_ONE = "name_one"
+    NAME_TWO = "name_two"
+    NAME_THREE = "name_three"
+
     def __init__(
         self,
         *,

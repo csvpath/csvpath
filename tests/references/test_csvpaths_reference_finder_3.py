@@ -752,14 +752,16 @@ class TestFieldAccessorFunctions:
         ).resolve()
         assert [r.data for r in results.results] == [2, 1]
 
-    def test_function_with_no_key_for_this_datatype_gives_none_not_a_crash(self):
-        # :mark()'s own DATATYPES is FILES-only, but nothing currently
-        # enforces DATATYPES against the reference it is actually used
-        # in (a pre-existing gap, not introduced here) -- so this reaches
-        # _extract_data() and must degrade to None rather than crashing
-        # on a KEY lookup that has no CSVPATHS entry.
-        results = _finder("$acme.csvpaths.:first():mark()", RICH_MANIFEST).resolve()
-        assert results.results[0].data is None
+    def test_function_not_legal_here_is_rejected_not_silently_degraded(self):
+        # :mark()'s own DATATYPES is FILES-only, and it has no POSITIONS
+        # entry for csvpaths at all -- added 2026-08-14: this now raises
+        # via ReferenceFinder3._check_position(), called from
+        # _resolve_versions(), instead of silently reaching
+        # _extract_data() and degrading to None on a KEY lookup with no
+        # CSVPATHS entry (the old, undetected gap this test used to
+        # lock in).
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.csvpaths.:first():mark()", RICH_MANIFEST).query()
 
 
 class TestDefinitionFieldAccessorFunctions:
@@ -899,3 +901,40 @@ class TestScopeLimits:
         finder = _finder("$acme.csvpaths.:first().:meta()")
         with pytest.raises(ReferenceException3):
             finder._extract_data(ReferenceResult3(path="p", uuid="v0-uuid"))
+
+
+class TestPositionEnforcement:
+    # ReferenceFinder3._check_position() -- added 2026-08-14, the
+    # enforced replacement for the scattered "is this recognized"
+    # guards each Finder used to hand-write on its own. CSVPATHS is the
+    # first Finder retrofitted to call it.
+    def test_name_is_registered_for_csvpaths_but_has_nowhere_legal_to_go(self):
+        # the actual bug this mechanism was built to close: :name()'s
+        # own DATATYPES includes csvpaths (it type-checks fine as an
+        # argument-typed function), but it has no path-building
+        # dimension there -- POSITIONS[csvpaths] is an explicit empty
+        # tuple, not an absent key, so this now raises instead of
+        # silently no-opping the way it used to.
+        with pytest.raises(ReferenceException3):
+            _finder('$acme.csvpaths.:name("x")').query()
+
+    def test_a_function_not_declared_for_csvpaths_at_all_is_rejected(self):
+        # :mark() is FILES-only in its own DATATYPES and has no
+        # POSITIONS entry for csvpaths at all -- same rejection path,
+        # different starting point (never declared vs. declared-empty).
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.csvpaths.:first():mark()", RICH_MANIFEST).query()
+
+    def test_a_legal_function_is_unaffected(self):
+        # sanity check that the new check does not over-reject --
+        # :having() legitimately declares name_one for csvpaths.
+        results = _finder(
+            '$acme.csvpaths.:having("company_names"):last()', RICH_MANIFEST
+        ).query()
+        assert results.uuids == ["v0-uuid"]
+
+    def test_having_is_not_legal_at_name_three(self):
+        # :having() only declares name_one -- riding on name_three
+        # (where it has never been meaningful) is rejected the same way.
+        with pytest.raises(ReferenceException3):
+            _finder('$acme.csvpaths.:last().:having("x")', RICH_MANIFEST).query()

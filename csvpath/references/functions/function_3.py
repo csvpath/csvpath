@@ -40,6 +40,28 @@ class Function3:
     ARG_REQUIRED: bool = False
 
     #
+    # {datatype: (position, ...)} -- which of Reference3.NAME_ONE/
+    # NAME_TWO/NAME_THREE this function is legal to appear in, per
+    # datatype it applies to. Added 2026-08-14, rolled out incrementally
+    # per Finder (CSVPATHS first -- see ReferenceFinder3._check_position()
+    # and CsvpathsReferenceFinder3's own call sites) rather than all at
+    # once. Unlike DATATYPES (descriptive only -- confirmed nothing reads
+    # it except Function3.describe(), a future type-ahead layer's own
+    # registry query, not a runtime gate), POSITIONS is the ENFORCED
+    # source of truth once a Finder calls _check_position() with it:
+    # replaces the scattered, inconsistent "is this recognized" guards
+    # each Finder used to hand-write on its own. A datatype key absent
+    # from this dict, or present but empty, both mean "not legal here"
+    # -- the difference is only documentation intent (declared-and-
+    # rejected vs. not yet declared for that datatype/Finder). Never
+    # declared for argument-only VALUE wrappers (e.g. :date(), :idchain())
+    # -- those are never a top-level chain member to check a position
+    # for; they only ever appear nested inside another function's own
+    # arg.
+    #
+    POSITIONS: dict = {}
+
+    #
     # field-accessor functions only (e.g. :uuid(), :time(), :on_arrival())
     # -- both left unset (None/{}) for every other function. SOURCE names
     # which well-known, per-entity resource this field lives in ("manifest"

@@ -24,3 +24,4 @@ class Scripts3(Function3):
     KEY = {
         Reference3.CSVPATHS: "scripts",
     }
+    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}
