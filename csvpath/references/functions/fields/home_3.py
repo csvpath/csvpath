@@ -34,5 +34,12 @@ class Home3(Function3):
     # CSVPATHS has no "bare :home() as zero-level selector" case (that
     # is FILES/RESULTS-only -- CSVPATHS' name_one has no path dimension
     # to be zero-level of) -- always the ordinary field-accessor position.
+    # FILES has BOTH: the bare, name_one, zero-level-selector shape
+    # (":home().:last()") and the ordinary field-accessor position
+    # (name_three, beside a matched pointer, e.g.
+    # ":name('orders.csv').:last():home()").
     #
-    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}
+    POSITIONS = {
+        Reference3.FILES: (Reference3.NAME_ONE, Reference3.NAME_THREE),
+        Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+    }

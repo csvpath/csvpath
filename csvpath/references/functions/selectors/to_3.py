@@ -31,4 +31,7 @@ class To3(Function3):
     #
     # see From3's own POSITIONS comment -- always paired, same positions.
     #
-    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE, Reference3.NAME_THREE)}
+    POSITIONS = {
+        Reference3.FILES: (Reference3.NAME_THREE,),
+        Reference3.CSVPATHS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
+    }

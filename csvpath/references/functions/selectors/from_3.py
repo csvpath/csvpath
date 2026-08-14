@@ -55,9 +55,15 @@ class From3(Function3):
     ARG_TYPES = (int, Index3, str, Date3)
     ARG_REQUIRED = True
     #
-    # CSVPATHS only, so far (2026-08-14) -- name_one (version-level
-    # range) and name_three (statement-level range) both. FILES/RESULTS
-    # entries deferred until those Finders are retrofitted to enforce
-    # POSITIONS the same way (see Function3.POSITIONS's own docstring).
+    # FILES: name_three only (its own version-selector position -- no
+    # name_one range, unlike CSVPATHS/RESULTS' own version-level range,
+    # since FILES' version selector never lives in name_one). CSVPATHS:
+    # both name_one (version-level range) and name_three (statement-
+    # level range). RESULTS entries deferred until that Finder is
+    # retrofitted to enforce POSITIONS the same way (see
+    # Function3.POSITIONS's own docstring).
     #
-    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE, Reference3.NAME_THREE)}
+    POSITIONS = {
+        Reference3.FILES: (Reference3.NAME_THREE,),
+        Reference3.CSVPATHS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
+    }

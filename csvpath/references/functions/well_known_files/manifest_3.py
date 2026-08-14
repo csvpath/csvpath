@@ -42,8 +42,13 @@ class Manifest3(Function3):
     ARG_TYPES = ()
     ARG_REQUIRED = False
     #
-    # name_one covers both the bare/beside-a-pointer shape and the
-    # special root_major='*' global-ledger case for CSVPATHS -- root_major
-    # is a separate axis from position, not a different position.
+    # name_one (CSVPATHS)/name_three (FILES) both cover the bare/beside-
+    # a-pointer shape and the special root_major='*' global-ledger case
+    # -- root_major is a separate axis from position, not a different
+    # position. FILES' own version-selector position is name_three
+    # (unlike CSVPATHS/RESULTS, where it is name_one).
     #
-    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}
+    POSITIONS = {
+        Reference3.FILES: (Reference3.NAME_THREE,),
+        Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+    }

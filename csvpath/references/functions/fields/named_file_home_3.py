@@ -22,3 +22,4 @@ class NamedFileHome3(Function3):
     ARG_REQUIRED = False
     SOURCE = "computed"
     KEY = {}
+    POSITIONS = {Reference3.FILES: (Reference3.NAME_THREE,)}

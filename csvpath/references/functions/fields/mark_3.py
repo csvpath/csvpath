@@ -23,3 +23,4 @@ class Mark3(Function3):
     KEY = {
         Reference3.FILES: "mark",
     }
+    POSITIONS = {Reference3.FILES: (Reference3.NAME_THREE,)}

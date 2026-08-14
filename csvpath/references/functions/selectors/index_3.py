@@ -17,4 +17,7 @@ class Index3(Function3):
     # nested inside :from()/:to()'s own arg (e.g. ":from(:index(2))"),
     # it is unwrapped via .arg and never reaches a position check at all.
     #
-    POSITIONS = {Reference3.CSVPATHS: (Reference3.NAME_ONE,)}
+    POSITIONS = {
+        Reference3.FILES: (Reference3.NAME_THREE,),
+        Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+    }
