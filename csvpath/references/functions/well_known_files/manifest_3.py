@@ -51,4 +51,11 @@ class Manifest3(Function3):
     POSITIONS = {
         Reference3.FILES: (Reference3.NAME_THREE,),
         Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+        # RESULTS: name_one only -- resolves to the selected RUN's own
+        # manifest.json (confirmed 2026-08-13); :manifest() is not
+        # recognized at name_three (_name_three_selector has no case for
+        # it -- it is not a content accessor and SOURCE is None, so it
+        # does not match field_call either -- falls through to that
+        # loop's own catch-all raise).
+        Reference3.RESULTS: (Reference3.NAME_ONE,),
     }

@@ -12,4 +12,8 @@ class First3(Function3):
     POSITIONS = {
         Reference3.FILES: (Reference3.NAME_THREE,),
         Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+        # RESULTS: name_one only -- name_three has no pointer concept of
+        # its own (_name_three_selector recognizes a literal identity,
+        # :all(), or ':from()'/':to()', never a pointer).
+        Reference3.RESULTS: (Reference3.NAME_ONE,),
     }

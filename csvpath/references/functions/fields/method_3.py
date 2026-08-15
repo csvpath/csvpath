@@ -13,3 +13,4 @@ class Method3(Function3):
     KEY = {
         Reference3.RESULTS: "method",
     }
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_ONE,)}

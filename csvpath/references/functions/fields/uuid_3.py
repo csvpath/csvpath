@@ -47,4 +47,8 @@ class Uuid3(Function3):
     POSITIONS = {
         Reference3.FILES: (Reference3.NAME_THREE,),
         Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+        # RESULTS: KEY has both RESULTS ("run_uuid", per the class's own
+        # docstring on why run scope reads that instead of a deprecated
+        # bare "uuid") and RESULT ("uuid", instance scope) entries.
+        Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
     }

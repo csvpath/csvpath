@@ -13,3 +13,4 @@ class Username3(Function3):
     KEY = {
         Reference3.RESULTS: "username",
     }
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_ONE,)}

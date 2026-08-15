@@ -35,8 +35,7 @@ class Groups3(Function3):
     DATATYPES = (Reference3.FILES, Reference3.RESULTS)
     ARG_TYPES = ()
     ARG_REQUIRED = False
-    #
-    # RESULTS entry deferred until that Finder is retrofitted to enforce
-    # POSITIONS the same way (see Function3.POSITIONS's own docstring).
-    #
-    POSITIONS = {Reference3.FILES: (Reference3.NAME_ONE,)}
+    POSITIONS = {
+        Reference3.FILES: (Reference3.NAME_ONE,),
+        Reference3.RESULTS: (Reference3.NAME_ONE,),
+    }

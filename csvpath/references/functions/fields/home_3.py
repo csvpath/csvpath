@@ -42,4 +42,9 @@ class Home3(Function3):
     POSITIONS = {
         Reference3.FILES: (Reference3.NAME_ONE, Reference3.NAME_THREE),
         Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+        # RESULTS: same dual shape as FILES -- bare, name_one, zero-
+        # level-selector (settled 2026-08-11) AND the ordinary name_three
+        # field-accessor position (KEY has both RESULTS and RESULT
+        # entries -- run AND instance scope).
+        Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
     }

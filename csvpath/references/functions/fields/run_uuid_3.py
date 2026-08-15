@@ -30,3 +30,4 @@ class RunUuid3(Function3):
         Reference3.RESULTS: "run_uuid",
         Reference3.RESULT: "run_uuid",
     }
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE)}

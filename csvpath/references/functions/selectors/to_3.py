@@ -34,4 +34,5 @@ class To3(Function3):
     POSITIONS = {
         Reference3.FILES: (Reference3.NAME_THREE,),
         Reference3.CSVPATHS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
+        Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
     }

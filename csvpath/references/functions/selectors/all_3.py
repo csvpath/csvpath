@@ -31,4 +31,9 @@ class All3(Function3):
     POSITIONS = {
         Reference3.FILES: (Reference3.NAME_THREE,),
         Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+        # RESULTS: name_one (one-level GROUP, run-level) AND name_three
+        # (:all() pools every instance in the run) -- unlike FILES/
+        # CSVPATHS, both positions are genuinely legal, not aliases of
+        # the same underlying slot.
+        Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
     }

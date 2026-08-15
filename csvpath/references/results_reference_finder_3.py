@@ -192,6 +192,21 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         home = self.csvpaths.results_manager.get_named_results_home(root_major)
         run_homes = [rh for rh, _ in self._discover_run_homes(root_major)]
         calls = self._combined_name_one_calls(name_one)
+        # added 2026-08-14 -- the same fix already made for CSVPATHS'
+        # _resolve_versions() and FILES' name_three chain: replaces
+        # nothing here (there was no equivalent "at least one recognized
+        # category" gate to redundantly cover), it CLOSES a real gap --
+        # confirmed via direct testing before this fix that
+        # "$acme.results.:last():webhooks()" (a function registered for
+        # a DIFFERENT datatype entirely, not even results-relevant)
+        # silently no-opped instead of raising, since every check below
+        # only ever looks for SPECIFIC recognized names, never rejects
+        # an unrecognized extra riding alongside them. Does not touch
+        # name_one's own PATH-BUILDING segments (literal/'*'/:name()) --
+        # those are already safe, validated separately and correctly by
+        # the shared ReferenceFinder3._compile_path_pattern().
+        for f in ReferenceFunctionFactory.build_chain(calls):
+            self._check_position(f, Reference3.NAME_ONE, Reference3.RESULTS)
         pointer = self._pointer_from_calls(calls)
         is_grouped = any(
             isinstance(c, FunctionCall3) and c.name == "all" for c in calls
@@ -571,23 +586,27 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
         calls = self._combined_name_one_calls(name_one)
         built = ReferenceFunctionFactory.build_chain(calls)
-        if any(f.name in ("all", "flatten", "manifest") for f in built):
-            # ':flatten()' would be a no-op here anyway -- traversal
-            # already pools every discovered run at the same (zero)
-            # level, unlike the literal-root case's plain bare pointer
-            # -- but rejecting it explicitly avoids silently applying
-            # the zero-level filter to what should be an any-depth
-            # query, rather than quietly doing the wrong thing.
+        # added 2026-08-14 -- replaces two separate, still-incomplete
+        # checks (an "all()/flatten()/manifest() by name" check and a
+        # separate field-function check) with one that actually covers
+        # every case this method's own docstring restriction implies
+        # ("only a bare pointer... is supported so far"). Confirmed via
+        # direct testing before this fix that neither replaced check
+        # actually caught everything it should have -- ':groups()' and
+        # ':from()' both silently swallowed instead of raising, the
+        # same bug class already fixed for the literal-root case above.
+        # ':flatten()' would have been a no-op here anyway (traversal
+        # already pools every discovered run at the same zero level),
+        # but rejecting it explicitly, like everything else that is not
+        # a pointer, still avoids silently applying that filter to what
+        # should be an any-depth query.
+        non_pointers = [f for f in built if f.ROLE != Function3.POINTER]
+        if non_pointers:
             raise ReferenceException3(
-                "ResultsReferenceFinder3 does not yet support ':all()', "
-                "':flatten()', or ':manifest()' combined with '*' "
-                "traversal -- only a bare pointer (:first()/:last()/"
-                ":index(n)) is supported so far."
-            )
-        if self._find_field_function_call(calls) is not None:
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 does not yet support a field-"
-                "accessor function combined with '*' traversal."
+                f"ResultsReferenceFinder3 does not yet support "
+                f":{non_pointers[0].name}() combined with '*' traversal -- "
+                "only a bare pointer (:first()/:last()/:index(n)) is "
+                "supported so far."
             )
         pointer = self._pointer_from_calls(calls)
         if pointer is None:

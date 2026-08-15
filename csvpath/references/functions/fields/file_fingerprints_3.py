@@ -22,3 +22,4 @@ class FileFingerprints3(Function3):
     KEY = {
         Reference3.RESULT: "file_fingerprints",
     }
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_THREE,)}

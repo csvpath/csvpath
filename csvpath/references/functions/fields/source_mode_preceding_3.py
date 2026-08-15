@@ -16,3 +16,4 @@ class SourceModePreceding3(Function3):
     KEY = {
         Reference3.RESULT: "source_mode_preceding",
     }
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_THREE,)}

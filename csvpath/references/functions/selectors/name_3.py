@@ -36,6 +36,12 @@ class Name3(Function3):
     # ReferenceFinder3._check_position().
     #
     POSITIONS = {
+        # FILES/RESULTS: name_one PATH-BUILDING position (a segment
+        # within name_one.path, alongside literal/'*' segments -- see
+        # the shared ReferenceFinder3._compile_path_pattern(), which
+        # already enforces this on its own; not part of the trailing
+        # function-chain _check_position() validates).
         Reference3.FILES: (Reference3.NAME_ONE,),
         Reference3.CSVPATHS: (),
+        Reference3.RESULTS: (Reference3.NAME_ONE,),
     }

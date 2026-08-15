@@ -24,6 +24,7 @@ class File3(Function3):
     DATATYPES = (Reference3.RESULTS,)
     ARG_TYPES = (str,)
     ARG_REQUIRED = True
+    POSITIONS = {Reference3.RESULTS: (Reference3.NAME_THREE,)}
 
     def check_valid(self) -> None:
         super().check_valid()
