@@ -275,11 +275,16 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
           FILES.
 
         Deliberately narrow, matching FILES' own scoping: combining '*'
-        traversal with :manifest()/a field-accessor function, or
-        name_three, is not yet supported -- raises clearly rather than
-        guessing (this also avoids a real bug: those code paths call
-        get_manifest_for_name(reference.root_major), which would break
-        if root_major were the '*' token instead of a literal name).
+        traversal with :manifest(), name_three, is not yet supported --
+        raises clearly rather than guessing. A registered field-accessor
+        function (e.g. :uuid(), :named_paths_name()) IS now supported
+        alongside the pointer (added 2026-08-18, mirroring RESULTS' own
+        equivalent fix) -- _extract_data() resolves it via
+        _group_manifest_entry(), which searches every group's manifest
+        for the matched uuid when root_major is the '*' token, instead
+        of the direct get_manifest_for_name(reference.root_major) call
+        every non-star call site uses (that direct call is what broke
+        for '*' before this fix -- no group is actually named "*").
         """
         name_one = reference.name_one
         if name_one.name_two is not None:
@@ -308,18 +313,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         built = ReferenceFunctionFactory.build_chain(calls)
         is_grouped = any(f.name == "all" for f in built)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
-        unsupported = (
-            any(f.name == "manifest" for f in built)
-            or any(f.name in ("from", "to") for f in built)
-            or self._find_field_function_call(calls) is not None
+        unsupported = any(f.name == "manifest" for f in built) or any(
+            f.name in ("from", "to") for f in built
         )
         if unsupported:
             raise ReferenceException3(
                 "CsvpathsReferenceFinder3 does not yet support combining "
-                "'*' traversal with :manifest(), ':from()'/':to()', or a "
-                "field-accessor function -- only a plain pointer "
-                "(:first()/:last()/:index(n)), optionally combined with "
-                ":all() for one result per group, is supported so far."
+                "'*' traversal with :manifest() or ':from()'/':to()' -- "
+                "only a plain pointer (:first()/:last()/:index(n)), "
+                "optionally combined with :all() for one result per "
+                "group, or a registered field-accessor function (e.g. "
+                ":uuid()), is supported so far."
             )
 
         if is_grouped:
@@ -398,11 +402,18 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # :manifest() riding alongside the real version-selecting
                 # pointer already in name_one's own combined chain (e.g.
                 # ":last():manifest()") -- give the matched version's own
-                # manifest entry, not the whole raw file.
-                manifest = self.csvpaths.paths_manager.get_manifest_for_name(
-                    reference.root_major
+                # manifest entry, not the whole raw file. root_major is
+                # never the '*' token here -- Rule 1b above already
+                # claims the star + bare-pointer-plus-manifest shape, and
+                # _query_star_traversal itself still rejects ':manifest()'
+                # combined with '*' traversal -- but routed through
+                # _group_manifest_entry() anyway for consistency with the
+                # field-accessor branch below, which genuinely does need
+                # to handle root_major being '*'.
+                _, entry = self._group_manifest_entry(
+                    reference.root_major, result.uuid
                 )
-                return self._find_manifest_entry_by_uuid(manifest, result.uuid)
+                return entry
         if kind == Reference3.METADATA_FIELD:
             # a registered field-accessor function (e.g. :uuid()) in the
             # same combined chain :manifest() itself rides in -- extracts
@@ -416,15 +427,22 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 )
                 key_path = function_cls.KEY.get(reference.datatype)
                 if function_cls.SOURCE == "definition":
+                    # a definition.json-backed field (e.g. :scripts(),
+                    # :webhooks()) is keyed by group NAME, not uuid --
+                    # _group_manifest_entry() re-derives which real group
+                    # this is even when root_major is the '*' token
+                    # (added 2026-08-18, see that method's own docstring).
+                    group_name, _ = self._group_manifest_entry(
+                        reference.root_major, result.uuid
+                    )
                     config = self.csvpaths.paths_manager.describer.get_config(
-                        reference.root_major
+                        group_name
                     )
                     entry = config.model_dump(exclude_none=True)
                 else:
-                    manifest = self.csvpaths.paths_manager.get_manifest_for_name(
-                        reference.root_major
+                    _, entry = self._group_manifest_entry(
+                        reference.root_major, result.uuid
                     )
-                    entry = self._find_manifest_entry_by_uuid(manifest, result.uuid)
                 return self._extract_field_value(entry, key_path)
         if kind != Reference3.FIRST_PARTY:
             raise ReferenceException3(
@@ -466,6 +484,30 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             return None
         statements = selected.get("named_paths") or []
         return statements[index]
+
+    def _group_manifest_entry(self, root_major, uuid: str) -> tuple:
+        """returns (group_name, manifest_entry) for the version matching
+        uuid. When root_major is the '*' token (a '*' traversal result --
+        added 2026-08-18) the matched version could belong to any named-
+        paths group, so every group's own manifest is searched for the
+        matching uuid -- uuids are assumed globally unique, the same
+        assumption _find_manifest_entry_by_uuid's every other call site
+        already makes. Otherwise root_major is a literal group name --
+        looked up directly, same as every call site used to do inline
+        before this helper existed. Acceptable performance-wise since a
+        csvpaths install typically has few named-paths groups, unlike
+        RESULTS' potentially-large run history (RESULTS did not need an
+        equivalent helper for this same reason -- see
+        ResultsReferenceFinder3._extract_data's own comment on why)."""
+        if isinstance(root_major, Star3):
+            for name in self.csvpaths.paths_manager.named_paths_names:
+                manifest = self.csvpaths.paths_manager.get_manifest_for_name(name)
+                entry = self._find_manifest_entry_by_uuid(manifest, uuid)
+                if entry is not None:
+                    return name, entry
+            return None, None
+        manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
+        return root_major, self._find_manifest_entry_by_uuid(manifest, uuid)
 
     def _resolve_versions(self, name_one, manifest: list) -> list:
         """name_one's sole job for csvpaths is selecting which

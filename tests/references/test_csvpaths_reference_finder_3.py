@@ -1,6 +1,7 @@
 import pytest
 
 from csvpath.references.csvpaths_reference_finder_3 import CsvpathsReferenceFinder3
+from csvpath.references.reference_3 import Star3
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.reference_results_3 import ReferenceResult3
@@ -37,12 +38,15 @@ GROUP_HOME = "named_paths/acme"
 
 
 class _FakePathsDescriber:
-    def __init__(self, definition: dict):
+    def __init__(self, definition: dict, definitions_by_name: dict | None = None):
         self._definition = definition
+        self._definitions_by_name = definitions_by_name
 
     def get_config(self, name):
         from csvpath.managers.paths.paths_descriptor import GroupConfig
 
+        if self._definitions_by_name is not None:
+            return GroupConfig(**self._definitions_by_name[name])
         return GroupConfig(**self._definition)
 
 
@@ -54,6 +58,7 @@ class _FakePathsManager:
         definition: dict | None = None,
         ledger=None,
         by_name: dict | None = None,
+        definitions_by_name: dict | None = None,
     ):
         self._manifest = manifest
         self._home = home
@@ -63,6 +68,11 @@ class _FakePathsManager:
         # which need more than one distinct named-paths group. Every
         # other test uses the single manifest above.
         self._by_name = by_name
+        # definitions_by_name: {name: definition} -- only used by '*'
+        # traversal tests for definition.json-backed fields (:scripts()
+        # etc), to prove the CORRECT group's own definition is read, not
+        # just any -- added 2026-08-18 alongside _group_manifest_entry().
+        self._definitions_by_name = definitions_by_name
 
     def get_manifest_for_name(self, name):
         if self._by_name is not None:
@@ -84,7 +94,7 @@ class _FakePathsManager:
 
     @property
     def describer(self):
-        return _FakePathsDescriber(self._definition)
+        return _FakePathsDescriber(self._definition, self._definitions_by_name)
 
 
 class _FakeConfig:
@@ -105,9 +115,16 @@ def _finder(
     inputs_csvpaths_path: str | None = None,
     ledger: list | None = None,
     by_name: dict | None = None,
+    definitions_by_name: dict | None = None,
 ) -> CsvpathsReferenceFinder3:
     csvpaths = _FakeCsvPaths(
-        _FakePathsManager(manifest, definition=definition, ledger=ledger, by_name=by_name),
+        _FakePathsManager(
+            manifest,
+            definition=definition,
+            ledger=ledger,
+            by_name=by_name,
+            definitions_by_name=definitions_by_name,
+        ),
         inputs_csvpaths_path=inputs_csvpaths_path,
     )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
@@ -615,6 +632,156 @@ class TestStarTraversalFlatten:
     def test_name_three_combined_with_traversal_is_not_yet_supported(self):
         with pytest.raises(ReferenceException3):
             _star_finder("$*.csvpaths.:last().0").query()
+
+
+class TestStarTraversalFieldAccessor:
+    # closes the gap ReferenceExpression3 needed -- a registered field-
+    # accessor function can now ride alongside the pointer in '*'
+    # traversal (added 2026-08-18), resolving from whichever real group
+    # matched via _group_manifest_entry(), which re-derives the matched
+    # group's own name/manifest from the uuid the pointer already
+    # selected -- unlike RESULTS, CSVPATHS genuinely needs this, since
+    # get_manifest_for_name(reference.root_major) breaks when
+    # root_major is the '*' token (no group is actually named "*").
+    def test_flatten_shape_with_a_field_accessor_now_works(self):
+        by_name = {
+            "alpha": [
+                {
+                    "group_file_path": "named_paths/alpha/group.csvpath",
+                    "uuid": "a-v1",
+                    "time": "2026-01-01T00:00:00+00:00",
+                    "named_paths_name": "alpha",
+                }
+            ],
+            "beta": [
+                {
+                    "group_file_path": "named_paths/beta/group.csvpath",
+                    "uuid": "b-v1",
+                    "time": "2026-01-03T00:00:00+00:00",
+                    "named_paths_name": "beta",
+                }
+            ],
+        }
+        results = _finder(
+            "$*.csvpaths.:last():named_paths_name()", by_name=by_name
+        ).resolve()
+        assert len(results.results) == 1
+        assert results.results[0].uuid == "b-v1"
+        assert results.results[0].data == "beta"
+
+    def test_grouped_shape_with_a_field_accessor_now_works(self):
+        by_name = {
+            "alpha": [
+                {
+                    "group_file_path": "named_paths/alpha/group.csvpath",
+                    "uuid": "a-v1",
+                    "time": "2026-01-01T00:00:00+00:00",
+                    "named_paths_name": "alpha",
+                },
+                {
+                    "group_file_path": "named_paths/alpha/group.csvpath",
+                    "uuid": "a-v2",
+                    "time": "2026-01-02T00:00:00+00:00",
+                    "named_paths_name": "alpha",
+                },
+            ],
+            "beta": [
+                {
+                    "group_file_path": "named_paths/beta/group.csvpath",
+                    "uuid": "b-v1",
+                    "time": "2026-01-03T00:00:00+00:00",
+                    "named_paths_name": "beta",
+                }
+            ],
+        }
+        results = _finder(
+            "$*.csvpaths.:all():last():named_paths_name()", by_name=by_name
+        ).resolve()
+        assert len(results.results) == 2
+        assert {r.data for r in results.results} == {"alpha", "beta"}
+        assert {r.uuid for r in results.results} == {"a-v2", "b-v1"}
+
+    def test_field_accessor_exemption_does_not_let_manifest_through_too(self):
+        # a field accessor is now exempt from the unsupported check, but
+        # a genuinely unsupported extra (:manifest()) riding alongside
+        # it is still rejected -- the exemption is narrow, not "anything
+        # goes once one field accessor is present". A third function
+        # also pushes this reference past _pointer_before_manifest's own
+        # exactly-two-functions Rule 1b shape, so it genuinely reaches
+        # _query_star_traversal's guard rather than being intercepted
+        # earlier.
+        with pytest.raises(ReferenceException3):
+            _star_finder("$*.csvpaths.:last():named_paths_name():manifest()").query()
+
+    def test_definition_sourced_field_reads_the_matched_groups_own_config(self):
+        # :scripts() (SOURCE == "definition") is the other branch
+        # _group_manifest_entry() serves -- it needs the matched GROUP
+        # NAME, not just its manifest entry, to call describer.get_
+        # config(name). Proves the correct group's own definition.json
+        # is read, not alpha's by accident, by giving each group a
+        # different "scripts" config and asserting on beta's value.
+        by_name = {
+            "alpha": [
+                {
+                    "group_file_path": "named_paths/alpha/group.csvpath",
+                    "uuid": "a-v1",
+                    "time": "2026-01-01T00:00:00+00:00",
+                }
+            ],
+            "beta": [
+                {
+                    "group_file_path": "named_paths/beta/group.csvpath",
+                    "uuid": "b-v1",
+                    "time": "2026-01-03T00:00:00+00:00",
+                }
+            ],
+        }
+        definitions_by_name = {
+            "alpha": {"scripts": {"on_complete_all": "alpha_notify.py"}},
+            "beta": {"scripts": {"on_complete_all": "beta_notify.py"}},
+        }
+        results = _finder(
+            "$*.csvpaths.:last():scripts()",
+            by_name=by_name,
+            definitions_by_name=definitions_by_name,
+        ).resolve()
+        assert len(results.results) == 1
+        assert results.results[0].uuid == "b-v1"
+        assert results.results[0].data == {"on_complete_all": "beta_notify.py"}
+
+
+class TestGroupManifestEntry:
+    # _group_manifest_entry() -- added 2026-08-18 alongside the field-
+    # accessor exemption above, so both the METADATA_FIELD manifest-
+    # sourced branch and the :scripts()/:webhooks()/:transfers()/
+    # :destinations() definition-sourced branch can re-derive which real
+    # group a star-traversal result came from, tested directly here
+    # rather than only indirectly through resolve().
+    def test_star_root_major_finds_the_correct_group(self):
+        by_name = {
+            "alpha": [{"group_file_path": "x", "uuid": "a-v1"}],
+            "beta": [{"group_file_path": "y", "uuid": "b-v1"}],
+        }
+        finder = _finder("$*.csvpaths.:last()", by_name=by_name)
+        name, entry = finder._group_manifest_entry(Star3(), "b-v1")
+        assert name == "beta"
+        assert entry["uuid"] == "b-v1"
+
+    def test_star_root_major_with_unknown_uuid_gives_none_none(self):
+        by_name = {"alpha": [{"group_file_path": "x", "uuid": "a-v1"}]}
+        finder = _finder("$*.csvpaths.:last()", by_name=by_name)
+        name, entry = finder._group_manifest_entry(Star3(), "missing-uuid")
+        assert name is None
+        assert entry is None
+
+    def test_literal_root_major_looks_up_directly_no_group_search(self):
+        # a literal root_major never needs to search every group -- this
+        # mirrors what every non-star call site did inline before this
+        # helper existed.
+        finder = _finder("$acme.csvpaths.:last()")
+        name, entry = finder._group_manifest_entry("acme", "v1-uuid")
+        assert name == "acme"
+        assert entry["uuid"] == "v1-uuid"
 
 
 class TestStarTraversalGroup:
