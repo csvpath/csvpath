@@ -229,16 +229,24 @@ class TestConstruction:
 # ---- end-to-end, real Finder plumbing -- David's own "orders" example
 # (references_notes/notes/reference_expressions_notes.txt), using literal
 # (non-'*') root_major on both sides, via real on-disk fixtures matching
-# test_results_reference_finder_3.py's own established pattern. '*'
-# traversal combined with a trailing field accessor is not supported by
-# either CsvpathsReferenceFinder3 or ResultsReferenceFinder3 today
-# (confirmed via direct testing while building this -- see
-# TestStarTraversalPlusFieldAccessorIsNotYetSupported below) -- a real,
-# separate limitation on the Finders themselves, not something
-# ReferenceExpression3 needs to work around. Sub-expressions (nested
-# ReferenceExpression3, UNION-ing two literal per-group queries) stand in
-# for "search every group" here instead -- exactly the shape a caller CAN
-# write today when the candidate group names are already known.
+# test_results_reference_finder_3.py's own established pattern.
+#
+# UPDATED 2026-08-18 (PR #253): '*' traversal combined with a BARE field
+# accessor (riding alongside a plain pointer or ':all()') now works for
+# both CsvpathsReferenceFinder3 and ResultsReferenceFinder3 -- see
+# TestStarTraversalPlusFieldAccessorNowWorks below. The "orders" example
+# ITSELF still cannot be rewritten to use real '*' traversal on either
+# side, though, because it specifically needs a field accessor combined
+# with ':having()' (CSVPATHS' right side -- "every group with an
+# 'orders' statement") or ':flatten()' (RESULTS' left side -- "every
+# run, any depth") -- neither of those is a bare pointer/':all()', and
+# neither is supported in '*' traversal yet (confirmed live -- see
+# TestHavingAndFlattenPlusStarTraversalStillNotSupported below). #253
+# only closed the narrower "plain field accessor alongside a pointer/
+# :all()" gap it was scoped to, not this one. Sub-expressions (nested
+# ReferenceExpression3, UNION-ing two literal per-group queries) still
+# stand in for "search every group" here -- exactly the shape a caller
+# CAN write today when the candidate group names are already known.
 #
 GROUPA_MANIFEST = [
     {
@@ -467,16 +475,66 @@ class TestOrdersExampleEndToEnd:
         assert len(expr3.resolve()) == 5
 
 
-class TestStarTraversalPlusFieldAccessorIsNotYetSupported:
-    # a real, pre-existing limitation on BOTH Finders (not something
-    # ReferenceExpression3 introduces or needs to fix) -- confirmed via
-    # direct testing while building this class: neither
-    # CsvpathsReferenceFinder3 nor ResultsReferenceFinder3 support '*'
-    # traversal combined with a trailing field accessor yet, which blocks
-    # the most literal phrasing of "every group"/"every run" without
-    # already knowing the candidate names -- see the module docstring
-    # above for how the "orders" tests work around it today.
-    def test_csvpaths_star_traversal_with_field_accessor_raises(self, orders_archive):
+class TestStarTraversalPlusFieldAccessorNowWorks:
+    # PR #253 (2026-08-18) fixed the Finder-level gap this class used to
+    # document as unsupported: a run/version-level field accessor can now
+    # ride alongside a bare pointer or ':all()' in '*' traversal, for
+    # both CsvpathsReferenceFinder3 (via the new _group_manifest_entry()
+    # helper) and ResultsReferenceFinder3 (already group-independent once
+    # the guard was loosened). Already covered directly at the Finder
+    # level in test_csvpaths_reference_finder_3.py/
+    # test_results_reference_finder_3.py -- proven here too since this is
+    # the actual integration point ReferenceExpression3 needs: a plain
+    # reference STRING with root_major='*' now resolves successfully all
+    # the way through ReferenceFinderFactory3 -> the Finder -> resolve(),
+    # not just when hand-built directly against the Finder class.
+    def test_csvpaths_star_traversal_with_field_accessor_resolves(
+        self, orders_archive
+    ):
+        expr = ReferenceExpression3(
+            left="$*.csvpaths.:all():named_paths_name()",
+            op=ReferenceExpression3.UNION,
+            right="$*.csvpaths.:all():named_paths_name()",
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert sorted(r.data for r in result.results) == ["groupa", "groupb"]
+
+    def test_results_star_traversal_with_field_accessor_resolves(
+        self, orders_archive
+    ):
+        expr = ReferenceExpression3(
+            left="$*.results.:last():named_paths_name()",
+            op=ReferenceExpression3.UNION,
+            right="$groupa.results.:flatten():named_paths_name()",
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        # groupB's b3 (2026-01-03) is the true global-latest run -- '*'
+        # traversal pools/sorts across both groups by real timestamp, so
+        # this only comes back correctly if the star-rooted side above
+        # actually resolved through traversal rather than raising.
+        assert "b3" in {r.uuid for r in result.results}
+        assert {r.data for r in result.results} == {"groupa", "groupb"}
+
+
+class TestHavingAndFlattenPlusStarTraversalStillNotSupported:
+    # a separate, narrower, still-open gap -- NOT fixed by #253, and not
+    # the same thing TestStarTraversalPlusFieldAccessorNowWorks above
+    # proves works now. #253 only exempted a field accessor riding
+    # alongside a bare pointer/':all()' from the '*'-traversal guard;
+    # ':having()' (CSVPATHS) and ':flatten()' (RESULTS) are neither of
+    # those, and neither is recognized by _query_star_traversal at all --
+    # confirmed live before writing these: the CSVPATHS case now raises
+    # "requires a pointer... use :all() instead" (having is silently
+    # neither a pointer nor :all(), so it falls through to that
+    # unrelated check) and the RESULTS case still raises its own
+    # explicit ":flatten() combined with '*' traversal" rejection. This
+    # is exactly why the "orders" example above still needs the sub-
+    # expression workaround on both sides, even after #253.
+    def test_csvpaths_having_combined_with_traversal_still_raises(
+        self, orders_archive
+    ):
         expr = ReferenceExpression3(
             left="$*.csvpaths.:having(\"orders\"):named_paths_name()",
             op=ReferenceExpression3.UNION,
@@ -486,7 +544,9 @@ class TestStarTraversalPlusFieldAccessorIsNotYetSupported:
         with pytest.raises(ReferenceException3):
             expr.resolve()
 
-    def test_results_star_traversal_with_field_accessor_raises(self, orders_archive):
+    def test_results_flatten_combined_with_traversal_still_raises(
+        self, orders_archive
+    ):
         expr = ReferenceExpression3(
             left="$*.results.:flatten():named_paths_name()",
             op=ReferenceExpression3.UNION,
