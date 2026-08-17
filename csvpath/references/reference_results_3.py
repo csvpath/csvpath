@@ -138,6 +138,26 @@ class ReferenceResults3:
         ]
         return ReferenceResults3(results=selected)
 
+    def deduplicated(self) -> "ReferenceResults3":
+        """a new ReferenceResults3 with duplicate entries (by
+        ReferenceResult3's own __eq__ -- path+uuid+data+identity)
+        collapsed, first occurrence wins, order preserved -- added
+        2026-08-17 for ReferenceExpression3's own UNION, which combines
+        two datatypes' native results with no join-key logic at all
+        (see references_notes/notes/reference_expressions_notes.txt's
+        own ARCHITECTURE section: UNION never looks at a resolved field
+        value, only at whether two results are already the same
+        result). ReferenceResult3 has no __hash__ (defining __eq__
+        without one already makes it unhashable, the correct default --
+        see ReferenceResult3.data, a mutable field, which is exactly
+        why), so this is a linear scan per entry, not a hash-set
+        dedup -- fine at the result-set sizes this operates on."""
+        seen: list = []
+        for result in self._results:
+            if result not in seen:
+                seen.append(result)
+        return ReferenceResults3(results=seen)
+
     def remove(self, result: ReferenceResult3) -> None:
         """drops one result in place -- for the "iterate, decide, trim"
         workflow: walk the results, remove the ones you do not want,
