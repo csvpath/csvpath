@@ -519,16 +519,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
     def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
         """root_major == "*" -- query across every named-results group,
-        not just one. Deliberately the narrowest '*' traversal of the
-        three datatypes: only a bare pointer (:first()/:last()/
-        :index(n)), no literal/'*' path narrowing, no name_three, no
-        ':all()', no :manifest()/a field-accessor function. A bare
-        pointer here means the same zero-level-only ("direct children
-        of each run's own group's home") restriction the literal-root
-        query() case now applies -- settled 2026-08-10, see that
-        method's own comments and :flatten() for the any-depth case.
-        Two things make the wider cases genuinely harder here, not just
-        unbuilt yet (unlike files/csvpaths, where the same shapes were
+        not just one. Deliberately narrow: only a bare pointer
+        (:first()/:last()/:index(n)), optionally combined with a run-
+        level field-accessor function (e.g. :uuid(), :named_paths_name()
+        -- added 2026-08-18, see this method's own field_call comment
+        below) -- still no literal/'*' path narrowing, no name_three, no
+        ':all()', no :manifest(). A bare pointer here means the same
+        zero-level-only ("direct children of each run's own group's
+        home") restriction the literal-root query() case now applies --
+        settled 2026-08-10, see that method's own comments and
+        :flatten() for the any-depth case. Two things make the
+        remaining wider cases genuinely harder here, not just unbuilt
+        yet (unlike files/csvpaths, where the same shapes were
         straightforward generalizations):
 
         - RESULTS' own ':all()' already means something different --
@@ -600,13 +602,36 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # but rejecting it explicitly, like everything else that is not
         # a pointer, still avoids silently applying that filter to what
         # should be an any-depth query.
-        non_pointers = [f for f in built if f.ROLE != Function3.POINTER]
+        # added 2026-08-18 -- a run-level field accessor (e.g. :uuid(),
+        # :named_paths_name()) is now allowed alongside the pointer:
+        # _results_for_run() (below) already builds each candidate's
+        # ReferenceResult3 from its own real run directory, independent
+        # of any group-name context, so resolving a field from it needs
+        # nothing star-traversal-specific -- see _extract_data()'s own
+        # comment on why this "just works" once let through. Previously
+        # rejected here alongside :all()/:flatten()/:groups()/:manifest()/
+        # ':from()'/':to()', which is still narrower than that reasoning
+        # required -- David: this gap "invalidates a high-value class of
+        # scenarios" for reference expressions, which need exactly this
+        # (a scalar per matched candidate, searched across every group)
+        # to compare RESULTS against CSVPATHS/FILES at all.
+        # _find_field_function_call(built), not calls -- calls holds raw
+        # FunctionCall3 parse shapes, built holds the real constructed
+        # Function3 instances non_pointers iterates below; comparing a
+        # raw-list match against a built-list entry via "is" would never
+        # succeed, since they are different objects even for "the same"
+        # function.
+        field_call = self._find_field_function_call(built)
+        non_pointers = [
+            f for f in built if f.ROLE != Function3.POINTER and f is not field_call
+        ]
         if non_pointers:
             raise ReferenceException3(
                 f"ResultsReferenceFinder3 does not yet support "
                 f":{non_pointers[0].name}() combined with '*' traversal -- "
-                "only a bare pointer (:first()/:last()/:index(n)) is "
-                "supported so far."
+                "only a bare pointer (:first()/:last()/:index(n)), "
+                "optionally combined with a run-level field-accessor "
+                "function (e.g. :uuid()), is supported so far."
             )
         pointer = self._pointer_from_calls(calls)
         if pointer is None:
@@ -649,7 +674,28 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
-        if isinstance(reference.root_major, Star3):
+        name_one_calls = self._combined_name_one_calls(reference.name_one)
+        has_manifest = any(
+            seg.contains_function_named("manifest")
+            for seg in name_one_calls
+            if isinstance(seg, FunctionCall3)
+        )
+        if isinstance(reference.root_major, Star3) and has_manifest:
+            # Rule 1a/1b -- the bare/pointer-plus-":manifest()" global-
+            # ledger shapes, both handled entirely by query()'s own
+            # earlier branches (see that method) -- narrowed 2026-08-18
+            # to require has_manifest specifically, not just root_major
+            # being '*': previously this branch fired for ANY star-
+            # rooted reference unconditionally, which (a) was never
+            # actually exercised by a real test for the plain-bare-
+            # pointer-no-manifest case, and (b) would have silently
+            # given the wrong answer there (the global ledger entry,
+            # not the run's own content) once _query_star_traversal
+            # started supporting a plain field accessor too. A star-
+            # traversal result with neither :manifest() nor a field
+            # accessor now correctly falls through to the same "no
+            # single unambiguous payload" rule the literal-root case
+            # already uses at the bottom of this method.
             if result.uuid is not None:
                 # Rule 1b -- a pointer already reduced the global ledger
                 # to one entry in query(); re-derive it by run_uuid
@@ -666,12 +712,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # has_manifest branch below does that join, but only
             # because it deals with a run directory, not a file).
             return self._read_well_known_json(result.path)
-        name_one_calls = self._combined_name_one_calls(reference.name_one)
-        has_manifest = any(
-            seg.contains_function_named("manifest")
-            for seg in name_one_calls
-            if isinstance(seg, FunctionCall3)
-        )
         if has_manifest:
             # :manifest() rides beside the run-selecting pointer in
             # name_one (e.g. "$acme.results.customers/2025:first()
@@ -712,6 +752,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # "no name_three" restriction as :manifest(), for the same
             # reason: asking for both a run-level field and a specific
             # instance at once is not a supported combination.
+            #
+            # also correctly serves root_major='*' now (added
+            # 2026-08-18, once _query_star_traversal started allowing a
+            # field accessor through) with no extra logic needed here --
+            # result.path is already the matched run's own real
+            # directory regardless of which group it came from (see
+            # _results_for_run), so reading its own manifest.json needs
+            # no group-name context at all, unlike CSVPATHS' equivalent
+            # fix, which does.
             if reference.name_three is not None:
                 raise ReferenceException3(
                     "ResultsReferenceFinder3 does not support combining "

@@ -1791,6 +1791,65 @@ class TestStarTraversal:
         with pytest.raises(ReferenceException3):
             _finder("$*.results.:last().0", two_group_archive).query()
 
+    def test_field_accessor_combined_with_star_traversal_now_works(self, tmp_path):
+        # closes the gap ReferenceExpression3 needed -- a run-level
+        # field accessor can now ride alongside the pointer in '*'
+        # traversal, resolving from whichever real run matched,
+        # regardless of which group it came from (see _extract_data's
+        # own comment on why no group-name context is needed for
+        # RESULTS, unlike CSVPATHS' equivalent fix).
+        acme_base = tmp_path / "acme"
+        acme_run1 = _make_run(acme_base, "2026-01-01_00-00-00", "acme-run1-uuid", {})
+        _write_json(
+            Path(acme_run1) / "manifest.json",
+            {"run_uuid": "acme-run1-uuid", "named_paths_name": "acme"},
+        )
+        widgets_base = tmp_path / "widgets"
+        widgets_run1 = _make_run(
+            widgets_base, "2026-01-03_00-00-00", "widgets-run1-uuid", {}
+        )
+        _write_json(
+            Path(widgets_run1) / "manifest.json",
+            {"run_uuid": "widgets-run1-uuid", "named_paths_name": "widgets"},
+        )
+        _write_archive_manifest_multi(
+            tmp_path,
+            {"widgets": [widgets_run1], "acme": [acme_run1]},
+        )
+        results = _finder(
+            "$*.results.:last():named_paths_name()", str(tmp_path)
+        ).resolve()
+        assert len(results.results) == 1
+        assert results.results[0].uuid == "widgets-run1-uuid"
+        assert results.results[0].data == "widgets"
+
+    def test_field_accessor_exemption_does_not_let_a_second_extra_through(
+        self, two_group_archive
+    ):
+        # a field accessor is now exempt from the non-pointer rejection,
+        # but a genuinely unsupported extra (e.g. :groups()) riding
+        # alongside it is still rejected -- proves the exemption is
+        # narrowly scoped to the one matched field call, not "anything
+        # goes once one field accessor is present".
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$*.results.:last():named_paths_name():groups()",
+                two_group_archive,
+            ).query()
+
+    def test_bare_pointer_resolve_with_no_manifest_and_no_field_accessor_gives_none(
+        self, two_group_archive
+    ):
+        # previously-latent bug: _extract_data's star-traversal branch
+        # checked isinstance(root_major, Star3) unconditionally, so a
+        # plain resolve() with no :manifest() and no field accessor
+        # incorrectly took the global-ledger-by-uuid path (Rule 1b)
+        # instead of falling through to "no single unambiguous payload"
+        # -- confirmed via grep that no existing test called resolve()
+        # on a bare star-traversal reference before this fix.
+        result = _finder("$*.results.:last()", two_group_archive).resolve()
+        assert result.results[0].data is None
+
 
 class TestPositionEnforcement:
     # ReferenceFinder3._check_position() -- added 2026-08-14, the
