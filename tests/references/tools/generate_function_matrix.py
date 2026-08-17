@@ -110,20 +110,42 @@ def _unit_test_path(function_cls) -> Path:
 
 def _integration_hits(name: str, datatype: str) -> bool:
     # require both a '$' (a real reference string's own marker) and
-    # ':name(' on the SAME line -- a bare ':from()'/':to()' mention in a
-    # comment/docstring (extremely common in this codebase) would
-    # otherwise false-positive as "tested" with a plain ':name\(' search.
-    # Deliberately NOT excluding quote characters between the two: a
-    # nested string arg (e.g. ':name("orders.csv").:from(1):to(3)') puts
-    # quotes between '$' and a LATER function call on the same line, so
-    # excluding them would wrongly break the match at the first nested arg.
-    pattern = re.compile(r"\$.*:" + re.escape(name) + r"\(")
+    # ':name(' within a short span of each other -- a bare ':from()'/
+    # ':to()' mention in a comment/docstring (extremely common in this
+    # codebase) would otherwise false-positive as "tested" with a plain
+    # ':name\(' search. Deliberately NOT excluding quote characters in
+    # that span: a nested string arg (e.g. ':name("orders.csv").
+    # :from(1):to(3)') puts quotes between '$' and a LATER function call,
+    # so excluding them would wrongly break the match at the first
+    # nested arg. Spans a short window ACROSS lines, non-greedy, rather
+    # than requiring the same line -- a reference string broken across
+    # two lines by ordinary Python string-literal concatenation (e.g.
+    # ':idchain()' in a real test, confirmed 2026-08-16: '$acme...'
+    # then, on the next line, ':errors(:idchain(...))') would otherwise
+    # be invisible to this check. 200 characters is generous for that
+    # (real split points are a handful of characters apart) while still
+    # far short of the gap between one test's own reference strings and
+    # an unrelated LATER test's, which would need this to false-match
+    # across tests instead of within one.
+    #
+    # KNOWN, NOT FIXED HERE: a reference string built via an f-string or
+    # a helper that inserts the function name as a variable (e.g.
+    # "f'$widgets.results.:first():{fn}()'", or a resolve(fn)-style
+    # helper called as resolve("status")) is invisible to ANY text
+    # search, since the literal text ':status(' never appears in the
+    # source at all -- confirmed 2026-08-16 this accounted for most of
+    # a "15 gaps" report that was actually only 2 real gaps. A
+    # **MISSING** flag from this script is a prompt to go look, not
+    # proof of an actual gap -- see this function's own limitation
+    # before trusting it at face value.
+    pattern = re.compile(
+        r"\$.{0,200}?:" + re.escape(name) + r"\(", re.DOTALL
+    )
     for path in INTEGRATION_TEST_FILES[datatype]:
         if not path.exists():
             continue
-        for line in path.read_text().splitlines():
-            if pattern.search(line):
-                return True
+        if pattern.search(path.read_text()):
+            return True
     return False
 
 

@@ -1416,6 +1416,59 @@ class TestFieldAccessorFunctions:
         ).resolve()
         assert result.results[0].data == instance_manifest_path
 
+    def test_named_results_name_shared_key_both_scopes(self, tmp_path):
+        # same literal key ("named_results_name") at both scopes -- see
+        # run_uuid_3.py's own docstring for why a shared value still
+        # needs two KEY entries, one per scope the finder dispatches on.
+        base = tmp_path / "widgets"  # direct child of the group's own home
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json",
+            {"run_uuid": "run-uuid", "named_results_name": "widgets"},
+        )
+        _write_json(
+            run_dir / "company_names" / "manifest.json",
+            {"uuid": "inst-uuid", "named_results_name": "widgets"},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        run_name = _finder(
+            "$widgets.results.:first():named_results_name()", str(tmp_path)
+        ).resolve()
+        assert run_name.results[0].data == "widgets"
+
+        instance_name = _finder(
+            "$widgets.results.:first().company_names:named_results_name()",
+            str(tmp_path),
+        ).resolve()
+        assert instance_name.results[0].data == "widgets"
+
+    def test_time_at_run_and_instance_scope(self, tmp_path):
+        # same literal key ("time") at both scopes -- confirmed real,
+        # written fields in results_registrar.py/result_registrar.py:
+        # run start time, and this one statement's own start time.
+        base = tmp_path / "widgets"  # direct child of the group's own home
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json",
+            {"run_uuid": "run-uuid", "time": "2026-01-01T00:00:00+00:00"},
+        )
+        _write_json(
+            run_dir / "company_names" / "manifest.json",
+            {"uuid": "inst-uuid", "time": "2026-01-01T00:00:05+00:00"},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        run_time = _finder(
+            "$widgets.results.:first():time()", str(tmp_path)
+        ).resolve()
+        assert run_time.results[0].data == "2026-01-01T00:00:00+00:00"
+
+        instance_time = _finder(
+            "$widgets.results.:first().company_names:time()", str(tmp_path)
+        ).resolve()
+        assert instance_time.results[0].data == "2026-01-01T00:00:05+00:00"
+
 
 class TestWellKnownFileAccessors:
     # :errors()/:vars()/:meta() resolve to parsed JSON; :data()/
