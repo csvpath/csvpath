@@ -807,6 +807,98 @@ class TestStarTraversalGroup:
         assert set(results.uuids) == {"a-v1", "a-v2", "b-v1"}
 
 
+class TestStarTraversalHaving:
+    # ':having("identity")' combined with '*' traversal -- added
+    # 2026-08-18, alongside RESULTS' own ':flatten()' fix. Closes a
+    # real, previously-latent bug, not just a missing feature: before
+    # this fix ':having()' was never checked for at all in
+    # _query_star_traversal -- neither rejected as unsupported NOR
+    # applied -- so it was silently DROPPED (confirmed live before
+    # writing these: "$*.csvpaths.:all():having('orders')" returned
+    # EVERY group's every version, unfiltered, not just the matching
+    # ones).
+    HAVING_BY_NAME = {
+        "alpha": [
+            {
+                "group_file_path": "named_paths/alpha/group.csvpath",
+                "uuid": "a-v1",
+                "time": "2026-01-01T00:00:00+00:00",
+                "named_paths_identities": ["orders"],
+                "named_paths_name": "alpha",
+            },
+            {
+                "group_file_path": "named_paths/alpha/group.csvpath",
+                "uuid": "a-v2",
+                "time": "2026-01-02T00:00:00+00:00",
+                "named_paths_identities": ["other"],
+                "named_paths_name": "alpha",
+            },
+        ],
+        "beta": [
+            {
+                "group_file_path": "named_paths/beta/group.csvpath",
+                "uuid": "b-v1",
+                "time": "2026-01-03T00:00:00+00:00",
+                "named_paths_identities": ["other"],
+                "named_paths_name": "beta",
+            }
+        ],
+    }
+
+    def test_grouped_having_filters_out_non_matching_versions(self):
+        # the actual bug this closes: without the fix, this returned all
+        # three versions, unfiltered -- only a-v1 actually has "orders".
+        results = _finder(
+            "$*.csvpaths.:all():having(\"orders\")", by_name=self.HAVING_BY_NAME
+        ).query()
+        assert results.uuids == ["a-v1"]
+
+    def test_grouped_having_with_pointer_gives_one_per_matching_group(self):
+        # beta has no version with "orders" at all -- it contributes
+        # nothing, not an empty/None placeholder.
+        results = _finder(
+            "$*.csvpaths.:having(\"orders\"):all():last()",
+            by_name=self.HAVING_BY_NAME,
+        ).query()
+        assert results.uuids == ["a-v1"]
+
+    def test_flatten_having_pools_filtered_versions_across_groups(self):
+        # not grouped (no ':all()') -- filtered pool across every group,
+        # reduced by the pointer, same as the ungrouped/flatten mode
+        # already does for the unfiltered case.
+        results = _finder(
+            "$*.csvpaths.:having(\"orders\"):last()", by_name=self.HAVING_BY_NAME
+        ).query()
+        assert results.uuids == ["a-v1"]
+
+    def test_having_combined_with_a_field_accessor_also_works(self):
+        results = _finder(
+            "$*.csvpaths.:having(\"orders\"):all():last():named_paths_name()",
+            by_name=self.HAVING_BY_NAME,
+        ).resolve()
+        assert len(results.results) == 1
+        assert results.results[0].uuid == "a-v1"
+        assert results.results[0].data == "alpha"
+
+    def test_having_with_no_matching_version_anywhere_is_empty(self):
+        results = _finder(
+            "$*.csvpaths.:all():having(\"nope\")", by_name=self.HAVING_BY_NAME
+        ).query()
+        assert results.results == []
+
+    def test_bare_having_alone_still_requires_a_pointer_or_all(self):
+        # deliberately unchanged -- a bare ':having()' with no pointer
+        # and no ':all()' does not get a new "unreduced flatten" meaning
+        # of its own; it falls into the same pre-existing "requires a
+        # pointer" rule flatten mode already enforces for a plain bare
+        # pointer, consistent with FLATTEN never having an "unreduced"
+        # form for csvpaths' own star traversal.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$*.csvpaths.:having(\"orders\")", by_name=self.HAVING_BY_NAME
+            ).query()
+
+
 class TestDefinitionFunction:
     # ":definition()" mirrors ":manifest()" exactly -- same bare, sole-
     # content shape, same query()/_extract_data() routing -- except

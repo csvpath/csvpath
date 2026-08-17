@@ -375,11 +375,66 @@ class TestFlatten:
                 '$acme.results.beta/:flatten("x"):last()', str(tmp_path)
             ).query()
 
-    def test_flatten_combined_with_traversal_is_not_yet_supported(
+    def test_flatten_combined_with_traversal_pools_any_depth_across_every_group(
+        self, tmp_path
+    ):
+        # closes a real gap (fixed 2026-08-18, alongside CSVPATHS'
+        # analogous ':having()' fix) -- unlike two_group_archive
+        # (deliberately both-flat, to prove cross-group pooling by
+        # time), this fixture has genuine depth variance -- acme's
+        # latest run is nested, widgets' only run is flat -- proving
+        # ':flatten()' finds the true global-latest regardless of depth
+        # AND regardless of which group it belongs to.
+        acme_base = tmp_path / "acme"
+        acme_flat = _make_run(acme_base, "2026-01-01_00-00-00", "acme-flat", {})
+        acme_deep = _make_run(
+            acme_base / "customers" / "2025", "2026-01-05_00-00-00", "acme-deep", {}
+        )
+        widgets_base = tmp_path / "widgets"
+        widgets_run = _make_run(
+            widgets_base, "2026-01-03_00-00-00", "widgets-run", {}
+        )
+        _write_archive_manifest_multi(
+            tmp_path,
+            {"acme": [acme_flat, acme_deep], "widgets": [widgets_run]},
+        )
+        # a bare pointer (zero-level only) misses acme's own deep run
+        # entirely and gives widgets' instead -- confirms ':flatten()'
+        # below is doing real work, not just passing through unchanged.
+        bare = _finder("$*.results.:last()", str(tmp_path)).query()
+        assert bare.results[0].uuid == "widgets-run"
+
+        flattened = _finder(
+            "$*.results.:flatten():last()", str(tmp_path)
+        ).query()
+        assert flattened.results[0].uuid == "acme-deep"
+
+    def test_flatten_combined_with_a_field_accessor_also_works(self, tmp_path):
+        base = tmp_path / "acme"
+        deep_run = _make_run(
+            base / "customers" / "2025", "2026-01-01_00-00-00", "deep-uuid", {}
+        )
+        _write_json(
+            Path(deep_run) / "manifest.json",
+            {"run_uuid": "deep-uuid", "named_paths_name": "acme"},
+        )
+        _write_archive_manifest(tmp_path, "acme", [deep_run])
+        results = _finder(
+            "$*.results.:flatten():last():named_paths_name()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].uuid == "deep-uuid"
+        assert results.results[0].data == "acme"
+
+    def test_all_grouping_combined_with_traversal_is_still_not_yet_supported(
         self, two_group_archive
     ):
+        # unlike ':flatten()', ':all()' at star-traversal's own position
+        # still means something else entirely (RESULTS' own name_three
+        # ':all()', or the literal-root one-level grouping) -- this
+        # remains unsupported, a real, separate, still-open restriction,
+        # not loosened by this fix.
         with pytest.raises(ReferenceException3):
-            _finder("$*.results.:flatten():last()", two_group_archive).query()
+            _finder("$*.results.:all():last()", two_group_archive).query()
 
 
 class TestAllGrouping:

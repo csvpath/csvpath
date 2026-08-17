@@ -26,10 +26,12 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 #    two exceptions carved out before general traversal (Rule 1a/1b, a
 #    bare/ordinal-indexed :manifest() reads the global archive ledger); any
 #    other use of "*" goes through _query_star_traversal(), which is
-#    deliberately the narrowest of the three datatypes' traversals (bare
-#    pointer only, no path narrowing/:all()/name_three/:manifest()/field
-#    accessors) -- see that method's own docstring for why the wider cases
-#    are genuinely harder here, not just unbuilt yet.
+#    deliberately the narrowest of the three datatypes' traversals -- a bare
+#    pointer, optionally combined with ':flatten()' and/or a run-level field-
+#    accessor function (both added 2026-08-18), but still no path narrowing/
+#    :all()/name_three/:manifest() -- see that method's own docstring for
+#    why the remaining wider cases are genuinely harder here, not just
+#    unbuilt yet.
 #  - name_one has TWO legal shapes, matching the spec's own examples
 #    ("$acme.results.:all()"/"$acme.results.:last()" alongside
 #    "$acme.results.customers/2025:first()"):
@@ -523,15 +525,17 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         (:first()/:last()/:index(n)), optionally combined with a run-
         level field-accessor function (e.g. :uuid(), :named_paths_name()
         -- added 2026-08-18, see this method's own field_call comment
-        below) -- still no literal/'*' path narrowing, no name_three, no
-        ':all()', no :manifest(). A bare pointer here means the same
-        zero-level-only ("direct children of each run's own group's
-        home") restriction the literal-root query() case now applies --
-        settled 2026-08-10, see that method's own comments and
-        :flatten() for the any-depth case. Two things make the
-        remaining wider cases genuinely harder here, not just unbuilt
-        yet (unlike files/csvpaths, where the same shapes were
-        straightforward generalizations):
+        below) and/or ':flatten()' (any-depth pooling across every
+        group -- added 2026-08-18, see this method's own flatten_call
+        comment below) -- still no literal/'*' path narrowing, no
+        name_three, no ':all()', no :manifest(). A bare pointer with no
+        ':flatten()' here means the same zero-level-only ("direct
+        children of each run's own group's home") restriction the
+        literal-root query() case now applies -- settled 2026-08-10, see
+        that method's own comments. Two things make the remaining wider
+        cases genuinely harder here, not just unbuilt yet (unlike
+        files/csvpaths, where the same shapes were straightforward
+        generalizations):
 
         - RESULTS' own ':all()' already means something different --
           pooling every csvpath-statement instance WITHIN one already-
@@ -597,11 +601,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # actually caught everything it should have -- ':groups()' and
         # ':from()' both silently swallowed instead of raising, the
         # same bug class already fixed for the literal-root case above.
-        # ':flatten()' would have been a no-op here anyway (traversal
-        # already pools every discovered run at the same zero level),
-        # but rejecting it explicitly, like everything else that is not
-        # a pointer, still avoids silently applying that filter to what
-        # should be an any-depth query.
         # added 2026-08-18 -- a run-level field accessor (e.g. :uuid(),
         # :named_paths_name()) is now allowed alongside the pointer:
         # _results_for_run() (below) already builds each candidate's
@@ -622,16 +621,40 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # succeed, since they are different objects even for "the same"
         # function.
         field_call = self._find_field_function_call(built)
+        # added 2026-08-18 -- ':flatten()' (any-depth pooling, mirroring
+        # its own literal-root meaning -- see is_flattened in query()
+        # above) is now also allowed alongside the pointer, for the same
+        # reason a field accessor is: David's own "orders" worked
+        # example (references_notes/notes/reference_expressions_notes.
+        # txt) needs "every run, any depth, across every group" as its
+        # left-hand side, which a zero-level-only bare pointer cannot
+        # express. build_chain() above already validated ':flatten()'
+        # takes no argument (Function3.check_valid()'s generic ARG_TYPES
+        # check, called from build()) -- no separate check needed here.
+        # ':all()'/':groups()' stay unsupported -- RESULTS' own ':all()'
+        # already means something else entirely at star-traversal's
+        # position (see this method's own docstring), and ':groups()'
+        # (any-depth GROUP, one result per distinct value observed) has
+        # no established per-GROUP-of-named-results-groups meaning the
+        # way ':flatten()' (any-depth POOL) does -- left for if/when a
+        # real use case asks for it, same as the literal-root case's own
+        # deferred ':groups()' precedent.
+        flatten_call = next((f for f in built if f.name == "flatten"), None)
         non_pointers = [
-            f for f in built if f.ROLE != Function3.POINTER and f is not field_call
+            f
+            for f in built
+            if f.ROLE != Function3.POINTER
+            and f is not field_call
+            and f is not flatten_call
         ]
         if non_pointers:
             raise ReferenceException3(
                 f"ResultsReferenceFinder3 does not yet support "
                 f":{non_pointers[0].name}() combined with '*' traversal -- "
                 "only a bare pointer (:first()/:last()/:index(n)), "
-                "optionally combined with a run-level field-accessor "
-                "function (e.g. :uuid()), is supported so far."
+                "optionally combined with ':flatten()' and/or a run-level "
+                "field-accessor function (e.g. :uuid()), is supported so "
+                "far."
             )
         pointer = self._pointer_from_calls(calls)
         if pointer is None:
@@ -641,19 +664,29 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "group with '*'."
             )
 
-        # zero-level (direct children of each run's own group's home)
-        # only -- same restriction the literal-root query() case now
-        # applies to a plain bare pointer, settled 2026-08-10. Each
-        # candidate's own group name (kept by _discover_run_homes since
-        # this is the traversal case) is needed to compute the right
-        # "home" per candidate -- different groups have different homes.
-        run_homes = [
-            rh
-            for rh, group in self._discover_run_homes(None)
-            if self._matches_prefix(
-                rh, self.csvpaths.results_manager.get_named_results_home(group), []
-            )
-        ]
+        if flatten_call is not None:
+            # any depth, every group -- _discover_run_homes(None) already
+            # discovers across every group with no depth restriction of
+            # its own (the zero-level restriction below is applied AFTER
+            # discovery, by the _matches_prefix filter, not by discovery
+            # itself), so no separate any-depth gathering logic is
+            # needed here.
+            run_homes = [rh for rh, _ in self._discover_run_homes(None)]
+        else:
+            # zero-level (direct children of each run's own group's
+            # home) only -- same restriction the literal-root query()
+            # case now applies to a plain bare pointer, settled
+            # 2026-08-10. Each candidate's own group name (kept by
+            # _discover_run_homes since this is the traversal case) is
+            # needed to compute the right "home" per candidate --
+            # different groups have different homes.
+            run_homes = [
+                rh
+                for rh, group in self._discover_run_homes(None)
+                if self._matches_prefix(
+                    rh, self.csvpaths.results_manager.get_named_results_home(group), []
+                )
+            ]
         run_homes = sorted(run_homes, key=self._run_dir_sort_key)
         selected = self._apply_pointer(pointer, run_homes)
         if selected is None:
