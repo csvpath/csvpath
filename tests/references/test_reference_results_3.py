@@ -131,6 +131,54 @@ class TestReferenceResults3:
     def test_equality(self):
         assert self._results() == self._results()
 
+    def test_deduplicated_with_no_duplicates_is_unchanged(self):
+        r = self._results()
+        assert r.deduplicated().files == ["p1", "p2"]
+
+    def test_deduplicated_collapses_exact_duplicates(self):
+        results = [
+            ReferenceResult3(path="p1", uuid="u1"),
+            ReferenceResult3(path="p2", uuid="u2"),
+            ReferenceResult3(path="p1", uuid="u1"),
+        ]
+        r = ReferenceResults3(results=results)
+        deduped = r.deduplicated()
+        assert deduped.files == ["p1", "p2"]
+        assert len(deduped) == 2
+
+    def test_deduplicated_preserves_first_occurrence_order(self):
+        results = [
+            ReferenceResult3(path="p3", uuid="u3"),
+            ReferenceResult3(path="p1", uuid="u1"),
+            ReferenceResult3(path="p3", uuid="u3"),
+            ReferenceResult3(path="p2", uuid="u2"),
+        ]
+        r = ReferenceResults3(results=results)
+        assert r.deduplicated().files == ["p3", "p1", "p2"]
+
+    def test_deduplicated_uses_full_equality_not_just_path(self):
+        # same path+uuid but different data, or different identity, are
+        # NOT duplicates -- see ReferenceResult3.__eq__ and its own
+        # identity docstring for why.
+        results = [
+            ReferenceResult3(path="p1", uuid="u1", data="a"),
+            ReferenceResult3(path="p1", uuid="u1", data="b"),
+            ReferenceResult3(path="p1", uuid="u1", identity="x"),
+            ReferenceResult3(path="p1", uuid="u1", identity="y"),
+        ]
+        r = ReferenceResults3(results=results)
+        assert len(r.deduplicated()) == 4
+
+    def test_deduplicated_on_empty_results_is_empty(self):
+        assert ReferenceResults3().deduplicated().results == []
+
+    def test_deduplicated_returns_a_new_instance_not_the_original(self):
+        r = self._results()
+        deduped = r.deduplicated()
+        assert deduped is not r
+        deduped.remove(deduped.results[0])
+        assert len(r) == 2
+
 
 class TestRemove:
     def _results(self, n=3):
