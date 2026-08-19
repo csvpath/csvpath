@@ -1814,10 +1814,27 @@ class TestGlobalArchiveLedger:
         results = _finder("$*.results.:last()", acme_archive).query()
         assert results.results == []
 
-    def test_star_with_path_narrowing_is_still_not_supported(self, acme_archive):
-        finder = _finder("$*.results.customers/2025:last()", acme_archive)
-        with pytest.raises(ReferenceException3):
-            finder.query()
+    def test_star_with_a_literal_path_prefix_now_works(self, acme_archive):
+        # closes the path-narrowing gap (2026-08-19) -- matches
+        # acme_archive's own "customers/2025" template, relative to
+        # acme's own group home, the same way the literal-root case
+        # already does, just discovered via '*' traversal instead.
+        results = _finder(
+            "$*.results.customers/2025:last()", acme_archive
+        ).query()
+        assert results.results[0].uuid == "run2-uuid"
+
+    def test_star_with_a_literal_path_prefix_excludes_non_matching_groups(
+        self, two_group_archive
+    ):
+        # two_group_archive's runs are all flat (zero-level) -- a
+        # literal "customers/2025" prefix matches neither group, so
+        # this correctly finds nothing rather than falling back to
+        # some other group's run.
+        results = _finder(
+            "$*.results.customers/2025:last()", two_group_archive
+        ).query()
+        assert results.results == []
 
 
 class TestGlobalArchiveLedgerOrdinalIndexing:
@@ -1896,18 +1913,55 @@ class TestStarTraversal:
         results = _finder("$*.results.:index(1)", two_group_archive).query()
         assert results.results[0].uuid == "acme-run2-uuid"
 
-    def test_all_is_not_yet_supported(self, two_group_archive):
-        # results' own :all() already means "every instance within one
-        # run" (name_three) -- no syntactic home for group-by-group
-        # traversal semantics exists yet, unlike files/csvpaths.
+    def test_bare_all_with_no_pointer_still_requires_a_pointer(
+        self, two_group_archive
+    ):
+        # ':all()' grouping DOES have a home in star traversal now (see
+        # TestAllGroupingStarTraversal) -- unlike ':manifest()'/
+        # name_three, this was never a "no meaning exists" restriction.
+        # What still raises is the SAME "no pointer" rule ':flatten()'
+        # is also held to in traversal mode -- a bare ':all()' with no
+        # pointer does not get an "unreduced, list everything" meaning
+        # of its own here, consistent with FLATTEN mode's own no-
+        # pointer restriction in this same method.
         with pytest.raises(ReferenceException3):
             _finder("$*.results.:all()", two_group_archive).query()
 
-    def test_name_three_combined_with_traversal_is_not_yet_supported(
+    def test_name_three_combined_with_traversal_now_works(self, tmp_path):
+        # closes the name_three gap (2026-08-19) -- _results_for_run()
+        # already does the identity selection entirely from a real run
+        # directory, independent of group, so it composes with a bare
+        # pointer here unchanged. widgets' run is the true global-
+        # latest, so this proves the run-selection AND the instance
+        # selection within it both resolved correctly, not just one.
+        acme_run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {"invoices": "acme-invoices-uuid"},
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets",
+            "2026-01-03_00-00-00",
+            "widgets-run",
+            {"invoices": "widgets-invoices-uuid"},
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
+        )
+        results = _finder(
+            "$*.results.:last().invoices", str(tmp_path)
+        ).query()
+        assert results.results[0].uuid == "widgets-invoices-uuid"
+
+    def test_name_three_with_no_matching_identity_is_empty_not_an_error(
         self, two_group_archive
     ):
-        with pytest.raises(ReferenceException3):
-            _finder("$*.results.:last().0", two_group_archive).query()
+        # two_group_archive's runs have no instances at all -- a
+        # literal identity that matches nothing correctly gives an
+        # empty result, not an error.
+        results = _finder("$*.results.:last().0", two_group_archive).query()
+        assert results.results == []
 
     def test_field_accessor_combined_with_star_traversal_now_works(self, tmp_path):
         # closes the gap ReferenceExpression3 needed -- a run-level
@@ -1969,6 +2023,178 @@ class TestStarTraversal:
         assert result.results[0].data is None
 
 
+class TestStarTraversalPathNarrowingAndNameThree:
+    # closes the "literal/'*' path narrowing" and "name_three" gaps in
+    # _query_star_traversal -- added 2026-08-19, alongside the ':all()'
+    # meaning-collision fix. Thorough coverage of the literal/'*'-
+    # prefixed shapes (prefix+':flatten()', prefix+':all()') and of
+    # name_three (an instance selector) composing with every run-
+    # selection shape, since _results_for_run() already did the
+    # identity/':all()'/range selection entirely group-independently.
+    def test_prefixed_flatten_pools_any_depth_beyond_prefix_across_groups(
+        self, tmp_path
+    ):
+        acme_shallow = _make_run(
+            tmp_path / "acme" / "beta", "2026-01-01_00-00-00", "acme-shallow", {}
+        )
+        acme_deep = _make_run(
+            tmp_path / "acme" / "beta" / "x" / "y",
+            "2026-01-02_00-00-00",
+            "acme-deep",
+            {},
+        )
+        widgets_deep = _make_run(
+            tmp_path / "widgets" / "beta" / "z",
+            "2026-01-03_00-00-00",
+            "widgets-deep",
+            {},
+        )
+        widgets_other = _make_run(
+            tmp_path / "widgets" / "gamma",
+            "2026-01-04_00-00-00",
+            "widgets-other",
+            {},
+        )
+        _write_archive_manifest_multi(
+            tmp_path,
+            {
+                "acme": [acme_shallow, acme_deep],
+                "widgets": [widgets_deep, widgets_other],
+            },
+        )
+        # widgets-other (gamma) is chronologically latest overall, but
+        # does not match the "beta" prefix -- proves the prefix is
+        # actually filtering, not just falling back to global latest.
+        results = _finder(
+            "$*.results.beta/:flatten():last()", str(tmp_path)
+        ).query()
+        assert results.results[0].uuid == "widgets-deep"
+
+    def test_prefixed_all_partitions_by_composite_key_beyond_prefix(
+        self, tmp_path
+    ):
+        acme_x = _make_run(
+            tmp_path / "acme" / "beta" / "x", "2026-01-01_00-00-00", "acme-x", {}
+        )
+        acme_y = _make_run(
+            tmp_path / "acme" / "beta" / "y", "2026-01-02_00-00-00", "acme-y", {}
+        )
+        widgets_x = _make_run(
+            tmp_path / "widgets" / "beta" / "x",
+            "2026-01-03_00-00-00",
+            "widgets-x",
+            {},
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_x, acme_y], "widgets": [widgets_x]}
+        )
+        # "x" is reused by both groups on purpose -- same crux as the
+        # bare ':all()' meaning-collision fixture, proving the prefixed
+        # shape ALSO partitions by (group, value), not value alone.
+        results = _finder(
+            "$*.results.beta/:all():last()", str(tmp_path)
+        ).query()
+        assert sorted(results.uuids) == ["acme-x", "acme-y", "widgets-x"]
+
+    def test_all_grouping_with_name_three_content_accessor_is_rejected(
+        self, tmp_path
+    ):
+        acme_run = _make_run(
+            tmp_path / "acme" / "east",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {"invoices": "acme-invoices"},
+        )
+        _write_archive_manifest(tmp_path, "acme", [acme_run])
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$*.results.:all():last().invoices:errors()", str(tmp_path)
+            ).query()
+
+    def test_all_grouping_with_name_three_field_accessor_is_poolable(
+        self, tmp_path
+    ):
+        # David's own confirmed example: "$*.results.:all():last()
+        # .invoices:uuid()" can find multiple runs, each contributing
+        # its own "invoices" statement's uuid -- a list of zero or more
+        # UUIDs, one per matched run that actually has that identity.
+        acme_run = _make_run(
+            tmp_path / "acme" / "east",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {"invoices": "acme-invoices"},
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets" / "east",
+            "2026-01-02_00-00-00",
+            "widgets-run",
+            {"invoices": "widgets-invoices"},
+        )
+        # gamma has no "invoices" statement at all -- contributes
+        # nothing, not an error/None placeholder.
+        gamma_run = _make_run(
+            tmp_path / "gamma" / "east",
+            "2026-01-03_00-00-00",
+            "gamma-run",
+            {"other": "gamma-other"},
+        )
+        _write_archive_manifest_multi(
+            tmp_path,
+            {"acme": [acme_run], "widgets": [widgets_run], "gamma": [gamma_run]},
+        )
+        results = _finder(
+            "$*.results.:all():last().invoices:uuid()", str(tmp_path)
+        ).resolve()
+        assert sorted(r.data for r in results.results) == [
+            "acme-invoices",
+            "widgets-invoices",
+        ]
+
+    def test_all_at_both_name_one_and_name_three_multiplies_correctly(
+        self, tmp_path
+    ):
+        # "$*.results.:all():last().:all():uuid()" -- :all() at name_one
+        # selects one run per (group, template) partition, :all() at
+        # name_three then pools every instance WITHIN each of those --
+        # a real two-level fan-out, not a single flat list.
+        acme_run = _make_run(
+            tmp_path / "acme" / "east",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {"invoices": "acme-invoices", "receipts": "acme-receipts"},
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets" / "east",
+            "2026-01-02_00-00-00",
+            "widgets-run",
+            {"invoices": "widgets-invoices"},
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
+        )
+        results = _finder(
+            "$*.results.:all():last().:all():uuid()", str(tmp_path)
+        ).resolve()
+        assert sorted(r.data for r in results.results) == [
+            "acme-invoices",
+            "acme-receipts",
+            "widgets-invoices",
+        ]
+
+    def test_flatten_with_a_specific_name_three_identity_works(self, tmp_path):
+        acme_deep = _make_run(
+            tmp_path / "acme" / "customers" / "2025",
+            "2026-01-01_00-00-00",
+            "acme-deep",
+            {"invoices": "acme-invoices"},
+        )
+        _write_archive_manifest(tmp_path, "acme", [acme_deep])
+        results = _finder(
+            "$*.results.:flatten():last().invoices", str(tmp_path)
+        ).query()
+        assert results.results[0].uuid == "acme-invoices"
+
+
 class TestPositionEnforcement:
     # ReferenceFinder3._check_position() -- added 2026-08-14, the
     # enforced replacement for the scattered "is this recognized"
@@ -2017,10 +2243,18 @@ class TestPositionEnforcement:
 
 
 class TestScopeLimits:
-    def test_star_root_major_not_yet_supported(self, acme_archive):
-        finder = _finder("$*.results.customers/2025:last()", acme_archive)
+    def test_manifest_combined_with_traversal_still_not_yet_supported(
+        self, two_group_archive
+    ):
+        # a real, still-open, separate gap -- see _extract_data()'s own
+        # has_manifest comment for why: it cannot yet tell a Rule-1a/1b
+        # global-ledger result apart from a traversal-selected run
+        # directory, unlike the field accessor/':all()'/':flatten()'
+        # gaps already closed.
         with pytest.raises(ReferenceException3):
-            finder.query()
+            _finder(
+                "$*.results.:all():last():manifest()", two_group_archive
+            ).query()
 
     def test_name_two_worksheet_marker_not_supported(self, acme_archive):
         finder = _finder(
