@@ -634,6 +634,61 @@ class TestStarTraversalFlatten:
             _star_finder("$*.csvpaths.:last().0").query()
 
 
+class TestStarTraversalPoolNoPointerIsOptional:
+    # a pointer is now optional in POOL/FLATTEN mode too (settled
+    # 2026-08-19) -- previously the one place csvpaths' own star
+    # traversal still required one unconditionally, an inconsistency
+    # with GROUP mode's own no-pointer precedent (which already listed
+    # everything per group, unreduced) and with RESULTS'/
+    # FilesReferenceFinder3's star traversal (neither ever requires
+    # one). Absence means every candidate across every group comes
+    # back, unreduced. Unlike RESULTS/FILES, csvpaths' name_one always
+    # requires SOME function as its sole path segment (no bare/literal-
+    # path-only shape exists here at all, confirmed live: "$*.csvpaths."
+    # with nothing after does not even parse) -- so POOL-mode-no-
+    # pointer is only reachable via a field accessor or ':having()'
+    # occupying that slot, not a truly empty reference.
+    def test_no_pointer_with_a_field_accessor_is_poolable(self):
+        by_name = {
+            "alpha": [
+                {
+                    "group_file_path": "named_paths/alpha/group.csvpath",
+                    "uuid": "a-v1",
+                    "time": "2026-01-01T00:00:00+00:00",
+                    "named_paths_name": "alpha",
+                }
+            ],
+            "beta": [
+                {
+                    "group_file_path": "named_paths/beta/group.csvpath",
+                    "uuid": "b-v1",
+                    "time": "2026-01-03T00:00:00+00:00",
+                    "named_paths_name": "beta",
+                }
+            ],
+        }
+        results = _finder(
+            "$*.csvpaths.:named_paths_name()", by_name=by_name
+        ).resolve()
+        assert sorted((r.uuid, r.data) for r in results.results) == [
+            ("a-v1", "alpha"),
+            ("b-v1", "beta"),
+        ]
+
+    def test_previously_masked_unrecognized_function_now_raises(self):
+        # a real, previously-latent bug this same fix exposed and
+        # closed: the old check only ever rejected ":manifest()"/
+        # ':from()'/':to()' BY NAME (a blacklist) -- any other
+        # unrecognized function (e.g. ':definition()', confirmed via
+        # TestGlobalLoadsLedger's own test) silently fell through
+        # unrejected once "no pointer" stopped forcing a raise for an
+        # unrelated reason. Now whitelist-based (only a pointer/':all()'
+        # /':having()'/a field accessor are exempted), closing that gap
+        # generally, not just for the one name already known about.
+        with pytest.raises(ReferenceException3):
+            _star_finder("$*.csvpaths.:groups()").query()
+
+
 class TestStarTraversalFieldAccessor:
     # closes the gap ReferenceExpression3 needed -- a registered field-
     # accessor function can now ride alongside the pointer in '*'
@@ -886,17 +941,17 @@ class TestStarTraversalHaving:
         ).query()
         assert results.results == []
 
-    def test_bare_having_alone_still_requires_a_pointer_or_all(self):
-        # deliberately unchanged -- a bare ':having()' with no pointer
-        # and no ':all()' does not get a new "unreduced flatten" meaning
-        # of its own; it falls into the same pre-existing "requires a
-        # pointer" rule flatten mode already enforces for a plain bare
-        # pointer, consistent with FLATTEN never having an "unreduced"
-        # form for csvpaths' own star traversal.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$*.csvpaths.:having(\"orders\")", by_name=self.HAVING_BY_NAME
-            ).query()
+    def test_bare_having_alone_with_no_pointer_lists_matching_versions(self):
+        # a pointer is optional everywhere in csvpaths' star traversal
+        # now (settled 2026-08-19, closing the one place it was still
+        # required unconditionally) -- a bare ':having()' with no
+        # pointer and no ':all()' means "every matching version, pooled
+        # across every group, unreduced," the same POOL-mode-no-pointer
+        # meaning a bare pointer-less reference now has too.
+        results = _finder(
+            "$*.csvpaths.:having(\"orders\")", by_name=self.HAVING_BY_NAME
+        ).query()
+        assert results.uuids == ["a-v1"]
 
 
 class TestDefinitionFunction:
