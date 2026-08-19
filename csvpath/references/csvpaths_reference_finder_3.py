@@ -263,7 +263,15 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
           chronological order across everything, not enumeration order
           (csvpaths has no path dimension the way files does, so there
           is nothing to pattern-match -- every entry in every group's
-          manifest is a candidate).
+          manifest is a candidate). A pointer is OPTIONAL here too
+          (settled 2026-08-19) -- absence means every candidate comes
+          back, unreduced, same as GROUP mode's own no-pointer case
+          below already did; this was the one place csvpaths' own star
+          traversal still required one unconditionally, an
+          inconsistency (not a deliberate choice) fixed once RESULTS'
+          equivalent fix (matching RESULTS' own literal-root behavior
+          and FilesReferenceFinder3, neither of which ever required
+          one either) made the asymmetry obvious.
         - ':all()' present in the combined chain (GROUP): the pointer
           is applied independently within each group's own manifest
           (plain array order -- no time-sort needed within one group)
@@ -327,16 +335,34 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         # 3+-function chain reaches the guard below.
         calls = [name_one.path[0], *name_one.functions]
         built = ReferenceFunctionFactory.build_chain(calls)
-        is_grouped = any(f.name == "all" for f in built)
+        all_call = next((f for f in built if f.name == "all"), None)
+        is_grouped = all_call is not None
         having_call = next((f for f in built if f.name == "having"), None)
+        field_call = self._find_field_function_call(built)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
-        unsupported = any(f.name == "manifest" for f in built) or any(
-            f.name in ("from", "to") for f in built
-        )
-        if unsupported:
+        # whitelist-based (settled 2026-08-19), replacing an earlier
+        # blacklist-based check (any(name=="manifest") or any(name in
+        # ("from","to"))) that only ever rejected those two specific
+        # names -- a real, previously-latent gap this fix closes, not
+        # just a stale test: confirmed live, before this fix, that
+        # "$*.csvpaths.:definition()" silently fell through as if it
+        # were a no-op (":definition()" is neither a pointer nor ':all()'
+        # /':having()'/a field accessor, but was also never explicitly
+        # rejected either) once the "no pointer" case stopped forcing a
+        # raise for an unrelated reason. Mirrors RESULTS' own
+        # non_pointers pattern in _star_run_selector_chain() exactly.
+        non_pointers = [
+            f
+            for f in built
+            if f.ROLE != Function3.POINTER
+            and f is not all_call
+            and f is not having_call
+            and f is not field_call
+        ]
+        if non_pointers:
             raise ReferenceException3(
-                "CsvpathsReferenceFinder3 does not yet support combining "
-                "'*' traversal with :manifest() or ':from()'/':to()' -- "
+                f"CsvpathsReferenceFinder3 does not yet support "
+                f":{non_pointers[0].name}() combined with '*' traversal -- "
                 "only a plain pointer (:first()/:last()/:index(n)), "
                 "optionally combined with :all(), :having(\"identity\"), "
                 "or a registered field-accessor function (e.g. :uuid()), "
@@ -365,13 +391,23 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 else:
                     selected_versions.extend(manifest)
         else:
-            if not pointers:
-                raise ReferenceException3(
-                    "CsvpathsReferenceFinder3 requires a pointer (:first()/"
-                    ":last()/:index(n)) when traversing every named-paths "
-                    "group with '*' -- use :all() for one result per "
-                    "group instead."
-                )
+            # a pointer is now OPTIONAL here too (settled 2026-08-19,
+            # alongside RESULTS' own equivalent fix) -- absence means
+            # every matched version comes back, unreduced, the same
+            # meaning a missing pointer already has in GROUP mode above
+            # (is_grouped's own "else: selected_versions.extend(manifest)"),
+            # at csvpaths' own single-group _resolve_versions() precedent,
+            # and at RESULTS' star traversal (see
+            # ResultsReferenceFinder3._star_run_selector_chain()'s own
+            # comment on why RESULTS was changed to match its own
+            # literal-root behavior and FilesReferenceFinder3, neither of
+            # which ever required one). This POOL branch was the one
+            # remaining place csvpaths' own star traversal still required
+            # a pointer unconditionally -- confirmed, before this fix,
+            # that it was a real inconsistency (not a deliberate,
+            # permanent design choice) since nothing about pooling itself
+            # needs a pointer to be meaningful, same as GROUP mode already
+            # proved.
             pooled = []
             for name in self.csvpaths.paths_manager.named_paths_names:
                 pooled.extend(
@@ -380,8 +416,11 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     )
                 )
             pooled.sort(key=lambda e: e["time"])
-            selected = self._apply_pointer(pointers[0], pooled)
-            selected_versions = [selected] if selected is not None else []
+            if pointers:
+                selected = self._apply_pointer(pointers[0], pooled)
+                selected_versions = [selected] if selected is not None else []
+            else:
+                selected_versions = pooled
 
         return ReferenceResults3(
             results=[
