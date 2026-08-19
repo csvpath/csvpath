@@ -1913,19 +1913,42 @@ class TestStarTraversal:
         results = _finder("$*.results.:index(1)", two_group_archive).query()
         assert results.results[0].uuid == "acme-run2-uuid"
 
-    def test_bare_all_with_no_pointer_still_requires_a_pointer(
+    def test_bare_all_with_no_pointer_gives_empty_on_flat_runs(
         self, two_group_archive
     ):
-        # ':all()' grouping DOES have a home in star traversal now (see
-        # TestAllGroupingStarTraversal) -- unlike ':manifest()'/
-        # name_three, this was never a "no meaning exists" restriction.
-        # What still raises is the SAME "no pointer" rule ':flatten()'
-        # is also held to in traversal mode -- a bare ':all()' with no
-        # pointer does not get an "unreduced, list everything" meaning
-        # of its own here, consistent with FLATTEN mode's own no-
-        # pointer restriction in this same method.
-        with pytest.raises(ReferenceException3):
-            _finder("$*.results.:all()", two_group_archive).query()
+        # a pointer is optional everywhere in star traversal now
+        # (settled 2026-08-19, matching RESULTS' own literal-root
+        # precedent and FilesReferenceFinder3, neither of which ever
+        # required one) -- absence means "every matched run, unreduced"
+        # rather than an error. two_group_archive's runs are all flat
+        # (zero-level), so ':all()' (which requires exactly one level)
+        # correctly matches nothing here -- empty, not a raise.
+        results = _finder("$*.results.:all()", two_group_archive).query()
+        assert results.results == []
+
+    def test_bare_all_with_no_pointer_lists_every_one_level_run(
+        self, tmp_path
+    ):
+        acme_x = _make_run(
+            tmp_path / "acme" / "east", "2026-01-01_00-00-00", "acme-east", {}
+        )
+        acme_y = _make_run(
+            tmp_path / "acme" / "west", "2026-01-02_00-00-00", "acme-west", {}
+        )
+        widgets_x = _make_run(
+            tmp_path / "widgets" / "east",
+            "2026-01-03_00-00-00",
+            "widgets-east",
+            {},
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_x, acme_y], "widgets": [widgets_x]}
+        )
+        results = _finder("$*.results.:all()", str(tmp_path)).query()
+        # every one-level run across every group, unreduced -- NOT one
+        # per (group, template) partition, since grouping only matters
+        # once there is a pointer to reduce a partition to one.
+        assert sorted(results.uuids) == ["acme-east", "acme-west", "widgets-east"]
 
     def test_name_three_combined_with_traversal_now_works(self, tmp_path):
         # closes the name_three gap (2026-08-19) -- _results_for_run()
@@ -2193,6 +2216,139 @@ class TestStarTraversalPathNarrowingAndNameThree:
             "$*.results.:flatten():last().invoices", str(tmp_path)
         ).query()
         assert results.results[0].uuid == "acme-invoices"
+
+
+class TestStarTraversalPointerIsOptional:
+    # a pointer is optional in EVERY '*' traversal shape now (settled
+    # 2026-08-19) -- absence means every matched run comes back,
+    # unreduced, mirroring RESULTS' own literal-root precedent (no
+    # shape there ever required one) and FilesReferenceFinder3's star
+    # traversal (also never requires one, in any of its four modes).
+    # CsvpathsReferenceFinder3's own narrower precedent (pointer
+    # required in POOL/flatten mode, optional only in GROUP/':all()')
+    # was deliberately NOT copied -- confirmed via reading its code
+    # that it is the outlier among the three, not the target.
+    def test_zero_level_bare_with_no_pointer_lists_every_flat_run(
+        self, tmp_path
+    ):
+        acme_run = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "acme-run", {}
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets", "2026-01-02_00-00-00", "widgets-run", {}
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
+        )
+        # ':home()' is the only legal spelling of "bare, zero-level,
+        # nothing else" -- a totally empty name_one ("$*.results.") is
+        # not valid grammar (confirmed live: Lark rejects it outright).
+        results = _finder("$*.results.:home()", str(tmp_path)).query()
+        assert sorted(results.uuids) == ["acme-run", "widgets-run"]
+
+    def test_prefixed_flatten_with_no_pointer_lists_everything_beyond_prefix(
+        self, tmp_path
+    ):
+        acme_run = _make_run(
+            tmp_path / "acme" / "beta" / "x",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {},
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets" / "beta" / "y" / "z",
+            "2026-01-02_00-00-00",
+            "widgets-run",
+            {},
+        )
+        other_run = _make_run(
+            tmp_path / "widgets" / "gamma", "2026-01-03_00-00-00", "other-run", {}
+        )
+        _write_archive_manifest_multi(
+            tmp_path,
+            {"acme": [acme_run], "widgets": [widgets_run, other_run]},
+        )
+        results = _finder("$*.results.beta/:flatten()", str(tmp_path)).query()
+        assert sorted(results.uuids) == ["acme-run", "widgets-run"]
+
+    def test_plain_literal_path_with_no_pointer_lists_everything_matching(
+        self, tmp_path
+    ):
+        acme_run = _make_run(
+            tmp_path / "acme" / "customers" / "2025",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {},
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets" / "customers" / "2025",
+            "2026-01-02_00-00-00",
+            "widgets-run",
+            {},
+        )
+        other_run = _make_run(
+            tmp_path / "widgets" / "customers" / "2026",
+            "2026-01-03_00-00-00",
+            "other-run",
+            {},
+        )
+        _write_archive_manifest_multi(
+            tmp_path,
+            {"acme": [acme_run], "widgets": [widgets_run, other_run]},
+        )
+        results = _finder(
+            "$*.results.customers/2025", str(tmp_path)
+        ).query()
+        assert sorted(results.uuids) == ["acme-run", "widgets-run"]
+
+    def test_no_pointer_pool_with_content_accessor_and_multiple_runs_is_rejected(
+        self, tmp_path
+    ):
+        acme_run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {"invoices": "acme-invoices"},
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets",
+            "2026-01-02_00-00-00",
+            "widgets-run",
+            {"invoices": "widgets-invoices"},
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
+        )
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$*.results.:home().invoices:errors()", str(tmp_path)
+            ).query()
+
+    def test_no_pointer_with_a_field_accessor_is_poolable(self, tmp_path):
+        acme_run = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "acme-run", {}
+        )
+        _write_json(
+            Path(acme_run) / "manifest.json",
+            {"run_uuid": "acme-run", "named_paths_name": "acme"},
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets", "2026-01-02_00-00-00", "widgets-run", {}
+        )
+        _write_json(
+            Path(widgets_run) / "manifest.json",
+            {"run_uuid": "widgets-run", "named_paths_name": "widgets"},
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
+        )
+        results = _finder(
+            "$*.results.:named_paths_name()", str(tmp_path)
+        ).resolve()
+        assert sorted((r.uuid, r.data) for r in results.results) == [
+            ("acme-run", "acme"),
+            ("widgets-run", "widgets"),
+        ]
 
 
 class TestPositionEnforcement:

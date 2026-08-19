@@ -25,19 +25,21 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 #    paths group that was run), or "*" (every named-results group). "*" has
 #    two exceptions carved out before general traversal (Rule 1a/1b, a
 #    bare/ordinal-indexed :manifest() reads the global archive ledger); any
-#    other use of "*" goes through _query_star_traversal(), which is
-#    deliberately the narrowest of the three datatypes' traversals -- a bare
-#    pointer, optionally combined with ':flatten()', ':all()' (added
-#    2026-08-18/2026-08-19), and/or a run-level field-accessor function, but
-#    still no path narrowing/name_three/:manifest() -- see that method's own
-#    docstring for why the remaining wider cases are genuinely harder here,
-#    not just unbuilt yet. ':all()' here partitions by the COMPOSITE (named-
-#    results group, 1-level template value) key, resolving a real meaning-
-#    collision -- see "THE ':all()' MEANING COLLISION AT STAR TRAVERSAL" in
-#    references_notes/notes/normative_reference_examples.txt for the worked
-#    example that settled it, and FilesReferenceFinder3's own equivalent
-#    ':all()' precedent (its "file_home" key already IS a composite key,
-#    the named-file's name embedded as a path prefix).
+#    other use of "*" goes through _query_star_traversal(), which mirrors
+#    query()'s own dispatch tree (bare/':flatten()'/':all()'/literal-'*'
+#    path, ':groups()' still deferred) across every group instead of one
+#    fixed home -- see that method's own docstring for the full history
+#    (2026-08-14 through 2026-08-19) and why ':manifest()' alone stays
+#    unsupported. name_three (an instance selector) composes with every
+#    shape too. A pointer is now OPTIONAL everywhere here (settled
+#    2026-08-19, matching RESULTS' own literal-root precedent and
+#    FilesReferenceFinder3's star traversal, which never requires one
+#    either) -- absence means every matched run comes back, unreduced.
+#    ':all()' partitions by the COMPOSITE (named-results group, 1-level
+#    template value) key when a pointer IS present, resolving a real
+#    meaning-collision -- see "THE ':all()' MEANING COLLISION AT STAR
+#    TRAVERSAL" in references_notes/notes/normative_reference_examples.txt
+#    for the worked example that settled it.
 #  - name_one has TWO legal shapes, matching the spec's own examples
 #    ("$acme.results.:all()"/"$acme.results.:last()" alongside
 #    "$acme.results.customers/2025:first()"):
@@ -550,6 +552,21 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         selected run directory (see _extract_data()'s own has_manifest
         branch) -- a separate, still-open gap, not attempted here.
 
+        A pointer is now OPTIONAL in every shape above (settled
+        2026-08-19, via _star_run_selector_chain()) -- absence means
+        every matched run comes back, unreduced, the same meaning a
+        missing pointer already has at every literal-root query() shape
+        (none of them require one). Confirmed against the closest
+        sibling datatype before making this change:
+        FilesReferenceFinder3's own '*' traversal never requires a
+        pointer either, in any of its four modes -- see this module's
+        own top-of-file docstring for the full comparison, including
+        CsvpathsReferenceFinder3's own partial (POOL-requires-it,
+        GROUP-does-not) precedent, which this deliberately does NOT
+        copy (RESULTS' own literal-root behavior and FILES both make it
+        optional everywhere, a stronger and more directly relevant
+        precedent than CSVPATHS' narrower one).
+
         Chronological order across every group cannot use a full-path
         string sort the way one group's own query() case can get away
         with (different groups' run directories live under different
@@ -742,7 +759,26 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         _results_for_run() already builds each candidate's
         ReferenceResult3 from its own real run directory, independent
         of any group-name context, so resolving a field from it needs
-        nothing star-traversal-specific."""
+        nothing star-traversal-specific.
+
+        A pointer itself is now OPTIONAL here (changed 2026-08-19) --
+        absence means "every matched run, unreduced," the SAME meaning
+        a missing pointer already has at every literal-root query()
+        shape (bare/':flatten()'/':all()' alike -- none of them require
+        one there). Confirmed against the closest sibling datatype
+        before making this change: FilesReferenceFinder3's own '*'
+        traversal NEVER requires a pointer either, in any of its four
+        modes (see its own _query_star_traversal docstring) -- a
+        missing pointer there returns a deduped list of distinct
+        file_home values. RESULTS does not need FILES' dedup-plus-
+        uuid=None trick (each candidate here is already a distinct real
+        run directory via _discover_run_homes()'s own dedup, so every
+        unreduced result can carry its own real run uuid, not a
+        placeholder). CsvpathsReferenceFinder3 is the outlier here, not
+        the target precedent -- it requires a pointer in POOL/flatten
+        mode but not GROUP/':all()' mode, an asymmetry noted but not
+        touched (a separate, already-merged PR, not blocking anything
+        needed here)."""
         built = ReferenceFunctionFactory.build_chain(calls)
         field_call = self._find_field_function_call(built)
         all_call = next((f for f in built if f.name == "all"), None)
@@ -771,12 +807,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "supported so far."
             )
         pointer = self._pointer_from_calls(calls)
-        if pointer is None:
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 requires a pointer (:first()/"
-                ":last()/:index(n)) when traversing every named-results "
-                "group with '*'."
-            )
         return pointer, all_call, flatten_call
 
     def _star_pool_and_reduce(
@@ -790,11 +820,29 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     ) -> ReferenceResults3:
         """POOL mode's shared tail -- added 2026-08-19, alongside
         _star_group_and_reduce(), factored out once name_three needed
-        threading through every star-traversal shape identically. No
-        "more than one candidate + content accessor" guard is needed
-        here (unlike the GROUP case) -- a pointer is always required in
-        POOL mode, so exactly one run is ever selected."""
+        threading through every star-traversal shape identically. A
+        missing pointer (added 2026-08-19, see _star_run_selector_chain()'s
+        own comment for why) means every matched run comes back,
+        unreduced -- which can now be MORE than one run, so the same
+        "more than one candidate + content accessor" guard the GROUP
+        case already needs applies here too."""
         run_homes = sorted(run_homes, key=self._run_dir_sort_key)
+        if pointer is None:
+            if len(run_homes) > 1 and accessor is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 does not yet support combining "
+                    "unreduced '*' traversal (no pointer, more than one "
+                    "matched run) with a name_three content accessor -- "
+                    "resolve the matched runs on their own first."
+                )
+            results = []
+            for run_dir in run_homes:
+                results.extend(
+                    self._results_for_run(
+                        run_dir, identity, match_all, range_bounds, accessor
+                    )
+                )
+            return ReferenceResults3(results=results)
         selected = self._apply_pointer(pointer, run_homes)
         if selected is None:
             return ReferenceResults3(results=[])
@@ -829,12 +877,38 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         A name_three FIELD accessor (e.g. ".invoices:uuid()") is NOT
         rejected -- confirmed live against the already-shipped literal-
         root precedent (":all():last().invoices:uuid()" resolves fine,
-        poolable, one result per matched run) before writing this."""
-        if accessor is not None:
+        poolable, one result per matched run) before writing this.
+
+        A missing pointer (added 2026-08-19) means every matched run
+        comes back, unreduced -- mirroring CsvpathsReferenceFinder3's
+        own already-shipped ':all()'-with-no-pointer precedent
+        (extends the filtered manifest, ungrouped) exactly: once there
+        is no pointer to reduce a partition to one, the partitioning
+        itself stops mattering for the OUTPUT (every member of every
+        partition just comes back), so this degenerates to the same
+        "list everything, unreduced" case _star_pool_and_reduce()
+        already handles -- delegated there directly rather than
+        duplicating that logic."""
+        if accessor is not None and pointer is not None:
+            # the content-accessor rejection only applies when grouping
+            # can still yield more than one run (pointer present, one
+            # per partition) -- the no-pointer case below reuses
+            # _star_pool_and_reduce()'s own equivalent guard instead,
+            # since it is really the same "list everything, unreduced"
+            # case once there is no pointer.
             raise ReferenceException3(
                 "ResultsReferenceFinder3 does not yet support combining "
                 "':all()' grouping with a name_three content accessor -- "
                 "resolve the grouped runs on their own first."
+            )
+        if pointer is None:
+            return self._star_pool_and_reduce(
+                [rh for rh, _ in partitioned],
+                None,
+                identity,
+                match_all,
+                range_bounds,
+                accessor,
             )
         groups: dict = {}
         for rh, key in partitioned:

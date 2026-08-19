@@ -227,26 +227,28 @@ class TestConstruction:
 
 #
 # ---- end-to-end, real Finder plumbing -- David's own "orders" example
-# (references_notes/notes/reference_expressions_notes.txt), using literal
-# (non-'*') root_major on both sides, via real on-disk fixtures matching
-# test_results_reference_finder_3.py's own established pattern.
+# (references_notes/notes/reference_expressions_notes.txt).
 #
-# UPDATED 2026-08-18 (PR #253): '*' traversal combined with a BARE field
-# accessor (riding alongside a plain pointer or ':all()') now works for
-# both CsvpathsReferenceFinder3 and ResultsReferenceFinder3 -- see
-# TestStarTraversalPlusFieldAccessorNowWorks below. The "orders" example
-# ITSELF still cannot be rewritten to use real '*' traversal on either
-# side, though, because it specifically needs a field accessor combined
-# with ':having()' (CSVPATHS' right side -- "every group with an
-# 'orders' statement") or ':flatten()' (RESULTS' left side -- "every
-# run, any depth") -- neither of those is a bare pointer/':all()', and
-# neither is supported in '*' traversal yet (confirmed live -- see
-# TestHavingAndFlattenPlusStarTraversalStillNotSupported below). #253
-# only closed the narrower "plain field accessor alongside a pointer/
-# :all()" gap it was scoped to, not this one. Sub-expressions (nested
-# ReferenceExpression3, UNION-ing two literal per-group queries) still
-# stand in for "search every group" here -- exactly the shape a caller
-# CAN write today when the candidate group names are already known.
+# UPDATED 2026-08-19 (PR #254, all commits): both sides now use REAL '*'
+# traversal, single plain reference strings, no sub-expression workaround
+# needed anymore. Three '*'-traversal gaps had to close, in order, before
+# this was reachable:
+#   1. (#253) a bare field accessor riding alongside a pointer/':all()'.
+#   2. (#254) ':having()' (CSVPATHS)/':flatten()' (RESULTS) combined with
+#      traversal at all -- CSVPATHS' right side needs :having(), RESULTS'
+#      left side needs :flatten(), neither was recognized before this.
+#   3. (#254) a pointer became OPTIONAL in every RESULTS '*'-traversal
+#      shape (previously always required) -- RESULTS' own left side
+#      needs "every run, unreduced," which only exists without a
+#      pointer. Confirmed against FilesReferenceFinder3 (never requires
+#      one, any mode) and RESULTS' own literal-root precedent (same)
+#      before making this change -- CsvpathsReferenceFinder3's own
+#      narrower, asymmetric precedent (pointer required in POOL mode,
+#      optional only in GROUP/':all()') was NOT the target; CSVPATHS'
+#      right side already worked via its OWN existing ':all()'-no-
+#      pointer precedent, unaffected by this RESULTS-only change.
+# _left_side/_right_side below were previously each a UNION sub-
+# expression of two literal per-group queries -- now single strings.
 #
 GROUPA_MANIFEST = [
     {
@@ -356,25 +358,23 @@ def orders_archive(tmp_path):
     return _FakeCsvPaths(str(archive), {"groupa": GROUPA_MANIFEST, "groupb": GROUPB_MANIFEST})
 
 
-def _left_side(csvpaths) -> ReferenceExpression3:
-    # "every run" -- UNION of the two known groups' own runs.
-    return ReferenceExpression3(
-        left="$groupa.results.:flatten():named_paths_name()",
-        op=ReferenceExpression3.UNION,
-        right="$groupb.results.:flatten():named_paths_name()",
-        csvpaths=csvpaths,
-    )
+def _left_side(csvpaths) -> str:
+    # "every run" -- a single real '*' traversal reference now (updated
+    # 2026-08-19): ':flatten()' (any depth, POOL) with no pointer lists
+    # every matched run across every group, unreduced -- both the
+    # ':flatten()'-combined-with-traversal gap and the pointer-optional
+    # gap had to close first (see this module's own docstring above).
+    return "$*.results.:flatten():named_paths_name()"
 
 
-def _right_side(csvpaths) -> ReferenceExpression3:
-    # "every group with an 'orders' statement" -- UNION of the two known
-    # groups' own :having() checks.
-    return ReferenceExpression3(
-        left='$groupa.csvpaths.:having("orders"):named_paths_name()',
-        op=ReferenceExpression3.UNION,
-        right='$groupb.csvpaths.:having("orders"):named_paths_name()',
-        csvpaths=csvpaths,
-    )
+def _right_side(csvpaths) -> str:
+    # "every group with an 'orders' statement" -- a single real '*'
+    # traversal reference now (updated 2026-08-19): ':having("orders")'
+    # filters, ':all()' with no pointer lists every matching version per
+    # group, unreduced -- CSVPATHS' own ':all()'-no-pointer precedent
+    # already supported this once ':having()' itself was recognized in
+    # traversal (#254), no further CSVPATHS change was needed.
+    return '$*.csvpaths.:having("orders"):all():named_paths_name()'
 
 
 class TestOrdersExampleEndToEnd:
@@ -518,33 +518,35 @@ class TestStarTraversalPlusFieldAccessorNowWorks:
         assert {r.data for r in result.results} == {"groupa", "groupb"}
 
 
-class TestHavingAndFlattenPlusStarTraversalStillNotSupported:
-    # a separate, narrower, still-open gap -- NOT fixed by #253, and not
-    # the same thing TestStarTraversalPlusFieldAccessorNowWorks above
-    # proves works now. #253 only exempted a field accessor riding
-    # alongside a bare pointer/':all()' from the '*'-traversal guard;
-    # ':having()' (CSVPATHS) and ':flatten()' (RESULTS) are neither of
-    # those, and neither is recognized by _query_star_traversal at all --
-    # confirmed live before writing these: the CSVPATHS case now raises
-    # "requires a pointer... use :all() instead" (having is silently
-    # neither a pointer nor :all(), so it falls through to that
-    # unrelated check) and the RESULTS case still raises its own
-    # explicit ":flatten() combined with '*' traversal" rejection. This
-    # is exactly why the "orders" example above still needs the sub-
-    # expression workaround on both sides, even after #253.
-    def test_csvpaths_having_combined_with_traversal_still_raises(
+class TestHavingAndFlattenPlusStarTraversalNowWork:
+    # PR #254 (2026-08-19, full run) closed this gap in stages: first
+    # recognizing ':having()' (CSVPATHS)/':flatten()' (RESULTS) in '*'
+    # traversal at all, then making a pointer OPTIONAL in every RESULTS
+    # shape (RESULTS' own left side needs "every run, unreduced," which
+    # only a missing pointer gives -- CSVPATHS' own ':all()' already had
+    # its own no-pointer precedent, unaffected). This class used to
+    # assert both raised; confirmed live before rewriting that neither
+    # does anymore, then replaced with positive tests -- proven here at
+    # the ReferenceExpression3 level (plain reference strings, not the
+    # Finder classes directly), same integration point
+    # TestStarTraversalPlusFieldAccessorNowWorks above proves.
+    def test_csvpaths_having_combined_with_traversal_now_works(
         self, orders_archive
     ):
         expr = ReferenceExpression3(
-            left="$*.csvpaths.:having(\"orders\"):named_paths_name()",
+            left="$*.csvpaths.:having(\"orders\"):all():named_paths_name()",
             op=ReferenceExpression3.UNION,
             right="$groupa.csvpaths.:having(\"orders\"):named_paths_name()",
             csvpaths=orders_archive,
         )
-        with pytest.raises(ReferenceException3):
-            expr.resolve()
+        result = expr.resolve()
+        # right's groupa item is IDENTICAL to left's own groupa item
+        # (same path/uuid/resolved data) -- UNION's dedup collapses the
+        # duplicate, leaving one groupa (from either side) plus left's
+        # own groupb, not three/two raw items pooled naively.
+        assert sorted(r.data for r in result.results) == ["groupa", "groupb"]
 
-    def test_results_flatten_combined_with_traversal_still_raises(
+    def test_results_flatten_combined_with_traversal_now_works(
         self, orders_archive
     ):
         expr = ReferenceExpression3(
@@ -553,5 +555,14 @@ class TestHavingAndFlattenPlusStarTraversalStillNotSupported:
             right="$groupa.results.:flatten():named_paths_name()",
             csvpaths=orders_archive,
         )
-        with pytest.raises(ReferenceException3):
-            expr.resolve()
+        result = expr.resolve()
+        # right's a1/a2 are IDENTICAL to left's own a1/a2 (same run
+        # dir/uuid/resolved data) -- UNION's dedup collapses the
+        # duplicates, leaving all 5 distinct runs once each, not 6.
+        assert sorted(r.uuid for r in result.results) == [
+            "a1",
+            "a2",
+            "b1",
+            "b2",
+            "b3",
+        ]
