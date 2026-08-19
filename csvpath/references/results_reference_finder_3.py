@@ -26,10 +26,18 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 #    two exceptions carved out before general traversal (Rule 1a/1b, a
 #    bare/ordinal-indexed :manifest() reads the global archive ledger); any
 #    other use of "*" goes through _query_star_traversal(), which is
-#    deliberately the narrowest of the three datatypes' traversals (bare
-#    pointer only, no path narrowing/:all()/name_three/:manifest()/field
-#    accessors) -- see that method's own docstring for why the wider cases
-#    are genuinely harder here, not just unbuilt yet.
+#    deliberately the narrowest of the three datatypes' traversals -- a bare
+#    pointer, optionally combined with ':flatten()', ':all()' (added
+#    2026-08-18/2026-08-19), and/or a run-level field-accessor function, but
+#    still no path narrowing/name_three/:manifest() -- see that method's own
+#    docstring for why the remaining wider cases are genuinely harder here,
+#    not just unbuilt yet. ':all()' here partitions by the COMPOSITE (named-
+#    results group, 1-level template value) key, resolving a real meaning-
+#    collision -- see "THE ':all()' MEANING COLLISION AT STAR TRAVERSAL" in
+#    references_notes/notes/normative_reference_examples.txt for the worked
+#    example that settled it, and FilesReferenceFinder3's own equivalent
+#    ':all()' precedent (its "file_home" key already IS a composite key,
+#    the named-file's name embedded as a path prefix).
 #  - name_one has TWO legal shapes, matching the spec's own examples
 #    ("$acme.results.:all()"/"$acme.results.:last()" alongside
 #    "$acme.results.customers/2025:first()"):
@@ -519,51 +527,35 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
     def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
         """root_major == "*" -- query across every named-results group,
-        not just one. Deliberately narrow: only a bare pointer
-        (:first()/:last()/:index(n)), optionally combined with a run-
-        level field-accessor function (e.g. :uuid(), :named_paths_name()
-        -- added 2026-08-18, see this method's own field_call comment
-        below) -- still no literal/'*' path narrowing, no name_three, no
-        ':all()', no :manifest(). A bare pointer here means the same
-        zero-level-only ("direct children of each run's own group's
-        home") restriction the literal-root query() case now applies --
-        settled 2026-08-10, see that method's own comments and
-        :flatten() for the any-depth case. Two things make the
-        remaining wider cases genuinely harder here, not just unbuilt
-        yet (unlike files/csvpaths, where the same shapes were
-        straightforward generalizations):
+        not just one. Mirrors query()'s own dispatch tree (bare
+        function-only / prefix+':flatten()' / prefix+':all()' /
+        prefix+':groups()' / plain literal-'*' path), just computing
+        each candidate's own home per its own group (via
+        _discover_run_homes(None), which keeps each pair's group name
+        specifically for this) instead of one fixed home -- added
+        2026-08-19, closing the "literal/'*' path narrowing" gap this
+        method used to reject outright. ':groups()' (any-depth GROUP)
+        stays unsupported here, same as bare ':groups()' already was --
+        no established per-GROUP-of-named-results-groups meaning exists
+        for it yet, left for if/when a real use case asks. name_three
+        (an instance selector) is now supported too (added 2026-08-19)
+        -- _results_for_run() already does the identity/':all()'/range
+        selection entirely from a real run directory, independent of
+        group, so it composes with every shape above unchanged; the one
+        real design point is the ':all()'-GROUPING-plus-content-
+        accessor case, see _star_group_and_reduce()'s own comment.
+        :manifest() stays unsupported -- needs one already-known
+        manifest.json to re-read in _extract_data(), which cannot yet
+        tell a Rule-1a/1b global-ledger result apart from a traversal-
+        selected run directory (see _extract_data()'s own has_manifest
+        branch) -- a separate, still-open gap, not attempted here.
 
-        - RESULTS' own ':all()' already means something different --
-          pooling every csvpath-statement instance WITHIN one already-
-          selected run, at name_three (see _name_three_selector) -- so
-          there is no existing syntactic home for a "group by named-
-          results-group" trigger the way files/csvpaths both have via
-          a bare ':all()' in name_one. (Grouping by observed template
-          value WITHIN one already-literal group, David's three-
-          templates example, is a different, narrower thing and is
-          handled in the literal-root query() case, not here.)
-        - Literal/'*' path narrowing (_matches_prefix) needs a
-          candidate's own group's home directory to compute a relative
-          match -- a bare run_home string, once pooled from
-          _discover_run_homes(), no longer carries which group it came
-          from on its own. _discover_run_homes() now keeps each pair's
-          group name specifically so the zero-level check above can
-          compute the right home per candidate; genuine non-zero path
-          narrowing across every group still needs more design work
-          than reusing that, and stays out of scope here.
-
-        So this only generalizes _discover_run_homes() (root_major=None
-        skips its group filter -- it already reads the same archive-
-        wide ledger Rule 1a/1b use, so no separate group-name
-        enumeration is needed at all) and reuses _results_for_run()'s
-        existing no-name_three case unchanged. One real design
-        decision, independent of the zero-level change: chronological
-        order across every group cannot use a full-path string sort the
-        way one group's own query() case can get away with (different
-        groups' run directories live under different prefixes, so a
-        full-path sort would sort by group name first, not by
-        timestamp) -- _run_dir_sort_key() extracts just the trailing
-        directory-name segment, AND handles that segment's own
+        Chronological order across every group cannot use a full-path
+        string sort the way one group's own query() case can get away
+        with (different groups' run directories live under different
+        prefixes, so a full-path sort would sort by group name first,
+        not by timestamp) -- _run_dir_sort_key() extracts just the
+        trailing directory-name segment, AND handles that segment's own
         disambiguating "_N" suffix numerically rather than as a string
         (see this module's own docstring for why that suffix
         specifically cannot be sorted as a plain string).
@@ -574,64 +566,209 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "ResultsReferenceFinder3 does not support the '#worksheet' "
                 "marker (name_two) -- it is files-only."
             )
-        if not self._is_bare_function_only(name_one):
+        identity, match_all, accessor, _, range_bounds = self._name_three_selector(
+            reference.name_three
+        )
+        if match_all and accessor is not None:
+            # same "more than one entity" rule the literal-root case
+            # already enforces, unconditionally, regardless of run
+            # count -- :all() at name_three means every instance in
+            # whichever run(s) match, each with its own separate well-
+            # known file on disk.
             raise ReferenceException3(
-                "ResultsReferenceFinder3 does not yet support path "
-                "narrowing combined with '*' traversal -- only a bare "
-                "pointer (:first()/:last()/:index(n)) is supported so "
-                "far, e.g. '$*.results.:last()'."
+                "ResultsReferenceFinder3 requires a specific statement "
+                "identity, not :all(), to read full well-known-file "
+                "content -- resolving full content always touches "
+                "exactly one entity."
             )
-        if reference.name_three is not None:
+
+        if self._is_bare_function_only(name_one):
+            calls = self._combined_name_one_calls(name_one)
+            pointer, all_call, flatten_call = self._star_run_selector_chain(calls)
+            if all_call is not None:
+                # exactly one level, wildcarded -- the SAME [Star3()]
+                # restriction bare ':all()' already applies for one
+                # literal group, just computed per candidate's own
+                # group home. Partitions by the COMPOSITE (group,
+                # template-value) key -- see this method's own
+                # docstring and normative_reference_examples.txt's "THE
+                # ':all()' MEANING COLLISION AT STAR TRAVERSAL" section.
+                partitioned = []
+                for rh, group in self._discover_run_homes(None):
+                    home = self.csvpaths.results_manager.get_named_results_home(
+                        group
+                    )
+                    if self._matches_prefix(rh, home, [Star3()]):
+                        partitioned.append(
+                            (rh, (group, self._group_key(rh, home)))
+                        )
+                return self._star_group_and_reduce(
+                    partitioned, pointer, identity, match_all, range_bounds, accessor
+                )
+            if flatten_call is not None:
+                # any depth, every group -- _discover_run_homes(None)
+                # already discovers across every group with no depth
+                # restriction of its own (the zero-level restriction in
+                # the else branch below is applied AFTER discovery, by
+                # the _matches_prefix filter, not by discovery itself),
+                # so no separate any-depth gathering logic is needed
+                # here.
+                run_homes = [rh for rh, _ in self._discover_run_homes(None)]
+            else:
+                # zero-level (direct children of each run's own group's
+                # home) only -- same restriction the literal-root
+                # query() case now applies to a plain bare pointer,
+                # settled 2026-08-10.
+                run_homes = [
+                    rh
+                    for rh, group in self._discover_run_homes(None)
+                    if self._matches_prefix(
+                        rh,
+                        self.csvpaths.results_manager.get_named_results_home(group),
+                        [],
+                    )
+                ]
+            return self._star_pool_and_reduce(
+                run_homes, pointer, identity, match_all, range_bounds, accessor
+            )
+
+        if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
+            -1
+        ].name == "flatten":
+            # a literal/wildcard prefix, then ':flatten()' as the last
+            # path segment, e.g. "beta/:flatten():last()" -- matches
+            # this prefix (relative to each candidate's OWN group home),
+            # then anything, at any remaining depth.
+            if name_one.path[-1].arg is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3's ':flatten()' does not take "
+                    "an argument."
+                )
+            prefix_pattern = self._compile_path_pattern(name_one.path[:-1])
+            calls = list(name_one.functions)
+            pointer, _, _ = self._star_run_selector_chain(calls)
+            run_homes = [
+                rh
+                for rh, group in self._discover_run_homes(None)
+                if self._matches_prefix_at_least(
+                    rh,
+                    self.csvpaths.results_manager.get_named_results_home(group),
+                    prefix_pattern,
+                )
+            ]
+            return self._star_pool_and_reduce(
+                run_homes, pointer, identity, match_all, range_bounds, accessor
+            )
+
+        if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
+            -1
+        ].name == "all":
+            # a literal/wildcard prefix, then ':all()' as the last path
+            # segment, e.g. "beta/:all():last()" -- matches exactly one
+            # level beyond the prefix (relative to each candidate's OWN
+            # group home), grouped by the COMPOSITE (group, observed-
+            # value-at-that-position) key, same as the bare case above.
+            if name_one.path[-1].arg is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3's ':all()' does not take an "
+                    "argument."
+                )
+            prefix = self._compile_path_pattern(name_one.path[:-1])
+            pattern = prefix + [Star3()]
+            calls = list(name_one.functions)
+            pointer, _, _ = self._star_run_selector_chain(calls)
+            partitioned = []
+            for rh, group in self._discover_run_homes(None):
+                home = self.csvpaths.results_manager.get_named_results_home(group)
+                if self._matches_prefix(rh, home, pattern):
+                    partitioned.append(
+                        (
+                            rh,
+                            (
+                                group,
+                                self._group_key(
+                                    rh, home, prefix_len=len(pattern) - 1
+                                ),
+                            ),
+                        )
+                    )
+            return self._star_group_and_reduce(
+                partitioned, pointer, identity, match_all, range_bounds, accessor
+            )
+
+        if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
+            -1
+        ].name == "groups":
             raise ReferenceException3(
-                "ResultsReferenceFinder3 does not yet support name_three "
-                "(an instance selector) combined with '*' traversal."
+                "ResultsReferenceFinder3 does not yet support ':groups()' "
+                "combined with '*' traversal -- no established per-GROUP-"
+                "of-named-results-groups meaning exists yet, unlike the "
+                "literal-root case's own ':groups()'."
             )
-        calls = self._combined_name_one_calls(name_one)
+
+        # plain literal/'*' path, no trailing ':flatten()'/':all()'/
+        # ':groups()' marker -- POOL mode, exact-length match (relative
+        # to each candidate's OWN group home), reduced by the pointer.
+        pattern = self._compile_path_pattern(name_one.path)
+        calls = list(name_one.functions)
+        pointer, _, _ = self._star_run_selector_chain(calls)
+        run_homes = [
+            rh
+            for rh, group in self._discover_run_homes(None)
+            if self._matches_prefix(
+                rh, self.csvpaths.results_manager.get_named_results_home(group), pattern
+            )
+        ]
+        return self._star_pool_and_reduce(
+            run_homes, pointer, identity, match_all, range_bounds, accessor
+        )
+
+    def _star_run_selector_chain(self, calls: list) -> tuple:
+        """validates a run-selecting combined function chain for '*'
+        traversal, shared by every _query_star_traversal shape (bare
+        and literal/'*'-prefixed alike) -- added 2026-08-19, factored
+        out of what used to be inline-only-for-the-bare-case logic once
+        the literal/'*'-prefixed shapes needed the identical validation.
+        Returns (pointer, all_call, flatten_call); all_call/flatten_call
+        are only ever non-None for the bare shape (calls includes
+        name_one.path[0] itself there) -- for a prefixed shape, calls is
+        just name_one.functions, and the ':all()'/':flatten()' marker
+        lives in name_one.path[-1] instead, inspected separately by the
+        caller, so it can never appear in `built` here; returning
+        None/None for those callers is correct, not a missed case.
+        A run-level field-accessor function (e.g. :uuid(),
+        :named_paths_name() -- added 2026-08-18) is exempt from the
+        non-pointer rejection below, same as ':all()'/':flatten()' are:
+        _results_for_run() already builds each candidate's
+        ReferenceResult3 from its own real run directory, independent
+        of any group-name context, so resolving a field from it needs
+        nothing star-traversal-specific."""
         built = ReferenceFunctionFactory.build_chain(calls)
-        # added 2026-08-14 -- replaces two separate, still-incomplete
-        # checks (an "all()/flatten()/manifest() by name" check and a
-        # separate field-function check) with one that actually covers
-        # every case this method's own docstring restriction implies
-        # ("only a bare pointer... is supported so far"). Confirmed via
-        # direct testing before this fix that neither replaced check
-        # actually caught everything it should have -- ':groups()' and
-        # ':from()' both silently swallowed instead of raising, the
-        # same bug class already fixed for the literal-root case above.
-        # ':flatten()' would have been a no-op here anyway (traversal
-        # already pools every discovered run at the same zero level),
-        # but rejecting it explicitly, like everything else that is not
-        # a pointer, still avoids silently applying that filter to what
-        # should be an any-depth query.
-        # added 2026-08-18 -- a run-level field accessor (e.g. :uuid(),
-        # :named_paths_name()) is now allowed alongside the pointer:
-        # _results_for_run() (below) already builds each candidate's
-        # ReferenceResult3 from its own real run directory, independent
-        # of any group-name context, so resolving a field from it needs
-        # nothing star-traversal-specific -- see _extract_data()'s own
-        # comment on why this "just works" once let through. Previously
-        # rejected here alongside :all()/:flatten()/:groups()/:manifest()/
-        # ':from()'/':to()', which is still narrower than that reasoning
-        # required -- David: this gap "invalidates a high-value class of
-        # scenarios" for reference expressions, which need exactly this
-        # (a scalar per matched candidate, searched across every group)
-        # to compare RESULTS against CSVPATHS/FILES at all.
-        # _find_field_function_call(built), not calls -- calls holds raw
-        # FunctionCall3 parse shapes, built holds the real constructed
-        # Function3 instances non_pointers iterates below; comparing a
-        # raw-list match against a built-list entry via "is" would never
-        # succeed, since they are different objects even for "the same"
-        # function.
         field_call = self._find_field_function_call(built)
+        all_call = next((f for f in built if f.name == "all"), None)
+        flatten_call = next((f for f in built if f.name == "flatten"), None)
+        if all_call is not None and flatten_call is not None:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not support combining "
+                "':all()'/':flatten()' -- each is its own depth/grouping "
+                "choice, not to be combined with another."
+            )
         non_pointers = [
-            f for f in built if f.ROLE != Function3.POINTER and f is not field_call
+            f
+            for f in built
+            if f.ROLE != Function3.POINTER
+            and f is not field_call
+            and f is not flatten_call
+            and f is not all_call
         ]
         if non_pointers:
             raise ReferenceException3(
                 f"ResultsReferenceFinder3 does not yet support "
                 f":{non_pointers[0].name}() combined with '*' traversal -- "
                 "only a bare pointer (:first()/:last()/:index(n)), "
-                "optionally combined with a run-level field-accessor "
-                "function (e.g. :uuid()), is supported so far."
+                "optionally combined with ':all()'/':flatten()' and/or a "
+                "run-level field-accessor function (e.g. :uuid()), is "
+                "supported so far."
             )
         pointer = self._pointer_from_calls(calls)
         if pointer is None:
@@ -640,27 +777,79 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 ":last()/:index(n)) when traversing every named-results "
                 "group with '*'."
             )
+        return pointer, all_call, flatten_call
 
-        # zero-level (direct children of each run's own group's home)
-        # only -- same restriction the literal-root query() case now
-        # applies to a plain bare pointer, settled 2026-08-10. Each
-        # candidate's own group name (kept by _discover_run_homes since
-        # this is the traversal case) is needed to compute the right
-        # "home" per candidate -- different groups have different homes.
-        run_homes = [
-            rh
-            for rh, group in self._discover_run_homes(None)
-            if self._matches_prefix(
-                rh, self.csvpaths.results_manager.get_named_results_home(group), []
-            )
-        ]
+    def _star_pool_and_reduce(
+        self,
+        run_homes: list,
+        pointer,
+        identity: str | None,
+        match_all: bool,
+        range_bounds: tuple | None,
+        accessor,
+    ) -> ReferenceResults3:
+        """POOL mode's shared tail -- added 2026-08-19, alongside
+        _star_group_and_reduce(), factored out once name_three needed
+        threading through every star-traversal shape identically. No
+        "more than one candidate + content accessor" guard is needed
+        here (unlike the GROUP case) -- a pointer is always required in
+        POOL mode, so exactly one run is ever selected."""
         run_homes = sorted(run_homes, key=self._run_dir_sort_key)
         selected = self._apply_pointer(pointer, run_homes)
         if selected is None:
             return ReferenceResults3(results=[])
         return ReferenceResults3(
-            results=self._results_for_run(selected, None, False)
+            results=self._results_for_run(
+                selected, identity, match_all, range_bounds, accessor
+            )
         )
+
+    def _star_group_and_reduce(
+        self,
+        partitioned: list,
+        pointer,
+        identity: str | None,
+        match_all: bool,
+        range_bounds: tuple | None,
+        accessor,
+    ) -> ReferenceResults3:
+        """GROUP mode's shared tail (":all()", bare or literal/'*'-
+        prefixed) -- added 2026-08-19. `partitioned`: list of
+        (run_home, composite_key) pairs. Unlike POOL mode, a pointer
+        here can still select MORE than one run overall (one per
+        partition) -- so a name_three CONTENT accessor (:errors()/
+        :vars()/etc, as opposed to a poolable field accessor like
+        :uuid()) is rejected outright here, mirroring the literal-root
+        query() case's own "':all()'/':groups()' grouping does not
+        combine with :manifest() or a run-level field accessor"
+        restriction, narrowed to the piece that actually applies here:
+        a name_three CONTENT accessor reading full file content is "one
+        entity" per the same rule content accessors are held to
+        everywhere else in this file, and grouping can produce several.
+        A name_three FIELD accessor (e.g. ".invoices:uuid()") is NOT
+        rejected -- confirmed live against the already-shipped literal-
+        root precedent (":all():last().invoices:uuid()" resolves fine,
+        poolable, one result per matched run) before writing this."""
+        if accessor is not None:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not yet support combining "
+                "':all()' grouping with a name_three content accessor -- "
+                "resolve the grouped runs on their own first."
+            )
+        groups: dict = {}
+        for rh, key in partitioned:
+            groups.setdefault(key, []).append(rh)
+        results = []
+        for key in sorted(groups):
+            candidates = sorted(groups[key], key=self._run_dir_sort_key)
+            selected = self._apply_pointer(pointer, candidates)
+            if selected is not None:
+                results.extend(
+                    self._results_for_run(
+                        selected, identity, match_all, range_bounds, accessor
+                    )
+                )
+        return ReferenceResults3(results=results)
 
     _JSON_ACCESSOR_FILES = {
         "errors": "errors.json",
