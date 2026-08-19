@@ -285,6 +285,22 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         of the direct get_manifest_for_name(reference.root_major) call
         every non-star call site uses (that direct call is what broke
         for '*' before this fix -- no group is actually named "*").
+
+        ':having("identity")' is ALSO now supported (added 2026-08-18,
+        alongside RESULTS' own ':flatten()' fix) -- filters each group's
+        own manifest down to versions whose "named_paths_identities"
+        actually contains that identity, BEFORE either mode's own
+        pointer/grouping reduction, same position it occupies in
+        _resolve_versions()'s single-group precedent. This closes a
+        real, previously-latent bug, not just a missing feature:
+        ':having()' was never checked for at all here before this fix --
+        neither rejected as unsupported NOR applied -- so it was
+        silently DROPPED, e.g. "$*.csvpaths.:all():having('orders')"
+        returned every group's every version, unfiltered, confirmed live
+        before this fix. David's own "orders" worked example
+        (references_notes/notes/reference_expressions_notes.txt) needs
+        exactly this ("every group with an 'orders' statement") as its
+        right-hand side.
         """
         name_one = reference.name_one
         if name_one.name_two is not None:
@@ -312,6 +328,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         calls = [name_one.path[0], *name_one.functions]
         built = ReferenceFunctionFactory.build_chain(calls)
         is_grouped = any(f.name == "all" for f in built)
+        having_call = next((f for f in built if f.name == "having"), None)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         unsupported = any(f.name == "manifest" for f in built) or any(
             f.name in ("from", "to") for f in built
@@ -321,15 +338,26 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 "CsvpathsReferenceFinder3 does not yet support combining "
                 "'*' traversal with :manifest() or ':from()'/':to()' -- "
                 "only a plain pointer (:first()/:last()/:index(n)), "
-                "optionally combined with :all() for one result per "
-                "group, or a registered field-accessor function (e.g. "
-                ":uuid()), is supported so far."
+                "optionally combined with :all(), :having(\"identity\"), "
+                "or a registered field-accessor function (e.g. :uuid()), "
+                "is supported so far."
             )
+
+        def _having_filtered(manifest: list) -> list:
+            if having_call is None:
+                return manifest
+            return [
+                entry
+                for entry in manifest
+                if having_call.arg in (entry.get("named_paths_identities") or [])
+            ]
 
         if is_grouped:
             selected_versions = []
             for name in self.csvpaths.paths_manager.named_paths_names:
-                manifest = self.csvpaths.paths_manager.get_manifest_for_name(name)
+                manifest = _having_filtered(
+                    self.csvpaths.paths_manager.get_manifest_for_name(name)
+                )
                 if pointers:
                     selected = self._apply_pointer(pointers[0], manifest)
                     if selected is not None:
@@ -347,7 +375,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             pooled = []
             for name in self.csvpaths.paths_manager.named_paths_names:
                 pooled.extend(
-                    self.csvpaths.paths_manager.get_manifest_for_name(name)
+                    _having_filtered(
+                        self.csvpaths.paths_manager.get_manifest_for_name(name)
+                    )
                 )
             pooled.sort(key=lambda e: e["time"])
             selected = self._apply_pointer(pointers[0], pooled)
