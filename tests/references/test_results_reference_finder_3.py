@@ -425,16 +425,79 @@ class TestFlatten:
         assert results.results[0].uuid == "deep-uuid"
         assert results.results[0].data == "acme"
 
-    def test_all_grouping_combined_with_traversal_is_still_not_yet_supported(
-        self, two_group_archive
+    def test_all_grouping_partitions_by_composite_group_and_template_key(
+        self, tmp_path
     ):
-        # unlike ':flatten()', ':all()' at star-traversal's own position
-        # still means something else entirely (RESULTS' own name_three
-        # ':all()', or the literal-root one-level grouping) -- this
-        # remains unsupported, a real, separate, still-open restriction,
-        # not loosened by this fix.
+        # closes the ':all()' meaning-collision (settled 2026-08-19 with
+        # David via a worked example -- see "THE ':all()' MEANING
+        # COLLISION AT STAR TRAVERSAL" in references_notes/notes/
+        # normative_reference_examples.txt) -- mirrors
+        # FilesReferenceFinder3's own already-built ':all()' star-
+        # traversal precedent: partition by the COMPOSITE (group,
+        # template-value) key, not group alone or template alone.
+        # acme has two "east" runs and one "west" run; widgets has one
+        # "east" run -- "east" is reused across BOTH groups on purpose,
+        # the crux of the ambiguity this fixture proves is resolved
+        # correctly (neither collapsed into the other).
+        acme_east_1 = _make_run(
+            tmp_path / "acme" / "east", "2026-01-01_00-00-00", "acme-east-1", {}
+        )
+        acme_east_2 = _make_run(
+            tmp_path / "acme" / "east", "2026-01-03_00-00-00", "acme-east-2", {}
+        )
+        acme_west_1 = _make_run(
+            tmp_path / "acme" / "west", "2026-01-02_00-00-00", "acme-west-1", {}
+        )
+        widgets_east_1 = _make_run(
+            tmp_path / "widgets" / "east",
+            "2026-01-04_00-00-00",
+            "widgets-east-1",
+            {},
+        )
+        _write_archive_manifest_multi(
+            tmp_path,
+            {
+                "acme": [acme_east_1, acme_east_2, acme_west_1],
+                "widgets": [widgets_east_1],
+            },
+        )
+        results = _finder("$*.results.:all():last()", str(tmp_path)).query()
+        # 3 results, not 2 -- pooling by template value alone would have
+        # conflated acme's and widgets' "east" runs into one group
+        # (giving widgets-east-1, the true latest, and losing acme-
+        # east-2 entirely); grouping by named-results-group alone would
+        # have lost the east/west distinction within acme (giving
+        # acme-east-2 as acme's one "last", never surfacing acme-west-1
+        # at all).
+        assert sorted(results.uuids) == [
+            "acme-east-2",
+            "acme-west-1",
+            "widgets-east-1",
+        ]
+
+    def test_all_combined_with_flatten_is_rejected(self, two_group_archive):
+        # each is its own depth/grouping choice -- same mutual-exclusion
+        # rule the literal-root case already enforces.
         with pytest.raises(ReferenceException3):
-            _finder("$*.results.:all():last()", two_group_archive).query()
+            _finder(
+                "$*.results.:all():flatten():last()", two_group_archive
+            ).query()
+
+    def test_all_combined_with_a_field_accessor_also_works(self, tmp_path):
+        acme_run = _make_run(
+            tmp_path / "acme" / "east", "2026-01-01_00-00-00", "acme-east", {}
+        )
+        _write_json(
+            Path(acme_run) / "manifest.json",
+            {"run_uuid": "acme-east", "named_paths_name": "acme"},
+        )
+        _write_archive_manifest(tmp_path, "acme", [acme_run])
+        results = _finder(
+            "$*.results.:all():last():named_paths_name()", str(tmp_path)
+        ).resolve()
+        assert len(results.results) == 1
+        assert results.results[0].uuid == "acme-east"
+        assert results.results[0].data == "acme"
 
 
 class TestAllGrouping:

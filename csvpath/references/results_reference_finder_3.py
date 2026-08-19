@@ -27,11 +27,17 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 #    bare/ordinal-indexed :manifest() reads the global archive ledger); any
 #    other use of "*" goes through _query_star_traversal(), which is
 #    deliberately the narrowest of the three datatypes' traversals -- a bare
-#    pointer, optionally combined with ':flatten()' and/or a run-level field-
-#    accessor function (both added 2026-08-18), but still no path narrowing/
-#    :all()/name_three/:manifest() -- see that method's own docstring for
-#    why the remaining wider cases are genuinely harder here, not just
-#    unbuilt yet.
+#    pointer, optionally combined with ':flatten()', ':all()' (added
+#    2026-08-18/2026-08-19), and/or a run-level field-accessor function, but
+#    still no path narrowing/name_three/:manifest() -- see that method's own
+#    docstring for why the remaining wider cases are genuinely harder here,
+#    not just unbuilt yet. ':all()' here partitions by the COMPOSITE (named-
+#    results group, 1-level template value) key, resolving a real meaning-
+#    collision -- see "THE ':all()' MEANING COLLISION AT STAR TRAVERSAL" in
+#    references_notes/notes/normative_reference_examples.txt for the worked
+#    example that settled it, and FilesReferenceFinder3's own equivalent
+#    ':all()' precedent (its "file_home" key already IS a composite key,
+#    the named-file's name embedded as a path prefix).
 #  - name_one has TWO legal shapes, matching the spec's own examples
 #    ("$acme.results.:all()"/"$acme.results.:last()" alongside
 #    "$acme.results.customers/2025:first()"):
@@ -525,36 +531,33 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         (:first()/:last()/:index(n)), optionally combined with a run-
         level field-accessor function (e.g. :uuid(), :named_paths_name()
         -- added 2026-08-18, see this method's own field_call comment
-        below) and/or ':flatten()' (any-depth pooling across every
-        group -- added 2026-08-18, see this method's own flatten_call
+        below), ':flatten()' (any-depth pooling across every group --
+        added 2026-08-18, see this method's own flatten_call comment
+        below), or ':all()' (exactly-one-level GROUPING across every
+        group -- added 2026-08-19, see this method's own all_call
         comment below) -- still no literal/'*' path narrowing, no
-        name_three, no ':all()', no :manifest(). A bare pointer with no
-        ':flatten()' here means the same zero-level-only ("direct
-        children of each run's own group's home") restriction the
-        literal-root query() case now applies -- settled 2026-08-10, see
-        that method's own comments. Two things make the remaining wider
+        name_three, no :manifest(). A bare pointer with no ':flatten()'/
+        ':all()' here means the same zero-level-only ("direct children
+        of each run's own group's home") restriction the literal-root
+        query() case now applies -- settled 2026-08-10, see that
+        method's own comments. Two things make the remaining wider
         cases genuinely harder here, not just unbuilt yet (unlike
         files/csvpaths, where the same shapes were straightforward
         generalizations):
 
-        - RESULTS' own ':all()' already means something different --
-          pooling every csvpath-statement instance WITHIN one already-
-          selected run, at name_three (see _name_three_selector) -- so
-          there is no existing syntactic home for a "group by named-
-          results-group" trigger the way files/csvpaths both have via
-          a bare ':all()' in name_one. (Grouping by observed template
-          value WITHIN one already-literal group, David's three-
-          templates example, is a different, narrower thing and is
-          handled in the literal-root query() case, not here.)
         - Literal/'*' path narrowing (_matches_prefix) needs a
           candidate's own group's home directory to compute a relative
           match -- a bare run_home string, once pooled from
           _discover_run_homes(), no longer carries which group it came
           from on its own. _discover_run_homes() now keeps each pair's
-          group name specifically so the zero-level check above can
-          compute the right home per candidate; genuine non-zero path
-          narrowing across every group still needs more design work
-          than reusing that, and stays out of scope here.
+          group name specifically so the zero-level check above (and
+          the ':all()' partitioning below) can compute the right home
+          per candidate; genuine non-zero, non-':all()' path narrowing
+          across every group still needs more design work than reusing
+          that, and stays out of scope here.
+        - :manifest() needs one already-known manifest.json to re-read
+          in _extract_data() -- not yet threaded through for the star-
+          traversal case the way the field accessor was.
 
         So this only generalizes _discover_run_homes() (root_major=None
         skips its group filter -- it already reads the same archive-
@@ -631,30 +634,53 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # express. build_chain() above already validated ':flatten()'
         # takes no argument (Function3.check_valid()'s generic ARG_TYPES
         # check, called from build()) -- no separate check needed here.
-        # ':all()'/':groups()' stay unsupported -- RESULTS' own ':all()'
-        # already means something else entirely at star-traversal's
-        # position (see this method's own docstring), and ':groups()'
-        # (any-depth GROUP, one result per distinct value observed) has
-        # no established per-GROUP-of-named-results-groups meaning the
-        # way ':flatten()' (any-depth POOL) does -- left for if/when a
-        # real use case asks for it, same as the literal-root case's own
-        # deferred ':groups()' precedent.
+        # ':all()' -- added 2026-08-19, closing the meaning-collision
+        # settled with David (references_notes/notes/
+        # normative_reference_examples.txt, "THE ':all()' MEANING
+        # COLLISION AT STAR TRAVERSAL" section): partitions every
+        # zero-or-one-level candidate by the COMPOSITE (group,
+        # template-value) key, mirroring FilesReferenceFinder3's own
+        # already-built ':all()' star-traversal precedent exactly
+        # (there, "file_home" already embeds the named-file's own name
+        # as a prefix, so partitioning by file_home already IS a
+        # composite key -- see files_reference_finder_3.py's own
+        # _query_star_traversal docstring). Neither axis is collapsed
+        # into the other: pooling by template value alone would
+        # silently conflate two different named-results groups that
+        # happen to reuse the same subfolder name; grouping by named-
+        # results group alone would silently lose the template
+        # distinction within a group. Confirmed with David via a worked
+        # example (two groups, one template value -- "east" -- reused
+        # by both) before building this.
+        # ':groups()' stays unsupported -- the any-depth GROUP peer of
+        # this ':all()' fix has no established per-GROUP-of-named-
+        # results-groups meaning yet, left for if/when a real use case
+        # asks for it, same as the literal-root case's own deferred
+        # ':groups()' precedent.
+        all_call = next((f for f in built if f.name == "all"), None)
         flatten_call = next((f for f in built if f.name == "flatten"), None)
+        if all_call is not None and flatten_call is not None:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not support combining "
+                "':all()'/':flatten()' -- each is its own depth/grouping "
+                "choice, not to be combined with another."
+            )
         non_pointers = [
             f
             for f in built
             if f.ROLE != Function3.POINTER
             and f is not field_call
             and f is not flatten_call
+            and f is not all_call
         ]
         if non_pointers:
             raise ReferenceException3(
                 f"ResultsReferenceFinder3 does not yet support "
                 f":{non_pointers[0].name}() combined with '*' traversal -- "
                 "only a bare pointer (:first()/:last()/:index(n)), "
-                "optionally combined with ':flatten()' and/or a run-level "
-                "field-accessor function (e.g. :uuid()), is supported so "
-                "far."
+                "optionally combined with ':all()'/':flatten()' and/or a "
+                "run-level field-accessor function (e.g. :uuid()), is "
+                "supported so far."
             )
         pointer = self._pointer_from_calls(calls)
         if pointer is None:
@@ -663,6 +689,31 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 ":last()/:index(n)) when traversing every named-results "
                 "group with '*'."
             )
+
+        if all_call is not None:
+            # exactly one level, wildcarded -- the SAME [Star3()]
+            # restriction bare ':all()' already applies for one literal
+            # group, just computed per candidate's own group home.
+            partitioned = []
+            for rh, group in self._discover_run_homes(None):
+                home = self.csvpaths.results_manager.get_named_results_home(
+                    group
+                )
+                if self._matches_prefix(rh, home, [Star3()]):
+                    partitioned.append((rh, (group, self._group_key(rh, home))))
+            groups: dict = {}
+            for rh, key in partitioned:
+                groups.setdefault(key, []).append(rh)
+            selected_run_homes = []
+            for key in sorted(groups):
+                candidates = sorted(groups[key], key=self._run_dir_sort_key)
+                selected = self._apply_pointer(pointer, candidates)
+                if selected is not None:
+                    selected_run_homes.append(selected)
+            results = []
+            for run_dir in selected_run_homes:
+                results.extend(self._results_for_run(run_dir, None, False))
+            return ReferenceResults3(results=results)
 
         if flatten_call is not None:
             # any depth, every group -- _discover_run_homes(None) already
