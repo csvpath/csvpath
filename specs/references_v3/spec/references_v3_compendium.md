@@ -10,19 +10,25 @@ only the resulting, settled fact is stated here (the full design record,
 including corrections narrated inline, lives in `specs/references_v3/notes/`
 and `specs/references_v3/spec/references_expressions.md`).
 
-Sources read to produce the original document: `specs/references_v3/notes/
+Sources read to produce the original document:
+- `specs/references_v3/notes/
 creating references v3.txt` (the frozen/current spec, most recently revised
-by David), `specs/references_v3/spec/requirements_for_functions.md`,
-`specs/references_v3/notes/more_reference_queries.txt`, `specs/references_v3/
-notes/autocomplete_prototype.py`, all of `csvpath/references/` (grammar,
-transformer, object graph, parser, exceptions, finder ABC, results
-container, functions subpackage, the one concrete finder), all of `tests/
-references/`, and this project's own persisted design-memory files. The
-2026-08-19 catch-up pass additionally read `specs/references_v3/notes/
-manifest_field_functions_proposal.md`, `specs/references_v3/spec/
-references_expressions.md`, `specs/references_v3/spec/
-normative_reference_examples.txt`, and the full current `csvpath/references/`
-tree/test suite as they now stand.
+by David)
+- `specs/references_v3/spec/requirements_for_functions.md`
+- `specs/references_v3/notes/more_reference_queries.txt`
+- `specs/references_v3/notes/autocomplete_prototype.py`
+- all of `csvpath/references/` (grammar, transformer, object graph, parser,
+exceptions, finder ABC, results container, functions subpackage, the one
+concrete finder)
+- all of `tests/references/`
+- and this project's own persisted design-memory files.
+
+The 2026-08-19 catch-up pass author additionally read:
+- `specs/references_v3/notes/manifest_field_functions_proposal.md`
+- `specs/references_v3/spec/references_expressions.md`
+- `specs/references_v3/spec/normative_reference_examples.txt`
+- and the full current `csvpath/references/` tree/test suite as they now
+stand.
 
 ---
 
@@ -49,11 +55,11 @@ CsvPath already has two prior reference languages:
   design that David has confirmed was deliberately shaped that way in an
   attempt at type-ahead support he didn't know how to do properly at the time.
 
-**v3 is a from-scratch replacement**, motivated by two things: v1/v2 have
-real tech debt and lack conceptual clarity, and — the main driver — a more
-robust reference language can give an AI assistant a single, concise,
-general-purpose exploration tool for digging into CsvPath project state,
-instead of requiring many narrow, brittle, purpose-built tools.
+**v3 is a from-scratch replacement**, motivated by two things:
+- v1/v2 have real tech debt and lack conceptual clarity
+- and the vision of a more robust reference language giving an AI assistant
+a single, concise, general-purpose exploration tool for digging into CsvPath
+project state, instead of requiring many narrow, brittle, purpose-built tools.
 
 v3 is **AI-facing only, for now**. v1/v2 stay exactly where they are, untouched,
 and remain what end users see (identifying runs, registrations, named-paths
@@ -63,14 +69,15 @@ under `util/`) — and follows v1/v2's own naming convention: `_3.py` files,
 live in `tests/references/`.
 
 v3 covers only named-file, named-paths-group, and named-results storage. It
-does not cover runtime datatypes (variables, headers, csvpath match state,
-metadata) — those are a different concern.
+does not cover the four runtime datatypes (variables, headers, csvpath match
+state, metadata) — those will be addressed in a follow-on release post v3's
+launch.
 
 ---
 
 ## 2. The reference syntax model
 
-A v3 reference is a `$`-prefixed, dot-separated string:
+Like v1/v2, a v3 reference is a `$`-prefixed, dot-separated string:
 
 ```
 $root_major.datatype.name_one[#name_two][.name_three]
@@ -88,8 +95,18 @@ XLSX files).
 | `name_three` | optional (for every datatype, per the current spec) | A more specific part of what name_one identified. |
 
 The names `root_major`/`name_one`/`name_two`/`name_three` are inherited from
-v1/v2's own naming for a related but larger structure — kept for continuity,
-not because they're the clearest possible names.
+v1/v2's naming and are kept for continuity and because they make sense in
+context even though they aren't obvious names. v1/v2 also allows for a
+`name_four` based on a separator, `#` as is used to create name_two. `name_four`
+has minimal use cases, is rarely used, and is only applicable to the runtime
+datatype `variables`. It does not make an appearance in v3.
+
+### The easy parts: `root_major` and the datatype
+
+`root_major` is the name of a named-file, named-paths group, or named-results.
+It can take a wildcard as explained below. The datatype is a static field
+indicating which type of named-thing the reference is to. One of `files`,
+`csvpaths`, or `results`.
 
 ### The name_one distinction — the load-bearing point of clarity
 
@@ -97,9 +114,22 @@ not because they're the clearest possible names.
 this right is the single most hard-won point in the whole design:
 
 - **For `files` and `results`: name_one is a path-like prefix search.** It is
-  built from `/`-separated segments (literal names, `*`, or a `:name("...")`
-  function), and it identifies *which logical file* (files) or *which run*
-  (results) — a location in a directory tree, matched by prefix.
+  built from `/`-separated segments. A segment is:
+  - a literal name
+  - `*`
+  - a `:name("...")` function that may include a `.` char which would
+    otherwise be illegal.
+  Note that a regex in root_major can stand alone, but in name one and name
+  three the `:regex()` function must be used.
+
+  Segments identify *which logical file* (files) or *which run* (results) —
+  a location in a directory tree, matched by prefix. Note that a prefix can
+  `''`, i.e. no prefix. This is the case when no template is used during
+  file registration or when a run is triggered. Using templates is an optional
+  tool for semantically organizing files. If no template is used registrations
+  and runs are found directly under their name's home directory. We speak of
+  1-level templates, 2-level templates, etc. to describe how many path
+  segments the template adds to the path to the home directory.
 - **For `csvpaths`: name_one is a version-selecting expression**, not a path.
   A named-paths group has exactly one `group.csvpath` file on disk, updated
   in place every time statements are (re)loaded; there is no per-version
@@ -110,23 +140,65 @@ this right is the single most hard-won point in the whole design:
   differentiated only by UUID (the manifest entry's identifying UUID).
 
 This is why the STRUCTURE table (below) lists name_one's per-datatype meaning
-so differently, and it's why `csvpaths`'s finder (not yet built, see §6) will
-have to work completely differently from the `files` finder that already
-exists — name_one there is doing version-selection work, not path-matching
-work.
+so differently, and it's why `csvpaths`'s finder works quite differently from
+the `files` and `results` finders.
+
+### The role of functions
+
+Functions look like `:name_of_function()` and can take 0 or 1 argument, which
+is a string, number, function, or regex string wrapped in forward slashes,
+like: `/.../`.
+
+Functions do one of six jobs:
+- sets context (e.g. a path segment)
+- narrows to a single result (e.g. :index(5) or :first())
+- retrieves a field from metadata
+- matches on a field from metadata
+- retrieves a well-known file (e.g. :errors() retrieves the run results
+errors.json file)
+- retrieve an arbitrary file from run results by the name the csvpath writer
+gave it (e.g. a Parquet file named `invoices.parquet` found in a `name_three`
+csvpath instance run home)
+
+We talk about these as:
+- pointers (pick one thing)
+- context setters (narrow the search scope)
+- file accessors (pull the full content of a file)
+- field accessors (pull a value from a metadata file)
+
+Note that when a function is used to retrieve the content of a file only one
+file may match the reference. For e.g., it is not possible to pull the
+contents of all the errors.json files for a run at once. You can identify all
+the errors files by pulling the paths to the csvpath statement components of
+the run, knowing `errors.json` always has the same name and location for each.
+And you can select a subset of those errors JSON files by matching on a
+metadata field of one or more errors, resulting in multiple errors.json paths.
+But you cannot access the content of more than one errors.json file at once
+solely using a reference. The same is true of all file types, not just errors
+files.
 
 ### root_major, name_one, name_three — what limits each segment
 
 - **root_major**: limited only by an exact name, `*` (all named-things), or a
-  `:regex(...)` function.
+  regex string wrapped in forward slashes, like: `/.../`.
 - **name_one**: limited primarily by constructing the path (literal segments,
   `*`, `:name(...)`), but also by date, index, UUID, and other functions.
-  Dates here are always *date of arrival* (files), *date of load* (csvpaths),
-  or *date of run* (results).
+  Note that dates here are always evaluated as:
+  - for `files`: date of arrival
+  - for `csvpaths`: date of load
+  - or for `results`: date of run
 - **name_three**: an identifier that combines with name_one to reach specific
-  run-result files or values. Functions here reach "well known files" (e.g.
-  `:errors()`) or drill into a specific value inside one (e.g.
-  `:errors(:idchain("add[0]string[2]"))`).
+  run-result files or values, as in:
+  - for `files`: a specific cryptographically identified version of a file
+  - for `csvpaths`: a csvpath statement contained in a named-paths group
+  - or for `results`: the specific results of running a csvpath statement
+    contained in the named-paths group that was used in the run; i.e. a
+    component result of the total set of run results.
+  Functions in name three:
+  - retrieve files (e.g. `:errors()`)
+  - match a specific metadata value to select a file path (e.g.
+    `:errors(:idchain("add[0]string[2]"))`)
+  - retrieve a specific metadata field (e.g. `:uuid()`)
 
 ### The STRUCTURE table
 
@@ -136,17 +208,12 @@ work.
 | `csvpaths` | version — index, datetime, or UUID | (none) | csvpath statement ID (ID+UUID) | list of (path-to-`group.csvpath`, uuid) pairs, one per selected manifest version | bytes of the one csvpath statement identified, within the version identified |
 | `results` | path (prefix search) | (none) | csvpath statement ID (path+UUID) | path to the run directory | path to a specific statement's result-subdirectory within the run dir |
 
-Footnotes from the spec, worth keeping verbatim:
-- csvpaths' name_three is a *statement ID*, not a separate file, because there
-  is no per-statement file on disk for a csvpaths group — only a whole
-  `group.csvpath` file. results' name_three is also a statement ID, but *is*
-  a separate directory (each statement in a run gets its own result
-  subdirectory with its own files) — same label, structurally different
-  reason.
-- The spec explicitly flags that there may be no further functions available
-  for csvpaths' name_three beyond identity, though access to statement-level
-  metadata (tags, modes) via a function is plausible future value, currently
-  unbuilt.
+Note: `csvpaths` name three is a *csvpath statement ID*, not a separate file.
+There is no per-statement file on disk for a csvpaths group, only a whole
+`group.csvpath` file with `---- CSVPATH ----` delimiters between the ordered
+csvpath statements in the group. `results` name_three is also a statement ID,
+but it *is* a separate directory (each statement in a run gets its own result
+subdirectory with its own files).
 
 ---
 
@@ -155,19 +222,35 @@ Footnotes from the spec, worth keeping verbatim:
 v3, like v2, splits reference-following into two phases, but the phases mean
 something different in v3.
 
-**Query**: runs the reference as a search and returns 0-or-more results, each
-a **file-system path + a UUID**. Cheap — no data is read.
+**Query**: runs the reference as a search and returns 0-or-more results. Each
+is the set of:
+- a file-system path
+- a UUID
+- a name two (Excel files only, and optionally)
+- an instance ID (`csvpaths` only, and optionally)
 
-**Resolve**: pulls actual content out of what query found. Resolving returns
-bytes (if binary), or a string/JSON structure. It is possible for resolve to
-have no answer (`None`) — e.g. a bare results reference with no metadata
-pointer has no single well-defined "the" output of a run.
+These results always point to a file system location, with the identifiers
+needed for any internal file pointer (for Excel and `group.csvpaths`). This
+is the case even when the reference is clearly pointing to a metadata field
+within that context. In the query stage, a user can trim the list of results
+according to path, UUID, etc. without accessing whole files. In some cases
+a reference expression may combine two references, when both sets of results
+are comparable without further resolution.
+
+**Resolve**: pulls actual content a reference points to. When a reference
+points to a file, resolving returns either bytes (if the reference is to a
+binary file, such as an `.xlsx`) or a JSON structure. When a reference
+points to a field the return is a string, int, date, UUID, etc.
+
+It is possible for resolve to return no answer (`None`). A bare results
+reference with no metadata pointer has no single well-defined resolve output
+of a run; only the path to the run is indicated and that is available in the
+query stage.
 
 ### Query, by termination point
 
-**Query terminating at name_one** (regardless of which pointer function, if
-any, ends the chain) is a **prefix search returning zero or more paths to
-"file home" style container directories**:
+A Query terminating at name_one (regardless of any pointer function) is primarily a path,
+which may be resolved to a value, if further resolution of the reference is possible.
 
 | Datatype | What name_one-terminated query() returns |
 |---|---|
@@ -180,25 +263,36 @@ any, ends the chain) is a **prefix search returning zero or more paths to
 | Datatype | What name_three-terminated query() returns |
 |---|---|
 | files | path to the specific version file |
-| csvpaths | path to the `group.csvpath` file (same path as always; the UUID is what differs) |
+| csvpaths | path to the `group.csvpath` file (same path as always; the combined version UUID and statement ID differ) |
 | results | path to the specific statement's instance directory within the run dir |
 
 ### Resolve — the three-way classification
 
-A reference resolves to exactly one of three kinds of thing (`Reference3.
-resolve_kind` in code: `FIRST_PARTY` / `METADATA_FILE` / `METADATA_FIELD`):
+A reference resolves to a 0 or more set of one of three kinds of thing:
 
-1. **First-party data** — the actual underlying content — returned when no
-   function names metadata at all (e.g. a plain files reference with a
+1. **First-party registered data** — the actual underlying content — returned
+   when no function names metadata at all (e.g. a plain files reference with a
    version pointer resolves to that version file's raw bytes).
-2. **A whole metadata file** — returned when a function names a known
-   metadata file (`:errors()`, `:vars()`, `:meta()`, or an arbitrarily-named
-   file via `:file(...)`) with no further drilling into it.
-3. **One metadata field** — returned when that metadata-file function itself
-   takes another pointer as its argument, extracting one value rather than
-   the whole file (e.g. `:errors(:idchain("add[0]string[2]"))`).
+2. **A whole results metadata or data file** — returned when a function names
+   a known metadata file (`:errors()`, `:vars()`, `:meta()`, or an arbitrarily-
+   named file via `:file(...)`) with no further drilling into it.
+3. **A manifest.json or definition.json file** — file contents of one of the two
+   main config files. Note all datatypes have `manifest.json` but only `files`
+   and `csvpath` have `definition.json`.
+4. **One metadata field** — returned when config file function or run metadata
+   file function itself takes another pointer as its argument, extracting one
+   value rather than the whole file (e.g. `:errors(:idchain())`).
 
-The full resolve matrix from the spec, by termination point and pointer kind:
+Note that a file accessor that takes a field accessor is doing one of two things:
+- if the field accessor has no argument it returns the field's value
+- if the field has an argument, it limits the reference's match to files that
+contain fields with exactly that value. In this case, the resolved reference
+returns the file, not the field, because the field is just a predicate, not a
+retrieval. It is not possible to pass multiple limiting field values to a
+reference as a way to be more discriminating. This is an intentional
+simplification. Reference expressions offer one approach to further narrowing.
+
+The full resolve matrix by termination point and pointer kind:
 
 | | name_one, no pointer | name_three, no pointer | name_one, file pointer | name_three, file pointer | name_one, field pointer | name_three, field pointer |
 |---|---|---|---|---|---|---|
@@ -206,13 +300,11 @@ The full resolve matrix from the spec, by termination point and pointer kind:
 | **csvpaths** | no default | no default | contents of `manifest.json`/`definition.json` | no default (needs `:uuid(...)` + instance name/index for csvpath bytes) | requires `:uuid(...)`; returns a field, or (if only `:uuid(...)`) the version's bytes | requires `:uuid(...)` + instance name/index to get a field |
 | **results** | no default | no default | contents of `manifest.json` | any standard run-result file, or a user-named parquet/jinja/text file, via e.g. `:file("orders.parquet")` | field from `manifest.json` | field from any standard JSON run-result file (`errors.json`, `meta.json`, etc.) |
 
-**Note on `:uuid(...)`**: it is not a mandatory hand-typed function. If a
-reference's own pointer (`:first()`, `:index(n)`, etc.) already narrows to
-one version, nothing else is needed. `:uuid(...)` matters when a caller wants
-to resolve one *specific*, previously-queried candidate — via `resolve_from
-(list[str|UUID])` — out of several results a prior `query()` returned. This is
-already how `resolve_from()` is implemented; no code changes were needed for
-this point when it was worked out.
+**Note on `:uuid(...)`**: it is not a mandatory function. If a reference's
+own pointer (`:first()`, `:index(n)`, etc.) already narrows to one version,
+nothing else is needed. `:uuid(...)` matters when a caller wants to resolve
+one *specific*, previously-queried candidate — via `resolve_from
+(list[str|UUID])` — out of several results a prior `query()` returned.
 
 ### The two-call workflow
 
