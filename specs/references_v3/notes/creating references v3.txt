@@ -1,0 +1,376 @@
+
+# References v3
+
+This project is creating a Lark schema, language implementation, and query
+capability for a little language that finds data within the CsvPath
+Framework data storage structures. There have been two prior versions of
+references. v1 set the current form. v2 updated the parsing and resolving
+kit that interpreted them. v3 is a clean sheet version covering only
+named-file, named-paths groups, and named-results. It doesn't include any
+of the runtime datatypes (variables, headers, csvpath, metadata).
+
+
+### Note about versioning in the different datatypes
+    All three of the datatypes we will be working with are versioned.
+
+    named-paths groups have a single group.csvpaths file that is updated each time
+    csvpath statements are loaded as that named-group or appended to a
+    named-paths group that already exists. group.csvpaths files are not
+    versioned as files. However, they are versioned in that we keep each loaded
+    named-paths group's statements in the array of updates in the group's
+    manifest.json. This means that all "csvpaths" references that point to a
+    particular named-paths group will always return the same file system path,
+    even if they are referencing different versions of the group. The
+    references user solves this by indexing into the returned file path's
+    manifest on the UUID. I.e. the receives two results sharing one
+    group.csvpaths file path but with different UUID. The meaning is that both
+    results are in the group.csvpaths's manifest as separate versions, each
+    version being identified by UUID.
+
+    The files and results datatype references have arbitrary paths within their
+    scope that are created by templates. They also have versions. In the case
+    of the files datatype, the versions are the different data content files
+    named for their SHA256 hash+extension. The results datatype versions are runs.
+    Run dir names are the version identifier. This means that files are the
+    deepest data structure (name, path, version), followed by results (name, path
+    with version), followed by csvpaths (name, version as index into manifest).
+    Overall, however, the results datatype is the deepest hierarchy, due to the
+    csvpath statements in the run having their own directories and results files.
+
+
+## Overview Of References
+
+A reference is a path-like string that points to named-files, named-paths
+groups, or named-results.
+
+Every reference has four parts; although, only three are required in every
+reference:
+- root_major: the named object (required)
+- datatype: the type of data, one of: files, csvpaths, results (required)
+- name_one: in the case of files and results, a path-like prefix search
+  (required). in the case of named-paths groups, a time, index, or ordinal
+  expression resulting in zero or more (path, uuid) pairs, where the path
+  is always the same group.csvpaths file path and the uuids are versions
+  of that group identified by uuid in the manifest.json.
+- name_two: identifies a worksheet of a file, if the file is an XLSX
+  (optional for named-paths; no other use)
+- name_three: a more specific part of the thing(s) identified by name_one;
+  - a metadata structure (dict, list) from a metadata file,
+  - a field from a metadata file,
+  - the bytes of a file,
+  - the bytes of a named-paths group version (stored in the group's
+    manifest.json, but treated like a virtual file), or
+  - the bytes of a single csvpath from within one of a named-paths group's
+    versions
+
+(the names "root_major", "name_one", "name_two", and "name_three" reflect
+v1 and v2 naming based on a slightly larger data structure).
+
+"Following" a reference or using a reference to "query" means:
+- Query: using it like a search query that returns 0 or more referenceable
+  things. The query return is a physical file system path + a UUID assigned
+  to the thing.
+- Resolving: pulling a certain kind of data out of the thing referenced. The
+  result of resolving a reference is bytes, if binary, or a string or JSON
+  structure.
+
+A reference is a query that can be limited by it's root_major, name_one
+and name_three segments.
+- root_major: always a name and can only be limited by what name it is given,
+  the *, or a regular expression function, :regex(s).
+- name_one: a path-like prefix search, primarily limited by constructing the
+  path, but also by date, index, UUID, and other limiters represented by
+  functions. Dates are always date of arrival, date of load, or date of run,
+  for named-files, named-paths, and named-results, respectively.
+- name_three: an identifier that combines with name_one to find a path to
+  run result files from a csvpath statement. functions give access to well
+  known files which hold values of interest by identifying them (e.g.
+  :errors()) and pointing to specific values (e.g.
+  :errors(:idchain("add[0]string[2]"))).
+
+The workflow of using a reference is:
+- Write a reference string
+- Create a ReferenceFinderV3(ref:str)
+- Call finder.query() to get a list of path+UUID
+- Call finder.resolve() or finder.resolve_from(list[str|UUID])
+
+In a later phase we will add a ReferenceExpression that will NOT, UNION,
+or INTERSECT multiple references.
+
+
+
+## Functions and Wildcards
+
+References have functions. Functions start with a colon, have parentheses,
+and may have 0 or 1 argument. All functions are anded together. If a
+function in name_one is separated by a forward slash, it is taking part
+in constructing a filesystem path within name_one. name_three cannot have
+free-standing forward slashes.
+
+root_major may take a *. The meaning is all named things are to be
+considered. A path segment may also take a * meaning accept all files or
+directories found at that certain level in the reference's name_one path.
+
+All functions start with a colon and have parentheses. a function can take
+at most 1 argument. functions are ANDed together. there can be a :not()
+function, maybe, but in general we will expect references to be combined
+using a very small number of set operations: AND, OR, NOT, INTERSECT, UNION
+
+
+## Query Vs. Resolve
+
+As in v2, v3 will offer query and resolve steps. However, in v3 the steps
+are different. A query will result in file system paths + UUIDs (most
+likely strings).
+
+### Query terminating at name_one, regardless of specific pointer, is a
+prefix search that returns zero or more paths to file home directories
+(containing version files):
+ - files: file system path to named-file file home (directory of versions)
+ - csvpaths: file system path to group.csvpath file
+ - results: file system path to the run dir
+
+### Query terminating at name_three, regardless of specific pointer:
+ - files: file system path to version file
+ - csvpaths: file system path to group.csvpath file
+ - results: file system path to the instance dir within the run dir
+
+A reference resolves to first-party data or metadata files or individual
+fields within metadata files. First-party data is returned when there is
+no specific reference to metadata. Metadata files are returned when
+there is no specific reference to a field. A field from a metadata file
+is returned when there is a specific field pointer. It is possible for
+there to be no resolution possible. For example, a results reference
+that ends with name_one and has no metadata reference cannot be resolved
+because there is no one data output of a run. In that case, the resolved
+data is None.
+
+### Resolve terminating at name_one, with no pointer:
+ - files: no default (so None)
+ - csvpaths: no default
+ - results: no default
+
+### Resolve terminating at name_three, with no pointer:
+ - files: version file bytes (name three always points)
+ - csvpaths: bytes of the csvpath statement identified by name_three,
+             from that statement's copy in the version identified by
+             name_one (name_three always points to a specific statement,
+             so there is no "no default" case here -- matches the
+             STRUCTURE section's "Name_three used alone == bytes of
+             csvpath identified in version identified")
+ - results: no default
+
+### Resolve terminating at name_one, with file pointer:
+ - files: contents of manifest.json or definition.json
+ - csvpaths: contents of manifest.json or definition.json
+ - results: contents of manifest.json
+
+Note: for files and csvpaths we take :manifest() to mean the manifest
+entry or entries for the scope picked out by the reference. That may
+be the whole manifest.json file, but often it will be just a subset
+that ends up feeling the same as a smaller JSON file.
+
+
+### Resolve terminating at name_three, with file pointer:
+ - files: version file bytes (name three always points)
+ - csvpaths: no default (requires :uuid(...) + instance name or index
+             to get csvpath bytes)
+ - results: any of the standard run result files or a user-named parquet,
+            jinja, or text output file, including any _extra_data
+            directory data files (rare today, but possible) using a
+            function like :file("orders.parquet").
+
+### Resolve terminating at name_one, with data field pointer:
+ - files: field from manifest.json or definition.json
+ - csvpaths: - requires :uuid(...)
+             - returns a field from manifest.json or definition.json
+             - or if only :uuid(...) provided returns bytes of the version
+ - results: field from manifest.json
+
+### Resolve terminating at name_three, with data field pointer:
+ - files: not possible
+ - csvpaths: requires :uuid(...) + instance name or index to get field
+ - results: returns field from any of the standard JSON run result files
+            e.g. errors.json, meta.json, etc.
+
+
+
+
+## Location
+
+The references v3 modules will be at csvpath/references. The old v1 and v2
+classes are at csvpath/util/references. Moving references up to the top of
+CsvPath Framework both separates the versions for easier maintenance and
+reflects that references have only become more important as time has
+passed. File names and class names will be appended by "_3.py" and "3"
+respectively. The unit tests for references v3 will be at tests/references.
+The parse tree built from parsing a v3 reference will be held by a
+ReferenceParser3 object that may be aliased to ReferenceParser, the current
+references class. Please see csvpaths/util/references for the v1 and v2
+classes to see the naming conventions that should be followed for v3 in
+csvpath/references.
+
+
+NOTE: Only new AI functionality will use v3 at this time. AI agents will be
+able to use sophisticated sets of references to explore and reason about the
+state of a CsvPath Framework project. Users will not see v3 references in
+the usual case, for now. Regular v2 references (which are identical to v1 in
+form) will still be returned to users identify runs, registrations, and
+named-paths group loads, at least for the foreseeable future.
+
+
+
+## STRUCTURE:
+
+            root    root_minor    datatype      name_one        name_two (op)   name_three (op)
+______________________________________________________________________________________________
+files:      name    (none)        "files"       path            worksheet       version
+                                                                                index or
+                                                                                fingerprint
+                                                                                or datetime
+
+Name_one used alone == path to directory of version files
+Name_three used alone == path version file
+
+
+
+            root    root_minor    datatype      name_one*       name_two (n/a)  name_three (op)
+______________________________________________________________________________________________
+csvpaths:   name    (none)        "csvpaths"    version         (none)          csvpath stmt
+                                                index or
+                                                datetime or
+                                                uuid
+
+Name_one used alone == list of versions in the form: (path-to-group.csvpaths, uuid)
+Name_three used alone == bytes of csvpath identified in version identified†
+
+
+
+            root    root_minor    datatype      name_one        name_two (n/a)  name_three (op)
+______________________________________________________________________________________________
+results:    name    (none)        "results"     path            (none)          csvpath stmt‡
+
+Name_one used alone == path to run dir
+Name_three used alone == path to a csvpath dir within run dir
+
+
+
+* The csvpaths datatype name_one is always one or more versions of a named-paths group's
+  group.csvpaths file
+
+† Caution here. There may not be any more specific functions available for name_three
+  in csvpaths datatype. Though, it might be important to get access to the metadata for
+  inspecting it as tags, modes, etc., so it is possible there could be a function. The
+  caller to parse the path, extracting the metadata themselves, but doing it that way
+  might be a real opportunity lost to references.
+
+‡ In the above, the difference between csvpaths name_three and results name_three is that
+  in the former there is no separate file per csvpath; whereas, in the latter there is a
+  directory with several result files from one csvpath.
+
+
+
+## Other Notes:
+
+- The number of available functions is unbounded. They must match the production form, but are looked up at runtime.
+- A single * may be used anywhere :all() may be; however, * and :all() do not have the same impact; see scenario given below.
+- A file reference, e.g. :data(), is returned from a query as a path+UUID and will be resolved into CSV data in another method
+- Paths may be declared in parts as static names, *, or functions separated by a forward slash
+- Dates are either date or datetimes. A :time() will be available for time-only queries.
+- @ prefixed names are variables that are bound at runtime
+- Percent signs (%) in name_one and name_two must be useable for URL encoding, in order to accomodate remote paths. %must be escapable as %%.
+- A reference like $acme.files.*.:index(7) will be interpreted in arrival time order, so :index(7) means the eighth file to be registered under the acme named-file (index is 0-based: index(0) is the first file)
+- A reference like $acme.files.*#my_worksheet.:type("xlsx") is redundant (we know it's an XLSX because we're refering to a worksheet in name_two) but legal
+- A reference like $acme.files.*.:uuid("a4ff-82b9-...") is a specific registration reference without regard for path
+- While we aren't defining functions in this doc it is worth pointing out:
+    - :all() is not equal to * (see example scenario below)
+    - :last() is (always?/in some cases?) assumed to mean last arrival. navigating by the arrival time of well-identified bytes within scopes is a key capbility of CsvPath Framework.
+
+
+## EXAMPLES:
+
+The "files" datatype:
+    $*.files.Q2/test-data.:last()
+    $acme.files.Q2/:name(*).:last()
+    $acme.files.Q2/:name(@customer).:last()
+    $acme.files.Q2/test-data.:last()
+    $acme.files.:quarter()/:name("live data").:last()
+    $acme.files.:date("2026-01-20").:to(:index(5))
+    $acme.files.*.:last()
+    $acme.files.:all().:first()
+    $acme.files.*#my_worksheet.:type("xlsx")
+    $acme.files.*#my_worksheet.:at(-1)
+    $acme.files.*.:uuid("a4ff-82b9-...")
+    $acme.files.*.:index(7)
+    $acme.files.*.:from(:index(0)):to(@index)
+    $acme.files.*.:last():before(:today())
+
+The "csvpaths" datatype:
+    $acme.csvpaths.:before(:yesterday()):after(:date("2024-08-01")):index(3).company-names
+    $acme.csvpaths.:last().company_names
+    $*.csvpaths.*.:uuid("a901-33b9-...")
+    $acme.csvpaths.:uuid("a901-33b9-...").index(3)
+    $acme.csvpaths.:uuid("a901-33b9-...").index(@which)
+    $acme.csvpaths.:last().:all()
+
+The "results" datatype:
+    $acme.results.:all()
+    $acme.results.:last()
+    $acme.results.customers/2025:first()
+    $acme.results.customers/2025:first().invoices
+    $acme.results.*/2025:first().invoices
+    $acme.results.*/*/2025:first().invoices
+    $acme.results.:name(/^[^M].*/)/2025:first().invoices
+    $acme.results.:choice("acme|star|general")/2025:first().invoices
+    $acme.results.:names(*)/2025:first().invoices:type("csv")
+    $acme.results.:names(*)/2025:first().invoices:name("report.txt")
+    $acme.results.customers/2025:first().invoices:data()
+    $acme.results.customers/2025:first().invoices:vars()
+    $acme.results.customers/2025:first().invoices:meta()
+    $acme.results.customers/2025:first().:all():data()
+    $acme.results.customers/2025:first().:from(2):unmatched()
+    $acme.results.customers/:year():first().:from(2):unmatched()
+    $acme.results.customers/:date("2025-01-01"):first().:from(2):unmatched()
+    $acme.results.customers/:from(:date("2025-01-01")):first().:from(2):unmatched()
+    $acme.results.customers/:from(:index(-1)).:from(2):unmatched()
+    $acme.results.customers/:from(:index(-1)).*:type("parquet")
+
+
+
+## EXAMPLE SCENARIO:
+
+To illustrate the difference between * and :all(), as well as the arrival-time nature of :last(). Given these files (listed in arrival timestamp order):
+
+  inputs/named_files
+              alpha
+                  zero.csv
+                      0000000000000000.csv
+                  one.csv
+                      1111111111abcdef.csv
+                      0000000000abcdef.csv
+              beta
+                  two.csv
+                      2222222222abcdef.csv
+                      3333333333abcdef.csv
+
+
+  These references will return these paths:
+
+   $*.files.:all().:last()
+     - inputs/named_files/alpha/zero.csv/0000000000000000.csv
+     - inputs/named_files/alpha/one.csv/0000000000abcdef.csv
+     - inputs/named_files/beta/two.csv3333333333abcdef.csv
+
+   $*.files.*.:last()
+     - inputs/named_files/beta/3333333333abcdef.csv
+
+   $alpha.files.:all().:last()
+     - inputs/named_files/alpha/zero.csv/0000000000000000.csv
+     - inputs/named_files/alpha/one.csv/0000000000abcdef.csv
+
+   $alpha.files.*.:last()
+     - inputs/named_files/alpha/one.csv/0000000000abcdef.csv
+
+
+
+
