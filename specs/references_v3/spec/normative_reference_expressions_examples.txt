@@ -1,0 +1,29 @@
+#
+# DO NOT USE THIS AS A NORMATIVE REFERENCES TEST SET UNTIL DAVID REMOVES THIS NOTE
+# Until then, this is just a draft/WIP.
+#
+
+
+# REFERENCE EXPRESSIONS
+
+Reference expressions combine references using three set operations:
+- `UNION`
+- `SUBTRACT`
+- `INTERSECTION`
+
+*Note*: these reference expressions require a more nuanced idea of `path` in ReferenceResults3. We will need to make a paths available to root_major, name_one, and name_three, with name_three's path being optional.
+
+### What changes from yesterday seem to have had a negative impact on overnight runs?
+Specifically, do:
+- a) find the identities of all csvpaths in named-paths groups loaded in the past 24 hours
+- b) find the identities of all csvpaths statement emitting errors in runs starting 16 hours ago
+- take the intersection of a and b to find the possible negative impact named-paths group changes
+
+
+$*.csvpaths.:from(:hours(-24)).*:identity()
+INTERSECT
+$*.results.:flatten():from(:hours(-16)).*:identity():has_errors()
+
+
+
+

@@ -1,0 +1,757 @@
+#
+# DO NOT USE THIS AS A NORMATIVE REFERENCES TEST SET UNTIL DAVID REMOVES THIS NOTE
+# Until then, this is just a draft/WIP.
+#
+
+*Note*: all functions may not be available at v3 launch, but all must possible and
+        have a well-known meaning that can be tested deterministically.
+
+# SIMPLE REFERENCES
+
+## The Results Datatype
+
+*
+#### Notes
+- A "1-level template" means a template like :1/:run_dir where the run is 1 path
+segment below a particular named-result home directory. A "non-template run dir"
+means a run dir that is a direct child of the named-result home.
+- Some constructions may simply be less efficient equivalents to others.
+For example `:from(:index(-3))` is identical to `:from(-3)`. In this case, both
+`:from()` and `:index()` need to exist for different requirements, and while we
+wouldn't suggest combining them together in this inefficient way, it wouldn't be
+technically prevented. Likewise, `:from(:yesterday())` is do able but not
+necessary -- a simple `:yesterday()` is enough. However,
+`:from(:date("2026-01-01"))` must be possible, so `:from(:yesterday())` is as
+well.
+*
+
+
+### Finding the "last" run or runs of a type of information:
+$alpha.results.:last()                  >> run with no template
+$alpha.results.*:last()                 >> run with a 1-level template
+$alpha.results.:all():last()            >> runs for each 1-level template
+$alpha.results.:flatten():last()        >> run
+$alpha.results.beta/:flatten():last()   >> run of all templates starting `beta`
+$alpha.results.beta/:all():last()       >> runs of all 2-level templates starting `beta`
+$alpha.results.beta/*:last()            >> run of all 2-level templates starting `beta`
+$alpha.results.:manifest():last()       >> manifest entry of the most recent run with no template
+$*.results.:manifest():last()           >> manifest entry of the most recent run, period, across every named-result
+$alpha.results.:groups():last()         >> runs for every template and non-template run dir
+
+### find errors in any named-result run since close of business yesterday
+### we do not have an :hour(n) as of 13 aug 2026
+QUESTION: $*.results.:flatten():from(:yesterday(:hour(18))).*:errors()
+$*.results.:flatten():from(-10):to(-1)
+$*.results.:flatten():from(:index(-10)):to(:index(-1))
+$*.results.:flatten():from(:date("2026-01-01")):to(:date("2026-05-01"))
+
+
+
+### use of :all()
+#### same as above
+$alpha.results.:all():last()            >> runs for each 1-level template
+#### more examples
+$alpha.results.:all().:all()            >> all csvpaths for all runs for each 1-level template
+#### NO GOOOD
+*   all in name_one returns all runs for each 1-level template resulting
+    in the expectation of multiple runs, and file accessors are only legal for 1
+    specific selection, not the possibility of multiple.*
+$alpha.results.:all().:manifest()       >> all csvpaths for all runs for each 1-level template
+#### same as above but with a pointer
+$alpha.results.:flatten():first():manifest()   >> the manifest of the last of all alpha results
+$alpha.results.:flatten():first().:last():manifest()   >> manifest of last statement of last alpha results
+$alpha.results.:flatten():first().:all():error_count() >> error cnt of all statements of last alpha results
+$alpha.results.:all():index(5).:all():error_count() >> error cnt of all statements of the 5th 1-level alpha results
+
+
+
+### Find errors from yesterday at a specific idchain of a csvpath with the `purchases` identity
+$acme.results.:flatten():from(:yesterday()).purchases:errors(:idchain("customer[0]id[0]"))
+
+### What errors yesterday from a csvpath with the `purchases` identity matched a customer
+$acme.results.:flatten():from(:yesterday()).purchases:errors(:message(/customer: 319/))
+
+### Did any csvpath generate more than 10 errors yesterday
+QUESTION: $acme.results.:flatten():yesterday().*:errors(:count(:above(10)))
+
+### Every run having a 1-level template
+$acme.results.:all()
+
+### First run with template `customers/2025`
+$acme.results.customers/2025:first()
+
+### `invoices` in 1st run w/2-level template `customers/2025`
+$acme.results.customers/2025:first().invoices
+
+### `invoices` in 1st run w/2-level template ending `2025`
+$acme.results.*/2025:first().invoices
+
+### `invoices` in 1st run w/3-level template ending `2025`
+$acme.results.*/*/2025:first().invoices
+
+### `invoices` in 1st run w/2-level template starting with `M` and ending `2025`
+$acme.results.:name(/^M.*/)/2025:first().invoices
+
+### `invoices` from first run w/template ending `2025` and beginning with `acme`, `star`, or `general`
+$acme.results.:choice("acme|star|general")/2025:first().invoices
+
+### `invoices` from first run w/2-level template starting with any name and ending with `2025` where the source data was CSV
+$acme.results.:name(*)/2025:first():type("csv").invoices
+
+### `report.txt` (a print-mode printout file) within the `invoices` csvpath statement in the first run with a 2-level template starting with the value of @myname and ending in `2025`
+$acme.results.:name(@myname)/2025:first().invoices:file("report.txt")
+
+### `report.txt` (a print-mode printout file) within the `invoices` csvpath statement in the first run with a 2-level template ending in `2025`
+$acme.results.*/2025:first().invoices:file("report.txt")
+
+### the data.csv output of the `invoices` csvpath statement in the first run with a 2-level template `customers/2025`
+$acme.results.customers/2025:first().invoices:data()
+
+### the vars.json output of the `invoices` csvpath statement in the first run with a 2-level template `customers/2025`
+$acme.results.customers/2025:first().invoices:vars()
+
+### the meta.json output of the `invoices` csvpath statement in the first run with a 2-level template `customers/2025`
+$acme.results.customers/2025:first().invoices:meta()
+
+### CORRECTED 2026-08-13 -- these next 5 lines are WRONG as written (David,
+### confirmed: "$acme.results...:from(:index(2)):unmatched() should
+### definitely not work"): ':from()'/':to()' selecting more than one
+### statement is "more than one entity," the same reason ':all()' already
+### cannot combine with a content accessor like ':unmatched()' -- built
+### 2026-08-13 as a count-DEPENDENT restriction (mirrors this file's own
+### run-level "more than one candidate" rule), so any of these that actually
+### match 2+ statements now correctly RAISES instead of silently doing the
+### wrong thing. Getting "unmatched.csv for each of the 3rd-through-last
+### statements" needs two steps, same as ':all()' + an accessor already
+### does: query() the range alone first (no accessor) to list the matched
+### statements, then resolve() each one's own ':unmatched()' separately, by
+### its own literal identity -- there is no one-shot reference for "content
+### from more than one entity at once." The range ITSELF (no accessor) is
+### fine and already covered by TestStatementLevelRange.
+
+### unmatched.csv output of the 3rd through last csvpath statements in the first run with a 2-level template `customers/2025`
+$acme.results.customers/2025:first().:from(2):unmatched()
+
+### unmatched.csv output of the 3rd through last csvpath statements in the first run with a 2-level template `customers/2026`, where the current year == 2026
+$acme.results.customers/:name(:year()):first().:from(2):unmatched()
+
+### unmatched.csv output of the 3rd through last csvpath statements in the first run with a 1-level template `customers` where the date of arrival was 2025-01-01
+$acme.results.customers:date("2025-01-01"):first().:from(2):unmatched()
+
+### unmatched.csv output of the 3rd through last csvpath statements in each run with a 1-level template `customers` where the date of arrival was 2025-01-01 or newer
+$acme.results.customers:from(:date("2025-01-01")).:from(2):unmatched()
+
+### unmatched.csv output of the 3rd through last csvpath statements in the last three runs with a 1-level template `customers`
+$acme.results.customers:from(:index(-3)).:from(2):unmatched()
+
+### all parquet files output of all of the csvpath statements in the last three runs with a 1-level template `customers`
+$acme.results.customers:from(:index(-3)).*:type("parquet")
+
+### The manifest of the first run with a 1-level template `customers`
+$acme.results.customers:manifest():first()
+
+### The manifest of the first run with a 1-level template `customers` (shows order of :first() and :manifest() not important)
+$acme.results.customers:first():manifest()
+
+
+#############################################################################
+# EVERYTHING BELOW THIS LINE WAS ADDED BY CLAUDE ON 2026-08-11 -- FOR DAVID
+# TO REVIEW. NOTHING ABOVE THIS LINE WAS TOUCHED.
+#############################################################################
+
+## :home() as a zero-level selector -- decided jointly 2026-08-11, filling
+## the one real gap left in the depth model: there was no way to ask for
+## "every zero-level (no-template) run, unreduced" -- a bare pointer always
+## reduces to one, ':all()' is one-level not zero, ':flatten()' is any
+## depth not zero. ':home()' works here because it is a VALUE-role field
+## accessor, never a pointer -- when it is the only thing present, nothing
+## reduces the candidate set, so every zero-level run comes back unreduced
+## ("everything that has its home here"). The moment a real pointer joins
+## the chain (either order), it reduces to one and ':home()' reverts to
+## its ordinary job of reading the field off whatever got selected.
+##
+## Root-only, no prefixed form -- decided jointly 2026-08-11 (added), then
+## removed 2026-08-12 once we noticed a plain literal prefix with nothing
+## trailing (e.g. `$acme.results.beta`) already means "every run under this
+## exact prefix, unreduced" -- confirmed byte-for-byte identical results to
+## a prefixed ':home()' in every case tested, so ':home()' would just be a
+## second, more confusing spelling of something that already has one.
+## ':home()' is only load-bearing at the bare/root position, where the
+## grammar has no other way to say "zero segments."
+
+### every no-template run for alpha, unreduced
+$alpha.results.:home()
+
+### the most recent no-template run for alpha (same either order)
+$alpha.results.:home():last()
+$alpha.results.:last():home()
+
+### every run directly under the `beta` prefix, unreduced -- no ':home()'
+### needed, the plain prefix alone already means this
+$acme.results.beta
+
+## The Results Datatype (continued) -- field accessors, currently built,
+## with no examples above
+
+### Run scope field accessors -- $widgets, one run, no template
+$widgets.results.:first():serial()
+$widgets.results.:first():valid()
+$widgets.results.:first():completed()
+$widgets.results.:first():files_complete()
+$widgets.results.:first():status()
+$widgets.results.:first():method()
+$widgets.results.:first():hostname()
+$widgets.results.:first():username()
+$widgets.results.:first():time_completed()
+$widgets.results.:first():manifest_path()
+$widgets.results.:first():named_paths_name()
+$widgets.results.:first():named_results_name()
+$widgets.results.:first():named_file_name()
+$widgets.results.:first():run_uuid()
+$widgets.results.:first():home()               >> run_home
+
+### settled 2026-08-11: mirrors :run_uuid(), not the run's own bare "uuid"
+### field (that field stays deprecated/vestigial and unread) -- fixed in PR #242
+$widgets.results.:first():uuid()                >> same value as :run_uuid()
+
+### Instance scope field accessors -- $widgets, one run, statement identity `company_names`
+$widgets.results.:first().company_names:uuid()
+$widgets.results.:first().company_names:run_uuid()
+$widgets.results.:first().company_names:valid()
+$widgets.results.:first().company_names:completed()
+$widgets.results.:first().company_names:files_complete()
+$widgets.results.:first().company_names:serial()
+$widgets.results.:first().company_names:identity()
+$widgets.results.:first().company_names:actual_data_file()
+$widgets.results.:first().company_names:origin_data_file()
+$widgets.results.:first().company_names:file_fingerprints()
+$widgets.results.:first().company_names:source_mode_preceding()
+$widgets.results.:first().company_names:preceding_instance_identity()
+$widgets.results.:first().company_names:manifest_path()
+$widgets.results.:first().company_names:named_file_name()
+$widgets.results.:first().company_names:home()  >> instance_home
+
+### Global archive ledger -- every run across every named-results group, one flat array
+$*.results.:manifest()
+
+### Ordinal indexing into the global ledger -- order does not matter (confirmed
+### 2026-08-10, both used to be inconsistent -- see review notes in chat)
+$*.results.:last():manifest()
+$*.results.:manifest():last()
+
+### "*" traversal across every named-results group -- bare pointer, zero-level
+### (direct children) only, per the 2026-08-10 depth-semantics refactor.
+### I.e. returns the last run of all runs without templates from all named-results
+$*.results.:last()
+
+### THE ':all()' MEANING COLLISION AT STAR TRAVERSAL -- illustrated 2026-08-18,
+### David asked for concrete examples over narrative. ':all()' already has TWO
+### settled, uncontested meanings depending on WHERE it sits:
+###
+### (A) at name_three -- "every instance within one already-selected run":
+$acme.results.:last().:all():uuid()   >> one result per statement instance in
+                                       >> the last run, e.g. if that run has 3
+                                       >> statements -> 3 results
+###
+### (B) at name_one, bare, ONE already-literal group -- "exactly one level of
+### template wildcarding, GROUPED by the observed value at that position"
+### (line 32/52 above, David's three-templates example):
+$alpha.results.:all():last()          >> one result per DISTINCT 1-level
+                                       >> template value alpha has ever used,
+                                       >> each that value's own last run
+###
+### Neither of those is in question. The collision is what ':all()' should
+### mean at name_one when root_major is ALSO '*' -- i.e. BOTH axes (which
+### named-results group, AND which 1-level template value) are open at once.
+### Worked example to make the ambiguity concrete -- two named-results groups,
+### each using a "region" 1-level template, ONE region name reused across both
+### groups on purpose (this is the crux of the ambiguity):
+###   acme:    east/run1 (2026-01-01), east/run2 (2026-01-03), west/run1 (2026-01-02)
+###   widgets: east/run1 (2026-01-04)
+### What should `$*.results.:all():last()` give back?
+###
+### Interpretation 1 -- POOL BY TEMPLATE VALUE ONLY, ignore which group (i.e.
+### just extend meaning (B) across every group's runs as one pooled bag,
+### using the template value alone as the group key):
+###   group "east" = {acme/east/run1, acme/east/run2, widgets/east/run1} -> last() -> widgets/east/run1 (01-04)
+###   group "west" = {acme/west/run1}                                   -> last() -> acme/west/run1 (01-02)
+###   => 2 results. BUT "east" just silently merged acme's and widgets' runs
+###   together because they happen to reuse the same subfolder name -- two
+###   unrelated named-results groups conflated by naming coincidence.
+###
+### Interpretation 2 -- GROUP BY NAMED-RESULTS GROUP ONLY (mirrors CSVPATHS'/
+### FILES' own star-traversal ':all()' precedent for THEIR entity, i.e. one
+### result per group, template value ignored once inside a group):
+###   group "acme"    = {east/run1, east/run2, west/run1} -> last() -> acme/east/run2 (01-03)
+###   group "widgets" = {east/run1}                        -> last() -> widgets/east/run1 (01-04)
+###   => 2 results, but the east/west template distinction is completely lost
+###   within a group -- "acme's last run" wins regardless of which region it
+###   was in.
+###
+### Interpretation 3 -- GROUP BY THE COMPOSITE (named-results group, template
+### value) PAIR -- neither axis collapses into the other:
+###   (acme, east)    = {run1, run2} -> last() -> acme/east/run2 (01-03)
+###   (acme, west)    = {run1}       -> last() -> acme/west/run1 (01-02)
+###   (widgets, east) = {run1}       -> last() -> widgets/east/run1 (01-04)
+###   => 3 results, one per group+template combination actually observed.
+###
+### THIS EXACT COLLISION WAS ALREADY DECIDED FOR FILES, and Interpretation 3
+### is what was chosen there -- see files_reference_finder_3.py's own
+### _query_star_traversal docstring (~line 496-505): bare ':all()' partitions
+### every candidate by its own "file_home" (which already embeds the named-
+### file's name as a path prefix, so it IS the composite key), "one result
+### per (named-file, path) pair" -- confirmed real, built, tested behavior,
+### not just a note (see $*.files.:all().:last() at line 462 above). RESULTS'
+### own _group_key() helper (used by its literal-root ':all()'/':groups()'
+### grouping already) computes something structurally similar per-group
+### today; extending it to also vary the "home" per named-results-group
+### during traversal would give RESULTS the same Interpretation-3 answer
+### FILES already committed to, without inventing a new mechanism.
+
+### ':from()'/':to()' -- run-level range, built 2026-08-13. Packaged
+### together on purpose (David: "our version of BETWEEN in SQL or range()
+### in Python") -- ':to()' is INCLUSIVE of its own position/date. Two
+### independent MODES, picked by each bound's own value type:
+###
+### index-mode (int/':index(n)') -- confirms the doc's own NOTES block:
+### ':from(:index(-3))' and ':from(-3)' give identical results.
+### the last three runs with template `customers`, unreduced
+$acme.results.customers:from(:index(-3))
+$acme.results.customers:from(-3)
+
+### the 2nd through 4th runs with template `customers` (0-based, inclusive)
+$acme.results.customers:from(1):to(3)
+
+### date-mode (str/':date(...)') -- added the same day, David: "arrival
+### and run order is even more important than indexing." FILTERS by each
+### run's own arrival date (parsed from its directory name's own timestamp
+### prefix), not a positional slice -- comparing positions would be
+### meaningless for a date bound. ':date()' is DATE-only granularity for
+### now (a plain "YYYY-MM-DD" string) -- hour/minute-level filtering (e.g.
+### a future ':yesterday(:hour(18))', still not built) is a separate,
+### deferred extension of the same mechanism.
+### runs on or after 2025-01-01, unreduced -- confirms the wrapped and bare
+### forms give identical results, same "wrapper optional" pattern as
+### index-mode
+$acme.results.customers:from(:date("2025-01-01"))
+$acme.results.customers:from("2025-01-01")
+
+### runs between 2025-01-01 and 2025-01-31, both dates inclusive
+$acme.results.customers:from(:date("2025-01-01")):to(:date("2025-01-31"))
+
+### mixing index-mode and date-mode bounds in the same range is rejected --
+### there is no coherent single meaning for e.g. ":from(2):to(:date(...))"
+
+### a real pointer alongside ':from()'/':to()' reduces the SLICE, not the
+### full candidate set -- the true latest of the last three runs
+$acme.results.customers:from(-3):last()
+
+### ':from()'/':to()' as a STATEMENT-level range in name_three -- built
+### 2026-08-13, once the design fork above was settled (David: "should
+### definitely not work," confirming a range gets the same single-entity
+### restriction ':all()' already has for content accessors -- see the
+### CORRECTED note above lines 93-105, which were wrong for exactly this
+### reason). Count-DEPENDENT, not ':all()'s own blanket rejection --
+### mirrors this file's own run-level "more than one candidate" check.
+### Building this also surfaced and fixed a real, separate, pre-existing bug:
+### the statement list this and ':all()' both read from used to be raw
+### filesystem directory-listing order (unspecified, NOT declaration order)
+### -- ':all()' never cared, ':from()'/':to()' absolutely does. Now sorted
+### by each instance's own "instance_index" (confirmed via csvpaths.py's
+### enumerate(paths)/enumerate(csvpath_objects) through to the written
+### manifest.json key) -- real declaration order.
+### the 3rd-through-last statement, unreduced, no content access
+$acme.results.customers/2025:first().:from(2)
+
+### the 2nd-through-4th statement (0-based, inclusive), unreduced
+$acme.results.customers/2025:first().:from(1):to(3)
+
+### a range narrowed to exactly one statement IS fine with a content
+### accessor -- count-dependent, same as a run-level pointer narrowing to
+### one already is
+$acme.results.customers/2025:first().:from(2):to(2):unmatched()
+
+----------------------------
+----------------------------
+----------------------------
+----------------------------
+
+## The Files Datatype -- no examples existed above; this whole section is new
+
+### Literal named-file, one version -- NOTE the "." before the pointer: for
+### FILES the pointer/accessor lives in name_three, never chained directly
+### onto name_one (that raises) -- unlike CSVPATHS/RESULTS, where it does.
+### Verified 2026-08-11 against real code -- my first draft got this wrong.
+$alpha.files.:name("orders.csv").:last()
+$alpha.files.:name("orders.csv").:first()
+$alpha.files.:name("orders.csv").:index(1)
+
+### Every version of a literal named-file, unreduced (paths + uuids, no content)
+$alpha.files.:name("orders.csv")
+
+### ':all()' in name_three -- added 2026-08-12, mirroring CSVPATHS' own
+### ':all()' precedent exactly (David: "is that right?" re: recalling the
+### v1/v2 token -- confirmed, it is not a POINTER, so its whole effect is
+### simply NOT reducing): every matched version, unreduced, with real
+### paths/uuids -- unlike name_three being absent entirely (line 223 above),
+### which dedupes to ONE directory-level result with uuid=None instead.
+$alpha.files.:name("orders.csv").:all()
+
+### ':from()'/':to()' as a name_three VERSION range -- built 2026-08-13,
+### broadened from RESULTS-only alongside CSVPATHS (see the csvpaths section
+### below), David: rewind/replay and comparing two or more versions for what
+### changed both need "the last N versions of a named-file" the same way
+### RESULTS' own run-level range does. Windows the already ':name()'-matched
+### file's own ordered version list; ':to()' is INCLUSIVE; a real pointer
+### riding alongside reduces the SLICE, not the full version list (same rule
+### as RESULTS). Two modes, picked by each bound's own value type:
+### index-mode (int/:index(n)) POSITIONALLY slices; date-mode
+### (str/:date(...)), also built 2026-08-13 (David caught that a named-file
+### version's own registration/load time IS a real arrival-date concept --
+### the initial rejection of date-mode here was wrong, not a real limit)
+### FILTERS by each version's own "time" manifest field. Mixing modes in one
+### pair is rejected.
+$alpha.files.:name("orders.csv").:from(:index(-3))
+$alpha.files.:name("orders.csv").:from(1):to(3)
+$alpha.files.:name("orders.csv").:from(-3):last()
+$alpha.files.:name("orders.csv").:from(:date("2026-01-01"))
+$alpha.files.:name("orders.csv").:from("2026-01-01"):to("2026-01-31")
+
+### ':home()' as a zero-level selector -- added 2026-08-12, mirroring
+### RESULTS' own ':home()' (David: keep functions meaning the same thing
+### across datatypes). Unlike RESULTS this needed real new code, since
+### FILES' name_one can never be empty -- there is no pre-existing "no
+### pattern" path for a bare pointer to fall into.
+$alpha.files.:home().:last()
+
+### every registration with no template, unreduced (paths only, no content)
+$alpha.files.:home()
+
+### Pool across every path under one named-file, EXACTLY one level deep -- i.e. no template --
+### single true-latest version. NOTE: unlike RESULTS' ':flatten()', a literal/
+### '*' pattern here always requires an exact segment count -- this is NOT
+### an any-depth match, see the ':all()' block below for that.
+$alpha.files.*.:last()
+
+### ':all()' for ONE named-file -- every distinct path under alpha, EXACTLY
+### one level deep (same match as '*' above), each independently reduced by
+### name_three's own pointer -- settled 2026-08-12, corrected same day to
+### stay a one-level peer of '*', kept in lockstep with RESULTS' own
+### ':all()'/'*' depth-peer vocabulary (David: keep functions meaning the
+### same thing across datatypes). One result per distinct one-level path.
+$alpha.files.:all().:last()
+$alpha.files.:all().:first()
+
+### every distinct one-level path under alpha, unreduced (paths only, no
+### content) -- the ':all()' analog of the "no name_three" dedupe case above
+$alpha.files.:all()
+
+### ':flatten()' for ONE named-file -- the any-depth POOL peer of ':all()'
+### (one-level GROUP)/'*' (one-level POOL), added 2026-08-12. Every distinct
+### path under alpha, at ANY depth, pooled into ONE reduced answer -- fills
+### the real gap a literal/'*' pattern cannot reach: a named-file whose
+### distinct paths do not all sit at the same depth. Mirrors RESULTS'
+### ':flatten()' exactly; FILES has the same variable-depth structure.
+$alpha.files.:flatten().:last()
+$alpha.files.:flatten().:first()
+
+### every distinct path under alpha, at any depth, unreduced (paths only, no
+### content)
+$alpha.files.:flatten()
+
+### ':flatten()' as name_one's FIRST segment, followed by a fixed literal/
+### :name(...) suffix -- built 2026-08-12: "any orders.csv, no matter how
+### many template levels from 0 to n." Matches ANY number of segments
+### (including zero) before the suffix, then reduces the whole pooled set
+### with one pointer -- the mirror image of RESULTS' own prefixed
+### ':flatten()' (there, the literal comes first and any-depth comes last;
+### here any-depth comes first and the literal anchor comes last).
+$alpha.files.:flatten()/:name("orders.csv").:last()
+
+### find all the orders.csv file homes (containing versions) no matter what depth
+$alpha.files.:flatten()/:name("orders.csv")
+
+### NOT YET BUILT, deferred 2026-08-12 (David: we probably want it, but it
+### can wait -- adding it later should not affect any non-prefixed path,
+### since ':flatten()' is only recognized as name_one's FIRST segment
+### today) -- a literal prefix BEFORE ':flatten()', e.g. find the first
+### orders.csv below `2025`, at any depth in between:
+### $alpha.files.2025/:flatten()/:name("orders.csv").:first()
+
+### ':groups()' for ONE named-file -- the any-depth GROUP peer of ':all()'
+### (one-level GROUP)/':flatten()' (any-depth POOL), built 2026-08-12
+### alongside RESULTS' own ':groups()' in the same pass. Every distinct
+### path under alpha, at ANY depth, each independently reduced -- reaches
+### the mixed-depth case ':all()' cannot.
+$alpha.files.:groups().:last()
+$alpha.files.:groups().:first()
+
+### every distinct path under alpha, at any depth, unreduced (paths only, no
+### content) -- identical to bare ':flatten()' above (with no pointer,
+### grouped and pooled candidate sets coincide)
+$alpha.files.:groups()
+
+### The version's own manifest entry, either order
+$alpha.files.:name("orders.csv").:last():manifest()
+$alpha.files.:name("orders.csv").:manifest():last()
+
+### the whole named-file's raw definition.json bytes -- bare is correct here,
+### no :name(...)/version needed, since definition.json is per named-file not
+### per-version
+$alpha.files.:definition()
+
+### on_arrival/sources -- CORRECTED 2026-08-12 (was wrong -- David: "an
+### arrival activation is set in the named-file's description.json, it
+### doesn't go to the version level"): bare, no :name(.../version needed at
+### all, matching ":definition()" itself, which already gets this treatment
+### -- these are sub-objects of the SAME definition.json, root_major-scoped
+### only, and never read result.uuid to resolve
+$alpha.files.:on_arrival()
+$alpha.files.:sources()
+
+### Global arrivals ledger -- every named-file's arrival, the content of manifest: one flat array
+$*.files.:manifest()
+
+### Ordinal indexing into the global ledger, either order
+$*.files.:last():manifest()
+$*.files.:manifest():last()
+
+### "*" traversal, POOL -- single true-latest version across every named-file,
+### each match still exactly one level deep (same '*' exact-depth rule as above)
+$*.files.*.:last()
+
+### "*" traversal, GROUP -- one result per (named-file, path) pair, each
+### match still exactly one level deep -- corrected 2026-08-12 alongside the
+### single named-file case above
+$*.files.:all().:last()
+
+### "*" traversal, POOL, any depth -- reaches every named-file's matches
+### regardless of depth, pooled into one true-latest answer -- the any-depth
+### peer of the exact-one-level POOL/GROUP cases above
+$*.files.:flatten().:last()
+
+### "*" traversal, GROUP, any depth -- one result per (named-file, path)
+### pair regardless of depth, built 2026-08-12 alongside the single
+### named-file case above
+$*.files.:groups().:last()
+
+### Field accessors on one matched version
+$alpha.files.:name("orders.csv").:last():uuid()
+$alpha.files.:name("orders.csv").:last():time()
+$alpha.files.:name("orders.csv").:last():fingerprint()
+$alpha.files.:name("orders.csv").:last():home()      >> file_home
+$alpha.files.:name("orders.csv").:last():origin()
+$alpha.files.:name("orders.csv").:last():mark()
+
+### the first of all registrations under alpha without templates -- BUG FIXED
+### 2026-08-12: needs the "." before the pointer, same rule as every other
+### FILES example above (my own earlier draft of this line omitted it,
+### which raises -- confirmed via direct testing during the pre-merge sweep)
+$alpha.files.:home().:first()
+
+### The filesystem path to a whole-resource function's own resource, rather
+### than its content -- also needs the literal name + "." (:path() bare, no
+### :name(...), is not supported -- verified 2026-08-11, my first draft of
+### this line was wrong too)
+$alpha.files.:name("orders.csv").:path(:manifest())
+$alpha.files.:name("orders.csv").:last():path(:manifest())
+
+### Computed fields -- never stored, derived from the reference itself
+$alpha.files.:name("orders.csv").:named_file_name()
+$alpha.files.:name("orders.csv").:first():named_file_home()
+
+### bare ':fingerprint("hash")' -- built 2026-08-13, a content-hash lookup
+### across the WHOLE named-file's manifest (every file_home/path), searching
+### by content identity rather than the path identity ':name()' matches.
+### Confirmed against FileRegistrar's real write path: the version file
+### itself is literally stored/named by its own fingerprint, so an exact
+### match is reliable. query() gives the matched version's real path/uuid
+### directly (no further name_three narrowing needed or supported -- a
+### fingerprint already identifies one specific version). resolve()-ing raw
+### content for this shape is NOT yet supported (Reference3.resolve_kind
+### currently classifies any "fingerprint" appearance as METADATA_FIELD
+### regardless of position, which is right for the ordinary field-accessor
+### use but wrong for this lookup use -- raises clearly rather than
+### resolving silently wrong; fixing resolve_kind itself is a separate,
+### deferred follow-up, not done here).
+$alpha.files.:fingerprint("a711df7d2846e8ba46125d3f7adb7aea0ede50eb20a6550fca2358628a05425b")
+
+
+----------------------------
+
+## The Csvpaths Datatype -- no examples existed above; this whole section is new.
+## Every example below was verified against real code on 2026-08-13 (the
+## normative pass) and is encoded as a real, running test in
+## tests/references/test_normative_examples_csvpaths.py -- all of it is
+## built; the one exception is the aspirational QUESTION line below, marked
+## inline as not buildable yet.
+
+### Version pointer / every version unreduced
+$acme.csvpaths.:last()
+$acme.csvpaths.:first()
+$acme.csvpaths.:index(1)
+$acme.csvpaths.:all()
+
+### the set of my_validations csvpath statements from every version of the
+### `acme` group -- FIXED wording 2026-08-12 (the original description said
+### "from all named-paths groups," but this reference's root_major is the
+### literal group `acme`, not '*' -- confirmed working exactly as re-worded)
+$acme.csvpaths.:all().my_validations
+
+### Three DIFFERENT queries below, not one -- kept side by side because each
+### explains why the next one exists.
+###
+### QUERY A (line above this note, already correct/built): literal root_major
+### `acme`, no pointer -- checks EVERY version of acme, keeps the ones with a
+### my_validations statement.
+###
+### QUERY B (NOT YET BUILT AS WRITTEN -- confirmed via direct testing during
+### the pre-merge sweep, 2026-08-12): $acme.csvpaths.:all():last().my_validations
+### -- same literal `acme`, now with :last() added. Once a real pointer
+### (:last()) is present, ':all()' is silently ignored (redundant, pointer
+### wins -- same rule as FILES' own ':all()' in name_three), so this reduces
+### to just "acme's own last version, if it has a my_validations statement."
+### Since `acme` is one specific literal group, this can never mean "every
+### named-paths group" no matter what gets added to it -- root_major alone
+### already rules that out.
+###
+### QUERY C (the QUESTION line -- aspirational, not buildable yet):
+### $*.csvpaths.:all():last().my_validations -- QUERY B with `acme` swapped
+### for `*`, which IS the right shape for "every group's own last version,
+### kept only if it has a my_validations statement." Reading it: '*' is
+### every named-paths group (not a path-depth thing -- CSVPATHS groups do
+### not nest, unlike RESULTS' templates); ':all()' switches
+### _query_star_traversal from FLATTEN (pool every group's whole version
+### list, one true-latest across everything) to GROUP (apply the pointer
+### independently inside each group's own list -- one result per group,
+### with no path dimension to dedupe to, unlike FILES); ':last()' then picks
+### each group's own latest version; '.my_validations' is the same identity
+### filter as QUERY A, just meant to apply per group instead of to one
+### literal group.
+###
+### Genuinely intermediate, not a design wall: query() itself would work
+### fine as a direct generalization of two already-built/tested patterns
+### (QUERY A's "check every selected version, keep matches" and the
+### single-group ":last().identity" lookup) -- _query_star_traversal already
+### fetches each group's manifest by its own real name inside the loop, not
+### by root_major. The real blocker is resolve(): _extract_data()'s
+### name_three content lookup re-derives the manifest via
+### get_manifest_for_name(reference.root_major), and root_major IS the '*'
+### token here -- there is no group literally named "*" to fetch. Today's
+### CsvpathsReferenceFinder3._query_star_traversal sidesteps diagnosing this
+### precisely by rejecting ANY name_three combined with '*' traversal up
+### front ("does not yet support name_three ... combined with '*'
+### traversal"), the same blanket guard that also covers the unrelated
+### :manifest()/field-accessor case (which hits an identical root_major-as-
+### '*' bug). Fix shape: the same "carry the real answer instead of
+### re-deriving it from root_major" idea already used for
+### ReferenceResult3.identity (added for the statement-range work) --
+### applied one level up, tracking which real group a star-traversal result
+### came from.
+### QUESTION: $*.csvpaths.:all():last().my_validations
+
+### ':having("identity")' -- built 2026-08-13, filters a group's version
+### list down to versions whose own named_paths_identities actually contains
+### that identity, before any pointer reduces further -- "the last version
+### that actually has a my_validations statement" (a group's statement set
+### can change release to release).
+$acme.csvpaths.:having("my_validations"):last()
+
+### ':having()' alone (no pointer) lists every matching version, unreduced,
+### same as ':all()' does -- built alongside the pointer-combined form above,
+### not deferred (an earlier draft of this doc said "NOT YET BUILT" here,
+### which was stale/wrong -- confirmed working via direct testing).
+$acme.csvpaths.:having("my_validations")
+
+### ':from()'/':to()' as a name_one VERSION range -- built 2026-08-13,
+### mirroring RESULTS'/FILES' own version-level ranges (see those sections
+### above). David: a named-paths group's own load time is a real
+### arrival-date concept -- "give me the versions loaded between date-one
+### and date-two." Windows the (possibly ':having()'-filtered) version list;
+### ':to()' is INCLUSIVE; a real pointer riding alongside reduces the RANGE,
+### not the full candidate set. Two modes, same as RESULTS/FILES: index-mode
+### (int/:index(n)) POSITIONALLY slices; date-mode (str/:date(...)) FILTERS
+### by each version's own "time" manifest field. Mixing modes in one pair is
+### rejected. Not yet supported combined with '*' traversal.
+$acme.csvpaths.:from(-3)
+$acme.csvpaths.:from(1):to(3):last()
+$acme.csvpaths.:from(:date("2026-01-01")):to(:date("2026-01-31"))
+$acme.csvpaths.:having("my_validations"):from(-3)
+
+### ':from()'/':to()' as a name_three STATEMENT range -- built 2026-08-13,
+### broadened from RESULTS-only alongside FILES (see that section above).
+### David's own FlightPath v2 use case: rewind/replay starting from a
+### specific csvpath statement, e.g. in FlightPath's Run Dialog
+### ("$acme.csvpaths.:last.:from:2" in v2) becomes, in v3:
+$acme.csvpaths.:last().:from(:index(2))
+
+### windows the matched version's own ordered named_paths_identities list;
+### ':to()' is INCLUSIVE, same as everywhere else. Index-mode only here --
+### unlike the name_one VERSION range just above, an individual STATEMENT
+### has no arrival time of its own, only the GROUP VERSION it belongs to
+### does, so date-mode bounds are rejected specifically at this level.
+### Because csvpaths has no per-statement uuid (only the whole GROUP VERSION
+### has one), path/uuid are identical across every statement in the window
+### -- ReferenceResult3.identity is what lets resolve() give each windowed
+### statement its own correct text.
+$acme.csvpaths.:last().:from(1):to(3)
+
+### a literal statement identity and a range are mutually exclusive on the
+### same name_three -- they select statements two different, contradictory
+### ways, so combining them raises. Likewise, a pointer (or any other
+### function) riding alongside the range on name_three is not supported --
+### only a literal identity, or ':from()'/':to()' alone, are recognized
+### there.
+
+
+### Identity lookup into the selected version's own statements -- by name, or
+### by stringified load-time index for an unnamed statement
+$acme.csvpaths.:last().company_names
+$acme.csvpaths.:last().0
+
+### The version's own manifest entry, either order
+$acme.csvpaths.:last():manifest()
+$acme.csvpaths.:manifest():last()
+
+### definition.json and its sub-objects
+$acme.csvpaths.:definition()
+$acme.csvpaths.:scripts()
+$acme.csvpaths.:webhooks()
+$acme.csvpaths.:transfers()
+$acme.csvpaths.:destinations()
+
+### Global loads ledger -- every named-paths group's own load, one flat array
+$*.csvpaths.:manifest()
+
+### Ordinal indexing into the global ledger, either order
+$*.csvpaths.:last():manifest()
+$*.csvpaths.:manifest():last()
+
+### "*" traversal, FLATTEN -- single true-latest version across every named-paths group
+$*.csvpaths.:last()
+
+### "*" traversal, GROUP -- one result per named-paths group
+$*.csvpaths.:all():last()
+
+### "*" traversal -- every version from every group, unreduced
+$*.csvpaths.:all()
+
+### Field accessors on one matched version
+$acme.csvpaths.:last():uuid()
+$acme.csvpaths.:last():time()
+$acme.csvpaths.:last():fingerprint()
+$acme.csvpaths.:last():home()          >> named_paths_home
+$acme.csvpaths.:last():origin()
+$acme.csvpaths.:last():manifest_path()
+$acme.csvpaths.:last():time_completed()
+$acme.csvpaths.:last():named_paths_name()
+$acme.csvpaths.:last():named_paths_identities()
+$acme.csvpaths.:last():named_paths_count()
+
+### The filesystem path to a whole-resource function's own resource
+$acme.csvpaths.:path(:manifest())
+
+
+
+
+

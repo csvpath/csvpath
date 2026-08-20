@@ -1,0 +1,25 @@
+
+Queries using references:
+
+### what errors were there since end of day yesterday
+$*.results.:from(:yesterday(:hour(18))).*:errors()
+
+
+### What changes from yesterday had a negative impact on overnight runs?
+$*.csvpaths.:from(:hours(-24))
+INTERSECT
+$*.results.:from(:hours(-16)).:has_errors()
+
+
+### What errors were due to the customer identity of an order
+$acme.results.:from(:yesterday()).customer:errors(:idchain("customer[0]id[0]"))
+
+### What errors matched a customer identity
+$acme.results.:from(:yesterday()).customer:errors(:message(:regex(/customer: 319/))
+
+
+### Any script having more than 10 errors
+$acme.results.:from(:yesterday()).*:errors(:count(:above(10)))
+
+
+
