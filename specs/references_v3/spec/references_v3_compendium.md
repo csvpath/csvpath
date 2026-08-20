@@ -2,17 +2,27 @@
 
 A standalone definition of the References v3 subsystem, synthesized directly
 from the persisted spec, requirements notes, example queries, and the actual
-implementation and test code as of 2026-07-31. This document does not
-reconstruct any chat history — where a design point was worked out through
-back-and-forth, only the resulting, settled fact is stated here.
+implementation and test code — originally as of 2026-07-31, caught back up
+to 2026-08-19 in a dedicated pass (§5's later subsections, from "`_check_
+position()`" onward, plus §6/§7). This document does not reconstruct any
+chat history — where a design point was worked out through back-and-forth,
+only the resulting, settled fact is stated here (the full design record,
+including corrections narrated inline, lives in `specs/references_v3/notes/`
+and `specs/references_v3/spec/references_expressions.md`).
 
-Sources read to produce this document: `references_notes/creating references
-v3.txt` (the frozen/current spec, most recently revised by David), `references_
-notes/requirements for functions.txt`, `references_notes/more_reference_
-queries.txt`, `references_notes/autocomplete_prototype.py`, all of `csvpath/
-references/` (grammar, transformer, object graph, parser, exceptions, finder
-ABC, results container, functions subpackage, the one concrete finder), all of
-`tests/references/`, and this project's own persisted design-memory files.
+Sources read to produce the original document: `specs/references_v3/notes/
+creating references v3.txt` (the frozen/current spec, most recently revised
+by David), `specs/references_v3/spec/requirements_for_functions.md`,
+`specs/references_v3/notes/more_reference_queries.txt`, `specs/references_v3/
+notes/autocomplete_prototype.py`, all of `csvpath/references/` (grammar,
+transformer, object graph, parser, exceptions, finder ABC, results
+container, functions subpackage, the one concrete finder), all of `tests/
+references/`, and this project's own persisted design-memory files. The
+2026-08-19 catch-up pass additionally read `specs/references_v3/notes/
+manifest_field_functions_proposal.md`, `specs/references_v3/spec/
+references_expressions.md`, `specs/references_v3/spec/
+normative_reference_examples.txt`, and the full current `csvpath/references/`
+tree/test suite as they now stand.
 
 ---
 
@@ -416,7 +426,10 @@ already covers every other depth.
 Verified 2026-08-05: `pytest tests/references/ -q` → **486 passed**. Full
 project suite: **2066 passed, 11 failed** — the 11 failures are the
 pre-existing, unrelated SFTP/S3/Nos baseline (issue #216 and similar), not
-references-v3 regressions.
+references-v3 regressions. **Re-verified 2026-08-19, after the catch-up
+pass covering everything from `_check_position()` onward: `tests/
+references/` → 1099 passed. Full suite: 2687 passed, 11 failed — same known
+baseline, unrelated to references v3.**
 
 ### Grammar (`csvpath/references/reference_grammar_3.py`)
 
@@ -562,15 +575,50 @@ storage layout differs enough that there's no generic implementation.
 each result to fill in `.data`.
 
 `ReferenceResult3`/`ReferenceResults3` (`reference_results_3.py`) are pure
-value containers — a `path`+`uuid`(+optional `data`), and a list of the same.
-Deliberately not modeled on v2's `ReferenceResults`, which mixes "holds the
-output" with "knows how to reach storage" (does its own manifest lookups).
+value containers, deliberately not modeled on v2's `ReferenceResults`, which
+mixes "holds the output" with "knows how to reach storage" (does its own
+manifest lookups). `ReferenceResult3` has **four** fields, not three:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `path` | `str`, required | A file-system path — but its exact *kind* (a directory vs. a file, and if a file, which one) is never recorded on the object itself; it is entirely determined by which finder/branch produced the result. See the "What `path` actually holds" table below. |
+| `uuid` | `str \| None` | The matched entity's own registered UUID — `None` when the result is directory-level with no single registered version (e.g. a name_one-terminal FILES query with no version pointer). |
+| `data` | `Any`, mutable | Empty at `query()` time; filled in by `resolve()`/`_extract_data()` afterward, on the same instances — the only mutable field. |
+| `identity` | `str \| None` | Which specific *sub-entity*, within `path`+`uuid`, this result is for — added 2026-08-13 for CSVPATHS' statement-level range selector (`:from()`/`:to()`). Unlike FILES/RESULTS, CSVPATHS has no per-statement UUID at all (only the whole group *version* has one) — `path`/`uuid` are identical across every statement matched by one `query()`, so `_extract_data()` cannot tell them apart from those two fields alone the way it can for the other two datatypes. `None` for every other case (`path`/`uuid` alone are already enough there). |
+
+`__eq__` compares all four fields (`path`+`uuid`+`data`+`identity`) — this is
+what `ReferenceResults3.deduplicated()` (§5, "`ReferenceExpression3`") uses to
+collapse true duplicates.
+
+**What `path` actually holds** — there is no discriminator field recording
+this, so it must be inferred from which finder/branch produced the result:
+
+| Producer | What `path` holds |
+|---|---|
+| FILES, a version match | the specific version file |
+| FILES, name_one-terminal (no version pointer) | the named-file's file-home *directory* |
+| CSVPATHS, any version match | the group's `group.csvpath` *file* — always the same path; only `uuid`/`identity` distinguish versions/statements |
+| RESULTS, a run-level match | the run's own *directory* |
+| RESULTS, an instance-level match | the instance's own *directory* (a subdirectory of the run) |
+| Rule 1a (bare `'*'`+`:manifest()`, global ledger — see below) | the ledger file itself, e.g. `.../manifest.json` — `uuid` always `None` |
+| Rule 1b (an ordinal pointer riding with the bare global-ledger `:manifest()` — see below) | the *same* ledger file path as Rule 1a, but with a real `uuid` attached (the selected ledger entry's own uuid/run_uuid) |
+
+That last row is a real trap, not just a table curiosity: a `'*'`-traversal
+result (once traversal supports `:manifest()`) *also* always carries a real
+`uuid` — so "does this result have a uuid" cannot distinguish a Rule-1b
+result from a genuine traversal result; only comparing `path` against the
+ledger's own known, fixed path can. See "Rule 1 / Rule 1a / Rule 1b" below.
+
 `ReferenceResults3` supports `.files`/`.uuids` passthrough lists, `file_for_
 uuid()`/`uuid_for_file()`/`data_for_uuid()` lookups, `.select(identifiers)`
-(subset by path or uuid), and `.remove(result)` (in-place, `ValueError` if
-absent, `list.remove()`-compatible). `__iter__` yields a **snapshot** (`iter
-(list(self._results))`), specifically so a caller can iterate-and-remove in
-the same loop without skipping entries.
+(subset by path, uuid, *or* identity — identity added 2026-08-13 alongside
+the field itself), `.remove(result)` (in-place, `ValueError` if absent,
+`list.remove()`-compatible), and `.deduplicated()` (added 2026-08-18 for
+`ReferenceExpression3`, §5 — collapses true duplicates by the same four-field
+`__eq__`, first-occurrence-wins, order preserved; no `__hash__` is defined
+since `data` is mutable, so this is a linear scan, not a hash-set dedup).
+`__iter__` yields a **snapshot** (`iter(list(self._results))`), specifically
+so a caller can iterate-and-remove in the same loop without skipping entries.
 
 Tested by `tests/references/test_reference_finder_3.py` and `test_reference_
 results_3.py`.
@@ -887,6 +935,254 @@ correctly despite landing on `METADATA_FIELD` not `METADATA_FILE`), and
 `:manifest()` on name_one in both shapes, with and without a pointer, and
 its rejection when combined with name_three.
 
+### Rule 1 / Rule 1a / Rule 1b — whole-resource content and the global-ledger exceptions
+
+Settled 2026-08-07 (`notes/manifest_field_functions_proposal.md`), extended
+in code shortly after. Governs every whole-resource content function
+(`:manifest()`, `:definition()`, and the well-known-file content functions
+`:errors()`/`:vars()`/`:meta()`/`:data()`/`:unmatched()`/`:file()`) across
+all three datatypes.
+
+- **Rule 1 — whole-resource content always resolves to exactly one entity,
+  full stop, no exceptions.** These functions never pool raw content across
+  more than one named-file version, named-paths group version, run, or
+  instance. To reach a Result Instance Manifest you must resolve to one run
+  *and* one instance within it — `:all()` at either level, combined with a
+  content accessor, is illegal; so is a version-selecting reference matching
+  more than one version with no pointer to pick between them, *even* for
+  files/csvpaths' own `manifest.json` (a single shared array across every
+  version, where reading several matched entries would be comparatively
+  cheap) — an earlier draft of this rule carved out an exception for exactly
+  that "cheap, already-read, just sliced" case, and David rejected it:
+  tying legality to a storage detail (does this entity type happen to keep
+  its versions in one shared file, or one file per version) is a leaky
+  abstraction — the same syntax could become legal or illegal if a future
+  entity type's storage changes. The corrected, adopted rule has no
+  carve-outs: reading full content with a reference always touches exactly
+  one entity, regardless of how any given entity type happens to persist
+  its data today.
+- **Rule 1a — the one exception is a real, existing global ledger, and it
+  is per-function.** `'*'` (or any other unresolved-entity position) at
+  `root_major`, combined with a *bare* `:manifest()`, resolves to that
+  datatype's own global ledger instead of raising — because exactly one
+  such single resource genuinely exists per datatype (the archive-root
+  `manifest.json` for RESULTS, the named-paths loads ledger for CSVPATHS,
+  the equivalent for FILES). `:definition()` has no equivalent global
+  ledger anywhere in the codebase, so `$*.files.:definition()` (or the
+  CSVPATHS/RESULTS equivalent) stays illegal — enforced by the finder
+  layer raising, not by the grammar (the grammar stays permissive on
+  purpose; see §5's grammar section). Implemented once per finder as an
+  early `query()` branch (`_is_bare_pointer_reference(reference,
+  "manifest")`, shared on the ABC) that returns the ledger file's own path
+  directly via the ABC's shared `_query_well_known_file(home, filename)`
+  (same helper `:manifest()`/`:definition()`'s bare, sole-content shape
+  already uses at literal `root_major` — see the section above), giving a
+  result with `uuid=None`.
+- **Rule 1b — an ordinal pointer riding with the bare global-ledger
+  `:manifest()` selects one entry out of it by position, instead of
+  dumping the whole ledger.** E.g. `$*.results.:last():manifest()` (either
+  order — `:manifest():last()` works identically, order-insensitively).
+  This is the natural extension of Rule 1a once a pointer joins the same
+  bare chain — built during implementation, but **never written back into
+  `manifest_field_functions_proposal.md` alongside Rule 1/1a**, only
+  documented in code comments (`_pointer_before_manifest()`, shared on the
+  ABC — detects a pointer-plus-bare-`:name()` shape in either order;
+  `query()`'s own early branch in each finder applies the pointer directly
+  against the ledger array, giving a result whose `path` is *still* the
+  ledger file's own path, but whose `uuid` is now the selected ledger
+  entry's own uuid/run_uuid). `_extract_data()` re-derives the right
+  ledger entry from that uuid at resolve time, rather than reading it off
+  `result.path` again (since `result.path` is the ledger file, not a
+  per-entry resource).
+
+**Why this matters beyond the narrow bare-chain shape**: once `'*'`
+traversal supports `:manifest()` combined with real narrowing (`:all()`,
+`:flatten()`, a literal prefix — not yet built, see §6/§7), a genuine
+traversal result will *also* carry a real, non-`None` uuid — the same
+signal Rule 1b's own result carries. `result.uuid is not None` therefore
+cannot be used to tell "this came from Rule 1b" apart from "this is a real
+traversal result needing its own group/run's own manifest read directly" —
+only comparing `result.path` against the ledger's own known, fixed path
+can. This is the central blocker for the `:manifest()`+`'*'`-traversal gap
+tracked in §6.
+
+Tested by `TestGlobalArchiveLedger`/`TestGlobalArchiveLedgerOrdinalIndexing`
+(`test_results_reference_finder_3.py`), `TestGlobalLoadsLedger`/
+`TestGlobalLoadsLedgerOrdinalIndexing` (`test_csvpaths_reference_finder_3.py`),
+and `TestGlobalArrivalsLedger`/`TestGlobalArrivalsLedgerOrdinalIndexing`
+(`test_files_reference_finder_3.py`) — same concept, one differently-named
+ledger per datatype.
+
+### `_check_position()` — enforced, declarative position validation
+
+Added 2026-08-14 (`ReferenceFinder3._check_position(function, position,
+datatype)`, shared on the ABC), replacing scattered, inconsistent
+"is this recognized" guards each finder used to hand-write on its own. The
+real bug this closes: a hand-written guard only ever checks for the
+*specific* names it happens to know about — anything genuinely unrecognized
+silently falls through as a no-op instead of raising. Confirmed live before
+this fix, for more than one finder independently: `$acme.csvpaths.:name
+("x")` (a FILES-only function, meaningless for CSVPATHS) silently no-opped
+rather than raising — `CsvpathsReferenceFinder3._resolve_versions()` had no
+guard at all covering this case, while `query()`'s own `name_three` handling
+did (for a *different* set of cases), an inconsistency within one finder,
+not just across finders.
+
+Each `Function3` subclass now declares `POSITIONS: dict[datatype, tuple[
+position, ...]]` — which of `NAME_ONE`/`NAME_TWO`/`NAME_THREE` it is legal
+at, per datatype (`Reference3.NAME_ONE`/`NAME_TWO`/`NAME_THREE` are the
+three position constants). `_check_position(function, position, datatype)`
+raises unless `position in function.POSITIONS.get(datatype, ())`. Rolled
+out incrementally, one finder at a time (CSVPATHS first, then FILES, then
+RESULTS) — a function with no `POSITIONS` entry for a given datatype has
+simply not been migrated to this mechanism by that datatype's own finder
+yet, not necessarily illegal everywhere; only a finder that actually calls
+`_check_position()` in a given code path enforces it there. By the time
+RESULTS was retrofitted (the last of the three), every finder's own
+name_one/name_three dispatch called it on every function in the relevant
+combined chain, closing the "unrecognized extra silently riding along"
+bug class project-wide, not just for the one case that surfaced it.
+
+Tested by `TestPositionEnforcement` in each of `test_csvpaths_reference_finder_3.py`,
+`test_files_reference_finder_3.py`, and `test_results_reference_finder_3.py`.
+
+### The manifest field-accessor catalog — Part A/B, and `:path()` (Rule 2)
+
+The big rollout following `notes/manifest_field_functions_proposal.md`'s own
+Part A/B tables — **34 field-accessor functions** now live in
+`csvpath/references/functions/fields/` (up from zero at the point §5's
+"Fourteen concrete functions" table was written), plus `:path()`. This
+section describes the *shape* shared by all of them; for the exhaustive
+per-function `KEY` mapping, treat `manifest_field_functions_proposal.md`'s
+own Part A/B tables as authoritative — they are not reproduced row-for-row
+here.
+
+- **Rule 2 — path accessors are exempt from Rule 1 and are always
+  poolable.** `:path()` takes any whole-resource content function as its
+  argument and returns the filesystem path to that resource instead of its
+  content (`:path(:errors())`, `:path(:manifest())`, etc.) — because a path
+  is a cheap scalar, not a raw structure, `:path()` calls are allowed to
+  pool across `'*'` and across unresolved versions/runs (`$*.results.:path
+  (:errors())` returns a list of paths, one per matching instance).
+- **Rule 3 — field/key accessors are also exempt from Rule 1 and are
+  always poolable**, for the same reason as Rule 2: a single field's value
+  (or a small fixed-shape value, e.g. `:file_fingerprints()`'s dict) is
+  cheap, not a raw structure to merge. `$*.files.:uuid()` is legal and
+  returns a list of uuids, one per version of every matched named-file —
+  the cross-product of the entity axis (`'*'`) and the unreduced-within-
+  entity version/run axis. This is exactly the case Rule 1 exists to
+  prevent for whole-resource *content* — the same cross-product with full
+  manifest dicts instead of scalar uuids is the expensive, unwieldy case
+  that motivated Rule 1 in the first place.
+
+**Shared shape** (`Function3` subclasses in `functions/fields/`, one file
+each): `ROLE = Function3.VALUE`; `DATATYPES` lists which of
+FILES/CSVPATHS/RESULTS the function applies to; `SOURCE` is `"manifest"`
+(the common case — reads a key straight off whichever manifest entry a
+pointer, or the absence of one, already resolved) or `"definition"` (reads
+from `definition.json` instead — `:scripts()`/`:webhooks()`/`:transfers()`/
+`:destinations()`/`:on_arrival()`/`:sources()`, CSVPATHS/FILES only, no
+RESULTS equivalent); `KEY` is a `{datatype: literal_key_path}` dict — one
+function can read a *different* literal manifest key per datatype (e.g.
+`Uuid3.KEY` reads RESULTS' run-scope `"run_uuid"` field, not a bare
+`"uuid"`, since RESULTS' own bare `uuid` field is deprecated/vestigial —
+see `RunUuid3` for the always-available name for the same value); `POSITIONS`
+(§5, "`_check_position()`") declares which of NAME_ONE/NAME_THREE is legal,
+per datatype — RESULTS' own `KEY`/`POSITIONS` commonly carry *two* entries
+per function, one for run scope (`Reference3.RESULTS`) and one for instance
+scope (`Reference3.RESULT`, singular — a separate scope constant from the
+datatype constant `RESULTS`), since the same field name can mean two
+different literal keys depending which scope it is read at.
+
+_Extraction_ is generic, not per-function: `_extract_field_value(container,
+key_path)` (shared on the ABC) walks a dotted `key_path` (e.g.
+`"on_arrival.named_paths_group"`) through whichever dict was already read
+(a manifest entry or a `definition.json` dict), returning `None` the moment
+any segment is missing — absence is normal, not an error, matching
+`definition.json`'s own established optionality. A `definition`-sourced
+field additionally needs the *group name*, not a uuid, to call
+`describer.get_config(name)` — see the `'*'`-traversal section below for
+`_group_manifest_entry()`, the helper this needed once traversal made
+`root_major` no longer reliably a literal name.
+
+Representative functions, by rough category (not exhaustive — see the
+proposal doc's own tables): identity/provenance (`:uuid()`, `:identity()`,
+`:fingerprint()`, `:origin()`, `:origin_data_file()`); timing
+(`:time()`, `:time_completed()`); naming (`:named_file_name()`,
+`:named_paths_name()`, `:named_results_name()`, `:home()`,
+`:named_file_home()`, `:manifest_path()`); RESULTS-run-specific
+(`:run_uuid()`, `:hostname()`, `:username()`, `:status()`, `:valid()`,
+`:completed()`, `:files_complete()`, `:mark()`, `:method()`, `:serial()`);
+RESULTS-instance-specific (`:preceding_instance_identity()`,
+`:source_mode_preceding()`, `:actual_data_file()`); counts/collections
+(`:named_paths_count()`, `:named_paths_identities()`,
+`:file_fingerprints()`); `definition.json`-backed (`:scripts()`,
+`:webhooks()`, `:transfers()`, `:destinations()`, `:on_arrival()`,
+`:sources()`).
+
+Tested by `tests/references/functions/` (one test file per function) plus
+each finder's own `TestFieldAccessorFunctions` class, and (FILES/CSVPATHS
+only, no RESULTS equivalent) `TestDefinitionFieldAccessorFunctions` — real-
+file round trips, not just fakes, for the run/instance-scope shared-key
+cases in particular.
+
+### `:having()` and `:from()`/`:to()` ranges
+
+`:having("identity")` (CSVPATHS only) filters the version list down to
+versions whose own `named_paths_identities` actually contains that
+identity, *before* any pointer reduces further — `:having("orders"):last()`
+means "the last version that actually has an `orders` statement." Combined
+with no pointer, lists every matching version unreduced (same "no pointer,
+no reduction" convention every other context-setter follows). **Not yet
+built for RESULTS** — logged as a real, wanted follow-up (`specs/
+references_v3/spec/references_expressions.md`): "give me all the runs
+where the named-paths group included a csvpath with identity X" needs
+`:having()` mirrored onto RESULTS, filtering by whether a run's matched
+statement has a given identity, the RESULTS-side analog of the CSVPATHS
+version filter.
+
+`:from()`/`:to()` — a named-paths group's own load time, and a RESULTS
+run's own arrival time, are both real arrival-date concepts ("our version
+of BETWEEN in SQL or `range()` in Python" — `:to()` is inclusive of its own
+position/date). Built at two different levels, with different mode
+support at each:
+
+- **Version/run-level** (CSVPATHS name_one; RESULTS run level) — **two
+  independent modes**, picked by each bound's own value type: index-mode
+  (`int`/`:index(n)`) positionally slices the (possibly `:having()`-
+  filtered) version/run list; date-mode (`str`/`:date(...)`) filters by
+  each entry's own `"time"` field instead — comparing *positions* would be
+  meaningless for a date bound, so the two modes use genuinely different
+  application logic, not just different parsing. Mixing modes in one
+  `:from()`/`:to()` pair is rejected — not because it is meaningless (e.g.
+  `:from(:date("2025-01-01")):to(:index(10))`, "10 versions/runs starting
+  from this date," is a reasonable ask), but because it is *ambiguous* and
+  deliberately left unsettled which of at least two readings is meant — is
+  the index bound an absolute position in the full list, or relative to
+  wherever the date bound starts matching? At most one pointer, riding
+  alongside `:from()`/`:to()` in the same chain, reduces the *range* to
+  one, not the full candidate set.
+- **Statement level** (CSVPATHS name_three; RESULTS name_three) —
+  **index-mode only**, no date mode: an individual statement/instance has
+  no arrival time of its own, only the version/run it belongs to does.
+  CSVPATHS' statement-level range additionally has no per-statement uuid
+  at all (only the whole group version has one) — a range's several
+  matched statements all share identical `path`/`uuid`, so
+  `ReferenceResult3.identity` (added for exactly this, see the "four
+  fields" note earlier in §5) is what `_extract_data()` uses to tell them
+  apart, not `name_three.body` (only ever set for the single-literal-
+  identity shape). RESULTS' statement-level range combined with a content
+  accessor is count-*dependent*, not a blanket rejection the way `:all()`
+  combined with a content accessor is — mirrors the run-level "more than
+  one candidate needs a pointer" rule exactly: a range that happens to
+  narrow to exactly one statement in a given run is fine with an accessor,
+  same as a pointer narrowing a candidate list to one already is.
+
+Tested by `TestHaving`/`TestVersionRange`/`TestNameThreeRange`
+(`test_csvpaths_reference_finder_3.py`) and `TestRunLevelRange`/
+`TestRunLevelDateRange`/`TestStatementLevelRange`
+(`test_results_reference_finder_3.py`).
+
 ### `{...}` string interpolation — parsing/validation only
 
 New scope, not in the original spec doc: since a function takes at most one
@@ -954,6 +1250,197 @@ pipeline, including the `VisitError`-unwrap regression and rejection of a
 real `POINTER`-role function), and `functions/test_function_3.py` (the
 `str`→`InterpolatedString3` auto-widening).
 
+### `ReferenceExpression3` — UNION/SUBTRACT/INTERSECT over references
+
+Settled and built 2026-08-18/19 (`specs/references_v3/spec/
+references_expressions.md` is the full design record; this section states
+only the settled result). Motivation: a single reference can't answer
+cross-datatype questions like "find all the named-files used in runs where
+the named-paths group was updated yesterday" — that needs a set operation
+across a RESULTS query and a CSVPATHS query. `ReferenceExpression3.__init__
+(*, left, op, right, csvpaths)` — `left`/`right` are each a non-empty
+reference `str` or another `ReferenceExpression3` (sub-expressions nest
+freely); `op` is one of the class-level constants `UNION`/`SUBTRACT`/
+`INTERSECT`. Works internally through `.resolve()` only — there is no
+meaningful `.query()`-only mode, since `INTERSECT`/`SUBTRACT`'s join key
+*is* resolved field-accessor data (see below), not something query-time
+path/uuid alone can express. Two small pieces built first, as reusable
+building blocks:
+
+- **`ReferenceFinderFactory3.for_reference(*, reference, csvpaths)`**
+  (`reference_finder_factory_3.py`) — parses a raw reference string and
+  dispatches to the correct one of the three finders based on the parsed
+  `Reference3.datatype`. Nothing before this auto-routed a string to the
+  right finder; every test had hand-picked one directly.
+- **`ReferenceResults3.deduplicated()`** (§5, "four fields" note) —
+  collapses duplicates by `ReferenceResult3`'s own full `__eq__`
+  (`path`+`uuid`+`data`+`identity`), first-occurrence-wins, order
+  preserved.
+
+**The core design tension**: `ReferenceResult3.path`/`.uuid` mean
+different things per datatype (a `group.csvpath` file vs. a run directory)
+and are not comparable across them — so the join key for `INTERSECT`/
+`SUBTRACT` cannot be path/uuid. The join key is instead **whatever scalar a
+side's own trailing field accessor resolves to** (`.data`, after
+`resolve()` — `:identity()`, `:named_paths_name()`, `:uuid()`, `:time()`,
+etc.). A side whose reference does not end in a scalar-valued accessor (or
+resolves to a list/dict, e.g. `:named_paths_identities()`,
+`:file_fingerprints()`, `:scripts()`) is not usable this way; `_hashable()`
+raises `ReferenceException3` clearly rather than failing deep in a set/dict
+implementation if an unhashable value is encountered. `None`-valued keys
+never match anything, on either side.
+
+- **`UNION`** does not use the join key at all — pure concatenation of both
+  sides' own native results, then `.deduplicated()`. No filtering, no row
+  multiplication. If a caller wants to see which items *pair* with which,
+  that is done *after* the union, by comparing `.data` across the merged
+  results — there is no separate "enumerate matching pairs" operation
+  needed; `UNION` already covers that need if the caller wants it.
+- **`INTERSECT`/`SUBTRACT`** are filters, not joins that multiply rows.
+  Only the **right** side is reduced to a plain `set` of resolved keys
+  (which right-hand item carried a given key never matters — right-hand
+  items never appear in the output). The **left** side is deduplicated
+  only by full item equality (`.deduplicated()`) — *never* collapsed by
+  key — then each surviving left item individually survives (`INTERSECT`)
+  or is removed (`SUBTRACT`) based on whether its own key exists anywhere
+  in the right side's key set.
+
+**A real bug caught by testing against a concrete worked example, not by
+design review**: an early draft collapsed the *left* side to one item per
+distinct key before filtering too, mirroring the right side — correct for
+"one result per identity," silently wrong for "give me every run where the
+group had an `orders` statement," which needs every matching run, not one
+exemplar per group. Caught via a direct repro (two named-paths groups, one
+with 2 runs, one with 3, both matching `orders` → only 2 results came back
+instead of 5) before shipping, then verified end-to-end against the exact
+worked numbers in `references_expressions.md`'s own canonical example: 7/6/5
+`ReferenceResults` for the `UNION` variants (both groups matching / one
+group deleted / neither group's *current* version matching), 5/2/0 for the
+equivalent `INTERSECT` variants.
+
+Tested by `test_reference_finder_factory_3.py`, `test_reference_results_3.py`
+(`.deduplicated()`), and `test_reference_expression_3.py` (pure operation-
+logic tests against synthetic `ReferenceResults3`, constructor validation,
+and a full end-to-end "orders" scenario with real on-disk RESULTS/CSVPATHS
+fixtures reproducing the worked numbers above exactly).
+
+### `'*'` traversal, fully generalized — field accessors, `:having()`/`:flatten()`/`:all()`, path narrowing, `name_three`, and pointer optionality
+
+`_query_star_traversal()` (each finder) handles `root_major == '*'` —
+"every named-file"/"every named-paths group"/"every named-results group" —
+once Rule 1a/1b's own narrow bare-chain shapes (above) don't already claim
+the reference. Originally built narrowly (RESULTS: a bare pointer only,
+zero-level; CSVPATHS: a bare pointer or `:all()`, no field accessors, no
+`:having()`) and generalized across several passes, driven directly by
+`ReferenceExpression3`'s own needs — cross-datatype set operations are
+exactly the case where "search every group/run without already knowing
+candidate names" stops being optional.
+
+- **A run/version-level field accessor may now ride alongside the pointer**
+  (e.g. `$*.results.:last():uuid()`, `$*.csvpaths.:all():named_paths_name()`).
+  For RESULTS this needed no new machinery — `_results_for_run()` already
+  builds each candidate's `ReferenceResult3` from its own real run
+  directory, independent of any group-name context. CSVPATHS needed a real
+  fix: field-accessor resolution reads a matched version's own manifest
+  entry via `get_manifest_for_name(root_major)`, which breaks when
+  `root_major` is the `'*'` token (no group is literally named `"*"`) —
+  `_group_manifest_entry(root_major, uuid)` (`csvpaths_reference_finder_3.py`)
+  searches every named-paths group's manifest for the matching uuid when
+  `root_major` is `'*'` (uuids assumed globally unique, an assumption
+  already made elsewhere in this codebase), returning `(group_name, entry)`
+  — used for both manifest-sourced fields and `definition.json`-backed
+  ones, which need the group *name* for `describer.get_config(name)`.
+- **`:having()` (CSVPATHS) and `:flatten()` (RESULTS) are now recognized in
+  traversal.** `:having()` filters each group's own manifest before either
+  mode's reduction, the same position it occupies at the literal-root
+  level — closing a real, previously-latent bug in the same pass, not just
+  adding a feature: `:having()` was never checked for at all in
+  `_query_star_traversal()` before this, neither rejected as unsupported
+  nor applied, so it was silently *dropped* (`$*.csvpaths.:all():having
+  ('orders')` returned every group's every version, unfiltered). `:flatten
+  ()` pools every group's runs at any depth before the pointer reduces —
+  `_discover_run_homes(None)` already discovers across every group with no
+  depth restriction of its own, so this needed only routing to it instead
+  of the zero-level-filtered candidate set.
+- **`:all()`'s own meaning-collision, resolved by a direct worked
+  example.** RESULTS' `:all()` already has two settled, non-conflicting
+  meanings depending on position — at `name_three`, "every instance within
+  one already-selected run"; at a literal-root `name_one`, "exactly one
+  level of template wildcarding, grouped by the observed value at that
+  position." Neither says what `:all()` should mean at `name_one` when
+  `root_major` is *also* `'*'` — both "which group" and "which template
+  value" are open at once, and naively extending either existing meaning
+  alone gives a silently wrong answer (pooling by template value alone
+  conflates two different groups that happen to reuse a subfolder name;
+  grouping by group alone loses the template distinction within a group).
+  Resolved via a worked example in `normative_reference_examples.txt`
+  ("THE `:all()` MEANING COLLISION AT STAR TRAVERSAL" — two groups, one
+  template value deliberately reused by both, three candidate
+  interpretations spelled out with exact result counts: 2, 2, 3) —
+  partition by the **composite** `(group, template-value)` key, matching
+  `FilesReferenceFinder3`'s own already-built `:all()` star-traversal
+  precedent exactly (there, `file_home` already embeds the named-file's
+  own name as a path prefix, so partitioning by `file_home` already *is* a
+  composite key).
+- **Literal/`'*'` path narrowing and `name_three` are now supported.**
+  Both turned out to be mechanical generalizations of building blocks the
+  work above already required, not new design questions:
+  `_compile_path_pattern()`/`_matches_prefix()`/`_matches_prefix_at_least()`/
+  `_group_key()` are shared helpers already built for the literal-root
+  case, applied per-candidate's-own-group-home instead of one fixed home
+  (the same trick already used for the zero-level bare pointer, `:flatten
+  ()`, and `:all()`); `_results_for_run()` already does the identity/
+  `:all()`/range selection entirely from a real run directory, independent
+  of group. The one real design point, not just wiring: `:all()` grouping
+  can select more than one run overall (one per partition), so a
+  `name_three` *content* accessor is rejected there — mirrors the literal-
+  root case's own restriction — while a `name_three` *field* accessor is
+  explicitly allowed and poolable (confirmed against the already-shipped
+  literal-root precedent before building this: `":all():last().invoices
+  :uuid()"` already resolves fine there, one result per matched run — so
+  `"$*.results.:all():last().invoices:uuid()"` can return a list of zero
+  or more uuids, one per matched run that actually has that identity, not
+  multiplied further).
+- **A pointer is now optional in every traversal shape, for both RESULTS
+  and CSVPATHS.** Absence means every matched candidate comes back,
+  unreduced — the same meaning a missing pointer already has at every
+  literal-root shape. This was investigated deliberately, not assumed,
+  before being built: `FilesReferenceFinder3`'s own `'*'` traversal never
+  requires a pointer, in any of its four modes (a missing pointer returns
+  a deduped list of distinct `file_home` values); RESULTS' own literal-
+  root `query()` never requires one either. Both fixed to match.
+  `CsvpathsReferenceFinder3`'s traversal is the actual **outlier**, not
+  the precedent it first appeared to be while building the `:having()`/
+  `:flatten()` work above: it requires a pointer in POOL/flatten mode,
+  optional only in GROUP/`:all()` mode — left as-is deliberately, a known,
+  documented, not-silently-fixed inconsistency, not blocking anything
+  built so far. Removing the old unconditional "requires a pointer" check
+  surfaced a *second*, previously-latent bug each time, for a related but
+  distinct reason each time: for RESULTS, `_extract_data()`'s star-
+  traversal branch had checked `isinstance(root_major, Star3)`
+  unconditionally (fixed to also require `has_manifest`, since a bare-
+  pointer `resolve()` with neither `:manifest()` nor a field accessor had
+  been incorrectly taking the global-ledger-by-uuid path instead of
+  falling through to "no single unambiguous payload → `None`"); for
+  CSVPATHS, the "is this combination supported" check had been a
+  *blacklist* (only rejected `:manifest()`/`:from()`/`:to()` by name), so
+  `:definition()` (and any other genuinely unrecognized function) silently
+  passed through unrejected once the mandatory-pointer rule stopped
+  masking it — fixed by switching to the same whitelist pattern (enumerate
+  what's legal, reject everything else) already used elsewhere.
+- **`:groups()`, literal/`'*'`-prefixed `:having()`/`:flatten()`
+  combinations beyond what's listed above, and `:manifest()` combined with
+  real narrowing all stay unsupported in traversal** — see §6/§7.
+
+Tested by `TestStarTraversal*`/`TestGroupManifestEntry` classes across
+`test_results_reference_finder_3.py` and `test_csvpaths_reference_finder_3.py`,
+plus `TestStarTraversalPlusFieldAccessorNowWorks`/
+`TestHavingAndFlattenPlusStarTraversalNowWork` in `test_reference_expression_3.py`
+(the same integration point `ReferenceExpression3` actually needs — a plain
+reference *string* with `root_major='*'` resolving successfully all the way
+through `ReferenceFinderFactory3` → the finder → `resolve()`, not just when
+hand-built directly against a finder class).
+
 ---
 
 ## 6. Known gaps / discrepancies between spec and implementation
@@ -974,11 +1461,11 @@ TestReferenceResult3::test_allows_none_uuid`.
 **Other discrepancies/loose ends worth flagging:**
 
 - `more_reference_queries.txt` uses a literal `INTERSECT` between two full
-  reference expressions in two of its example queries, but the main spec
-  still describes NOT/UNION/INTERSECT-combining (`ReferenceExpression`) as
-  explicit "later phase" work. This has been explicitly deferred (confirmed
-  staying later-phase), so the two example queries should be read as
-  aspirational, not as evidence INTERSECT needs to move up in priority.
+  reference expressions in two of its example queries. This section used
+  to describe that as aspirational, since NOT/UNION/INTERSECT-combining
+  was explicit "later phase" work — **resolved 2026-08-18/19: `Reference
+  Expression3` is now built** (`UNION`/`SUBTRACT`/`INTERSECT`, no `NOT`)
+  — see §5, "`ReferenceExpression3`."
 - `Reference3.resolve_kind`'s `_METADATA_FILE_FUNCTIONS`/`_METADATA_FIELD_
   FUNCTIONS` are hardcoded name tuples (`"errors"`, `"vars"`, `"meta"`,
   `"data"`, `"unmatched"`, `"file"`, `"definition"`, `"manifest"` /
@@ -990,96 +1477,79 @@ TestReferenceResult3::test_allows_none_uuid`.
   "indexes a parse tree" — confirmed wrong directly against the real
   `Error` class and by David: it is the same field-filter idea, just
   applied to `errors.json` instead of `manifest.json`.)
+- **`:manifest()` combined with real `'*'`-traversal narrowing is still
+  unsupported**, in both `ResultsReferenceFinder3` and
+  `CsvpathsReferenceFinder3` — the one traversal restriction that has
+  survived every generalization pass described in §5's `'*'`-traversal
+  section. Not just unbuilt: `_extract_data()` cannot yet reliably tell a
+  Rule-1b global-ledger result apart from a genuine traversal-selected
+  result once both can carry a real uuid (see "Rule 1 / Rule 1a / Rule
+  1b," §5) — comparing `result.path` against the ledger's own known,
+  fixed path (rather than the `result.uuid is not None` check both
+  finders currently lean on) is the identified fix, not yet implemented.
+  Also needs the same "grouping can select more than one result, so a
+  whole-resource content function needs the single-entity guard" treatment
+  already applied to `name_three` content accessors in the same section.
+  Planned as a dedicated next branch.
 
 ---
 
 ## 7. Not yet built at all
 
-- **`CsvpathsReferenceFinder3` / `ResultsReferenceFinder3`** — only
-  `FilesReferenceFinder3` exists. Real-API research (against `PathsManager`/
-  `ResultsManager`) has confirmed genuine structural divergence worth knowing
-  before building these: for csvpaths, name_one **is** the version pointer
-  and name_three is an identity lookup into `named_paths_identities`
-  (reversed from files' division of labor); for results, name_three
-  overloads both identity *and* a well-known-file function in one go. A
-  csvpaths `ReferenceResult3.path` is always the same physical `group.
-  csvpath` path — only `uuid` (the manifest entry's own UUID) actually
-  distinguishes versions there, so `file_for_uuid()`/`uuid_for_file()` are
-  not meaningful for csvpaths specifically the way they are for files/
-  results. `CsvpathsReferenceFinder3` (built after this document was first
-  written — see below) confirmed both pieces of shared logic actually do
-  generalize: pointer application (`:first()`/`:last()`/`:index()`
-  list-position logic) and "resolve an identity against a list of (identity,
-  item) pairs" now both live on the `ReferenceFinder3` ABC as
-  `_apply_pointer`/`_find_by_identity`, shared by files and csvpaths.
-- **`CsvpathsReferenceFinder3` is now built** — `name_one`/`name_three`'s
-  roles are reversed from files: `name_one` **is** the version selector here
-  (its combined function chain may hold at most one pointer — none present
-  means every version in the manifest comes back unreduced, which is how
-  "Name_one used alone == list of versions in the form: (path-to-group.
-  csvpaths, uuid)", STRUCTURE table, is actually reached); `name_three` is
-  an identity lookup into that version's `named_paths_identities`.
-  Resolving a named/indexed statement gives its source text; resolving
-  with no `name_three` gives `None` (a whole group version has no single
-  unambiguous payload — the STRUCTURE section and the "Query vs. Resolve"
-  matrix used to disagree about this specific case; confirmed and the doc
-  fixed to say "bytes of the identified statement," not "no default").
-  Scoped as narrowly as files was — `root_major == "*"`, `#worksheet`,
-  literal/`*` path-building in `name_one`, and a function chain on
-  `name_three` all raise rather than guess.
-- **`ResultsReferenceFinder3` is now built** — see §5. Its run-ordering
-  question (what determines a run's "arrival order," given results has no
-  run-by-run manifest array the way files/csvpaths do) was resolved first,
-  by a controlled experiment, not decided in the abstract: run directories
-  are named `%Y-%m-%d_%H-%M-%S[_N]`, already lexicographically sortable =
-  chronological, and a separate archive-wide global manifest (appended once
-  per csvpath-statement execution, shared across every named-paths group,
-  and found to retain stale entries for deleted runs) turned out to be
-  unnecessary and untrustworthy for this — the finder scopes to the
-  group's own directory and sorts its listing, exactly matching what the
-  existing v1/v2 code already does (`ResultsManager.get_named_results()`'s
-  non-template branch). No new run-by-run manifest was needed.
-- **Functions beyond the fourteen listed in §5** — `:before()`/`:after()`,
-  `:yesterday()`, `:quarter()`, `:date()`, `:time()`, `:uuid()`, `:regex()`,
+**Everything this section originally tracked as unbuilt is now built** —
+`CsvpathsReferenceFinder3` and `ResultsReferenceFinder3` (§5), `root_major
+== "*"` traversal for all three datatypes including the full flatten-vs-
+group cross-product behavior (§5, "`'*'` traversal, fully generalized"),
+`ReferenceExpression3` (§5), and the great majority of the functions this
+section used to list as missing (`:date()`, `:time()`, `:uuid()`,
+`:from()`/`:to()`, and the whole field-accessor catalog — §5). The design
+reasoning behind each of those (why csvpaths/results needed genuinely
+different finder logic than files, why results' run-ordering couldn't just
+reuse the archive-wide global manifest, etc.) is preserved in §5's own
+narrative rather than repeated here.
+
+**Still genuinely not built:**
+
+- **`:before()`/`:after()`, `:yesterday()`, `:quarter()`, `:regex()`,
   `:choice()`, `:names()`, `:message()`, `:count()`, `:above()`,
-  `:has_errors()`, `:type()`, `:at()`, `:from()`/`:to()` — all appear in the
-  spec/example-queries docs but have no `Function3` subclass yet.
-  (`:errors()`/`:vars()`/`:meta()`/`:data()`/`:unmatched()`/`:file()`/
-  `:idchain()` are done now — see §5.)
-- **`root_major == "*"` traversal** — querying across every named-file/
-  named-paths-group/named-result — explicitly rejected today by both
-  `FilesReferenceFinder3` and `CsvpathsReferenceFinder3` as a "different
-  traversal problem," not attempted.
-- **`:all()`'s flatten-vs-group query semantics, only partially wired in.**
-  `:all()` is now a real, registered function (`All3`, see §5), and
-  `CsvpathsReferenceFinder3` handles its simple case correctly (no path
-  dimension to group by there, so "no pointer" already means "return
-  everything"). But the full cross-product/grouping behavior the spec's
-  worked example describes for files (`$*.files.:all().:last()` → one
-  result per named-file+path pair) needs `root_major == "*"` traversal,
-  which — per the point directly above — doesn't exist yet. `Files
-  ReferenceFinder3` does not yet accept `:all()` as a name_one path
-  segment at all (`_compile_path_pattern` only recognizes `:name(...)`
-  there today).
-- **Type-ahead** — a prototype exists (`references_notes/autocomplete_
-  prototype.py`) demonstrating the intended mechanism: Lark's `parse_
-  interactive()`/`InteractiveParser.choices()` against actual LALR parser
-  state, layered with a function registry filtered by datatype and slot
-  (name_one path-slot vs. name_three part-slot) — deliberately in place of
-  v1/v2's hand-maintained follow-set lists. It predates the grammar that
-  actually got merged (written against a draft `reference_v3.lark` with
-  different terminal names) and is not wired into the real grammar or
-  `Function3`/`describe()` metadata at all. `REFERENCE_GRAMMAR_3` has been
-  separately confirmed to work under `parser="lalr"` (a prerequisite for
-  this technique), but no `parse_interactive()`-based code exists in
-  `csvpath/references/` itself yet.
-- **`ReferenceExpression`** (NOT/UNION/INTERSECT combining multiple
-  references) — explicitly named in the spec as later-phase, confirmed
-  still out of scope.
+  `:has_errors()`, `:type()`, `:at()`** — appear in the spec/example-
+  queries docs but have no `Function3` subclass yet. `:having()` is also
+  not yet built for RESULTS specifically (§5, "`:having()` and `:from()`/
+  `:to()` ranges") — a real, wanted follow-up, not merely aspirational.
+- **`:manifest()` combined with real `'*'`-traversal narrowing** — §6.
+- **`:groups()` combined with `'*'` traversal**, and literal/`'*'`-prefixed
+  `:having()`/`:flatten()` combinations beyond what §5 already lists — no
+  established per-GROUP-of-named-\[paths/results\]-groups meaning has been
+  settled for the deep/any-depth case yet; left for if/when a real use
+  case asks, same as `:groups()`'s own deferred status at the literal-root
+  level once was before it was eventually built there.
+- **Type-ahead** — a prototype exists (`specs/references_v3/notes/
+  autocomplete_prototype.py`) demonstrating the intended mechanism: Lark's
+  `parse_interactive()`/`InteractiveParser.choices()` against actual LALR
+  parser state, layered with a function registry filtered by datatype and
+  slot (name_one path-slot vs. name_three part-slot) — deliberately in
+  place of v1/v2's hand-maintained follow-set lists. It predates the
+  grammar that actually got merged (written against a draft
+  `reference_v3.lark` with different terminal names) and is not wired into
+  the real grammar or `Function3`/`describe()` metadata at all.
+  `REFERENCE_GRAMMAR_3` has been separately confirmed to work under
+  `parser="lalr"` (a prerequisite for this technique), but no
+  `parse_interactive()`-based code exists in `csvpath/references/` itself
+  yet.
 - **`{...}` interpolation evaluation** — parsing/validation is built (see
   §5), but actually resolving an `InterpolatedString3` into its final text
-  is not. Needs two prerequisites that don't exist yet: variable resolution
-  (looking up an `@name` against a real `CsvPaths`/scope context) and at
-  least one real `VALUE`-role function (e.g. a future `:year()` — no
-  `VALUE`-role function is registered today, only `CONTEXT_SETTER`/
-  `POINTER` ones).
+  is not. Needs two prerequisites: variable resolution (looking up an
+  `@name` against a real `CsvPaths`/scope context — not built), and at
+  least one real `VALUE`-role function usable inside `{...}` for something
+  other than a bare field lookup (e.g. a future `:year()`) — many
+  `VALUE`-role functions exist today (the whole field-accessor catalog,
+  §5), so the second prerequisite is arguably already partly met; nothing
+  currently wires interpolation evaluation up to actually call one at
+  runtime.
+- **v3 is still not wired into production.** The live managers
+  (`results_manager.py`, `file_manager.py`) still dispatch through the
+  older v2 reference system (`csvpath/util/references/`) — confirmed by
+  grep: only v2's `ReferenceParser`/`Reference` classes are actually
+  instantiated in manager code; v3's classes are referenced only in
+  comments there. Everything in this document has been built and tested
+  self-contained, independent of that integration question.
