@@ -149,33 +149,7 @@ Functions look like `:name_of_function()` and can take 0 or 1 argument, which
 is a string, number, function, or regex string wrapped in forward slashes,
 like: `/.../`.
 
-Functions do one of six jobs:
-- sets context (e.g. a path segment)
-- narrows to a single result (e.g. :index(5) or :first())
-- retrieves a field from metadata
-- matches on a field from metadata
-- retrieves a well-known file (e.g. :errors() retrieves the run results
-errors.json file)
-- retrieve an arbitrary file from run results by the name the csvpath writer
-gave it (e.g. a Parquet file named `invoices.parquet` found in a `name_three`
-csvpath instance run home)
-
-We talk about these as:
-- pointers (pick one thing)
-- context setters (narrow the search scope)
-- file accessors (pull the full content of a file)
-- field accessors (pull a value from a metadata file)
-
-Note that when a function is used to retrieve the content of a file only one
-file may match the reference. For e.g., it is not possible to pull the
-contents of all the errors.json files for a run at once. You can identify all
-the errors files by pulling the paths to the csvpath statement components of
-the run, knowing `errors.json` always has the same name and location for each.
-And you can select a subset of those errors JSON files by matching on a
-metadata field of one or more errors, resulting in multiple errors.json paths.
-But you cannot access the content of more than one errors.json file at once
-solely using a reference. The same is true of all file types, not just errors
-files.
+There is much more information on functions below in their own section.
 
 ### root_major, name_one, name_three — what limits each segment
 
@@ -314,13 +288,8 @@ finder = FilesReferenceFinder3(csvpaths=paths, ref=ref)
 results = finder.query()        # cheap: list of ReferenceResult3(path, uuid)
 data = finder.resolve()         # or finder.resolve_from(narrowed_selection)
 ```
-
-`resolve()` internally calls `resolve_from(self.query())` — it re-queries and
-resolves everything. `resolve_from(selection)` accepts either a
-`ReferenceResults3` (resolve exactly that set) or a `list[str | UUID]` (pull
-just those out of a fresh `query()` first) — this is what makes "cheap
-search, then selective fetch" real rather than aspirational, and is the shape
-that lets an AI agent triage cheaply before paying for full data pulls.
+In this case, above, the resolve returns the paths to the last instance home
+within every 1-level template run.
 
 ---
 
@@ -330,7 +299,7 @@ Functions are the mechanism for narrowing and pointing within a reference.
 
 **Form**: `:name(arg)` or `:name()` — a colon, a name, parentheses, at most
 one argument. Functions chain with no separator (`:before(:yesterday()):
-index(3)`) and are implicitly ANDed together.
+index(3)`) and are implicitly ANDed together without regard for order.
 
 **Arguments** can be a quoted string, a signed int, an `@name` runtime-bound
 variable, a nested function call, a bare `*`, or a `/regex/` literal.
@@ -339,8 +308,42 @@ variable, a nested function call, a bare `*`, or a `/regex/` literal.
 knowledge of what functions exist — `FNAME` is just `/[a-zA-Z_][a-zA-Z0-9_]*/`.
 Every function name is resolved against a name-keyed registry
 (`ReferenceFunctionFactory`) at transform/build time, not parse time. This is
-the central design choice that keeps the grammar flat (v1/v2's huge
-per-operator alternation is exactly what this avoids).
+the central design choice that keeps the grammar flat and the opportunity
+to add a custom functions capability when needed.
+
+Reference functions are self-documenting in the same way that match
+functions are.
+
+### What functions do
+
+Functions do one of six jobs:
+- sets context (e.g. a path segment)
+- narrows to a single result (e.g. :index(5) or :first())
+- retrieves a field from metadata
+- matches on a field from metadata
+- retrieves a well-known file (e.g. :errors() retrieves the run results
+errors.json file)
+- retrieve an arbitrary file from run results by the name the csvpath writer
+gave it (e.g. a Parquet file named `invoices.parquet` found in a `name_three`
+csvpath instance run home)
+
+We talk about these as:
+- pointers (pick one thing)
+- context setters (narrow the search scope)
+- file accessors (pull the full content of a file)
+- field accessors (pull a value from a metadata file)
+
+Note that when a function is used to retrieve the content of a file only one
+file may match the reference. For e.g., it is not possible to pull the
+contents of all the errors.json files for a run at once. You can identify all
+the errors files by pulling the paths to the csvpath statement components of
+the run, knowing `errors.json` always has the same name and location for each.
+And you can select a subset of those errors JSON files by matching on a
+metadata field of one or more errors, resulting in multiple errors.json paths.
+But you cannot access the content of more than one errors.json file at once
+solely using a reference. The same is true of all file types, not just errors
+files.
+
 
 ### Context-setter vs. pointer
 
