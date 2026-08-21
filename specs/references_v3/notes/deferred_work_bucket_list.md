@@ -29,6 +29,16 @@ Two things to check/preserve, not just the field-read, before splitting:
   only ever need the field-read job — `Home3.POSITIONS`' own comment
   already notes CSVPATHS has no "bare zero-level selector" case, and the
   same reasoning likely applies to a specific instance.
+- **`:home()` vs. `:all()`, precisely (David, 2026-08-21)**: not just a
+  different depth — a different axis entirely. `:home()`'s placeholder
+  role indicates the zero-level ("no template") homes as a **complete
+  path** — nothing narrows further, so the result already *is* the whole
+  entity's own home directory. `:all()` indicates **any value of one path
+  segment** — a path *part*, the observed value at exactly one wildcarded
+  position — with the complete path only emerging once that grouping
+  resolves (and reduces, if a pointer is present). Whichever function
+  replaces `:home()`'s placeholder role needs to preserve this distinction
+  too, not just the depth (zero vs. one level).
 
 Work: re-verify `:home()`'s complete current behavior (both jobs, every
 `POSITIONS` entry) as the actual starting point, then build the new
