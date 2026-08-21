@@ -6,6 +6,32 @@ conversation while working on references v3 — the single place to check
 mid-conversation or mid-code. Remove/check off an item once it's actually
 built, rather than leaving it to rot.
 
+## `$name.files.:manifest():last()` (ordinal pointer into a single named-file's own manifest) — not built
+
+David, 2026-08-21: raised while reviewing the compendium's `path`-per-
+producer table. `$*.files.:manifest():last()` (Rule 1b) works today —
+ordinal-selects one entry out of the *global* files ledger, real `uuid`
+attached. By symmetry, `$acme.files.:manifest():last()` should do the same
+thing one level down: ordinal-select one entry out of *acme's own*
+manifest.json array, without needing a full `name_one` (`:name(...)`) +
+`name_three` (pointer) reference. David: "I believe it should work that
+way... regardless, the symmetry."
+
+Confirmed by live testing it does not work today — raises:
+`FilesReferenceFinder3 does not yet support functions attached directly to
+name_one -- put the version-selecting function in name_three instead.`
+(`files_reference_finder_3.py:169-174`). The reason: `_pointer_before_
+manifest()` (the mechanism behind Rule 1b) is only invoked in the
+`isinstance(root_major, Star3)` branch (`files_reference_finder_3.py:116`)
+— there is no equivalent call for a literal root_major.
+
+Open question David flagged, not yet settled: is this actually a good/
+wanted alternative to a full `:name(...)` + name_three reference (which
+already gets you "the matched version's own manifest entry," a different,
+narrower thing), or just a symmetry nicety worth having anyway? Worth
+resolving before building, not just building because Rule 1b's shape
+suggests it.
+
 ## Retire `:home()`, split into scope-specific home functions
 
 David, 2026-08-21: no manifest anywhere has a literal `"home"` key — confirmed,
