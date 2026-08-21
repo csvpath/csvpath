@@ -6,6 +6,74 @@ conversation while working on references v3 — the single place to check
 mid-conversation or mid-code. Remove/check off an item once it's actually
 built, rather than leaving it to rot.
 
+## Predicate-argument field accessors (`:on_arrival(:not_none())`) — not built anywhere
+
+David, 2026-08-21, drafting the compendium's replacement `:manifest()`/
+`:definition()` section: an AI needs to answer "which named-files trigger a
+run on arrival" with a direct, reliable list — not by pulling every
+`definition.json` and reasoning over them itself, which only invites error
+and inconsistency. Proposed shape: `$acme.files.:definition(:on_arrival
+(:not_none()))` — a field-accessor function (`:on_arrival()`) taking a
+predicate (`:not_none()`) as its own argument, so combined with `'*'`/
+`:all()` traversal this filters which named-things survive, rather than
+just transforming a value.
+
+**Nothing like this exists today.** Two pieces are both missing:
+- No filtering-by-field-value mechanism exists for FILES at all. The
+  closest precedent, `:having()`, is CSVPATHS-only (`Having3.DATATYPES =
+  (Reference3.CSVPATHS,)`) and does one narrow thing — checks whether a
+  version's `named_paths_identities` list *contains* a given string. No
+  notion of "check an arbitrary field against an arbitrary predicate."
+- No predicate function (`:not_none()`, `:none()`, `:above()`, etc.) is
+  registered anywhere in the codebase — confirmed via grep, nothing
+  matches. `:above()` is named in the examples doc (`:count(:above(10))`)
+  but is equally unbuilt.
+
+**A second, independent precedent for the same underlying need (David,
+2026-08-21)**: `:idchain("...")` as an argument to `:errors()` already
+filters which errors match — not every error necessarily has an idchain,
+so a `:not_none()`/`:none()` predicate would make sense there too, for the
+same reason. Two separate real use cases (definition-field filtering for
+FILES, error-matching for `:errors()`) both want the same underlying
+predicate-argument capability — this is not a one-off, speculative ask.
+
+**Design constraint, stated explicitly (David, 2026-08-21)**: no two-arg
+functions, and no allowing multiple predicates in one reference — "some
+enforced simplicity is, by my theory, beneficial, even as too much (e.g.
+not having a way to do what I wrote re: on_arrival) is harmful." So the
+mechanism has to be a single predicate function nested as the sole
+argument to the field/error accessor it filters (`:on_arrival(:not_none())`,
+`:errors(:idchain(...))`-style), never a second positional argument or a
+combination of predicates ANDed/ORed together in the same call.
+
+Needs real design work before building: how a predicate argument is
+recognized/dispatched generically (one shared mechanism, not a bespoke
+check per accessor function, mirroring the `SELECTOR_WHEN_ARGUED` idea
+already proposed for the dual selector/value-accessor gap above), and how
+it interacts with `'*'`/`:all()` traversal to actually filter survivors
+rather than just transform a value.
+
+## Corrections needed in the new `:manifest()`/`:definition()` compendium section (David's draft, 2026-08-21)
+
+While reviewing David's own replacement text for the "root `:manifest()`
+and `:definition()` files" section (aimed at cutting implementation-history
+cruft down to design intent, which the old section had a lot of):
+
+- `$acme.files.:manifest():last()` was given as an example returning "the
+  last file registration data captured in the **global** files ledger
+  manifest" — wrong on two counts. A literal root_major (`acme`) can never
+  mean the global ledger — only `$*` reaches that; `$acme` always means
+  acme's own manifest.json. And even read as "acme's own manifest, last
+  entry" (not the global one), that exact shape is the unbuilt gap in the
+  bucket-list entry directly above this one — it raises today, it doesn't
+  work. Needs splitting into two correct examples: `$*.files.:manifest()
+  :last()` (global ledger's last entry — genuinely works today) and
+  `$acme.files.:manifest():last()` (acme's own manifest's last entry — does
+  not work yet).
+- The draft called the definition-file function `:description()`; the real,
+  existing function is `:definition()`. David confirmed this was just a
+  slip while drafting, not an intentional rename.
+
 ## `$name.files.:manifest():last()` (ordinal pointer into a single named-file's own manifest) — not built
 
 David, 2026-08-21: raised while reviewing the compendium's `path`-per-
