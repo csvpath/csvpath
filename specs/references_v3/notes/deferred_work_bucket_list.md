@@ -46,12 +46,17 @@ functions preserving whichever job each one actually needs, then remove
 `:home()` and fix the compendium's own now-incorrect claim about it
 "reverting to its ordinary job of reading the field."
 
-## `#name_two` (XLSX worksheet marker) — not built anywhere, and `ReferenceResult3` has no field for it
+## `#name_two` (XLSX worksheet marker) — not built anywhere
 
 David, 2026-08-21: raised while reviewing the compendium — does
-`ReferenceResult3` need a field for which worksheet was found? Confirmed:
+`ReferenceResult3` need a field for which worksheet was found? Confirmed
 it does not have one today, and neither does anything else exist yet to
-make that field meaningful.
+make that field meaningful. **Resolved, 2026-08-21: reuse `identity`**
+(David: "identity works quite well with worksheet (name_two)") rather
+than adding a dedicated field — no `ReferenceResult3` change needed when
+this actually gets built, just populate `identity` with the worksheet
+name the same way CSVPATHS already populates it with a statement
+identifier.
 
 - The grammar already has the slot (`name_one: path_prefix ("#" name_two)?
   func_chain?`, `reference_grammar_3.py:102,109`), and it parses fine
@@ -61,18 +66,9 @@ make that field meaningful.
   documented as the eventual, files-only, XLSX-worksheet meaning.
   CSVPATHS/RESULTS correctly reject it as files-only; FILES rejecting it
   too just means the feature isn't built yet anywhere.
-- `ReferenceResult3` (`reference_results_3.py`) has four fields — `path`/
-  `uuid`/`data`/`identity` — none of which record which worksheet a result
-  came from. Once FILES' finder is taught to parse `#Sheet1`, results need
-  somewhere to carry that.
-- Open question, not yet settled: reuse `identity` (its own docstring
-  already frames it generically as "which specific sub-entity, within
-  path+uuid, this result is for," added for CSVPATHS' statement-range
-  selectors) vs. a new dedicated field (e.g. `worksheet`). Reuse is
-  probably right — the field's whole purpose is "extra discriminator when
-  path+uuid isn't enough," and a worksheet is exactly that shape of thing
-  — but a statement-index/range and a sheet name are different enough in
-  kind that this deserves a real decision, not just default reuse.
+- Work still needed: teach `FilesReferenceFinder3` to accept `#name_two`
+  and actually read the named worksheet, then populate the resulting
+  `ReferenceResult3.identity` with it.
 
 ## Function self-documentation — dual selector/value-accessor behavior
 
