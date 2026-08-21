@@ -317,8 +317,8 @@ functions are.
 ### What functions do
 
 Functions do one of six jobs:
-- sets context (e.g. a path segment)
-- narrows to a single result (e.g. :index(5) or :first())
+- sets the narrowing context (e.g. a path segment)
+- points to a single result (e.g. :index(5) or :first())
 - retrieves a field from metadata
 - matches on a field from metadata
 - retrieves a well-known file (e.g. :errors() retrieves the run results
@@ -360,25 +360,30 @@ Every function self-reports one of three roles:
   `$acme.files.orders/:year()` to create a dynamic path like `acme/orders/2026`.)
 
 
-There is deliberately **no "value extractor" role**. What a pointer
-resolves to depends purely on *where it sits*:
+What a pointer or value resolves to depends on where it sits and how it is used:
+- A pointer that uniquely identifies an item (file or directory) when used
+  with an argument may also be used without an argument to retrieve the same
+  value as a field accessor. E.g. $acme.files.:first():uuid() returns a UUID
+  value; whereas, $acme.files.:uuid("ab37-fef3...") returns a path to the item
+  without resolving to a more specific value. Likewise :fingerprint().
 - In name_one, a pointer resolves to a physical file, a named-paths group
   version, or a run.
 - In name_three, a pointer resolves to a well-known metadata *file* (e.g.
   `:errors()`) — unless that pointer's own argument is itself another
   pointer, in which case it resolves to a specific *value* inside that file
-  instead (e.g. `:errors(:idchain(...))`). Same trait, one nesting level
+  instead (e.g. `:errors(:idchain())`). Same trait, one nesting level
   deeper, not a separate category.
 
 **Note on pointers within file functions:**
 References are are as simple as we could make them without giving up value.
 They are not intended to give the maximum flexibility in extracting
 data. In the example above, `:errors(:idchain(...))`, the resulting value
-is one or more error dicts with keys matching the given idchain. We don't
-allow more than one key to be specified and there's no way to do boolean
-predicates beyond what you see. In the usual case, if you need more
+is one or more error dicts with `idchain` keys matching the given idchain.
+We don't allow more than one key to be specified and there's no way to do
+boolean predicates beyond what you see. In the usual case, if you need more
 specificity than a reference gives it is your job to go beyond the basic
-access references give you.
+access references give you either programmatically or using reference
+expressions (multiple references with set operations; discussed elsewhere).
 
 ### At most one pointer per chain, per nesting level
 
@@ -391,10 +396,6 @@ legal (one pointer — `idchain` — at the argument level, one pointer —
 sitting side by side in the same chain is illegal (two pointers, same
 level).
 
-This rule is enforced in code by `ReferenceFunctionFactory.build_chain()`,
-which compiles every call in a chain, then rejects the chain if more than one
-compiled function has `ROLE == Function3.POINTER`.
-
 ### Why a trailing bare `*` is illegal but bare `:all()` is fine
 
 This is real design reasoning, not an arbitrary restriction. `*` is a
@@ -404,15 +405,15 @@ could be more path segments, a function on name_one's chain, or a name_three.
 `:all()`, by contrast, is already a **complete instruction**. `:all()` says:
 *"get me all of them!"* Nothing needs to follow it.
 
-The two are not otherwise equivalent either (see the EXAMPLE SCENARIO in the
-spec doc, summarized below): `*` **flattens** every wildcard position in the
-reference into one pooled search space that a terminal pointer reduces to a
-single answer; `:all()` anywhere in the reference **groups** — it switches
-the *whole reference* into a mode where every wildcard position (root_major
-included) becomes a dimension of a composite group key, and the terminal
-function distributes across the resulting cross-product. Confirmed by a
-worked example: given named-file `alpha` (paths `zero.csv` [1 version],
-`one.csv` [2 versions]) and named-file `beta` (path `two.csv` [2 versions]):
+The two are not otherwise equivalent either (see the EXAMPLE SCENARIO below):
+`*` **flattens** every wildcard position in the reference into one pooled
+search space that a terminal pointer reduces to a single answer; `:all()`
+anywhere in the reference **groups** — it switches the *whole reference* into
+a mode where every wildcard position (root_major included) becomes a
+dimension of a composite group key, and the terminal function distributes
+across the resulting cross-product. Confirmed by a worked example: given
+named-file `alpha` (paths `zero.csv` [1 version], `one.csv` [2 versions]) and
+named-file `beta` (path `two.csv` [2 versions]):
 
 - `$*.files.*.:last()` → 1 result (single most-recent file across everything —
   flattened).
@@ -427,13 +428,6 @@ A related side finding baked into the same example: `:last()` means
 order on the version filename — version names are content hashes with no
 inherent temporal order.
 
-The precise illegality rule, as implemented in `Reference3.check_valid()`:
-reject only when `name_three is None and not name_one.functions and
-name_one.path[-1] is a bare Star3` — i.e. a **trailing, nothing-follows**
-star with no way to complete it. A mid-path star (`$alpha.files.*/orders`) is
-always fine — the literal segment after it supplies the completion. A star
-followed by name_one's own function chain (`*:first()`) or by a name_three
-is also fine.
 
 #### Why `*` is disallowed as name_three's body, even though it is legal elsewhere
 
@@ -446,29 +440,23 @@ function-followed `*` is fine per the rule above. This is not the same
 already have `:errors()` (or another accessor) following it, so the
 sentence-completion problem does not apply.
 
-The real reason: `*`'s flatten-vs-`:all()`'s-group distinction only means
-anything where there is more than one axis/position for the two to diverge
-on — name_one is a `/`-joined, multi-segment path, so a wildcard at one
-position can coexist with literal segments at others, and pooling across
-that wildcarded position (`*`) is genuinely different from grouping by it
-(`:all()`). name_three's body is not a path at all — it is a single,
-unstructured identity slot (a literal statement name, or the stringified
-load-time index of an unnamed one). There is no second position for `*` to
-wildcard against, so `*` and `:all()` would be exactly, unconditionally
-synonymous there — always selecting every instance, never diverging. Rather
-than give the same concept two spellings with zero cases where they would
-ever differ, the language keeps one canonical form (`:all()`) and disallows
-the other. This mirrors a pattern already followed elsewhere (e.g. a regex
-argument has exactly one way to be written — passed directly as a `REGEX`
-literal, never wrapped in a function of its own).
+Note: the distinction between `*`'s flatten and `:all()`'s grouping is only
+meaningful where there is more than one axis/position. Name_one is a
+`/`-joined, multi-segment path, so a wildcard at one position can coexist
+with literal segments at others, and pooling across that wildcarded position
+(`*`) is different from grouping by it (`:all()`). Name_three's body is
+a single, unstructured identity (a statement name or stringified index).
+There is no second position for `*` to wildcard against, so `*` and `:all()`
+would be exactly the same: always selecting every instance. Rather than give
+the same concept two spellings with zero cases where they would ever differ,
+the language keeps one canonical form (`:all()`) and disallows the other.
 
-#### RESULTS' full depth model, and the one gap `:home()` fills
+#### RESULTS' full depth model, and the gap `:home()` fills
 
-Settled 2026-08-10/11, arrived at over several rounds with real registered
-data checked at each step, not just reasoned about. RESULTS' template depth
-has exactly four positions in a 2×2 matrix (how many levels of nesting a
-reference targets, crossed with pool-vs-group), plus one position that
-turned out to need a fifth, different kind of function entirely:
+RESULTS' template depth has exactly four positions in a 2×2 matrix (how
+many levels of nesting a reference targets, crossed with pool-vs-group),
+plus one position that turned out to need a fifth, different kind of
+function entirely:
 
 | Depth | Pooled (one answer) | Grouped (one per distinct value) |
 |---|---|---|
@@ -477,54 +465,18 @@ turned out to need a fifth, different kind of function entirely:
 | any depth | `:flatten()` | `:groups()` |
 
 `*`/`:all()` are peers restricted to exactly one wildcarded segment,
-regardless of whether a pointer follows — this holds even without a
-pointer (a pointer-less `:all()` still means "one level, unreduced," not
-"any depth," a bug introduced then caught and fixed the same day it
-shipped in PR #241 — the fix mistakenly mirrored csvpaths' own bare
-`:all()` precedent, which does not apply to results since csvpaths has no
-path dimension at all to be wrong about).
+regardless of whether a pointer follows. Because they imply wildcarding a
+path segment, they only match when a 1 or more-level template is used.
+To match all no-template named-files or named-results use :home(). The
+meaning of :home() is essentially the same as :all(), but with the
+difference that :home() represents the whole path; whereas, :all()
+represents one path segment.
 
-The gap: nothing above provides "every zero-level run, unreduced" — a bare
-pointer always reduces to exactly one. `:all()`'s own one-level restriction
-means it can never reach zero levels either. The fix is not a new pool/
-group pair (zero levels has no wildcarded position, so there is nothing to
-group by — only one mode is meaningful there, matching the empty cell in
-the table above) — instead, `:home()`, an *existing* `VALUE`-role field
-accessor (never a `POINTER`), fills it for free: when it is the only
-function present in a bare chain, nothing reduces the candidate set, so
-every matching zero-level run comes back unreduced — "everything that has
-its home here." The moment a real pointer joins the chain (either order —
-`:home():last()` and `:last():home()` mean the same thing), the pointer
-reduces to one and `:home()` reverts to its ordinary job of reading the
-field off whatever got selected. No new grammar, no order-sensitivity trap
-(`:home()` never competes with a pointer for which one "wins" — it simply
-is not a pointer).
+Note that in `csvpaths` there is no path dimension so no depth dimension
+to name one.
 
-`:home()` is root-only — there is no prefixed form (`$acme.results.beta/
-:home()`). This was built, then removed the next day (2026-08-12): a plain
-literal prefix segment with nothing trailing already means "every run
-under this exact prefix, unreduced" (`$acme.results.beta` alone), and it
-predates this whole depth refactor. Direct testing confirmed the prefixed
-`:home()` shape gave byte-for-byte identical results to the plain prefix
-in every case tried, with and without a trailing pointer — so it was pure
-redundant code, a second, more confusing spelling of something that
-already had one canonical spelling (the same "one canonical spelling"
-principle behind disallowing `*` at name_three and the `:regex()` wrapper).
-`:home()` is only load-bearing at the bare/root position, where the
-grammar has no other way to express "zero segments" — a literal prefix
-already covers every other depth.
 
 ---
-
-## 5. What's actually built and tested today
-
-Verified 2026-08-05: `pytest tests/references/ -q` → **486 passed**. Full
-project suite: **2066 passed, 11 failed** — the 11 failures are the
-pre-existing, unrelated SFTP/S3/Nos baseline (issue #216 and similar), not
-references-v3 regressions. **Re-verified 2026-08-19, after the catch-up
-pass covering everything from `_check_position()` onward: `tests/
-references/` → 1099 passed. Full suite: 2687 passed, 11 failed — same known
-baseline, unrelated to references v3.**
 
 ### Grammar (`csvpath/references/reference_grammar_3.py`)
 
@@ -560,107 +512,36 @@ positive/negative cases against the spec's own example corpus.
 
 ### Transformer and object graph
 
-- **`reference_transformer_3.py`** — `Reference3Transformer(lark.Transformer)`,
-  one method per grammar rule (in contrast to v1's `reference_transformer.py`,
-  which has one method per grammar-rule *combination* and mutates a shared
-  flat object — the pattern v3 is designed specifically to avoid). Modeled on
-  `csvpath/matching/lark_transformer.py`.
-- **`reference_3.py`** — the plain value-object graph the transformer builds,
-  with no execution context or filesystem access:
-  - `Star3` — a bare `*` wildcard token (all instances equal).
-  - `Variable3` — an `@name` runtime-bound variable reference.
-  - `Regex3` — a slash-delimited regex literal (pattern held without delimiters).
-  - `FunctionCall3` — the raw parsed `:name(arg)` shape (not yet a real,
-    behavior-having function — see `Function3` below). Has `contains_
-    function_named(name)`, a purely structural recursive check over its own
-    arg chain.
-  - `NameOne3` — path (list of literal/`Star3`/`FunctionCall3` segments),
-    optional `name_two`, list of trailing functions.
-  - `NameThree3` — optional body (literal/`Star3`), list of trailing
-    functions.
-  - `Reference3` — the whole parsed reference: `root_major`, `datatype`,
-    `name_one`, `name_three` (optional). Exposes `check_valid()` (see §4's
-    bare-`*` rule — this is where it's enforced) and `resolve_kind` (the
-    `FIRST_PARTY`/`METADATA_FILE`/`METADATA_FIELD` computation described in
-    §3, currently driven by placeholder name-lists — `_METADATA_FILE_
-    FUNCTIONS` and `_METADATA_FIELD_FUNCTIONS` — explicitly flagged in code
-    comments as stand-ins for real per-function traits the `Function3`
-    registry will eventually own).
-  - Every object round-trips to its original string form via `__str__` — all
-    47 positive examples in the spec/grammar corpus were confirmed to parse
-    and reconstruct byte-for-byte through `ReferenceParser3` before the test
-    suite was written.
-- **`check_valid()` is called explicitly by `ReferenceParser3.parse()` after
-  `Transformer.transform()` returns, not from inside a transformer rule
-  method or `Reference3.__init__`** — deliberately, so a violation surfaces
-  as a real `ReferenceException3`, not a Lark `VisitError` wrapping it (Lark
-  wraps any exception raised inside a `Transformer` rule method; this was
-  caught via direct testing, not assumed).
+- **`reference_transformer_3.py`** — `Reference3Transformer(lark.Transformer)`
+  builds the parse tree.
 
-Tested by `tests/references/test_reference_3.py` and `tests/references/
-test_reference_transformer_3.py`.
+- **`reference_3.py`** — the plain value-object graph the transformer builds,
+  with no execution context or filesystem access. This is class is used by
+  within the v3 package, but not general callers. Callers outside the v3
+  package who need to access a reference's names or to use it in a finder or
+  reference expression to make queries use a ReferenceParser.
 
 ### `ReferenceParser3` (`csvpath/references/reference_parser_3.py`)
-
-Wraps a reference string plus a required `csvpaths` context object. `__init__
-(*, string, csvpaths)` — both keyword-only, both bounds-checked (`ValueError`
-on `None`/empty). Parses eagerly in the constructor via a shared, lazily-
-built, class-level `QueryParser3` instance (compiled once, not per instance).
-Exposes `.parsed` (the `Reference3`), `.ref_string` (round-trip string),
-`.root_major`/`.datatype`/`.name_one`/`.name_two`/`.name_three` passthrough
-properties, and logs+re-raises on parse failure.
-
-Tested by `tests/references/test_reference_parser_3.py`, including the
-spec-corpus round-trip and the `check_valid()`/`VisitError` regression.
+The public interface representing a v3 reference language string. Mainly used
+by finders and for direct access to the name parts of a reference string.
 
 ### Functions: `Function3` and `ReferenceFunctionFactory`
 
-`Function3` (`csvpath/references/functions/function_3.py`) is the base class
-for real, behavior-having functions — distinct from `FunctionCall3` (the raw
-parsed shape). Declarative per-subclass metadata (`NAME`, `SUMMARY`, `ROLE`,
-`DATATYPES`, `ARG_TYPES`, `ARG_REQUIRED`) drives a generic `check_valid()`
-(structural only — required-ness, arg type, recurses into a nested `Function3`
-arg) and a `describe()` method returning a self-description dict, feeding a
-future type-ahead registry. Deliberately does **not** port `csvpath.matching.
-functions.args.Args`/`ArgSet` — that machinery solves multi-arg-overload
-problems these ≤1-arg functions don't have, and the requirements doc's own
-hard rule (no code-sharing between the match language and reference language)
-rules out importing it directly anyway.
+- **`Function3`** (`csvpath/references/functions/function_3.py`) the base class
+for real, behavior-having functions. (Note: `FunctionCall3` is the parse tree
+object.)
 
-`ReferenceFunctionFactory` (`reference_function_factory_3.py`) is the
-name-keyed registry: `build(call: FunctionCall3) -> Function3` (recurses into
-a nested `FunctionCall3` arg first, then validates), `build_chain(calls) ->
-list[Function3]` (compiles a whole chain and enforces "at most one pointer
-per chain" by counting `ROLE == Function3.POINTER` among the *direct*
-compiled siblings — a pointer nested inside another function's arg has
-already been compiled away and doesn't count), and `add_function(cls)` for
-runtime registration of custom functions.
+- **`ReferenceFunctionFactory`** (`reference_function_factory_3.py`) is the
+name-keyed registry for all functions. `add_function(cls)` allows for future
+custom function registration.
 
-**Fourteen concrete functions exist**:
+#### Existing functions
 
-| Function | Role | Arg | What it does |
-|---|---|---|---|
-| `First3` | POINTER | none | Earliest-arriving item in the current scope. |
-| `Last3` | POINTER | none | Most-recently-arriving item in the current scope. |
-| `Index3` | POINTER | required `int` | Item at a 0-based position, in arrival order. (David confirmed the spec's earlier "`:index(7)` means the seventh file" wording was his own mistake — it is 0-based, so `:index(7)` means the eighth.) |
-| `Name3` | CONTEXT_SETTER | required `str` | Matches an exact literal name at this position — built specifically because a real filename with a `.` in it (e.g. `"zero.csv"`) cannot be written as a bare `PATH_SEGMENT` (the grammar reserves `.` as the name_one/name_three separator). Wired in only as a name_one path segment, not name_three. Str-arg only for now — the grammar also permits `*`/`@var`/regex here, but those need machinery (wildcard-as-arg semantics, variable lookup, regex matching) not yet built. |
-| `All3` | CONTEXT_SETTER | none | Explicitly asks for every match, unreduced — the complete-instruction counterpart to a bare `*` (which is a dangling fragment on its own, see §4's "Why a trailing bare `*` is illegal but bare `:all()` is fine"). For csvpaths specifically (no path dimension to group by), this collapses to a simple case: a chain with `:all()` and no pointer returns every version in the manifest, unreduced — this is how `CsvpathsReferenceFinder3` actually reaches "Name_one used alone == list of versions in the form: (path-to-group.csvpaths, uuid)" (STRUCTURE table). |
-| `Manifest3` | VALUE | none | Resolves to the manifest data for the enclosing named-file/named-paths group — the whole raw `manifest.json` when name_one is bare/sole-content (`$acme.files.:manifest()`), or the matched entry/entries when combined with real path narrowing and/or a version pointer in name_three (files) or name_one's own combined chain (csvpaths) — see below. `ROLE` is `VALUE`, not `POINTER` — corrected after realizing `:manifest()` never narrows/selects anything itself, in any usage (see below). |
-| `Definition3` | VALUE | none | Points at the enclosing named-file/named-paths group's own `definition.json` (its stored configuration — sources, `on_arrival` behavior, scripts, webhooks, etc). Only wired in for the bare, sole-content name_one shape — `definition.json` is a single dict (not an array like manifest.json), so there is no "filtered subset"/"matched entry" concept for it the way `:manifest()` now has. Genuinely optional (not currently versioned; a group/file never explicitly configured has none on disk at all), so resolving it gives `None` rather than raising when absent. `DATATYPES` is `FILES`/`CSVPATHS` only — named-results has no `definition.json` equivalent. (`Definition3`'s own `ROLE` was still wrongly `POINTER` until this pass too — missed in the earlier `Manifest3` fix, caught while re-checking every accessor function's role for consistency ahead of building the six below.) |
-| `Errors3` | VALUE | none | The parsed contents of a run instance's `errors.json` — results-only. Rides alongside the identity/`:all()` selector already in name_three, does not select the instance itself. |
-| `Vars3` | VALUE | none | The parsed contents of a run instance's `vars.json` — results-only. |
-| `Meta3` | VALUE | none | The parsed contents of a run instance's `meta.json` — results-only. |
-| `Data3` | VALUE | none | The raw bytes of a run instance's `data.csv` — results-only. Genuinely optional (only written if at least one line matched); resolves to `None` rather than raising when absent, same treatment as `Definition3`. |
-| `Unmatched3` | VALUE | none | The raw bytes of a run instance's `unmatched.csv` — results-only. Genuinely optional (only written if at least one line was unmatched); resolves to `None` when absent. |
-| `File3` | VALUE | required `str` | The raw bytes of an arbitrary user-named output file (e.g. a custom parquet/jinja/text file) in a run instance's own directory — results-only. Genuinely optional; resolves to `None` when absent. `check_valid()` additionally rejects any arg containing `/`, `\`, or `..` — a bare-filename-only guard against escaping the instance directory (skipped for an `InterpolatedString3` arg, whose actual text is not known until evaluation, which is deferred). |
-| `Idchain3` | VALUE | required `str` | The first metadata-*field* function — addresses one specific entry within a well-known file's own array by the match component that produced it (e.g. `:errors(:idchain("add[0]string[2]"))`). Only meaningful nested as `Errors3`'s own argument (`Errors3.ARG_TYPES` widened to accept it specifically, not any `Function3`). Despite sounding like it walks a live Matcher parse tree, it does not — confirmed directly against the real `Error` class: `Error.to_json()`'s `"source"` field already holds exactly this chain string (`Matchable.my_chain`, computed once, at error time), so this is a plain field-match filter over `errors.json`'s list — the same idea as `:type()`'s still-queued manifest-field-filter design, just applied to a different well-known file, and confirmed by David directly ("idchains are essentially like `:type()`... it is just a field in a well-known JSON file"). Zero matches is a legitimate empty list, not `None` and not an error. |
-
-Tested by `tests/references/functions/` (one test file per function, plus
-`test_function_3.py` and `test_reference_function_factory_3.py`).
+See: specs/references_v3/notes/function_coverage_matrix.md
 
 ### `ReferenceFinder3` ABC and results containers
 
-`ReferenceFinder3` (`reference_finder_3.py`) is an ABC taking `(*, csvpaths,
+- **`ReferenceFinder3`** (`reference_finder_3.py`) is an ABC taking `(*, csvpaths,
 ref: ReferenceParser3)`. `query()` is `@abstractmethod` — each datatype's
 storage layout differs enough that there's no generic implementation.
 `resolve()` and `resolve_from(selection)` are shared (concrete) on the ABC:
@@ -669,21 +550,26 @@ storage layout differs enough that there's no generic implementation.
 `ReferenceResults3.select()`), then calls the abstract `_extract_data()` on
 each result to fill in `.data`.
 
-`ReferenceResult3`/`ReferenceResults3` (`reference_results_3.py`) are pure
-value containers, deliberately not modeled on v2's `ReferenceResults`, which
-mixes "holds the output" with "knows how to reach storage" (does its own
-manifest lookups). `ReferenceResult3` has **four** fields, not three:
+- **`ReferenceResults3`** the container acting as a list of results found by
+querying a finder with a reference.
+
+- **`ReferenceResult3`** the container for a specific item found by evaluating
+a reference. Reference results have three fields that indicate the item found
+when the query function was called, of which one is conditional to specific
+datatypes. And one field that optionally contains a resolved value after the
+resolve function is called.
 
 | Field | Type | Meaning |
 |---|---|---|
 | `path` | `str`, required | A file-system path — but its exact *kind* (a directory vs. a file, and if a file, which one) is never recorded on the object itself; it is entirely determined by which finder/branch produced the result. See the "What `path` actually holds" table below. |
 | `uuid` | `str \| None` | The matched entity's own registered UUID — `None` when the result is directory-level with no single registered version (e.g. a name_one-terminal FILES query with no version pointer). |
+| `identity` | `str \| None` | Which specific *sub-entity*, within `path`+`uuid`. This field covers the identity of `csvpath` statements with `group.csvpaths` and worksheet names within `.xlsx` files |
 | `data` | `Any`, mutable | Empty at `query()` time; filled in by `resolve()`/`_extract_data()` afterward, on the same instances — the only mutable field. |
-| `identity` | `str \| None` | Which specific *sub-entity*, within `path`+`uuid`, this result is for — added 2026-08-13 for CSVPATHS' statement-level range selector (`:from()`/`:to()`). Unlike FILES/RESULTS, CSVPATHS has no per-statement UUID at all (only the whole group *version* has one) — `path`/`uuid` are identical across every statement matched by one `query()`, so `_extract_data()` cannot tell them apart from those two fields alone the way it can for the other two datatypes. `None` for every other case (`path`/`uuid` alone are already enough there). |
 
 `__eq__` compares all four fields (`path`+`uuid`+`data`+`identity`) — this is
-what `ReferenceResults3.deduplicated()` (§5, "`ReferenceExpression3`") uses to
-collapse true duplicates.
+what `ReferenceResults3.deduplicated()` uses to collapse true duplicates.
+Different results may be returned after `resolve()` than would after only
+`query()`.
 
 **What `path` actually holds** — there is no discriminator field recording
 this, so it must be inferred from which finder/branch produced the result:
@@ -693,72 +579,29 @@ this, so it must be inferred from which finder/branch produced the result:
 | FILES, a version match | the specific version file |
 | FILES, name_one-terminal (no version pointer) | the named-file's file-home *directory* |
 | CSVPATHS, any version match | the group's `group.csvpath` *file* — always the same path; only `uuid`/`identity` distinguish versions/statements |
-| RESULTS, a run-level match | the run's own *directory* |
-| RESULTS, an instance-level match | the instance's own *directory* (a subdirectory of the run) |
-| Rule 1a (bare `'*'`+`:manifest()`, global ledger — see below) | the ledger file itself, e.g. `.../manifest.json` — `uuid` always `None` |
-| Rule 1b (an ordinal pointer riding with the bare global-ledger `:manifest()` — see below) | the *same* ledger file path as Rule 1a, but with a real `uuid` attached (the selected ledger entry's own uuid/run_uuid) |
+| RESULTS, a run-level match | the run's own home *directory* |
+| RESULTS, an instance-level match | the instance's own home *directory* (a subdirectory of the run) |
+| Rule 1a (bare `'*'`+`:manifest()`, a global ledger — see below) | the ledger file itself, e.g. `.../manifest.json` — `uuid` always `None` |
+| Rule 1b (an ordinal pointer riding with the bare global-ledger `:manifest()` — see below) | the *same* ledger file path as Rule 1a, but with a real `uuid` attached to select an entry) |
 
-That last row is a real trap, not just a table curiosity: a `'*'`-traversal
-result (once traversal supports `:manifest()`) *also* always carries a real
-`uuid` — so "does this result have a uuid" cannot distinguish a Rule-1b
-result from a genuine traversal result; only comparing `path` against the
-ledger's own known, fixed path can. See "Rule 1 / Rule 1a / Rule 1b" below.
 
-`ReferenceResults3` supports `.files`/`.uuids` passthrough lists, `file_for_
-uuid()`/`uuid_for_file()`/`data_for_uuid()` lookups, `.select(identifiers)`
-(subset by path, uuid, *or* identity — identity added 2026-08-13 alongside
-the field itself), `.remove(result)` (in-place, `ValueError` if absent,
-`list.remove()`-compatible), and `.deduplicated()` (added 2026-08-18 for
-`ReferenceExpression3`, §5 — collapses true duplicates by the same four-field
-`__eq__`, first-occurrence-wins, order preserved; no `__hash__` is defined
-since `data` is mutable, so this is a linear scan, not a hash-set dedup).
-`__iter__` yields a **snapshot** (`iter(list(self._results))`), specifically
-so a caller can iterate-and-remove in the same loop without skipping entries.
+### The finders
+`FilesReferenceFinder3`, `CsvpathsReferenceFinder3`, `ResultsReferenceFinder3`
+find results based on a ReferenceParser which represents a reference string.
 
-Tested by `tests/references/test_reference_finder_3.py` and `test_reference_
-results_3.py`.
+### `:manifest()`/`:definition()`
+All named-things areas have global ledger manifest.json files tracking all
+add actions (registers, loads, runs). Each named-file, named-paths group, and
+named-results run has its own manifest.json, as does each instance in a name-
+result.
 
-### The finders: `FilesReferenceFinder3`, `CsvpathsReferenceFinder3`, `ResultsReferenceFinder3`
+Named-files and named-paths groups also have a definition.json file that
+holds additional config information controlling how files are registered and
+how named-paths groups are run.
 
-`csvpath/references/files_reference_finder_3.py` — grounded in the real
-on-disk `manifest.json` schema (one flat, append-only JSON array per
-named-file; each entry's `file_home` is the directory shared by all versions
-of one logical file; arrival order is simply array order, confirmed not
-sorted by the `time` field).
 
-**Supports**: a literal `root_major` (named-file name); `name_one` as `*`,
-literal path segments, or `:name("...")` segments (matched against
-`file_home` relative to the named-file's home directory); `name_three`
-resolving via `build_chain()` to exactly one pointer (`:first()`/`:last()`/
-`:index(n)`) that picks *which version*; `resolve()` for `FIRST_PARTY`
-content (reads raw bytes via `DataFileReader`, mirroring the pattern already
-used in `csvpath/util/cache.py`).
+-----------------------------------
 
-**Explicitly rejects** (raises `ReferenceException3` rather than guessing):
-`root_major == "*"` (every named-file — a different traversal problem);
-the `#worksheet` (`name_two`) marker; any function-valued name_one segment
-other than `:name(...)`; a literal `name_three` body (bypassing a pointer
-entirely); a `name_three` that doesn't resolve to exactly one pointer.
-`_extract_data()` is effectively unreachable for `METADATA_FIELD` today and
-raises for that kind — no metadata-field functions are registered for files
-yet. `METADATA_FILE` is reachable, but only for `:manifest()` — see below.
-
-Tested by `tests/references/test_files_reference_finder_3.py`, including a
-direct check against the spec's own EXAMPLE SCENARIO (`$alpha.files.*.:last()`
-→ `one.csv`'s `0000000000abcdef.csv`, matching exactly).
-
-### `:manifest()`/`:definition()` — the first metadata-file functions wired up
-
-`resolve_kind` had classified `METADATA_FILE`/`METADATA_FIELD` since early in
-this initiative, but no finder could actually act on either — both raised
-unconditionally. `:manifest()` (`Manifest3`) is the first to close that gap,
-chosen as the starting point because it needs nothing new: both finders
-already read the exact manifest.json the function resolves to. `:definition()`
-(`Definition3`) followed immediately after, once confirmed to be the
-identical shape at the identical home directory (`NamedFileDescriber`/
-`NamedPathsDescriber`, both `JSON_FILE = "definition.json"`) — different
-resource, same everything else. (`ROLE` for both is now `VALUE`, corrected in
-a follow-up pass — see the next section.)
 
 - **Grammar shape, deliberately narrow**: only wired in as a name_one-
   terminal, *bare/sole-content* reference — `$acme.files.:manifest()`/
