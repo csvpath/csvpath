@@ -53,6 +53,33 @@ already proposed for the dual selector/value-accessor gap above), and how
 it interacts with `'*'`/`:all()` traversal to actually filter survivors
 rather than just transform a value.
 
+**Part of the ambiguity is now resolved (David, 2026-08-21): "position
+decides meaning."** Checked `:idchain()`'s actual current behavior against
+the code first (`results_reference_finder_3.py:1102`) rather than assuming
+— it is definitively a **filter** today (returns the subset of
+`errors.json`'s own entries that match), never an all-or-nothing gate, and
+that must not change; it is shipped, tested behavior. The two different
+things "a predicate near `:errors()`" could mean turn out to already map
+cleanly onto two different grammar positions, not one ambiguous shape:
+- **Nested as the function's own argument** (`:errors(:idchain(...))`) —
+  **filter**: narrows which entries of *that function's own content* come
+  back. Already built exactly this way; do not touch.
+- **A separate function chained after it**, itself carrying a nested
+  predicate on an unrelated sibling field (e.g. `:errors():error_count
+  (:above(5))`, hypothetical — `:error_count()` is not built either, though
+  the underlying `error_count` field is real, already written to the
+  manifest by `ResultsRegistrar`/`ResultRegistrar`) — **gate**: whether
+  the *preceding* function's whole result is returned at all. Nothing
+  dispatches this today; it is the genuinely new piece.
+
+This rule is now written up directly in the two functions' own code
+comments (`errors_3.py`, `idchain_3.py`) as the most load-bearing place for
+it to live, cross-referenced to this bucket-list entry. Still to design/
+build: the actual GATE dispatch mechanism (a chained sibling function
+whose own predicate argument controls whether the preceding function's
+result is emitted) — this is additive to `:idchain()`'s existing filter
+behavior, not a replacement for it.
+
 ## Corrections needed in the new `:manifest()`/`:definition()` compendium section (David's draft, 2026-08-21)
 
 While reviewing David's own replacement text for the "root `:manifest()`

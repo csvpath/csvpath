@@ -22,6 +22,25 @@ class Errors3(Function3):
     # the file itself was found and read, it just has no entry for that
     # idchain.
     #
+    # POSITION DECIDES MEANING (David, 2026-08-21) -- this is the FILTER
+    # half of a two-part rule, not the whole rule. A predicate NESTED as
+    # this function's own argument (:idchain(...), matching a field
+    # WITHIN errors.json's own array entries) narrows which entries of
+    # errors.json's content come back -- the content itself is always
+    # returned, just possibly narrowed. This is settled, shipped
+    # behavior and must not change to an all-or-nothing gate.
+    #
+    # The GATE half (NOT YET BUILT -- see deferred_work_bucket_list.md)
+    # is a *separate* function CHAINED AFTER :errors() in the same
+    # func_chain, not nested inside it -- e.g. a hypothetical
+    # ":errors():error_count(:above(5))". There, :error_count() reads a
+    # field that has nothing to do with errors.json's own array (it is
+    # a sibling field on the run instance's manifest.json), and its own
+    # nested predicate (:above(5)) decides whether :errors()'s WHOLE
+    # result is returned AT ALL -- not which entries survive. Chained
+    # position, not nesting, is what signals "gate the function before
+    # me" instead of "filter my own content."
+    #
     NAME = "errors"
     SUMMARY = (
         "The parsed contents of a run instance's errors.json -- the list "

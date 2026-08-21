@@ -22,6 +22,14 @@ class Idchain3(Function3):
     # so far: it does not narrow/select anything itself, it is a value
     # fed to :errors()'s own filtering logic.
     #
+    # This is the FILTER half of the broader "position decides meaning"
+    # rule (David, 2026-08-21) -- being NESTED as :errors()'s own
+    # argument is what makes this narrow errors.json's own entries
+    # rather than gate the whole result. See Errors3's own comment for
+    # the GATE half (a separate function CHAINED AFTER :errors(),
+    # carrying its own predicate on an unrelated sibling field --
+    # NOT YET BUILT, see deferred_work_bucket_list.md).
+    #
     # arg may be a plain str (exact match against an entry's "source",
     # the original behavior) or a Regex3 (":idchain(/pattern/)") for a
     # minimally-searchable match -- David's own call after weighing
