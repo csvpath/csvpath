@@ -46,6 +46,34 @@ functions preserving whichever job each one actually needs, then remove
 `:home()` and fix the compendium's own now-incorrect claim about it
 "reverting to its ordinary job of reading the field."
 
+## `#name_two` (XLSX worksheet marker) — not built anywhere, and `ReferenceResult3` has no field for it
+
+David, 2026-08-21: raised while reviewing the compendium — does
+`ReferenceResult3` need a field for which worksheet was found? Confirmed:
+it does not have one today, and neither does anything else exist yet to
+make that field meaningful.
+
+- The grammar already has the slot (`name_one: path_prefix ("#" name_two)?
+  func_chain?`, `reference_grammar_3.py:102,109`), and it parses fine
+  (`NameOne3.name_two`, `ReferenceParser3.name_two`) — but **every** finder
+  rejects it outright the moment it's present, including `FilesReference
+  Finder3` itself (`files_reference_finder_3.py:134-138`), where it's
+  documented as the eventual, files-only, XLSX-worksheet meaning.
+  CSVPATHS/RESULTS correctly reject it as files-only; FILES rejecting it
+  too just means the feature isn't built yet anywhere.
+- `ReferenceResult3` (`reference_results_3.py`) has four fields — `path`/
+  `uuid`/`data`/`identity` — none of which record which worksheet a result
+  came from. Once FILES' finder is taught to parse `#Sheet1`, results need
+  somewhere to carry that.
+- Open question, not yet settled: reuse `identity` (its own docstring
+  already frames it generically as "which specific sub-entity, within
+  path+uuid, this result is for," added for CSVPATHS' statement-range
+  selectors) vs. a new dedicated field (e.g. `worksheet`). Reuse is
+  probably right — the field's whole purpose is "extra discriminator when
+  path+uuid isn't enough," and a worksheet is exactly that shape of thing
+  — but a statement-index/range and a sheet name are different enough in
+  kind that this deserves a real decision, not just default reuse.
+
 ## Function self-documentation — dual selector/value-accessor behavior
 
 - **`:uuid(known_uuid)` should select the entity whose uuid *is* that value**
