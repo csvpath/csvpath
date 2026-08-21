@@ -6,6 +6,36 @@ conversation while working on references v3 — the single place to check
 mid-conversation or mid-code. Remove/check off an item once it's actually
 built, rather than leaving it to rot.
 
+## Retire `:home()`, split into scope-specific home functions
+
+David, 2026-08-21: no manifest anywhere has a literal `"home"` key — confirmed,
+`Home3.KEY` (`home_3.py`) reads `file_home` (FILES), `named_paths_home`
+(CSVPATHS), `run_home` (RESULTS run scope), `instance_home` (RESULTS
+instance scope), never a bare `"home"`. Proposed replacement: separate,
+obviously-named functions matching the real keys — `:file_home()`,
+`:group_home()`, `:instance_home()`, `:run_home()` (David also listed
+`:name_home()`; couldn't confidently map that fifth name onto any of
+`Home3`'s current four keys — clarify when actually designing this).
+
+Two things to check/preserve, not just the field-read, before splitting:
+- `:home()` today does **two** jobs, not one — the field read (going
+  away), and (FILES + RESULTS only, not CSVPATHS, which has no path
+  dimension) the *only* legal way to express "nothing narrows here" at a
+  bare, zero-segment position — a truly empty `name_one` isn't legal
+  grammar at all (`path_prefix` requires >= 1 segment). Whichever new
+  function replaces `:home()` for FILES/RESULTS-run needs to keep serving
+  that placeholder role, not just the field-read.
+- `:group_home()` (CSVPATHS)/`:instance_home()` (RESULTS instance) likely
+  only ever need the field-read job — `Home3.POSITIONS`' own comment
+  already notes CSVPATHS has no "bare zero-level selector" case, and the
+  same reasoning likely applies to a specific instance.
+
+Work: re-verify `:home()`'s complete current behavior (both jobs, every
+`POSITIONS` entry) as the actual starting point, then build the new
+functions preserving whichever job each one actually needs, then remove
+`:home()` and fix the compendium's own now-incorrect claim about it
+"reverting to its ordinary job of reading the field."
+
 ## Function self-documentation — dual selector/value-accessor behavior
 
 - **`:uuid(known_uuid)` should select the entity whose uuid *is* that value**
