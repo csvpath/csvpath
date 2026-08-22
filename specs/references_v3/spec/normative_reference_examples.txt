@@ -509,6 +509,26 @@ $alpha.files.:definition()
 $alpha.files.:on_arrival()
 $alpha.files.:sources()
 
+### The named-file's own manifest.json -- bare, no :name(...)/version needed,
+### same treatment as ':definition()' above -- built, confirmed working
+$alpha.files.:manifest()
+
+### NOT YET BUILT, deferred 2026-08-21 (David, reviewing the compendium's
+### path-per-producer table: "I believe it should work that way... not sure
+### if it's a good alternative to a full name_one + name_three reference,
+### but maybe, and regardless, the symmetry" -- see deferred_work_bucket_
+### list.md). By symmetry with the global ledger's own Rule 1b (an ordinal
+### pointer riding alongside a bare ':manifest()', two lines below), this
+### should ordinal-select one entry out of alpha's OWN manifest.json array.
+### Confirmed via direct testing it raises today instead:
+### "FilesReferenceFinder3 does not yet support functions attached directly
+### to name_one -- put the version-selecting function in name_three
+### instead." The only similar thing built today is name_three's own
+### ':manifest()' (line 494-496 above), which means something narrower --
+### the matched VERSION's own manifest entry, not "the last entry of the
+### whole named-file's manifest array."
+### $alpha.files.:manifest():last()
+
 ### Global arrivals ledger -- every named-file's arrival, the content of manifest: one flat array
 $*.files.:manifest()
 
