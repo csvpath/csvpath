@@ -344,7 +344,71 @@ But you cannot access the content of more than one errors.json file at once
 solely using a reference. The same is true of all file types, not just errors
 files.
 
-#### Function arguments
+### Functions representing files
+
+The complete class of file accessors is:
+- :manifest() — any of the seven manifest.json files
+- :definition() — the named-files or named-paths definition.json files
+- :data() — the matched data output file data.csv
+- :errors() — the errors.json file
+- :printouts() — the standard printouts under print-mode's combined output default
+- :vars() — the vars.json file containing the end-state runtime variables
+- :meta() — the meta.json file containing both the metadata key-value pairs from leading comment and the runtime indicators
+- :unmatched() — the optional standard unmatched lines output to unmatched.csv
+- :file("...") — arbitrary files, primarily Parquet output and print report files when print-mode is set to create separate files
+- :log() — the project csvpath.log file
+
+### Ordinal functions
+
+- :before(int|str|datetime)
+- :after(int|str|datetime)
+- :from(int|str)
+- :to(int|str)
+- :index(int)
+- :last()
+- :first()
+
+Note: historically we have had from/to as inclusive and before/after as
+exclusive. We also used from/to only with the `csvpaths` datatype. It may be
+practical to only offer one of these pairs or use aliases. TBD.
+
+### Pure value functions
+
+The complete set of dumb value-producing functions is:
+- :year() — int
+- :month() — int
+- :month_name() — str
+- :day() — int
+- :day_name() — str
+- :hour() — int
+- :hour_24() — int
+- :minute() — int
+- :second() — int
+- :yesterday() — datetime or str
+- :today() — datetime or str
+
+Note: this list may expand modestly before feature complete.
+
+### Predicate support functions
+
+Every field accessor has the ability to match on a provided value, and thereby
+filter the reference. For e.g. `$*.files.:home():definition(:on_arrival(:not_none()))`
+limits the registration file homes returned to 0-level template registrations where the
+named-file's `definition.json` has an `on_arrival` activation declared.
+
+The predicate support functions are those that make it possible to use predicate
+matching with variable or category values.
+
+- :true() — matches the JSON true / Python True
+- :false() — matches the JSON false / Python False
+- :none() — matches the JSON null / Python None
+- :not_none() — value is not null / None
+- :empty() — value is ""
+- :not_empty() — value is not ""
+- :regex(/.../) — value matches regex
+- :having("...") — structure has a named/IDed child. Primary case: named-paths groups versions having a csvpath statement ID.
+
+### Function arguments
 Functions may have zero or one argument. Arguments do one of three things:
 - Point
 - Narrow
@@ -428,7 +492,7 @@ legal (one pointer — `idchain` — at the argument level, one pointer —
 sitting side by side in the same chain is illegal (two pointers, same
 level).
 
-### Why a trailing bare `*` is illegal but bare `:all()` is fine
+### A trailing bare `*` is illegal but bare `:all()` is fine
 
 `*` is a **linguistic fragment** equal to: "any X that Y". It names an
 open set X and something Y must follow to complete the sentence. The something
@@ -437,9 +501,9 @@ could be more path segments, a function on name_one's chain, or a name_three.
 *"get me all of them!"* Nothing needs to follow it.
 
 The two are not otherwise equivalent either (see the EXAMPLE SCENARIO below):
-`*` **flattens** every wildcard position in the reference into one pooled
+`*` flattens every wildcard position in the reference into one pooled
 search space that a terminal pointer reduces to a single answer; `:all()`
-anywhere in the reference **groups** — it switches the *whole reference* into
+anywhere in the reference groups. It switches the *whole reference* into
 a mode where every wildcard position (root_major included) becomes a
 dimension of a composite group key, and the terminal function distributes
 across the resulting cross-product. Confirmed by a worked example: given
@@ -482,7 +546,7 @@ would be exactly the same: always selecting every instance. Rather than give
 the same concept two spellings with zero cases where they would ever differ,
 the language keeps one canonical form (`:all()`) and disallows the other.
 
-#### RESULTS' full depth model, and the gap `:home()` fills
+#### `results`'s full depth model, and the gap `:home()` fills
 
 RESULTS' template depth has exactly four positions in a 2×2 matrix (how
 many levels of nesting a reference targets, crossed with pool-vs-group),
@@ -495,7 +559,7 @@ function entirely:
 | exactly one level | `*` | `:all()` |
 | any depth | `:flatten()` | `:groups()` |
 
-`*`/`:all()` are peers restricted to exactly one wildcarded segment,
+`*`/`:all()` are peers. Both are restricted to one wildcarded segment,
 regardless of whether a pointer follows. Because they imply wildcarding a
 path segment, they only match when a 1 or more-level template is used.
 To match all no-template named-files or named-results use :home(). The
@@ -511,35 +575,12 @@ to name one.
 
 ### Grammar (`csvpath/references/reference_grammar_3.py`)
 
-`REFERENCE_GRAMMAR_3`, a Lark grammar parsed with `parser="lalr"` (chosen
-deliberately — LALR is required for `parse_interactive()`-based type-ahead,
-see §7 — and confirmed genuinely unambiguous, not just convenient: an earlier
-draft had a redundant, ambiguous "bare func_chain" alternative for name_one
-that caused a real reduce/reduce collision on `COLON`; removing it fixed both
-the ambiguity and the LALR incompatibility with no loss of expressiveness).
-`QueryParser3` wraps it as a syntax-only parser (`.parse()`, `.validate_
-query()`) — it does not build the object graph or enforce semantic rules;
-that's the transformer's job.
+An LALR Lark grammar is required. LALR is required to support
+`parse_interactive()`-based type-ahead.
 
-Grammar shape: `reference: "$" root_major "." datatype "." name_one ("."
-name_three)?`. `name_one` is a `/`-joined `path_prefix` (segments: `*`,
-literal `PATH_SEGMENT`, or a whole `function`), optional `#name_two`, optional
-trailing `func_chain`. `name_three` is either an optional literal/`*` body
-plus optional trailing `func_chain`, or a bare `func_chain`. Function args:
-`STRING`, `SIGNED_INT`, `AT_VAR` (`@name`), a nested `function`, a bare
-`STAR`, or a slash-delimited `REGEX` (mirrors the REGEX/REGEX_INNER pattern
-already used in `csvpath/matching/lark_parser.py`). There is deliberately no
-bare/unquoted catch-all argument token (an earlier `BARE_ARG` was removed —
-it was fully redundant with `REGEX`/`STRING`/`SIGNED_INT`/`STAR` once those
-existed, and it could not represent regex capture groups without swallowing
-the function's own closing paren).
+Function names, the requirement for `name_three`, or not, and other factors are
+grammatically neutral and enforced during parse tree interpretation.
 
-name_three's required-ness is deliberately **not** encoded in the grammar at
-all for any datatype (kept fully optional grammatically, everywhere) — this
-is the main way v3 avoids the v1/v2 grammar's per-datatype rule explosion.
-
-Tested by `tests/references/test_references_3_grammar.py` — grammar-level
-positive/negative cases against the spec's own example corpus.
 
 ### Transformer and object graph
 
@@ -554,7 +595,9 @@ positive/negative cases against the spec's own example corpus.
 
 ### `ReferenceParser3` (`csvpath/references/reference_parser_3.py`)
 The public interface representing a v3 reference language string. Mainly used
-by finders and for direct access to the name parts of a reference string.
+by finders and for direct access to the name parts of a reference string. v3's
+ReferenceParser is analogous to v1/v2's and shares parts of its interface;
+however, full v3 and v2 compatibility is not a hard requirement at this time.
 
 ### Functions: `Function3` and `ReferenceFunctionFactory`
 
@@ -568,18 +611,29 @@ custom function registration.
 
 #### Existing functions
 
-For a breakdown of existing functions, see: specs/references_v3/notes/function_coverage_matrix.md
+There must be a field accessor function for every field available in any of
+the manifest.json files. Whenever it is practical and clarity is neutral or
+enhanced, the same field accessors should be applied across the manifests.
+
+For a breakdown of existing functions, see:
+specs/references_v3/notes/function_coverage_matrix.md
 
 ### `ReferenceFinder3` ABC and results containers
 
-- **`ReferenceFinder3`** (`reference_finder_3.py`) is an ABC taking `(*, csvpaths,
-ref: ReferenceParser3)`. `query()` is `@abstractmethod` — each datatype's
-storage layout differs enough that there's no generic implementation.
-`resolve()` and `resolve_from(selection)` are shared (concrete) on the ABC:
-`resolve()` = `resolve_from(self.query())`; `resolve_from` accepts either a
-`ReferenceResults3` or a `list[str | UUID]` (narrows a fresh `query()` via
-`ReferenceResults3.select()`), then calls the abstract `_extract_data()` on
-each result to fill in `.data`.
+- **`ReferenceFinder3`** is an ABC taking `(*, csvpaths, ref: ReferenceParser3)`.
+Using a reference has two stages:
+- query
+- resolve
+
+The query stage is performed with the `query()` method. The result is a list
+of path+uuid pairs, with two other fields for specific cases, as described
+elsewhere.
+
+The following resolve stage is performed with `resolve()`, and implies `query()`.
+Resolve gives whole files or field values, in addition to path+uuid.
+
+Items from the list produced by `query()` may be resolved without resolving the
+whole list originally returned.
 
 - **`ReferenceResults3`** the container acting as a list of results found by
 querying a finder with a reference.
@@ -641,135 +695,37 @@ can return a single field, if a field accessor is used, or return None if
 a field accessor is given an appropriate match value argument. For e.g.
 `$acme.files.:description(:on_arrival(:not_none()))`
 
+The only times there may not be manifests where expected are:
+- There has been no registration, loading, or running activity in the project
+- The missing manifest is expected in a named-thing area that has not had
+  activity, even if other named-thing areas have
+- Manifests have been truncated for operational reasons without CsvPath
+  Framework managing that process
+
+A manifest is:
+- Files ledger: list of one dict per registration
+- Named-file: list of one dict per registration
+- Csvpaths ledger: list of one dict per named-paths group load
+- Named-paths group: list of one dict per load, each dict including a list of csvpath instances and a verbatim list of csvpath statements
+- Results ledger: list of one dict per csvpath instance run
+- Named-results: no master manifest is created at this level at this time
+- Named-results run: dict of run values for the whole run
+- Named-results run's instance: dict of run values for the csvpath statement instance
+
+The `:manifest()` function's behavior is context-aware. It says: "get
+whatever manifest data is currently in scope". It resolves three ways:
+- The bare files datatype ledger manifest returned by the file accessor:
+  `$*.files.:manifest()`
+- The acme named-file manifest returned from the file accessor
+  `$acme.files.:manifest()`
+- The manifest entry of the first orders.csv registration returned by the file accessor after matching within the contained list
+  `$acme.files.:name("orders.csv").:first():manifest()`
+
+
+
 
 -----------------------------------
 
-
-- **Grammar shape, deliberately narrow**: only wired in as a name_one-
-  terminal, *bare/sole-content* reference — `$acme.files.:manifest()`/
-  `:definition()` or `$acme.csvpaths.:manifest()`/`:definition()` — no other
-  path narrowing, no trailing chain, no `name_three`.
-  `ReferenceFinder3._is_bare_pointer_reference(reference, name)` (shared on
-  the ABC) detects this shape; both finders check it first in `query()` and
-  route to the shared `ReferenceFinder3._query_well_known_file(home,
-  filename)` when either matches — `filename` is derived directly from the
-  matched function's own name (`f"{name_one.path[0].name}.json"`, so
-  `:manifest()` → `manifest.json`, `:definition()` → `definition.json`),
-  rather than duplicating a near-identical branch per function. `:definition()`
-  combining with anything else (real path narrowing, a trailing chain,
-  `name_three`) still falls through to the ordinary pipeline and raises — a
-  deliberate scope limit (`definition.json` is a single dict, so there is no
-  narrower thing to resolve to). `:manifest()` combining with real narrowing
-  is now supported too — see the next section for how.
-- **`:definition()` tolerates absence; `:manifest()` did not need to.**
-  `definition.json` is genuinely optional — a named-file/group that was
-  never explicitly configured has none on disk at all (confirmed against
-  `NamedFileDescriber.get_json()`/`NamedPathsDescriber.get_json()`, which
-  already return `{}` rather than raising for exactly this case) — and it is
-  not currently versioned (always the single current definition, regardless
-  of which version of the file/group is in scope; versioning description
-  files is a real future need, not yet prioritized, per David). The shared
-  `ReferenceFinder3._read_well_known_file(path)` reads raw bytes if the file
-  exists, else returns `None` — reused as-is for `:manifest()` too (harmless
-  there since manifest.json always exists once anything is registered), so
-  neither finder needed a function-specific existence check.
-- **Real bug found and fixed while wiring `:manifest()` in**: `Reference3.
-  resolve_kind` only ever inspected `name_one.functions` (the trailing
-  chain) when `name_three` was absent — but a "path-less, function-only"
-  name_one (the same shape `:all()` already uses) puts its function in
-  `name_one.path[0]`, not `.functions`. So `$acme.files.:manifest()` was
-  silently misclassified as `FIRST_PARTY`. This was latent and harmless
-  until now, since no metadata-file function existed to expose it. Fixed
-  by having `resolve_kind` scan any function-valued `name_one.path`
-  segment too, not just `.functions` — safe to widen, since an ordinary
-  path-matching function like `:name(...)` never appears in
-  `_METADATA_FILE_FUNCTIONS`/`_METADATA_FIELD_FUNCTIONS`, so this only lets
-  the real metadata functions be seen, it doesn't change what gets flagged.
-- **Where the paths come from**: `FileManager.named_file_home(name)` /
-  `PathsManager.named_paths_home(name)` (both already used elsewhere in
-  these finders) give the named-file's/named-paths group's own home
-  directory; both `manifest.json` and `definition.json` live directly under
-  it in either datatype. Results carry `uuid=None` — neither file is itself
-  a registered version.
-
-Tested by `functions/test_manifest_3.py`/`test_definition_3.py`,
-`test_reference_finder_3.py` (`TestIsBarePointerReference`,
-`TestQueryWellKnownFile`, `TestReadWellKnownFile`), `test_reference_3.py`
-(the `resolve_kind` path-segment fix), and `TestManifestFunction`/
-`TestDefinitionFunction` classes in both `test_files_reference_finder_3.py`
-and `test_csvpaths_reference_finder_3.py` (including real-file round trips
-through an actual file on disk, and the never-configured/`None` case for
-`:definition()`, not just fakes).
-
-### `:manifest()` becomes context-aware; `ROLE` corrected to `VALUE`
-
-Surfaced while confirming the semantics of `:manifest()` combined with real
-narrowing (David's own worked examples: `$acme.files.:manifest()`,
-`$acme.files.orders.:manifest()`, `$acme.files.orders.:last():manifest()`)
-before starting `ResultsReferenceFinder3` — two real corrections came out of
-that check, both to already-shipped code, neither breaking anything
-previously working.
-
-- **`ROLE` was wrong from the start.** `:manifest()`/`:definition()` never
-  narrow or select anything — even bare, `root_major` already fully
-  identifies the one named-file/group, so `:manifest()` is only ever
-  *accessing* it, not resolving scope down from multiple candidates. This
-  never surfaced as a problem because the bare shape never competed with
-  another pointer for `build_chain()`'s "at most one pointer per chain"
-  slot. It became visible the moment `:manifest()` needed to sit *beside* a
-  real version-selecting pointer in the same chain (e.g. `:last():manifest()`)
-  — as `POINTER` it would have been double-counted, raising a false "two
-  pointers" error even though nothing is actually narrowed twice. Fixed by
-  changing `Manifest3`/`Definition3` to `ROLE = Function3.VALUE` — the same
-  category a future computed value like `:year()` would use, and already
-  excluded from `build_chain()`'s pointer count. Confirmed non-breaking: the
-  bare-shape query()/`_extract_data()` branches never actually consulted
-  `ROLE` for these two functions — the role value was purely descriptive
-  until now.
-- **`:manifest()`'s behavior needed to become context-aware — `:definition()`
-  did not.** `manifest.json` is an array of many per-version entries;
-  `definition.json` is a single dict. So `:manifest()` now means "the
-  manifest data for whatever's currently in scope," resolved three different
-  ways depending on how much narrowing is present in the same reference:
-  - **Bare** (`$acme.files.:manifest()`) — the whole raw file, unchanged
-    from before.
-  - **Real path narrowing, no pointer** (`$acme.files.orders.:manifest()`,
-    files; `$acme.csvpaths.:all():manifest()`, csvpaths) — every matching
-    entry, unreduced, each as its own `ReferenceResult3` resolving to its
-    own entry dict (native Python `dict`, not raw bytes — the spec's own
-    "Following a reference" section already anticipates JSON-structure
-    results, not only bytes).
-  - **Path narrowing plus a real pointer** (`$acme.files.orders.:last()
-    :manifest()`, files; `$acme.csvpaths.:last():manifest()`, csvpaths) —
-    the single matched entry's dict.
-
-  Mechanically: `FilesReferenceFinder3.query()`'s name_three handling
-  relaxed from "exactly one pointer required" to "one pointer, *or* zero
-  pointers if `:manifest()` is present" (`build_chain()` already guarantees
-  at most one pointer on its own); when zero, every matched candidate comes
-  back instead of raising. `_extract_data()` in both finders now checks
-  whether the relevant function chain (name_three for files; name_one's own
-  combined chain for csvpaths) contains `:manifest()` and, if so, looks up
-  the entry by `result.uuid` via the new shared `ReferenceFinder3.
-  _find_manifest_entry_by_uuid(manifest, uuid)` and returns it directly,
-  instead of falling into the ordinary `FIRST_PARTY` raw-bytes/statement-text
-  path. `CsvpathsReferenceFinder3._extract_data()`'s own pre-existing
-  `next((entry for entry in manifest if entry["uuid"] == result.uuid), None)`
-  was refactored to use the same shared helper (two real consumers now).
-  `:definition()` needed none of this — a single dict has no "filtered
-  subset"/"matched entry" concept to resolve to, so it stays bare-shape-only.
-- This directly informs `ResultsReferenceFinder3`'s own deferred `:manifest()`
-  wiring (still not built): results' `:manifest()` will need the same
-  "context-aware, riding beside the real pointer" treatment, now proven out
-  here first rather than solved for the first time on the harder datatype.
-
-Tested by updated assertions in `functions/test_manifest_3.py` (`ROLE ==
-VALUE`), new `TestManifestCombinedWithNameThree` in
-`test_files_reference_finder_3.py`, and replaced/new tests in
-`test_csvpaths_reference_finder_3.py`'s `TestManifestFunction` (the old
-"combining with a pointer is two pointers" test was itself wrong once the
-role was fixed, and was replaced with tests confirming the combination now
-works and resolves correctly).
 
 ### `ResultsReferenceFinder3` — the third and last finder
 
