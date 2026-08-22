@@ -84,6 +84,19 @@ one shared mechanism, whether this connects to the still-unrecognized
 discussion) before deciding whether/how to act on it. Flagging for
 clarity, not yet a committed-to fix.
 
+**A precedent for exactly this kind of fix already exists in the codebase**
+(found while scanning the old compendium copy before it was deleted):
+`ReferenceFinder3._check_position()` replaced a near-identical class of
+problem — scattered, hand-written, per-finder "is this recognized" guards
+that silently no-opped on anything genuinely unrecognized instead of
+raising (confirmed live at the time: `$acme.csvpaths.:name("x")`, a
+FILES-only function, silently did nothing instead of erroring). The fix
+was a declarative `Function3.POSITIONS: dict[datatype, tuple[position,
+...]]` class attribute, checked centrally by one shared `_check_position()`
+call, rolled out incrementally one finder at a time. Whatever `resolve_kind`
+ends up doing should probably follow the same template (a declarative
+class attribute + one shared check) rather than inventing a new pattern.
+
 ## Predicate-argument field accessors (`:on_arrival(:not_none())`) — not built anywhere
 
 David, 2026-08-21, drafting the compendium's replacement `:manifest()`/
@@ -344,6 +357,20 @@ identifier.
   where the named-paths group included a csvpath with a given identity"
   vs. "just give me the matching instances" both want this on RESULTS
   directly. See `references_expressions.md`.
+- **`CsvpathsReferenceFinder3`'s own `'*'` traversal still requires a
+  pointer in POOL/flatten mode, but not in GROUP/`:all()` mode — a known,
+  deliberately-left inconsistency, not yet fixed.** Found while scanning
+  the old compendium copy before it was deleted — this was an explicit
+  observation made while generalizing traversal, not something newly
+  discovered here: `FilesReferenceFinder3` and `ResultsReferenceFinder3`'s
+  own literal-root `query()` never require a pointer in *any* mode (a
+  missing pointer means "every matched candidate comes back, unreduced"),
+  and both finders' `'*'` traversal were fixed to match — CSVPATHS'
+  traversal was the one left as the actual outlier, on purpose, since
+  fixing it wasn't blocking anything built at the time. Still true today,
+  as far as this pass could tell; worth a real look now that traversal
+  work is being picked back up (this list's `:manifest()` +
+  `'*'`-traversal item above).
 
 ## `'*'` traversal — FILES, essentially untouched by the recent RESULTS/CSVPATHS work
 
