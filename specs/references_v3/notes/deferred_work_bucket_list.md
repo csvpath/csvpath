@@ -270,13 +270,48 @@ identifier.
 ## `'*'` traversal — FILES, essentially untouched by the recent RESULTS/CSVPATHS work
 
 - `FilesReferenceFinder3`'s own `_query_star_traversal()` still rejects
-  combining `'*'` traversal with `:manifest()`/`:path()`/a field-accessor
-  function outright — the same class of gap RESULTS/CSVPATHS just had
-  fixed (field accessors, then `:having()`/`:flatten()`/`:all()`, then
-  path narrowing/`name_three`, then pointer optionality), never applied to
-  FILES. FILES' traversal already never requires a pointer (confirmed —
-  no fix needed there), but everything else in that generalization
-  sequence hasn't been revisited for this datatype.
+  combining `'*'` traversal with `:manifest()`/`:definition()`/`:path()`/a
+  field-accessor function outright — the same class of gap RESULTS/CSVPATHS
+  just had fixed (field accessors, then `:having()`/`:flatten()`/`:all()`,
+  then path narrowing/`name_three`, then pointer optionality), never
+  applied to FILES. FILES' traversal already never requires a pointer
+  (confirmed — no fix needed there), but everything else in that
+  generalization sequence hasn't been revisited for this datatype.
+  (`:definition()` added by name 2026-08-21 — previously only `:manifest()`
+  was called out here, but it has the identical gap, confirmed below.)
+
+- **Concrete worked example motivating this (David, 2026-08-21)**: "which
+  named-files have `on_arrival` set" needs `$*.files.:home():definition
+  (:on_arrival(:not_none()))` — every named-file, zero-level (no-template)
+  registrations only, with `definition.json`'s `on_arrival` field present.
+  Live-tested each piece independently (dropping the not-yet-built
+  predicate, since it can't even parse) to confirm exactly what's missing,
+  rather than assuming one gap covers it — turns out this one reference
+  needs **four independent fixes**, not one:
+  1. Typo aside (`home()` needs its leading colon), `:home()` + `'*'`
+     traversal doesn't exist — `$*.files.:home()` alone raises `"Does not
+     yet support :home() as a name_one path segment."` `:home()`'s
+     zero-level-selector behavior (`_is_bare_home_reference`) was only ever
+     built for a literal root_major, never extended to traversal.
+  2. `:definition()` + `'*'` traversal doesn't exist either — same
+     rejection, confirmed independently. `:definition()` is only wired for
+     the literal-root bare case (`_is_bare_pointer_reference`); nothing
+     routes it through `_query_star_traversal` at all.
+  3. Chaining them together is *separately* blocked even once #1/#2 are
+     fixed — `$*.files.:home():definition()` raises a different, more
+     specific error: `"does not yet support functions attached directly to
+     name_one for '*' traversal."` A dedicated guard rejects any
+     function-in-name_one during `'*'` traversal, so fixing `:home()` and
+     `:definition()` individually would not automatically make the
+     combination work.
+  4. The predicate itself, `:on_arrival(:not_none())` — see the
+     predicate-argument entry above; not built anywhere, independent of
+     all three traversal issues above.
+
+  Use this reference as the acceptance test once all four pieces are
+  built: `$*.files.:home():definition(:on_arrival(:not_none()))` should
+  return exactly the zero-level named-files whose `definition.json` has a
+  non-`None` `on_arrival`.
 - FILES' `:all()`/`:groups()` (GROUP modes) combined with `:manifest()`/
   `:path()`/a field-accessor — same single-entity-vs-grouping restriction
   RESULTS' `name_three` content accessor now has, not yet built for FILES.
