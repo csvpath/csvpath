@@ -333,7 +333,7 @@ We talk about these as:
 - file accessors (pull the full content of a file)
 - field accessors (pull a value from a metadata file)
 
-Note that when a function is used to retrieve the content of a file only one
+Note: when a function is used to retrieve the content of a file only one
 file may match the reference. For e.g., it is not possible to pull the
 contents of all the errors.json files for a run at once. You can identify all
 the errors files by pulling the paths to the csvpath statement components of
@@ -343,6 +343,38 @@ metadata field of one or more errors, resulting in multiple errors.json paths.
 But you cannot access the content of more than one errors.json file at once
 solely using a reference. The same is true of all file types, not just errors
 files.
+
+#### Function arguments
+Functions may have zero or one argument. Arguments do one of three things:
+- Point
+- Narrow
+- Match
+
+An argument that enables a function to point provides additional variable
+information. For e.g. `:index(5)` is always a pointer but it only works when
+it is given the information indicating which index it refers to, in this case
+the 0-based `5`, meaning the 6th item.
+
+An argument that narrows enables a context-setting function to know what its
+context creating constraint is. E.g. `:having("orders")` is a context setter that
+needs the ID of a csvpath statement to enforce its limitation on the results of
+`name_one`.
+
+An argument that matches allows a field accessor function to indicate a
+limitation on its `name_one` or `name_three` results by requiring the value of
+its field to match the argument it receives. Take, for e.g.,
+`:errors():error_count(:above(2))`. By itself, `:error_count()` provides
+access to a csvpath statement's run instance's manifest field tracking the
+number of errors. But `:errors():error_count(:above(2))` is selecting the
+path to a run instance's `errors.json` (on query()) and the contents of the
+same `errors.json` (on resolve()) but only if there were more than `2` errors
+in the run of that csvpath instance.
+
+By contrast to the last example,
+`$acme.results.:last().orders:errors(:idchain("add[0]"))` returns the path
+to the errors.json of the orders csvpath statement in the last acme run on
+query and on resolve returns every error in the list where the first add
+function generated an error resulting in an idchain of "add[0]", if any.
 
 
 ### Context-setter vs. pointer
@@ -398,9 +430,8 @@ level).
 
 ### Why a trailing bare `*` is illegal but bare `:all()` is fine
 
-This is real design reasoning, not an arbitrary restriction. `*` is a
-**linguistic fragment**. A `*` says: "any of the data that ___". It names an
-open set and something must follow to complete the sentence. The something
+`*` is a **linguistic fragment** equal to: "any X that Y". It names an
+open set X and something Y must follow to complete the sentence. The something
 could be more path segments, a function on name_one's chain, or a name_three.
 `:all()`, by contrast, is already a **complete instruction**. `:all()` says:
 *"get me all of them!"* Nothing needs to follow it.
@@ -537,7 +568,7 @@ custom function registration.
 
 #### Existing functions
 
-See: specs/references_v3/notes/function_coverage_matrix.md
+For a breakdown of existing functions, see: specs/references_v3/notes/function_coverage_matrix.md
 
 ### `ReferenceFinder3` ABC and results containers
 
@@ -589,15 +620,26 @@ this, so it must be inferred from which finder/branch produced the result:
 `FilesReferenceFinder3`, `CsvpathsReferenceFinder3`, `ResultsReferenceFinder3`
 find results based on a ReferenceParser which represents a reference string.
 
-### `:manifest()`/`:definition()`
-All named-things areas have global ledger manifest.json files tracking all
+### Root `:manifest()` and `:definition()` files
+All named-things areas have global ledger `manifest.json` files tracking all
 add actions (registers, loads, runs). Each named-file, named-paths group, and
 named-results run has its own manifest.json, as does each instance in a name-
 result.
 
-Named-files and named-paths groups also have a definition.json file that
+Named-files and named-paths groups may also have a definition.json file that
 holds additional config information controlling how files are registered and
-how named-paths groups are run.
+how named-paths groups are run. `definition.json` is common but not mandatory.
+
+Both files may be accessed by references that address all named-things and
+use `:manifest()` or `:definition()` without other path info. For e.g.
+`$*.files.:manifest():last()` returns the last file registration data
+captured in the global files ledger manifest. To get a reference to the
+manifest as a whole, simply use `:manifest()` alone.
+
+Definition file references always act on the complete JSON structure, but
+can return a single field, if a field accessor is used, or return None if
+a field accessor is given an appropriate match value argument. For e.g.
+`$acme.files.:description(:on_arrival(:not_none()))`
 
 
 -----------------------------------
