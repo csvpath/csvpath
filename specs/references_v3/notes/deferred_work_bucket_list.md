@@ -6,6 +6,36 @@ conversation while working on references v3 — the single place to check
 mid-conversation or mid-code. Remove/check off an item once it's actually
 built, rather than leaving it to rot.
 
+## `resolve_kind`'s hardcoded name-tuple dispatch — needs examination for clarity/impact before deciding
+
+Found 2026-08-22 while checking whether the compendium's old §6 ("Known
+gaps") still had anything current in it. `Reference3.resolve_kind` (`reference_3.py`)
+dispatches `METADATA_FILE`/`METADATA_FIELD` classification off two hardcoded
+name-string tuples, `_METADATA_FILE_FUNCTIONS`/`_METADATA_FIELD_FUNCTIONS`
+(38 names total) — confirmed every single name in both tuples *is* backed
+by a real, registered `Function3` today (checked all 38 directly against
+the function registry, none missing). So nothing is factually broken.
+
+But the code comment sitting directly above those two tuples says: "both
+lists will be replaced by real per-function trait lookups once `Function3`
+exists." `Function3` (with `ROLE`/`SOURCE`) now fully exists — that refactor
+was always the intended end state, and it appears to have never happened.
+`resolve_kind` still dispatches off two hardcoded name lists instead of a
+declarative check on the function classes themselves (e.g. `SOURCE is not
+None`, or similar). This is the same *kind* of architectural debt as the
+`SELECTOR_WHEN_ARGUED` idea already on this list (dual selector/value-
+accessor behavior), but it is a distinct mechanism — that entry is about
+declaring dual selector/value behavior; this one is about *how function
+category is recognized at all* — and isn't covered by that entry.
+
+**David, 2026-08-22: not yet clear on the meaning/impact of this one** —
+needs a real look (what would break or simplify if `resolve_kind` were
+switched to a declarative check, whether the two tuples could shrink to
+one shared mechanism, whether this connects to the still-unrecognized
+"file/well-known-file accessor" category from the four-function-types
+discussion) before deciding whether/how to act on it. Flagging for
+clarity, not yet a committed-to fix.
+
 ## Predicate-argument field accessors (`:on_arrival(:not_none())`) — not built anywhere
 
 David, 2026-08-21, drafting the compendium's replacement `:manifest()`/
