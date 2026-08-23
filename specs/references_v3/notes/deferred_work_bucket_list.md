@@ -357,20 +357,21 @@ identifier.
   where the named-paths group included a csvpath with a given identity"
   vs. "just give me the matching instances" both want this on RESULTS
   directly. See `references_expressions.md`.
-- **`CsvpathsReferenceFinder3`'s own `'*'` traversal still requires a
-  pointer in POOL/flatten mode, but not in GROUP/`:all()` mode — a known,
-  deliberately-left inconsistency, not yet fixed.** Found while scanning
-  the old compendium copy before it was deleted — this was an explicit
-  observation made while generalizing traversal, not something newly
-  discovered here: `FilesReferenceFinder3` and `ResultsReferenceFinder3`'s
-  own literal-root `query()` never require a pointer in *any* mode (a
-  missing pointer means "every matched candidate comes back, unreduced"),
-  and both finders' `'*'` traversal were fixed to match — CSVPATHS'
-  traversal was the one left as the actual outlier, on purpose, since
-  fixing it wasn't blocking anything built at the time. Still true today,
-  as far as this pass could tell; worth a real look now that traversal
-  work is being picked back up (this list's `:manifest()` +
-  `'*'`-traversal item above).
+- ~~`CsvpathsReferenceFinder3`'s own `'*'` traversal still requires a
+  pointer in POOL/flatten mode~~ — **CORRECTION, 2026-08-23: this was
+  already fixed, the entry was stale the moment it was added.** Added
+  2026-08-22 from a snapshot of the old compendium copy (dated as of
+  2026-08-19) that turned out to predate a same-day fix. Confirmed live
+  against current code (`csvpaths_reference_finder_3.py:381-423`): the
+  POOL/flatten branch now has `if pointers: ... else: selected_versions =
+  pooled` exactly mirroring the GROUP/`:all()` branch — a missing pointer
+  returns every candidate unreduced in both modes. `references_v3_
+  expressions.md`'s own "Status notes" section confirms this directly:
+  "CSVPATHS' OWN POINTER-OPTIONALITY GAP CLOSED TOO, 2026-08-19... This
+  closes out star-traversal pointer-optionality across all three
+  datatypes cleanly." Lesson: even a same-day-dated snapshot doc can be
+  stale relative to the actual final code state — verify live, not just
+  against the most recent-looking doc.
 
 ## `'*'` traversal — FILES, essentially untouched by the recent RESULTS/CSVPATHS work
 
