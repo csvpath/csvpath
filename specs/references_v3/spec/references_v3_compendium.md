@@ -31,21 +31,19 @@ CsvPath Framework includes a CsvPath Reference Language that provides flexible
 general access to the Framework's physical data and metadata model. This
 language enables users to ask questions in a declarative syntax rather than
 requiring them to programmatically work within the Framework's objects interface.
-The expectation is that references will be:
-- easier to use than remembering how to use numerous classes
-- more flexible in terms of questions that can be answered practically
-- more resiliant and safer in the face of user error
-- less brittle than dozens of methods on the current objects interfaces and dozens more for new quering and reasoning tools
-- more understandable when logged by an AI as it iterates through its work
 
-CsvPath Framework stores data under three kinds of named things: **named-files**
-(registered input files, each with multiple content versions identified by
-SHA256-hash filename), **named-paths groups** (registered sets of CsvPath
-statements, versioned as entries in a manifest array rather than as separate
-files), and **named-results** (the output of running a named-paths group
-against a named-file — a run directory containing one subdirectory per
-statement in the group, each with its own result files: `data.csv`,
-`errors.json`, `vars.json`, `meta.json`, etc.).
+The expectation is that references will be:
+- Easier to use than remembering how to use numerous classes
+- More flexible in terms of questions that can be answered practically
+- More resiliant and safer in the face of user error
+- Less brittle than adding dozens of new methods supporting new querying and reasoning tools
+- More understandable when logged by an AI as it iterates through its work
+
+References give access to CsvPath Framework data stores. There are three data
+stores each holding a kind of named thing:
+- **named-files** — versioned sets of registered data files, with each version having a cryptographic identity
+- **named-paths groups** — versioned sets of CsvPath statements that are used as a single entity
+- **named-results** — sets of run outputs from applying a named-paths group to a named-file
 
 CsvPath already has two prior versions of CsvPath Reference Language:
 
@@ -54,58 +52,58 @@ CsvPath already has two prior versions of CsvPath Reference Language:
 - **v2** updated the parsing/resolving implementation behind that same
   syntax (`csvpath/util/references/`: `ReferenceParser`, `FilesReferenceFinder2`,
   `ResultsReferenceFinder2`, `reference_transformer.py`, etc., ~2500 lines).
-  v2's grammar/transformer hard-codes every operator combination per datatype
-  (one rule alone has ~25 alternatives) — a "detuned," heavily combinatorial
-  design that David has confirmed was deliberately shaped that way in an
-  attempt at type-ahead support he didn't know how to do properly at the time.
 
 **v3 is a from-scratch replacement**, motivated by two things:
 - v1 and v2 have real tech debt and lack conceptual clarity
-- and the vision of a more robust reference language giving an AI assistant
+- The vision of a more robust reference language giving an AI assistant
 a single, concise, general-purpose exploration tool for digging into CsvPath
-project state, instead of requiring many narrow, brittle, purpose-built tools.
+Framework project states, instead of requiring many narrow, brittle,
+purpose-built tools.
 
-v3 is **AI-facing only, for now**. v1/v2 stay exactly where they are, untouched,
+v3 is AI-facing only, for now. v1/v2 stay exactly where they are, untouched,
 and remain what end users see (identifying runs, registrations, named-paths
 loads). v3 lives in a new location, `csvpath/references/`, and follows v1/v2's
 naming convention: `_3.py` files, `3`-suffixed class names (`ReferenceParser3`).
-Tests live in `tests/references/`.
+v3 tests live in `tests/references/`.
 
 v3 covers only named-file, named-paths-group, and named-results storage. It
 does not cover the four runtime datatypes (variables, headers, csvpath match
-state, metadata). Those will be addressed in a follow-on release post v3's
-launch.
+state, metadata) used as primary CsvPath Validation Language productions and
+in `print()` and `error()` statements. Those will be addressed in a follow-on
+release post v3's launch.
 
 ---
 
 ## 2. Overall usage pattern
 
 A reference is a string that is interpreted as a query that gives access to
-file paths, identifiers, and metadata field values, as is described below.
+file paths, identifiers, and metadata field values, as described below.
 
 The steps to using a reference are:
-1. parse a reference string into a reference object
-2. create a finder that will interpret the reference
-3. register any required variables with the finder
-4. use the finder's query() method to get a list of paths+UUID matching the reference
-5. if needed, use the finder's resolve() method to get a file contents or the value of one or more metadata fields
+1. Parse a reference string into a reference object
+2. Create a finder that will interpret the reference
+3. Register any required variables with the finder
+4. Use the finder's query() method to get a list of paths+UUID matching the reference
+5. If needed, use the finder's resolve() method to get a file's contents or the values of one or more metadata fields
 
-References may be used within a lightweight expression language that enables
-the user to structure set operations on references. These reference expressions set operations are:
+References may be used within a lightweight expression language (also
+considered part of CsvPath Reference Language) that enables the user to
+structure set operations on references. These reference expressions set
+operations are:
 - UNION
 - INTERSECT
 - SUBTRACT
 
-There is a small amount of requirements and background below, but most of
-the reference expressions requirements are in
-`specs/references_v3/spec/references_v3_expressions.md`
+There are a few requirements below, but most reference expressions
+requirements are in `specs/references_v3/spec/references_v3_expressions.md`
 
 ---
 
 ## 3. The reference syntax model
 
-For the formal CsvPath Reference Language v3 grammar see:
-`csvpath/references/reference_grammar_3.py`
+See `csvpath/references/reference_grammar_3.py` for the formal CsvPath
+Reference Language v3 grammar. The reference expressions set operations are
+a layer on top of the references grammar.
 
 Like v1 and v2, a v3 reference is a `$`-prefixed, dot-separated string:
 
@@ -118,7 +116,7 @@ XLSX files).
 
 | Segment | Required? | Meaning |
 |---|---|---|
-| `root_major` | yes | The named object — a named-file name, named-paths group name, or named-results (run) name. |
+| `root_major` | yes | The named object — a named-file name, named-paths group name, or named-results name. |
 | `datatype` | yes | One of `files`, `csvpaths`, `results`. |
 | `name_one` | yes | See below — meaning differs sharply by datatype. |
 | `name_two` | optional, files only | An XLSX worksheet identifier, written as `#worksheet_name` appended directly to name_one's path. |
@@ -127,16 +125,19 @@ XLSX files).
 The names `root_major`/`name_one`/`name_two`/`name_three` are inherited from
 v1/v2's naming and are kept for continuity and because they make sense in
 context even though they aren't obvious names. v1/v2 also allows for a
-`name_four` based on a separator, `#` as is used to create name_two. `name_four`
-has minimal use cases, is rarely used, and is only applicable to the runtime
-datatype `variables`. It does not make an appearance in v3.
+`name_four` based on a separator, `#`, same as used to create name_two.
+`name_four` has few use cases, is rarely used, and is only applicable to the
+runtime datatype `variables`. It does not make an appearance in v3.
 
-### The easy parts: `root_major` and the datatype
+### `root_major`
 
 `root_major` is the name of a named-file, named-paths group, or named-results.
 It can take a wildcard as explained below. The datatype is a static field
-indicating which type of named-thing the reference is to. One of `files`,
+indicating which type of named-thing root_major refers to, one of `files`,
 `csvpaths`, or `results`.
+
+`root_major` can be a static string, a regex (wrapped in `/` chars) or `*`. As discussed further below, `*`
+means any existing named-thing.
 
 ### The name_one datatype distinction
 
@@ -148,6 +149,7 @@ indicating which type of named-thing the reference is to. One of `files`,
   - `*`
   - a `:name("...")` function that may include a `.` char which would
     otherwise be illegal.
+
   Note that a regex in root_major can stand alone, but in name one and name
   three the `:regex()` function must be used.
 
@@ -184,7 +186,7 @@ There is much more information on functions below in their own section.
 
 ### The role of variables
 
-Prior to query, a reference finder can be given variables that may be use in
+Prior to query, a reference finder can be given variables that may be used in
 references. A variable can be any Python object, but the variable value will
 be put into a string context so its __str__ must make sense for the reference.
 
