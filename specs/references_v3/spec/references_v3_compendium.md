@@ -141,7 +141,8 @@ means any existing named-thing.
 
 ### The name_one datatype distinction
 
-`name_one` means structurally different things per datatype.
+`name_one` means structurally different things per datatype. The larger
+difference is between `csvpaths` and the other two.
 
 - **`files` and `results`**: name_one is a path-like prefix search. It is
   built from `/`-separated segments. A segment is:
@@ -212,15 +213,16 @@ finder is an implementation detail.
   - or for `results`: the specific results of running a csvpath statement
     contained in the named-paths group that was used in the run; i.e. a
     component result of the total set of run results.
-  Functions in name three:
+
+Functions in name three can:
   - retrieve files (e.g. `:errors()`)
   - match a specific metadata value to select a file path (e.g.
     `:errors(:idchain("add[0]string[2]"))`)
   - retrieve a specific metadata field (e.g. `:uuid()`)
 
-### The STRUCTURE table
+### Structure breakdown table
 
-| Datatype | name_one | name_two | name_three (optional) | name_one alone means | name_three alone means |
+| Datatype | name_one | name_two | name_three (optional) | name_one returns | name_three returns |
 |---|---|---|---|---|---|
 | `files` | path (prefix search) | worksheet (XLSX) | version — index, fingerprint, or datetime | path to the named-file's file-home directory (dir of version files) | path to a specific version file |
 | `csvpaths` | version — index, datetime, or UUID | (none) | csvpath statement ID (ID+UUID) | list of (path-to-`group.csvpath`, uuid) pairs, one per selected manifest version | bytes of the one csvpath statement identified, within the version identified |
@@ -232,6 +234,86 @@ There is no per-statement file on disk for a csvpaths group, only a whole
 csvpath statements in the group. `results` name_three is also a statement ID,
 but it *is* a separate directory (each statement in a run gets its own result
 subdirectory with its own files).
+
+#### `results`'s full depth model, and the gap `:home()` fills
+
+RESULTS' template depth has exactly four positions in a 2×2 matrix (how
+many levels of nesting a reference targets, crossed with pool-vs-group),
+plus one position that turned out to need a fifth, different kind of
+function entirely:
+
+| Depth | Pooled (one answer) | Grouped (one per distinct value) |
+|---|---|---|
+| zero levels (direct children, "no template") | bare pointer (`:last()`/`:first()`/`:index(n)`) | *(nothing to group by — no wildcarded position exists)* |
+| exactly one level | `*` | `:all()` |
+| any depth | `:flatten()` | `:groups()` |
+
+`*`/`:all()` are peers. Both are restricted to one wildcarded segment,
+regardless of whether a pointer follows. Because they imply wildcarding a
+path segment, they only match when a 1 or more-level template is used.
+To match all no-template named-files or named-results use :home(). The
+meaning of :home() is essentially the same as :all(), but with the
+difference that :home() represents the whole path; whereas, :all()
+represents one path segment.
+
+Note that in `csvpaths` there is no path dimension so no depth dimension
+to name one.
+
+
+### A trailing bare `*` is illegal, but bare `:all()` is fine
+
+`*` is a **linguistic fragment** equal to: "any X that Y". It names an
+open set X and something Y must follow to complete the sentence. The something
+could be more path segments, a function on name_one's chain, or a name_three.
+`:all()`, by contrast, is already a **complete instruction**. `:all()` says:
+*"get me all of them!"* Nothing needs to follow it.
+
+The two are not otherwise equivalent either (see the EXAMPLE SCENARIO below):
+`*` flattens every wildcard position in the reference into one pooled
+search space that a terminal pointer reduces to a single answer; `:all()`
+anywhere in the reference groups. It switches the *whole reference* into
+a mode where every wildcard position (root_major included) becomes a
+dimension of a composite group key, and the terminal function distributes
+across the resulting cross-product. Confirmed by a worked example: given
+named-file `alpha` (paths `zero.csv` [1 version], `one.csv` [2 versions]) and
+named-file `beta` (path `two.csv` [2 versions]):
+
+- `$*.files.*.:last()` → 1 result (single most-recent file across everything —
+  flattened).
+- `$*.files.:all().:last()` → 3 results, one per (named-file, path) pair —
+  grouped.
+- `$alpha.files.*.:last()` → 1 result (root already literal, so nothing extra
+  to flatten across, but still one pooled answer across alpha's paths).
+- `$alpha.files.:all().:last()` → 2 results, one per path within alpha.
+
+A related side finding baked into the same example: `:last()` means
+*arrival/registration order* (manifest array order), **not** lexicographic
+order on the version filename — version names are content hashes with no
+inherent temporal order.
+
+#### Why `*` is disallowed as name_three's body, even though it is legal elsewhere
+
+Settled 2026-08-11. `ResultsReferenceFinder3._name_three_selector()` rejects a
+bare `Star3` body outright (`"does not support a bare '*' as name_three's
+body -- use :all() instead"`), full stop — even combined with a trailing
+function (e.g. `.*:errors()`), unlike name_one, where a mid-path or
+function-followed `*` is fine per the rule above. This is not the same
+"needs something to complete it" argument — a name_three's `*` here would
+already have `:errors()` (or another accessor) following it, so the
+sentence-completion problem does not apply.
+
+Note: the distinction between `*`'s flatten and `:all()`'s grouping is only
+meaningful where there is more than one axis/position. Name_one is a
+`/`-joined, multi-segment path, so a wildcard at one position can coexist
+with literal segments at others, and pooling across that wildcarded position
+(`*`) is different from grouping by it (`:all()`). Name_three's body is
+a single, unstructured identity (a statement name or stringified index).
+There is no second position for `*` to wildcard against, so `*` and `:all()`
+would be exactly the same: always selecting every instance. Rather than give
+the same concept two spellings with zero cases where they would ever differ,
+the language keeps one canonical form (`:all()`) and disallows the other.
+
+
 
 ---
 
@@ -388,6 +470,15 @@ But you cannot access the content of more than one errors.json file at once
 solely using a reference. The same is true of all file types, not just errors
 files.
 
+#### Existing functions
+
+There must be a field accessor function for every field available in any of
+the manifest.json files. Whenever it is practical and clarity is neutral or
+enhanced, the same field accessors should be applied across the manifests.
+
+For a breakdown of existing functions, see:
+specs/references_v3/notes/function_coverage_matrix.md
+
 ### Functions representing files
 
 The complete class of file accessors is:
@@ -401,6 +492,53 @@ The complete class of file accessors is:
 - :unmatched() — the optional standard unmatched lines output to unmatched.csv
 - :file("...") — arbitrary files, primarily Parquet output and print report files when print-mode is set to create separate files
 - :log() — the project csvpath.log file
+
+#### The root `:manifest()` and `:definition()` file accessors
+All named-things areas have global ledger `manifest.json` files tracking all
+add actions (registers, loads, runs). Each named-file, named-paths group, and
+named-results run has its own manifest.json, as does each instance in a name-
+result.
+
+Named-files and named-paths groups may also have a definition.json file that
+holds additional config information controlling how files are registered and
+how named-paths groups are run. `definition.json` is common but not mandatory.
+
+Both files may be accessed by references that address all named-things and
+use `:manifest()` or `:definition()` without other path info. For e.g.
+`$*.files.:manifest():last()` returns the last file registration data
+captured in the global files ledger manifest. To get a reference to the
+manifest as a whole, simply use `:manifest()` alone.
+
+Definition file references always act on the complete JSON structure, but
+can return a single field, if a field accessor is used, or return None if
+a field accessor is given an appropriate match value argument. For e.g.
+`$acme.files.:description(:on_arrival(:not_none()))`
+
+The only times there may not be manifests where expected are:
+- There has been no registration, loading, or running activity in the project
+- The missing manifest is expected in a named-thing area that has not had
+  activity, even if other named-thing areas have
+- Manifests have been truncated for operational reasons without CsvPath
+  Framework managing that process
+
+A manifest is:
+- Files ledger: list of one dict per registration
+- Named-file: list of one dict per registration
+- Csvpaths ledger: list of one dict per named-paths group load
+- Named-paths group: list of one dict per load, each dict including a list of csvpath instances and a verbatim list of csvpath statements
+- Results ledger: list of one dict per csvpath instance run
+- Named-results: no master manifest is created at this level at this time
+- Named-results run: dict of run values for the whole run
+- Named-results run's instance: dict of run values for the csvpath statement instance
+
+The `:manifest()` function's behavior is context-aware. It says: "get
+whatever manifest data is currently in scope". It resolves three ways:
+- The bare files datatype ledger manifest returned by the file accessor:
+  `$*.files.:manifest()`
+- The acme named-file manifest returned from the file accessor
+  `$acme.files.:manifest()`
+- The manifest entry of the first orders.csv registration returned by the file accessor after matching within the contained list
+  `$acme.files.:name("orders.csv").:first():manifest()`
 
 ### Ordinal functions
 
@@ -495,6 +633,7 @@ The complete set of dumb value-producing functions is:
 - :second() — int
 - :yesterday() — datetime or str
 - :today() — datetime or str
+- :date("...")  — str
 
 Note: this list may expand modestly before feature complete.
 
@@ -552,14 +691,15 @@ function generated an error resulting in an idchain of "add[0]", if any.
 
 ### `{...}` string interpolation
 
-New scope, not in the original spec doc: since a function takes at most one
-argument, there is no way to write a `:concat()`. Interpolation is the
-mechanism instead — `:name("partner-{@company}-orders")`, `:name("partner-
-{:year()}-orders")`, `:name("partner-{:year()}-{@company}")`. Only a bare
-`@variable` or a call to a `VALUE`-role function is legal inside `{...}` —
-a context-setter or pointer (e.g. `:first()`, `:all()`) is rejected, since
-neither produces a plain value. `{{`/`}}` escapes a literal brace, matching
-the convention already used by `csvpath/util/var_utility.py`'s `substitute()`.
+Since a function takes at most one argument, there is no way to write a
+`:concat()`. Interpolation is the mechanism instead —
+`:name("partner-{@company}-orders")`,
+`:name("partner-{:year()}-orders")`, `:name("partner-{:year()}-{@company}")`.
+Only a bare `@variable` or a call to a `VALUE`-role function is legal
+inside `{...}` — a context-setter or pointer (e.g. `:first()`, `:all()`)
+is rejected, since neither produces a plain value. `{{`/`}}` escapes a
+literal brace, matching the convention already used by
+`csvpath/util/var_utility.py`'s `substitute()`.
 
 **Deliberately split into two phases** (David's call: "(b) works for me" —
 parsing/validation now, evaluation deferred): actually resolving an
@@ -568,7 +708,7 @@ interpolated string into its final text needs a runtime `CsvPaths` context
 (e.g. a future `:year()`) — neither exists yet, so this phase only builds
 and validates the *shape*.
 
-### Context-setter vs. pointer
+### Context-setter vs. pointer functions
 
 Every function self-reports one of three roles:
 
@@ -581,7 +721,6 @@ Every function self-reports one of three roles:
 - **Value** — produces a value that can be used as the input to a function
   or as a segment of a path-like string. (e.g. `year()` can be used as
   `$acme.files.orders/:year()` to create a dynamic path like `acme/orders/2026`.)
-
 
 What a pointer or value resolves to depends on where it sits and how it is used:
 - A pointer that uniquely identifies an item (file or directory) when used
@@ -619,88 +758,9 @@ legal (one pointer — `idchain` — at the argument level, one pointer —
 sitting side by side in the same chain is illegal (two pointers, same
 level).
 
-### A trailing bare `*` is illegal but bare `:all()` is fine
-
-`*` is a **linguistic fragment** equal to: "any X that Y". It names an
-open set X and something Y must follow to complete the sentence. The something
-could be more path segments, a function on name_one's chain, or a name_three.
-`:all()`, by contrast, is already a **complete instruction**. `:all()` says:
-*"get me all of them!"* Nothing needs to follow it.
-
-The two are not otherwise equivalent either (see the EXAMPLE SCENARIO below):
-`*` flattens every wildcard position in the reference into one pooled
-search space that a terminal pointer reduces to a single answer; `:all()`
-anywhere in the reference groups. It switches the *whole reference* into
-a mode where every wildcard position (root_major included) becomes a
-dimension of a composite group key, and the terminal function distributes
-across the resulting cross-product. Confirmed by a worked example: given
-named-file `alpha` (paths `zero.csv` [1 version], `one.csv` [2 versions]) and
-named-file `beta` (path `two.csv` [2 versions]):
-
-- `$*.files.*.:last()` → 1 result (single most-recent file across everything —
-  flattened).
-- `$*.files.:all().:last()` → 3 results, one per (named-file, path) pair —
-  grouped.
-- `$alpha.files.*.:last()` → 1 result (root already literal, so nothing extra
-  to flatten across, but still one pooled answer across alpha's paths).
-- `$alpha.files.:all().:last()` → 2 results, one per path within alpha.
-
-A related side finding baked into the same example: `:last()` means
-*arrival/registration order* (manifest array order), **not** lexicographic
-order on the version filename — version names are content hashes with no
-inherent temporal order.
-
-MOVE ME vvvvv
-#### Why `*` is disallowed as name_three's body, even though it is legal elsewhere
-
-Settled 2026-08-11. `ResultsReferenceFinder3._name_three_selector()` rejects a
-bare `Star3` body outright (`"does not support a bare '*' as name_three's
-body -- use :all() instead"`), full stop — even combined with a trailing
-function (e.g. `.*:errors()`), unlike name_one, where a mid-path or
-function-followed `*` is fine per the rule above. This is not the same
-"needs something to complete it" argument — a name_three's `*` here would
-already have `:errors()` (or another accessor) following it, so the
-sentence-completion problem does not apply.
-
-Note: the distinction between `*`'s flatten and `:all()`'s grouping is only
-meaningful where there is more than one axis/position. Name_one is a
-`/`-joined, multi-segment path, so a wildcard at one position can coexist
-with literal segments at others, and pooling across that wildcarded position
-(`*`) is different from grouping by it (`:all()`). Name_three's body is
-a single, unstructured identity (a statement name or stringified index).
-There is no second position for `*` to wildcard against, so `*` and `:all()`
-would be exactly the same: always selecting every instance. Rather than give
-the same concept two spellings with zero cases where they would ever differ,
-the language keeps one canonical form (`:all()`) and disallows the other.
-
-#### `results`'s full depth model, and the gap `:home()` fills
-
-RESULTS' template depth has exactly four positions in a 2×2 matrix (how
-many levels of nesting a reference targets, crossed with pool-vs-group),
-plus one position that turned out to need a fifth, different kind of
-function entirely:
-
-| Depth | Pooled (one answer) | Grouped (one per distinct value) |
-|---|---|---|
-| zero levels (direct children, "no template") | bare pointer (`:last()`/`:first()`/`:index(n)`) | *(nothing to group by — no wildcarded position exists)* |
-| exactly one level | `*` | `:all()` |
-| any depth | `:flatten()` | `:groups()` |
-
-`*`/`:all()` are peers. Both are restricted to one wildcarded segment,
-regardless of whether a pointer follows. Because they imply wildcarding a
-path segment, they only match when a 1 or more-level template is used.
-To match all no-template named-files or named-results use :home(). The
-meaning of :home() is essentially the same as :all(), but with the
-difference that :home() represents the whole path; whereas, :all()
-represents one path segment.
-
-Note that in `csvpaths` there is no path dimension so no depth dimension
-to name one.
-
-
 ---
 
-### Grammar (`csvpath/references/reference_grammar_3.py`)
+## 6. Grammar (`csvpath/references/reference_grammar_3.py`)
 
 An LALR Lark grammar is required. LALR is required to support
 `parse_interactive()`-based type-ahead.
@@ -735,15 +795,6 @@ object.)
 - **`ReferenceFunctionFactory`** (`reference_function_factory_3.py`) is the
 name-keyed registry for all functions. `add_function(cls)` allows for future
 custom function registration.
-
-#### Existing functions
-
-There must be a field accessor function for every field available in any of
-the manifest.json files. Whenever it is practical and clarity is neutral or
-enhanced, the same field accessors should be applied across the manifests.
-
-For a breakdown of existing functions, see:
-specs/references_v3/notes/function_coverage_matrix.md
 
 ### `ReferenceFinder3` ABC and results containers
 
@@ -783,8 +834,12 @@ what `ReferenceResults3.deduplicated()` uses to collapse true duplicates.
 Different results may be returned after `resolve()` than would after only
 `query()`.
 
-**What `path` actually holds** — there is no discriminator field recording
-this, so it must be inferred from which finder/branch produced the result:
+
+### The finders
+`FilesReferenceFinder3`, `CsvpathsReferenceFinder3`, `ResultsReferenceFinder3`
+find results based on a ReferenceParser which represents a reference string.
+
+**What a reference results object `path` actually holds**
 
 | Producer | What `path` holds |
 |---|---|
@@ -797,61 +852,10 @@ this, so it must be inferred from which finder/branch produced the result:
 | Rule 1b (an ordinal pointer riding with the bare global-ledger `:manifest()` — see below) | the *same* ledger file path as Rule 1a, but with a real `uuid` attached to select an entry) |
 
 
-### The finders
-`FilesReferenceFinder3`, `CsvpathsReferenceFinder3`, `ResultsReferenceFinder3`
-find results based on a ReferenceParser which represents a reference string.
 
-### Root `:manifest()` and `:definition()` files
-All named-things areas have global ledger `manifest.json` files tracking all
-add actions (registers, loads, runs). Each named-file, named-paths group, and
-named-results run has its own manifest.json, as does each instance in a name-
-result.
+---
 
-Named-files and named-paths groups may also have a definition.json file that
-holds additional config information controlling how files are registered and
-how named-paths groups are run. `definition.json` is common but not mandatory.
-
-Both files may be accessed by references that address all named-things and
-use `:manifest()` or `:definition()` without other path info. For e.g.
-`$*.files.:manifest():last()` returns the last file registration data
-captured in the global files ledger manifest. To get a reference to the
-manifest as a whole, simply use `:manifest()` alone.
-
-Definition file references always act on the complete JSON structure, but
-can return a single field, if a field accessor is used, or return None if
-a field accessor is given an appropriate match value argument. For e.g.
-`$acme.files.:description(:on_arrival(:not_none()))`
-
-The only times there may not be manifests where expected are:
-- There has been no registration, loading, or running activity in the project
-- The missing manifest is expected in a named-thing area that has not had
-  activity, even if other named-thing areas have
-- Manifests have been truncated for operational reasons without CsvPath
-  Framework managing that process
-
-A manifest is:
-- Files ledger: list of one dict per registration
-- Named-file: list of one dict per registration
-- Csvpaths ledger: list of one dict per named-paths group load
-- Named-paths group: list of one dict per load, each dict including a list of csvpath instances and a verbatim list of csvpath statements
-- Results ledger: list of one dict per csvpath instance run
-- Named-results: no master manifest is created at this level at this time
-- Named-results run: dict of run values for the whole run
-- Named-results run's instance: dict of run values for the csvpath statement instance
-
-The `:manifest()` function's behavior is context-aware. It says: "get
-whatever manifest data is currently in scope". It resolves three ways:
-- The bare files datatype ledger manifest returned by the file accessor:
-  `$*.files.:manifest()`
-- The acme named-file manifest returned from the file accessor
-  `$acme.files.:manifest()`
-- The manifest entry of the first orders.csv registration returned by the file accessor after matching within the contained list
-  `$acme.files.:name("orders.csv").:first():manifest()`
-
-
-
-
------------------------------------ UNKNOWN CORRECTNESS / USEFULNESS
+## Appendix: UNKNOWN CORRECTNESS / USEFULNESS
 
 ### Rule 1 / Rule 1a / Rule 1b — whole-resource content and the global-ledger exceptions
 
