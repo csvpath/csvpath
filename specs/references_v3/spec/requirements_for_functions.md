@@ -4,32 +4,30 @@
 
 ## Hard requirements
 
-### Form is colon name parentheses with or without an arg
+### Form is colon, name, parentheses with or without an arg
 
 ### Function arg can be a function, value, or variable
 
 ### A function is looked up and validated at runtime
 
-### There is no overlap or code-sharing between CsvPath Validation Language
-    and CsvPath Reference Language.
-
-
-
-## Strongly held opinions that could change
-
-### Functions must be self validating
-
-### Functions can have no more than 1 arg
+### There is no overlap or code-sharing between CsvPath Validation Language and CsvPath Reference Language.
 
 ### Functions must be self describing and programmatically inspectable.
     Self-description supports both human-readable and machine-actionable
     needs.
 
+
+## Strongly held opinions that are unlikely to change
+
+### Functions must be self validating
+
+### Functions can have no more than 1 arg
+
 ### Reference Language should support type-ahead, so functions must be
     prepared to contribute to that capability.
 
-### Functions must self-report whether they are a context setter, a
-    pointer, or a value function (see below for the third role).
+### Functions must self-report whether they are a context setter, a pointer, or a value function
+    (see below for the third role).
 
     A context setter narrows the current scope without resolving to a
     specific item (e.g. :before()/:after()/:from()/:to()). Note that
@@ -73,10 +71,9 @@
     :before(:yesterday()):index(3) and :index(3):before(:yesterday())
     are the same reference.
 
-### A third role exists alongside context setter and pointer: a value
-    function.
+### A third role exists alongside context setter and pointer: a value function.
 
-    Context setters and pointers both operate on the current scope --
+    Context setters and pointers both operate on the current scope,
     narrowing it, or reducing it to one item. A value function does
     neither. It computes a value (usually clock/calendar-derived, e.g.
     :year(), :quarter(), :today(), :yesterday(), :hour(), :hours(-24),
@@ -92,24 +89,19 @@
     must-be-qualified rule either -- once it resolves to a value it is
     exactly as "complete" as a literal segment.
 
-### String args support "{...}" interpolation, as the substitute for a
-    multi-arg :concat()
+### String args support "{...}" interpolation, substitute for a multi-arg string :concat()
 
     Because a function takes at most 1 arg (see above), there is no way
     to write :concat(). Instead, a quoted string arg may contain one or
     more "{...}" spans: a bare @variable (:name("partner-{@company}-
     orders")) or a call to a value-role function (:name("partner-
     {:year()}-orders")). Multiple spans in one string are fine
-    (:name("partner-{:year()}-{@company}")). Only a value function is
-    legal inside "{...}" -- a context setter or pointer is not, since
-    neither produces a plain value to splice in. "{{" / "}}" escapes a
-    literal brace, matching the convention already used elsewhere in
-    the codebase (csvpath/util/var_utility.py's substitute()).
-
-    Implementation note: parsing/validation of this shape is built
-    (InterpolatedString3 in reference_3.py); actually resolving one into
-    its final text is deferred until a runtime CsvPaths/variable context
-    and a real value function exist -- see references_v3_compendium.md.
+    (:name("partner-{:year()}-{@company}")). Only a value function or
+    variable is legal inside "{...}" -- a context setter or pointer is
+    not, since neither produces a plain value to splice in. "{{" / "}}"
+    escapes a literal brace, matching the convention already used
+    elsewhere in the codebase (csvpath/util/var_utility.py's
+    substitute()).
 
 ### Functions only "see" each other if they are nested
 
@@ -117,14 +109,11 @@
     i.e. there is nothing like $*.results.*.*:errors():index() == 5. Instead
     we might do $*.results.*.*:errors(:index(5))
 
-### The csvpath.matching.functions.FunctionFactory is a reasonable rough
-    draft for the implementation of the Reference Language functions factory.
 
 
+## Possible requirements, limitations, context
 
-## Possible requirements or limitations
-
-### Custom functions can be created by end users (tho perhaps not intended for customer users)
+### Custom functions can be added and should be relatively simple to create
 
 ### No CsvPath Validation Language qualifier-like syntax is required in CsvPath Reference Langauge
 
