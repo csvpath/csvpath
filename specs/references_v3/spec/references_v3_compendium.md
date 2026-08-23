@@ -1,38 +1,42 @@
 # CsvPath References v3 — Compendium
 
-A standalone definition of the References v3 subsystem, synthesized directly
-from the persisted spec, requirements notes, example queries, and the actual
-implementation and test code — originally as of 2026-07-31, caught back up
-to 2026-08-19 in a dedicated pass (§5's later subsections, from "`_check_
-position()`" onward, plus §6/§7). This document does not reconstruct any
-chat history — where a design point was worked out through back-and-forth,
-only the resulting, settled fact is stated here (the full design record,
-including corrections narrated inline, lives in `specs/references_v3/notes/`
-and `specs/references_v3/spec/references_expressions.md`).
+This document defines the References v3 subsystem, incorporating the
+following docs by reference:
+- requirements_for_functions.md
+- references_expressions.md
+- normative_reference_examples.txt
+- normative_reference_expressions_examples.txt
 
-Sources read to produce the original document:
-- `specs/references_v3/notes/
-creating references v3.txt` (the frozen/current spec, most recently revised
-by David)
-- `specs/references_v3/spec/requirements_for_functions.md`
-- `specs/references_v3/notes/more_reference_queries.txt`
-- `specs/references_v3/notes/autocomplete_prototype.py`
-- all of `csvpath/references/` (grammar, transformer, object graph, parser,
-exceptions, finder ABC, results container, functions subpackage, the one
-concrete finder)
-- all of `tests/references/`
-- and this project's own persisted design-memory files.
+No one doc controls. If there is a discrepency, lack of clarity, or
+logical question mark, the resolution is to raise the issue to David's
+attention for triage and a specification update.
 
-The 2026-08-19 catch-up pass author additionally read:
-- `specs/references_v3/notes/manifest_field_functions_proposal.md`
-- `specs/references_v3/spec/references_expressions.md`
-- `specs/references_v3/spec/normative_reference_examples.txt`
-- and the full current `csvpath/references/` tree/test suite as they now
-stand.
+Other non-normative, informational sources to read for background and
+dev history include:
+- `specs/references_v3/notes/rc_roadmap.md — path to production
+- `specs/references_v3/notes/deferred_work_bucket_list.md` — running task list
+- `specs/references_v3/notes/ — older text notes
+- `csvpath/references` — code comments
+
+Development must include the production of running notes and code
+comments documenting each decision made and referencing tests where a
+test might be illuminating. Any defered decisions or deferred
+implementation must be itemized specifically in the bucket list.
 
 ---
 
-## 1. What this is and why
+## 1. What are References v3?
+
+CsvPath Framework includes a CsvPath Reference Language that provides flexible
+general access to the Framework's physical data and metadata model. This
+language enables users to ask questions in a declarative syntax rather than
+requiring them to programmatically work within the Framework's objects interface.
+The expectation is that references will be:
+- easier to use than remembering how to use numerous classes
+- more flexible in terms of questions that can be answered practically
+- more resiliant and safer in the face of user error
+- less brittle than dozens of methods on the current objects interfaces and dozens more for new quering and reasoning tools
+- more understandable when logged by an AI as it iterates through its work
 
 CsvPath Framework stores data under three kinds of named things: **named-files**
 (registered input files, each with multiple content versions identified by
@@ -43,7 +47,7 @@ against a named-file — a run directory containing one subdirectory per
 statement in the group, each with its own result files: `data.csv`,
 `errors.json`, `vars.json`, `meta.json`, etc.).
 
-CsvPath already has two prior reference languages:
+CsvPath already has two prior versions of CsvPath Reference Language:
 
 - **v1** set the current `$`-prefixed path/name syntax users see everywhere
   (e.g. `$myfile.files.abc`).
@@ -56,28 +60,54 @@ CsvPath already has two prior reference languages:
   attempt at type-ahead support he didn't know how to do properly at the time.
 
 **v3 is a from-scratch replacement**, motivated by two things:
-- v1/v2 have real tech debt and lack conceptual clarity
+- v1 and v2 have real tech debt and lack conceptual clarity
 - and the vision of a more robust reference language giving an AI assistant
 a single, concise, general-purpose exploration tool for digging into CsvPath
 project state, instead of requiring many narrow, brittle, purpose-built tools.
 
 v3 is **AI-facing only, for now**. v1/v2 stay exactly where they are, untouched,
 and remain what end users see (identifying runs, registrations, named-paths
-loads). v3 lives in a new location — `csvpath/references/` (top-level, not
-under `util/`) — and follows v1/v2's own naming convention: `_3.py` files,
-`3`-suffixed class names (`ReferenceParser3`, not `ReferenceParserV3`). Tests
-live in `tests/references/`.
+loads). v3 lives in a new location, `csvpath/references/`, and follows v1/v2's
+naming convention: `_3.py` files, `3`-suffixed class names (`ReferenceParser3`).
+Tests live in `tests/references/`.
 
 v3 covers only named-file, named-paths-group, and named-results storage. It
 does not cover the four runtime datatypes (variables, headers, csvpath match
-state, metadata) — those will be addressed in a follow-on release post v3's
+state, metadata). Those will be addressed in a follow-on release post v3's
 launch.
 
 ---
 
-## 2. The reference syntax model
+## 2. Overall usage pattern
 
-Like v1/v2, a v3 reference is a `$`-prefixed, dot-separated string:
+A reference is a string that is interpreted as a query that gives access to
+file paths, identifiers, and metadata field values, as is described below.
+
+The steps to using a reference are:
+1. parse a reference string into a reference object
+2. create a finder that will interpret the reference
+3. register any required variables with the finder
+4. use the finder's query() method to get a list of paths+UUID matching the reference
+5. if needed, use the finder's resolve() method to get a file contents or the value of one or more metadata fields
+
+References may be used within a lightweight expression language that enables
+the user to structure set operations on references. These reference expressions set operations are:
+- UNION
+- INTERSECT
+- SUBTRACT
+
+There is a small amount of requirements and background below, but most of
+the reference expressions requirements are in
+`specs/references_v3/spec/references_v3_expressions.md`
+
+---
+
+## 3. The reference syntax model
+
+For the formal CsvPath Reference Language v3 grammar see:
+`csvpath/references/reference_grammar_3.py`
+
+Like v1 and v2, a v3 reference is a `$`-prefixed, dot-separated string:
 
 ```
 $root_major.datatype.name_one[#name_two][.name_three]
@@ -108,12 +138,11 @@ It can take a wildcard as explained below. The datatype is a static field
 indicating which type of named-thing the reference is to. One of `files`,
 `csvpaths`, or `results`.
 
-### The name_one distinction — the load-bearing point of clarity
+### The name_one datatype distinction
 
-**name_one means structurally different things per datatype**, and getting
-this right is the single most hard-won point in the whole design:
+`name_one` means structurally different things per datatype.
 
-- **For `files` and `results`: name_one is a path-like prefix search.** It is
+- **`files` and `results`**: name_one is a path-like prefix search. It is
   built from `/`-separated segments. A segment is:
   - a literal name
   - `*`
@@ -130,7 +159,7 @@ this right is the single most hard-won point in the whole design:
   and runs are found directly under their name's home directory. We speak of
   1-level templates, 2-level templates, etc. to describe how many path
   segments the template adds to the path to the home directory.
-- **For `csvpaths`: name_one is a version-selecting expression**, not a path.
+- **`csvpaths`**: name_one is a version-selecting expression, not a path.
   A named-paths group has exactly one `group.csvpath` file on disk, updated
   in place every time statements are (re)loaded; there is no per-version
   physical file. Versioning instead lives entirely in the group's own
@@ -140,10 +169,12 @@ this right is the single most hard-won point in the whole design:
   differentiated only by UUID (the manifest entry's identifying UUID).
 
 This is why the STRUCTURE table (below) lists name_one's per-datatype meaning
-so differently, and it's why `csvpaths`'s finder works quite differently from
-the `files` and `results` finders.
+so differently.
 
 ### The role of functions
+
+Note: high level requirements for functions begin in
+`specs/references_v3/spec/requirements_for_functions.md`
 
 Functions look like `:name_of_function()` and can take 0 or 1 argument, which
 is a string, number, function, or regex string wrapped in forward slashes,
@@ -151,7 +182,18 @@ like: `/.../`.
 
 There is much more information on functions below in their own section.
 
-### root_major, name_one, name_three — what limits each segment
+### The role of variables
+
+Prior to query, a reference finder can be given variables that may be use in
+references. A variable can be any Python object, but the variable value will
+be put into a string context so its __str__ must make sense for the reference.
+
+Variable syntax is `@` name, as in `@myvariable`.
+
+For the purposes of this specification, how variables are registered with a
+finder is an implementation detail.
+
+### root_major, name_one, name_three
 
 - **root_major**: limited only by an exact name, `*` (all named-things), or a
   regex string wrapped in forward slashes, like: `/.../`.
@@ -191,7 +233,7 @@ subdirectory with its own files).
 
 ---
 
-## 3. Query vs. Resolve
+## 4. Query vs. Resolve
 
 v3, like v2, splits reference-following into two phases, but the phases mean
 something different in v3.
@@ -293,7 +335,7 @@ within every 1-level template run.
 
 ---
 
-## 4. Functions
+## 5. Functions
 
 Functions are the mechanism for narrowing and pointing within a reference.
 
@@ -524,8 +566,6 @@ interpolated string into its final text needs a runtime `CsvPaths` context
 (e.g. a future `:year()`) — neither exists yet, so this phase only builds
 and validates the *shape*.
 
-
-
 ### Context-setter vs. pointer
 
 Every function self-reports one of three roles:
@@ -608,7 +648,7 @@ A related side finding baked into the same example: `:last()` means
 order on the version filename — version names are content hashes with no
 inherent temporal order.
 
-
+MOVE ME vvvvv
 #### Why `*` is disallowed as name_three's body, even though it is legal elsewhere
 
 Settled 2026-08-11. `ResultsReferenceFinder3._name_three_selector()` rejects a
