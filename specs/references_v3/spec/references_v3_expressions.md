@@ -65,12 +65,12 @@ This uses INTERSECT in order to return the runs, not the instances within the ru
 
 - The join/comparison key for INTERSECT/SUBTRACT is whatever scalar a side's
   own trailing field accessor resolves to (`:identity()`, `:named_paths_name()`,
-  `:uuid()`, `:time()`, etc), never path/uuid, which are not comparable across
-  datatypes. A side whose reference does not end in a scalar-valued accessor
-  (or resolves to a list/dict -- `:named_paths_identities()`,
-  `:file_fingerprints()`, `:scripts()`/`:webhooks()`/`:transfers()`) is not
-  usable this way and must raise clearly rather than fail deep inside a
-  set/dict.
+  `:uuid()`, `:time()`, etc). A key that resolves to a list/dict
+  (`:named_paths_identities()`, `:file_fingerprints()`,
+  `:scripts()`/`:webhooks()`/`:transfers()`) is never usable as a join key
+  and must raise clearly rather than fail deep inside a set/dict. See
+  "`paths` vs. `values` sides" below for when a side with *no* trailing
+  accessor (a plain path+uuid result) is or isn't usable.
 - `None`-valued keys never match anything, on either side -- excluded from
   membership testing entirely, never treated as equal to each other.
 - UNION does not correlate the two sides at all -- pure concatenation of
@@ -103,6 +103,37 @@ This uses INTERSECT in order to return the runs, not the instances within the ru
     - neither group's *current* version has "orders" anymore: 5 results
       (all 5 runs, 0 groups) -- every run orphaned.
     - INTERSECT for the same three scenarios: 5, 2, 0.
+
+### `paths` vs. `values` sides
+
+A side is **`paths`** if its reference has no trailing `VALUE`-role
+accessor (a plain path+uuid result -- `.data` is `None`), or **`values`**
+if it does (a real scalar in `.data`). Every result, regardless of kind,
+always has its own real `path`/`uuid` from `query()` -- `values` doesn't
+mean "no path," it means "also has a value."
+
+Settled compatibility matrix (David, 2026-08-23):
+
+| Operation | LHS \\ RHS | Result |
+|---|---|---|
+| UNION | `values`/`values` | normal -- dedup by full `ReferenceResult3` equality |
+| UNION | `paths`/`paths` | normal -- same, `.data` is `None` on both sides |
+| UNION | `values`/`paths` or `paths`/`values` | **raise** -- concatenating two structurally different result shapes into one bag is never meaningful, regardless of order |
+| SUBTRACT / INTERSECT | `values`/`values` | normal -- compare by each side's own `.data` (established behavior, unchanged) |
+| SUBTRACT / INTERSECT | `paths`/`paths` | compare by identity (`path`+`uuid` together -- `path` alone is not always enough, e.g. CSVPATHS shares one `group.csvpath` path across every version) |
+| SUBTRACT / INTERSECT | `values`(LHS)/`paths`(RHS) | RHS has no value to compare, so fall back to identity: compare LHS's own `path`+`uuid` against RHS's `path`+`uuid`. The *output* still carries LHS's own `.data` intact -- the comparison basis changed, the result shape (`values`) didn't. |
+| SUBTRACT / INTERSECT | `paths`(LHS)/`values`(RHS) | **raise** ("bad query" -- LHS has no value to compare against RHS's), **unless RHS's accessor is specifically UUID-valued** (e.g. `:uuid()`, `:run_uuid()`), in which case LHS's own *native* `uuid` field (always present, no accessor needed) is compared directly against RHS's `.data` as a real uuid-to-uuid match. This is what makes "every named-file whose uuid intersects the named-file-uuids recorded across a set of runs" possible -- a genuine cross-datatype capability, not just an edge case. |
+
+**Why SUBTRACT/INTERSECT's raise is asymmetric but UNION's isn't**: UNION
+never compares anything, so its raise is purely about not mixing
+incompatible output shapes -- order doesn't matter for that argument.
+SUBTRACT/INTERSECT's asymmetry comes directly from *which side defines the
+comparison basis*: a `values`-valued RHS demands a value to compare against
+(LHS must have one too, or it's ill-posed); a `paths`-valued RHS only
+demands identity, which every result always has, so LHS's own kind doesn't
+matter.
+
+**Not yet built** -- see `deferred_work_bucket_list.md`.
 
 ---
 
@@ -149,14 +180,7 @@ runs on either side, not just already-known literal names), and is what
 makes the "orders" example's `_left_side`/`_right_side` able to be plain
 reference strings rather than needing a sub-expression workaround.
 
-This depends on `'*'` traversal itself supporting, across all three
-datatypes: a field accessor riding alongside the pointer; `:having()`
-(CSVPATHS) and `:flatten()`/`:all()` (RESULTS) recognized and composing
-with that field accessor; literal/`'*'` path narrowing and `name_three`;
-and an optional pointer (absence means every matched candidate comes back
-unreduced) -- all now true for CSVPATHS and RESULTS alike. The one
-remaining traversal gap, `:manifest()` combined with real `'*'`-traversal
-narrowing, is tracked on `deferred_work_bucket_list.md`, not repeated here.
+
 
 **A settled decision worth keeping, not just the compendium's own
 FILES-only `*`-vs-`:all()` composite-key example**: RESULTS' `:all()` at
