@@ -408,36 +408,60 @@ A query terminating at name_three:
 #### 4.8
 A reference resolves to a 0 or more set of one of three kinds of thing:
 
-#### 4.9
 1. **First-party registered data** — the actual underlying content — returned
+#### 4.9
    when no function names metadata at all (e.g. a plain files reference with a
    version pointer resolves to that version file's raw bytes).
+2. **File contents**
 #### 4.10
-2. **A whole results metadata or data file** — returned when a function names
+   - A whole results metadata or data file — returned when a function names
    a known metadata file (`:errors()`, `:vars()`, `:meta()`, or an arbitrarily-
    named file via `:file(...)`) with no further drilling into it.
 #### 4.11
-3. **A manifest.json or definition.json file** — file contents of one of the two
+   - A manifest.json or definition.json file — file contents of one of the two
    main config files. Note all datatypes have `manifest.json` but only `files`
    and `csvpath` have `definition.json`.
-#### 4.12
 4. **One metadata field** — returned when config file function or run metadata
+#### 4.12
    file function itself takes another pointer as its argument, extracting one
    value rather than the whole file (e.g. `:errors(:idchain())`).
 
-Note that a file accessor that takes a field accessor is doing one of two things:
+
+
+
+
+Note the ways file accessors relate to field accessors:
+$acme.results.:last().:errors() -- returns the path+uuid, and resolves to content of file
+$acme.results.:last().:errors(:idchain(:not_none())) -- returns the path+uuid, and resolves to all errors that have idchains
+$acme.results.:last().:errors(:idchain("add[0]") -- returns the path+uuid, and resolves to all errors with matching idchains
+$acme.results.:last().:errors():idchain(:not_none()) -- returns path+uuid, and resolves to contents, iff idchain exists in file
+$acme.results.:last().:errors():idchain("add[0]") -- returns path+uuid, and resolves to contents, iff idchain matching exists in file
+
+If these are correct I'll put them in the spec, replacing current flawed text.
+
+Note that :idchain() will have to be smart enough to look at a list of errors and dig into the right place to find idchains. since we have very specific functions I don't see that as a problem, just a thing to know.
+
+
+
+
+
+
+
+
 #### 4.13
-- if the field accessor has no argument it returns the field's value
+- if a file accessor field accessor
+- if the field accessor itself has no argument the field's value is returned
 #### 4.14
-- if the field has an argument, it limits the reference's match to files that
-contain fields with exactly that value.
+- if the field has an argument, it limits the return to files that
+contain the field with exactly that value. (Note: if more than one such file
+is found resolve() will raise an error.)
 
 #### 4.15
 In the latter case, the resolved reference returns the file, not the field,
-because the field is just a predicate, not a retrieval. It is not possible
-to pass multiple limiting field values to a reference as a way to be more
-discriminating. This is an intentional simplification. Reference expressions
-offer one approach to further narrowing.
+because the field is used as a predicate, not a retrieval of the field. It is
+not possible to pass multiple limiting field values to a reference as a way
+to be more discriminating. This is an intentional simplification. Reference
+expressions offer one approach to further narrowing.
 
 The full resolve matrix by termination point and pointer kind:
 
@@ -467,7 +491,7 @@ results = finder.query()        # cheap: list of ReferenceResult3(path, uuid)
 data = finder.resolve()         # or finder.resolve_from(narrowed_selection)
 ```
 In this case, above, the resolve returns the paths to the last instance home
-within every 1-level template run.
+within every 1-level template file registration under the `acme` named-file.
 
 ---
 
