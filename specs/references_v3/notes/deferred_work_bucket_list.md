@@ -6,6 +6,25 @@ conversation while working on references v3 — the single place to check
 mid-conversation or mid-code. Remove/check off an item once it's actually
 built, rather than leaving it to rot.
 
+## `ReferenceExpression3` has no query()-only mode — not built
+
+Found 2026-08-24 (Phase 1 compendium review, item 4.2), which describes
+"in some cases a reference expression may combine two references, when
+both sets of results are comparable without further resolution." Checked
+directly against `reference_expression_3.py`: `resolve()` is the *only*
+public entry point, and `_resolve_side()` always calls `.resolve()` on
+both sides for all three operations, `UNION` included — there is no
+`query()`-only path anywhere in the class today.
+
+`INTERSECT`/`SUBTRACT` genuinely need resolved data for their join key
+(already established), so a query()-only mode only makes sense for
+`UNION` specifically — `UNION`'s own dedup only needs `ReferenceResult3`'s
+full `__eq__` (`path`+`uuid`+`data`+`identity`), which works fine whether
+`data`/`identity` are populated or not (comparing `None`s is safe). Worth
+deciding whether a cheap, query()-only `UNION` mode is actually wanted
+(matching 4.2's own stated intent) before building it — not yet designed
+beyond "it would only apply to `UNION`."
+
 ## `ReferenceExpression3` `paths`-vs-`values` compatibility matrix — not built
 
 Settled 2026-08-23 (see `references_v3_expressions.md`'s own "`paths` vs.
@@ -203,11 +222,38 @@ cleanly onto two different grammar positions, not one ambiguous shape:
 
 This rule is now written up directly in the two functions' own code
 comments (`errors_3.py`, `idchain_3.py`) as the most load-bearing place for
-it to live, cross-referenced to this bucket-list entry. Still to design/
-build: the actual GATE dispatch mechanism (a chained sibling function
-whose own predicate argument controls whether the preceding function's
-result is emitted) — this is additive to `:idchain()`'s existing filter
-behavior, not a replacement for it.
+it to live, cross-referenced to this bucket-list entry.
+
+**Settled 2026-08-24, now in the compendium itself (§4.13/4.14)** — the
+concrete, confirmed acceptance criteria for both filter and gate, using
+`:idchain()` for both rather than the earlier, more speculative
+`:error_count(:above(5))`-only framing:
+```
+$acme.results.:last().:errors()                             -- path+uuid; resolves to full content
+$acme.results.:last().:errors(:idchain(:not_none()))         -- path+uuid; resolves to all errors that HAVE an idchain (filter)
+$acme.results.:last().:errors(:idchain("add[0]"))            -- path+uuid; resolves to all errors matching that idchain (filter)
+$acme.results.:last().:errors():idchain(:not_none())         -- path+uuid; resolves to full content, iff some idchain exists (gate)
+$acme.results.:last().:errors():idchain("add[0]")            -- path+uuid; resolves to full content, iff a matching idchain exists (gate)
+```
+This settles the mechanism as reusing `:idchain()` in *both* positions
+(nested = filter, chained = gate) rather than needing a separate, purpose-
+built gate function — the predicate argument (`:not_none()`, or a literal/
+`Regex3`) works the same way in either slot; only the position changes
+what happens with the result.
+
+Still to design/build:
+- `Idchain3.ARG_TYPES` needs to accept a predicate function (`:not_none()`
+  and friends) alongside its current `(str, Regex3)` — confirmed
+  `ARG_REQUIRED = True` today, so a bare, argument-less `:idchain()` stays
+  illegal; `:not_none()` is the sanctioned way to say "any idchain at all,"
+  not an empty-argument special case.
+- `:not_none()` itself is still not a registered function anywhere
+  (unchanged from above).
+- The actual GATE dispatch mechanism — a chained sibling function whose
+  own predicate argument controls whether the *preceding* function's
+  result is emitted at all — is additive to `:idchain()`'s existing filter
+  behavior, not a replacement for it, and still needs building from
+  scratch; nothing dispatches this today.
 
 ## Corrections needed in the new `:manifest()`/`:definition()` compendium section (David's draft, 2026-08-21)
 

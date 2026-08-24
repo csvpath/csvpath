@@ -147,3 +147,82 @@ compendium review), not all at once up front.
 #### 3.25
 - Same as 3.24 (the rule this explains) — no separate test needed beyond
   3.24's own rejection test.
+
+## 4. Query vs. Resolve
+
+#### 4.1
+- Path/uuid: exercised throughout. `identity` doing double duty for
+  worksheet name (files) / instance ID (csvpaths) is *not yet built* for
+  the worksheet case — see bucket list "`#name_two`" item. Flagged to
+  David 2026-08-24: wording here should be double-checked against the
+  settled "reuse `identity`, no new fields" decision, not yet confirmed
+  either way.
+
+#### 4.2
+- *(no test yet — the "reference expression may combine two references...
+  without further resolution" query()-only mode does not exist;
+  `ReferenceExpression3.resolve()` always calls `.resolve()` on both
+  sides for all three operations, confirmed directly in
+  `reference_expression_3.py`. Worth a bucket-list item — see note below.)*
+
+#### 4.3
+- `test_reference_3.py::TestResolveKind`, per-datatype resolve tests
+  throughout `test_files_reference_finder_3.py`/
+  `test_csvpaths_reference_finder_3.py`/`test_results_reference_finder_3.py`
+
+#### 4.4
+- `test_results_reference_finder_3.py` (bare pointer resolve -> `None`
+  cases)
+
+#### 4.5
+- Exercised throughout the three finders' own name_one-terminal query()
+  tests.
+
+#### 4.6
+- `test_files_reference_finder_3.py`/`test_csvpaths_reference_finder_3.py`/
+  `test_results_reference_finder_3.py` (name_one-terminal query() path
+  assertions, one per datatype row)
+
+#### 4.7
+- Same three files' name_three-terminal query() tests
+
+#### 4.8
+- `test_reference_3.py::TestResolveKind` (all three `resolve_kind` values)
+
+#### 4.9
+- `test_reference_3.py::TestResolveKind::test_first_party_when_no_name_three_and_no_name_one_functions`,
+  `test_first_party_for_ordinary_selector_function_with_nested_arg`
+
+#### 4.10
+- `test_reference_3.py::TestResolveKind::test_metadata_file_for_plain_well_known_file_function`
+
+#### 4.11
+- `test_files_reference_finder_3.py`/`test_csvpaths_reference_finder_3.py`/
+  `test_results_reference_finder_3.py` `:manifest()`/`:definition()`
+  content tests
+
+#### 4.12
+- `test_reference_3.py::TestResolveKind::test_metadata_field_when_value_locator_nested_in_terminal_function`
+
+#### 4.13
+- `test_results_reference_finder_3.py::test_errors_with_idchain_filters_to_matching_source`,
+  `test_errors_with_idchain_no_match_returns_empty_list`,
+  `test_errors_with_idchain_regex_filters_by_search_not_full_match` (the
+  three *filter* examples — lines 1-3 of the worked set). *(No test yet
+  for the two *gate* examples (lines 4-5) — `:idchain()` chained after
+  `:errors()` isn't built; see bucket list "Predicate-argument field
+  accessors" item.)*
+
+#### 4.14
+- Same as 4.13 — this is the explanatory note for the same worked
+  example, not a separate testable claim.
+
+#### 4.15
+- `test_normative_examples_files.py`/`test_normative_examples_csvpaths.py`/
+  `test_normative_examples_results.py` (resolve matrix cells, exercised
+  end to end per datatype)
+
+#### 4.16
+- `test_reference_finder_3.py` (`resolve_from()` with an explicit
+  `:uuid(...)` selection), `test_files_reference_finder_3.py`/
+  `test_results_reference_finder_3.py` equivalent selection tests
