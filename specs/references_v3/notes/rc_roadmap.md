@@ -13,26 +13,25 @@ controlling spec, directive-requirements-only per David's 2026-08-22 call).
 
 ---
 
-## Phase 0 — Prerequisites
+## Phase 0 — Prerequisites — CLOSED 2026-08-24
 
 - [x] First compendium pass complete (branch `references_v3_docs_edits`,
   merged PR #259).
-- [ ] **David's second compendium pass** (his own work, in progress as of
-  2026-08-22) — must land before Phase 1 starts; Phase 1 operates on the
-  compendium as its input, block by block.
-- [ ] **Open decision, not yet resolved**: how test-conformance references
-  get recorded against compendium claims. David: "no test refs yet, I
-  still have to ponder how to do that while keeping the doc concise and
-  readable — likely it happens in another doc, maybe." This needs at
-  least a provisional answer before Phase 1 can consistently record
-  findings — doesn't have to be final, but Phase 1 needs somewhere
-  consistent to put "claim X is backed by test Y" as it goes. Simplest
-  default if no better idea surfaces: a sibling doc (e.g.
-  `references_v3_test_map.md`) mapping compendium section → test
-  file/class, kept separate so the compendium itself stays clean.
+- [x] **David's second compendium pass** — done. Compendium now has
+  numbered `#### N.M` items throughout (99 as of 2026-08-24), a stable
+  citation anchor for every discrete requirement. Not claimed to be
+  gap-free ("I'm sure there are gaps... software is never done") — good
+  enough to drive Phase 1 from, which is the actual bar, not perfection.
+- [x] **Test-conformance mechanism decided**: a separate file,
+  `references_v3_compendium_tests.md`, mirroring the compendium's own
+  `#### N.M` numbering, each followed by the test(s) that verify it (or an
+  explicit "no test yet" marker — gaps stay visible, never silently
+  blank). Skeleton/convention created 2026-08-24; populated for real
+  during Phase 1, not backfilled all at once now, since Phase 1 is the
+  actual verification pass.
 
-**Exit criteria**: compendium's second pass is done and stable; a place to
-record test-conformance mappings is picked (even provisionally).
+**Exit criteria**: compendium is stable enough to review against; a place
+to record test-conformance mappings exists. Both true as of 2026-08-24.
 
 ---
 
