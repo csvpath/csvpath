@@ -374,6 +374,14 @@ identifier.
   The only place it's structurally accepted at all is a bare `@variable`
   inside `{...}` string interpolation, and even there it can't be
   *evaluated* yet (see interpolation-evaluation item below).
+- Found 2026-08-24 (Phase 1 compendium review, item 3.12): there is no
+  registration mechanism at all yet, either — no finder has any "give me a
+  value for `@name`" API (confirmed via grep, nothing like `set_variable`
+  exists anywhere in `csvpath/references/`). The compendium's own 3.12
+  deliberately leaves this "an implementation detail," so it may not need
+  solving before `@variable` itself becomes usable as an argument, but
+  it's a real, separate prerequisite once evaluation is tackled, not
+  something `@variable` support alone would provide.
 
 ## `'*'` traversal — RESULTS/CSVPATHS remaining gap
 
