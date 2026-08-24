@@ -6,6 +6,44 @@ conversation while working on references v3 — the single place to check
 mid-conversation or mid-code. Remove/check off an item once it's actually
 built, rather than leaving it to rot.
 
+## `:printouts()` and `:log()` file accessors — not built
+
+Found 2026-08-24 (Phase 1 compendium review, item 5.9). The compendium
+lists ten well-known file accessors as "the complete class": `:manifest()`,
+`:definition()`, `:data()`, `:errors()`, `:printouts()`, `:vars()`,
+`:meta()`, `:unmatched()`, `:file(...)`, `:log()`. Checked all ten directly
+against the function registry — eight are real; `:printouts()` and `:log()`
+have no `Function3` subclass anywhere. Not previously tracked —
+`function_coverage_matrix.md` doesn't mention either name, and neither is
+on this list's existing "Functions" section of named-but-unbuilt items.
+
+## `Function3.describe()` has no markdown-rendering capability — 5.4's requirement not met
+
+Found 2026-08-24 (Phase 1 compendium review, item 5.4): "Reference
+functions are self-documenting... must be able to output .md in a similar
+way to `csvpath/cli/function_describer.py`." Checked `Function3.describe()`
+(`function_3.py:120-131`) directly — it exists, but only returns a plain
+dict (`name`/`summary`/`role`/`datatypes`), explicitly documented as "what
+a future type-ahead layer's registry query is meant to read." It does not
+render markdown or any human-readable document, unlike match functions'
+own `FunctionDescriber.describe()` (`csvpath/cli/function_describer.py`),
+which actually prints/renders formatted (optionally markdown) output. The
+underlying structured data `describe()` returns is a reasonable
+foundation, but the actual rendering layer 5.4 requires doesn't exist yet.
+
+## Field-accessor coverage against real manifest fields — needs a dedicated audit, not yet done
+
+Compendium 5.7: "There must be a field accessor function for every field
+available in any of the manifest.json files." 34 field accessors were
+built following `manifest_field_functions_proposal.md`'s Part A/B tables,
+but that was a one-time pass — nothing has since re-verified this against
+every `Registrar`/`*Metadata` class's actual current field set project-
+wide, the way the `resolve_kind` hardcoded-tuple check did for its own,
+narrower 38-name list. Worth a dedicated audit pass (enumerate every real
+field written by every Registrar/Metadata class, diff against the
+registered field-accessor functions) rather than assuming 5.7 is met
+because the original rollout was thorough at the time.
+
 ## `ReferenceExpression3` has no query()-only mode — not built
 
 Found 2026-08-24 (Phase 1 compendium review, item 4.2), which describes
