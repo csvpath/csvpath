@@ -84,8 +84,9 @@ compendium review), not all at once up front.
 
 #### 3.12
 - *(no test yet — no variable-registration mechanism exists on any finder
-  at all; see bucket list "`@variable`" item, extended 2026-08-24 to note
-  this specifically.)*
+  at all; see bucket list "`@variable`" item. David, 2026-08-24: this is
+  RC-blocking, not low-priority — the compendium's own wording here was
+  corrected accordingly.)*
 
 #### 3.13
 - *(no test yet — same gap as 3.5, restated here.)*

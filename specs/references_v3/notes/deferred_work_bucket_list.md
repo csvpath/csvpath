@@ -377,11 +377,17 @@ identifier.
 - Found 2026-08-24 (Phase 1 compendium review, item 3.12): there is no
   registration mechanism at all yet, either — no finder has any "give me a
   value for `@name`" API (confirmed via grep, nothing like `set_variable`
-  exists anywhere in `csvpath/references/`). The compendium's own 3.12
-  deliberately leaves this "an implementation detail," so it may not need
-  solving before `@variable` itself becomes usable as an argument, but
-  it's a real, separate prerequisite once evaluation is tackled, not
-  something `@variable` support alone would provide.
+  exists anywhere in `csvpath/references/`). **David, 2026-08-24: this is
+  a required, must-have capability for RC, not optional or deferrable** —
+  the compendium's own 3.12 originally said "an implementation detail,"
+  which was meant only to mean "no strong opinion on the mechanism/
+  user-level interface," not "low priority." Compendium text corrected to
+  say so explicitly. Both pieces are needed before RC: the registration
+  API itself, and `@variable` actually being usable as a real function
+  argument (see the entry directly above this one) plus evaluated at
+  resolve time (see the `{...}` interpolation-evaluation item under
+  "Bigger, standing items," which shares the same variable-resolution
+  prerequisite).
 
 ## `'*'` traversal — RESULTS/CSVPATHS remaining gap
 
