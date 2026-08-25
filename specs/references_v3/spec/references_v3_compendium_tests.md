@@ -150,61 +150,97 @@ compendium review), not all at once up front.
 
 ## 4. Query vs. Resolve
 
+(Renumbered 2026-08-25 after David's edit added 4.3-4.8 and shifted
+everything below — this section replaces the pre-edit 4.1-4.16 mapping
+entirely.)
+
 #### 4.1
 - Path/uuid: exercised throughout. `identity` doing double duty for
   worksheet name (files) / instance ID (csvpaths) is *not yet built* for
-  the worksheet case — see bucket list "`#name_two`" item. Flagged to
-  David 2026-08-24: wording here should be double-checked against the
-  settled "reuse `identity`, no new fields" decision, not yet confirmed
-  either way.
+  the worksheet case — see bucket list "`#name_two`" item. The "three
+  fields at query()" framing is confirmed consistent with 6.6's own field
+  table — no separate new `ReferenceResult3` fields implied.
 
 #### 4.2
 - *(no test yet — the "reference expression may combine two references...
-  without further resolution" query()-only mode does not exist;
-  `ReferenceExpression3.resolve()` always calls `.resolve()` on both
-  sides for all three operations, confirmed directly in
-  `reference_expression_3.py`. Worth a bucket-list item — see note below.)*
+  without further resolution" query()-only mode does not exist; see
+  bucket list "`ReferenceExpression3` has no query()-only mode" item.)*
 
 #### 4.3
+- *(no test yet — the query()-always-succeeds/resolve()-raises-on-
+  multi-match split is not built; `:path()` retirement/Rule 1 move from
+  `query()` to `resolve()` is still on the bucket list. This is the
+  single most consequential not-yet-built item in this whole section —
+  everything else in 4.4-4.8 already works, this general rule doesn't
+  yet.)*
+
+#### 4.4
+- `test_files_reference_finder_3.py::TestGlobalArrivalsLedger`,
+  `test_results_reference_finder_3.py::TestGlobalArchiveLedger`,
+  `test_csvpaths_reference_finder_3.py::TestGlobalLoadsLedger` (Rule 1a,
+  bare `'*'`+`:manifest()`)
+
+#### 4.5
+- Same `TestGlobalArrivalsLedger`-family tests as 4.4 — `uuid=None`,
+  `path`/`identity` assertions on the bare ledger result
+
+#### 4.6
+- `test_results_reference_finder_3.py` (ledger record vs. instance-file
+  distinction — exercised via `TestGlobalArchiveLedger` alongside
+  `TestResultInstanceManifest`-style per-instance tests; no single test
+  isolates the *distinction* itself, both sides are separately covered)
+
+#### 4.7
+- `test_files_reference_finder_3.py::TestGlobalArrivalsLedgerOrdinalIndexing`,
+  `test_results_reference_finder_3.py::TestGlobalArchiveLedgerOrdinalIndexing`,
+  `test_csvpaths_reference_finder_3.py::TestGlobalLoadsLedgerOrdinalIndexing`
+  (Rule 1b — `uuid=None` for multiple, real uuid for one ordinal-selected
+  entry)
+
+#### 4.8
+- `test_files_reference_finder_3.py::test_star_with_definition_is_still_not_supported`
+  (and the CSVPATHS/RESULTS equivalents in their own finder test files)
+
+#### 4.9
 - `test_reference_3.py::TestResolveKind`, per-datatype resolve tests
   throughout `test_files_reference_finder_3.py`/
   `test_csvpaths_reference_finder_3.py`/`test_results_reference_finder_3.py`
 
-#### 4.4
+#### 4.10
 - `test_results_reference_finder_3.py` (bare pointer resolve -> `None`
   cases)
 
-#### 4.5
+#### 4.11
 - Exercised throughout the three finders' own name_one-terminal query()
   tests.
 
-#### 4.6
+#### 4.12
 - `test_files_reference_finder_3.py`/`test_csvpaths_reference_finder_3.py`/
   `test_results_reference_finder_3.py` (name_one-terminal query() path
   assertions, one per datatype row)
 
-#### 4.7
+#### 4.13
 - Same three files' name_three-terminal query() tests
 
-#### 4.8
+#### 4.14
 - `test_reference_3.py::TestResolveKind` (all three `resolve_kind` values)
 
-#### 4.9
+#### 4.15
 - `test_reference_3.py::TestResolveKind::test_first_party_when_no_name_three_and_no_name_one_functions`,
   `test_first_party_for_ordinary_selector_function_with_nested_arg`
 
-#### 4.10
+#### 4.16
 - `test_reference_3.py::TestResolveKind::test_metadata_file_for_plain_well_known_file_function`
 
-#### 4.11
+#### 4.17
 - `test_files_reference_finder_3.py`/`test_csvpaths_reference_finder_3.py`/
   `test_results_reference_finder_3.py` `:manifest()`/`:definition()`
   content tests
 
-#### 4.12
+#### 4.18
 - `test_reference_3.py::TestResolveKind::test_metadata_field_when_value_locator_nested_in_terminal_function`
 
-#### 4.13
+#### 4.19
 - `test_results_reference_finder_3.py::test_errors_with_idchain_filters_to_matching_source`,
   `test_errors_with_idchain_no_match_returns_empty_list`,
   `test_errors_with_idchain_regex_filters_by_search_not_full_match` (the
@@ -213,16 +249,24 @@ compendium review), not all at once up front.
   `:errors()` isn't built; see bucket list "Predicate-argument field
   accessors" item.)*
 
-#### 4.14
-- Same as 4.13 — this is the explanatory note for the same worked
+#### 4.20
+- Same as 4.19 — this is the explanatory note for the same worked
   example, not a separate testable claim.
 
-#### 4.15
+#### 4.21
 - `test_normative_examples_files.py`/`test_normative_examples_csvpaths.py`/
   `test_normative_examples_results.py` (resolve matrix cells, exercised
   end to end per datatype)
 
-#### 4.16
+#### 4.22
 - `test_reference_finder_3.py` (`resolve_from()` with an explicit
   `:uuid(...)` selection), `test_files_reference_finder_3.py`/
   `test_results_reference_finder_3.py` equivalent selection tests
+
+#### 4.23
+- `test_files_reference_finder_3.py::TestStarFlattensAcrossAllFiles`
+  (the exact reference used in this pseudocode example). The trailing
+  "resolve() will raise if more than one path" caveat has no test of its
+  own here since it doesn't apply to this specific example (`:last()`
+  already guarantees exactly one match) — see 4.3's own not-yet-built
+  note for where that general rule actually needs covering.
