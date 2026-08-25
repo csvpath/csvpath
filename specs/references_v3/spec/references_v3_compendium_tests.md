@@ -45,7 +45,7 @@ compendium review), not all at once up front.
 - Doc pointer only, not independently testable.
 
 #### 3.2
-- `test_reference_grammar_3.py`, `test_reference_parser_3.py::TestConstruction`
+- `test_references_3_grammar.py`, `test_reference_parser_3.py::TestConstruction`
 
 #### 3.3
 - *(no test yet — `#name_two` is not built anywhere yet, including for
@@ -80,7 +80,7 @@ compendium review), not all at once up front.
 - Doc pointer only, not independently testable.
 
 #### 3.11
-- `test_reference_grammar_3.py`, `test_reference_3.py::TestFunctionCall3`
+- `test_references_3_grammar.py`, `test_reference_3.py::TestFunctionCall3`
 
 #### 3.12
 - *(no test yet — no variable-registration mechanism exists on any finder
@@ -274,7 +274,7 @@ entirely.)
 ## 5. Functions
 
 #### 5.1
-- `test_reference_grammar_3.py`, `test_reference_3.py::TestFunctionCall3`
+- `test_references_3_grammar.py`, `test_reference_3.py::TestFunctionCall3`
   (form/argument-count parsing, exercised throughout)
 
 #### 5.2
