@@ -355,27 +355,71 @@ something different in v3.
 #### 4.1
 **Query**: runs the reference as a search and returns 0-or-more results. Each
 is the set of:
-- a file-system path
-- a UUID
-- a name two (Excel files only, and optionally)
-- an instance ID (`csvpaths` only, and optionally)
+1. A file-system path
+2. A UUID
+3. Optionally a name identifing a sub-unit, either:
+   - The `name_two` field (Excel files only)
+   - An instance ID (`csvpaths` only)
 
 #### 4.2
 These results always point to a file system location, with the identifiers
-needed for any internal file pointer (for Excel and `group.csvpaths`). This
-is the case even when the reference is clearly pointing to a metadata field
+needed for any internal file pointer (for Excel files and `group.csvpaths`).
+This even when the reference is clearly pointing to a metadata field
 within that context. In the query stage, a user can trim the list of results
 according to path, UUID, etc. without accessing whole files. In some cases
 a reference expression may combine two references, when both sets of results
 are comparable without further resolution.
 
 #### 4.3
+The `query()` method always succeeds (presuming a properly written reference);
+however, queries may refer to multiple files. Note that the contents of a
+file can be resolved using `resolve()`, but if multiple results of `query()`
+would retrieve file contents an error is raised.
+
+The rule is:
+- `query()` can return multiple file paths
+- `resolve()` can only retrieve one file's content and errors if there are
+  multiple file paths for the reference
+
+#### 4.4
+Tangental to the rule of 4.2, a wildcard `root_major` in any datatype where
+name_one is `:manifest()` points to the ledger manifest for that datatype.
+
+#### 4.5
+E.g. `$*.files.:manifest()` is a pointer to the path of the named-files
+ledger manifest. That manifest does not have its own UUID; therefore, the
+reference result object's UUID field is None. The manifest also does not
+have a `name_two` or `name_three` identity, and therefore the identity field
+also remains None. In that example, individual registrations, or their
+fields, can be retrieved from the manifest. Likewise, the set of all
+registrations within the manifest can be retrieved.
+
+#### 4.6
+Note that a run record in the `results` ledger manifest is not the same
+as as a run manifest for an instance of a csvpath in a run. The former is
+not a file, the latter is a file. You can pull multiple complete run records
+from the `results` ledger manifest, but you cannot retrieve multiple
+instance-level results manifest files at the same time.
+
+#### 4.7
+If a reference retrieves multiple records from a ledger the UUID of the
+reference result object remains None. If the reference retrieves one record
+the UUID of the reference result is the UUID of that ledger entry. In
+either case, the reference result object's path remains that of the ledger
+manifest file.
+
+#### 4.8
+
+Note that `:definition()` has no global ledger. A reference like
+`$*.files.:definition()` will raise an error.
+
+#### 4.9
 **Resolve**: pulls actual content a reference points to. When a reference
 points to a file, resolving returns either bytes (if the reference is to a
 binary file, such as an `.xlsx`) or a JSON structure. When a reference
 points to a field the return is a string, int, date, UUID, etc.
 
-#### 4.4
+#### 4.10
 It is possible for resolve to return no answer (`None`). A bare results
 reference with no metadata pointer has no single well-defined resolve output
 of a run; only the path to the run is indicated and that is available in the
@@ -383,18 +427,18 @@ query stage.
 
 ### Query, by termination point
 
-#### 4.5
+#### 4.11
 A Query terminating at name_one (regardless of any pointer function) is primarily a path,
 which may be resolved to a value, if further resolution of the reference is possible.
 
-#### 4.6
+#### 4.12
 | Datatype | What name_one-terminated query() returns |
 |---|---|
 | files | path to the named-file's file-home directory (directory of version files) |
 | csvpaths | path to the `group.csvpath` file |
 | results | path to the run directory |
 
-#### 4.7
+#### 4.13
 A query terminating at name_three:
 
 | Datatype | What name_three-terminated query() returns |
@@ -405,74 +449,52 @@ A query terminating at name_three:
 
 ### Resolve — the three-way classification
 
-#### 4.8
+#### 4.14
 A reference resolves to a 0 or more set of one of three kinds of thing:
 
 1. **First-party registered data** — the actual underlying content — returned
-#### 4.9
+#### 4.15
    when no function names metadata at all (e.g. a plain files reference with a
    version pointer resolves to that version file's raw bytes).
 2. **File contents**
-#### 4.10
-   - A whole results metadata or data file — returned when a function names
+#### 4.16
+   - A whole results metadata or result data file — returned when a function names
    a known metadata file (`:errors()`, `:vars()`, `:meta()`, or an arbitrarily-
    named file via `:file(...)`) with no further drilling into it.
-#### 4.11
+#### 4.17
    - A manifest.json or definition.json file — file contents of one of the two
    main config files. Note all datatypes have `manifest.json` but only `files`
    and `csvpath` have `definition.json`.
-4. **One metadata field** — returned when config file function or run metadata
-#### 4.12
-   file function itself takes another pointer as its argument, extracting one
-   value rather than the whole file (e.g. `:errors(:idchain())`).
+3. **One metadata field** — based on combining a file accessor and a field accessor.
+#### 4.18
 
+Note the ways file accessors relate to field accessors. Given a reference
+that finds the last `results` run and using the `:idchain()` field accessor:
 
+#### 4.19
+`$acme.results.:last().:errors()` — returns the path+uuid, and resolves to content of file
+`$acme.results.:last().:errors(:idchain(:not_none()))` — returns the path+uuid, and resolves to all errors that have idchains
+`$acme.results.:last().:errors(:idchain("add[0]"))` — returns the path+uuid, and resolves to all errors with matching idchains
+`$acme.results.:last().:errors():idchain(:not_none())` — returns path+uuid, and resolves to contents, iff idchain exists in file
+`$acme.results.:last().:errors():idchain("add[0]")` — returns path+uuid, and resolves to contents, iff idchain matching exists in file
 
+#### 4.20
+`:idchain()` and similar functions must be smart enough to look into a JSON
+structure in the right place to find the value they operate on. In the case
+of idchains, the function must know to look at the `idchain` key of each
+error dictionary in the list contained by `errors.json`.
 
-
-Note the ways file accessors relate to field accessors:
-$acme.results.:last().:errors() -- returns the path+uuid, and resolves to content of file
-$acme.results.:last().:errors(:idchain(:not_none())) -- returns the path+uuid, and resolves to all errors that have idchains
-$acme.results.:last().:errors(:idchain("add[0]") -- returns the path+uuid, and resolves to all errors with matching idchains
-$acme.results.:last().:errors():idchain(:not_none()) -- returns path+uuid, and resolves to contents, iff idchain exists in file
-$acme.results.:last().:errors():idchain("add[0]") -- returns path+uuid, and resolves to contents, iff idchain matching exists in file
-
-If these are correct I'll put them in the spec, replacing current flawed text.
-
-Note that :idchain() will have to be smart enough to look at a list of errors and dig into the right place to find idchains. since we have very specific functions I don't see that as a problem, just a thing to know.
-
-
-
-
-
-
-
-
-#### 4.13
-- if a file accessor field accessor
-- if the field accessor itself has no argument the field's value is returned
-#### 4.14
-- if the field has an argument, it limits the return to files that
-contain the field with exactly that value. (Note: if more than one such file
-is found resolve() will raise an error.)
-
-#### 4.15
-In the latter case, the resolved reference returns the file, not the field,
-because the field is used as a predicate, not a retrieval of the field. It is
-not possible to pass multiple limiting field values to a reference as a way
-to be more discriminating. This is an intentional simplification. Reference
-expressions offer one approach to further narrowing.
 
 The full resolve matrix by termination point and pointer kind:
 
-#### 4.16
+#### 4.21
 | | name_one, no pointer | name_three, no pointer | name_one, file pointer | name_three, file pointer | name_one, field pointer | name_three, field pointer |
 |---|---|---|---|---|---|---|
 | **files** | no default → `None` | version file bytes (name_three always points) | contents of `manifest.json`/`definition.json` | version file bytes | field from `manifest.json`/`definition.json` | not possible |
 | **csvpaths** | no default | no default | contents of `manifest.json`/`definition.json` | no default (needs `:uuid(...)` + instance name/index for csvpath bytes) | requires `:uuid(...)`; returns a field, or (if only `:uuid(...)`) the version's bytes | requires `:uuid(...)` + instance name/index to get a field |
 | **results** | no default | no default | contents of `manifest.json` | any standard run-result file, or a user-named parquet/jinja/text file, via e.g. `:file("orders.parquet")` | field from `manifest.json` | field from any standard JSON run-result file (`errors.json`, `meta.json`, etc.) |
 
-#### 4.17
+#### 4.22
 **Note on `:uuid(...)`**: it is not a mandatory function. If a reference's
 own pointer (`:first()`, `:index(n)`, etc.) already narrows to one version,
 nothing else is needed. `:uuid(...)` matters when a caller wants to resolve
@@ -483,15 +505,17 @@ one *specific*, previously-queried candidate — via `resolve_from
 
 This pseudocode illustrates the approximate workflow for a simple case:
 
-#### 4.18
+#### 4.23
 ```python
 ref = ReferenceParser3(string="$acme.files.*.:last()", csvpaths=paths)
 finder = FilesReferenceFinder3(csvpaths=paths, ref=ref)
 results = finder.query()        # cheap: list of ReferenceResult3(path, uuid)
 data = finder.resolve()         # or finder.resolve_from(narrowed_selection)
 ```
-In this case, above, the resolve returns the paths to the last instance home
+In this case, above, the query returns the paths to the last version
 within every 1-level template file registration under the `acme` named-file.
+Note that if there is more than one such path, attempting `resolve()` will
+raise an error because only one file contents can be retrieved per reference.
 
 ---
 
@@ -602,7 +626,7 @@ manifest as a whole, simply use `:manifest()` alone.
 Definition file references always act on the complete JSON structure, but
 can return a single field, if a field accessor is used, or return None if
 a field accessor is given an appropriate match value argument. For e.g.
-`$acme.files.:description(:on_arrival(:not_none()))`
+`$acme.files.:definition(:on_arrival(:not_none()))`
 
 #### 5.14
 The only times there may not be manifests where expected are:
@@ -701,7 +725,7 @@ Ordinals have roles:
 An index counts from the anchor. :index() counts upward by default, meaning
 in an increasing direction. :index() steps down to find the starting point if
 negative, but still counts upwards. I.e. `:from(5):to(-1)` counts from the 6th
-position to the N - 1 position, where N is the (0-based) length - 1 of the list.
+position to the last position.
 
 #### 5.26
 If a pair of direction functions have indexes forcing up to down the index is
@@ -851,7 +875,7 @@ What a pointer or value resolves to depends on where it sits and how it is used:
 - In name_three, a pointer resolves to a well-known metadata *file* (e.g.
   `:errors()`) — unless that pointer's own argument is itself another
   pointer, in which case it resolves to a specific *value* inside that file
-  instead (e.g. `:errors(:idchain())`). Same trait, one nesting level
+  instead (e.g. `:errors(:idchain("add[0]"))`). Same trait, one nesting level
   deeper, not a separate category.
 
 #### 5.43
@@ -980,102 +1004,6 @@ find results based on a ReferenceParser which represents a reference string.
 
 
 ---
-
-## Appendix: UNKNOWN CORRECTNESS / USEFULNESS
-
-### Rule 1 / Rule 1a / Rule 1b — whole-resource content and the global-ledger exceptions
-
-Settled 2026-08-07 (`notes/manifest_field_functions_proposal.md`), extended
-in code shortly after. Governs every whole-resource content function
-(`:manifest()`, `:definition()`, and the well-known-file content functions
-`:errors()`/`:vars()`/`:meta()`/`:data()`/`:unmatched()`/`:file()`) across
-all three datatypes.
-
-- **Rule 1 — whole-resource content always resolves to exactly one entity,
-  full stop, no exceptions.** These functions never pool raw content across
-  more than one named-file version, named-paths group version, run, or
-  instance. To reach a Result Instance Manifest you must resolve to one run
-  *and* one instance within it — `:all()` at either level, combined with a
-  content accessor, is illegal; so is a version-selecting reference matching
-  more than one version with no pointer to pick between them, *even* for
-  files/csvpaths' own `manifest.json` (a single shared array across every
-  version, where reading several matched entries would be comparatively
-  cheap) — an earlier draft of this rule carved out an exception for exactly
-  that "cheap, already-read, just sliced" case, and David rejected it:
-  tying legality to a storage detail (does this entity type happen to keep
-  its versions in one shared file, or one file per version) is a leaky
-  abstraction — the same syntax could become legal or illegal if a future
-  entity type's storage changes. The corrected, adopted rule has no
-  carve-outs: reading full content with a reference always touches exactly
-  one entity, regardless of how any given entity type happens to persist
-  its data today.
-- **Rule 1a — the one exception is a real, existing global ledger, and it
-  is per-function.** `'*'` (or any other unresolved-entity position) at
-  `root_major`, combined with a *bare* `:manifest()`, resolves to that
-  datatype's own global ledger instead of raising — because exactly one
-  such single resource genuinely exists per datatype (the archive-root
-  `manifest.json` for RESULTS, the named-paths loads ledger for CSVPATHS,
-  the equivalent for FILES). `:definition()` has no equivalent global
-  ledger anywhere in the codebase, so `$*.files.:definition()` (or the
-  CSVPATHS/RESULTS equivalent) stays illegal — enforced by the finder
-  layer raising, not by the grammar (the grammar stays permissive on
-  purpose; see §5's grammar section). Implemented once per finder as an
-  early `query()` branch (`_is_bare_pointer_reference(reference,
-  "manifest")`, shared on the ABC) that returns the ledger file's own path
-  directly via the ABC's shared `_query_well_known_file(home, filename)`
-  (same helper `:manifest()`/`:definition()`'s bare, sole-content shape
-  already uses at literal `root_major` — see the section above), giving a
-  result with `uuid=None`.
-- **Rule 1b — an ordinal pointer riding with the bare global-ledger
-  `:manifest()` selects one entry out of it by position, instead of
-  dumping the whole ledger.** E.g. `$*.results.:last():manifest()` (either
-  order — `:manifest():last()` works identically, order-insensitively).
-  This is the natural extension of Rule 1a once a pointer joins the same
-  bare chain — built during implementation, but **never written back into
-  `manifest_field_functions_proposal.md` alongside Rule 1/1a**, only
-  documented in code comments (`_pointer_before_manifest()`, shared on the
-  ABC — detects a pointer-plus-bare-`:name()` shape in either order;
-  `query()`'s own early branch in each finder applies the pointer directly
-  against the ledger array, giving a result whose `path` is *still* the
-  ledger file's own path, but whose `uuid` is now the selected ledger
-  entry's own uuid/run_uuid). `_extract_data()` re-derives the right
-  ledger entry from that uuid at resolve time, rather than reading it off
-  `result.path` again (since `result.path` is the ledger file, not a
-  per-entry resource).
-
-**Why this matters beyond the narrow bare-chain shape**: once `'*'`
-traversal supports `:manifest()` combined with real narrowing (`:all()`,
-`:flatten()`, a literal prefix — not yet built, see §6/§7), a genuine
-traversal result will *also* carry a real, non-`None` uuid — the same
-signal Rule 1b's own result carries. `result.uuid is not None` therefore
-cannot be used to tell "this came from Rule 1b" apart from "this is a real
-traversal result needing its own group/run's own manifest read directly" —
-only comparing `result.path` against the ledger's own known, fixed path
-can. This is the central blocker for the `:manifest()`+`'*'`-traversal gap
-tracked in §6.
-
-### Additional rule notes
-
-- **Rule 2 — path accessors are exempt from Rule 1 and are always
-  poolable.** `:path()` takes any whole-resource content function as its
-  argument and returns the filesystem path to that resource instead of its
-  content (`:path(:errors())`, `:path(:manifest())`, etc.) — because a path
-  is a cheap scalar, not a raw structure, `:path()` calls are allowed to
-  pool across `'*'` and across unresolved versions/runs (`$*.results.:path
-  (:errors())` returns a list of paths, one per matching instance).
-- **Rule 3 — field/key accessors are also exempt from Rule 1 and are
-  always poolable**, for the same reason as Rule 2: a single field's value
-  (or a small fixed-shape value, e.g. `:file_fingerprints()`'s dict) is
-  cheap, not a raw structure to merge. `$*.files.:uuid()` is legal and
-  returns a list of uuids, one per version of every matched named-file —
-  the cross-product of the entity axis (`'*'`) and the unreduced-within-
-  entity version/run axis. This is exactly the case Rule 1 exists to
-  prevent for whole-resource *content* — the same cross-product with full
-  manifest dicts instead of scalar uuids is the expensive, unwieldy case
-  that motivated Rule 1 in the first place.
-
-
-
 
 
 
