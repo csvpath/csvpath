@@ -35,10 +35,22 @@ to record test-conformance mappings exists. Both true as of 2026-08-24.
 
 ---
 
-## Phase 1 — Block-by-block compendium review
+## Phase 1 — Block-by-block compendium review — FIRST PASS COMPLETE 2026-08-25
 
 The same process this whole conversation has been doing manually, run
 systematically over the entire document instead of piecemeal.
+
+**Status**: all six numbered sections of the compendium (as of David's
+own second-pass edits, itself completed alongside this review) have been
+checked block by block and recorded in
+`specs/references_v3/spec/references_v3_compendium_tests.md`. Real
+findings from this pass (function-family audits, the `:home()` scoping
+decision, the `paths`-vs-`values` compatibility matrix, several stale/
+wrong text passages, two numbering slips) are on the bucket list or
+already fixed in the compendium directly. Not claimed to be the last
+pass ever needed — David continues to edit the compendium, and each
+future edit should get the same block-level scrutiny, not just new
+material added since the last review.
 
 **Per block, do this:**
 1. Read the block as a standalone claim (or small group of claims).
@@ -61,17 +73,18 @@ systematically over the entire document instead of piecemeal.
    memory across a long pass; write it down (bucket list, tests-needed
    list, or a text correction) as you go.
 
-**Tests-needed list**: keep a running, simple list of "obviously needed,
-no ambiguity" tests surfaced during the pass — David's own instinct is to
-block these out first, before tackling harder/ambiguous gaps, since
-they're pure execution with no judgment calls attached. Suggested home:
-a new `## Tests needed` section at the top of this file, or its own file
-next to the bucket list — decide when Phase 1 actually starts producing
-entries, no need to pre-decide now.
+**Tests-needed list — resolved, no separate file needed.** In practice,
+`references_v3_compendium_tests.md`'s own `*(no test yet)*` markers
+turned out to serve exactly this purpose, item by item, with more
+precision than a separate flat list would have (each gap is already tied
+to the specific requirement it's missing a test for, and to whichever
+bucket-list item tracks the underlying build work). No separate file was
+needed.
 
-**Exit criteria**: every section of the compendium has been checked;
-every real gap is on the bucket list; the tests-needed list is populated
-and distinct from the harder, judgment-call gaps.
+**Exit criteria — met for the first pass**: every section of the
+compendium has been checked; every real gap found is on the bucket list;
+every compendium item has an entry in the test-conformance map, whether
+a real test citation or an explicit "no test yet."
 
 ---
 
