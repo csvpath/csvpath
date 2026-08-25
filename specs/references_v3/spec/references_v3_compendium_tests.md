@@ -273,12 +273,6 @@ entirely.)
 
 ## 5. Functions
 
-**Note before this section**: `#### 5.4` appears twice in the compendium
-(line 543, "self-documenting/.md output," and line 894, "at most one
-pointer per chain, per nesting level") — same class of numbering slip as
-the earlier duplicate `4.2`. The second occurrence is mapped below under
-its own heading, "5.4 (second occurrence)," pending a real renumber.
-
 #### 5.1
 - `test_reference_grammar_3.py`, `test_reference_3.py::TestFunctionCall3`
   (form/argument-count parsing, exercised throughout)
@@ -291,7 +285,7 @@ its own heading, "5.4 (second occurrence)," pending a real renumber.
 - `functions/test_reference_function_factory_3.py` (name-keyed registry
   lookup, exercised via every function's own construction test)
 
-#### 5.4 (first occurrence — "self-documenting/.md output")
+#### 5.4
 - `functions/test_function_3.py` (`describe()` returns a dict — tests the
   *existing* structured-data method). *(No test for actual markdown
   rendering — that capability doesn't exist; see bucket list
@@ -486,7 +480,7 @@ its own heading, "5.4 (second occurrence)," pending a real renumber.
   predicates) is enforced structurally by the grammar itself (`test_
   reference_grammar_3.py`, at-most-one-argument parsing).
 
-#### 5.4 (second occurrence — "at most one pointer per chain, per nesting level")
+#### 5.44
 - `functions/test_reference_function_factory_3.py::TestBuildChain::test_two_pointers_in_the_same_chain_raises`
   (the illegal same-level case); `test_results_reference_finder_3.py::test_errors_with_idchain_filters_to_matching_source`
   (the legal nested case, `:errors(:idchain(...))`)
