@@ -6,6 +6,30 @@ conversation while working on references v3 — the single place to check
 mid-conversation or mid-code. Remove/check off an item once it's actually
 built, rather than leaving it to rot.
 
+## "Pure value" date/time functions (5.29) — only `:date()` exists, 10 of 11 missing
+
+Found 2026-08-24 (Phase 1 compendium review). The compendium lists eleven
+"dumb value-producing functions": `:year()`, `:month()`, `:month_name()`,
+`:day()`, `:day_name()`, `:hour()`, `:hour_24()`, `:minute()`, `:second()`,
+`:yesterday()`, `:today()`, `:date(...)`. Checked all eleven directly —
+only `:date()` is registered. `:yesterday()` was already named individually
+in this list's "Functions" section; the other nine were not previously
+tracked at all. Note `:date()` doesn't need to expand to cover the others'
+jobs — these are genuinely separate, smaller-grained accessors (year vs.
+month vs. day-of-week etc.), not overlapping with what `:date()` already
+does.
+
+## Predicate support functions (5.31) — only `:having()` exists, 7 of 8 missing
+
+Found 2026-08-24 (Phase 1 compendium review). The compendium lists eight
+predicate-support functions: `:true()`, `:false()`, `:none()`,
+`:not_none()`, `:empty()`, `:not_empty()`, `:regex(/.../)`, `:having(...)`.
+Checked all eight — only `:having()` exists. `:not_none()`/`:regex()` are
+already tracked individually elsewhere on this list (the predicate-
+argument gate mechanism, and the grammar/argument-type gaps section,
+respectively) — not double-counted here. `:true()`/`:false()`/`:none()`/
+`:empty()`/`:not_empty()` are new, not previously tracked anywhere.
+
 ## `:printouts()` and `:log()` file accessors — not built
 
 Found 2026-08-24 (Phase 1 compendium review, item 5.9). The compendium
