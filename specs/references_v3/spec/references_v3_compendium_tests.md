@@ -270,3 +270,223 @@ entirely.)
   own here since it doesn't apply to this specific example (`:last()`
   already guarantees exactly one match) — see 4.3's own not-yet-built
   note for where that general rule actually needs covering.
+
+## 5. Functions
+
+**Note before this section**: `#### 5.4` appears twice in the compendium
+(line 543, "self-documenting/.md output," and line 894, "at most one
+pointer per chain, per nesting level") — same class of numbering slip as
+the earlier duplicate `4.2`. The second occurrence is mapped below under
+its own heading, "5.4 (second occurrence)," pending a real renumber.
+
+#### 5.1
+- `test_reference_grammar_3.py`, `test_reference_3.py::TestFunctionCall3`
+  (form/argument-count parsing, exercised throughout)
+
+#### 5.2
+- `test_reference_3.py::TestFunctionCall3`, `TestVariable3`, `TestRegex3`,
+  `TestStar3` (one test family per argument kind)
+
+#### 5.3
+- `functions/test_reference_function_factory_3.py` (name-keyed registry
+  lookup, exercised via every function's own construction test)
+
+#### 5.4 (first occurrence — "self-documenting/.md output")
+- `functions/test_function_3.py` (`describe()` returns a dict — tests the
+  *existing* structured-data method). *(No test for actual markdown
+  rendering — that capability doesn't exist; see bucket list
+  "`Function3.describe()` has no markdown-rendering capability" item.)*
+
+#### 5.5
+- `test_reference_3.py::TestResolveKind` (the four/three-category split is
+  really `resolve_kind`'s three values plus the not-yet-declarative
+  "file/well-known-file accessor" category — see bucket list
+  "`resolve_kind`'s hardcoded name-tuple dispatch" item)
+
+#### 5.6
+- `test_files_reference_finder_3.py`/`test_results_reference_finder_3.py`
+  (the "more than one candidate + content accessor" guards, e.g.
+  `TestManifestCombinedWithNameThree`-style tests) — note this rule is
+  mid-migration per 4.3's own not-yet-built query()/resolve() split; the
+  *behavior* 5.6 describes is tested today via `query()`-time raises that
+  are slated to move to `resolve()`-time
+
+#### 5.7
+- *(no test yet, by definition — this is the field-accessor-coverage audit
+  itself; see bucket list "Field-accessor coverage against real manifest
+  fields — audited 2026-08-24" item, 28/82 built)*
+
+#### 5.8
+- Doc pointer only, not independently testable.
+
+#### 5.9
+- `tests/references/functions/well_known_files/` (one test file per
+  built accessor). *(`:printouts()`/`:log()` have no test — not built;
+  see bucket list item.)*
+
+#### 5.10
+- `test_files_reference_finder_3.py`/`test_csvpaths_reference_finder_3.py`/
+  `test_results_reference_finder_3.py` (per-instance/per-run/per-group
+  manifest.json existence, exercised throughout)
+
+#### 5.11
+- `functions/well_known_files/test_definition_3.py` (optional/absent
+  `definition.json` handling)
+
+#### 5.12
+- `test_files_reference_finder_3.py::TestGlobalArrivalsLedger` (bare
+  `:manifest()`), `TestGlobalArrivalsLedgerOrdinalIndexing` (`:last()`
+  combined) — the exact two examples given here
+
+#### 5.13
+- *(no test yet — `:on_arrival(:not_none())` predicate-argument mechanism
+  is not built; see bucket list "Predicate-argument field accessors"
+  item)*
+
+#### 5.14
+- Exercised implicitly wherever a finder test covers a missing/absent
+  manifest or definition file — no single test isolates all three listed
+  cases together.
+
+#### 5.15
+- `test_files_reference_finder_3.py`/`test_csvpaths_reference_finder_3.py`/
+  `test_results_reference_finder_3.py` (manifest shape per schema,
+  exercised via real fixture data throughout)
+
+#### 5.16
+- `functions/well_known_files/test_manifest_3.py`,
+  `test_files_reference_finder_3.py::TestManifestCombinedWithNameThree`
+  (all three worked examples, already confirmed live earlier this pass)
+
+#### 5.17
+- `:before()`/`:after()` — *(no test yet, not built)*. `:from()`/`:to()`/
+  `:index()`/`:last()`/`:first()` — exercised extensively throughout all
+  three finders' own range/pointer tests.
+
+#### 5.18
+- No direct test (conceptual framing) — the underlying claim (positional
+  ordering reflects arrival order) is tested via `_run_dir_sort_key`
+  behavior and the FILES/RESULTS worked examples (3.22/3.23's tests).
+
+#### 5.19
+- Date-mode `:from()`/`:to()` tests across all three finders (arrival/
+  load/run date filtering)
+
+#### 5.20
+- `test_csvpaths_reference_finder_3.py` (statement-range `:from()`/`:to()`
+  tests — index-mode only, date-mode explicitly rejected there)
+
+#### 5.21
+- No direct test — this is the conceptual Anchor/Direction/Stepping
+  framework, not itself a behavioral claim.
+
+#### 5.22
+- `test_files_reference_finder_3.py`/`test_csvpaths_reference_finder_3.py`/
+  `test_results_reference_finder_3.py` date-mode range tests (anchors);
+  `:yesterday()` itself has *(no test yet — not built)*.
+
+#### 5.23
+- Covered by the same `:from()`/`:to()`/`:before()`/`:after()` tests as
+  5.17 — `:before()`/`:after()` still *(no test yet — not built)*.
+
+#### 5.24
+- `test_files_reference_finder_3.py`/`test_csvpaths_reference_finder_3.py`/
+  `test_results_reference_finder_3.py` `:index()`/range-bound tests
+
+#### 5.25
+- `test_reference_finder_3.py` (`_apply_range` negative-bound handling,
+  including the `end == -1` special case this example relies on)
+
+#### 5.26
+- *(no test yet, deliberately deferred — David: raise in the first
+  release since there's no demand; not yet built either way, not on the
+  bucket list per his own explicit "defer the decision" call)*
+
+#### 5.27
+- Exercised via the mixed index/date-mode rejection tests in all three
+  finders (`_apply_range` vs. `_apply_manifest_date_range` mixing checks)
+
+#### 5.28
+- Doc note (TBD), not a testable claim.
+
+#### 5.29
+- `functions/selectors/test_date_3.py` (`:date()` only). *(`:year()`,
+  `:month()`, `:month_name()`, `:day()`, `:day_name()`, `:hour()`,
+  `:hour_24()`, `:minute()`, `:second()`, `:yesterday()`, `:today()` all
+  have no test — not built; see bucket list "pure value date/time
+  functions" item, 1/11 built.)*
+
+#### 5.30
+- *(no test yet — the whole worked example needs the FILES `'*'`-
+  traversal + predicate-argument mechanism; see bucket list "'*'
+  traversal — FILES" worked-example entry, confirmed four independent
+  fixes needed)*
+
+#### 5.31
+- `functions/selectors/test_having_3.py` (`:having()` only). *(`:true()`,
+  `:false()`, `:none()`, `:not_none()`, `:empty()`, `:not_empty()`,
+  `:regex()` all have no test — not built; see bucket list "predicate
+  support functions" item, 1/8 built.)*
+
+#### 5.32
+- No direct test — conceptual framing (Point/Narrow/Match), demonstrated
+  by 5.33-5.36's own examples.
+
+#### 5.33
+- `test_files_reference_finder_3.py`/`test_csvpaths_reference_finder_3.py`/
+  `test_results_reference_finder_3.py` `:index(n)` tests
+
+#### 5.34
+- `functions/selectors/test_having_3.py`,
+  `test_csvpaths_reference_finder_3.py` (`:having("...")` filtering)
+
+#### 5.35
+- *(no test yet — `:error_count()` is not built, and the chained-gate
+  mechanism itself is not built; see bucket list "Predicate-argument
+  field accessors" item's confirmed 5-example acceptance criteria)*
+
+#### 5.36
+- `test_results_reference_finder_3.py::test_errors_with_idchain_filters_to_matching_source`
+  (the exact example given here — nested filter, already shipped)
+
+#### 5.37
+- `test_reference_3.py::TestInterpolatedString3`,
+  `test_reference_transformer_3.py::TestStringInterpolation`,
+  `test_reference_parser_3.py::TestStringInterpolationThroughParser`
+
+#### 5.38
+- *(no test yet for actual evaluation — parsing/validation only, per
+  5.38's own text; see bucket list "`{...}` interpolation evaluation"
+  item)*
+
+#### 5.39
+- `functions/test_function_3.py` (`ROLE` self-reporting, exercised via
+  every function's own `ROLE` class attribute and `build_chain()`'s
+  pointer-counting logic)
+
+#### 5.40
+- *(no test yet — `:uuid("...")`/`:fingerprint()` bare-vs-argued dual
+  selector behavior beyond `:fingerprint()`'s own existing one-off case is
+  not built; see bucket list "Function self-documentation — dual
+  selector/value-accessor behavior" item)*
+
+#### 5.41
+- Exercised throughout all three finders' own name_one pointer-resolution
+  tests.
+
+#### 5.42
+- `test_results_reference_finder_3.py::test_errors_with_idchain_filters_to_matching_source`
+  (the file-vs-value distinction this describes, using the same real
+  `:idchain("add[0]")` example)
+
+#### 5.43
+- No direct test — this is a design-philosophy note (deliberate
+  simplicity, no multi-key predicates), not itself a behavioral claim.
+  The constraint it describes (no two-arg functions, no combined
+  predicates) is enforced structurally by the grammar itself (`test_
+  reference_grammar_3.py`, at-most-one-argument parsing).
+
+#### 5.4 (second occurrence — "at most one pointer per chain, per nesting level")
+- `functions/test_reference_function_factory_3.py::TestBuildChain::test_two_pointers_in_the_same_chain_raises`
+  (the illegal same-level case); `test_results_reference_finder_3.py::test_errors_with_idchain_filters_to_matching_source`
+  (the legal nested case, `:errors(:idchain(...))`)
