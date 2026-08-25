@@ -38,22 +38,35 @@ class ReferenceFunctionFactory:
         from .well_known_files.vars_3 import Vars3
 
         from .fields.actual_data_file_3 import ActualDataFile3
+        from .fields.archive_3 import Archive3
         from .fields.completed_3 import Completed3
         from .fields.destinations_3 import Destinations3
+        from .fields.error_count_3 import ErrorCount3
         from .fields.file_fingerprints_3 import FileFingerprints3
+        from .fields.file_path_3 import FilePath3
         from .fields.files_complete_3 import FilesComplete3
         from .fields.fingerprint_3 import Fingerprint3
+        from .fields.group_file_3 import GroupFile3
         from .fields.home_3 import Home3
         from .fields.hostname_3 import Hostname3
         from .fields.identity_3 import Identity3
+        from .fields.instance_index_3 import InstanceIndex3
         from .fields.manifest_path_3 import ManifestPath3
         from .fields.mark_3 import Mark3
         from .fields.method_3 import Method3
+        from .fields.named_file_fingerprint_3 import NamedFileFingerprint3
         from .fields.named_file_home_3 import NamedFileHome3
+        from .fields.named_file_last_change_3 import NamedFileLastChange3
         from .fields.named_file_name_3 import NamedFileName3
+        from .fields.named_file_path_3 import NamedFilePath3
+        from .fields.named_file_size_3 import NamedFileSize3
+        from .fields.named_file_uuid_3 import NamedFileUuid3
+        from .fields.named_paths_3 import NamedPaths3
         from .fields.named_paths_count_3 import NamedPathsCount3
+        from .fields.named_paths_group_3 import NamedPathsGroup3
         from .fields.named_paths_identities_3 import NamedPathsIdentities3
         from .fields.named_paths_name_3 import NamedPathsName3
+        from .fields.named_paths_uuid_3 import NamedPathsUuid3
         from .fields.named_results_name_3 import NamedResultsName3
         from .fields.on_arrival_3 import OnArrival3
         from .fields.origin_3 import Origin3
@@ -61,6 +74,9 @@ class ReferenceFunctionFactory:
         from .fields.preceding_instance_identity_3 import (
             PrecedingInstanceIdentity3,
         )
+        from .fields.reference_field_3 import ReferenceField3
+        from .fields.run_dir_3 import RunDir3
+        from .fields.run_method_3 import RunMethod3
         from .fields.run_uuid_3 import RunUuid3
         from .fields.scripts_3 import Scripts3
         from .fields.serial_3 import Serial3
@@ -70,6 +86,7 @@ class ReferenceFunctionFactory:
         from .fields.time_3 import Time3
         from .fields.time_completed_3 import TimeCompleted3
         from .fields.transfers_3 import Transfers3
+        from .fields.type_3 import Type3
         from .fields.username_3 import Username3
         from .fields.uuid_3 import Uuid3
         from .fields.valid_3 import Valid3
@@ -136,6 +153,23 @@ class ReferenceFunctionFactory:
             FileFingerprints3.NAME: FileFingerprints3,
             SourceModePreceding3.NAME: SourceModePreceding3,
             PrecedingInstanceIdentity3.NAME: PrecedingInstanceIdentity3,
+            Type3.NAME: Type3,
+            ReferenceField3.NAME: ReferenceField3,
+            FilePath3.NAME: FilePath3,
+            Archive3.NAME: Archive3,
+            GroupFile3.NAME: GroupFile3,
+            NamedPaths3.NAME: NamedPaths3,
+            ErrorCount3.NAME: ErrorCount3,
+            NamedPathsUuid3.NAME: NamedPathsUuid3,
+            NamedFileUuid3.NAME: NamedFileUuid3,
+            NamedFilePath3.NAME: NamedFilePath3,
+            NamedFileSize3.NAME: NamedFileSize3,
+            NamedFileLastChange3.NAME: NamedFileLastChange3,
+            NamedFileFingerprint3.NAME: NamedFileFingerprint3,
+            RunDir3.NAME: RunDir3,
+            InstanceIndex3.NAME: InstanceIndex3,
+            NamedPathsGroup3.NAME: NamedPathsGroup3,
+            RunMethod3.NAME: RunMethod3,
         }
 
     @classmethod

@@ -55,39 +55,66 @@ which actually prints/renders formatted (optionally markdown) output. The
 underlying structured data `describe()` returns is a reasonable
 foundation, but the actual rendering layer 5.4 requires doesn't exist yet.
 
-## Field-accessor coverage against real manifest fields — audited 2026-08-24, majority not built
+## Field-accessor coverage against real manifest fields — Phase 2, in progress
 
 Compendium 5.7: "There must be a field accessor function for every field
 available in any of the manifest.json files." David pointed to
 `specs/references_v3/spec/references_v3_required_manifest_functions.md`
-as the final, authoritative spec for exactly this — nine manifest/
-definition schemas, every field named, each assigned a specific v3
-function name in its own "References v3 Function" column. That document
-made the audit actually doable: extracted all 82 distinct function names
-it assigns and checked each directly against the real function registry.
+as the final, authoritative spec for exactly this.
 
-**Result: 28 exist, 54 do not.** A majority gap, not an edge case. Some
-highlights, not the full list (see the source doc itself for the complete,
-authoritative set):
-- Widely-expected basics missing: `:template()`, `:reference()`,
-  `:error_count()`, `:type()`, `:archive()`/`:archive_name()`.
-- `:file_home()` and friends — already covered by the separate `:home()`
-  field-read-split item above, not double-counted here.
-- Whole families entirely unbuilt: `:script_on_complete_*()` (4),
-  `:webhooks_on_complete_*()` (4), `:transfer_on_complete_*()` (4),
-  `:source_*()`/`:destination_*()` credential accessors (8) — all of
-  `definition.json`'s scripts/webhooks/transfers/sources/destinations
-  detail-level access.
-- Global-ledger-specific fields: `:file_manifest()`, `:group_manifest()`,
-  `:named_files_root()`, `:named_paths_root()`, `:run_dir()`,
-  `:run_method()`, `:identities()`/`:identities_count()`,
-  `:instance_index()`, `:fingerprints()` (plural, the instance-level
-  multi-file-fingerprint field, distinct from the already-built singular
-  `:fingerprint()`).
+**First audit (name-matching against the doc's suggested function
+names) said 28/82 built.** A second, more rigorous audit (2026-08-25,
+introspecting every registered function's actual `KEY` mapping — real
+datatype+literal-key pairs — rather than trusting the doc's suggested
+names) found the true picture was better than that: several "missing"
+names were already covered under a *different* existing name than the
+doc suggested (`:origin()` already covers Table 1's `from`/Table 3's
+`source_path`, both suggested as `:source()`; `:completed()`/`:valid()`/
+`:files_complete()` already have both instance- and run-level keys). Two
+real naming collisions were also found and resolved with David:
+`:file()` already means something else (an arbitrary RESULTS output
+file) — Table 1's `file` field is now `:file_path()` instead, matching
+Table 2's own existing name for the same concept; `:status()` is
+confirmed fine to reuse across FILES/RESULTS (same mechanism `:uuid()`/
+`:home()` already use — one name, per-datatype `KEY`, disambiguated by
+the datatype in the reference string itself).
 
-This is now the tracked, correct scope of 5.7's requirement — not a
-"needs auditing someday" placeholder anymore. Building all 54 is a real,
-substantial chunk of Phase 2 work in its own right, not a quick pass.
+**Built 2026-08-25** (18 new functions, covering all six *per-entity*
+tables — 1, 3, 5, 6, 8, 9): `:type()`, `:reference()`, `:file_path()`
+(Table 1); `:archive()`, `:group_file()`, `:named_paths()` (Table 3);
+`:error_count()`, `:named_paths_uuid()`, `:named_file_uuid()`,
+`:named_file_path()`, `:named_file_size()`, `:named_file_last_change()`,
+`:named_file_fingerprint()` (Table 5); `:run_dir()`, `:instance_index()`
+(Table 6, `:archive()`/`:named_paths_uuid()` above also cover this
+table's own scope); `:named_paths_group()`, `:run_method()` (Table 8).
+All registered, tested (`tests/references/functions/fields/test_*.py`,
+one file each), full `tests/references/` suite passing (1150) after.
+
+**Still deferred, not yet built:**
+- **The three *global-ledger* tables (2, 4, 7)** — deliberately held back
+  from this batch. Several of their fields share a concept with an
+  already-built per-entity field but use a *different literal key*
+  (e.g. Table 2's `origin_path` vs. Table 1's `from`, both meaning "where
+  this came from") — extending an existing function to cover this needs
+  the same-datatype-different-key-by-scope mechanism, not just a new
+  `KEY` entry. Needs its own pass.
+- **`:template()`** — genuinely needs a new mechanism (source picked by
+  *position*: bare/no-pointer at name_one reads `definition.json`'s
+  default, alongside a real pointer reads that specific version's
+  manifest snapshot), plus RESULTS is blocked on a `results_registrar.py`
+  schema gap (the run manifest doesn't store its own `template` at all,
+  confirmed by David — a core-Framework gap, not something references-v3
+  can fix alone). Not part of this batch.
+- **`sources`/`destinations`/`transfers`/`scripts`/`webhooks` sub-field
+  accessors** (Table 8/9) — held pending doc corrections. David fixed
+  the webhooks field-name miscopy, the transfers wrong-function-names
+  copy-paste, and `destinations.<name>.port`'s host/port mixup — but
+  **`sources.<name>.port` still says `:source_host(str)`, not
+  `:source_port(str)`** (line 251 as of 2026-08-25) — one more small fix
+  needed there before this sub-batch is ready to build.
+
+This is real, ongoing Phase 2 work, not a "someday" placeholder — update
+this entry as further batches land.
 
 ## `ReferenceExpression3` has no query()-only mode — not built
 
