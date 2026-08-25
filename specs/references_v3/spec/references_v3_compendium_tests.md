@@ -477,10 +477,65 @@ entirely.)
 - No direct test — this is a design-philosophy note (deliberate
   simplicity, no multi-key predicates), not itself a behavioral claim.
   The constraint it describes (no two-arg functions, no combined
-  predicates) is enforced structurally by the grammar itself (`test_
-  reference_grammar_3.py`, at-most-one-argument parsing).
+  predicates) is enforced structurally by the grammar itself
+  (`test_references_3_grammar.py`, at-most-one-argument parsing).
 
 #### 5.44
 - `functions/test_reference_function_factory_3.py::TestBuildChain::test_two_pointers_in_the_same_chain_raises`
   (the illegal same-level case); `test_results_reference_finder_3.py::test_errors_with_idchain_filters_to_matching_source`
   (the legal nested case, `:errors(:idchain(...))`)
+
+## 6. Grammar (`csvpath/references/reference_grammar_3.py`)
+
+#### 6.1
+- No dedicated "LALR works" test — proven by construction itself
+  (`Lark(REFERENCE_GRAMMAR_3, parser="lalr")` in `reference_grammar_3.py`
+  — if LALR failed to compile this grammar, every test in
+  `tests/references/` would fail at parse time, not just a dedicated
+  one). `parse_interactive()`-based type-ahead itself is *(no test yet —
+  not built; see bucket list "Type-ahead" item)*.
+
+#### 6.2
+- `test_reference_transformer_3.py`, `test_reference_parser_3.py::TestConstruction`
+
+#### 6.3
+- `functions/test_reference_function_factory_3.py::TestBuild`
+  (registry lookup/dispatch), the `_Wraps3` custom-function test in the
+  same file (`add_function(cls)` — confirmed real, exists at
+  `reference_function_factory_3.py:142`)
+
+#### 6.4
+- `test_reference_finder_3.py::TestConstruction`, `TestResolve`
+  (query/resolve two-stage shape, shared ABC behavior)
+
+#### 6.5
+- `test_reference_finder_3.py::test_resolve_from_list_narrows_then_only_extracts_the_selection`,
+  `test_resolve_from_a_results3_does_not_requery`;
+  `test_reference_results_3.py::test_trimmed_results_can_be_handed_to_resolve_from`
+
+#### 6.6
+- `test_reference_results_3.py::TestReferenceResult3` (four-field
+  construction/validation), `TestReferenceResults3` (container behavior)
+
+#### 6.7
+- `test_reference_results_3.py::test_deduplicated_collapses_exact_duplicates`,
+  `test_deduplicated_uses_full_equality_not_just_path`,
+  `test_deduplicated_preserves_first_occurrence_order`
+
+#### 6.8
+- Exercised throughout — every finder test constructs via a
+  `ReferenceParser3`, no single isolated test needed beyond that.
+
+#### 6.9
+- Confirmed piecemeal throughout this Phase 1 pass and earlier sessions:
+  FILES/CSVPATHS/RESULTS rows via each finder's own `query()` tests;
+  Rule 1a/1b rows via the global-ledger test classes cited under 4.4/4.7
+  above.
+
+---
+
+**End of Phase 1 first pass** (2026-08-25) — all six numbered sections
+of the compendium have been reviewed block by block and mapped here.
+Remaining work: the bucket list itself (Phase 2 — closing the gaps found
+during this pass), plus re-verifying this map stays in sync as David's
+own editing continues.
