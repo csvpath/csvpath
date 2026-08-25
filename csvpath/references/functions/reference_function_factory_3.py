@@ -43,10 +43,12 @@ class ReferenceFunctionFactory:
         from .fields.destinations_3 import Destinations3
         from .fields.error_count_3 import ErrorCount3
         from .fields.file_fingerprints_3 import FileFingerprints3
+        from .fields.file_manifest_3 import FileManifest3
         from .fields.file_path_3 import FilePath3
         from .fields.files_complete_3 import FilesComplete3
         from .fields.fingerprint_3 import Fingerprint3
         from .fields.group_file_3 import GroupFile3
+        from .fields.group_manifest_3 import GroupManifest3
         from .fields.home_3 import Home3
         from .fields.hostname_3 import Hostname3
         from .fields.identity_3 import Identity3
@@ -170,6 +172,8 @@ class ReferenceFunctionFactory:
             InstanceIndex3.NAME: InstanceIndex3,
             NamedPathsGroup3.NAME: NamedPathsGroup3,
             RunMethod3.NAME: RunMethod3,
+            FileManifest3.NAME: FileManifest3,
+            GroupManifest3.NAME: GroupManifest3,
         }
 
     @classmethod

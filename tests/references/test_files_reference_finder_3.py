@@ -1446,6 +1446,64 @@ class TestFieldAccessorFunctions:
         results = finder.query()
         assert len(results.results) == 2
 
+    def test_type_and_reference_and_file_path(self):
+        manifest = [
+            {**RICH_MANIFEST[0], "type": "csv", "reference": "ref-aaaa"},
+        ]
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():type()', RICH_HOME, manifest
+        )
+        assert finder.resolve().results[0].data == "csv"
+
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():reference()', RICH_HOME, manifest
+        )
+        assert finder.resolve().results[0].data == "ref-aaaa"
+
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():file_path()', RICH_HOME, manifest
+        )
+        assert finder.resolve().results[0].data == manifest[0]["file"]
+
+
+class TestLedgerFallbackFieldAccessor:
+    # :file_manifest() has KEY = {} (RICH_MANIFEST's own entries never
+    # have this field -- confirmed, the named-file's own manifest has no
+    # self-reference to itself, see issue #261) and LEDGER_KEY pointing
+    # at the global ledger instead -- proves Function3.LEDGER_KEY's
+    # fallback mechanism actually reaches the ledger, not just that it
+    # is declared.
+    LEDGER = [
+        {
+            "uuid": "u-rich-2",
+            "file_manifest": "inputs/named_files/rich/manifest.json",
+        },
+    ]
+
+    def test_field_missing_from_own_manifest_falls_back_to_ledger_entry(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:last():file_manifest()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            ledger=self.LEDGER,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == "inputs/named_files/rich/manifest.json"
+
+    def test_no_matching_ledger_entry_gives_none(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():file_manifest()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            ledger=self.LEDGER,
+        )
+        # RICH_MANIFEST's first entry is u-rich-1, which has no matching
+        # LEDGER entry (only u-rich-2 does) -- falls through to None
+        # rather than raising, same "absence is normal" treatment as
+        # every other field lookup.
+        results = finder.resolve()
+        assert results.results[0].data is None
+
 
 class TestDefinitionFieldAccessorFunctions:
     # :on_arrival()/:sources() are SOURCE="definition" -- resolved
@@ -1482,6 +1540,23 @@ class TestDefinitionFieldAccessorFunctions:
         )
         results = finder.resolve()
         assert results.results[0].data == {"a": {"address": "localhost", "port": 22}}
+
+    def test_named_paths_group_and_run_method(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():named_paths_group()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "order validations"
+
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():run_method()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "collect_paths"
 
     def test_never_configured_gives_none_not_an_error(self):
         finder = _finder(

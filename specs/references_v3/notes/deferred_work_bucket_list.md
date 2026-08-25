@@ -6,7 +6,7 @@ conversation while working on references v3 — the single place to check
 mid-conversation or mid-code. Remove/check off an item once it's actually
 built, rather than leaving it to rot.
 
-## Field-accessor fallback to the global ledger entry — not built, needed for the global-ledger tables
+## Field-accessor fallback to the global ledger entry — BUILT 2026-08-25 (FILES/CSVPATHS), RESULTS still open
 
 Found 2026-08-25 while starting the deferred global-ledger batch (Tables
 2/4/7 of `references_v3_required_manifest_functions.md`). Live-tested
@@ -14,50 +14,63 @@ first, not assumed: built a fixture where the global ledger's own entry
 for a run said `named_file_name = "LEDGER_VALUE"` and the run's own
 manifest said `"RUN_MANIFEST_VALUE"` — both `$*.results.:last():
 named_file_name()` and `$acme.results.:last():named_file_name()`
-returned the *run's own* value, never the ledger's. Confirmed: **no
-existing code path reads a field directly off a Rule-1a/1b-selected
-ledger entry** — every field accessor resolves to a real matched entity
-and re-reads *that entity's own* manifest.json, regardless of how the
+returned the *run's own* value, never the ledger's. Confirmed: no
+existing code path read a field directly off a Rule-1a/1b-selected
+ledger entry — every field accessor resolved to a real matched entity
+and re-read *that entity's own* manifest.json, regardless of how the
 entity was found.
 
-Several Table 2/4/7 fields only exist in the *ledger's* own entries, with
-no per-entity equivalent at all (e.g. Table 2's `file_manifest`, a
-pointer *from* the ledger entry *to* the named-file's own manifest — the
-named-file's own manifest doesn't self-reference this at all, see issue
-#261 for the closest related gap; Table 4's `paths_manifest`; Table 7's
-`archive_path`/`named_files_root`/`named_paths_root`).
-
-**David, 2026-08-25 — the actual design principle, not a one-off
-workaround**: "when we are working with any item (registered, loaded, or
-run) we are talking about a single conceptual item that owns all its
-data -- if we have to do more work to bring all that data together then
-we do, but that is our problem, not the user's problem." So the fix
-isn't a narrow `SOURCE="ledger"` mode that only works for the bare
-Rule-1a/1b shape — it's a general fallback: **any field accessor, for any
-matched entity, however it was found, checks the entity's own manifest
+**David's design principle, not a one-off workaround**: "when we are
+working with any item (registered, loaded, or run) we are talking about
+a single conceptual item that owns all its data -- if we have to do more
+work to bring all that data together then we do, but that is our
+problem, not the user's problem." So the fix is a general fallback: any
+field accessor, for any matched entity, checks the entity's own manifest
 first and falls back to that same entity's corresponding global-ledger
-entry (looked up by uuid) if the field isn't there.** A caller asking for
-`origin_path` on a specific FILES version shouldn't need to know that
-field only lives in the global ledger, not the named-file's own
-manifest — the finder does that assembly work, not the caller.
+entry (looked up by uuid) if the field isn't there.
 
-Confirmed as the agreed design (not yet built). Needs, before building:
-- Extend the shared `_extract_data()`/`_extract_field_value()` path (all
-  three finders) with the fallback-to-ledger-entry-by-uuid step.
-- A way for a function's `KEY` dict to express *both* the per-entity
-  spelling and the ledger's own spelling for the same concept, for the
-  cases where they differ (e.g. Table 1's `from` vs. Table 2's
-  `origin_path`) — `KEY` alone isn't enough for those; something like a
-  parallel `LEDGER_KEY` dict, checked only on fallback, is the likely
-  shape but not yet designed in detail.
-- This is genuinely cross-cutting (new step in core extraction logic
-  shared by all three finders), not "write more field-accessor classes"
-  — treat as its own small design/build pass, not folded into the
-  ordinary per-table batches.
+**Built**: `Function3.LEDGER_KEY` (`function_3.py`) — a parallel `{datatype:
+dotted key path}` dict, checked only when the entity's own manifest
+lookup comes back `None`. New shared ABC helper
+`ReferenceFinder3._extract_field_value_with_ledger_fallback()`
+(`reference_finder_3.py`), taking a lazy `ledger_entry_getter` callable
+so the ledger is only fetched/searched when actually needed. Wired into
+`FilesReferenceFinder3`/`CsvpathsReferenceFinder3._extract_data()`
+(both match ledger entries by `uuid`, reusing the existing
+`_find_manifest_entry_by_uuid` helper). Proven with two real, LEDGER_KEY-
+only functions: `:file_manifest()` (FILES, Table 2 — a named-file's own
+manifest never self-references its path at all, see issue #261) and
+`:group_manifest()` (CSVPATHS, Table 4, same shape). Both have `KEY = {}`
+— nothing to find in the entity's own manifest, `LEDGER_KEY` is the only
+source. Integration-tested end to end (not just unit-level), including a
+"no matching ledger entry" case confirming it falls through to `None`
+rather than raising.
 
-This unblocks most of the remaining Table 2/4/7 field-accessor work once
-built — see the "Field-accessor coverage" entry above for what's already
-done and what's still deferred pending this mechanism.
+**Still open**: RESULTS' own global ledger (Table 7, the Archive Run
+Manifest) is not wired into this mechanism yet — it is per-*instance*
+(one entry per statement execution, keyed by `run_uuid` + `identity`,
+not a single `uuid`), so it needs its own matching logic in
+`ResultsReferenceFinder3`, not a direct reuse of
+`_find_manifest_entry_by_uuid`. Table 7's own LEDGER_KEY-only fields
+(`archive_path`, `named_files_root`, `named_paths_root`) are still
+unbuilt pending this.
+
+**A second, real bug found and fixed along the way**: `Reference3.
+resolve_kind`'s hardcoded `_METADATA_FIELD_FUNCTIONS` tuple did not
+recognize *any* of the 19 field-accessor functions built in this whole
+session's Phase 2 work (the 17 from the per-entity batch, plus
+`file_manifest`/`group_manifest`) — confirmed live, references using them
+were silently misclassified as `FIRST_PARTY` instead of `METADATA_FIELD`,
+so none of them could actually resolve end to end despite passing their
+own isolated unit tests. This is the exact hardcoded-dispatch debt
+already flagged in the `resolve_kind` bucket item above — fixed for now
+by adding all 19 names to the existing tuple (consistent with how every
+other field accessor is registered today), not by fixing the underlying
+mechanism, which is still its own separate, undecided item. **Lesson
+for future batches: a function's own unit test (metadata + `check_valid()`)
+does not prove it actually resolves through a real reference — add at
+least one live, end-to-end `resolve()` test per new function, not just
+class-level tests.**
 ## "Pure value" date/time functions (5.29) — only `:date()` exists, 10 of 11 missing
 
 Found 2026-08-24 (Phase 1 compendium review). The compendium lists eleven

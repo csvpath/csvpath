@@ -1587,6 +1587,69 @@ class TestFieldAccessorFunctions:
         ).resolve()
         assert instance_time.results[0].data == "2026-01-01T00:00:05+00:00"
 
+    def test_run_scope_fields_added_2026_08_25(self, tmp_path):
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json",
+            {
+                "run_uuid": "run1-uuid",
+                "error_count": 3,
+                "named_paths_uuid": "paths-uuid-1",
+                "named_file_uuid": "file-uuid-1",
+                "named_file_path": "/inputs/named_files/widgets/data.csv",
+                "named_file_size": 1024,
+                "named_file_last_change": "2026-01-01T00:00:00+00:00",
+                "named_file_fingerprint": "deadbeef",
+            },
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        def _val(fn):
+            return _finder(
+                f"$widgets.results.:first():{fn}()", str(tmp_path)
+            ).resolve().results[0].data
+
+        assert _val("error_count") == 3
+        assert _val("named_paths_uuid") == "paths-uuid-1"
+        assert _val("named_file_uuid") == "file-uuid-1"
+        assert _val("named_file_path") == "/inputs/named_files/widgets/data.csv"
+        assert _val("named_file_size") == 1024
+        assert _val("named_file_last_change") == "2026-01-01T00:00:00+00:00"
+        assert _val("named_file_fingerprint") == "deadbeef"
+
+    def test_instance_scope_fields_added_2026_08_25(self, tmp_path):
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            run_dir / "company_names" / "manifest.json",
+            {
+                "uuid": "inst1-uuid",
+                "run": "2026-01-01_00-00-00",
+                "instance_index": 2,
+                "named_paths_uuid": "paths-uuid-1",
+                "archive_name": "archive-2026",
+            },
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        def _val(fn):
+            return (
+                _finder(
+                    f"$widgets.results.:first().company_names:{fn}()",
+                    str(tmp_path),
+                )
+                .resolve()
+                .results[0]
+                .data
+            )
+
+        assert _val("run_dir") == "2026-01-01_00-00-00"
+        assert _val("instance_index") == 2
+        assert _val("named_paths_uuid") == "paths-uuid-1"
+        assert _val("archive") == "archive-2026"
+
 
 class TestWellKnownFileAccessors:
     # :errors()/:vars()/:meta() resolve to parsed JSON; :data()/

@@ -80,6 +80,25 @@ class Function3:
     SOURCE: str = None
     KEY: dict = {}
 
+    #
+    # optional fallback for SOURCE == "manifest" field accessors only --
+    # {datatype: dotted key path} within that same entity's own global-
+    # ledger entry, consulted only when KEY's own lookup in the entity's
+    # own manifest/definition comes back None. Added 2026-08-25: some
+    # fields exist only in the global ledger, never in the entity's own
+    # manifest (e.g. a named-file's own manifest never records a pointer
+    # back to itself -- see file_manifest_3.py, and issue #261 for the
+    # related core-Framework gap this works around at the reference
+    # layer). Per David's own framing: a reference resolves one
+    # conceptual entity, not "one manifest entry here, another there" --
+    # the caller should not need to know which physical file a field
+    # actually lives in. Left empty ({}) for every function that does
+    # not need it -- the common case, where a field is never absent
+    # from its own entity's manifest. See ReferenceFinder3's own shared
+    # fallback helper for how this is actually consulted.
+    #
+    LEDGER_KEY: dict = {}
+
     def __init__(self, *, arg: Any = None) -> None:
         self._arg = arg
 

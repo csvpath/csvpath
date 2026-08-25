@@ -1066,6 +1066,35 @@ class TestFieldAccessorFunctions:
         ).resolve()
         assert [r.data for r in results.results] == [2, 1]
 
+    def test_group_file(self):
+        results = _finder(
+            "$acme.csvpaths.:first():group_file()", RICH_MANIFEST
+        ).resolve()
+        assert results.results[0].data == GROUP_FILE_PATH
+
+    def test_named_paths(self):
+        results = _finder(
+            "$acme.csvpaths.:first():named_paths()", RICH_MANIFEST
+        ).resolve()
+        assert results.results[0].data == ["stmt text A", "stmt text B"]
+
+    def test_archive(self):
+        manifest = [
+            {**RICH_MANIFEST[0], "archive_name": "archive-2026"},
+        ]
+        results = _finder("$acme.csvpaths.:first():archive()", manifest).resolve()
+        assert results.results[0].data == "archive-2026"
+
+    def test_group_manifest_falls_back_to_the_global_ledger(self):
+        # group_manifest_3.py's KEY is empty -- the named-paths group's
+        # own manifest never has this field, only the global ledger does
+        # (see the shared LEDGER_KEY fallback mechanism this proves).
+        ledger = [{"uuid": "v1-uuid", "paths_manifest": "named_paths/acme/manifest.json"}]
+        results = _finder(
+            "$acme.csvpaths.:last():group_manifest()", RICH_MANIFEST, ledger=ledger
+        ).resolve()
+        assert results.results[0].data == "named_paths/acme/manifest.json"
+
     def test_function_not_legal_here_is_rejected_not_silently_degraded(self):
         # :mark()'s own DATATYPES is FILES-only, and it has no POSITIONS
         # entry for csvpaths at all -- added 2026-08-14: this now raises

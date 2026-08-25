@@ -856,12 +856,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
                         reference.root_major
                     )
                     entry = config.model_dump(exclude_none=True)
-                else:
-                    manifest = self.csvpaths.file_manager.get_manifest(
-                        reference.root_major
-                    )
-                    entry = self._find_manifest_entry_by_uuid(manifest, result.uuid)
-                return self._extract_field_value(entry, key_path)
+                    return self._extract_field_value(entry, key_path)
+                manifest = self.csvpaths.file_manager.get_manifest(
+                    reference.root_major
+                )
+                entry = self._find_manifest_entry_by_uuid(manifest, result.uuid)
+                return self._extract_field_value_with_ledger_fallback(
+                    entry=entry,
+                    key_path=key_path,
+                    function_cls=function_cls,
+                    datatype=reference.datatype,
+                    ledger_entry_getter=lambda: self._find_manifest_entry_by_uuid(
+                        self.csvpaths.file_manager.files_root_manifest, result.uuid
+                    ),
+                )
         raise ReferenceException3(
             f"FilesReferenceFinder3 does not yet support resolve_kind={kind!r} "
             "-- only :manifest()/:definition() and registered field-accessor "

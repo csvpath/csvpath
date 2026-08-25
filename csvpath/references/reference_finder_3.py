@@ -367,6 +367,36 @@ class ReferenceFinder3(ABC):
             value = value[segment]
         return value
 
+    @classmethod
+    def _extract_field_value_with_ledger_fallback(
+        cls,
+        *,
+        entry: dict | None,
+        key_path: str | None,
+        function_cls: type,
+        datatype: str,
+        ledger_entry_getter,
+    ) -> object:
+        """like _extract_field_value(), but for SOURCE == "manifest"
+        field accessors that also declare a Function3.LEDGER_KEY: if the
+        entity's own manifest entry does not have the field, falls back
+        to that same entity's own global-ledger entry instead of just
+        returning None -- added 2026-08-25, see Function3.LEDGER_KEY's
+        own docstring for why (some fields, e.g. a named-file's pointer
+        back to its own manifest, only exist in the ledger, never in the
+        entity's own manifest). `ledger_entry_getter` is a zero-arg
+        callable, called only if actually needed, so a normal field
+        lookup that succeeds against the entity's own manifest never
+        pays for fetching/searching the ledger at all."""
+        value = cls._extract_field_value(entry, key_path)
+        if value is not None:
+            return value
+        ledger_key_path = function_cls.LEDGER_KEY.get(datatype)
+        if ledger_key_path is None:
+            return None
+        ledger_entry = ledger_entry_getter()
+        return cls._extract_field_value(ledger_entry, ledger_key_path)
+
     @staticmethod
     def _find_field_function_call(functions: list) -> "FunctionCall3 | None":
         """returns the first function in `functions` that is a

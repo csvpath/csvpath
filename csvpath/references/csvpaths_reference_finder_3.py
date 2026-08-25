@@ -508,11 +508,19 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                         group_name
                     )
                     entry = config.model_dump(exclude_none=True)
-                else:
-                    _, entry = self._group_manifest_entry(
-                        reference.root_major, result.uuid
-                    )
-                return self._extract_field_value(entry, key_path)
+                    return self._extract_field_value(entry, key_path)
+                _, entry = self._group_manifest_entry(
+                    reference.root_major, result.uuid
+                )
+                return self._extract_field_value_with_ledger_fallback(
+                    entry=entry,
+                    key_path=key_path,
+                    function_cls=function_cls,
+                    datatype=reference.datatype,
+                    ledger_entry_getter=lambda: self._find_manifest_entry_by_uuid(
+                        self.csvpaths.paths_manager.paths_root_manifest, result.uuid
+                    ),
+                )
         if kind != Reference3.FIRST_PARTY:
             raise ReferenceException3(
                 f"CsvpathsReferenceFinder3 does not yet support "
