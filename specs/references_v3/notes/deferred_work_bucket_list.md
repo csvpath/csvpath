@@ -155,14 +155,27 @@ table's own scope); `:named_paths_group()`, `:run_method()` (Table 8).
 All registered, tested (`tests/references/functions/fields/test_*.py`,
 one file each), full `tests/references/` suite passing (1150) after.
 
+**Built 2026-08-25, second pass** — the ledger-fallback mechanism (see
+its own bucket-list entry above) plus two real Table 2/4 functions that
+needed it: `:file_manifest()`, `:group_manifest()`. Also fixed along the
+way: `resolve_kind`'s hardcoded dispatch tuple didn't recognize *any* of
+the 19 functions from the first pass, so none of them actually resolved
+end to end despite passing their own unit tests — added all 19 names,
+and added the missing integration tests. `tests/references/` now 1166
+passed, full suite 2754 passed.
+
 **Still deferred, not yet built:**
-- **The three *global-ledger* tables (2, 4, 7)** — deliberately held back
-  from this batch. Several of their fields share a concept with an
-  already-built per-entity field but use a *different literal key*
-  (e.g. Table 2's `origin_path` vs. Table 1's `from`, both meaning "where
-  this came from") — extending an existing function to cover this needs
-  the same-datatype-different-key-by-scope mechanism, not just a new
-  `KEY` entry. Needs its own pass.
+- **Most of Tables 2/4/7's remaining fields** — the ones that duplicate
+  an already-built per-entity concept under a *different literal key*
+  (e.g. Table 2's `origin_path` vs. Table 1's `from`) still need the
+  ledger-fallback mechanism's `LEDGER_KEY` extended with those spellings,
+  now that the mechanism itself exists — mechanical follow-up work, not
+  a new design question.
+- **Table 7 (RESULTS' own global ledger) specifically** — the fallback
+  mechanism isn't wired into `ResultsReferenceFinder3` yet, since Table 7
+  is per-*instance* (keyed by `run_uuid`+`identity`, not a single `uuid`)
+  and needs its own matching logic, not a direct reuse of
+  `_find_manifest_entry_by_uuid`.
 - **`:template()`** — genuinely needs a new mechanism (source picked by
   *position*: bare/no-pointer at name_one reads `definition.json`'s
   default, alongside a real pointer reads that specific version's
