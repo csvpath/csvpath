@@ -6,6 +6,58 @@ conversation while working on references v3 — the single place to check
 mid-conversation or mid-code. Remove/check off an item once it's actually
 built, rather than leaving it to rot.
 
+## Field-accessor fallback to the global ledger entry — not built, needed for the global-ledger tables
+
+Found 2026-08-25 while starting the deferred global-ledger batch (Tables
+2/4/7 of `references_v3_required_manifest_functions.md`). Live-tested
+first, not assumed: built a fixture where the global ledger's own entry
+for a run said `named_file_name = "LEDGER_VALUE"` and the run's own
+manifest said `"RUN_MANIFEST_VALUE"` — both `$*.results.:last():
+named_file_name()` and `$acme.results.:last():named_file_name()`
+returned the *run's own* value, never the ledger's. Confirmed: **no
+existing code path reads a field directly off a Rule-1a/1b-selected
+ledger entry** — every field accessor resolves to a real matched entity
+and re-reads *that entity's own* manifest.json, regardless of how the
+entity was found.
+
+Several Table 2/4/7 fields only exist in the *ledger's* own entries, with
+no per-entity equivalent at all (e.g. Table 2's `file_manifest`, a
+pointer *from* the ledger entry *to* the named-file's own manifest — the
+named-file's own manifest doesn't self-reference this at all, see issue
+#261 for the closest related gap; Table 4's `paths_manifest`; Table 7's
+`archive_path`/`named_files_root`/`named_paths_root`).
+
+**David, 2026-08-25 — the actual design principle, not a one-off
+workaround**: "when we are working with any item (registered, loaded, or
+run) we are talking about a single conceptual item that owns all its
+data -- if we have to do more work to bring all that data together then
+we do, but that is our problem, not the user's problem." So the fix
+isn't a narrow `SOURCE="ledger"` mode that only works for the bare
+Rule-1a/1b shape — it's a general fallback: **any field accessor, for any
+matched entity, however it was found, checks the entity's own manifest
+first and falls back to that same entity's corresponding global-ledger
+entry (looked up by uuid) if the field isn't there.** A caller asking for
+`origin_path` on a specific FILES version shouldn't need to know that
+field only lives in the global ledger, not the named-file's own
+manifest — the finder does that assembly work, not the caller.
+
+Confirmed as the agreed design (not yet built). Needs, before building:
+- Extend the shared `_extract_data()`/`_extract_field_value()` path (all
+  three finders) with the fallback-to-ledger-entry-by-uuid step.
+- A way for a function's `KEY` dict to express *both* the per-entity
+  spelling and the ledger's own spelling for the same concept, for the
+  cases where they differ (e.g. Table 1's `from` vs. Table 2's
+  `origin_path`) — `KEY` alone isn't enough for those; something like a
+  parallel `LEDGER_KEY` dict, checked only on fallback, is the likely
+  shape but not yet designed in detail.
+- This is genuinely cross-cutting (new step in core extraction logic
+  shared by all three finders), not "write more field-accessor classes"
+  — treat as its own small design/build pass, not folded into the
+  ordinary per-table batches.
+
+This unblocks most of the remaining Table 2/4/7 field-accessor work once
+built — see the "Field-accessor coverage" entry above for what's already
+done and what's still deferred pending this mechanism.
 ## "Pure value" date/time functions (5.29) — only `:date()` exists, 10 of 11 missing
 
 Found 2026-08-24 (Phase 1 compendium review). The compendium lists eleven
@@ -104,7 +156,14 @@ one file each), full `tests/references/` suite passing (1150) after.
   manifest snapshot), plus RESULTS is blocked on a `results_registrar.py`
   schema gap (the run manifest doesn't store its own `template` at all,
   confirmed by David — a core-Framework gap, not something references-v3
-  can fix alone). Not part of this batch.
+  can fix alone). **David, 2026-08-25: the `results_registrar.py` gap is
+  explicitly out of scope for now** — sweep up before a full release,
+  expected to be low-effort to wire into `:template()` once added
+  (the template used to build the run's own directory must already be
+  known/available at the same point `results_registrar.py` writes every
+  other per-run captured field, e.g. `named_file_size`, so writing one
+  more field there should follow the same existing pattern). Not part of
+  this batch either way.
 - **`sources`/`destinations`/`transfers`/`scripts`/`webhooks` sub-field
   accessors** (Table 8/9) — held pending doc corrections. David fixed
   the webhooks field-name miscopy, the transfers wrong-function-names
