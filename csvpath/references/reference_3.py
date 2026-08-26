@@ -93,18 +93,19 @@ class InterpolatedString3:
     "{{"/"}}" escape a literal brace (same convention already used by
     csvpath/util/var_utility.py's substitute()).
 
-    Parsing/validation only, for the @variable half: looking up an
-    @variable's value needs a runtime CsvPaths/scope context this
-    object graph deliberately has none of, and no registration API for
-    that exists yet -- see the bucket list's grammar/argument-type-gaps
-    entry. See check_valid().
-
-    The VALUE-role-function half is no longer deferred (2026-08-26,
-    once the first real SOURCE == "clock" functions existed -- see
-    year_3.py) -- ReferenceFinder3._resolve_value() evaluates each
-    FunctionCall3 part by calling its own compute(), rejecting anything
-    whose SOURCE isn't "clock" (only clock functions are wired up so
-    far) and any @variable part (still unbuilt, above)."""
+    Both halves are now evaluated for real (2026-08-26) by
+    ReferenceFinder3._resolve_value() -- called wherever a Function3's
+    own str-typed arg needs its final value (currently :name("...")'s
+    own arg, see _compile_path_pattern()): each literal-str part passes
+    through; each FunctionCall3 part is built and its own compute()
+    called (only SOURCE == "clock" functions are wired up so far --
+    see year_3.py); each Variable3 part is looked up in the resolving
+    finder's own registered variables (compendium 3.12 -- "prior to
+    query, a reference finder can be given variables" -- see
+    ReferenceFinder3.set_variable()/set_variables()), raising if
+    nothing was registered for that name. See check_valid() for the
+    parse-time-only structural check (which functions/roles are legal
+    inside "{...}" at all, not whether they can actually be evaluated)."""
 
     def __init__(self, *, parts: list) -> None:
         if not parts:

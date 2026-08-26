@@ -458,27 +458,16 @@ identifier.
   (widened 2026-08-26, see `deferred_work_done_list.md`'s date/time-
   functions entry) as function-valued segments, but not a regex, and
   `Name3.ARG_TYPES = (str,)` (no `Regex3` support).
-- `@variable` (`Variable3`) is parsed but not usable anywhere as a real
-  argument — no currently-registered function's `ARG_TYPES` includes it.
-  The only place it's structurally accepted at all is a bare `@variable`
-  inside `{...}` string interpolation, and even there it can't be
-  *evaluated* yet (see interpolation-evaluation item below — the
-  function-call half of that same item is now built, `@variable` is the
-  remaining, still-unbuilt half).
-- Found 2026-08-24 (Phase 1 compendium review, item 3.12): there is no
-  registration mechanism at all yet, either — no finder has any "give me a
-  value for `@name`" API (confirmed via grep, nothing like `set_variable`
-  exists anywhere in `csvpath/references/`). **David, 2026-08-24: this is
-  a required, must-have capability for RC, not optional or deferrable** —
-  the compendium's own 3.12 originally said "an implementation detail,"
-  which was meant only to mean "no strong opinion on the mechanism/
-  user-level interface," not "low priority." Compendium text corrected to
-  say so explicitly. Both pieces are needed before RC: the registration
-  API itself, and `@variable` actually being usable as a real function
-  argument (see the entry directly above this one) plus evaluated at
-  resolve time (see the `{...}` interpolation-evaluation item under
-  "Bigger, standing items," which shares the same variable-resolution
-  prerequisite).
+- `@variable` (`Variable3`) registration and `{...}` interpolation
+  evaluation are both **built 2026-08-26** — see `deferred_work_done_list.md`.
+  Still not built: `@variable` used as some OTHER function's *own direct
+  argument* (e.g. a hypothetical `:uuid(@myvar)`, per the dual-selector/
+  value-accessor entry above) — no currently-registered function's
+  `ARG_TYPES` includes `Variable3` at all. This is a separate,
+  independent gap from interpolation, not shared machinery — nothing
+  about the registration API or `_resolve_value()` built for
+  interpolation would need to change to also cover this, it is a
+  per-function `ARG_TYPES` question.
 
 ## `'*'` traversal — RESULTS/CSVPATHS remaining gap
 
@@ -576,17 +565,12 @@ and a stale-entry correction, are both done — see
   `parse_interactive()`/`InteractiveParser.choices()` plus a datatype/slot-
   filtered function registry), but it predates the merged grammar and
   isn't wired into `REFERENCE_GRAMMAR_3`/`Function3`/`describe()` at all.
-- **`{...}` interpolation evaluation — half built 2026-08-26, half still
-  open.** The function-call half is done (see
-  `deferred_work_done_list.md`'s date/time-functions entry) — a `{...}`
-  span calling a `SOURCE == "clock"` function (e.g. `:year()`) now
-  evaluates for real, via `ReferenceFinder3._resolve_value()`. Still
-  needed: `@name` variable resolution against a real runtime
-  `CsvPaths`/scope context — no registration API for that exists yet
-  (see the grammar/argument-type-gaps entry above) — and widening
-  `_resolve_value()`'s function-call handling to cover more than just
-  `SOURCE == "clock"` once other `VALUE`-role functions exist that make
-  sense inside `{...}`.
+- **`{...}` interpolation evaluation — BUILT 2026-08-26**, both halves
+  (function-call and `@variable`) — see `deferred_work_done_list.md`.
+  `_resolve_value()`'s function-call handling is still narrow (only
+  `SOURCE == "clock"` functions), worth widening once other `VALUE`-role
+  functions exist that make sense inside `{...}` — not urgent, no such
+  function exists yet.
 - **v3 is not wired into production.** `results_manager.py`/
   `file_manager.py` still dispatch through the older v2 reference system
   (`csvpath/util/references/`). Everything built so far has been

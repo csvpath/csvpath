@@ -6,7 +6,7 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
-from .reference_3 import FunctionCall3, InterpolatedString3, Reference3, Star3
+from .reference_3 import FunctionCall3, InterpolatedString3, Reference3, Star3, Variable3
 from .reference_exceptions_3 import ReferenceException3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -22,13 +22,32 @@ class ReferenceFinder3(ABC):
     # resolve_from() are shared here: "call query(), then maybe extract
     # a value" is the same shape regardless of datatype.
     #
-    def __init__(self, *, csvpaths, ref: ReferenceParser3) -> None:
+    def __init__(
+        self, *, csvpaths, ref: ReferenceParser3, variables: dict | None = None
+    ) -> None:
         if csvpaths is None:
             raise ValueError("Csvpaths cannot be None")
         if ref is None:
             raise ValueError("Reference cannot be None")
         self._csvpaths = csvpaths
         self._ref = ref
+        #
+        # compendium 3.12: "prior to query, a reference finder can be
+        # given variables that may be used in references... a variable
+        # can be any Python object, but the variable value will be put
+        # into a string context so its __str__ must make sense."
+        # Registration is deliberately simple and explicit -- a plain
+        # {name: value} mapping the caller hands the finder, not a
+        # lookup into any live CsvPath instance's own runtime variables
+        # (those are scoped to one running statement, which does not
+        # exist at all when a reference is resolved standalone -- v3
+        # is not wired into production yet, see the bucket list). Added
+        # 2026-08-26, added alongside @variable's first real consumer,
+        # "{...}" interpolation (see _resolve_value()) -- usability as
+        # some OTHER function's own direct argument is a separate,
+        # still-open question, not addressed by this.
+        #
+        self._variables: dict = dict(variables) if variables else {}
 
     @property
     def ref(self) -> ReferenceParser3:
@@ -37,6 +56,26 @@ class ReferenceFinder3(ABC):
     @property
     def csvpaths(self):
         return self._csvpaths
+
+    @property
+    def variables(self) -> dict:
+        return self._variables
+
+    def set_variable(self, name: str, *, value) -> None:
+        """registers one @name -> value mapping, usable inside "{...}"
+        interpolation once this finder resolves a reference containing
+        it. Callable any time before resolve() actually needs the
+        value -- see __init__'s own docstring comment for the design."""
+        if not name:
+            raise ValueError("name cannot be None or empty")
+        self._variables[name] = value
+
+    def set_variables(self, variables: dict) -> None:
+        """bulk form of set_variable() -- merges `variables` into
+        whatever is already registered, rather than replacing it."""
+        if variables is None:
+            raise ValueError("variables cannot be None")
+        self._variables.update(variables)
 
     @abstractmethod
     def query(self) -> ReferenceResults3:
@@ -401,8 +440,7 @@ class ReferenceFinder3(ABC):
         classification), rather than the whole raw file."""
         return next((entry for entry in manifest if entry["uuid"] == uuid), None)
 
-    @staticmethod
-    def _compile_path_pattern(path: list) -> list:
+    def _compile_path_pattern(self, path: list) -> list:
         """turns a name_one path into a list of str/Star3 to match
         against real path segments (a manifest entry's file_home for
         files, real directory names for results). a literal str or
@@ -423,13 +461,18 @@ class ReferenceFinder3(ABC):
         stringify. Any other function-valued segment is still not
         supported. Shared by files and results -- both have a real,
         literal/star/:name(...)/clock-function path to match; csvpaths
-        does not (its whole name_one is version-selecting functions)."""
+        does not (its whole name_one is version-selecting functions).
+
+        Instance method (not a staticmethod, since 2026-08-26) purely
+        because _resolve_value() now needs this finder's own registered
+        variables -- callers already invoke this as self._compile_path_
+        pattern(...) everywhere, so nothing else changes."""
         pattern = []
         for segment in path:
             if isinstance(segment, FunctionCall3):
                 if segment.name == "name":
                     built = ReferenceFunctionFactory.build(segment)
-                    pattern.append(ReferenceFinder3._resolve_value(built.arg))
+                    pattern.append(self._resolve_value(built.arg))
                     continue
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     segment.name
@@ -449,8 +492,7 @@ class ReferenceFinder3(ABC):
                 raise ReferenceException3(f"Unsupported name_one path segment: {segment!r}")
         return pattern
 
-    @staticmethod
-    def _resolve_value(value):
+    def _resolve_value(self, value):
         """returns `value` unchanged if it is a plain literal (str, int,
         etc.); evaluates it if it is an InterpolatedString3 -- each
         literal-str part passes through, each FunctionCall3 part is
@@ -460,13 +502,11 @@ class ReferenceFinder3(ABC):
         parts to ROLE == VALUE; a non-clock VALUE function landing here
         would mean check_valid() itself needs widening first, so this
         raises a clear error rather than silently mishandling it), each
-        part joined into one final string. A bare @variable part raises
-        -- variable resolution needs a real registration API against a
-        runtime CsvPaths/scope context that does not exist yet (see
-        deferred_work_bucket_list.md's grammar/argument-type-gaps
-        entry); added 2026-08-26 alongside the ten clock functions this
-        was built to support, deliberately scoped to just the
-        function-call half of interpolation."""
+        Variable3 part is looked up in this finder's own registered
+        self._variables (added 2026-08-26, compendium 3.12 -- "a
+        reference finder can be given variables"; see set_variable()/
+        set_variables()), each part joined into one final string.
+        Instance method so this lookup has something to read from."""
         if not isinstance(value, InterpolatedString3):
             return value
         pieces = []
@@ -485,11 +525,18 @@ class ReferenceFinder3(ABC):
                     )
                 built = ReferenceFunctionFactory.build(part)
                 pieces.append(str(built.compute()))
+            elif isinstance(part, Variable3):
+                if part.name not in self._variables:
+                    raise ReferenceException3(
+                        f"@{part.name} has no registered value -- call "
+                        "set_variable()/set_variables() on this finder "
+                        "before resolving a reference that uses it."
+                    )
+                pieces.append(str(self._variables[part.name]))
             else:
                 raise ReferenceException3(
                     f"{part!r} cannot be evaluated inside \"{{...}}\" "
-                    "interpolation yet -- @variable resolution is not "
-                    "built yet (see the bucket list)."
+                    "interpolation."
                 )
         return "".join(pieces)
 

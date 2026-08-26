@@ -9,6 +9,62 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `@variable` registration and `{...}` interpolation evaluation, both halves — BUILT 2026-08-26
+
+Compendium 3.12: "Prior to query, a reference finder can be given
+variables that may be used in references. A variable can be any Python
+object, but the variable value will be put into a string context so its
+`__str__` must make sense... Variable support, including registration, is
+a required, must-have capability for RC." Built immediately after the
+date/time functions (previous entry) and their path-segment/interpolation
+consumption paths — David's own call: "knock out variables now... we have
+one use case, interpolation, right at hand," reusing `_resolve_value()`
+(the evaluator just built for the function-call half of interpolation) for
+the other half it always had a placeholder branch for.
+
+**The key design question, resolved by reading 3.12 literally rather
+than assuming**: this is NOT about reaching into a live `CsvPath`
+instance's own runtime `variables` dict (`csvpath.py`'s `set_variable()`/
+`get_variable()`) — those are scoped to one specific, currently-running
+statement, which does not exist at all when a reference is resolved
+standalone (v3 is not wired into production yet, see the bucket list's
+own "Bigger, standing items"). 3.12's own wording — "a reference finder
+can be given variables" — describes something much simpler: explicit,
+finder-level registration, done by whoever constructs/uses the finder,
+before resolving.
+
+**Built**: `ReferenceFinder3.__init__` gained an optional `variables:
+dict | None = None` kwarg (stored as `self._variables`), plus two
+post-construction registration methods — `set_variable(name, *,
+value)` (mirrors `CsvPath.set_variable()`'s own keyword-only `value`
+convention) and `set_variables(dict)` (bulk merge). `_compile_path_
+pattern()`/`_resolve_value()` were converted from `@staticmethod` to
+ordinary instance methods (every call site already used `self.`-style
+calls, so no call site needed to change) so `_resolve_value()` could
+reach `self._variables` — its own `Variable3`-part branch, which used
+to always raise, now looks the name up and raises only if nothing was
+registered for it.
+
+Scoped deliberately narrow, matching David's own framing ("one use
+case, interpolation, right at hand"): `@variable` is now usable inside
+`{...}` interpolation only. Whether `@variable` should ALSO be usable
+as some other function's own direct argument (e.g. a hypothetical
+`:uuid(@myvar)`, tied to the separate dual-selector/value-accessor
+design item) is untouched, independent follow-up work, not needed to
+close this out.
+
+Tests: 6 new cases in `test_reference_finder_3.py`'s `TestResolveValue`
+(registered-variable substitution, non-string variable values via
+`__str__`, unregistered-variable raises, both registration APIs) plus
+one live end-to-end test through a real `FilesReferenceFinder3`
+combining a variable AND a clock function in one interpolated string
+(`:name("partner-{:year()}-{@company}")`, matching the compendium's
+own 5.37 worked example exactly). `tests/references/` now 1370 passed,
+up from 1364. Full local-backend suite reconfirmed at the known
+11-failure (SFTP/S3/Nos, unrelated) baseline afterward.
+
+---
+
 ## "Pure value" date/time functions (5.29), plus their two consumption paths — BUILT 2026-08-26
 
 Found 2026-08-24 (Phase 1 compendium review). The compendium lists eleven

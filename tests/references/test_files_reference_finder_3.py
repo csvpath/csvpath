@@ -153,6 +153,7 @@ def _finder(
     ledger: list | None = None,
     by_name: dict | None = None,
     log_file: str | None = None,
+    variables: dict | None = None,
 ) -> FilesReferenceFinder3:
     csvpaths = _FakeCsvPaths(
         _FakeFileManager(home, manifest, definition, ledger=ledger, by_name=by_name),
@@ -160,7 +161,7 @@ def _finder(
         log_file=log_file,
     )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
-    return FilesReferenceFinder3(csvpaths=csvpaths, ref=ref)
+    return FilesReferenceFinder3(csvpaths=csvpaths, ref=ref, variables=variables)
 
 
 class TestStarFlattensAcrossAllFiles:
@@ -277,6 +278,24 @@ class TestClockFunctionInPathSegments:
                 TEMPLATED_HOME,
                 TEMPLATED_MANIFEST,
             ).query()
+
+    def test_interpolated_name_combining_a_variable_and_a_clock_function(self):
+        # matches the compendium's own worked example (5.37):
+        # :name("partner-{:year()}-{@company}"). @variable resolution
+        # (compendium 3.12, built 2026-08-26) is the other half of
+        # interpolation, registered on the finder itself before
+        # resolving -- see ReferenceFinder3.set_variable()'s own
+        # docstring.
+        year = str(daut.now().year)
+        home = f"inputs/named_files/acme/partner-{year}-acme-corp"
+        manifest = [{"file": f"{home}/aaaa.csv", "file_home": home, "uuid": "u-1"}]
+        finder = _finder(
+            '$acme.files.:name("partner-{:year()}-{@company}").:first()',
+            TEMPLATED_HOME,
+            manifest,
+            variables={"company": "acme-corp"},
+        )
+        assert finder.query().files == [f"{home}/aaaa.csv"]
 
 
 class TestIndexOutOfRange:
