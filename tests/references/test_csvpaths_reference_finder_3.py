@@ -595,7 +595,14 @@ STAR_BY_NAME = {"beta": STAR_BETA_MANIFEST, "alpha": STAR_ALPHA_MANIFEST}
 
 
 def _star_finder(reference: str) -> CsvpathsReferenceFinder3:
-    return _finder(reference, by_name=STAR_BY_NAME)
+    # inputs_csvpaths_path is needed even for genuine (non-Rule-1a/1b)
+    # traversal now: _extract_data()'s Star3 branch always computes the
+    # ledger's own fixed path to disambiguate against, whether or not
+    # this particular reference turns out to be the ledger-ordinal case
+    # (fixed 2026-08-26, see csvpaths_reference_finder_3.py).
+    return _finder(
+        reference, by_name=STAR_BY_NAME, inputs_csvpaths_path="inputs/named_paths"
+    )
 
 
 class TestStarTraversalFlatten:
@@ -620,14 +627,15 @@ class TestStarTraversalFlatten:
         results = _star_finder("$*.csvpaths.:index(1)").query()
         assert results.uuids == ["a-v2"]
 
-    def test_combining_with_manifest_is_not_yet_supported(self):
-        # note: a plain pointer + :manifest() (e.g. ":last():manifest()")
-        # is intercepted earlier by Rule 1b (the global-ledger ordinal
-        # case, same structural shape) before ever reaching traversal --
-        # :all():manifest() is not a pointer-first shape, so it reaches
-        # _query_star_traversal's own combining-guard instead.
-        with pytest.raises(ReferenceException3):
-            _star_finder("$*.csvpaths.:all():manifest()").query()
+    # no "combined with :manifest()" test in this class: a bare pointer
+    # plus a bare ':manifest()' (e.g. ":last():manifest()") is always
+    # exactly the two-function shape _pointer_before_manifest() matches
+    # -- it is intercepted by Rule 1b in query() before ever reaching
+    # _query_star_traversal, regardless of root_major being '*'. See
+    # TestGlobalLoadsLedger for that already-existing, unaffected
+    # behavior. TestStarTraversalGroup's own ':all():last():manifest()'
+    # test below is what actually proves this class's sibling fix (the
+    # traversal-guard exemption fixed 2026-08-26).
 
     def test_name_three_combined_with_traversal_is_not_yet_supported(self):
         with pytest.raises(ReferenceException3):
@@ -756,17 +764,43 @@ class TestStarTraversalFieldAccessor:
         assert {r.data for r in results.results} == {"alpha", "beta"}
         assert {r.uuid for r in results.results} == {"a-v2", "b-v1"}
 
-    def test_field_accessor_exemption_does_not_let_manifest_through_too(self):
-        # a field accessor is now exempt from the unsupported check, but
-        # a genuinely unsupported extra (:manifest()) riding alongside
-        # it is still rejected -- the exemption is narrow, not "anything
-        # goes once one field accessor is present". A third function
-        # also pushes this reference past _pointer_before_manifest's own
-        # exactly-two-functions Rule 1b shape, so it genuinely reaches
-        # _query_star_traversal's guard rather than being intercepted
-        # earlier.
-        with pytest.raises(ReferenceException3):
-            _star_finder("$*.csvpaths.:last():named_paths_name():manifest()").query()
+    def test_field_accessor_combined_with_manifest_now_also_works(self):
+        # ':manifest()' is now exempted from _query_star_traversal's
+        # unsupported-combination check too (fixed 2026-08-26, the same
+        # change that let a bare pointer/':all()' combine with it) -- so
+        # this three-function chain no longer raises. resolve_kind()
+        # gives a field-accessor function priority over ':manifest()'
+        # when both are present in the same terminal chain (see
+        # reference_3.py's own resolve_kind docstring: METADATA_FIELD is
+        # checked before METADATA_FILE), so named_paths_name()'s own
+        # value wins here and ':manifest()' rides along harmlessly,
+        # unused -- same outcome as test_flatten_shape_with_a_field_
+        # accessor_now_works above, just proving the extra function does
+        # not change it.
+        by_name = {
+            "alpha": [
+                {
+                    "group_file_path": "named_paths/alpha/group.csvpath",
+                    "uuid": "a-v1",
+                    "time": "2026-01-01T00:00:00+00:00",
+                    "named_paths_name": "alpha",
+                }
+            ],
+            "beta": [
+                {
+                    "group_file_path": "named_paths/beta/group.csvpath",
+                    "uuid": "b-v1",
+                    "time": "2026-01-03T00:00:00+00:00",
+                    "named_paths_name": "beta",
+                }
+            ],
+        }
+        results = _finder(
+            "$*.csvpaths.:last():named_paths_name():manifest()", by_name=by_name
+        ).resolve()
+        assert len(results.results) == 1
+        assert results.results[0].uuid == "b-v1"
+        assert results.results[0].data == "beta"
 
     def test_definition_sourced_field_reads_the_matched_groups_own_config(self):
         # :scripts() (SOURCE == "definition") is the other branch
@@ -860,6 +894,20 @@ class TestStarTraversalGroup:
         results = _star_finder("$*.csvpaths.:all()").query()
         assert len(results.results) == 3
         assert set(results.uuids) == {"a-v1", "a-v2", "b-v1"}
+
+    def test_all_with_last_and_manifest_gives_each_groups_own_manifest_entry(self):
+        # previously unsupported (raised); fixed 2026-08-26 -- see
+        # TestStarTraversalFlatten's own manifest test for the FLATTEN-
+        # mode sibling of this fix. Proves the GROUP-mode reduction
+        # (one version per group) and the manifest-entry lookup compose
+        # correctly together, not just each in isolation.
+        results = _star_finder("$*.csvpaths.:all():last():manifest()").resolve()
+        assert len(results.results) == 2
+        data_by_uuid = {r.uuid: r.data for r in results.results}
+        assert data_by_uuid == {
+            "a-v2": STAR_ALPHA_MANIFEST[1],
+            "b-v1": STAR_BETA_MANIFEST[0],
+        }
 
 
 class TestStarTraversalHaving:

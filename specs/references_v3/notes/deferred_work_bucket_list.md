@@ -655,16 +655,35 @@ identifier.
 
 ## `'*'` traversal — RESULTS/CSVPATHS remaining gap
 
-- `:manifest()` combined with real `'*'`-traversal narrowing (`:all()`/
-  `:flatten()`/a literal prefix) is still unsupported, both
-  `ResultsReferenceFinder3` and `CsvpathsReferenceFinder3` — the one
-  traversal restriction that survived every other generalization pass.
-  `_extract_data()` can't yet reliably tell a Rule-1b global-ledger result
-  apart from a genuine traversal result once both carry a real uuid;
+- ~~`:manifest()` combined with real `'*'`-traversal narrowing~~ — **FIXED
+  2026-08-26**, both `ResultsReferenceFinder3` and `CsvpathsReferenceFinder3`.
+  `_star_run_selector_chain()` (RESULTS) and the equivalent `non_pointers`
+  guard in `_query_star_traversal()` (CSVPATHS) now exempt `:manifest()` the
+  same way `:all()`/`:flatten()`/`:having()`/a field accessor already were.
+  `_extract_data()`'s Star3 branch in both finders now disambiguates a
+  Rule-1a/1b global-ledger result from a genuine traversal-selected result by
   comparing `result.path` against the ledger's own known, fixed path
-  (rather than `result.uuid is not None`) is the identified fix. See
-  `references_v3_compendium.md` §6 for the full writeup. **Currently the
-  active next task.**
+  (`Nos(archive/inputs_csvpaths_path).join("manifest.json")`) instead of the
+  now-ambiguous `result.uuid is not None` check (both shapes carry a real
+  uuid once this composes with real narrowing) — path equality means Rule
+  1a/1b (read the global ledger, keyed by uuid or not per Rule 1a vs 1b);
+  anything else falls through to the pre-existing per-entity manifest read.
+  For CSVPATHS specifically, note a plain bare pointer + bare `:manifest()`
+  (e.g. `:last():manifest()`) is ALWAYS the exact two-function shape
+  `_pointer_before_manifest()` matches and is intercepted as Rule 1b before
+  ever reaching `_query_star_traversal` at all, regardless of root_major
+  being `'*'` — so there is no "FLATTEN mode + manifest via genuine
+  traversal" case for CSVPATHS, only GROUP mode (`:all():manifest()`) or a
+  field-accessor riding alongside it reach the new exemption. Tests: RESULTS
+  `TestScopeLimits::test_manifest_combined_with_traversal_now_works`;
+  CSVPATHS `TestStarTraversalGroup::
+  test_all_with_last_and_manifest_gives_each_groups_own_manifest_entry` and
+  `TestStarTraversalFieldAccessor::
+  test_field_accessor_combined_with_manifest_now_also_works`. Full
+  `tests/references/` suite (1166 tests, all green) and full local-backend
+  suite (2754 passed, 11 failed) both confirmed after this fix — the 11
+  failures are the same known SFTP/S3/Nos baseline, unrelated. See
+  `references_v3_compendium.md` §6 for the full writeup.
 - `:groups()` combined with `'*'` traversal (RESULTS) — no established
   per-GROUP-of-named-results-groups meaning settled yet for the any-depth
   case.

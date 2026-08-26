@@ -2462,18 +2462,40 @@ class TestPositionEnforcement:
 
 
 class TestScopeLimits:
-    def test_manifest_combined_with_traversal_still_not_yet_supported(
-        self, two_group_archive
-    ):
-        # a real, still-open, separate gap -- see _extract_data()'s own
-        # has_manifest comment for why: it cannot yet tell a Rule-1a/1b
-        # global-ledger result apart from a traversal-selected run
-        # directory, unlike the field accessor/':all()'/':flatten()'
-        # gaps already closed.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$*.results.:all():last():manifest()", two_group_archive
-            ).query()
+    def test_manifest_combined_with_traversal_now_works(self, tmp_path):
+        # previously a real, open gap -- fixed 2026-08-26. Once
+        # _query_star_traversal's own combining-guard exempted
+        # ':manifest()' (alongside the field accessor/':all()'/
+        # ':flatten()' exemptions already in place), a genuine
+        # traversal-selected run also carries a real, non-None uuid --
+        # identical in shape to what Rule 1a/1b's own bare-pointer-plus-
+        # manifest result carries. _extract_data() now disambiguates by
+        # comparing result.path against the archive ledger's own known,
+        # fixed path (manifest.json directly under the archive root)
+        # rather than checking uuid presence, so this correctly reads
+        # each matched group's own run manifest.json, not the ledger.
+        # ':all()' needs exactly one level of nesting -- two_group_
+        # archive's runs are deliberately flat (zero-level), so this
+        # uses its own one-level fixture instead, mirroring
+        # test_all_combined_with_a_field_accessor_also_works above.
+        acme_run = _make_run(
+            tmp_path / "acme" / "east", "2026-01-01_00-00-00", "acme-east", {}
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets" / "east", "2026-01-02_00-00-00", "widgets-east", {}
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
+        )
+        results = _finder(
+            "$*.results.:all():last():manifest()", str(tmp_path)
+        ).resolve()
+        assert len(results.results) == 2
+        data_by_uuid = {r.uuid: r.data for r in results.results}
+        assert data_by_uuid == {
+            "acme-east": {"run_uuid": "acme-east"},
+            "widgets-east": {"run_uuid": "widgets-east"},
+        }
 
     def test_name_two_worksheet_marker_not_supported(self, acme_archive):
         finder = _finder(

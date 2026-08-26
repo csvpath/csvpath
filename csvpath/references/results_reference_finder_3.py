@@ -546,11 +546,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         group, so it composes with every shape above unchanged; the one
         real design point is the ':all()'-GROUPING-plus-content-
         accessor case, see _star_group_and_reduce()'s own comment.
-        :manifest() stays unsupported -- needs one already-known
-        manifest.json to re-read in _extract_data(), which cannot yet
-        tell a Rule-1a/1b global-ledger result apart from a traversal-
-        selected run directory (see _extract_data()'s own has_manifest
-        branch) -- a separate, still-open gap, not attempted here.
+        :manifest() combined with real narrowing is now supported too
+        (fixed 2026-08-26, the "active next task" this whole depth-
+        matrix pass used to defer) -- _star_run_selector_chain() allows
+        it through the same validation as a field accessor, and
+        _extract_data() now disambiguates a Rule-1a/1b global-ledger
+        result from a genuine traversal-selected run by comparing
+        result.path against the ledger's own known, fixed path, rather
+        than the old, now-ambiguous "does it have a uuid" test (both
+        shapes carry a real uuid once this composes with real
+        narrowing) -- see _extract_data()'s own has_manifest branch.
 
         A pointer is now OPTIONAL in every shape above (settled
         2026-08-19, via _star_run_selector_chain()) -- absence means
@@ -783,6 +788,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         field_call = self._find_field_function_call(built)
         all_call = next((f for f in built if f.name == "all"), None)
         flatten_call = next((f for f in built if f.name == "flatten"), None)
+        manifest_call = next((f for f in built if f.name == "manifest"), None)
         if all_call is not None and flatten_call is not None:
             raise ReferenceException3(
                 "ResultsReferenceFinder3 does not support combining "
@@ -796,15 +802,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             and f is not field_call
             and f is not flatten_call
             and f is not all_call
+            and f is not manifest_call
         ]
         if non_pointers:
             raise ReferenceException3(
                 f"ResultsReferenceFinder3 does not yet support "
                 f":{non_pointers[0].name}() combined with '*' traversal -- "
                 "only a bare pointer (:first()/:last()/:index(n)), "
-                "optionally combined with ':all()'/':flatten()' and/or a "
-                "run-level field-accessor function (e.g. :uuid()), is "
-                "supported so far."
+                "optionally combined with ':all()'/':flatten()', :manifest(), "
+                "and/or a run-level field-accessor function (e.g. :uuid()), "
+                "is supported so far."
             )
         pointer = self._pointer_from_calls(calls)
         return pointer, all_call, flatten_call
@@ -944,37 +951,44 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             if isinstance(seg, FunctionCall3)
         )
         if isinstance(reference.root_major, Star3) and has_manifest:
-            # Rule 1a/1b -- the bare/pointer-plus-":manifest()" global-
-            # ledger shapes, both handled entirely by query()'s own
-            # earlier branches (see that method) -- narrowed 2026-08-18
-            # to require has_manifest specifically, not just root_major
-            # being '*': previously this branch fired for ANY star-
-            # rooted reference unconditionally, which (a) was never
-            # actually exercised by a real test for the plain-bare-
-            # pointer-no-manifest case, and (b) would have silently
-            # given the wrong answer there (the global ledger entry,
-            # not the run's own content) once _query_star_traversal
-            # started supporting a plain field accessor too. A star-
-            # traversal result with neither :manifest() nor a field
-            # accessor now correctly falls through to the same "no
-            # single unambiguous payload" rule the literal-root case
-            # already uses at the bottom of this method.
-            if result.uuid is not None:
-                # Rule 1b -- a pointer already reduced the global ledger
-                # to one entry in query(); re-derive it by run_uuid
-                # (the archive ledgers own locator -- see query()).
-                ledger = self.csvpaths.results_manager.results_root_manifest
-                return next(
-                    (e for e in ledger if e["run_uuid"] == result.uuid), None
-                )
-            # global-ledger case (Rule 1a) -- query()'s
-            # _query_well_known_file() branch already pointed result.path
-            # at the archive-root manifest.json itself, not a run
-            # directory, so read it directly rather than joining
-            # "manifest.json" onto it again (the ordinary, per-group
-            # has_manifest branch below does that join, but only
-            # because it deals with a run directory, not a file).
-            return self._read_well_known_json(result.path)
+            # Rule 1a/1b vs. a genuine traversal-selected run both reach
+            # here now (fixed 2026-08-26) -- both carry a real, non-None
+            # uuid once _query_star_traversal supports :manifest()
+            # combined with real narrowing (:all()/:flatten()/a literal
+            # prefix), so `result.uuid is not None` can no longer tell
+            # them apart (the exact gap this whole branch used to have,
+            # tracked in the bucket list as "the active next task").
+            # Compare result.path against the ledger's own known, fixed
+            # path instead: Rule 1a/1b's own query() branches always set
+            # result.path to the archive-root manifest.json itself,
+            # never a run directory, so this is a reliable, structural
+            # test rather than a data-dependent guess.
+            archive = self.csvpaths.config.get(section="results", name="archive")
+            ledger_path = Nos(archive).join("manifest.json")
+            if result.path == ledger_path:
+                if result.uuid is not None:
+                    # Rule 1b -- a pointer already reduced the global
+                    # ledger to one entry in query(); re-derive it by
+                    # run_uuid (the archive ledger's own locator -- see
+                    # query()).
+                    ledger = self.csvpaths.results_manager.results_root_manifest
+                    return next(
+                        (e for e in ledger if e["run_uuid"] == result.uuid), None
+                    )
+                # global-ledger case (Rule 1a) -- query()'s
+                # _query_well_known_file() branch already pointed
+                # result.path at the archive-root manifest.json itself,
+                # so read it directly rather than joining "manifest.json"
+                # onto it again (the ordinary, per-group has_manifest
+                # branch below does that join, but only because it deals
+                # with a run directory, not a file).
+                return self._read_well_known_json(result.path)
+            # a genuine traversal-selected run (result.path is that run's
+            # own directory, not the ledger) -- fall through to the
+            # ordinary has_manifest branch immediately below, which
+            # already does exactly the right thing (read that
+            # directory's own manifest.json) regardless of whether
+            # root_major was literal or '*'.
         if has_manifest:
             # :manifest() rides beside the run-selecting pointer in
             # name_one (e.g. "$acme.results.customers/2025:first()
