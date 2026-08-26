@@ -1166,6 +1166,52 @@ class TestFieldAccessorFunctions:
         with pytest.raises(ReferenceException3):
             _finder("$acme.csvpaths.:first():mark()", RICH_MANIFEST).query()
 
+    def test_username_hostname_host_fall_back_to_the_global_ledger(self):
+        # widened 2026-08-26 -- RICH_MANIFEST's own entries never have
+        # username/hostname/ip_address (the Named-Paths Manifest
+        # genuinely has no such fields), only the global loads ledger
+        # does.
+        ledger = [
+            {
+                "uuid": "v1-uuid",
+                "username": "bot",
+                "hostname": "worker-1",
+                "ip_address": "10.0.0.5",
+            }
+        ]
+        assert (
+            _finder(
+                "$acme.csvpaths.:last():username()", RICH_MANIFEST, ledger=ledger
+            )
+            .resolve()
+            .results[0]
+            .data
+            == "bot"
+        )
+        assert (
+            _finder(
+                "$acme.csvpaths.:last():hostname()", RICH_MANIFEST, ledger=ledger
+            )
+            .resolve()
+            .results[0]
+            .data
+            == "worker-1"
+        )
+        assert (
+            _finder("$acme.csvpaths.:last():host()", RICH_MANIFEST, ledger=ledger)
+            .resolve()
+            .results[0]
+            .data
+            == "10.0.0.5"
+        )
+
+    def test_username_no_matching_ledger_entry_gives_none(self):
+        ledger = [{"uuid": "some-other-uuid", "username": "bot"}]
+        results = _finder(
+            "$acme.csvpaths.:last():username()", RICH_MANIFEST, ledger=ledger
+        ).resolve()
+        assert results.results[0].data is None
+
 
 class TestDefinitionFieldAccessorFunctions:
     # :scripts()/:webhooks()/:transfers()/:destinations() are

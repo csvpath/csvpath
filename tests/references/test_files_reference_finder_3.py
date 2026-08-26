@@ -1513,6 +1513,59 @@ class TestLedgerFallbackFieldAccessor:
         assert results.results[0].data is None
 
 
+class TestUsernameHostnameHostLedgerFallback:
+    # username/hostname/host widened 2026-08-26 to also cover FILES --
+    # RICH_MANIFEST's own entries never have these fields (confirmed,
+    # the Named-File Manifest genuinely has no such fields), only the
+    # global arrivals ledger does.
+    LEDGER = [
+        {
+            "uuid": "u-rich-2",
+            "username": "bot",
+            "hostname": "worker-1",
+            "ip_address": "10.0.0.5",
+        },
+    ]
+
+    def test_username_falls_back_to_the_ledger_entry(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:last():username()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            ledger=self.LEDGER,
+        )
+        assert finder.resolve().results[0].data == "bot"
+
+    def test_hostname_falls_back_to_the_ledger_entry(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:last():hostname()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            ledger=self.LEDGER,
+        )
+        assert finder.resolve().results[0].data == "worker-1"
+
+    def test_host_falls_back_to_the_ledger_entry(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:last():host()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            ledger=self.LEDGER,
+        )
+        assert finder.resolve().results[0].data == "10.0.0.5"
+
+    def test_no_matching_ledger_entry_gives_none(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():username()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            ledger=self.LEDGER,
+        )
+        # RICH_MANIFEST's first entry is u-rich-1, which has no
+        # matching LEDGER entry (only u-rich-2 does).
+        assert finder.resolve().results[0].data is None
+
+
 class TestDefinitionFieldAccessorFunctions:
     # :on_arrival()/:sources() are SOURCE="definition" -- resolved
     # against the named-file's definition.json config, not a manifest

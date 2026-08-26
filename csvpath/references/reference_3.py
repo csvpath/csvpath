@@ -354,6 +354,7 @@ _METADATA_FIELD_FUNCTIONS = (
     "time",
     "fingerprint",
     "home",
+    "host",
     "origin",
     "mark",
     "named_paths_identities",

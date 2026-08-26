@@ -250,14 +250,6 @@ and added the missing integration tests. `tests/references/` now 1166
 passed, full suite 2754 passed.
 
 **Still deferred, not yet built:**
-- **Most of Tables 2/4's remaining fields** — the ones that duplicate
-  an already-built per-entity concept under a *different literal key*
-  (e.g. Table 2's `origin_path` vs. Table 1's `from`) still need the
-  ledger-fallback mechanism's `LEDGER_KEY` extended with those spellings,
-  now that the mechanism itself exists — mechanical follow-up work, not
-  a new design question. **Table 7 is DONE as of 2026-08-26** (see its
-  own bucket-list entry above) — every field except deprecated
-  `base_path` (issue #225) and `:template()` (below) is now covered.
 - **`:template()`** — genuinely needs a new mechanism (source picked by
   *position*: bare/no-pointer at name_one reads `definition.json`'s
   default, alongside a real pointer reads that specific version's
@@ -271,16 +263,71 @@ passed, full suite 2754 passed.
   mechanism itself remains to be designed/built, not a data-availability
   blocker — likely one of "the quick ones" now, not a deferred core-
   Framework dependency.
-- **`sources`/`destinations`/`transfers`/`scripts`/`webhooks` sub-field
-  accessors** (Table 8/9) — held pending doc corrections. David fixed
-  the webhooks field-name miscopy, the transfers wrong-function-names
-  copy-paste, and `destinations.<name>.port`'s host/port mixup — but
-  **`sources.<name>.port` still says `:source_host(str)`, not
-  `:source_port(str)`** (line 251 as of 2026-08-25) — one more small fix
-  needed there before this sub-batch is ready to build.
 
 This is real, ongoing Phase 2 work, not a "someday" placeholder — update
 this entry as further batches land.
+
+**`sources`/`destinations`/`transfers`/`scripts`/`webhooks` sub-field
+accessors (Table 8/9) — BUILT 2026-08-26.** Confirmed against the real
+dataclasses (`paths_descriptor.py`/`file_descriptor.py`) before
+building, not the doc alone: `sources.<name>.*`/`destinations.<name>.*`/
+`transfers.<name>.on_complete_*` are genuinely keyed by an arbitrary
+name (`dict[str, ...]`); `scripts.on_complete_*`/`webhooks.on_complete_*`
+are fixed four-state objects with no name dimension at all — the doc's
+`(str)` on two of the four scripts accessors was a leftover copy-paste
+artifact, dropped (all eight built zero-arg). The name-keyed group
+needed a genuinely new mechanism: `Function3.KEY` can now hold a `"{}"`
+placeholder (e.g. `"sources.{}.port"`), filled with the field accessor's
+own arg via new shared `ReferenceFinder3._apply_key_arg()` before the
+ordinary dotted-path walk — the first field accessors whose KEY needed
+a per-call value, not just a per-datatype one.
+`FilesReferenceFinder3._bare_definition_field_call()` also had to be
+relaxed to accept an argument-bearing call (previously argument-less
+only). 20 new functions: `source_address/port/username/password`
+(FILES), `destination_address/port/username/password` (CSVPATHS),
+`transfer_on_complete_all/valid/invalid/error` (CSVPATHS, keyed by
+csvpath statement identity), `script_on_complete_all/valid/invalid/
+error` and `webhooks_on_complete_all/valid/invalid/error` (CSVPATHS,
+zero-arg). `tests/references/` now 1284 passed.
+
+**Most of Tables 2/4's remaining fields — BUILT 2026-08-26.** Table 7
+was already done (see its own entry above) — every field except
+deprecated `base_path` (issue #225) and `:template()` (above) is
+covered. Cross-referenced every Table 2/4 field against Tables 1/3's
+own fields before building anything: most turned out to already be
+fully covered by an existing per-entity `KEY` that always succeeds (no
+`LEDGER_KEY` ever needed, since the field is never actually missing
+from the entity's own manifest) — `time`/`uuid`/`type`/`fingerprint`/
+`origin`(`from`/`source_path`)/`named_paths_name`/`home`
+(`named_paths_home`)/`group_file`/`file_manifest`/`group_manifest` all
+fell into this bucket, needing no code change at all. The GENUINE gaps
+were `username`/`hostname`/`ip_address` — confirmed against
+`file_registrar.py`/`paths_registrar.py` that neither Table 1 nor Table
+3 has these fields at all, only the global arrivals/loads ledgers
+(Tables 2/4) do (RESULTS already had them directly, unaffected).
+Widened the existing `Username3`/`Hostname3` to also cover FILES/
+CSVPATHS via `LEDGER_KEY` (their own `KEY` has no FILES/CSVPATHS entry
+at all — same "nothing to find in the entity's own manifest" shape as
+`:file_manifest()`). Built one new function, `Host3`/`:host()`, for
+`ip_address` (FILES/CSVPATHS only — RESULTS' own `ip_address` is
+explicitly deprecated, "Do not use," no function at all).
+
+**A real naming question surfaced and was settled with David
+(2026-08-26)**: the doc's Table 5 row for the `hostname` field said
+`:host()`, not `:hostname()` — but `:hostname()` already existed,
+tested, KEY=`RESULTS:"hostname"`. Since Tables 2/4/5's `ip_address` rows
+*also* say `:host()`, and `hostname`/`ip_address` are adjacent rows in
+all three tables, this was almost certainly the same copy-paste-
+artifact pattern as the webhooks/transfers/destinations doc bugs found
+earlier — confirmed with David: keep `:hostname()` as-is, `:host()` is
+a separate, new function for `ip_address` only, not a rename/merge.
+
+Tests: `tests/references/functions/fields/test_host_3.py` (unit),
+widened `test_username_3.py`/`test_hostname_3.py`, plus
+`TestUsernameHostnameHostLedgerFallback`
+(`test_files_reference_finder_3.py`) and two new tests in CSVPATHS'
+`TestFieldAccessorFunctions` (`test_csvpaths_reference_finder_3.py`).
+`tests/references/` now 1293 passed, up from 1284.
 
 ## `ReferenceExpression3` has no query()-only mode — not built
 

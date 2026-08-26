@@ -57,6 +57,7 @@ class ReferenceFunctionFactory:
         from .fields.group_file_3 import GroupFile3
         from .fields.group_manifest_3 import GroupManifest3
         from .fields.home_3 import Home3
+        from .fields.host_3 import Host3
         from .fields.hostname_3 import Hostname3
         from .fields.identity_3 import Identity3
         from .fields.instance_index_3 import InstanceIndex3
@@ -150,6 +151,7 @@ class ReferenceFunctionFactory:
             Time3.NAME: Time3,
             Fingerprint3.NAME: Fingerprint3,
             Home3.NAME: Home3,
+            Host3.NAME: Host3,
             Origin3.NAME: Origin3,
             Mark3.NAME: Mark3,
             NamedPathsIdentities3.NAME: NamedPathsIdentities3,
