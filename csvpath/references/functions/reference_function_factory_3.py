@@ -289,6 +289,17 @@ class ReferenceFunctionFactory:
         return cls._FUNCTIONS.get(name)
 
     @classmethod
+    def registered_names(cls) -> list[str]:
+        """every registered function name -- added 2026-08-26 for
+        Function3Describer's own registry-wide markdown rendering
+        (compendium 5.4), which needs to enumerate the whole registry
+        without reaching into _FUNCTIONS directly from outside this
+        class."""
+        if not cls._FUNCTIONS:
+            cls._load()
+        return list(cls._FUNCTIONS.keys())
+
+    @classmethod
     def build(cls, call: FunctionCall3) -> Function3:
         """compiles one FunctionCall3 into a real, validated Function3.
         recurses first if call.arg is itself a FunctionCall3, so a

@@ -9,6 +9,58 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `Function3.describe()`'s markdown-rendering companion — BUILT 2026-08-26
+
+Compendium 5.4: "Reference functions are self-documenting... must be
+able to output .md in a similar way to `csvpath/cli/function_describer.py`."
+`Function3.describe()` already existed but only returned a plain dict
+(`name`/`summary`/`role`/`datatypes`) meant for a future type-ahead
+layer, not human-readable output — the actual rendering layer 5.4
+requires didn't exist.
+
+**Built as a new, separate class** (`Function3Describer`, `csvpath/
+references/function_describer_3.py`), not a reuse of the match-language
+`FunctionDescriber` and not a change to `Function3.describe()` itself
+(left alone — still the machine-readable half, unchanged contract).
+Match-language functions have argsets/overloads/qualifiers that
+references-v3 functions simply do not (at most one arg, no overloads at
+all), so a from-scratch, much simpler renderer fit the actual `Function3`
+model better than adapting the heavier match-side one. Two entry
+points: `describe(function_cls)` (one function's own markdown block —
+name, summary, role, datatypes, argument type/required-ness, `POSITIONS`
+per datatype, and — for field accessors — `SOURCE`/`KEY`/`LEDGER_KEY`/
+`BARE_SOURCE` when declared) and `describe_all()` (the whole registry as
+one combined document: an alphabetical index linking down to each
+function's own block, mirroring `FunctionDescriber.describe()`'s own
+"[[Back to index]]" convention, just inverted — one document, not one
+page per function).
+
+New `ReferenceFunctionFactory.registered_names()` (`reference_function_
+factory_3.py`) — `describe_all()` needed to enumerate every registered
+name without reaching into the factory's own "private" `_FUNCTIONS` dict
+from outside the class.
+
+**Deliberately just a markdown-STRING producer** — writing the result to
+a file, or wiring it into any interactive CLI (the way `FunctionLister`
+wires the match-language version into a REPL picker), is a separate
+integration question, out of scope here (v3 is not wired into
+production yet, see this list's own "Bigger, standing items"). Also
+deliberately side-stepped GitHub-flavored-markdown's own heading-to-
+anchor slugify ambiguity (different renderers handle punctuation in
+headings differently) by keeping each function's own heading a plain
+`## {name}` with no backticks/colon/parens, so the index's own `#{name}`
+links resolve predictably everywhere rather than replicating one
+specific renderer's exact algorithm.
+
+Tests: `tests/references/test_function_describer_3.py` — one function's
+own block (name/summary/role/datatypes/argument-required-ness/source-
+key/bare-source/positions, spot-checked against `Year3`/`Idchain3`/
+`Template3`), plus `describe_all()` (every registered name appears in
+the index exactly once, one full block per function, no duplicates).
+`tests/references/` now 1408 passed, up from 1397.
+
+---
+
 ## Predicate support functions (5.31), plus the `:idchain()` filter half of predicate-argument accessors — BUILT 2026-08-26
 
 Found 2026-08-24 (Phase 1 compendium review). The compendium lists eight

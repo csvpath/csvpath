@@ -9,20 +9,6 @@ instead, so the completed reasoning trail isn't lost, it's just off this
 list (see that file's own header, and the "Process note" at the bottom of
 this one).
 
-## `Function3.describe()` has no markdown-rendering capability — 5.4's requirement not met
-
-Found 2026-08-24 (Phase 1 compendium review, item 5.4): "Reference
-functions are self-documenting... must be able to output .md in a similar
-way to `csvpath/cli/function_describer.py`." Checked `Function3.describe()`
-(`function_3.py:120-131`) directly — it exists, but only returns a plain
-dict (`name`/`summary`/`role`/`datatypes`), explicitly documented as "what
-a future type-ahead layer's registry query is meant to read." It does not
-render markdown or any human-readable document, unlike match functions'
-own `FunctionDescriber.describe()` (`csvpath/cli/function_describer.py`),
-which actually prints/renders formatted (optionally markdown) output. The
-underlying structured data `describe()` returns is a reasonable
-foundation, but the actual rendering layer 5.4 requires doesn't exist yet.
-
 ## `ReferenceExpression3` has no query()-only mode — not built
 
 Found 2026-08-24 (Phase 1 compendium review, item 4.2), which describes
