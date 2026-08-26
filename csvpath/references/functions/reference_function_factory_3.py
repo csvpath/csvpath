@@ -133,7 +133,13 @@ class ReferenceFunctionFactory:
         from .fields.webhooks_on_complete_invalid_3 import WebhooksOnCompleteInvalid3
         from .fields.webhooks_on_complete_valid_3 import WebhooksOnCompleteValid3
 
+        from .filters.empty_3 import Empty3
+        from .filters.false_3 import False3
         from .filters.idchain_3 import Idchain3
+        from .filters.none_3 import None3
+        from .filters.not_empty_3 import NotEmpty3
+        from .filters.not_none_3 import NotNone3
+        from .filters.true_3 import True3
 
         from .wrappers.path_3 import Path3
 
@@ -169,6 +175,12 @@ class ReferenceFunctionFactory:
             Unmatched3.NAME: Unmatched3,
             Printouts3.NAME: Printouts3,
             Idchain3.NAME: Idchain3,
+            True3.NAME: True3,
+            False3.NAME: False3,
+            None3.NAME: None3,
+            NotNone3.NAME: NotNone3,
+            Empty3.NAME: Empty3,
+            NotEmpty3.NAME: NotEmpty3,
             File3.NAME: File3,
             Log3.NAME: Log3,
             Uuid3.NAME: Uuid3,

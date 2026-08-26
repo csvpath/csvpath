@@ -2,6 +2,10 @@ import pytest
 
 from csvpath.references.functions.function_3 import Function3
 from csvpath.references.functions.filters.idchain_3 import Idchain3
+from csvpath.references.functions.filters.not_none_3 import NotNone3
+from csvpath.references.functions.filters.predicate_function_3 import (
+    PredicateFunction3,
+)
 from csvpath.references.reference_3 import Reference3, Regex3
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 
@@ -11,7 +15,7 @@ def test_metadata():
     assert f.name == "idchain"
     assert f.ROLE == Function3.VALUE
     assert f.DATATYPES == (Reference3.RESULTS,)
-    assert f.ARG_TYPES == (str, Regex3)
+    assert f.ARG_TYPES == (str, Regex3, PredicateFunction3)
 
 
 def test_required_arg_present_and_correct_type_passes():
@@ -58,3 +62,10 @@ class TestMatches:
     def test_none_value_does_not_match_either_arg_type(self):
         assert Idchain3(arg="add[0]").matches(None) is False
         assert Idchain3(arg=Regex3(pattern="add")).matches(None) is False
+
+    def test_predicate_function_arg_delegates_to_its_own_matches(self):
+        # compendium 5.36/4.13's own settled example --
+        # ":idchain(:not_none())" means "any idchain at all".
+        idchain = Idchain3(arg=NotNone3())
+        assert idchain.matches("add[0]string[2]") is True
+        assert idchain.matches(None) is False

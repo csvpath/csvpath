@@ -3,6 +3,7 @@ import re
 from ...reference_3 import Reference3, Regex3
 from ...reference_exceptions_3 import ReferenceException3
 from ..function_3 import Function3
+from .predicate_function_3 import PredicateFunction3
 
 
 class Idchain3(Function3):
@@ -31,12 +32,15 @@ class Idchain3(Function3):
     # NOT YET BUILT, see deferred_work_bucket_list.md).
     #
     # arg may be a plain str (exact match against an entry's "source",
-    # the original behavior) or a Regex3 (":idchain(/pattern/)") for a
+    # the original behavior), a Regex3 (":idchain(/pattern/)") for a
     # minimally-searchable match -- David's own call after weighing
     # search()/match()/fullmatch(): search(), so the pattern does not
     # need to anchor to the whole idchain string, just find something
     # within it (e.g. matching one match-component among several
-    # chained together). The grammar already allowed a REGEX arg
+    # chained together) -- or, added 2026-08-26, a PredicateFunction3
+    # (":idchain(:not_none())", compendium 5.31/5.36/4.13) -- "any
+    # idchain at all," not an empty-argument special case, per David's
+    # 2026-08-21 framing. The grammar already allowed a REGEX arg
     # everywhere a STRING is allowed, including here -- this is the
     # first real consumer of Regex3 as an actual matching value rather
     # than just a parsed/held object, so the compile-and-apply behavior
@@ -46,12 +50,13 @@ class Idchain3(Function3):
     SUMMARY = (
         "Addresses one specific match component within a well-known "
         "file's own entries (e.g. errors.json) by its idchain string, "
-        "either an exact match (a plain string) or a search (a /regex/) "
-        "-- only meaningful nested inside :errors()."
+        "either an exact match (a plain string), a search (a /regex/), "
+        "or a predicate function (e.g. :not_none()) -- only meaningful "
+        "nested inside :errors()."
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.RESULTS,)
-    ARG_TYPES = (str, Regex3)
+    ARG_TYPES = (str, Regex3, PredicateFunction3)
     ARG_REQUIRED = True
 
     def __init__(self, *, arg=None) -> None:
@@ -65,9 +70,13 @@ class Idchain3(Function3):
 
     def matches(self, value: str) -> bool:
         """true if `value` (an error entry's own "source" idchain
-        string) matches this idchain's arg -- exact equality for a
-        plain string, or a regex search (not anchored to the start/
-        whole string) when the arg is a Regex3."""
+        string) matches this idchain's arg -- a nested predicate
+        function's own matches() (e.g. :not_none() -- "any idchain at
+        all"), exact equality for a plain string, or a regex search
+        (not anchored to the start/whole string) when the arg is a
+        Regex3."""
+        if isinstance(self._arg, PredicateFunction3):
+            return self._arg.matches(value)
         if value is None:
             return False
         if self._compiled is not None:

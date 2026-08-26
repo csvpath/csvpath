@@ -1869,6 +1869,25 @@ class TestWellKnownFileAccessors:
         ).resolve()
         assert results.results[0].data == [errors[0], errors[1]]
 
+    def test_errors_with_idchain_not_none_filters_to_entries_that_have_any_source(
+        self, acme_archive, instance_dir
+    ):
+        # compendium 5.31/5.36/4.13's own settled worked example --
+        # :not_none() (built 2026-08-26) nested inside :idchain() means
+        # "any idchain at all", not one specific value/pattern.
+        errors = [
+            {"source": "add[0]string[2]", "message": "bad add"},
+            {"message": "no source recorded for this one"},
+        ]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names"
+            ":errors(:idchain(:not_none()))",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == [errors[0]]
+
     def test_vars_resolves_parsed_json(self, acme_archive, instance_dir):
         variables = {"count": 5, "label": "totals"}
         with open(os.path.join(instance_dir, "vars.json"), "w") as f:

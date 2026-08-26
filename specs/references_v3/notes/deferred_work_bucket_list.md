@@ -9,17 +9,6 @@ instead, so the completed reasoning trail isn't lost, it's just off this
 list (see that file's own header, and the "Process note" at the bottom of
 this one).
 
-## Predicate support functions (5.31) — only `:having()` exists, 7 of 8 missing
-
-Found 2026-08-24 (Phase 1 compendium review). The compendium lists eight
-predicate-support functions: `:true()`, `:false()`, `:none()`,
-`:not_none()`, `:empty()`, `:not_empty()`, `:regex(/.../)`, `:having(...)`.
-Checked all eight — only `:having()` exists. `:not_none()`/`:regex()` are
-already tracked individually elsewhere on this list (the predicate-
-argument gate mechanism, and the grammar/argument-type gaps section,
-respectively) — not double-counted here. `:true()`/`:false()`/`:none()`/
-`:empty()`/`:not_empty()` are new, not previously tracked anywhere.
-
 ## `Function3.describe()` has no markdown-rendering capability — 5.4's requirement not met
 
 Found 2026-08-24 (Phase 1 compendium review, item 5.4): "Reference
@@ -187,7 +176,7 @@ call, rolled out incrementally one finder at a time. Whatever `resolve_kind`
 ends up doing should probably follow the same template (a declarative
 class attribute + one shared check) rather than inventing a new pattern.
 
-## Predicate-argument field accessors (`:on_arrival(:not_none())`) — not built anywhere
+## Predicate-argument field accessors (`:on_arrival(:not_none())`) — filter half built for `:idchain()`, generic mechanism still not built
 
 David, 2026-08-21, drafting the compendium's replacement `:manifest()`/
 `:definition()` section: an AI needs to answer "which named-files trigger a
@@ -274,14 +263,24 @@ built gate function — the predicate argument (`:not_none()`, or a literal/
 `Regex3`) works the same way in either slot; only the position changes
 what happens with the result.
 
+**The FILTER half, and the six missing predicate functions themselves
+(compendium 5.31) — BUILT 2026-08-26** — see `deferred_work_done_list.md`
+for the full writeup (`:true()`/`:false()`/`:none()`/`:not_none()`/
+`:empty()`/`:not_empty()`, a new shared `PredicateFunction3` base class,
+and `Idchain3.ARG_TYPES` widened to accept one). `:regex()` as a
+*function* (as opposed to `Regex3`, the literal type `:idchain()`
+already accepted) is still unbuilt — separately tracked under the
+grammar/argument-type-gaps entry, not double-counted here.
+
 Still to design/build:
-- `Idchain3.ARG_TYPES` needs to accept a predicate function (`:not_none()`
-  and friends) alongside its current `(str, Regex3)` — confirmed
-  `ARG_REQUIRED = True` today, so a bare, argument-less `:idchain()` stays
-  illegal; `:not_none()` is the sanctioned way to say "any idchain at all,"
-  not an empty-argument special case.
-- `:not_none()` itself is still not a registered function anywhere
-  (unchanged from above).
+- **The generic "any field accessor takes a predicate argument"
+  mechanism** (`:on_arrival(:not_none())`, the FILES definition-field
+  example that originally motivated this whole entry) — NOT built.
+  `Idchain3` accepting a predicate is a narrow, specific fix for one
+  function; nothing generic exists yet for arbitrary field accessors to
+  do the same. Still needs the design work described above (how a
+  predicate argument is recognized/dispatched generically) before
+  building.
 - The actual GATE dispatch mechanism — a chained sibling function whose
   own predicate argument controls whether the *preceding* function's
   result is emitted at all — is additive to `:idchain()`'s existing filter

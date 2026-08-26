@@ -9,6 +9,76 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## Predicate support functions (5.31), plus the `:idchain()` filter half of predicate-argument accessors — BUILT 2026-08-26
+
+Found 2026-08-24 (Phase 1 compendium review). The compendium lists eight
+predicate-support functions: `:true()`, `:false()`, `:none()`,
+`:not_none()`, `:empty()`, `:not_empty()`, `:regex(/.../)`, `:having(...)`.
+Only `:having()` existed. `:regex()` as a *function* (distinct from
+`Regex3`, the `/pattern/` literal type) stays tracked separately under
+the grammar/argument-type-gaps entry, not double-counted here.
+
+**Same entanglement risk as the date/time functions (previous entries)
+— the six leaf functions would be inert without a real consumer.**
+Continuing straight through the bucket list in order (David's own
+call — "step through the items unless you spot a better ordering"),
+but the natural, already-*settled* consumer wasn't a later list item at
+all — it was sitting right there in the still-open "Predicate-argument
+field accessors" entry: compendium 5.36/§4.13/4.14 had already agreed
+`:idchain()` should accept a predicate argument (`:errors(:idchain(
+:not_none()))` — "any idchain at all", a filter), with `Idchain3.
+ARG_TYPES` widening explicitly named as the one remaining, ready-to-
+build piece. Wired that in the same pass, rather than leaving the six
+functions with zero consumers the way a stricter "one bucket item at a
+time" reading would have.
+
+**Built**: `:true()`/`:false()`/`:none()`/`:not_none()`/`:empty()`/
+`:not_empty()`, all `ROLE = VALUE`, `DATATYPES = (FILES, CSVPATHS,
+RESULTS)` (datatype-agnostic, matching how they are meant to nest
+inside any field accessor's argument regardless of datatype, even
+though the one consumer wired up so far is RESULTS-only). New shared
+base class, `PredicateFunction3` (`csvpath/references/functions/
+filters/predicate_function_3.py`), each declaring `matches(value) ->
+bool` — added specifically so a consumer (e.g. `Idchain3`) can declare
+`ARG_TYPES` generically as `(..., PredicateFunction3)` instead of
+enumerating all six concrete classes by name, matching the project's
+own declarative-over-hardcoded-list preference (see the `resolve_kind`
+bucket-list entry) — a future predicate function automatically works
+with any existing consumer with no changes there at all.
+
+`Idchain3.ARG_TYPES` widened to `(str, Regex3, PredicateFunction3)`;
+`Idchain3.matches()` now delegates to the nested predicate's own
+`matches()` when `self._arg` is one, checked before the existing str/
+Regex3 branches. No special-casing needed for how a predicate function
+actually gets built as `:idchain()`'s own arg — `ReferenceFunctionFactory.
+build()` already recursively builds a nested `FunctionCall3` arg into a
+real `Function3` instance (the same generic mechanism `:from(:index(2))`
+already relies on), confirmed live before assuming it would "just work".
+
+**Still explicitly NOT built** (separately tracked, see the bucket
+list's own "Predicate-argument field accessors" entry): the GENERIC
+"any field accessor accepts a predicate argument" mechanism (the FILES
+`:on_arrival(:not_none())` example that originally motivated the whole
+predicate-argument idea) — `Idchain3` accepting one is a narrow, specific
+fix for one function, not a generic dispatch mechanism any OTHER field
+accessor gets for free; and the GATE half (a chained sibling function,
+e.g. hypothetical `:errors():idchain(:not_none())`) — additive to the
+filter behavior, nothing dispatches it yet.
+
+Tests: `tests/references/functions/filters/test_{true,false,none,
+not_none,empty,not_empty}_3.py` (one file each, metadata + `check_valid()`
++ `matches()` truth-table), `test_predicate_function_3.py` (base class
+raises `NotImplementedError` if a subclass forgets to override
+`matches()`), widened `test_idchain_3.py` (new `ARG_TYPES` assertion
+plus a `matches()` delegation test), and one live end-to-end test
+through a real `ResultsReferenceFinder3`
+(`test_errors_with_idchain_not_none_filters_to_entries_that_have_any_source`,
+matching compendium 5.36's own worked example exactly — some errors
+have a `"source"` field, one does not, `:not_none()` filters to just
+the ones that do). `tests/references/` now 1397 passed, up from 1370.
+
+---
+
 ## `@variable` registration and `{...}` interpolation evaluation, both halves — BUILT 2026-08-26
 
 Compendium 3.12: "Prior to query, a reference finder can be given
