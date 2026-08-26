@@ -1635,6 +1635,78 @@ class TestDefinitionFieldAccessorFunctions:
             _finder("$rich.files.:uuid()", RICH_HOME, RICH_MANIFEST).query()
 
 
+class TestSourceSubFieldAccessorFunctions:
+    # sources.<name>.* -- arg-keyed (built 2026-08-26, see
+    # ReferenceFinder3._apply_key_arg()'s own docstring for the shared
+    # "{}"-placeholder mechanism). Same bare-name_one treatment as
+    # :sources() itself (SOURCE="definition", no version needed), plus
+    # the ordinary name_three position beside a matched pointer.
+    DEFINITION = {
+        "sources": {
+            "email": {
+                "address": "mail.example.com",
+                "port": 993,
+                "username": "bot",
+                "password": "secret",
+            }
+        }
+    }
+
+    def test_source_address_bare(self):
+        finder = _finder(
+            '$rich.files.:source_address("email")',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "mail.example.com"
+
+    def test_source_port_bare(self):
+        finder = _finder(
+            '$rich.files.:source_port("email")',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == 993
+
+    def test_source_username_bare(self):
+        finder = _finder(
+            '$rich.files.:source_username("email")',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "bot"
+
+    def test_source_password_bare(self):
+        finder = _finder(
+            '$rich.files.:source_password("email")',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "secret"
+
+    def test_source_address_at_name_three(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():source_address("email")',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "mail.example.com"
+
+    def test_unknown_source_name_gives_none_not_an_error(self):
+        finder = _finder(
+            '$rich.files.:source_address("nope")',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data is None
+
+
 class TestPathFunction:
     # :path(inner) returns the filesystem path to whatever well-known
     # resource `inner` points at, instead of its content -- and, unlike

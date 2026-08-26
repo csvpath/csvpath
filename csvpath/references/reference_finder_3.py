@@ -433,6 +433,26 @@ class ReferenceFinder3(ABC):
         return pattern
 
     @staticmethod
+    def _apply_key_arg(key_path: str | None, arg) -> str | None:
+        """fills a "{}" placeholder in an arg-parameterized Function3.KEY
+        dotted path with the field-accessor call's own arg -- e.g.
+        "sources.{}.port".format("email") -> "sources.email.port".
+        Added 2026-08-26 for the first field accessors whose manifest/
+        definition key genuinely depends on a per-call value, not just
+        the datatype (sources.<name>.*/destinations.<name>.*/
+        transfers.path_transfers.<name>.on_complete_* -- see
+        SourcePort3/DestinationPort3/TransferOnCompleteAll3's own
+        docstrings for the worked argument). A no-op for every static,
+        placeholder-free KEY (arg is None for those, or the path simply
+        has no "{}" to fill) -- call this unconditionally before
+        _extract_field_value()/_extract_field_value_with_ledger_
+        fallback() rather than only for the functions that need it; it
+        costs nothing for the ones that do not."""
+        if key_path is None or arg is None:
+            return key_path
+        return key_path.format(arg)
+
+    @staticmethod
     def _extract_field_value(container: dict | None, key_path: str) -> object:
         """walks a dotted key path (e.g. "on_arrival.named_paths_group")
         through a dict, returning None the moment any segment is missing

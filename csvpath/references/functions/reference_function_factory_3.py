@@ -43,6 +43,10 @@ class ReferenceFunctionFactory:
         from .fields.archive_3 import Archive3
         from .fields.archive_path_3 import ArchivePath3
         from .fields.completed_3 import Completed3
+        from .fields.destination_address_3 import DestinationAddress3
+        from .fields.destination_password_3 import DestinationPassword3
+        from .fields.destination_port_3 import DestinationPort3
+        from .fields.destination_username_3 import DestinationUsername3
         from .fields.destinations_3 import Destinations3
         from .fields.error_count_3 import ErrorCount3
         from .fields.file_fingerprints_3 import FileFingerprints3
@@ -85,19 +89,35 @@ class ReferenceFunctionFactory:
         from .fields.run_dir_3 import RunDir3
         from .fields.run_method_3 import RunMethod3
         from .fields.run_uuid_3 import RunUuid3
+        from .fields.script_on_complete_all_3 import ScriptOnCompleteAll3
+        from .fields.script_on_complete_error_3 import ScriptOnCompleteError3
+        from .fields.script_on_complete_invalid_3 import ScriptOnCompleteInvalid3
+        from .fields.script_on_complete_valid_3 import ScriptOnCompleteValid3
         from .fields.scripts_3 import Scripts3
         from .fields.serial_3 import Serial3
+        from .fields.source_address_3 import SourceAddress3
         from .fields.source_mode_preceding_3 import SourceModePreceding3
+        from .fields.source_password_3 import SourcePassword3
+        from .fields.source_port_3 import SourcePort3
+        from .fields.source_username_3 import SourceUsername3
         from .fields.sources_3 import Sources3
         from .fields.status_3 import Status3
         from .fields.time_3 import Time3
         from .fields.time_completed_3 import TimeCompleted3
+        from .fields.transfer_on_complete_all_3 import TransferOnCompleteAll3
+        from .fields.transfer_on_complete_error_3 import TransferOnCompleteError3
+        from .fields.transfer_on_complete_invalid_3 import TransferOnCompleteInvalid3
+        from .fields.transfer_on_complete_valid_3 import TransferOnCompleteValid3
         from .fields.transfers_3 import Transfers3
         from .fields.type_3 import Type3
         from .fields.username_3 import Username3
         from .fields.uuid_3 import Uuid3
         from .fields.valid_3 import Valid3
         from .fields.webhooks_3 import Webhooks3
+        from .fields.webhooks_on_complete_all_3 import WebhooksOnCompleteAll3
+        from .fields.webhooks_on_complete_error_3 import WebhooksOnCompleteError3
+        from .fields.webhooks_on_complete_invalid_3 import WebhooksOnCompleteInvalid3
+        from .fields.webhooks_on_complete_valid_3 import WebhooksOnCompleteValid3
 
         from .filters.idchain_3 import Idchain3
 
@@ -136,10 +156,30 @@ class ReferenceFunctionFactory:
             NamedPathsCount3.NAME: NamedPathsCount3,
             OnArrival3.NAME: OnArrival3,
             Sources3.NAME: Sources3,
+            SourceAddress3.NAME: SourceAddress3,
+            SourcePort3.NAME: SourcePort3,
+            SourceUsername3.NAME: SourceUsername3,
+            SourcePassword3.NAME: SourcePassword3,
             Scripts3.NAME: Scripts3,
+            ScriptOnCompleteAll3.NAME: ScriptOnCompleteAll3,
+            ScriptOnCompleteValid3.NAME: ScriptOnCompleteValid3,
+            ScriptOnCompleteInvalid3.NAME: ScriptOnCompleteInvalid3,
+            ScriptOnCompleteError3.NAME: ScriptOnCompleteError3,
             Webhooks3.NAME: Webhooks3,
+            WebhooksOnCompleteAll3.NAME: WebhooksOnCompleteAll3,
+            WebhooksOnCompleteValid3.NAME: WebhooksOnCompleteValid3,
+            WebhooksOnCompleteInvalid3.NAME: WebhooksOnCompleteInvalid3,
+            WebhooksOnCompleteError3.NAME: WebhooksOnCompleteError3,
             Transfers3.NAME: Transfers3,
+            TransferOnCompleteAll3.NAME: TransferOnCompleteAll3,
+            TransferOnCompleteValid3.NAME: TransferOnCompleteValid3,
+            TransferOnCompleteInvalid3.NAME: TransferOnCompleteInvalid3,
+            TransferOnCompleteError3.NAME: TransferOnCompleteError3,
             Destinations3.NAME: Destinations3,
+            DestinationAddress3.NAME: DestinationAddress3,
+            DestinationPort3.NAME: DestinationPort3,
+            DestinationUsername3.NAME: DestinationUsername3,
+            DestinationPassword3.NAME: DestinationPassword3,
             Path3.NAME: Path3,
             RunUuid3.NAME: RunUuid3,
             Serial3.NAME: Serial3,

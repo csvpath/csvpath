@@ -1233,6 +1233,131 @@ class TestDefinitionFieldAccessorFunctions:
         assert first.results[0].data == last.results[0].data
 
 
+class TestDefinitionSubFieldAccessorFunctions:
+    # the arg-keyed (destinations.<name>.*, transfers.<name>.
+    # on_complete_*) and fixed-state (scripts.on_complete_*, webhooks.
+    # on_complete_*) sub-field accessors built 2026-08-26 -- see
+    # ReferenceFinder3._apply_key_arg()'s own docstring for the shared
+    # "{}"-placeholder mechanism the arg-keyed ones need.
+    DEFINITION = {
+        "scripts": {
+            "on_complete_all": "notify.sh",
+            "on_complete_error": "alert.sh",
+        },
+        "webhooks": {
+            "on_complete_valid": {"url": "https://example.com/hook"},
+        },
+        "transfers": {
+            "path_transfers": {
+                "company_names": {
+                    "on_complete_all": [{"file": "data", "transfer_to": "@out"}]
+                }
+            }
+        },
+        "destinations": {
+            "main": {
+                "address": "example.com",
+                "port": 22,
+                "username": "bot",
+                "password": "secret",
+            }
+        },
+    }
+
+    def test_script_on_complete_all(self):
+        results = _finder(
+            "$acme.csvpaths.:first():script_on_complete_all()",
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == "notify.sh"
+
+    def test_script_on_complete_error(self):
+        results = _finder(
+            "$acme.csvpaths.:first():script_on_complete_error()",
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == "alert.sh"
+
+    def test_script_on_complete_valid_not_configured_gives_none(self):
+        results = _finder(
+            "$acme.csvpaths.:first():script_on_complete_valid()",
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_webhooks_on_complete_valid(self):
+        results = _finder(
+            "$acme.csvpaths.:first():webhooks_on_complete_valid()",
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == {
+            "url": "https://example.com/hook",
+            "headers": [],
+        }
+
+    def test_destination_address_by_name(self):
+        results = _finder(
+            '$acme.csvpaths.:first():destination_address("main")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == "example.com"
+
+    def test_destination_port_by_name(self):
+        results = _finder(
+            '$acme.csvpaths.:first():destination_port("main")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == 22
+
+    def test_destination_username_by_name(self):
+        results = _finder(
+            '$acme.csvpaths.:first():destination_username("main")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == "bot"
+
+    def test_destination_password_by_name(self):
+        results = _finder(
+            '$acme.csvpaths.:first():destination_password("main")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == "secret"
+
+    def test_destination_unknown_name_gives_none_not_an_error(self):
+        results = _finder(
+            '$acme.csvpaths.:first():destination_address("nope")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_transfer_on_complete_all_by_identity(self):
+        results = _finder(
+            '$acme.csvpaths.:first():transfer_on_complete_all("company_names")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == [
+            {"file": "data", "transfer_to": "@out"}
+        ]
+
+    def test_transfer_on_complete_unknown_identity_gives_none(self):
+        results = _finder(
+            '$acme.csvpaths.:first():transfer_on_complete_all("nope")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data is None
+
+
 class TestPathFunction:
     # :path(inner) returns the filesystem path to whatever well-known
     # resource `inner` points at, instead of its content.

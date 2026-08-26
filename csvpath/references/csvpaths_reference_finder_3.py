@@ -539,6 +539,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     field_call.name
                 )
                 key_path = function_cls.KEY.get(reference.datatype)
+                key_path = self._apply_key_arg(key_path, field_call.arg)
                 if function_cls.SOURCE == "definition":
                     # a definition.json-backed field (e.g. :scripts(),
                     # :webhooks()) is keyed by group NAME, not uuid --
