@@ -342,6 +342,7 @@ _METADATA_FILE_FUNCTIONS = (
     "meta",
     "data",
     "unmatched",
+    "printouts",
     "file",
     "definition",
     "manifest",

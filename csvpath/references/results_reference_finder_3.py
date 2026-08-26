@@ -940,6 +940,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     _BYTES_ACCESSOR_FILES = {
         "data": "data.csv",
         "unmatched": "unmatched.csv",
+        "printouts": "printouts.txt",
     }
 
     def _extract_data(self, result: ReferenceResult3):
@@ -1351,7 +1352,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         seg = run_home.rstrip("/").rsplit("/", 1)[-1]
         return seg[:10]
 
-    _ACCESSOR_NAMES = ("errors", "vars", "meta", "data", "unmatched", "file")
+    _ACCESSOR_NAMES = (
+        "errors",
+        "vars",
+        "meta",
+        "data",
+        "unmatched",
+        "printouts",
+        "file",
+    )
 
     @staticmethod
     def _name_three_selector(

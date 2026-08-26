@@ -34,6 +34,7 @@ class ReferenceFunctionFactory:
         from .well_known_files.file_3 import File3
         from .well_known_files.manifest_3 import Manifest3
         from .well_known_files.meta_3 import Meta3
+        from .well_known_files.printouts_3 import Printouts3
         from .well_known_files.unmatched_3 import Unmatched3
         from .well_known_files.vars_3 import Vars3
 
@@ -120,6 +121,7 @@ class ReferenceFunctionFactory:
             Meta3.NAME: Meta3,
             Data3.NAME: Data3,
             Unmatched3.NAME: Unmatched3,
+            Printouts3.NAME: Printouts3,
             Idchain3.NAME: Idchain3,
             File3.NAME: File3,
             Uuid3.NAME: Uuid3,

@@ -1898,6 +1898,27 @@ class TestWellKnownFileAccessors:
         ).resolve()
         assert results.results[0].data == content
 
+    def test_printouts_resolves_raw_bytes(self, acme_archive, instance_dir):
+        content = b"---- PRINTOUT: line 1 ----\nhello\n"
+        with open(os.path.join(instance_dir, "printouts.txt"), "wb") as f:
+            f.write(content)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:printouts()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == content
+
+    def test_printouts_resolves_none_when_never_written(
+        self, acme_archive, instance_dir
+    ):
+        # printouts.txt is only written if the csvpath statement printed
+        # something -- genuinely optional, same as data.csv/unmatched.csv.
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:printouts()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data is None
+
     def test_file_resolves_a_user_named_output(self, acme_archive, instance_dir):
         content = b"custom output"
         with open(os.path.join(instance_dir, "orders.parquet"), "wb") as f:

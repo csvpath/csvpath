@@ -126,16 +126,46 @@ argument gate mechanism, and the grammar/argument-type gaps section,
 respectively) — not double-counted here. `:true()`/`:false()`/`:none()`/
 `:empty()`/`:not_empty()` are new, not previously tracked anywhere.
 
-## `:printouts()` and `:log()` file accessors — not built
+## `:printouts()` — BUILT 2026-08-26; `:log()` — deferred, needs its own mechanism
 
 Found 2026-08-24 (Phase 1 compendium review, item 5.9). The compendium
 lists ten well-known file accessors as "the complete class": `:manifest()`,
 `:definition()`, `:data()`, `:errors()`, `:printouts()`, `:vars()`,
 `:meta()`, `:unmatched()`, `:file(...)`, `:log()`. Checked all ten directly
-against the function registry — eight are real; `:printouts()` and `:log()`
-have no `Function3` subclass anywhere. Not previously tracked —
+against the function registry — eight were real; `:printouts()` and `:log()`
+had no `Function3` subclass anywhere. Not previously tracked —
 `function_coverage_matrix.md` doesn't mention either name, and neither is
 on this list's existing "Functions" section of named-but-unbuilt items.
+
+**`:printouts()` built 2026-08-26** — fit the existing per-instance
+well-known-file pattern exactly like `:data()`/`:unmatched()`: raw bytes
+of `printouts.txt`, same directory level as `data.csv`/`errors.json`
+(confirmed against `run_home_maker.py`'s own worked example path),
+genuinely optional (`None` if nothing was ever printed). New
+`printouts_3.py` (`Printouts3`), registered in the factory, added to
+`_METADATA_FILE_FUNCTIONS` (`reference_3.py`) and `_BYTES_ACCESSOR_FILES`
+**and** `_ACCESSOR_NAMES` in `ResultsReferenceFinder3` (two separate
+whitelists gate this, not one — confirmed live: missing from
+`_ACCESSOR_NAMES` alone raised "does not yet support :printouts() as a
+name_three function" even after every other piece was wired up). Tests:
+`tests/references/functions/well_known_files/test_printouts_3.py` (unit)
+plus two integration tests (`test_printouts_resolves_raw_bytes`/
+`test_printouts_resolves_none_when_never_written`) in
+`TestWellKnownFileAccessors` (`test_results_reference_finder_3.py`).
+`tests/references/` now 1184 passed.
+
+**`:log()` — David, 2026-08-26: defer, does not fit the quick-ones
+batch.** Unlike every other well-known-file function, `:log()` means
+"the project csvpath.log file" (`config.log_file`) — a single, global
+resource with no dependency on any matched run/instance/named-entity at
+all. Forcing it into RESULTS/`NAME_THREE` scope (the way every other
+well-known file rides alongside a matched instance) would be
+syntactically hollow — the entity selection would be ignored entirely,
+always resolving to the same global path regardless of which run/
+instance matched. Needs its own design decision (does resolving it even
+require root_major/datatype in the reference string, or is there a
+different, entity-free syntax for a genuinely global resource?) before
+building — a real open design question, not mechanical follow-up.
 
 ## `Function3.describe()` has no markdown-rendering capability — 5.4's requirement not met
 
