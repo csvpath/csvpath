@@ -293,6 +293,92 @@ class ReferenceFinder3(ABC):
             return reader.source.read()
 
     @staticmethod
+    def _log_call_anywhere(reference: Reference3) -> "FunctionCall3 | None":
+        """returns the :log() FunctionCall3 if it appears anywhere in
+        name_one (regardless of whether the overall shape is legal),
+        else None -- added 2026-08-26 (compendium 5.16(b)). Checked
+        separately from _bare_log_call() so a caller can give a clear,
+        specific error ("must be standalone") for an illegal
+        combination, rather than falling through to whatever generic
+        "not supported" message the ordinary dispatch would raise for
+        an unrecognized shape."""
+        name_one = reference.name_one
+        segments = [*name_one.path, *name_one.functions]
+        for seg in segments:
+            if isinstance(seg, FunctionCall3) and seg.name == "log":
+                return seg
+        return None
+
+    @staticmethod
+    def _bare_log_call(reference: Reference3) -> "FunctionCall3 | None":
+        """returns the :log() FunctionCall3 only if name_one is EXACTLY
+        a bare, standalone :log() call -- nothing else in name_one's
+        path or function chain, and no name_two/name_three -- per the
+        compendium's own "standalone, not-combinable" requirement
+        (5.16(b)). Does NOT check root_major -- :log() is a single,
+        datatype-independent global resource (the configured log_file),
+        not tied to any named entity, so root_major being '*' is a
+        separate, dedicated check the caller makes itself (a literal
+        root_major gets its own clear error, not silent misuse). Note
+        name_two (the "#worksheet" marker) lives on name_one itself,
+        not on Reference3 directly."""
+        if reference.name_three is not None:
+            return None
+        name_one = reference.name_one
+        if name_one.name_two is not None:
+            return None
+        if len(name_one.path) != 1 or name_one.functions:
+            return None
+        call = name_one.path[0]
+        if not isinstance(call, FunctionCall3) or call.name != "log":
+            return None
+        return call
+
+    def _query_log_call(self, reference: Reference3) -> "ReferenceResults3 | None":
+        """query()'s own entry point for :log() -- shared by all three
+        finders since the log file is identical regardless of
+        datatype. Returns None if :log() is not present at all (an
+        ordinary reference, unaffected); raises if it is present but
+        the shape is illegal; otherwise returns the one-result
+        ReferenceResults3 pointing at the configured log file itself
+        (uuid=None, same convention _query_well_known_file() uses for
+        a fixed, non-versioned resource)."""
+        if self._log_call_anywhere(reference) is None:
+            return None
+        if self._bare_log_call(reference) is None:
+            raise ReferenceException3(
+                ":log() must be a standalone, not-combinable function -- "
+                "it cannot ride alongside a pointer or any other "
+                "function in name_one, and does not support name_two/"
+                "name_three."
+            )
+        if not isinstance(reference.root_major, Star3):
+            raise ReferenceException3(
+                ":log() requires root_major to be '*' -- it resolves a "
+                "single, global log file, not tied to any specific "
+                "named entity."
+            )
+        path = self.csvpaths.config.log_file
+        return ReferenceResults3(results=[ReferenceResult3(path=path, uuid=None)])
+
+    @classmethod
+    def _read_log_file(cls, path: str, lines: int | None):
+        """reads the configured log file as text -- the whole thing if
+        `lines` is None, otherwise just its last `lines` lines,
+        rejoined with newlines (settled with David, 2026-08-26: a
+        single string, not raw bytes or a list of line strings, per
+        the compendium's own "gives... a string" resolve-type framing
+        for text content). None if the log file does not exist yet
+        (nothing has ever been logged)."""
+        if not Nos(path).exists():
+            return None
+        with DataFileReader(path=path) as reader:
+            text = reader.source.read()
+        if lines is None:
+            return text
+        return "\n".join(text.splitlines()[-lines:])
+
+    @staticmethod
     def _read_well_known_json(path: str):
         """reads a well-known, JSON-shaped resource (results' errors.json/
         vars.json/meta.json) as a parsed Python structure -- None if it

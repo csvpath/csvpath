@@ -346,6 +346,7 @@ _METADATA_FILE_FUNCTIONS = (
     "file",
     "definition",
     "manifest",
+    "log",
 )
 _METADATA_FIELD_FUNCTIONS = (
     "idchain",

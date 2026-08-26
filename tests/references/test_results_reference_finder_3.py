@@ -22,8 +22,9 @@ from csvpath.references.results_reference_finder_3 import ResultsReferenceFinder
 
 
 class _FakeConfig:
-    def __init__(self, archive: str):
+    def __init__(self, archive: str, log_file: str | None = None):
         self._archive = archive
+        self.log_file = log_file
 
     def get(self, *, section, name):
         assert (section, name) == ("results", "archive")
@@ -44,9 +45,9 @@ class _FakeResultsManager:
 
 
 class _FakeCsvPaths:
-    def __init__(self, archive: str):
+    def __init__(self, archive: str, log_file: str | None = None):
         self.results_manager = _FakeResultsManager(archive)
-        self.config = _FakeConfig(archive)
+        self.config = _FakeConfig(archive, log_file=log_file)
 
 
 def _write_json(path, data) -> None:
@@ -80,8 +81,10 @@ def _write_archive_manifest_multi(archive, groups: dict) -> None:
     _write_json(archive / "manifest.json", entries)
 
 
-def _finder(reference: str, archive: str) -> ResultsReferenceFinder3:
-    csvpaths = _FakeCsvPaths(archive)
+def _finder(
+    reference: str, archive: str, log_file: str | None = None
+) -> ResultsReferenceFinder3:
+    csvpaths = _FakeCsvPaths(archive, log_file=log_file)
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
     return ResultsReferenceFinder3(csvpaths=csvpaths, ref=ref)
 
@@ -2695,3 +2698,20 @@ class TestScopeLimits:
         finder = _finder("$acme.results.:quarter()/2025:last()", acme_archive)
         with pytest.raises(ReferenceException3):
             finder.query()
+
+
+class TestLog:
+    # compendium 5.16(b) -- see test_csvpaths_reference_finder_3.py's
+    # own TestLog for the full scenario set (shared ABC mechanism,
+    # ReferenceFinder3._bare_log_call()/_query_log_call()/
+    # _read_log_file()); this just confirms it composes correctly with
+    # ResultsReferenceFinder3's own query()/_extract_data() dispatch
+    # too, and that it takes priority over the archive-ledger '*'
+    # handling that would otherwise apply to a bare '*' root_major.
+    def test_bare_log_resolves_the_whole_file(self, tmp_path, acme_archive):
+        log_path = tmp_path / "csvpath.log"
+        log_path.write_text("line1\nline2\n")
+        results = _finder(
+            "$*.results.:log()", acme_archive, log_file=str(log_path)
+        ).resolve()
+        assert results.results[0].data == "line1\nline2\n"

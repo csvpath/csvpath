@@ -32,6 +32,7 @@ class ReferenceFunctionFactory:
         from .well_known_files.definition_3 import Definition3
         from .well_known_files.errors_3 import Errors3
         from .well_known_files.file_3 import File3
+        from .well_known_files.log_3 import Log3
         from .well_known_files.manifest_3 import Manifest3
         from .well_known_files.meta_3 import Meta3
         from .well_known_files.printouts_3 import Printouts3
@@ -124,6 +125,7 @@ class ReferenceFunctionFactory:
             Printouts3.NAME: Printouts3,
             Idchain3.NAME: Idchain3,
             File3.NAME: File3,
+            Log3.NAME: Log3,
             Uuid3.NAME: Uuid3,
             Time3.NAME: Time3,
             Fingerprint3.NAME: Fingerprint3,

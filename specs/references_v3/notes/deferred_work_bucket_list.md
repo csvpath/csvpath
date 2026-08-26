@@ -126,7 +126,7 @@ argument gate mechanism, and the grammar/argument-type gaps section,
 respectively) — not double-counted here. `:true()`/`:false()`/`:none()`/
 `:empty()`/`:not_empty()` are new, not previously tracked anywhere.
 
-## `:printouts()` — BUILT 2026-08-26; `:log()` — deferred, needs its own mechanism
+## `:printouts()` and `:log()` — BUILT 2026-08-26
 
 Found 2026-08-24 (Phase 1 compendium review, item 5.9). The compendium
 lists ten well-known file accessors as "the complete class": `:manifest()`,
@@ -154,18 +154,42 @@ plus two integration tests (`test_printouts_resolves_raw_bytes`/
 `TestWellKnownFileAccessors` (`test_results_reference_finder_3.py`).
 `tests/references/` now 1184 passed.
 
-**`:log()` — David, 2026-08-26: defer, does not fit the quick-ones
-batch.** Unlike every other well-known-file function, `:log()` means
-"the project csvpath.log file" (`config.log_file`) — a single, global
-resource with no dependency on any matched run/instance/named-entity at
-all. Forcing it into RESULTS/`NAME_THREE` scope (the way every other
-well-known file rides alongside a matched instance) would be
-syntactically hollow — the entity selection would be ignored entirely,
-always resolving to the same global path regardless of which run/
-instance matched. Needs its own design decision (does resolving it even
-require root_major/datatype in the reference string, or is there a
-different, entity-free syntax for a genuinely global resource?) before
-building — a real open design question, not mechanical follow-up.
+**`:log()` built 2026-08-26**, after David added a proper spec for it
+(compendium 5.16(b), added directly by him, not this session): a
+standalone, not-combinable `name_one` function, legal under any of the
+three datatypes but only with `root_major == '*'` (`$*.files.:log()` /
+`$*.results.:log()` / `$*.csvpaths.:log()` — datatype is arbitrary since
+it is genuinely datatype-independent, just required by the grammar). An
+optional int argument gives the last N lines; without it, the whole
+file. Resolves to a single string (settled with David: not raw bytes,
+not a list of line strings — matches the compendium's own "gives...a
+string" framing for text content), `None` if the log file does not
+exist yet.
+
+Because this is the first function that is not tied to any datatype/
+entity at all, it needed new shared-ABC mechanism rather than reusing
+any per-entity pattern: `ReferenceFinder3._log_call_anywhere()` (detects
+`:log()` anywhere in `name_one`, for a clear, specific error rather than
+a generic one), `_bare_log_call()` (the actual legality check —
+standalone, no `name_two`/`name_three`), `_query_log_call()` (called
+first thing in each finder's `query()`, before any datatype-specific
+dispatch — returns `None` for an ordinary reference, raises for an
+illegal combination or a literal `root_major`, otherwise returns the
+one-result `ReferenceResults3` pointing at `config.log_file`), and
+`_read_log_file()` (the actual read + optional tail, shared by every
+finder's `_extract_data()`). New `log_3.py` (`Log3`), registered in the
+factory, added to `_METADATA_FILE_FUNCTIONS`. Wired into all three
+finders identically (`query()` and `_extract_data()`, four lines each).
+
+Tests: `tests/references/functions/well_known_files/test_log_3.py`
+(unit) plus `TestLog` in `test_csvpaths_reference_finder_3.py` (the full
+scenario set: bare resolves whole file, int arg tails N lines, missing
+file gives `None`, combined-with-a-pointer raises, literal `root_major`
+raises) and one confirming end-to-end test each in
+`test_files_reference_finder_3.py`/`test_results_reference_finder_3.py`
+(proving the shared mechanism composes correctly with each finder's own
+`query()` dispatch, not just in isolation). `tests/references/` now 1195
+passed, up from 1184.
 
 ## `Function3.describe()` has no markdown-rendering capability — 5.4's requirement not met
 

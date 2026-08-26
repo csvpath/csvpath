@@ -86,6 +86,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
 
     def query(self) -> ReferenceResults3:
         reference = self.ref.parsed
+        log_results = self._query_log_call(reference)
+        if log_results is not None:
+            return log_results
         root_major = reference.root_major
         if isinstance(root_major, Star3):
             if self._is_bare_pointer_reference(reference, "manifest"):
@@ -446,6 +449,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
 
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
+        log_call = self._bare_log_call(reference)
+        if log_call is not None:
+            return self._read_log_file(result.path, log_call.arg)
         # :path(...) is checked before resolve_kind's content-oriented
         # dispatch -- see FilesReferenceFinder3._extract_data() for why.
         name_one = reference.name_one

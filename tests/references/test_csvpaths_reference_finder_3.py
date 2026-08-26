@@ -98,14 +98,24 @@ class _FakePathsManager:
 
 
 class _FakeConfig:
-    def __init__(self, inputs_csvpaths_path: str | None = None):
+    def __init__(
+        self,
+        inputs_csvpaths_path: str | None = None,
+        log_file: str | None = None,
+    ):
         self.inputs_csvpaths_path = inputs_csvpaths_path
+        self.log_file = log_file
 
 
 class _FakeCsvPaths:
-    def __init__(self, paths_manager, inputs_csvpaths_path: str | None = None):
+    def __init__(
+        self,
+        paths_manager,
+        inputs_csvpaths_path: str | None = None,
+        log_file: str | None = None,
+    ):
         self.paths_manager = paths_manager
-        self.config = _FakeConfig(inputs_csvpaths_path)
+        self.config = _FakeConfig(inputs_csvpaths_path, log_file=log_file)
 
 
 def _finder(
@@ -116,6 +126,7 @@ def _finder(
     ledger: list | None = None,
     by_name: dict | None = None,
     definitions_by_name: dict | None = None,
+    log_file: str | None = None,
 ) -> CsvpathsReferenceFinder3:
     csvpaths = _FakeCsvPaths(
         _FakePathsManager(
@@ -126,6 +137,7 @@ def _finder(
             definitions_by_name=definitions_by_name,
         ),
         inputs_csvpaths_path=inputs_csvpaths_path,
+        log_file=log_file,
     )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
     return CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
@@ -1329,3 +1341,45 @@ class TestPositionEnforcement:
         # (where it has never been meaningful) is rejected the same way.
         with pytest.raises(ReferenceException3):
             _finder('$acme.csvpaths.:last().:having("x")', RICH_MANIFEST).query()
+
+
+class TestLog:
+    # compendium 5.16(b) -- an outlier: a single, global, datatype-
+    # independent resource (config.ini's own log_file), not tied to any
+    # named-paths group at all. Built and shared identically across all
+    # three finders (ReferenceFinder3._bare_log_call()/_query_log_call()/
+    # _read_log_file()) -- this class exercises the full scenario set
+    # once here (csvpaths needs no real fixture beyond a log file path,
+    # simplest of the three datatypes to set up); see
+    # test_files_reference_finder_3.py/test_results_reference_finder_3.py
+    # for one confirming end-to-end test each, proving the shared
+    # mechanism composes correctly with each datatype's own query()
+    # dispatch too, not just in isolation.
+    def test_bare_log_resolves_the_whole_file(self, tmp_path):
+        log_path = tmp_path / "csvpath.log"
+        log_path.write_text("line1\nline2\nline3\n")
+        results = _finder("$*.csvpaths.:log()", log_file=str(log_path)).resolve()
+        assert results.results[0].data == "line1\nline2\nline3\n"
+
+    def test_log_with_int_arg_gives_last_n_lines(self, tmp_path):
+        log_path = tmp_path / "csvpath.log"
+        log_path.write_text("\n".join(f"line{i}" for i in range(1, 21)) + "\n")
+        results = _finder("$*.csvpaths.:log(3)", log_file=str(log_path)).resolve()
+        assert results.results[0].data == "line18\nline19\nline20"
+
+    def test_log_resolves_none_when_file_does_not_exist_yet(self, tmp_path):
+        log_path = tmp_path / "does-not-exist.log"
+        results = _finder("$*.csvpaths.:log()", log_file=str(log_path)).resolve()
+        assert results.results[0].data is None
+
+    def test_log_combined_with_a_pointer_is_rejected(self):
+        # "standalone, not-combinable" -- riding alongside anything else
+        # in name_one is illegal, even a plain pointer.
+        with pytest.raises(ReferenceException3):
+            _finder("$*.csvpaths.:log():last()", log_file="x.log").query()
+
+    def test_log_with_literal_root_major_is_rejected(self):
+        # root_major must be '*' -- a literal named-paths group name is
+        # misleading here (there is no acme-specific log content).
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.csvpaths.:log()", log_file="x.log").query()

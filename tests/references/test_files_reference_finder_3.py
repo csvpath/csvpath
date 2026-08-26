@@ -127,14 +127,20 @@ class _FakeFileManager:
 
 
 class _FakeConfig:
-    def __init__(self, inputs_files_path: str | None = None):
+    def __init__(self, inputs_files_path: str | None = None, log_file: str | None = None):
         self.inputs_files_path = inputs_files_path
+        self.log_file = log_file
 
 
 class _FakeCsvPaths:
-    def __init__(self, file_manager, inputs_files_path: str | None = None):
+    def __init__(
+        self,
+        file_manager,
+        inputs_files_path: str | None = None,
+        log_file: str | None = None,
+    ):
         self.file_manager = file_manager
-        self.config = _FakeConfig(inputs_files_path)
+        self.config = _FakeConfig(inputs_files_path, log_file=log_file)
 
 
 def _finder(
@@ -145,10 +151,12 @@ def _finder(
     inputs_files_path: str | None = None,
     ledger: list | None = None,
     by_name: dict | None = None,
+    log_file: str | None = None,
 ) -> FilesReferenceFinder3:
     csvpaths = _FakeCsvPaths(
         _FakeFileManager(home, manifest, definition, ledger=ledger, by_name=by_name),
         inputs_files_path=inputs_files_path,
+        log_file=log_file,
     )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
     return FilesReferenceFinder3(csvpaths=csvpaths, ref=ref)
@@ -1746,3 +1754,21 @@ class TestPositionEnforcement:
                 ALPHA_HOME,
                 ALPHA_MANIFEST,
             ).query()
+
+
+class TestLog:
+    # compendium 5.16(b) -- see test_csvpaths_reference_finder_3.py's
+    # own TestLog for the full scenario set (shared ABC mechanism,
+    # ReferenceFinder3._bare_log_call()/_query_log_call()/
+    # _read_log_file()); this just confirms it composes correctly with
+    # FilesReferenceFinder3's own query()/_extract_data() dispatch too.
+    def test_bare_log_resolves_the_whole_file(self, tmp_path):
+        log_path = tmp_path / "csvpath.log"
+        log_path.write_text("line1\nline2\n")
+        results = _finder(
+            "$*.files.:log()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            log_file=str(log_path),
+        ).resolve()
+        assert results.results[0].data == "line1\nline2\n"
