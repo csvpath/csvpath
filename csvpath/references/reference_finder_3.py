@@ -433,6 +433,23 @@ class ReferenceFinder3(ABC):
         return pattern
 
     @staticmethod
+    def _pointer_present(calls: list) -> bool:
+        """true if any function in `calls` is a real, top-level version-
+        selecting pointer (:first()/:last()/:index()) -- used to decide,
+        for a Function3.BARE_SOURCE-declaring field accessor (currently
+        only :template()), whether a specific version was actually
+        selected (read that version's own manifest snapshot, the
+        ordinary SOURCE) or not (read the entity's current
+        definition.json default instead, BARE_SOURCE). Added 2026-08-26.
+        Uses the same literal-name check already established in
+        _pointer_before_manifest() above, rather than a registry lookup
+        -- deliberately narrow/cheap, matching that precedent."""
+        return any(
+            isinstance(f, FunctionCall3) and f.name in ("first", "last", "index")
+            for f in calls
+        )
+
+    @staticmethod
     def _apply_key_arg(key_path: str | None, arg) -> str | None:
         """fills a "{}" placeholder in an arg-parameterized Function3.KEY
         dotted path with the field-accessor call's own arg -- e.g.

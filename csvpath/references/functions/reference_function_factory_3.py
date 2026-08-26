@@ -103,6 +103,7 @@ class ReferenceFunctionFactory:
         from .fields.source_username_3 import SourceUsername3
         from .fields.sources_3 import Sources3
         from .fields.status_3 import Status3
+        from .fields.template_3 import Template3
         from .fields.time_3 import Time3
         from .fields.time_completed_3 import TimeCompleted3
         from .fields.transfer_on_complete_all_3 import TransferOnCompleteAll3
@@ -148,6 +149,7 @@ class ReferenceFunctionFactory:
             File3.NAME: File3,
             Log3.NAME: Log3,
             Uuid3.NAME: Uuid3,
+            Template3.NAME: Template3,
             Time3.NAME: Time3,
             Fingerprint3.NAME: Fingerprint3,
             Home3.NAME: Home3,

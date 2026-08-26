@@ -99,6 +99,24 @@ class Function3:
     #
     LEDGER_KEY: dict = {}
 
+    #
+    # optional second resource for a SOURCE == "manifest" field accessor
+    # that means something genuinely different when NO version was
+    # actually selected -- currently only :template() (added 2026-08-26):
+    # riding alongside a real pointer (":first():template()") reads that
+    # matched version's own manifest snapshot (the ordinary SOURCE/KEY
+    # path); used bare, with no pointer at all, it instead reads the
+    # entity's CURRENT definition.json default (BARE_SOURCE ==
+    # "definition") -- the same KEY string works for both, since it is
+    # genuinely the same literal field name in both resources, just
+    # captured at a different moment (registration/load time vs. right
+    # now). None for every function that does not need this distinction
+    # -- the common case. See ReferenceFinder3._pointer_present() for how
+    # a finder decides which resource applies, and Template3's own
+    # docstring for the full worked example.
+    #
+    BARE_SOURCE: str = None
+
     def __init__(self, *, arg: Any = None) -> None:
         self._arg = arg
 

@@ -1760,6 +1760,56 @@ class TestSourceSubFieldAccessorFunctions:
         assert finder.resolve().results[0].data is None
 
 
+class TestTemplateBareVsMatchedDualSource:
+    # :template() (built 2026-08-26) is the first field accessor using
+    # Function3.BARE_SOURCE -- bare, name_one-only (no :name(...)/match
+    # at all) reads definition.json's current default; matched at
+    # name_three beside a real version, it reads that version's own
+    # manifest snapshot instead. See ReferenceFinder3._bare_definition_
+    # field_call()/Template3's own docstring for the full design.
+    DEFINITION = {"template": "current-default"}
+
+    def test_bare_reads_the_current_definition_default(self):
+        manifest = [
+            {**RICH_MANIFEST[0], "template": "snapshot-v1"},
+            {**RICH_MANIFEST[1], "template": "snapshot-v2"},
+        ]
+        finder = _finder(
+            "$rich.files.:template()", RICH_HOME, manifest, self.DEFINITION
+        )
+        assert finder.resolve().results[0].data == "current-default"
+
+    def test_matched_first_reads_that_versions_own_manifest_snapshot(self):
+        manifest = [
+            {**RICH_MANIFEST[0], "template": "snapshot-v1"},
+            {**RICH_MANIFEST[1], "template": "snapshot-v2"},
+        ]
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():template()',
+            RICH_HOME,
+            manifest,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "snapshot-v1"
+
+    def test_matched_last_reads_that_versions_own_manifest_snapshot(self):
+        manifest = [
+            {**RICH_MANIFEST[0], "template": "snapshot-v1"},
+            {**RICH_MANIFEST[1], "template": "snapshot-v2"},
+        ]
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:last():template()',
+            RICH_HOME,
+            manifest,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "snapshot-v2"
+
+    def test_bare_never_configured_gives_none_not_an_error(self):
+        finder = _finder("$rich.files.:template()", RICH_HOME, RICH_MANIFEST)
+        assert finder.resolve().results[0].data is None
+
+
 class TestPathFunction:
     # :path(inner) returns the filesystem path to whatever well-known
     # resource `inner` points at, instead of its content -- and, unlike

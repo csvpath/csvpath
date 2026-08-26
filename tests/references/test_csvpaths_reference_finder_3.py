@@ -1404,6 +1404,49 @@ class TestDefinitionSubFieldAccessorFunctions:
         assert results.results[0].data is None
 
 
+class TestTemplateBareVsPointerDualSource:
+    # :template() (built 2026-08-26) is the first field accessor using
+    # Function3.BARE_SOURCE -- bare (no pointer at all) reads
+    # definition.json's current default; alongside a real pointer, it
+    # reads that specific matched version's own manifest snapshot
+    # instead. See ReferenceFinder3._pointer_present()/Template3's own
+    # docstring for the full design.
+    MANIFEST = [
+        {**RICH_MANIFEST[0], "template": "snapshot-v0"},
+        {**RICH_MANIFEST[1], "template": "snapshot-v1"},
+    ]
+    DEFINITION = {"template": "current-default"}
+
+    def test_bare_reads_the_current_definition_default(self):
+        results = _finder(
+            "$acme.csvpaths.:template()", self.MANIFEST, self.DEFINITION
+        ).resolve()
+        # no pointer -- pools every version, each reading the SAME
+        # current default (definition.json is not versioned).
+        assert [r.data for r in results.results] == [
+            "current-default",
+            "current-default",
+        ]
+
+    def test_first_reads_that_versions_own_manifest_snapshot(self):
+        results = _finder(
+            "$acme.csvpaths.:first():template()", self.MANIFEST, self.DEFINITION
+        ).resolve()
+        assert results.results[0].data == "snapshot-v0"
+
+    def test_last_reads_that_versions_own_manifest_snapshot(self):
+        results = _finder(
+            "$acme.csvpaths.:last():template()", self.MANIFEST, self.DEFINITION
+        ).resolve()
+        assert results.results[0].data == "snapshot-v1"
+
+    def test_bare_never_configured_gives_none_not_an_error(self):
+        results = _finder(
+            "$acme.csvpaths.:template()", self.MANIFEST
+        ).resolve()
+        assert [r.data for r in results.results] == [None, None]
+
+
 class TestPathFunction:
     # :path(inner) returns the filesystem path to whatever well-known
     # resource `inner` points at, instead of its content.

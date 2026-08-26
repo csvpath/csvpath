@@ -249,20 +249,60 @@ end to end despite passing their own unit tests — added all 19 names,
 and added the missing integration tests. `tests/references/` now 1166
 passed, full suite 2754 passed.
 
-**Still deferred, not yet built:**
-- **`:template()`** — genuinely needs a new mechanism (source picked by
-  *position*: bare/no-pointer at name_one reads `definition.json`'s
-  default, alongside a real pointer reads that specific version's
-  manifest snapshot). **Correction, 2026-08-26: the `results_registrar.py`
-  schema gap this bullet used to cite is no longer real** — confirmed
-  live against current code: both `results_registrar.py` (Table 5,
-  line 121: `m["template"] = mdata.template or ""`) and
-  `run_registrar.py` (Table 7, line 51, same pattern) already write a
-  `template` field. David's 2026-08-25 note said he had fixed this; this
-  is that fix, already in place. Only the position-based-dispatch
-  mechanism itself remains to be designed/built, not a data-availability
-  blocker — likely one of "the quick ones" now, not a deferred core-
-  Framework dependency.
+**`:template()` — BUILT 2026-08-26.** The `results_registrar.py` schema
+gap this bullet used to cite turned out to already be fixed (confirmed
+live: both `results_registrar.py`/`run_registrar.py` already write a
+`template` field, unconditionally) — only the position-based-dispatch
+mechanism itself needed designing/building, not a data-availability
+blocker.
+
+Settled with David: one function, dual source, via a new
+`Function3.BARE_SOURCE` attribute (`function_3.py`) — `Template3` sets
+`SOURCE = "manifest"` (used when a real pointer/matched version is
+present — reads that version's own historical manifest snapshot,
+Table 1/Table 3) and `BARE_SOURCE = "definition"` (used bare, no
+pointer/match at all — reads the entity's CURRENT default from
+definition.json, Table 8/Table 9). Same `KEY` string ("template")
+works for both, since it is genuinely the same literal field, just
+captured at different moments — matches Table 9's own doc note that
+its `template` is "the actual source of truth... the Named-Paths
+Manifest's own template field is a snapshot of whatever this held at
+that particular load."
+
+FILES needed no new runtime check at all — its two existing code paths
+(`_bare_definition_field_call()`'s bare-name_one shape vs. the ordinary
+name_three-with-a-real-match shape) already structurally correspond to
+"no version selected" vs. "a version was selected," so widening
+`_bare_definition_field_call()` to also accept `BARE_SOURCE ==
+"definition"` was the only change needed there. CSVPATHS is different —
+both cases go through the SAME code path (a pointer and the field
+accessor coexist in one combined `name_one` chain), so it genuinely
+needed a new shared ABC helper, `ReferenceFinder3._pointer_present()`,
+to check whether a real `:first()`/`:last()`/`:index()` rode alongside
+`:template()` in that chain and pick the resource accordingly. RESULTS
+needed no special-casing at all — a run is not a versioned, editable
+config artifact the way a named-file/named-paths registration is, so
+`:template()` there is just an ordinary `SOURCE == "manifest"` field
+with a `LEDGER_KEY` fallback to Table 7, identical in shape to every
+other RESULTS run-scope field built this session.
+
+Confirmed live (not just via tests) for all three datatypes before
+writing the formal tests: CSVPATHS `:first():template()`/
+`:last():template()` gave each matched version's own snapshot while
+bare `:template()` gave the pooled current default for every version;
+same for FILES; RESULTS gave the run's own value directly.
+
+Also found along the way: Table 5's own doc field list is missing a
+row for `template` entirely, even though `results_registrar.py`
+genuinely writes it — a real doc gap, not fixed here (David's file),
+built from the confirmed code rather than the doc.
+
+Tests: `tests/references/functions/fields/test_template_3.py` (unit),
+`TestTemplateBareVsPointerDualSource` (CSVPATHS),
+`TestTemplateBareVsMatchedDualSource` (FILES), and
+`test_template_at_run_scope` in RESULTS' own
+`TestFieldAccessorFunctions`. `tests/references/` now 1305 passed, up
+from 1293.
 
 This is real, ongoing Phase 2 work, not a "someday" placeholder — update
 this entry as further batches land.

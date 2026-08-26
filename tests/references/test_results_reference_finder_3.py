@@ -1653,6 +1653,24 @@ class TestFieldAccessorFunctions:
         assert _val("named_paths_uuid") == "paths-uuid-1"
         assert _val("archive") == "archive-2026"
 
+    def test_template_at_run_scope(self, tmp_path):
+        # :template() (built 2026-08-26) is simple at RESULTS run scope
+        # -- no bare/definition duality the way FILES/CSVPATHS have,
+        # since a run is not a versioned, editable config artifact.
+        # Ordinary SOURCE == "manifest" read, direct from the run's own
+        # manifest.json.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json",
+            {"run_uuid": "run1-uuid", "template": "run-template"},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+        results = _finder(
+            "$widgets.results.:first():template()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data == "run-template"
+
 
 class TestArchiveLedgerFallback:
     # Table 7 (the Archive Run Manifest, RESULTS' own global ledger) is

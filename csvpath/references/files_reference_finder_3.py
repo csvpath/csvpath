@@ -755,26 +755,34 @@ class FilesReferenceFinder3(ReferenceFinder3):
     def _bare_definition_field_call(name_one) -> "FunctionCall3 | None":
         """returns the field-accessor FunctionCall3 when name_one's
         entire content is a single function whose registered class is
-        SOURCE == "definition" (":on_arrival()"/":sources()"/etc.) --
-        these values live in the named-file's own definition.json, not
-        any particular file/version's manifest entry, so (like
-        ":definition()" itself) they need no :name(...)/matched-version
-        context to resolve. An argument is fine here too (e.g.
-        ":source_port(\"email\")" -- added 2026-08-26 for the arg-
-        keyed sources.<name>.* fields, see SourcePort3's own KEY
-        docstring): the arg parameterizes the KEY lookup itself, not
-        which version matched, so it does not need a candidate any
-        more than an argument-less definition field does. None for
-        every other shape, including SOURCE == "manifest" field
-        accessors (":uuid()"/":time()"/etc.), which DO vary by which
-        version matched and still need a real candidate."""
+        SOURCE == "definition" (":on_arrival()"/":sources()"/etc.), OR
+        whose BARE_SOURCE == "definition" (currently only ":template()"
+        -- added 2026-08-26, see Template3's own docstring: bare/no-
+        pointer means "the current default," genuinely a different
+        resource than SOURCE == "manifest"'s own matched-version
+        snapshot) -- these values live in the named-file's own
+        definition.json, not any particular file/version's manifest
+        entry, so (like ":definition()" itself) they need no
+        :name(...)/matched-version context to resolve. An argument is
+        fine here too (e.g. ":source_port(\"email\")" -- added
+        2026-08-26 for the arg-keyed sources.<name>.* fields, see
+        SourcePort3's own KEY docstring): the arg parameterizes the KEY
+        lookup itself, not which version matched, so it does not need a
+        candidate any more than an argument-less definition field does.
+        None for every other shape, including a plain SOURCE ==
+        "manifest" field accessor with no BARE_SOURCE (":uuid()"/
+        ":time()"/etc.), which DOES vary by which version matched and
+        still needs a real candidate."""
         if name_one.functions or len(name_one.path) != 1:
             return None
         segment = name_one.path[0]
         if not isinstance(segment, FunctionCall3):
             return None
         function_cls = ReferenceFunctionFactory.get_registered_class(segment.name)
-        if function_cls is not None and function_cls.SOURCE == "definition":
+        if function_cls is not None and (
+            function_cls.SOURCE == "definition"
+            or function_cls.BARE_SOURCE == "definition"
+        ):
             return segment
         return None
 
@@ -833,17 +841,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
                 return self._find_manifest_entry_by_uuid(manifest, result.uuid)
         if kind == Reference3.METADATA_FIELD:
-            if reference.name_three is not None:
+            is_bare_field_call = reference.name_three is None
+            if not is_bare_field_call:
                 field_call = self._find_field_function_call(
                     reference.name_three.functions
                 )
             else:
                 # a bare, SOURCE == "definition" field accessor occupying
-                # name_one's entire content (":on_arrival()"/":sources()")
-                # -- settled 2026-08-12, see query()'s own comment. Never
-                # reads result.uuid below (function_cls.SOURCE is always
-                # "definition" for anything _bare_definition_field_call
-                # returns), so result.uuid being None here is fine.
+                # name_one's entire content (":on_arrival()"/":sources()"),
+                # OR a bare BARE_SOURCE == "definition" field accessor
+                # (":template()" -- added 2026-08-26, see Template3's own
+                # docstring) -- settled 2026-08-12/2026-08-26, see
+                # query()'s own comment. Never reads result.uuid below for
+                # a plain SOURCE == "definition" function (result.uuid
+                # being None here is fine for those); a BARE_SOURCE
+                # function reached here specifically because NO version
+                # was selected at all, same reasoning.
                 field_call = self._bare_definition_field_call(reference.name_one)
             if field_call is not None:
                 function_cls = ReferenceFunctionFactory.get_registered_class(
@@ -863,7 +876,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     return reference.root_major
                 key_path = function_cls.KEY.get(reference.datatype)
                 key_path = self._apply_key_arg(key_path, field_call.arg)
-                if function_cls.SOURCE == "definition":
+                use_definition = function_cls.SOURCE == "definition" or (
+                    is_bare_field_call and function_cls.BARE_SOURCE == "definition"
+                )
+                if use_definition:
                     config = self.csvpaths.file_manager.describer.get_config(
                         reference.root_major
                     )

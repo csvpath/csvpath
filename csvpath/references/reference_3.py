@@ -351,6 +351,7 @@ _METADATA_FILE_FUNCTIONS = (
 _METADATA_FIELD_FUNCTIONS = (
     "idchain",
     "uuid",
+    "template",
     "time",
     "fingerprint",
     "home",
