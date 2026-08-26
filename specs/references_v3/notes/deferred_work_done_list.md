@@ -9,6 +9,91 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## "Pure value" date/time functions (5.29), plus their two consumption paths — BUILT 2026-08-26
+
+Found 2026-08-24 (Phase 1 compendium review). The compendium lists eleven
+"dumb value-producing functions": `:year()`, `:month()`, `:month_name()`,
+`:day()`, `:day_name()`, `:hour()`, `:hour_24()`, `:minute()`, `:second()`,
+`:yesterday()`, `:today()`, `:date(...)`. Only `:date()` was registered;
+the other ten were not.
+
+**David's own framing, deciding scope**: the ten functions themselves are
+simple, so build those first, then dive right into their two real
+consumption paths — a `name_one` path segment (e.g.
+`$acme.files.orders/:year()` → `acme/orders/2026`) and `{...}` string
+interpolation (e.g. `:name("orders-{:year()}.csv")`) — in the same pass,
+using the date/time functions themselves as the concrete driving/test
+case for both, since "these three chunks of related work... feed off
+each other nicely."
+
+**Built, all ten, in a new `csvpath/references/functions/values/`
+package** (a new subdirectory — these don't fit `fields/` (manifest/
+definition-sourced), `selectors/` (context setters/pointers), or
+`well_known_files/`): `Year3`, `Month3`, `MonthName3`, `Day3`,
+`DayName3`, `Hour3` (12-hour, 1-12), `Hour243` (24-hour, 0-23),
+`Minute3`, `Second3`, `Today3`, `Yesterday3` (the last two as plain
+`"YYYY-MM-DD"` strings, matching `:date()`'s own established literal-
+date format). All `DATATYPES = (FILES, CSVPATHS, RESULTS)` — genuinely
+datatype-independent, computed purely from the clock, no dependency on
+any resolved entity/reference state at all.
+
+**New `Function3` mechanism**: a fourth `SOURCE` value, `"clock"`
+(`function_3.py`), and a new `compute()` method every clock function
+overrides (no args at all, not even `self._arg` — the value comes
+purely from the current moment). `DateUtility` (`csvpath/util/
+date_util.py`, aliased `daut` per the project's own established utility-
+alias convention) is the framework's already-existing single source of
+"now" (same one `Metadata.set_time()` already uses) — reused rather than
+calling `datetime.now()` directly, and its `OFFSET_DAYS/MONTHS/YEARS`
+give every one of these ten a free, deterministic test hook if ever
+needed (not used in the tests actually written — see below — which
+instead compute their own expected value from `daut.now()` directly, so
+they never go stale/flaky regardless of when the suite runs).
+
+**Path-segment consumption, built**: `ReferenceFinder3.
+_compile_path_pattern()` (shared by FILES/RESULTS — CSVPATHS has no path
+dimension) widened to accept any registered `SOURCE == "clock"` function
+as a bare `name_one` path segment (not just `:name("...")` as before),
+evaluated via `compute()` and stringified. A non-clock function (e.g. a
+field accessor like `:uuid()`) is still rejected there, confirmed by a
+regression test — the widening is specifically for clock functions, not
+"any function at all."
+
+**`{...}` interpolation consumption, half built**: new shared
+`ReferenceFinder3._resolve_value()` — returns a plain literal unchanged,
+or evaluates an `InterpolatedString3`'s own parts (literal-text parts
+pass through; a `FunctionCall3` part is built and `compute()`'d, only if
+its `SOURCE == "clock"`; an `@variable` part still raises, since no
+variable-registration API exists yet — see the bucket list's grammar/
+argument-type-gaps entry, a separate, bigger prerequisite deliberately
+left untouched here). Wired into `_compile_path_pattern()`'s own
+`:name("...")` handling, so `:name("orders-{:year()}.csv")` now unwraps
+its `{...}` span the same way a plain literal name always has.
+`InterpolatedString3`'s own docstring (`reference_3.py`) updated to
+reflect this is no longer fully deferred — only the `@variable` half
+still is.
+
+Confirmed live for both consumption paths, both datatypes with a path
+dimension, before writing formal tests: `$acme.files.orders/:year()`
+matched a real `file_home` built from the current year;
+`:name("orders-{:year()}.csv")` unwrapped to the same; same for RESULTS'
+own `run_home` path matching.
+
+Tests: `tests/references/functions/values/test_*.py` (10 files, one per
+function — metadata/`check_valid()` plus a `compute()` test comparing
+against `daut.now()` computed independently in the test itself, so nothing
+is a stale hard-coded literal); `TestCompilePathPattern`/`TestResolveValue`
+in `test_reference_finder_3.py` (the shared-ABC mechanism, both success
+and non-clock-function-rejection cases); `TestClockFunctionInPathSegments`
+in both `test_files_reference_finder_3.py` and
+`test_results_reference_finder_3.py` (end-to-end, real fixtures built
+from the actual current year, not a mocked clock). `tests/references/`
+now 1364 passed, up from 1305. Full local-backend suite reconfirmed at
+the known 11-failure (SFTP/S3/Nos, unrelated) baseline — 2952 passed, 11
+failed, no regressions.
+
+---
+
 ## Field-accessor fallback to the global ledger entry — BUILT 2026-08-25 (FILES/CSVPATHS), 2026-08-26 (RESULTS/Table 7)
 
 Found 2026-08-25 while starting the deferred global-ledger batch (Tables

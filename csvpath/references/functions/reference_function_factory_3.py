@@ -39,6 +39,18 @@ class ReferenceFunctionFactory:
         from .well_known_files.unmatched_3 import Unmatched3
         from .well_known_files.vars_3 import Vars3
 
+        from .values.day_3 import Day3
+        from .values.day_name_3 import DayName3
+        from .values.hour_3 import Hour3
+        from .values.hour_24_3 import Hour243
+        from .values.minute_3 import Minute3
+        from .values.month_3 import Month3
+        from .values.month_name_3 import MonthName3
+        from .values.second_3 import Second3
+        from .values.today_3 import Today3
+        from .values.year_3 import Year3
+        from .values.yesterday_3 import Yesterday3
+
         from .fields.actual_data_file_3 import ActualDataFile3
         from .fields.archive_3 import Archive3
         from .fields.archive_path_3 import ArchivePath3
@@ -137,6 +149,17 @@ class ReferenceFunctionFactory:
             To3.NAME: To3,
             Having3.NAME: Having3,
             Date3.NAME: Date3,
+            Year3.NAME: Year3,
+            Month3.NAME: Month3,
+            MonthName3.NAME: MonthName3,
+            Day3.NAME: Day3,
+            DayName3.NAME: DayName3,
+            Hour3.NAME: Hour3,
+            Hour243.NAME: Hour243,
+            Minute3.NAME: Minute3,
+            Second3.NAME: Second3,
+            Today3.NAME: Today3,
+            Yesterday3.NAME: Yesterday3,
             Manifest3.NAME: Manifest3,
             Definition3.NAME: Definition3,
             Errors3.NAME: Errors3,

@@ -6,7 +6,7 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
-from .reference_3 import FunctionCall3, Reference3, Star3
+from .reference_3 import FunctionCall3, InterpolatedString3, Reference3, Star3
 from .reference_exceptions_3 import ReferenceException3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -407,30 +407,91 @@ class ReferenceFinder3(ABC):
         against real path segments (a manifest entry's file_home for
         files, real directory names for results). a literal str or
         Star3 segment passes through unchanged; a :name("...") segment
-        is compiled and unwrapped to its literal string, so matching
-        downstream doesn't need to know the difference -- built
-        specifically because a literal name containing characters a
-        bare PATH_SEGMENT cannot hold (e.g. a real filename's ".") has
-        no other way to appear. any other function-valued segment is
-        explicitly not yet supported. shared by files and results --
-        both have a real, literal/star/:name(...) path to match; csvpaths
+        is compiled and its own arg run through _resolve_value() (so a
+        "{...}"-interpolated name, e.g. :name("orders-{:year()}.csv"),
+        unwraps to its final literal string the same way a plain
+        literal name always has) -- built specifically because a
+        literal name containing characters a bare PATH_SEGMENT cannot
+        hold (e.g. a real filename's ".") has no other way to appear.
+
+        A bare SOURCE == "clock" function (e.g. :year()) is ALSO now a
+        legal path segment in its own right (added 2026-08-26, see
+        Year3's own docstring) -- e.g. "$acme.files.orders/:year()" ->
+        matches "acme/orders/2026" today, at whatever the current year
+        actually is. Evaluated the same way _resolve_value() evaluates
+        one inside "{...}" -- build the Function3, call compute(),
+        stringify. Any other function-valued segment is still not
+        supported. Shared by files and results -- both have a real,
+        literal/star/:name(...)/clock-function path to match; csvpaths
         does not (its whole name_one is version-selecting functions)."""
         pattern = []
         for segment in path:
             if isinstance(segment, FunctionCall3):
-                if segment.name != "name":
+                if segment.name == "name":
+                    built = ReferenceFunctionFactory.build(segment)
+                    pattern.append(ReferenceFinder3._resolve_value(built.arg))
+                    continue
+                function_cls = ReferenceFunctionFactory.get_registered_class(
+                    segment.name
+                )
+                if function_cls is None or function_cls.SOURCE != "clock":
                     raise ReferenceException3(
                         f"Does not yet support :{segment.name}() as a "
-                        "name_one path segment -- only :name(\"...\") and "
+                        "name_one path segment -- only :name(\"...\"), a "
+                        "clock value function (e.g. :year()), and "
                         "literal/'*' segments are supported."
                     )
                 built = ReferenceFunctionFactory.build(segment)
-                pattern.append(built.arg)
+                pattern.append(str(built.compute()))
             elif isinstance(segment, (str, Star3)):
                 pattern.append(segment)
             else:
                 raise ReferenceException3(f"Unsupported name_one path segment: {segment!r}")
         return pattern
+
+    @staticmethod
+    def _resolve_value(value):
+        """returns `value` unchanged if it is a plain literal (str, int,
+        etc.); evaluates it if it is an InterpolatedString3 -- each
+        literal-str part passes through, each FunctionCall3 part is
+        built and its compute() called (only SOURCE == "clock"
+        functions are legal inside "{...}" for now -- see
+        InterpolatedString3.check_valid(), which already restricts
+        parts to ROLE == VALUE; a non-clock VALUE function landing here
+        would mean check_valid() itself needs widening first, so this
+        raises a clear error rather than silently mishandling it), each
+        part joined into one final string. A bare @variable part raises
+        -- variable resolution needs a real registration API against a
+        runtime CsvPaths/scope context that does not exist yet (see
+        deferred_work_bucket_list.md's grammar/argument-type-gaps
+        entry); added 2026-08-26 alongside the ten clock functions this
+        was built to support, deliberately scoped to just the
+        function-call half of interpolation."""
+        if not isinstance(value, InterpolatedString3):
+            return value
+        pieces = []
+        for part in value.parts:
+            if isinstance(part, str):
+                pieces.append(part)
+            elif isinstance(part, FunctionCall3):
+                function_cls = ReferenceFunctionFactory.get_registered_class(
+                    part.name
+                )
+                if function_cls is None or function_cls.SOURCE != "clock":
+                    raise ReferenceException3(
+                        f":{part.name}() cannot be evaluated inside "
+                        "\"{...}\" interpolation yet -- only clock value "
+                        "functions (e.g. :year()) are supported so far."
+                    )
+                built = ReferenceFunctionFactory.build(part)
+                pieces.append(str(built.compute()))
+            else:
+                raise ReferenceException3(
+                    f"{part!r} cannot be evaluated inside \"{{...}}\" "
+                    "interpolation yet -- @variable resolution is not "
+                    "built yet (see the bucket list)."
+                )
+        return "".join(pieces)
 
     @staticmethod
     def _pointer_present(calls: list) -> bool:

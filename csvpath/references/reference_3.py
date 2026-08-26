@@ -93,11 +93,18 @@ class InterpolatedString3:
     "{{"/"}}" escape a literal brace (same convention already used by
     csvpath/util/var_utility.py's substitute()).
 
-    Parsing/validation only for now: turning this into an actual
-    resolved string (looking up @variables, computing value functions)
-    needs a runtime CsvPaths context this object graph deliberately
-    has none of -- that is deferred until variable resolution and a
-    real VALUE function exist. See check_valid()."""
+    Parsing/validation only, for the @variable half: looking up an
+    @variable's value needs a runtime CsvPaths/scope context this
+    object graph deliberately has none of, and no registration API for
+    that exists yet -- see the bucket list's grammar/argument-type-gaps
+    entry. See check_valid().
+
+    The VALUE-role-function half is no longer deferred (2026-08-26,
+    once the first real SOURCE == "clock" functions existed -- see
+    year_3.py) -- ReferenceFinder3._resolve_value() evaluates each
+    FunctionCall3 part by calling its own compute(), rejecting anything
+    whose SOURCE isn't "clock" (only clock functions are wired up so
+    far) and any @variable part (still unbuilt, above)."""
 
     def __init__(self, *, parts: list) -> None:
         if not parts:

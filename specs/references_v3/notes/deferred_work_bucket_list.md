@@ -9,19 +9,6 @@ instead, so the completed reasoning trail isn't lost, it's just off this
 list (see that file's own header, and the "Process note" at the bottom of
 this one).
 
-## "Pure value" date/time functions (5.29) — only `:date()` exists, 10 of 11 missing
-
-Found 2026-08-24 (Phase 1 compendium review). The compendium lists eleven
-"dumb value-producing functions": `:year()`, `:month()`, `:month_name()`,
-`:day()`, `:day_name()`, `:hour()`, `:hour_24()`, `:minute()`, `:second()`,
-`:yesterday()`, `:today()`, `:date(...)`. Checked all eleven directly —
-only `:date()` is registered. `:yesterday()` was already named individually
-in this list's "Functions" section; the other nine were not previously
-tracked at all. Note `:date()` doesn't need to expand to cover the others'
-jobs — these are genuinely separate, smaller-grained accessors (year vs.
-month vs. day-of-week etc.), not overlapping with what `:date()` already
-does.
-
 ## Predicate support functions (5.31) — only `:having()` exists, 7 of 8 missing
 
 Found 2026-08-24 (Phase 1 compendium review). The compendium lists eight
@@ -467,13 +454,17 @@ identifier.
   v3 today, for any position (`Regex3` is a `/pattern/` *literal* type,
   usable as some other function's argument value — a different thing).
 - A name_one path segment cannot be a regex either — `_compile_path_
-  pattern()` only accepts `:name("...")` as a function-valued segment, and
+  pattern()` accepts `:name("...")` and any `SOURCE == "clock"` function
+  (widened 2026-08-26, see `deferred_work_done_list.md`'s date/time-
+  functions entry) as function-valued segments, but not a regex, and
   `Name3.ARG_TYPES = (str,)` (no `Regex3` support).
 - `@variable` (`Variable3`) is parsed but not usable anywhere as a real
   argument — no currently-registered function's `ARG_TYPES` includes it.
   The only place it's structurally accepted at all is a bare `@variable`
   inside `{...}` string interpolation, and even there it can't be
-  *evaluated* yet (see interpolation-evaluation item below).
+  *evaluated* yet (see interpolation-evaluation item below — the
+  function-call half of that same item is now built, `@variable` is the
+  remaining, still-unbuilt half).
 - Found 2026-08-24 (Phase 1 compendium review, item 3.12): there is no
   registration mechanism at all yet, either — no finder has any "give me a
   value for `@name`" API (confirmed via grep, nothing like `set_variable`
@@ -585,11 +576,17 @@ and a stale-entry correction, are both done — see
   `parse_interactive()`/`InteractiveParser.choices()` plus a datatype/slot-
   filtered function registry), but it predates the merged grammar and
   isn't wired into `REFERENCE_GRAMMAR_3`/`Function3`/`describe()` at all.
-- **`{...}` interpolation evaluation.** Parsing/validation is built;
-  actually resolving an `InterpolatedString3` into final text at runtime
-  is not — needs variable resolution (`@name` against a real `CsvPaths`/
-  scope context) and something to actually call a real `VALUE`-role
-  function at evaluation time.
+- **`{...}` interpolation evaluation — half built 2026-08-26, half still
+  open.** The function-call half is done (see
+  `deferred_work_done_list.md`'s date/time-functions entry) — a `{...}`
+  span calling a `SOURCE == "clock"` function (e.g. `:year()`) now
+  evaluates for real, via `ReferenceFinder3._resolve_value()`. Still
+  needed: `@name` variable resolution against a real runtime
+  `CsvPaths`/scope context — no registration API for that exists yet
+  (see the grammar/argument-type-gaps entry above) — and widening
+  `_resolve_value()`'s function-call handling to cover more than just
+  `SOURCE == "clock"` once other `VALUE`-role functions exist that make
+  sense inside `{...}`.
 - **v3 is not wired into production.** `results_manager.py`/
   `file_manager.py` still dispatch through the older v2 reference system
   (`csvpath/util/references/`). Everything built so far has been

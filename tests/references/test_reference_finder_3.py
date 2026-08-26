@@ -382,3 +382,71 @@ class TestResolve:
         assert results.files == ["only-this-one"]
         assert results.results[0].data == "data-for-only-this-one"
         assert f.query_call_count == 0
+
+
+class TestCompilePathPattern:
+    # shared by files/results -- a bare SOURCE == "clock" function
+    # (e.g. :year()) is now a legal name_one path segment in its own
+    # right (added 2026-08-26), evaluated via compute(); :name("...")'s
+    # own arg is run through _resolve_value() too, so a "{...}"-
+    # interpolated name works the same way a plain literal one always
+    # has. See Year3/ReferenceFinder3._resolve_value()'s own docstrings.
+    def test_literal_and_star_segments_pass_through_unchanged(self):
+        path = _ref("$acme.files.a/*:first()").parsed.name_one.path
+        assert ReferenceFinder3._compile_path_pattern(path) == ["a", path[1]]
+
+    def test_name_function_unwraps_to_its_literal_string(self):
+        path = _ref('$acme.files.:name("orders.csv")').parsed.name_one.path
+        assert ReferenceFinder3._compile_path_pattern(path) == ["orders.csv"]
+
+    def test_bare_clock_function_evaluates_to_its_computed_value(self):
+        path = _ref("$acme.files.:year()").parsed.name_one.path
+        from csvpath.util.date_util import DateUtility as daut
+
+        assert ReferenceFinder3._compile_path_pattern(path) == [
+            str(daut.now().year)
+        ]
+
+    def test_name_function_with_interpolated_clock_call(self):
+        path = _ref('$acme.files.:name("orders-{:year()}.csv")').parsed.name_one.path
+        from csvpath.util.date_util import DateUtility as daut
+
+        assert ReferenceFinder3._compile_path_pattern(path) == [
+            f"orders-{daut.now().year}.csv"
+        ]
+
+    def test_non_clock_function_segment_is_rejected(self):
+        path = _ref("$acme.files.:uuid()").parsed.name_one.path
+        with pytest.raises(Exception):
+            ReferenceFinder3._compile_path_pattern(path)
+
+
+class TestResolveValue:
+    # the "{...}" evaluation half of the same mechanism -- shared by
+    # anything that resolves a Function3's own str-typed arg, not just
+    # path segments (currently _compile_path_pattern()'s own :name(...)
+    # handling).
+    def test_plain_string_passes_through_unchanged(self):
+        assert ReferenceFinder3._resolve_value("plain") == "plain"
+
+    def test_plain_int_passes_through_unchanged(self):
+        assert ReferenceFinder3._resolve_value(10) == 10
+
+    def test_interpolated_string_with_only_literal_text(self):
+        arg = _ref('$acme.files.:name("just-text")').parsed.name_one.path[0].arg
+        assert ReferenceFinder3._resolve_value(arg) == "just-text"
+
+    def test_interpolated_string_with_a_clock_function(self):
+        arg = _ref(
+            '$acme.files.:name("prefix-{:year()}-suffix")'
+        ).parsed.name_one.path[0].arg
+        from csvpath.util.date_util import DateUtility as daut
+
+        assert ReferenceFinder3._resolve_value(arg) == (
+            f"prefix-{daut.now().year}-suffix"
+        )
+
+    def test_non_clock_function_inside_interpolation_is_rejected(self):
+        arg = _ref('$acme.files.:name("prefix-{:uuid()}")').parsed.name_one.path[0].arg
+        with pytest.raises(Exception):
+            ReferenceFinder3._resolve_value(arg)

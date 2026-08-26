@@ -7,6 +7,7 @@ import pytest
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.results_reference_finder_3 import ResultsReferenceFinder3
+from csvpath.util.date_util import DateUtility as daut
 
 #
 # unlike files/csvpaths (which read a fake in-memory manifest list), results
@@ -2716,6 +2717,35 @@ class TestScopeLimits:
         finder = _finder("$acme.results.:quarter()/2025:last()", acme_archive)
         with pytest.raises(ReferenceException3):
             finder.query()
+
+
+class TestClockFunctionInPathSegments:
+    # see test_files_reference_finder_3.py's own
+    # TestClockFunctionInPathSegments for the full design (
+    # ReferenceFinder3._compile_path_pattern()/_resolve_value(), shared
+    # by FILES and RESULTS). Proven here against the real current year,
+    # not a mocked clock.
+    def test_bare_clock_function_as_a_path_segment(self, tmp_path):
+        year = str(daut.now().year)
+        base = tmp_path / "acme" / "customers" / year
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_archive_manifest(tmp_path, "acme", [str(run_dir)])
+        results = _finder(
+            "$acme.results.customers/:year():first()", str(tmp_path)
+        ).query()
+        assert results.uuids == ["run1-uuid"]
+
+    def test_interpolated_name_containing_a_clock_function(self, tmp_path):
+        year = str(daut.now().year)
+        base = tmp_path / "acme" / f"orders-{year}"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_archive_manifest(tmp_path, "acme", [str(run_dir)])
+        results = _finder(
+            '$acme.results.:name("orders-{:year()}"):first()', str(tmp_path)
+        ).query()
+        assert results.uuids == ["run1-uuid"]
 
 
 class TestLog:

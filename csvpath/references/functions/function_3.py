@@ -117,6 +117,35 @@ class Function3:
     #
     BARE_SOURCE: str = None
 
+    #
+    # SOURCE == "clock" (added 2026-08-26): a fourth SOURCE value for
+    # the compendium's own "dumb value-producing functions" (5.29 --
+    # :year()/:month()/:day()/:hour()/etc.) -- these are never stored
+    # anywhere and have no dependency on any resolved entity/reference
+    # state at all, unlike "computed" (which reads already-resolved
+    # reference/finder state, e.g. named_file_home) -- their value
+    # comes purely from the current wall-clock moment. KEY/LEDGER_KEY/
+    # BARE_SOURCE are all left empty/None for these; a finder never
+    # reads a manifest/definition for them at all. Each SOURCE ==
+    # "clock" function overrides compute() below instead.
+    #
+    def compute(self) -> Any:
+        """returns this function's own computed value -- overridden by
+        every SOURCE == "clock" function (e.g. Year3, Today3); never
+        called for any other SOURCE. Deliberately takes no arguments at
+        all (not even self._arg, which SOURCE == "clock" functions
+        never declare via ARG_TYPES) -- the value comes purely from the
+        current moment, nothing else. Called directly wherever a pure
+        value is needed: a bare/standalone resolve(), a name_one path
+        segment (ReferenceFinder3._compile_path_pattern()), or a
+        "{...}" interpolation span (InterpolatedString3's own
+        evaluation) -- the same computed value regardless of which of
+        those three contexts calls it, by design."""
+        raise NotImplementedError(
+            f":{self.NAME}() does not implement compute() -- only "
+            "SOURCE == \"clock\" functions do."
+        )
+
     def __init__(self, *, arg: Any = None) -> None:
         self._arg = arg
 

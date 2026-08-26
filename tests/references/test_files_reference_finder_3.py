@@ -4,6 +4,7 @@ from csvpath.references.files_reference_finder_3 import FilesReferenceFinder3
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.reference_results_3 import ReferenceResult3
+from csvpath.util.date_util import DateUtility as daut
 
 
 #
@@ -235,6 +236,47 @@ class TestLiteralMultiSegmentPath:
         assert finder.query().files == [
             "inputs/named_files/acme/Q2/test-data/aaaa.csv"
         ]
+
+
+class TestClockFunctionInPathSegments:
+    # a bare SOURCE == "clock" function (e.g. :year()) is now a legal
+    # name_one path segment in its own right (added 2026-08-26, see
+    # ReferenceFinder3._compile_path_pattern()'s own docstring), and
+    # :name("...")'s own string argument now evaluates any "{...}"
+    # interpolation spans it contains (ReferenceFinder3._resolve_value())
+    # -- both proven here against the real current year rather than a
+    # mocked clock, so a fixture built from daut.now() itself always
+    # matches regardless of when the suite actually runs.
+    def test_bare_clock_function_as_a_path_segment(self):
+        year = str(daut.now().year)
+        home = f"inputs/named_files/acme/{year}/test-data"
+        manifest = [{"file": f"{home}/aaaa.csv", "file_home": home, "uuid": "u-1"}]
+        finder = _finder(
+            "$acme.files.:year()/test-data.:first()", TEMPLATED_HOME, manifest
+        )
+        assert finder.query().files == [f"{home}/aaaa.csv"]
+
+    def test_interpolated_name_containing_a_clock_function(self):
+        year = str(daut.now().year)
+        home = f"inputs/named_files/acme/orders-{year}.csv"
+        manifest = [{"file": f"{home}/aaaa.csv", "file_home": home, "uuid": "u-1"}]
+        finder = _finder(
+            '$acme.files.:name("orders-{:year()}.csv").:first()',
+            TEMPLATED_HOME,
+            manifest,
+        )
+        assert finder.query().files == [f"{home}/aaaa.csv"]
+
+    def test_non_clock_function_still_rejected_as_a_path_segment(self):
+        # regression guard: the widening is specifically for SOURCE ==
+        # "clock" functions, not "any function at all" -- a field
+        # accessor like :uuid() still raises, same as before.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.files.:uuid()/test-data.:first()",
+                TEMPLATED_HOME,
+                TEMPLATED_MANIFEST,
+            ).query()
 
 
 class TestIndexOutOfRange:
