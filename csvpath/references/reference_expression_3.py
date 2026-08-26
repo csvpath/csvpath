@@ -26,6 +26,17 @@ class ReferenceExpression3:
     # AFTER the union, by the caller, comparing .data across the merged
     # results themselves -- not something this computes.
     #
+    # UNION's own compatibility check is LHS-driven and purely
+    # structural (settled 2026-08-26, see _check_union_compatible) -- if
+    # the left side is PATHS, any right side unions freely, by path
+    # alone. If the left side is VALUES, the right side's own terminal
+    # accessor must be IDENTICAL to the left's (same function name, same
+    # argument, via FunctionCall3's own __eq__), not merely "the same
+    # kind" or "both produce a uuid" -- comparing the accessors
+    # themselves, not the values they resolve to, is what decides
+    # comparability; the values are a downstream question, not this
+    # class's.
+    #
     # INTERSECT/SUBTRACT use a join key instead: whatever scalar each
     # side's own trailing field accessor resolved to (result.data,
     # already populated by resolve() -- e.g. :identity(), :uuid(),
@@ -78,7 +89,10 @@ class ReferenceExpression3:
     #
     # paths-vs-values compatibility matrix, settled 2026-08-23 (see
     # references_v3_expressions.md's own "paths vs. values sides"
-    # section for the full matrix this implements) -- built 2026-08-26.
+    # section for the full matrix this implements) -- built 2026-08-26,
+    # governs INTERSECT/SUBTRACT only (UNION has its own, separate,
+    # accessor-equality rule -- see _check_union_compatible and the
+    # UNION paragraph in this class's own top comment block).
     # A side is VALUES if its own terminal function chain includes a
     # ROLE == VALUE function (a real scalar lands in .data), or PATHS
     # if it does not (plain path+uuid, .data is always None). Computed
@@ -128,16 +142,7 @@ class ReferenceExpression3:
         left_results = self._resolve_side(self._left)
         right_results = self._resolve_side(self._right)
         if self._op == self.UNION:
-            left_kind = self._kind(self._left)
-            right_kind = self._kind(self._right)
-            if left_kind != right_kind:
-                raise ReferenceException3(
-                    f"ReferenceExpression3 UNION cannot combine a "
-                    f"{left_kind!r} side with a {right_kind!r} side -- "
-                    "concatenating two structurally different result "
-                    "shapes into one bag is never meaningful, regardless "
-                    "of order."
-                )
+            self._check_union_compatible()
             return self._union(left_results, right_results)
         keep = self._op == self.INTERSECT
         right_kind = self._kind(self._right)
@@ -194,12 +199,55 @@ class ReferenceExpression3:
         return ReferenceParser3(string=side, csvpaths=self._csvpaths).parsed
 
     def _kind(self, side: "str | ReferenceExpression3") -> str:
+        return (
+            self.VALUES if self._terminal_value_call(side) is not None else self.PATHS
+        )
+
+    def _terminal_value_call(self, side: "str | ReferenceExpression3"):
+        """the first ROLE == VALUE FunctionCall3 in `side`'s own terminal
+        chain, or None if the side is PATHS (no such accessor at all).
+        Shared by _kind (True/False only) and _check_union_compatible,
+        which needs the actual call -- not just whether one exists -- to
+        compare accessor identity (name+arg together) via FunctionCall3's
+        own __eq__."""
         parsed = self._side_reference_parsed(side)
         for f in parsed.terminal_functions:
             function_cls = ReferenceFunctionFactory.get_registered_class(f.name)
             if function_cls is not None and function_cls.ROLE == Function3.VALUE:
-                return self.VALUES
-        return self.PATHS
+                return f
+        return None
+
+    def _check_union_compatible(self) -> None:
+        """UNION's own compatibility rule -- LHS-driven, purely
+        structural, settled 2026-08-26 directly from David's own "compare
+        the accessors, not the value types" proposal: a :uuid() side and
+        a :run_uuid() side both produce a uuid, but they are NOT the same
+        accessor, so they are not union-compatible under this rule --
+        only two sides whose own terminal accessor (function name and
+        argument together) are identical qualify, e.g. :uuid()==:uuid()
+        or :type()==:type() (a bare :type() vs. another bare :type() is
+        accessor-equal even though the two sides' actual resolved values
+        may or may not agree -- that is a downstream question, not this
+        method's). :type("csv") and :type("xlsx") are NOT accessor-equal
+        (different argument), so they would not be union-compatible
+        either, if either side's own trailing accessor were :type()
+        itself -- in practice :type(...) is normally a mid-chain filter,
+        not the terminal accessor, so this rarely applies to it directly.
+        If the left side is PATHS (no terminal VALUE-role accessor at
+        all), any right side unions freely, by path alone -- this is the
+        "RHS added by path" case from the design note."""
+        left_call = self._terminal_value_call(self._left)
+        if left_call is None:
+            return
+        right_call = self._terminal_value_call(self._right)
+        if right_call != left_call:
+            raise ReferenceException3(
+                f"ReferenceExpression3 UNION cannot combine the left "
+                f"side's accessor {left_call!r} with the right side's "
+                f"accessor {right_call!r} -- both sides' own terminal "
+                "accessor (function name and argument together) must "
+                "match exactly to be comparable."
+            )
 
     def _produces_uuid(self, side: "str | ReferenceExpression3") -> bool:
         parsed = self._side_reference_parsed(side)

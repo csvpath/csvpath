@@ -9,6 +9,80 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `ReferenceExpression3` UNION compatibility rule revised to LHS-driven accessor-equality — BUILT 2026-08-26
+
+Same day as the `paths`-vs-`values` matrix entry below, but a genuine
+revision of it, not a duplicate — David reopened `UNION`'s own compatibility
+check almost immediately after that build landed, via a design note about
+"`UNION` of paths": bare-path `query()`-level unions (no field accessor on
+either side) need to work without regard to uuid or any resolved data, and
+the boundary condition ("LHS resolves to a value that does not match the
+type of RHS's value -> raise") needed a real mechanism, not just prose.
+
+Worked through in conversation, not assumed:
+- First clarified whether the rule was meant to be symmetric or driven by
+  one side — David: **genuinely LHS-driven**, not symmetric (confirmed
+  directly, not inferred).
+- Then how "does not match the type" should actually be checked -- runtime
+  value-type comparison (`isinstance`/`type()` on resolved `.data`) vs.
+  something declarative. David's own proposal, verbatim: *"could we not do
+  it by comparing functions? a `:uuid() == :uuid()`, `:type()` may or may
+  not equal `:type()`, `:type("csv") != :type("xlsx")`. So the accessor
+  must equal. If it does, we then ask are the values equal?"* -- i.e.
+  compare each side's own terminal `FunctionCall3` (function name +
+  argument together) for structural equality, not the resolved values'
+  runtime types. Confirmed `FunctionCall3.__eq__` (`reference_3.py`)
+  already does exactly this comparison (`name` + `arg`), so no new
+  comparison primitive was needed, only wiring it into `UNION`'s own
+  check.
+- This deliberately **replaces** the earlier `PRODUCES_UUID`-based "both
+  sides produce a uuid" framing from the original design note, rather than
+  layering a separate uuid-specific tier on top of it: `:uuid()` and
+  `:run_uuid()` both produce a uuid but are not the *same* accessor, so
+  under the final rule they are NOT union-compatible, even though they
+  would be directly comparable under `SUBTRACT`/`INTERSECT`'s own
+  uuid-valued-RHS case (a genuinely different, still-unchanged rule --
+  see the matrix entry below). `:uuid() == :uuid()` and a bare `:type()`
+  against another bare `:type()` are both still fine (identical accessor);
+  `:type("csv")` vs. `:type("xlsx")` is not (same function, different
+  argument).
+
+**Built**: `ReferenceExpression3._terminal_value_call()` (new, returns the
+side's own terminal `ROLE == VALUE` `FunctionCall3`, or `None` for a
+`paths` side -- `_kind()` rewritten as a one-line consumer of it) and
+`_check_union_compatible()` (new, replaces the inline symmetric check
+`resolve()` used to run for `UNION` -- if LHS is `paths`, returns
+immediately (RHS unions freely, by path); otherwise raises unless RHS's
+own terminal `FunctionCall3` equals LHS's, via the existing `__eq__`).
+`resolve()`'s `UNION` branch is now just `self._check_union_compatible();
+return self._union(...)`.
+
+**Also resolves the separate, previously-open "`ReferenceExpression3` has
+no `query()`-only mode" bucket-list item** (found 2026-08-24, compendium
+4.2) -- decided, in the course of this same conversation, NOT to build a
+distinct `query()`-only code path. The compatibility check itself was
+already purely structural (parsed accessors, never resolved data) before
+this revision and stays that way; `resolve()` remains the sole public
+entry point and still fully resolves both sides regardless of kind --
+there was never a real cost to resolving that a `query()`-only shortcut
+would have avoided, once the check moved to comparing parsed accessors
+rather than resolved values.
+
+Tests: rewrote `TestPathsVsValuesEndToEnd.test_union_of_a_paths_side_and_a_values_side_raises`
+(`tests/references/test_reference_expression_3.py`) into three tests
+reflecting the new asymmetric rule --
+`test_union_of_a_paths_left_and_values_right_succeeds_by_path` (no longer
+raises -- LHS `paths` unions freely),
+`test_union_of_a_values_left_and_paths_right_raises` (new -- the reverse
+order now matters), and
+`test_union_of_two_values_sides_with_different_accessors_raises` (new --
+`:named_paths_name()` vs. `:run_uuid()`, both `values` but not the same
+accessor). Updated `references_v3_expressions.md`'s own matrix and
+"Why SUBTRACT/INTERSECT's raise is asymmetric" section to describe the
+new rule instead of the superseded symmetric one.
+
+---
+
 ## `ReferenceExpression3` `paths`-vs-`values` compatibility matrix — BUILT 2026-08-26
 
 Settled 2026-08-23 (see `references_v3_expressions.md`'s own "`paths` vs.
@@ -50,7 +124,14 @@ live bug. David: skip ahead to this one now, circle back to the decision
   traversal logic.
 - **`UNION` validation** — raises if the two sides' kinds differ
   ("concatenating two structurally different result shapes into one bag
-  is never meaningful, regardless of order").
+  is never meaningful, regardless of order"). **Superseded later the same
+  day** — see the entry above this one ("`ReferenceExpression3` UNION
+  compatibility rule revised to LHS-driven accessor-equality"), which
+  replaces this symmetric kind-check with David's own "compare the
+  accessors, not the value types" rule. `_kind()` itself, and everything
+  else in this entry (the classifier, `terminal_functions`, the
+  `SUBTRACT`/`INTERSECT` rewrite, `PRODUCES_UUID`), is unaffected — only
+  `UNION`'s own check changed.
 - **`SUBTRACT`/`INTERSECT` rewrite** — `values`/`values` unchanged
   (compare by `.data`, the existing `_intersect`/`_subtract` methods,
   untouched); two new comparison methods for the other three matrix

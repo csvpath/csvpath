@@ -9,25 +9,6 @@ instead, so the completed reasoning trail isn't lost, it's just off this
 list (see that file's own header, and the "Process note" at the bottom of
 this one).
 
-## `ReferenceExpression3` has no query()-only mode — not built
-
-Found 2026-08-24 (Phase 1 compendium review, item 4.2), which describes
-"in some cases a reference expression may combine two references, when
-both sets of results are comparable without further resolution." Checked
-directly against `reference_expression_3.py`: `resolve()` is the *only*
-public entry point, and `_resolve_side()` always calls `.resolve()` on
-both sides for all three operations, `UNION` included — there is no
-`query()`-only path anywhere in the class today.
-
-`INTERSECT`/`SUBTRACT` genuinely need resolved data for their join key
-(already established), so a query()-only mode only makes sense for
-`UNION` specifically — `UNION`'s own dedup only needs `ReferenceResult3`'s
-full `__eq__` (`path`+`uuid`+`data`+`identity`), which works fine whether
-`data`/`identity` are populated or not (comparing `None`s is safe). Worth
-deciding whether a cheap, query()-only `UNION` mode is actually wanted
-(matching 4.2's own stated intent) before building it — not yet designed
-beyond "it would only apply to `UNION`."
-
 ## Retire `:path()`; move Rule 1 enforcement from `query()` to `resolve()`
 
 David, 2026-08-22, deciding while reviewing the compendium's "Rule 2/Rule 3"

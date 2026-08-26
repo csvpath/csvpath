@@ -116,24 +116,42 @@ Settled compatibility matrix (David, 2026-08-23):
 
 | Operation | LHS \\ RHS | Result |
 |---|---|---|
-| UNION | `values`/`values` | normal -- dedup by full `ReferenceResult3` equality |
-| UNION | `paths`/`paths` | normal -- same, `.data` is `None` on both sides |
-| UNION | `values`/`paths` or `paths`/`values` | **raise** -- concatenating two structurally different result shapes into one bag is never meaningful, regardless of order |
+| UNION | LHS is `paths` | normal -- RHS unions freely, by path alone, regardless of RHS's own kind |
+| UNION | LHS is `values`, RHS's terminal accessor equals LHS's own (same function name + argument) | normal -- dedup by full `ReferenceResult3` equality |
+| UNION | LHS is `values`, RHS's terminal accessor does not equal LHS's own (different function, different argument, or RHS is `paths`) | **raise** -- e.g. `:uuid()` vs. `:run_uuid()` (both produce a uuid but are not the same accessor), or `:type("csv")` vs. `:type("xlsx")` (same function, different argument) |
 | SUBTRACT / INTERSECT | `values`/`values` | normal -- compare by each side's own `.data` (established behavior, unchanged) |
 | SUBTRACT / INTERSECT | `paths`/`paths` | compare by identity (`path`+`uuid` together -- `path` alone is not always enough, e.g. CSVPATHS shares one `group.csvpath` path across every version) |
 | SUBTRACT / INTERSECT | `values`(LHS)/`paths`(RHS) | RHS has no value to compare, so fall back to identity: compare LHS's own `path`+`uuid` against RHS's `path`+`uuid`. The *output* still carries LHS's own `.data` intact -- the comparison basis changed, the result shape (`values`) didn't. |
 | SUBTRACT / INTERSECT | `paths`(LHS)/`values`(RHS) | **raise** ("bad query" -- LHS has no value to compare against RHS's), **unless RHS's accessor is specifically UUID-valued** (e.g. `:uuid()`, `:run_uuid()`), in which case LHS's own *native* `uuid` field (always present, no accessor needed) is compared directly against RHS's `.data` as a real uuid-to-uuid match. This is what makes "every named-file whose uuid intersects the named-file-uuids recorded across a set of runs" possible -- a genuine cross-datatype capability, not just an edge case. |
 
+**UNION's compatibility rule is LHS-driven and purely structural**
+(settled 2026-08-26, replacing an earlier "both sides must be the same
+kind" draft): if the left side is `paths` (no terminal `VALUE`-role
+accessor at all), any right side unions freely, by path. Otherwise the
+left side's own terminal accessor -- function name and argument together,
+compared the same way `FunctionCall3.__eq__` already compares two parsed
+function calls -- must be *identical* to the right side's own terminal
+accessor. This is deliberately stricter than "both sides produce the same
+kind of value," and stricter than "both sides produce a uuid": `:uuid()`
+and `:run_uuid()` both produce a uuid but are not the same accessor, so
+they are not UNION-compatible under this rule, even though they would be
+directly comparable under SUBTRACT/INTERSECT's own uuid-valued-RHS case
+above. Comparing the accessors themselves, not the values they resolve to,
+is what decides comparability -- two `values`-valued sides with the
+identical accessor may still resolve to different actual values per item
+(a bare `:type()` on both sides, for instance); that is a downstream
+question for whoever consumes the union, not something this check raises
+on.
+
 **Why SUBTRACT/INTERSECT's raise is asymmetric but UNION's isn't**: UNION
-never compares anything, so its raise is purely about not mixing
-incompatible output shapes -- order doesn't matter for that argument.
+never compares resolved data at all, so its check is purely about not
+mixing incompatible *accessors* into one bag -- it is LHS-driven because
+the left side is what a caller is building the union *around*.
 SUBTRACT/INTERSECT's asymmetry comes directly from *which side defines the
 comparison basis*: a `values`-valued RHS demands a value to compare against
 (LHS must have one too, or it's ill-posed); a `paths`-valued RHS only
 demands identity, which every result always has, so LHS's own kind doesn't
 matter.
-
-**Not yet built** -- see `deferred_work_bucket_list.md`.
 
 ---
 

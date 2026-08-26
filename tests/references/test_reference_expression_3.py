@@ -557,12 +557,54 @@ class TestPathsVsValuesEndToEnd:
     # matrix, proven through real reference strings/resolve(), not just
     # the synthetic-ReferenceResults3 unit tests above -- confirms
     # _kind()/_produces_uuid() classify real references correctly and
-    # resolve() dispatches to the right comparison basis.
-    def test_union_of_a_paths_side_and_a_values_side_raises(self, orders_archive):
+    # resolve() dispatches to the right comparison basis. UNION's own
+    # rule is separate and LHS-driven (settled 2026-08-26) -- see the
+    # three tests immediately below, which replace an earlier, now-
+    # outdated "both sides must be the same kind" version of this test.
+    def test_union_of_a_paths_left_and_values_right_succeeds_by_path(
+        self, orders_archive
+    ):
+        # LHS is paths -- RHS unions freely, by path, regardless of its
+        # own kind.
         expr = ReferenceExpression3(
             left="$*.results.:flatten()",  # paths -- no trailing accessor
             op=ReferenceExpression3.UNION,
             right=_right_side(orders_archive),  # values -- :named_paths_name()
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert sorted(r.uuid for r in result.results if r.uuid) == [
+            "a1",
+            "a2",
+            "b1",
+            "b2",
+            "b3",
+            "gva",
+            "gvb",
+        ]
+
+    def test_union_of_a_values_left_and_paths_right_raises(self, orders_archive):
+        # LHS is values -- a paths-only RHS has no accessor at all, so it
+        # cannot match the left side's own terminal accessor.
+        expr = ReferenceExpression3(
+            left=_left_side(orders_archive),  # values -- :named_paths_name()
+            op=ReferenceExpression3.UNION,
+            right="$*.results.:flatten()",  # paths -- no trailing accessor
+            csvpaths=orders_archive,
+        )
+        with pytest.raises(ReferenceException3):
+            expr.resolve()
+
+    def test_union_of_two_values_sides_with_different_accessors_raises(
+        self, orders_archive
+    ):
+        # both sides are values, but the accessors themselves differ
+        # (:named_paths_name() vs. :run_uuid()) -- not comparable, even
+        # though both happen to resolve to strings.
+        expr = ReferenceExpression3(
+            left=_left_side(orders_archive),  # values -- :named_paths_name()
+            op=ReferenceExpression3.UNION,
+            right="$groupa.results.:flatten():run_uuid()",  # values -- :run_uuid()
             csvpaths=orders_archive,
         )
         with pytest.raises(ReferenceException3):
