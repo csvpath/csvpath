@@ -1651,6 +1651,122 @@ class TestFieldAccessorFunctions:
         assert _val("archive") == "archive-2026"
 
 
+class TestArchiveLedgerFallback:
+    # Table 7 (the Archive Run Manifest, RESULTS' own global ledger) is
+    # per-statement-execution, keyed by "run_uuid" + "identity", not a
+    # single "uuid" the way FILES/CSVPATHS ledgers are -- wired in
+    # 2026-08-26 via ResultsReferenceFinder3._find_archive_ledger_entry(),
+    # closing the last open gap in the field-accessor ledger-fallback
+    # mechanism (see FILES'/CSVPATHS' own :file_manifest()/:group_
+    # manifest() precedent). archive_name/archive_path/named_files_root/
+    # named_paths_root are run-level facts (same value across every
+    # statement in one run, confirmed against run_registrar.py), so a
+    # run-scope lookup only needs to match run_uuid, not identity too.
+    def test_run_scope_archive_falls_back_to_the_ledger_entry(self, tmp_path):
+        # the run's own manifest (table 5, written by results_registrar.py)
+        # never has "archive_name" -- only the ledger entry (table 7,
+        # written by run_registrar.py) does.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            tmp_path / "manifest.json",
+            [
+                {
+                    "run_uuid": "run1-uuid",
+                    "identity": "company_names",
+                    "named_paths_name": "widgets",
+                    "run_home": str(run_dir),
+                    "archive_name": "archive-2026",
+                }
+            ],
+        )
+        results = _finder(
+            "$widgets.results.:first():archive()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data == "archive-2026"
+
+    def test_run_scope_ledger_only_fields_resolve(self, tmp_path):
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            tmp_path / "manifest.json",
+            [
+                {
+                    "run_uuid": "run1-uuid",
+                    "identity": "company_names",
+                    "named_paths_name": "widgets",
+                    "run_home": str(run_dir),
+                    "archive_path": "/archives/archive-2026",
+                    "named_files_root": "/inputs/named_files",
+                    "named_paths_root": "/inputs/named_paths",
+                }
+            ],
+        )
+
+        def _val(fn):
+            return (
+                _finder(f"$widgets.results.:first():{fn}()", str(tmp_path))
+                .resolve()
+                .results[0]
+                .data
+            )
+
+        assert _val("archive_path") == "/archives/archive-2026"
+        assert _val("named_files_root") == "/inputs/named_files"
+        assert _val("named_paths_root") == "/inputs/named_paths"
+
+    def test_run_scope_ledger_only_field_with_no_matching_entry_gives_none(
+        self, tmp_path
+    ):
+        # the run's own uuid genuinely has no ledger entry at all (e.g.
+        # a stale/hand-built fixture) -- falls through to None, same as
+        # any other missing field, rather than raising.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            tmp_path / "manifest.json",
+            [
+                {
+                    # discovery still needs named_paths_name/run_home to
+                    # find this run at all -- but run_uuid deliberately
+                    # does not match "run1-uuid", so the fallback lookup
+                    # itself finds nothing.
+                    "run_uuid": "some-other-run-uuid",
+                    "identity": "company_names",
+                    "named_paths_name": "widgets",
+                    "run_home": str(run_dir),
+                }
+            ],
+        )
+        results = _finder(
+            "$widgets.results.:first():archive_path()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_instance_scope_archive_still_reads_its_own_manifest_directly(
+        self, tmp_path
+    ):
+        # regression guard: instance scope (table 6) already has its own
+        # "archive_name" field (confirmed against result_registrar.py) --
+        # this must keep resolving directly, never touching the ledger.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        instance_dir = run_dir / "company_names"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            instance_dir / "manifest.json",
+            {"uuid": "inst1-uuid", "archive_name": "instance-own-archive"},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+        results = _finder(
+            "$widgets.results.:first().company_names:archive()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data == "instance-own-archive"
+
+
 class TestWellKnownFileAccessors:
     # :errors()/:vars()/:meta() resolve to parsed JSON; :data()/
     # :unmatched() resolve to raw bytes and tolerate absence (None);

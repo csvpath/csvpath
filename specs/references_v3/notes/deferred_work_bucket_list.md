@@ -6,7 +6,7 @@ conversation while working on references v3 — the single place to check
 mid-conversation or mid-code. Remove/check off an item once it's actually
 built, rather than leaving it to rot.
 
-## Field-accessor fallback to the global ledger entry — BUILT 2026-08-25 (FILES/CSVPATHS), RESULTS still open
+## Field-accessor fallback to the global ledger entry — BUILT 2026-08-25 (FILES/CSVPATHS), 2026-08-26 (RESULTS/Table 7)
 
 Found 2026-08-25 while starting the deferred global-ledger batch (Tables
 2/4/7 of `references_v3_required_manifest_functions.md`). Live-tested
@@ -46,14 +46,45 @@ source. Integration-tested end to end (not just unit-level), including a
 "no matching ledger entry" case confirming it falls through to `None`
 rather than raising.
 
-**Still open**: RESULTS' own global ledger (Table 7, the Archive Run
-Manifest) is not wired into this mechanism yet — it is per-*instance*
-(one entry per statement execution, keyed by `run_uuid` + `identity`,
-not a single `uuid`), so it needs its own matching logic in
-`ResultsReferenceFinder3`, not a direct reuse of
-`_find_manifest_entry_by_uuid`. Table 7's own LEDGER_KEY-only fields
-(`archive_path`, `named_files_root`, `named_paths_root`) are still
-unbuilt pending this.
+**RESULTS/Table 7 — BUILT 2026-08-26.** Table 7 (the Archive Run
+Manifest) is per-statement-execution (one entry per csvpath statement
+run, keyed by `run_uuid` + `identity`, not a single `uuid`), so it needed
+its own matching logic rather than reusing `_find_manifest_entry_by_uuid`
+— new `ResultsReferenceFinder3._find_archive_ledger_entry(*, ledger,
+run_uuid, identity=None)`. `identity` is optional: confirmed against
+`run_registrar.py` that the run-scope fallback fields this was built for
+(`archive_name`/`archive_path`/`named_files_root`/`named_paths_root`) are
+the same value across every statement in one run, so a run-scope lookup
+only needs to match `run_uuid` (first entry found); a caller resolving a
+genuinely per-statement field would pass `identity` too. Wired into both
+of `ResultsReferenceFinder3._extract_data()`'s field-accessor branches
+(run scope via name_one, instance scope via name_three).
+
+A real naming question surfaced along the way and was settled with
+David: the doc's suggested mapping (`:archive_name()` → `archive_name`,
+`:archive()` → `archive_path`) would have made `:archive()` mean two
+different *kinds* of value depending on scope (a bare name at CSVPATHS/
+RESULT, a full path at RESULTS run scope) — same shape the `:file()`/
+`:file_path()` split resolved earlier this session. **David, 2026-08-26:
+keep `:archive()` meaning the name everywhere** (widened its `KEY`/
+`LEDGER_KEY`/`POSITIONS` to cover RESULTS run scope via the ledger
+fallback, since the run's own manifest never has this field); a new,
+separate `:archive_path()` covers the path, `KEY = {}`/`LEDGER_KEY`-only,
+matching `:file_manifest()`/`:group_manifest()`'s own shape. Two more new
+LEDGER_KEY-only functions built the same way: `:named_files_root()`,
+`:named_paths_root()` — genuinely new concepts, no existing function
+touched either literal key at all before this. All three new functions
+added to `_METADATA_FIELD_FUNCTIONS` (the lesson from the per-entity
+batch above, applied this time instead of re-discovered). Tests:
+`tests/references/functions/fields/test_archive_path_3.py`,
+`test_named_files_root_3.py`, `test_named_paths_root_3.py` (unit), plus
+`TestArchiveLedgerFallback` in `test_results_reference_finder_3.py`
+(4 integration tests: run-scope fallback success for `:archive()`, all
+three ledger-only fields resolving, a no-matching-ledger-entry-gives-
+`None` case, and a regression guard proving instance scope still reads
+its own manifest directly, untouched by this change). `tests/references/`
+now 1179 passed (up from 1166); full suite reconfirmed at the same known
+11-failure baseline.
 
 **A second, real bug found and fixed along the way**: `Reference3.
 resolve_kind`'s hardcoded `_METADATA_FIELD_FUNCTIONS` tuple did not
@@ -165,31 +196,27 @@ and added the missing integration tests. `tests/references/` now 1166
 passed, full suite 2754 passed.
 
 **Still deferred, not yet built:**
-- **Most of Tables 2/4/7's remaining fields** — the ones that duplicate
+- **Most of Tables 2/4's remaining fields** — the ones that duplicate
   an already-built per-entity concept under a *different literal key*
   (e.g. Table 2's `origin_path` vs. Table 1's `from`) still need the
   ledger-fallback mechanism's `LEDGER_KEY` extended with those spellings,
   now that the mechanism itself exists — mechanical follow-up work, not
-  a new design question.
-- **Table 7 (RESULTS' own global ledger) specifically** — the fallback
-  mechanism isn't wired into `ResultsReferenceFinder3` yet, since Table 7
-  is per-*instance* (keyed by `run_uuid`+`identity`, not a single `uuid`)
-  and needs its own matching logic, not a direct reuse of
-  `_find_manifest_entry_by_uuid`.
+  a new design question. **Table 7 is DONE as of 2026-08-26** (see its
+  own bucket-list entry above) — every field except deprecated
+  `base_path` (issue #225) and `:template()` (below) is now covered.
 - **`:template()`** — genuinely needs a new mechanism (source picked by
   *position*: bare/no-pointer at name_one reads `definition.json`'s
   default, alongside a real pointer reads that specific version's
-  manifest snapshot), plus RESULTS is blocked on a `results_registrar.py`
-  schema gap (the run manifest doesn't store its own `template` at all,
-  confirmed by David — a core-Framework gap, not something references-v3
-  can fix alone). **David, 2026-08-25: the `results_registrar.py` gap is
-  explicitly out of scope for now** — sweep up before a full release,
-  expected to be low-effort to wire into `:template()` once added
-  (the template used to build the run's own directory must already be
-  known/available at the same point `results_registrar.py` writes every
-  other per-run captured field, e.g. `named_file_size`, so writing one
-  more field there should follow the same existing pattern). Not part of
-  this batch either way.
+  manifest snapshot). **Correction, 2026-08-26: the `results_registrar.py`
+  schema gap this bullet used to cite is no longer real** — confirmed
+  live against current code: both `results_registrar.py` (Table 5,
+  line 121: `m["template"] = mdata.template or ""`) and
+  `run_registrar.py` (Table 7, line 51, same pattern) already write a
+  `template` field. David's 2026-08-25 note said he had fixed this; this
+  is that fix, already in place. Only the position-based-dispatch
+  mechanism itself remains to be designed/built, not a data-availability
+  blocker — likely one of "the quick ones" now, not a deferred core-
+  Framework dependency.
 - **`sources`/`destinations`/`transfers`/`scripts`/`webhooks` sub-field
   accessors** (Table 8/9) — held pending doc corrections. David fixed
   the webhooks field-name miscopy, the transfers wrong-function-names

@@ -39,6 +39,7 @@ class ReferenceFunctionFactory:
 
         from .fields.actual_data_file_3 import ActualDataFile3
         from .fields.archive_3 import Archive3
+        from .fields.archive_path_3 import ArchivePath3
         from .fields.completed_3 import Completed3
         from .fields.destinations_3 import Destinations3
         from .fields.error_count_3 import ErrorCount3
@@ -63,11 +64,13 @@ class ReferenceFunctionFactory:
         from .fields.named_file_path_3 import NamedFilePath3
         from .fields.named_file_size_3 import NamedFileSize3
         from .fields.named_file_uuid_3 import NamedFileUuid3
+        from .fields.named_files_root_3 import NamedFilesRoot3
         from .fields.named_paths_3 import NamedPaths3
         from .fields.named_paths_count_3 import NamedPathsCount3
         from .fields.named_paths_group_3 import NamedPathsGroup3
         from .fields.named_paths_identities_3 import NamedPathsIdentities3
         from .fields.named_paths_name_3 import NamedPathsName3
+        from .fields.named_paths_root_3 import NamedPathsRoot3
         from .fields.named_paths_uuid_3 import NamedPathsUuid3
         from .fields.named_results_name_3 import NamedResultsName3
         from .fields.on_arrival_3 import OnArrival3
@@ -159,6 +162,7 @@ class ReferenceFunctionFactory:
             ReferenceField3.NAME: ReferenceField3,
             FilePath3.NAME: FilePath3,
             Archive3.NAME: Archive3,
+            ArchivePath3.NAME: ArchivePath3,
             GroupFile3.NAME: GroupFile3,
             NamedPaths3.NAME: NamedPaths3,
             ErrorCount3.NAME: ErrorCount3,
@@ -174,6 +178,8 @@ class ReferenceFunctionFactory:
             RunMethod3.NAME: RunMethod3,
             FileManifest3.NAME: FileManifest3,
             GroupManifest3.NAME: GroupManifest3,
+            NamedFilesRoot3.NAME: NamedFilesRoot3,
+            NamedPathsRoot3.NAME: NamedPathsRoot3,
         }
 
     @classmethod

@@ -1052,7 +1052,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 Nos(result.path).join("manifest.json")
             )
             key_path = function_cls.KEY.get(Reference3.RESULTS)
-            return self._extract_field_value(entry, key_path)
+            return self._extract_field_value_with_ledger_fallback(
+                entry=entry,
+                key_path=key_path,
+                function_cls=function_cls,
+                datatype=Reference3.RESULTS,
+                ledger_entry_getter=lambda: self._find_archive_ledger_entry(
+                    ledger=self.csvpaths.results_manager.results_root_manifest,
+                    run_uuid=entry.get("run_uuid") if entry else None,
+                ),
+            )
 
         kind = reference.resolve_kind
         if kind in (Reference3.METADATA_FILE, Reference3.METADATA_FIELD):
@@ -1080,7 +1089,17 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     Nos(result.path).join("manifest.json")
                 )
                 key_path = function_cls.KEY.get(Reference3.RESULT)
-                return self._extract_field_value(entry, key_path)
+                return self._extract_field_value_with_ledger_fallback(
+                    entry=entry,
+                    key_path=key_path,
+                    function_cls=function_cls,
+                    datatype=Reference3.RESULT,
+                    ledger_entry_getter=lambda: self._find_archive_ledger_entry(
+                        ledger=self.csvpaths.results_manager.results_root_manifest,
+                        run_uuid=entry.get("run_uuid") if entry else None,
+                        identity=entry.get("instance_identity") if entry else None,
+                    ),
+                )
         if kind != Reference3.FIRST_PARTY:
             raise ReferenceException3(
                 f"ResultsReferenceFinder3 does not yet support "
@@ -1092,6 +1111,35 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # by identity/:all() with no accessor riding alongside has no
         # single unambiguous payload -- "no default", per "creating
         # references v3.txt"'s resolve table.
+        return None
+
+    @staticmethod
+    def _find_archive_ledger_entry(
+        *, ledger: list, run_uuid: str, identity: str | None = None
+    ) -> dict | None:
+        """Table 7 (the Archive Run Manifest, RESULTS' own global ledger)
+        is per-statement-execution -- one entry per csvpath statement
+        run, keyed by "run_uuid" + "identity", not a single "uuid" the
+        way FILES/CSVPATHS ledgers are (see
+        ReferenceFinder3._find_manifest_entry_by_uuid) -- added
+        2026-08-26 to wire the field-accessor ledger-fallback mechanism
+        (Function3.LEDGER_KEY) into RESULTS, closing Table 7 gap
+        flagged in the bucket list.
+
+        `identity` is optional: the run-scope fallback fields this was
+        built for (archive_name/archive_path/named_files_root/
+        named_paths_root) are the SAME value across every statement in
+        one run (confirmed against run_registrar.py -- they are written
+        once per run_uuid, not per statement), so passing None matches
+        the first entry found for that run_uuid, which is enough. Pass
+        a specific identity when a caller genuinely needs one exact
+        statement's own entry, not just any entry for the run."""
+        for entry in ledger:
+            if entry.get("run_uuid") != run_uuid:
+                continue
+            if identity is not None and entry.get("identity") != identity:
+                continue
+            return entry
         return None
 
     @classmethod

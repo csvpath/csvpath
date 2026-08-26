@@ -402,6 +402,9 @@ _METADATA_FIELD_FUNCTIONS = (
     "run_method",
     "file_manifest",
     "group_manifest",
+    "archive_path",
+    "named_files_root",
+    "named_paths_root",
 )
 
 

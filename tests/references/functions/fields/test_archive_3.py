@@ -16,6 +16,7 @@ def test_metadata():
         Reference3.CSVPATHS: "archive_name",
         Reference3.RESULT: "archive_name",
     }
+    assert f.LEDGER_KEY == {Reference3.RESULTS: "archive_name"}
 
 
 def test_no_arg_is_valid():
