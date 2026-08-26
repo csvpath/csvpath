@@ -118,6 +118,25 @@ class Function3:
     BARE_SOURCE: str = None
 
     #
+    # declares that this VALUE-role function's own resolved value IS a
+    # uuid (e.g. :uuid(), :run_uuid(), :named_file_uuid(),
+    # :named_paths_uuid()) -- added 2026-08-26 for ReferenceExpression3's
+    # own paths-vs-values compatibility matrix (references_v3_
+    # expressions.md): a "paths"-side (no VALUE-role accessor of its
+    # own) can still be compared against a "values"-side INTERSECT/
+    # SUBTRACT right-hand side specifically when that right side's own
+    # accessor is uuid-valued -- the paths side's own NATIVE uuid
+    # (always present, no accessor needed) is compared directly against
+    # it. Checked generically by ReferenceExpression3, not hardcoded by
+    # function name -- same declarative-over-hardcoded-list principle
+    # as POSITIONS/_check_position() (see the resolve_kind bucket-list
+    # entry for the anti-pattern this deliberately avoids repeating).
+    # False for every function that does not produce a uuid -- the
+    # common case.
+    #
+    PRODUCES_UUID: bool = False
+
+    #
     # SOURCE == "clock" (added 2026-08-26): a fourth SOURCE value for
     # the compendium's own "dumb value-producing functions" (5.29 --
     # :year()/:month()/:day()/:hour()/etc.) -- these are never stored

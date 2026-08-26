@@ -574,28 +574,24 @@ class Reference3:
         return self._name_three
 
     @property
-    def resolve_kind(self) -> str:
-        """which of the three resolve outcomes this reference asks for
-        -- FIRST_PARTY (the underlying bytes/content, the default),
-        METADATA_FILE (a whole well-known/named file), or
-        METADATA_FIELD (one value drilled out of such a file). computed
-        from whichever function chain is terminal: name_three's if
-        name_three is present, else name_one's own complete function
-        chain (a legal terminus now that name_three is optional
-        everywhere) -- which includes any function-valued name_one path
-        segment (e.g. a "path-less, function-only" name_one like
-        ":all()"/":manifest()" occupying the sole segment), not just its
-        trailing chain: a metadata-file function can be the whole of
-        name_one with nothing following it (":manifest()" needs
-        exactly this shape to be recognized at all). Safe to widen this
-        way -- an ordinary path-matching function like :name("...")
-        never appears in _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_
-        FUNCTIONS, so including path segments here only lets the real
-        metadata functions be seen, it does not change what gets
-        flagged. see the _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_
-        FUNCTIONS placeholder comment above -- both lists are stand-ins
-        for traits the future function registry will own."""
-        terminal_functions = (
+    def terminal_functions(self) -> list:
+        """this reference's own terminal function chain -- name_three's
+        own chain if name_three is present, else name_one's complete
+        function chain (a legal terminus now that name_three is
+        optional everywhere), which includes any function-valued
+        name_one path segment (e.g. a "path-less, function-only"
+        name_one like ":all()"/":manifest()" occupying the sole
+        segment), not just its trailing chain: a metadata-file function
+        can be the whole of name_one with nothing following it
+        (":manifest()" needs exactly this shape to be recognized at
+        all). Extracted 2026-08-26 (previously inlined only in
+        resolve_kind below) so ReferenceExpression3's own paths-vs-
+        values classifier can compute the same terminal chain without
+        duplicating the traversal -- that classifier checks each
+        function's own ROLE directly against the registry, not via
+        resolve_kind's own hardcoded name tuples, so extracting this
+        shared piece does not entangle the two mechanisms."""
+        return (
             self._name_three.functions
             if self._name_three is not None
             else [
@@ -607,6 +603,22 @@ class Reference3:
                 *self._name_one.functions,
             ]
         )
+
+    @property
+    def resolve_kind(self) -> str:
+        """which of the three resolve outcomes this reference asks for
+        -- FIRST_PARTY (the underlying bytes/content, the default),
+        METADATA_FILE (a whole well-known/named file), or
+        METADATA_FIELD (one value drilled out of such a file). computed
+        from terminal_functions (below). Safe to widen this
+        way -- an ordinary path-matching function like :name("...")
+        never appears in _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_
+        FUNCTIONS, so including path segments here only lets the real
+        metadata functions be seen, it does not change what gets
+        flagged. see the _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_
+        FUNCTIONS placeholder comment above -- both lists are stand-ins
+        for traits the future function registry will own."""
+        terminal_functions = self.terminal_functions
         for f in terminal_functions:
             if any(
                 f.contains_function_named(name)

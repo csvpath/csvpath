@@ -26,6 +26,7 @@ class RunUuid3(Function3):
     ARG_TYPES = ()
     ARG_REQUIRED = False
     SOURCE = "manifest"
+    PRODUCES_UUID = True
     KEY = {
         Reference3.RESULTS: "run_uuid",
         Reference3.RESULT: "run_uuid",

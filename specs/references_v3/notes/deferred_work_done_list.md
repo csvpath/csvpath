@@ -9,6 +9,81 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `ReferenceExpression3` `paths`-vs-`values` compatibility matrix — BUILT 2026-08-26
+
+Settled 2026-08-23 (see `references_v3_expressions.md`'s own "`paths` vs.
+`values` sides" section for the full matrix) while working through what
+should happen when one side of a `UNION`/`SUBTRACT`/`INTERSECT` has no
+trailing `VALUE`-role accessor (`paths` -- plain path+uuid) and the other
+does (`values` -- a real scalar in `.data`). Live-traced the current code
+first (`reference_expression_3.py`'s `_intersect`/`_subtract`/`_keys`) to
+find the actual behavior, not just what the semantics notes claimed:
+`None`-valued `.data` (what every `paths`-side item had) was silently
+treated as "never matches" — `INTERSECT` with a `paths` side quietly came
+back empty, `SUBTRACT` quietly came back as an unfiltered copy of the
+left side, in every case, with no error. A real, currently-shipped gap,
+not just an untested edge case.
+
+**Continued straight through the bucket list, per David's own "step
+through in order unless you spot a better one" instruction, then flagged
+a real ordering issue**: the item ahead of this one (`ReferenceExpression3`
+query()-only mode) explicitly needed a yes/no decision before any code
+made sense ("worth deciding whether... actually wanted... not yet
+designed"), while this one had an already-settled design and a confirmed
+live bug. David: skip ahead to this one now, circle back to the decision
+-needed one after.
+
+**Built, all four pieces the bucket-list entry named**:
+- **The `paths`/`values` classifier** (`ReferenceExpression3._kind()`) —
+  static, from the parsed reference's own `terminal_functions` (see
+  below), checking each function's own `ROLE` directly against the
+  registry (`ReferenceFunctionFactory`) rather than via `Reference3.
+  resolve_kind`'s hardcoded name tuples — deliberately avoiding a second
+  consumer of that already-flagged debt (see the `resolve_kind` bucket-
+  list entry, still open). A side is `VALUES` if its terminal chain
+  includes any `ROLE == Function3.VALUE` function, `PATHS` otherwise.
+- **`Reference3.terminal_functions`** (`reference_3.py`) — extracted as a
+  new public property from what used to be `resolve_kind`'s own inline
+  computation (pure refactor, `resolve_kind` itself unchanged/untouched
+  behavior, still hardcoded-tuple-based) — needed so the classifier
+  above computes the same terminal chain without duplicating the
+  traversal logic.
+- **`UNION` validation** — raises if the two sides' kinds differ
+  ("concatenating two structurally different result shapes into one bag
+  is never meaningful, regardless of order").
+- **`SUBTRACT`/`INTERSECT` rewrite** — `values`/`values` unchanged
+  (compare by `.data`, the existing `_intersect`/`_subtract` methods,
+  untouched); two new comparison methods for the other three matrix
+  rows: `_filter_by_identity()` (`paths`/`paths`, or `values`(LHS)/
+  `paths`(RHS) — compares `(path, uuid)` tuples, LHS's own `.data` if any
+  survives unchanged in the output) and `_filter_by_native_uuid()`
+  (`paths`(LHS)/`values`(RHS) where RHS is uuid-valued — LHS's own
+  native `.uuid` compared directly against RHS's `.data`). `resolve()`
+  itself now branches on `right_kind` first (covers both identity-basis
+  rows in one check), then `left_kind` if right is `values` (raises, or
+  falls back to native-uuid comparison, per the matrix).
+- **`Function3.PRODUCES_UUID`** (new declarative class attribute,
+  default `False`) — checked generically by `ReferenceExpression3`, not
+  hardcoded by function name, same `POSITIONS`/`_check_position()`
+  precedent already established elsewhere. Set `True` on the four
+  functions that genuinely produce a uuid: `:uuid()`, `:run_uuid()`,
+  `:named_file_uuid()`, `:named_paths_uuid()` — confirmed by reading each
+  one's own `KEY`, not assumed from the name alone.
+
+Tests: `TestFilterByIdentity`/`TestFilterByNativeUuid` (synthetic-
+`ReferenceResults3` unit tests, mirroring the existing `TestIntersect`/
+`TestSubtract` style) plus `TestPathsVsValuesEndToEnd` (5 real, end-to-
+end tests through `resolve()` and the existing `orders_archive` fixture
+— UNION-mismatch-raises, `paths`/`paths`, `values`(LHS)/`paths`(RHS)
+keeping LHS's own `.data`, `paths`(LHS)/`values`(RHS) non-uuid-valued
+raising, and the uuid-valued case actually matching) in
+`test_reference_expression_3.py`; `TestTerminalFunctions` in
+`test_reference_3.py`; widened `PRODUCES_UUID` assertions in all four
+uuid functions' own unit tests. `tests/references/` now 1423 passed, up
+from 1408.
+
+---
+
 ## `Function3.describe()`'s markdown-rendering companion — BUILT 2026-08-26
 
 Compendium 5.4: "Reference functions are self-documenting... must be

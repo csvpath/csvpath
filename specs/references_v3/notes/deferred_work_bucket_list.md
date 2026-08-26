@@ -28,44 +28,6 @@ deciding whether a cheap, query()-only `UNION` mode is actually wanted
 (matching 4.2's own stated intent) before building it — not yet designed
 beyond "it would only apply to `UNION`."
 
-## `ReferenceExpression3` `paths`-vs-`values` compatibility matrix — not built
-
-Settled 2026-08-23 (see `references_v3_expressions.md`'s own "`paths` vs.
-`values` sides" section for the full matrix) while working through what
-should happen when one side of a `UNION`/`SUBTRACT`/`INTERSECT` has no
-trailing `VALUE`-role accessor (`paths` -- plain path+uuid) and the other
-does (`values` -- a real scalar in `.data`). Live-traced the current code
-first (`reference_expression_3.py`'s `_intersect`/`_subtract`/`_keys`) to
-find the actual behavior, not just what the semantics notes claimed:
-today, `None`-valued `.data` (which is what every item on a `paths` side
-has) is silently treated as "never matches" — meaning `INTERSECT` with a
-`paths` side quietly comes back empty, and `SUBTRACT` quietly comes back
-as an unfiltered copy of the left side, in every case, with no error. This
-is a real, currently-shipped gap, not just an untested edge case — nothing
-raises where the settled design now says it should.
-
-**None of this is built yet.** Needed:
-- **A `paths`/`values` classifier** for a side (plain reference string or
-  sub-`ReferenceExpression3`) — static, from the parsed reference's own
-  trailing function, not from resolved data (a per-item legitimate `None`,
-  e.g. an optional field absent for one entity, must stay distinct from
-  "this reference structurally has no accessor at all").
-- **`UNION` validation**: raise if the two sides' kinds differ.
-- **`SUBTRACT`/`INTERSECT` rewrite**: `values`/`values` stays as today
-  (compare by `.data`); `paths`/`paths` and `values`(LHS)/`paths`(RHS) need
-  a *new* identity-based comparison (`path`+`uuid` together, not today's
-  `.data`-only comparison) — this doesn't exist in the code at all yet;
-  `paths`(LHS)/`values`(RHS) raises unless RHS is UUID-valued, in which
-  case compare LHS's *native* `uuid` (no accessor involved) against RHS's
-  `.data`.
-- **A declarative "this accessor produces a UUID" marker on `Function3`**
-  (e.g. `:uuid()`, `:run_uuid()`) — checked generically by
-  `ReferenceExpression3`, not hardcoded by function name. Same principle
-  as the `_check_position()`/`POSITIONS` precedent already used elsewhere
-  in this codebase (see the `resolve_kind` hardcoded-dispatch entry below)
-  — don't invent a second, parallel hardcoded-name mechanism right next to
-  the one already flagged as debt.
-
 ## Retire `:path()`; move Rule 1 enforcement from `query()` to `resolve()`
 
 David, 2026-08-22, deciding while reviewing the compendium's "Rule 2/Rule 3"

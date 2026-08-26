@@ -1,5 +1,8 @@
+from .functions.function_3 import Function3
+from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_exceptions_3 import ReferenceException3
 from .reference_finder_factory_3 import ReferenceFinderFactory3
+from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResults3
 
 
@@ -72,6 +75,25 @@ class ReferenceExpression3:
     INTERSECT = "intersect"
     _OPERATIONS = (UNION, SUBTRACT, INTERSECT)
 
+    #
+    # paths-vs-values compatibility matrix, settled 2026-08-23 (see
+    # references_v3_expressions.md's own "paths vs. values sides"
+    # section for the full matrix this implements) -- built 2026-08-26.
+    # A side is VALUES if its own terminal function chain includes a
+    # ROLE == VALUE function (a real scalar lands in .data), or PATHS
+    # if it does not (plain path+uuid, .data is always None). Computed
+    # statically, from the parsed reference's own terminal_functions
+    # (Reference3.terminal_functions), never from resolved data -- a
+    # per-item legitimate None (e.g. an optional field absent for one
+    # entity) must stay distinct from "this reference structurally has
+    # no accessor at all". Checked directly against each function's own
+    # ROLE via the registry, not via Reference3.resolve_kind's hardcoded
+    # name tuples -- deliberately avoiding adding a second consumer of
+    # that already-flagged debt (see the resolve_kind bucket-list entry).
+    #
+    PATHS = "paths"
+    VALUES = "values"
+
     def __init__(
         self,
         *,
@@ -106,7 +128,43 @@ class ReferenceExpression3:
         left_results = self._resolve_side(self._left)
         right_results = self._resolve_side(self._right)
         if self._op == self.UNION:
+            left_kind = self._kind(self._left)
+            right_kind = self._kind(self._right)
+            if left_kind != right_kind:
+                raise ReferenceException3(
+                    f"ReferenceExpression3 UNION cannot combine a "
+                    f"{left_kind!r} side with a {right_kind!r} side -- "
+                    "concatenating two structurally different result "
+                    "shapes into one bag is never meaningful, regardless "
+                    "of order."
+                )
             return self._union(left_results, right_results)
+        keep = self._op == self.INTERSECT
+        right_kind = self._kind(self._right)
+        if right_kind == self.PATHS:
+            # paths/paths, or values(LHS)/paths(RHS) -- RHS defines the
+            # comparison basis either way: identity (path+uuid), never
+            # .data. LHS's own .data (if any) is preserved unchanged in
+            # the output regardless -- only the comparison basis changes.
+            return self._filter_by_identity(left_results, right_results, keep=keep)
+        left_kind = self._kind(self._left)
+        if left_kind == self.PATHS:
+            # paths(LHS)/values(RHS) -- LHS has no value of its own to
+            # compare against RHS's, unless RHS's own accessor is
+            # specifically uuid-valued, in which case LHS's native uuid
+            # (always present, no accessor needed) is the real
+            # comparison basis instead.
+            if not self._produces_uuid(self._right):
+                raise ReferenceException3(
+                    f"ReferenceExpression3 {self._op} cannot compare a "
+                    "'paths' left side (no value of its own) against a "
+                    "'values' right side unless the right side's own "
+                    "accessor is uuid-valued (e.g. :uuid()/:run_uuid()/"
+                    ":named_file_uuid()/:named_paths_uuid()) -- there is "
+                    "otherwise nothing on the left to compare with."
+                )
+            return self._filter_by_native_uuid(left_results, right_results, keep=keep)
+        # values/values -- established behavior, unchanged.
         if self._op == self.INTERSECT:
             return self._intersect(left_results, right_results)
         return self._subtract(left_results, right_results)
@@ -117,6 +175,39 @@ class ReferenceExpression3:
         return ReferenceFinderFactory3.for_reference(
             reference=side, csvpaths=self._csvpaths
         ).resolve()
+
+    def _side_reference_parsed(self, side: "str | ReferenceExpression3"):
+        """the single, definitive parsed Reference3 that determines a
+        side's own kind (PATHS/VALUES) and PRODUCES_UUID-ness -- for a
+        plain reference string, that is just its own parse; for a
+        sub-ReferenceExpression3, recurses into ITS OWN left side
+        (regardless of that sub-expression's own op) -- INTERSECT/
+        SUBTRACT's own output always mirrors left's shape (see this
+        module's own docstring), and UNION's own left/right are already
+        required (above) to share the same kind, so left is an equally
+        valid representative there too. A deliberate simplification for
+        the rare case of a deeply-nested sub-expression used as the
+        uuid-valued side of an outer paths/values comparison -- not
+        exhaustively tracing every possible nesting shape."""
+        if isinstance(side, ReferenceExpression3):
+            return side._side_reference_parsed(side._left)
+        return ReferenceParser3(string=side, csvpaths=self._csvpaths).parsed
+
+    def _kind(self, side: "str | ReferenceExpression3") -> str:
+        parsed = self._side_reference_parsed(side)
+        for f in parsed.terminal_functions:
+            function_cls = ReferenceFunctionFactory.get_registered_class(f.name)
+            if function_cls is not None and function_cls.ROLE == Function3.VALUE:
+                return self.VALUES
+        return self.PATHS
+
+    def _produces_uuid(self, side: "str | ReferenceExpression3") -> bool:
+        parsed = self._side_reference_parsed(side)
+        for f in parsed.terminal_functions:
+            function_cls = ReferenceFunctionFactory.get_registered_class(f.name)
+            if function_cls is not None and function_cls.PRODUCES_UUID:
+                return True
+        return False
 
     @staticmethod
     def _union(left: ReferenceResults3, right: ReferenceResults3) -> ReferenceResults3:
@@ -147,6 +238,48 @@ class ReferenceExpression3:
                 kept.append(item)
                 continue
             if cls._hashable(item.data) not in right_keys:
+                kept.append(item)
+        return ReferenceResults3(results=kept)
+
+    @classmethod
+    def _filter_by_identity(
+        cls, left: ReferenceResults3, right: ReferenceResults3, *, keep: bool
+    ) -> ReferenceResults3:
+        """paths/paths, or values(LHS)/paths(RHS) -- the right side has
+        no value of its own (or its own kind means identity is what
+        actually defines membership regardless of the left side's
+        kind), so the comparison basis is identity: path+uuid together
+        -- path alone is not always enough (e.g. CSVPATHS shares one
+        group.csvpath path across every version). `keep=True` is
+        INTERSECT (keep matches), `keep=False` is SUBTRACT (keep non-
+        matches). The left side's own .data (if any) is preserved
+        unchanged in the output regardless -- only the comparison basis
+        changed, not the result shape."""
+        right_keys = {(item.path, item.uuid) for item in right.results}
+        kept = []
+        for item in left.deduplicated().results:
+            matched = (item.path, item.uuid) in right_keys
+            if matched == keep:
+                kept.append(item)
+        return ReferenceResults3(results=kept)
+
+    @classmethod
+    def _filter_by_native_uuid(
+        cls, left: ReferenceResults3, right: ReferenceResults3, *, keep: bool
+    ) -> ReferenceResults3:
+        """paths(LHS)/values(RHS), where the right side's own accessor
+        is uuid-valued (Function3.PRODUCES_UUID) -- the left side has
+        no value of its own, but its own NATIVE uuid (always present,
+        no accessor needed) is compared directly against the right
+        side's own .data as a real uuid-to-uuid match. This is what
+        makes "every named-file whose uuid intersects the named-file-
+        uuids recorded across a set of runs" possible -- a genuine
+        cross-datatype capability, not just an edge case."""
+        right_keys = cls._keys(right)
+        kept = []
+        for item in left.deduplicated().results:
+            matched = item.uuid is not None and cls._hashable(item.uuid) in right_keys
+            if matched == keep:
                 kept.append(item)
         return ReferenceResults3(results=kept)
 
