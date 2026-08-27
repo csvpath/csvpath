@@ -9,6 +9,109 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `:home()`/`:definition()` during `'*'` traversal for FILES — three of four gaps BUILT 2026-08-27
+
+From the "FILES '*' traversal — essentially untouched by the recent
+RESULTS/CSVPATHS work" bucket-list entry, driven by David's concrete
+worked example (2026-08-21): "which named-files have `on_arrival` set"
+needs `$*.files.:home():definition(:on_arrival(:not_none()))`. Live
+testing had identified **four independent fixes** needed, not one; this
+pass builds the first three (the traversal/chaining machinery), leaving
+the fourth (a predicate argument, `:on_arrival(:not_none())`) to the
+separately-tracked predicate-argument entry — nothing about this build
+depends on that piece, and nothing here builds toward it either, they are
+genuinely independent.
+
+**Built, in `files_reference_finder_3.py`'s `_query_star_traversal()`:**
+
+1. **Bare `:home()` + `'*'` traversal.** `$*.files.:home()` used to raise
+   `"Does not yet support :home() as a name_one path segment"` (from
+   `_compile_path_pattern()`, which only recognizes `:name(...)`/clock
+   functions as legal path segments — `:home()`'s zero-level-selector
+   behavior was only ever wired for a literal root_major via
+   `_is_bare_home_reference`, never routed through `_query_star_traversal`
+   at all). Fixed by adding an `is_home` branch (new
+   `_is_home_prefixed_reference()` check) that gathers `_candidates_for_
+   name(name, [])` — the empty-pattern, zero-level match — across every
+   named-file, same as the existing is_grouped/is_flattened/is_deep_grouped
+   branches immediately above it in the same method. Deliberately NOT
+   partitioned by named-file (unlike `:all()`/`:groups()`): an empty
+   pattern is still a POOL-mode narrowing (one level, zero segments), the
+   same peer relationship a literal/`'*'` pattern already has to plain
+   `'*'` traversal's own bare-path POOL branch — a terminal pointer picks
+   ONE overall winner by time across every named-file's own zero-level
+   version, not one winner per named-file.
+
+2. **Bare `:definition()` + `'*'` traversal.** `$*.files.:definition()`
+   raised the identical "not a legal name_one path segment" error --
+   `:definition()` was only wired for the literal-root bare case
+   (`_is_bare_pointer_reference`), nothing routed it through
+   `_query_star_traversal`. Unlike `:manifest()` (which has Rule 1a's real
+   global ledger to fall back to at `"*"` root_major), `:definition()` has
+   no equivalent global resource -- so the traversal meaning built here is
+   "every named-file's own definition.json, one result per name," not a
+   single shared resource. New `_is_bare_definition_reference()` check,
+   early-returning (before the is_grouped/is_home/etc. dispatch) a
+   `ReferenceResult3` per `named_file_names` entry, path =
+   `named_file_home(name)/definition.json`, `uuid=None` (matches
+   `_query_well_known_file()`'s own convention for a non-versioned
+   resource). `ambiguous_content_read=True` whenever more than one result
+   comes back -- Rule 1 (`manifest_field_functions_proposal.md`) still
+   makes resolving full METADATA_FILE content for more than one entity at
+   once illegal; `query()` itself returns every match regardless (moved
+   2026-08-26, the `:path()`/Rule-1 relocation), only `resolve()`/
+   `resolve_from()` raises if a caller actually tries to read more than
+   one at once.
+
+3. **Chaining `:home():definition()` together.** Even with #1/#2 built
+   independently, `$*.files.:home():definition()` hit a *third*, separate
+   rejection: `"does not yet support functions attached directly to
+   name_one for '*' traversal"` -- a dedicated guard unconditionally
+   rejects any function chained onto name_one during `'*'` traversal, so
+   fixing `:home()`/`:definition()` individually did not make the
+   combination work. New `_chained_definition_call()` check (only
+   recognizes exactly one, argument-less `:definition()` chained onto a
+   bare `:home()` -- `_is_home_prefixed_reference()`, unlike
+   `_is_bare_home_reference()`, deliberately does NOT require
+   `name_one.functions` to be empty, so it matches both the bare and the
+   chained shape) folded into the same early-return branch as #2, but
+   FILTERED to only named-files with at least one zero-level candidate
+   (`_candidates_for_name(name, [])` non-empty) -- `:home()` here is a
+   FILTER ("only named-files with a plain, non-templated registration"),
+   not the placeholder-value role it plays bare; it has nothing to be a
+   placeholder FOR, since `:definition()` doesn't vary by
+   version/path the way a pointer's target would. Chaining anything OTHER
+   than `:definition()` onto `:home()` during `'*'` traversal still
+   raises, same as before.
+
+**`_extract_data()` changes:** bare `:definition()` during `'*'`
+traversal needed no new code at all -- `_is_bare_pointer_reference()`
+never checked `root_major`, so the existing literal-root branch
+(`return self._read_well_known_file(result.path)`) already fires
+correctly once `query()` sets `result.path` to the right definition.json.
+The chained `:home():definition()` shape needed one new branch (checks
+`_chained_definition_call()` directly) since `_is_bare_pointer_reference()`
+requires `name_one.functions` to be empty, which the chained shape never
+satisfies.
+
+**Deliberately scoped out of this pass, staying on the bucket list:**
+FILES' `:all()`/`:groups()` GROUP modes combined with `:manifest()`/a
+field-accessor (the same single-entity-vs-grouping restriction RESULTS'
+`name_three` content accessor already has); a literal prefix before
+`:flatten()`; `:from()`/`:to()` combined with `:all()`/`:groups()`
+grouping; a literal name_three body. None of these were touched or made
+easier/harder by this pass -- see the bucket list's own updated entry.
+
+Tests: new `TestStarTraversalHome`/`TestStarTraversalDefinition` classes
+in `tests/references/test_files_reference_finder_3.py` (query shape,
+zero-level filtering, `ambiguous_content_read`, name_three rejection,
+resolve-reads-real-bytes-per-named-file); the stale
+`test_star_with_definition_is_still_not_supported` (which asserted the
+OLD, now-wrong "always raises" behavior) was replaced with a comment
+pointing at the new coverage. Full local-backend suite green (3036/3036,
+run twice) plus the 11 known SFTP/S3 env-dependent failures (issue #216
+et al., unrelated to this change).
+
 ## `:name(/regex/)` — a name_one path segment can now be a regex — BUILT 2026-08-27
 
 From the "grammar / argument-type gaps" bucket-list entry: `Name3.

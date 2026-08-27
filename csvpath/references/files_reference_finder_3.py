@@ -551,6 +551,34 @@ class FilesReferenceFinder3(ReferenceFinder3):
         supported -- those all assume exactly one already-known manifest
         to re-read in _extract_data(), which does not hold when a result
         could have come from any of several named-files' manifests.
+
+        ':home()' and ':definition()' as name_one's own content -- added
+        2026-08-27 (FILES '*' traversal generalization bucket-list
+        entry), closing three of that entry's four identified gaps (the
+        fourth, a predicate argument to filter by, is separately unbuilt
+        -- see the predicate-argument bucket-list entry). Two independent
+        shapes, both METADATA_FILE (definition.json is never versioned,
+        so there is no "which version" left for name_three to narrow --
+        combining either shape with name_three is rejected):
+        - bare ':definition()' alone -- every named-file's own
+          definition.json, one result per named-file, regardless of
+          whether it has any zero-level registration at all.
+        - ':home()' with ':definition()' chained onto it -- the SAME
+          per-named-file definition.json lookup, but FILTERED to only
+          named-files that have at least one zero-level ("no template")
+          registration, per the concrete worked example that motivated
+          this ("$*.files.:home():definition(:on_arrival(:not_none()))"
+          -- "which named-files have on_arrival set," restricted to
+          plain, non-templated registrations). ':home()' here is a
+          filter, not the placeholder-value role it plays bare -- it has
+          nothing to be a placeholder FOR, since ':definition()' does not
+          vary by version/path the way a pointer's target would.
+        A bare ':home()' with nothing chained onto it (no ':definition()')
+        is a separate, third shape -- see the is_home branch below -- and
+        falls through to the ordinary candidate/pointer machinery every
+        other bare shape uses, since it is FIRST_PARTY-style path
+        narrowing (an empty, zero-level pattern), not a metadata-file
+        read.
         """
         name_one = reference.name_one
         if name_one.name_two is not None:
@@ -558,6 +586,41 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "FilesReferenceFinder3 does not yet support the '#worksheet' "
                 "marker (name_two)."
             )
+        is_home = self._is_home_prefixed_reference(name_one)
+        is_bare_definition = self._is_bare_definition_reference(name_one)
+        if is_bare_definition or (
+            is_home and self._chained_definition_call(name_one) is not None
+        ):
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not yet support combining "
+                    "':definition()' with name_three during '*' traversal "
+                    "-- definition.json is not versioned, there is no "
+                    "version to select."
+                )
+            names = self.csvpaths.file_manager.named_file_names
+            if is_home:
+                names = [
+                    name for name in names if self._candidates_for_name(name, [])
+                ]
+            results = []
+            for name in names:
+                home = self.csvpaths.file_manager.named_file_home(name)
+                path = Nos(home).join("definition.json")
+                results.append(ReferenceResult3(path=path, uuid=None))
+            return ReferenceResults3(
+                results=results,
+                # Rule 1 (manifest_field_functions_proposal.md): resolving
+                # full METADATA_FILE content for more than one entity at
+                # once is illegal -- more than one named-file's own
+                # definition.json is exactly that case, same as :manifest()
+                # already flags via has_manifest/len(selected_candidates)
+                # below. query() itself still returns every match; only
+                # resolve_from() raises if a caller actually tries to
+                # resolve more than one of these at once.
+                ambiguous_content_read=len(results) > 1,
+            )
+
         is_grouped = self._is_bare_all_reference(name_one)
         is_flattened = self._is_bare_flatten_reference(name_one)
         is_deep_grouped = self._is_bare_groups_reference(name_one)
@@ -570,6 +633,28 @@ class FilesReferenceFinder3(ReferenceFinder3):
             candidates = []
             for name in self.csvpaths.file_manager.named_file_names:
                 candidates.extend(self._all_candidates_for_name(name))
+        elif is_home:
+            # bare ':home()', nothing chained onto it -- the zero-level
+            # ("no template") placeholder, exactly like the literal-root
+            # case's own is_bare_home_reference branch in query(), just
+            # gathered across every named-file instead of one. Not
+            # partitioned: an empty pattern is still a POOL-mode narrowing
+            # (one level, just zero segments), the same peer relationship
+            # a literal/'*' pattern already has to '*' traversal's own
+            # bare-path POOL mode above -- a terminal pointer picks one
+            # overall winner by time across every named-file's zero-level
+            # version, it does not pick one winner per named-file (that
+            # is what ':all()' is for).
+            if name_one.functions:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not yet support chaining "
+                    f":{name_one.functions[0].name}() onto ':home()' "
+                    "during '*' traversal -- only ':definition()' is "
+                    "supported so far."
+                )
+            candidates = []
+            for name in self.csvpaths.file_manager.named_file_names:
+                candidates.extend(self._candidates_for_name(name, []))
         else:
             if name_one.functions:
                 raise ReferenceException3(
@@ -746,6 +831,56 @@ class FilesReferenceFinder3(ReferenceFinder3):
         )
 
     @staticmethod
+    def _is_home_prefixed_reference(name_one) -> bool:
+        """true when name_one's path is exactly a single, argument-less
+        ':home()' call -- UNLIKE _is_bare_home_reference, this does NOT
+        also require name_one.functions to be empty, since ':home()' is
+        legal here either bare (the zero-level placeholder, see
+        _query_star_traversal's own is_home branch) or with exactly one
+        ':definition()' chained onto it (the filtered-definition-lookup
+        shape, see _chained_definition_call) -- '*' traversal only,
+        added 2026-08-27 alongside that pair of shapes."""
+        return (
+            len(name_one.path) == 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == "home"
+            and name_one.path[0].arg is None
+        )
+
+    @staticmethod
+    def _is_bare_definition_reference(name_one) -> bool:
+        """true when name_one's entire content is a single, argument-
+        less ':definition()' call, with no trailing function chain --
+        the '*'-traversal counterpart to _is_bare_pointer_reference's
+        identical literal-root check (added 2026-08-27, see
+        _query_star_traversal's own early METADATA_FILE branch)."""
+        return (
+            not name_one.functions
+            and len(name_one.path) == 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == "definition"
+            and name_one.path[0].arg is None
+        )
+
+    @staticmethod
+    def _chained_definition_call(name_one) -> "FunctionCall3 | None":
+        """returns the ':definition()' FunctionCall3 when it is the ONE
+        thing chained onto name_one.functions (e.g. the "'home()':
+        ':definition()'" shape ':home():definition()'), else None. Added
+        2026-08-27 alongside _is_home_prefixed_reference -- the two are
+        meant to be checked together (is_home and this both non-None) to
+        recognize the filtered-definition-lookup shape specifically,
+        rather than any other function someone might try to chain onto
+        ':home()' during '*' traversal (still rejected, see the is_home
+        branch's own functions check)."""
+        if len(name_one.functions) != 1:
+            return None
+        call = name_one.functions[0]
+        if isinstance(call, FunctionCall3) and call.name == "definition" and call.arg is None:
+            return call
+        return None
+
+    @staticmethod
     def _is_bare_fingerprint_reference(name_one) -> bool:
         """same shape as _is_bare_home_reference, for ':fingerprint(...)'
         -- settled 2026-08-13, but the OPPOSITE arg requirement: WITH an
@@ -857,7 +992,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
             ) or self._is_bare_pointer_reference(reference, "definition"):
                 # result.path is already the manifest.json/definition.json
                 # path itself (set by query()'s _query_well_known_file()
-                # branch above).
+                # branch above). Also covers bare ':definition()' during
+                # '*' traversal -- _is_bare_pointer_reference does not
+                # look at root_major, and _query_star_traversal's own
+                # early METADATA_FILE branch sets result.path the same
+                # way for that shape (added 2026-08-27).
+                return self._read_well_known_file(result.path)
+            if (
+                reference.name_three is None
+                and self._chained_definition_call(reference.name_one) is not None
+            ):
+                # ':home():definition()' chained during '*' traversal --
+                # added 2026-08-27. result.path is already the matched
+                # named-file's own definition.json path, set by
+                # _query_star_traversal's own early METADATA_FILE branch.
                 return self._read_well_known_file(result.path)
             if isinstance(reference.root_major, Star3) and result.uuid is not None:
                 # Rule 1b -- a pointer already reduced the global ledger
