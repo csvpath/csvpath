@@ -118,47 +118,56 @@ Settled compatibility matrix (David, 2026-08-23):
 |---|---|---|
 | UNION | LHS is `paths` | normal -- RHS unions freely, by path alone, regardless of RHS's own kind |
 | UNION | LHS is `values`, RHS's terminal accessor shares the LHS's own conceptual `KIND` (e.g. both `"uuid"`, both `"name"`), or is the literally identical accessor when neither declares a `KIND` | normal -- dedup by full `ReferenceResult3` equality |
-| UNION | LHS is `values`, RHS's terminal accessor shares neither a `KIND` nor literal identity with the LHS's own (or RHS is `paths`) | **raise** -- e.g. `:fingerprint()` vs. `:type()` (both happen to resolve to a string, but a content hash and a file extension are not the same kind of thing, and neither declares a `KIND`), or `:type("csv")` vs. `:type("xlsx")` (same function, different argument, no `KIND`) |
+| UNION | LHS is `values`, RHS's terminal accessor shares neither a `KIND` nor literal identity with the LHS's own (or RHS is `paths`) | **raise** -- e.g. `:type()` vs. `:status()` (both happen to resolve to a string, but a file extension and a status message are not the same kind of thing, and neither declares a `KIND`), or `:type("csv")` vs. `:type("xlsx")` (same function, different argument, no `KIND`) |
 | SUBTRACT / INTERSECT | `values`/`values` | normal -- compare by each side's own `.data` (established behavior, unchanged) |
 | SUBTRACT / INTERSECT | `paths`/`paths` | compare by identity (`path`+`uuid` together -- `path` alone is not always enough, e.g. CSVPATHS shares one `group.csvpath` path across every version) |
 | SUBTRACT / INTERSECT | `values`(LHS)/`paths`(RHS) | RHS has no value to compare, so fall back to identity: compare LHS's own `path`+`uuid` against RHS's `path`+`uuid`. The *output* still carries LHS's own `.data` intact -- the comparison basis changed, the result shape (`values`) didn't. |
 | SUBTRACT / INTERSECT | `paths`(LHS)/`values`(RHS) | **raise** ("bad query" -- LHS has no value to compare against RHS's), **unless RHS's accessor is specifically UUID-valued** (e.g. `:uuid()`, `:run_uuid()`), in which case LHS's own *native* `uuid` field (always present, no accessor needed) is compared directly against RHS's `.data` as a real uuid-to-uuid match. This is what makes "every named-file whose uuid intersects the named-file-uuids recorded across a set of runs" possible -- a genuine cross-datatype capability, not just an edge case. |
 
 **UNION's compatibility rule is LHS-driven and purely structural**
-(settled 2026-08-26, revised the same day from an intermediate "both
-sides' accessors must be literally identical" draft): if the left side
-is `paths` (no terminal `VALUE`-role accessor at all), any right side
-unions freely, by path. Otherwise the two sides must be comparable by
-*conceptual purpose*, not literal accessor identity and not resolved-
-value type -- David's own framing: "the accessor must equal. If it
-does, we then ask are the values equal?" Two accessors are comparable
-if they share the same declared `Function3.KIND` (e.g. `"uuid"` for
-`:uuid()`/`:run_uuid()`/`:named_file_uuid()`/`:named_paths_uuid()`,
-`"name"` for `:named_paths_name()`/`:named_results_name()`/
-`:named_file_name()` -- different functions, same conceptual family), or
-if neither side declares a `KIND`, only if they are the literally
+(settled 2026-08-26, revised twice the same day -- first to an
+intermediate "both sides' accessors must be literally identical" draft,
+then to this one): if the left side is `paths` (no terminal `VALUE`-role
+accessor at all), any right side unions freely, by path. Otherwise the
+two sides must be comparable by *conceptual purpose*, not literal
+accessor identity and not resolved-value type -- David's own framing:
+"the accessor must equal. If it does, we then ask are the values
+equal?" Two accessors are comparable if they share the same declared
+`Function3.KIND` (e.g. `"uuid"` for `:uuid()`/`:run_uuid()`/
+`:named_file_uuid()`/`:named_paths_uuid()`, `"name"` for
+`:named_paths_name()`/`:named_results_name()`/`:named_file_name()`,
+`"fingerprint"` for `:fingerprint()`/`:named_file_fingerprint()`/
+`:file_fingerprints()` -- different functions, same conceptual family),
+or if neither side declares a `KIND`, only if they are the literally
 identical accessor (function name and argument together, via
 `FunctionCall3.__eq__`) -- e.g. a bare `:type()` against another bare
-`:type()`. `:fingerprint()` and `:type()` both happen to resolve to a
-string but share neither a `KIND` nor literal identity, so they are not
-comparable -- a content hash and a file extension are not the same kind
-of thing, regardless of Python type. Comparing the accessors' own
-conceptual purpose, not the values they resolve to, is what decides
-comparability -- two `values`-valued sides that ARE comparable may still
-resolve to different actual values per item (two different `:uuid()`
-calls, or a bare `:type()` on both sides); that is a downstream question
-for whoever consumes the union, not something this check raises on.
+`:type()`. Comparing the accessors' own conceptual purpose, not the
+values they resolve to, is what decides comparability -- two
+`values`-valued sides that ARE comparable may still resolve to
+different actual values per item (two different `:uuid()` calls, or a
+bare `:type()` on both sides); that is a downstream question for
+whoever consumes the union, not something this check raises on.
 
 Which functions share a `KIND` is a deliberately small, explicit list,
-not inferred from resolved-value type -- `:named_file_fingerprint()` and
-`:file_fingerprints()` both produce a fingerprint-shaped value too, but
-are NOT grouped with `:fingerprint()`'s own `KIND` (left undeclared, as
-of this writing): they record the fingerprint of a *different* entity's
-content (the named-file input a run/instance consumed), not the
-resolved entity's own content, per `Fingerprint3`'s own docstring on why
-those stay conceptually separate. `:type()` is currently the only
-function of its own kind, so it has no declared `KIND` either, and falls
-back to the literal-identity rule.
+not inferred from resolved-value type or from which entity a field
+belongs to -- David's own correction to an earlier draft of this note,
+which had left the fingerprint functions uncategorized on the reasoning
+that `:fingerprint()` (the FILES/CSVPATHS entity's own content) and
+`:named_file_fingerprint()`/`:file_fingerprints()` (a RESULTS run's
+*record* of a different entity's content) describe different entities.
+David's correction: a fingerprint is a cryptographic identity of BYTES,
+not of an entity or event the way a uuid is -- "same fingerprint" means
+"same content" regardless of which manifest field recorded it or which
+entity that field belongs to, so all three legitimately share `KIND =
+"fingerprint"`. Concrete motivating case: two named-paths groups loaded
+from identical `group.csvpath` text under different names get different
+uuids but identical fingerprints -- comparing a group's own
+`:fingerprint()` against a run's own record of which named-paths
+content drove it (a field the Results Run Manifest does not carry yet,
+but should -- see `deferred_work_bucket_list.md`) is exactly the kind of
+comparison `:uuid()` cannot make. `:type()` is currently the only
+function of its own conceptual purpose, so it still has no declared
+`KIND`, and falls back to the literal-identity rule.
 
 **Why SUBTRACT/INTERSECT's raise is asymmetric but UNION's isn't**: UNION
 never compares resolved data at all, so its check is purely about not

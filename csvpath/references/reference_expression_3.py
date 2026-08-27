@@ -222,26 +222,30 @@ class ReferenceExpression3:
         return None
 
     def _check_union_compatible(self) -> None:
-        """UNION's own compatibility rule -- LHS-driven, revised
-        2026-08-26 (same day as the first, now-superseded "accessor must
-        be literally identical" draft) directly from David's own refined
-        design note: comparability is about conceptual PURPOSE, not raw
-        accessor identity or resolved-value type. :uuid() and
-        :run_uuid() are comparable (both KIND == "uuid") even though
-        they are different functions; :named_paths_name() and
-        :named_results_name() are comparable (both KIND == "name") for
-        the same reason. :fingerprint() and :type() are NOT comparable
-        even though both happen to resolve to a string -- a content hash
-        and a file extension are not the same kind of thing, and
-        neither has a declared KIND, so they fall back to (and fail)
-        the literal-identity check below. A bare :type() against another
-        bare :type() IS comparable under that same fallback -- identical
-        accessor, regardless of KIND -- even though the two sides' own
-        resolved values may or may not actually agree; that is a
-        downstream question, not this method's. If the left side is
-        PATHS (no terminal VALUE-role accessor at all), any right side
-        unions freely, by path alone -- the "RHS added by path" case
-        from the design note."""
+        """UNION's own compatibility rule -- LHS-driven, revised twice
+        on 2026-08-26 (first to an "accessor must be literally
+        identical" draft, then to this KIND-based one) directly from
+        David's own refined design note: comparability is about
+        conceptual PURPOSE, not raw accessor identity or resolved-value
+        type. :uuid() and :run_uuid() are comparable (both KIND ==
+        "uuid") even though they are different functions;
+        :named_paths_name() and :named_results_name() are comparable
+        (both KIND == "name") for the same reason; :fingerprint() and
+        :named_file_fingerprint() are comparable (both KIND ==
+        "fingerprint") even though they describe different entities'
+        content -- a fingerprint is a cryptographic identity of bytes,
+        so "same content" is meaningful across entities the way "same
+        uuid" or "same name" is not. :type() has no declared KIND (it
+        is currently the only function of its own conceptual purpose),
+        so it falls back to the literal-identity check below -- a bare
+        :type() against another bare :type() IS comparable under that
+        fallback (identical accessor, even though the two sides' own
+        resolved values may or may not actually agree -- that is a
+        downstream question, not this method's), but :type() against
+        :status() is not (neither a shared KIND nor the same accessor).
+        If the left side is PATHS (no terminal VALUE-role accessor at
+        all), any right side unions freely, by path alone -- the "RHS
+        added by path" case from the design note."""
         left_call = self._terminal_value_call(self._left)
         if left_call is None:
             return

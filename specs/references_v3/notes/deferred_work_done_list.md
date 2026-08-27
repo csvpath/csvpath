@@ -9,6 +9,69 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## Fingerprint functions grouped under `KIND = "fingerprint"` — CORRECTED 2026-08-26
+
+Fourth revision, same conversation, same day, of `UNION`'s own
+compatibility rule -- corrects a call made in the entry two below this
+one ("UNION compatibility revised again, to compare by conceptual
+KIND"), which had deliberately left `:fingerprint()`,
+`:named_file_fingerprint()`, and `:file_fingerprints()` uncategorized,
+reasoning from `Fingerprint3`'s own pre-existing docstring that they
+describe different entities' content and should stay separate. Flagged
+that reasoning to David transparently rather than silently overriding
+it either way; David pushed back directly:
+
+> There is some truth to it, but it is not ironclad. If a named-paths
+> group fingerprint were carried into a run manifest (it is not, but
+> should be), we would name the run manifest field
+> named_paths_fingerprint, but compare it to `:fingerprint()` on the
+> named-paths group side. And that is one clearly valuable case:
+> group.csvpaths files may exist under different names having been
+> loaded from the same csvpaths text. We would want to be able to
+> signal that and `:uuid()` will not do it. Ultimately, a fingerprint is
+> a cryptographic identity of bytes... we care that two UUIDs are
+> distinct in one way and two fingerprints are distinct in another way
+> -- and the way that fingerprints are distinct is that bytes are
+> either the same or they are not.
+
+The distinction that actually matters: a uuid is an identity of an
+*entity/event* (a registration, a run), so two different entities always
+get different uuids even with byte-identical content; a fingerprint is
+an identity of *content*, so it is meaningful to ask "is this the same
+content" across two entirely different entities/manifests. That is
+precisely why grouping the fingerprint functions together is correct
+where grouping, say, `:fingerprint()` with `:uuid()` would not be.
+
+**Built**: `KIND = "fingerprint"` added to `Fingerprint3`
+(`fingerprint_3.py`), `NamedFileFingerprint3`
+(`named_file_fingerprint_3.py`), and `FileFingerprints3`
+(`file_fingerprints_3.py`, despite being dict-shaped -- UNION only cares
+about accessor comparability, never resolved-value shape, so the
+dict-vs-scalar difference does not disqualify it; `SUBTRACT`/`INTERSECT`
+still separately reject a dict-valued join key via `_hashable`,
+unaffected). Rewrote `Fingerprint3`'s own docstring (previously said
+"deliberately not unified with... those describe the fingerprint of
+other content... not of the entity itself" -- now explains the opposite
+conclusion and why) and `NamedFileFingerprint3`'s docstring to match.
+
+**Also surfaced, and added to the bucket list, a genuine gap David named
+directly**: the Results Run Manifest has no `named_paths_fingerprint`
+field today (only `named_paths_uuid`, an identity-of-registration-event
+field, not identity-of-content) -- see the bucket list's own new entry.
+Not built now; this was raised as a hypothetical motivating example, not
+a request to build it in this pass.
+
+Tests: added `test_union_of_fingerprint_and_named_file_fingerprint_succeeds`
+(`tests/references/test_reference_expression_3.py`) -- `$groupa.csvpaths.
+:fingerprint()` UNION `$groupa.results.:flatten():named_file_fingerprint()`,
+proving the cross-entity, cross-function `KIND` match actually resolves
+end to end, not just that it does not raise. Required adding a
+`fingerprint` key to `GROUPA_MANIFEST` and an optional
+`named_file_fingerprint` kwarg to the `_make_run()` fixture helper.
+`tests/references/` now 1428 passed, up from 1427.
+
+---
+
 ## `ReferenceExpression3` UNION compatibility rule revised to LHS-driven accessor-equality — BUILT 2026-08-26
 
 Same day as the `paths`-vs-`values` matrix entry below, but a genuine
@@ -151,6 +214,14 @@ declared `KIND` for now (falls back to the literal-identity rule) --
 flagged to David as a discovered tension rather than silently
 overridden either way; revisit if/when a real cross-entity fingerprint
 comparison use case actually comes up.
+
+**Corrected within the hour** -- see the entry above this one
+("Fingerprint functions grouped under `KIND = \"fingerprint\"`"). David
+pushed back on the "different entities can never share a `KIND`"
+reasoning directly: a fingerprint is a cryptographic identity of BYTES,
+not of an entity, so it is exactly the kind of value that should be
+comparable across different entities/manifests -- unlike uuid/name.
+`Type3` alone stays uncategorized -- unaffected by the correction.
 
 Tests: renamed `test_union_of_two_values_sides_with_different_accessors_raises`
 to `test_union_of_two_values_sides_with_different_kinds_raises` (still

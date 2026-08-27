@@ -334,6 +334,7 @@ GROUPA_MANIFEST = [
         "named_paths": ["stmt orders text"],
         "named_paths_identities": ["orders"],
         "named_paths_name": "groupa",
+        "fingerprint": "groupa-fp",
     }
 ]
 GROUPB_MANIFEST = [
@@ -400,12 +401,14 @@ def _write_json(path, data) -> None:
     path.write_text(json.dumps(data))
 
 
-def _make_run(base, run_name: str, run_uuid: str, group_name: str) -> str:
+def _make_run(
+    base, run_name: str, run_uuid: str, group_name: str, *, named_file_fingerprint=None
+) -> str:
     run_dir = base / run_name
-    _write_json(
-        run_dir / "manifest.json",
-        {"run_uuid": run_uuid, "named_paths_name": group_name},
-    )
+    manifest = {"run_uuid": run_uuid, "named_paths_name": group_name}
+    if named_file_fingerprint is not None:
+        manifest["named_file_fingerprint"] = named_file_fingerprint
+    _write_json(run_dir / "manifest.json", manifest)
     return str(run_dir)
 
 
@@ -423,7 +426,13 @@ def orders_archive(tmp_path):
     # example (references_notes/notes/reference_expressions_notes.txt).
     archive = tmp_path / "archive"
     a_runs = [
-        _make_run(archive / "groupa", "2026-01-01_00-00-00", "a1", "groupa"),
+        _make_run(
+            archive / "groupa",
+            "2026-01-01_00-00-00",
+            "a1",
+            "groupa",
+            named_file_fingerprint="groupa-fp",
+        ),
         _make_run(archive / "groupa", "2026-01-02_00-00-00", "a2", "groupa"),
     ]
     b_runs = [
@@ -648,6 +657,27 @@ class TestPathsVsValuesEndToEnd:
         )
         result = expr.resolve()
         assert len(result) > 0
+
+    def test_union_of_fingerprint_and_named_file_fingerprint_succeeds(
+        self, orders_archive
+    ):
+        # :fingerprint() (the named-paths group's own content) and
+        # :named_file_fingerprint() (a RESULTS run's record of a
+        # DIFFERENT entity's content) are different functions describing
+        # different entities, but both share KIND == "fingerprint" --
+        # David's own correction (2026-08-26) to an earlier, narrower
+        # taxonomy that had left the fingerprint functions uncategorized
+        # on the reasoning that different entities cannot be compared.
+        # A fingerprint is a cryptographic identity of bytes, so "same
+        # content" is meaningful across entities, unlike uuid/name.
+        expr = ReferenceExpression3(
+            left="$groupa.csvpaths.:fingerprint()",  # values -- KIND "fingerprint"
+            op=ReferenceExpression3.UNION,
+            right="$groupa.results.:flatten():named_file_fingerprint()",  # values -- KIND "fingerprint"
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert "groupa-fp" in {r.data for r in result.results}
 
     def test_intersect_paths_paths_compares_by_identity(self, orders_archive):
         expr = ReferenceExpression3(
