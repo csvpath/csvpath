@@ -45,6 +45,9 @@ class ResultsRegistrar(Registrar, Listener):
         mdata.named_file_path = filepath
         mdata.named_file_size = self._size(filepath)
         mdata.named_file_last_change = self._last_change(filepath)
+        mdata.named_paths_fingerprint = self.csvpaths.paths_manager.get_fingerprint_for_name(
+            self.pathsname
+        )
         self.distribute_update(mdata)
         # after we distribute the update
         # if we see a fingerprint mismatch we need to log it
@@ -106,6 +109,7 @@ class ResultsRegistrar(Registrar, Listener):
         #
         m["named_paths_name"] = mdata.named_paths_name
         m["named_paths_uuid"] = mdata.named_paths_uuid_string
+        m["named_paths_fingerprint"] = mdata.named_paths_fingerprint
         #
         m["named_file_name"] = mdata.named_file_name
         m["named_file_uuid"] = mdata.named_file_uuid_string

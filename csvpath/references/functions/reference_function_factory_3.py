@@ -89,6 +89,7 @@ class ReferenceFunctionFactory:
         from .fields.named_files_root_3 import NamedFilesRoot3
         from .fields.named_paths_3 import NamedPaths3
         from .fields.named_paths_count_3 import NamedPathsCount3
+        from .fields.named_paths_fingerprint_3 import NamedPathsFingerprint3
         from .fields.named_paths_group_3 import NamedPathsGroup3
         from .fields.named_paths_identities_3 import NamedPathsIdentities3
         from .fields.named_paths_name_3 import NamedPathsName3
@@ -260,6 +261,7 @@ class ReferenceFunctionFactory:
             NamedFileSize3.NAME: NamedFileSize3,
             NamedFileLastChange3.NAME: NamedFileLastChange3,
             NamedFileFingerprint3.NAME: NamedFileFingerprint3,
+            NamedPathsFingerprint3.NAME: NamedPathsFingerprint3,
             RunDir3.NAME: RunDir3,
             InstanceIndex3.NAME: InstanceIndex3,
             NamedPathsGroup3.NAME: NamedPathsGroup3,

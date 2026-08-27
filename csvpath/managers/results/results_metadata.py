@@ -12,6 +12,16 @@ class ResultsMetadata(Metadata):
         self.run_home: str = None
         self.named_paths_name: str = None
         self.named_paths_uuid: UUID = None
+        #
+        # the content fingerprint of the named-paths group version that
+        # drove this run (as opposed to named_paths_uuid, its
+        # registration identity) -- lets a run be compared, by content,
+        # against the group that produced it, catching the case where
+        # the same group.csvpaths text was loaded under two different
+        # names (different uuids, identical fingerprints). See
+        # NamedPathsFingerprint3.
+        #
+        self.named_paths_fingerprint: str = None
         self.named_results_name: str = None
         self.named_file_uuid: str = None
         self.named_file_name: str = None
@@ -119,6 +129,7 @@ class ResultsMetadata(Metadata):
         self.run_uuid_string = m.get("run_uuid")
         self.named_paths_name = m.get("named_paths_name")
         self.named_paths_uuid_string = m.get("named_paths_uuid")
+        self.named_paths_fingerprint = m.get("named_paths_fingerprint")
         self.named_file_name = m.get("named_file_name")
         self.named_file_uuid_string = m.get("named_file_uuid")
         self.named_file_path = m.get("named_file_path")

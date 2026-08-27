@@ -156,6 +156,39 @@ class PathsManager:
                 return m[len(m) - 1]["uuid"]
         raise ValueError(f"No manifest for path named {name}")
 
+    def get_fingerprint_for_name(self, name: NamedPathsName) -> str:
+        """@private -- the most recently registered version's own
+        content fingerprint for named-paths group `name` (the group's
+        own group.csvpaths text, not any run's copy of it) -- mirrors
+        get_named_paths_uuid's own name/reference resolution exactly,
+        just returning "fingerprint" instead of "uuid" off the same last
+        manifest entry. Used by ResultsRegistrar to record which
+        named-paths CONTENT drove a run (Results Run Manifest's own
+        named_paths_fingerprint field), distinct from named_paths_uuid,
+        which only records the group version's registration identity --
+        two groups loaded from identical group.csvpaths text under
+        different names get different uuids but identical fingerprints."""
+        if name is None:
+            raise ValueError("Paths name cannot be None")
+        if name.find("#") > -1:
+            name = name[0 : name.find("#")]
+        if name.startswith("$"):
+            ref = ReferenceParser(name, csvpaths=self.csvpaths)
+            if ref.datatype != ReferenceParser.CSVPATHS:
+                raise ValueError(
+                    "Must be a reference of type {ReferenceParser.CSVPATHS}"
+                )
+            name = ref.root_major
+
+        path = self.named_paths_home(name)
+        path = Nos(path).join("manifest.json")
+        nos = Nos(path)
+        if nos.exists():
+            with DataFileReader(path) as reader:
+                m = json.load(reader.source)
+                return m[len(m) - 1]["fingerprint"]
+        raise ValueError(f"No manifest for path named {name}")
+
     @property
     def named_paths_dir(self) -> str:
         """@private"""

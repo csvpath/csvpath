@@ -402,12 +402,20 @@ def _write_json(path, data) -> None:
 
 
 def _make_run(
-    base, run_name: str, run_uuid: str, group_name: str, *, named_file_fingerprint=None
+    base,
+    run_name: str,
+    run_uuid: str,
+    group_name: str,
+    *,
+    named_file_fingerprint=None,
+    named_paths_fingerprint=None,
 ) -> str:
     run_dir = base / run_name
     manifest = {"run_uuid": run_uuid, "named_paths_name": group_name}
     if named_file_fingerprint is not None:
         manifest["named_file_fingerprint"] = named_file_fingerprint
+    if named_paths_fingerprint is not None:
+        manifest["named_paths_fingerprint"] = named_paths_fingerprint
     _write_json(run_dir / "manifest.json", manifest)
     return str(run_dir)
 
@@ -432,6 +440,7 @@ def orders_archive(tmp_path):
             "a1",
             "groupa",
             named_file_fingerprint="groupa-fp",
+            named_paths_fingerprint="groupa-fp",
         ),
         _make_run(archive / "groupa", "2026-01-02_00-00-00", "a2", "groupa"),
     ]
@@ -674,6 +683,31 @@ class TestPathsVsValuesEndToEnd:
             left="$groupa.csvpaths.:fingerprint()",  # values -- KIND "fingerprint"
             op=ReferenceExpression3.UNION,
             right="$groupa.results.:flatten():named_file_fingerprint()",  # values -- KIND "fingerprint"
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert "groupa-fp" in {r.data for r in result.results}
+
+    def test_union_of_fingerprint_and_named_paths_fingerprint_succeeds(
+        self, orders_archive
+    ):
+        # the ORIGINAL motivating case for named_paths_fingerprint
+        # existing at all (bucket-list entry, David 2026-08-26/added
+        # 2026-08-27): "let a run be compared, by content, against the
+        # named-paths group whose content produced it -- catching the
+        # case where the same group.csvpaths text was loaded under two
+        # different names (different uuids, identical fingerprints)."
+        # :fingerprint() here reads groupa's CURRENT content fingerprint
+        # (GROUPA_MANIFEST's own "groupa-fp"); :named_paths_fingerprint()
+        # reads run a1's own RECORD of which content drove it -- set to
+        # the same value by the orders_archive fixture. Both share
+        # KIND == "fingerprint", same as the named_file_fingerprint
+        # pairing above, just for the named-paths entity instead of the
+        # named-file one.
+        expr = ReferenceExpression3(
+            left="$groupa.csvpaths.:fingerprint()",  # values -- KIND "fingerprint"
+            op=ReferenceExpression3.UNION,
+            right="$groupa.results.:flatten():named_paths_fingerprint()",  # values -- KIND "fingerprint"
             csvpaths=orders_archive,
         )
         result = expr.resolve()

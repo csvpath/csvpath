@@ -35,3 +35,20 @@ class TestCsvPathsManagersResultsMetadata(unittest.TestCase):
         m.from_manifest(manifest)
         assert m.run_uuid_string == run_uuid
         assert m.uuid_string == run_uuid
+
+    def test_named_paths_fingerprint_defaults_to_none(self) -> None:
+        m = ResultsMetadata(None)
+        assert m.named_paths_fingerprint is None
+
+    def test_from_manifest_reads_named_paths_fingerprint(self) -> None:
+        m = ResultsMetadata(None)
+        manifest = {
+            "run_home": "some/run/home",
+            "uuid": str(uuid4()),
+            "run_uuid": str(uuid4()),
+            "named_paths_uuid": str(uuid4()),
+            "named_file_uuid": str(uuid4()),
+            "named_paths_fingerprint": "abc123",
+        }
+        m.from_manifest(manifest)
+        assert m.named_paths_fingerprint == "abc123"

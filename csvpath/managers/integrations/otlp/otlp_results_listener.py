@@ -60,4 +60,6 @@ class OpenTelemetryResultsListener(OtlpListener):
             cmeta["time_completed"] = mdata.time_completed_string
         if mdata.named_paths_uuid_string:
             cmeta["named_paths_uuid_string"] = mdata.named_paths_uuid_string
+        if mdata.named_paths_fingerprint:
+            cmeta["named_paths_fingerprint"] = mdata.named_paths_fingerprint
         return cmeta

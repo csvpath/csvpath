@@ -227,6 +227,30 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         lst = CsvPaths().paths_manager.get_named_paths(name)
         assert lst is None
 
+    def test_get_fingerprint_for_name(self):
+        # get_fingerprint_for_name mirrors get_named_paths_uuid exactly,
+        # just returning the last manifest entry's own "fingerprint"
+        # instead of "uuid" -- added 2026-08-27 for the Results Run
+        # Manifest's own named_paths_fingerprint field (see
+        # ResultsRegistrar.register_start).
+        name = f"{uuid4()}"
+        apath = "$[*][yes()]"
+        paths = Builder().build()
+        paths.paths_manager.add_named_paths(name=name, paths=[apath])
+        fingerprint = CsvPaths().paths_manager.get_fingerprint_for_name(name)
+        assert fingerprint
+        mani = CsvPaths().paths_manager.get_manifest_for_name(name)
+        assert fingerprint == mani[-1]["fingerprint"]
+        CsvPaths().paths_manager.remove_named_paths(name)
+
+    def test_get_fingerprint_for_name_none_raises(self):
+        with self.assertRaises(ValueError):
+            CsvPaths().paths_manager.get_fingerprint_for_name(None)
+
+    def test_get_fingerprint_for_name_no_manifest_raises(self):
+        with self.assertRaises(ValueError):
+            CsvPaths().paths_manager.get_fingerprint_for_name(f"{uuid4()}")
+
     def test_named_paths_adda(self):
         name = f"{uuid4()}"
         apath = "$[*][yes()]"
