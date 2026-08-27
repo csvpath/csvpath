@@ -9,6 +9,58 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `#name_two` (XLSX worksheet marker) built for FILES — BUILT 2026-08-26
+
+David, 2026-08-21: does `ReferenceResult3` need a field for which
+worksheet was found? Resolved the same day: reuse `identity` (David:
+"identity works quite well with worksheet (name_two)") rather than a
+dedicated field. The grammar already had the slot (`name_one:
+path_prefix ("#" name_two)? func_chain?`) and parsed fine, but every
+finder rejected it outright the moment it was present.
+
+**Built, `FilesReferenceFinder3` only** (CSVPATHS/RESULTS correctly keep
+rejecting it as files-only, unchanged): `query()`'s old unconditional
+rejection replaced with two narrower, precise ones -- `#name_two`
+combined with a bare context-setter/marker function occupying name_one's
+entire content (`:all()`/`:manifest()`/`:home()`/etc. -- anything other
+than `:name(...)`, which is path-BUILDING, not a marker, same exemption
+`_is_bare_function_only` already makes) still raises, since there is no
+literal file to have a worksheet in; combined with a literal path but no
+version-selecting pointer in name_three also still raises (checked at
+both the no-name_three-at-all point and the has-name_three-but-no-
+pointer point), since there is no single version to read a worksheet
+from. Otherwise legal now -- the matched `ReferenceResult3`'s own
+`identity` is populated with the worksheet name at `query()` time.
+
+`_extract_data()`'s `FIRST_PARTY` branch reads the named worksheet by
+appending `#{worksheet}` to the matched file's own path before handing
+it to `DataFileReader` -- which already understood this exact
+`path#sheet` convention (`file_readers.py`'s own `__new__`), no new
+reading mechanism invented. Confirmed, not assumed, that the ordinary
+`reader.source.read()` every other `FIRST_PARTY` read uses does NOT work
+for XLSX before writing around it: `XlsxDataReader` is row-oriented
+(`.next()`, a generator of `list[str]` rows via `pylightxl`), never sets
+`.source` at all -- the ABC's own `.read()` docstring already flagged
+this ("may not work as-is for some files, e.g. xlsx... today we only
+need it for csvpaths files"). Explicitly rejects a non-XLSX path
+(`XlsxReaderHelper.is_xlsx()`) rather than silently falling through to
+whatever reader the stripped path happens to resolve to.
+
+Tests use a real, already-shared XLSX fixture
+(`tests/csvpaths/test_resources/Book1.xlsx`, also used by
+`tests/csvpaths/test_csvpaths_xlsx.py`, with two known real worksheets,
+"hello" and "world") rather than a synthetic one, for both `query()`
+(`identity` populated) and `resolve()` (actual rows read, and the two
+worksheets give different rows -- proves the sheet argument really
+selects, not just parses). `tests/references/` now 1432 passed, up from
+1426.
+
+**Deliberately did not touch `_query_star_traversal()`'s own separate
+`#worksheet` rejection** -- see the bucket list's new entry for this,
+same scoping discipline as the recent `:path()`/`:home()` work.
+
+---
+
 ## `:home()`'s field-read job split into four scope-specific functions — BUILT 2026-08-26
 
 David, 2026-08-21, refined 2026-08-24: no manifest anywhere has a literal

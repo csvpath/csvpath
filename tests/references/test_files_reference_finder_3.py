@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from csvpath.references.files_reference_finder_3 import FilesReferenceFinder3
@@ -341,12 +343,16 @@ class TestScopeLimits:
         finder = _finder("$*.files.*.:last()", ALPHA_HOME, ALPHA_MANIFEST)
         assert finder.query().results == []
 
-    def test_name_two_worksheet_marker_not_yet_supported(self):
+    def test_name_two_worksheet_marker_beside_a_pointer_now_works(self):
+        # '#worksheet' settled 2026-08-26 -- legal against a literal
+        # path (a wildcard path segment counts, same as :name("...")),
+        # combined with a real version-selecting pointer. See
+        # TestNameTwoWorksheetMarker below for actually resolving one.
         finder = _finder(
             '$alpha.files.*#sheet1.:last()', ALPHA_HOME, ALPHA_MANIFEST
         )
-        with pytest.raises(ReferenceException3):
-            finder.query()
+        results = finder.query()
+        assert results.results[0].identity == "sheet1"
 
     def test_functions_directly_on_name_one_not_yet_supported(self):
         finder = _finder("$alpha.files.*:last().v1", ALPHA_HOME, ALPHA_MANIFEST)
@@ -1962,6 +1968,88 @@ class TestPositionEnforcement:
                 '$alpha.files.:name("one.csv").:name("y")',
                 ALPHA_HOME,
                 ALPHA_MANIFEST,
+            ).query()
+
+
+BOOK1_XLSX = os.path.join(
+    "tests", "csvpaths", "test_resources", "Book1.xlsx"
+)
+
+
+class TestNameTwoWorksheetMarker:
+    # '#worksheet' (name_two) -- settled 2026-08-26, see the "#name_two"
+    # bucket-list entry. Book1.xlsx (a real, shared test fixture -- also
+    # used by tests/csvpaths/test_csvpaths_xlsx.py) has two known real
+    # worksheets, "hello" and "world".
+    def test_query_populates_identity_with_the_worksheet_name(self):
+        manifest = [
+            {"file": BOOK1_XLSX, "file_home": f"{ALPHA_HOME}/Book1.xlsx", "uuid": "u-1"}
+        ]
+        results = _finder(
+            '$alpha.files.:name("Book1.xlsx")#hello.:last()',
+            ALPHA_HOME,
+            manifest,
+        ).query()
+        assert results.results[0].identity == "hello"
+        assert results.results[0].path == BOOK1_XLSX
+
+    def test_resolve_reads_the_named_worksheets_own_rows(self):
+        manifest = [
+            {"file": BOOK1_XLSX, "file_home": f"{ALPHA_HOME}/Book1.xlsx", "uuid": "u-1"}
+        ]
+        results = _finder(
+            '$alpha.files.:name("Book1.xlsx")#hello.:last()',
+            ALPHA_HOME,
+            manifest,
+        ).resolve()
+        rows = results.results[0].data
+        assert isinstance(rows, list)
+        assert len(rows) > 0
+        assert all(isinstance(row, list) for row in rows)
+
+    def test_a_different_worksheet_gives_different_rows(self):
+        manifest = [
+            {"file": BOOK1_XLSX, "file_home": f"{ALPHA_HOME}/Book1.xlsx", "uuid": "u-1"}
+        ]
+        hello = _finder(
+            '$alpha.files.:name("Book1.xlsx")#hello.:last()',
+            ALPHA_HOME,
+            manifest,
+        ).resolve()
+        world = _finder(
+            '$alpha.files.:name("Book1.xlsx")#world.:last()',
+            ALPHA_HOME,
+            manifest,
+        ).resolve()
+        assert hello.results[0].data != world.results[0].data
+
+    def test_worksheet_marker_requires_a_pointer(self):
+        # no name_three pointer at all -- there is no single version to
+        # read a worksheet from.
+        manifest = [
+            {"file": BOOK1_XLSX, "file_home": f"{ALPHA_HOME}/Book1.xlsx", "uuid": "u-1"}
+        ]
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$alpha.files.:name("Book1.xlsx")#hello', ALPHA_HOME, manifest
+            ).query()
+
+    def test_worksheet_marker_rejects_a_non_xlsx_file(self):
+        results = _finder(
+            '$alpha.files.:name("one.csv")#hello.:last()',
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+        )
+        with pytest.raises(ReferenceException3):
+            results.resolve()
+
+    def test_worksheet_marker_rejects_a_bare_marker_function(self):
+        # ':all()' (or ':manifest()'/':home()'/etc.) occupies name_one's
+        # entire content on its own -- there is no literal file for a
+        # worksheet marker to apply to.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:all()#hello.:last()", ALPHA_HOME, ALPHA_MANIFEST
             ).query()
 
 

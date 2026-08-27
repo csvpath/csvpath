@@ -1,5 +1,6 @@
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
+from csvpath.util.xlsx.xlsx_reader_helper import XlsxReaderHelper
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
@@ -134,10 +135,25 @@ class FilesReferenceFinder3(ReferenceFinder3):
             return self._query_star_traversal(reference)
 
         name_one = reference.name_one
-        if name_one.name_two is not None:
+        if (
+            name_one.name_two is not None
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name != "name"
+        ):
+            # '#worksheet' only means anything against a literal named-
+            # file path (there is one specific file to have worksheets
+            # in) -- ':name("...")' is path-BUILDING (a literal name),
+            # same as any other literal path segment, so it is exempt
+            # here same as it is from _is_bare_function_only's own
+            # "bare marker" test; a bare context-setter/pointer/marker
+            # function occupying name_one's entire content (':manifest()',
+            # ':all()', ':home()', etc.) has no file of its own to read
+            # a worksheet from.
             raise ReferenceException3(
-                "FilesReferenceFinder3 does not yet support the '#worksheet' "
-                "marker (name_two)."
+                "FilesReferenceFinder3 does not support the '#worksheet' "
+                "marker (name_two) combined with a bare context-setter/"
+                "pointer function in name_one -- it only applies to a "
+                "literal named-file path."
             )
 
         if self._is_bare_pointer_reference(
@@ -289,6 +305,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
         name_three = reference.name_three
         if name_three is None:
+            if name_one.name_two is not None:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 requires a version-selecting "
+                    "pointer (:first()/:last()/:index(n)) alongside the "
+                    "'#worksheet' marker (name_two) -- there is no single "
+                    "version to read a worksheet from otherwise."
+                )
             file_homes = []
             for entry in candidates:
                 if entry["file_home"] not in file_homes:
@@ -340,6 +363,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "it takes none."
                 )
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
+        if name_one.name_two is not None and not pointers:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 requires a version-selecting "
+                "pointer (:first()/:last()/:index(n)) alongside the "
+                "'#worksheet' marker (name_two) -- there is no single "
+                "version to read a worksheet from otherwise."
+            )
         has_manifest = any(f.name == "manifest" for f in built)
         has_field_function = self._find_field_function_call(built) is not None
         has_all = any(f.name == "all" for f in built)
@@ -475,7 +505,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
         return ReferenceResults3(
             results=[
-                ReferenceResult3(path=c["file"], uuid=c["uuid"])
+                ReferenceResult3(
+                    path=c["file"], uuid=c["uuid"], identity=name_one.name_two
+                )
                 for c in selected_candidates
             ],
             ambiguous_content_read=has_manifest and len(selected_candidates) > 1,
@@ -794,6 +826,29 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # references v3.txt"'s "Resolve terminating at
                 # name_one, with no pointer: no default" rule.
                 return None
+            worksheet = reference.name_one.name_two
+            if worksheet is not None:
+                # '#worksheet' marker (settled 2026-08-26, see the
+                # "#name_two" bucket-list entry) -- XLSX only, enforced
+                # structurally by query() (a pointer is required
+                # alongside it, so result.path is always exactly one
+                # version file here). XlsxDataReader is row-oriented
+                # (.next(), a generator of str lists), not the raw-bytes
+                # ".source.read()" every other FIRST_PARTY read uses --
+                # DataFileReader itself already understands the
+                # "path#sheet" convention (see file_readers.py's own
+                # __new__), so the sheet just needs appending to the
+                # path, same as any other caller of that convention.
+                if not XlsxReaderHelper.is_xlsx(result.path):
+                    raise ReferenceException3(
+                        f"FilesReferenceFinder3 cannot apply the "
+                        f"'#worksheet' marker to {result.path!r} -- it is "
+                        "not an XLSX file."
+                    )
+                with DataFileReader(
+                    path=f"{result.path}#{worksheet}", mode="rb"
+                ) as reader:
+                    return list(reader.next())
             with DataFileReader(path=result.path, mode="rb") as reader:
                 return reader.source.read()
         if kind == Reference3.METADATA_FILE:

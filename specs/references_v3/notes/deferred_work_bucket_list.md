@@ -252,29 +252,15 @@ narrower thing), or just a symmetry nicety worth having anyway? Worth
 resolving before building, not just building because Rule 1b's shape
 suggests it.
 
-## `#name_two` (XLSX worksheet marker) — not built anywhere
+## `#name_two` combined with `'*'` traversal — still not supported
 
-David, 2026-08-21: raised while reviewing the compendium — does
-`ReferenceResult3` need a field for which worksheet was found? Confirmed
-it does not have one today, and neither does anything else exist yet to
-make that field meaningful. **Resolved, 2026-08-21: reuse `identity`**
-(David: "identity works quite well with worksheet (name_two)") rather
-than adding a dedicated field — no `ReferenceResult3` change needed when
-this actually gets built, just populate `identity` with the worksheet
-name the same way CSVPATHS already populates it with a statement
-identifier.
-
-- The grammar already has the slot (`name_one: path_prefix ("#" name_two)?
-  func_chain?`, `reference_grammar_3.py:102,109`), and it parses fine
-  (`NameOne3.name_two`, `ReferenceParser3.name_two`) — but **every** finder
-  rejects it outright the moment it's present, including `FilesReference
-  Finder3` itself (`files_reference_finder_3.py:134-138`), where it's
-  documented as the eventual, files-only, XLSX-worksheet meaning.
-  CSVPATHS/RESULTS correctly reject it as files-only; FILES rejecting it
-  too just means the feature isn't built yet anywhere.
-- Work still needed: teach `FilesReferenceFinder3` to accept `#name_two`
-  and actually read the named worksheet, then populate the resulting
-  `ReferenceResult3.identity` with it.
+Left over from building `#name_two` support for `FilesReferenceFinder3`
+(see `deferred_work_done_list.md`) — deliberately scoped to the literal-
+root `query()` only, same scoping discipline as the recent `:path()`/
+Rule 1 and `:home()` splits. `_query_star_traversal()`'s own `#worksheet`
+rejection is untouched, still unconditional. Not yet a concrete worked
+example driving this — add one if/when a real use case asks for reading
+a named worksheet across every named-file matched by `'*'`.
 
 ## Function self-documentation — dual selector/value-accessor behavior
 
