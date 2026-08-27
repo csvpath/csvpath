@@ -9,6 +9,82 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `:having()` widened to RESULTS — BUILT 2026-08-27
+
+From the "'*' traversal — RESULTS/CSVPATHS remaining gap" bucket-list
+entry: `:having("identity")` existed for CSVPATHS only (filters a named-
+paths group's own version manifest to versions whose
+`named_paths_identities` contains the given identity, before any
+pointer reduces). RESULTS had no equivalent.
+
+**Clarified with David, 2026-08-27, before building** (a live-tested
+finding first suggested this might be redundant with existing
+capability -- worth recording since it changed the design): a literal
+identity in `name_three` combined with `'*'` traversal (e.g.
+`$*.results.:flatten().orders`) ALREADY does "every run's own `orders`
+instance, or nothing where absent" -- confirmed live, `_results_for_run()`'s
+`_find_by_identity()` lookup already returns `[]` (not an error) for a
+non-matching run. That is `references_v3_expressions.md`'s own "just
+give me the instances" framing for `:having()` on RESULTS, and it was
+already reachable.
+
+The REAL, previously-missing capability is different: `:having()` riding
+in `name_one` (the same *slot* CSVPATHS' own `:having()` occupies, e.g.
+`$acme.results.customers/2025:last():having("header_checks")`) as a
+`CONTEXT_SETTER` that filters the CANDIDATE RUN POOL down to runs
+containing a matching instance, BEFORE a pointer (`:last()` etc.)
+reduces that pool -- returns the matching RUN itself, not the instance.
+This is genuinely new: nothing in `results_reference_finder_3.py`
+recognized `:having()` at all before this build (confirmed via grep).
+`references_v3_expressions.md`'s own Q&A only worked out the
+INTERSECT-with-CSVPATHS shape ("give me the runs") and the "just the
+instances" shape (already redundant, per above) -- the run-*filtering*
+shape built here is a third, equally real case neither of those two
+examples covered explicitly.
+
+**Built, mirroring CSVPATHS' own `_resolve_versions()`/`_query_star_traversal()`
+precedent as closely as the two datatypes' different candidate shapes
+allow:**
+
+- **`Having3`** (`having_3.py`) widened -- `DATATYPES`/`POSITIONS` now
+  include `RESULTS: (NAME_ONE,)` alongside the existing CSVPATHS entry.
+  Same class, not a duplicate -- the underlying idea ("filter this
+  candidate pool by whether it contains a given identity") is identical,
+  just applied to a different candidate shape (run pool vs. group-
+  version manifest).
+- **Literal-root `query()`** (`results_reference_finder_3.py`) -- filters
+  `candidates` (a list of run_home strings) right after they are sorted,
+  before `:from()`/`:to()` range narrowing, using the new
+  `_list_instance_identities(rh)` check (a real filesystem listing --
+  RESULTS has no manifest-array field to read the way CSVPATHS'
+  `named_paths_identities` provides, each run's own instance
+  subdirectories ARE the identity list). `group_key_for` (`:all()`/
+  `:groups()` partitioning) needed no separate trim -- its own consumer
+  only ever looks up keys for `rh in candidates`, so stale entries for
+  filtered-out runs are simply never read.
+- **`'*'` traversal** -- `_star_run_selector_chain()` recognizes and
+  exempts `having_call` from the "unsupported function" rejection
+  (same treatment `all_call`/`flatten_call`/`manifest_call`/`home_call`/
+  `field_call` already get), and now returns it as a fourth tuple
+  element, threaded through all four of `_query_star_traversal()`'s own
+  candidate-gathering branches (bare, `:flatten()`-prefixed,
+  `:all()`-prefixed, plain literal/`'*'` path) into the two shared-tail
+  methods, `_star_pool_and_reduce()`/`_star_group_and_reduce()`, which
+  each apply the same `_list_instance_identities()` filter centrally
+  (once, not duplicated across the four branches) before their own
+  pointer/partition reduction. `_star_group_and_reduce()`'s own
+  no-pointer delegation to `_star_pool_and_reduce()` passes no
+  `having_call` (already filtered by that point) to avoid double-
+  filtering.
+
+Tests: widened `test_having_3.py`'s metadata assertions; new
+`TestHavingFiltersRunsByInstanceIdentity` (literal-root, using the
+existing `acme_archive` fixture's real identity split) and
+`TestStarTraversalHaving` (pool mode via bare pointer/`:flatten()`,
+grouped mode via `:all()`) in `test_results_reference_finder_3.py`.
+Full local-backend suite green (3055/3055, run twice); pre-existing
+SFTP/S3 env-dependent failures unrelated to this change.
+
 ## Results Run Manifest `named_paths_fingerprint` field — BUILT 2026-08-27 (closes issue #262)
 
 Surfaced by David, 2026-08-26, while correcting the UNION `KIND`

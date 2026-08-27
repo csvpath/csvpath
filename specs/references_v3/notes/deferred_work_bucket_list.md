@@ -321,11 +321,8 @@ and a stale-entry correction, are both done — see
 - `:groups()` combined with `'*'` traversal (RESULTS) — no established
   per-GROUP-of-named-results-groups meaning settled yet for the any-depth
   case.
-- `:having()` is not yet built for RESULTS at all (only CSVPATHS has it).
-  Real, wanted follow-up, not just aspirational — "give me all the runs
-  where the named-paths group included a csvpath with a given identity"
-  vs. "just give me the matching instances" both want this on RESULTS
-  directly. See `references_expressions.md`.
+- `:having()` for RESULTS — **BUILT 2026-08-27**, see
+  `deferred_work_done_list.md`.
 
 ## `'*'` traversal — FILES, essentially untouched by the recent RESULTS/CSVPATHS work
 
