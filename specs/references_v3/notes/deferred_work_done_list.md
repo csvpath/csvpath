@@ -9,6 +9,47 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `ResultsReferenceFinder3._star_pool_and_reduce()`'s content-accessor guard converted — BUILT 2026-08-27
+
+One piece of the "`'*'`-traversal content-accessor guards" bucket-list
+entry, picked specifically because it was the one already marked "a
+strong candidate to convert the same way" with no open caveat, unlike
+its three siblings in that same entry (which either need to be decided
+together with a still-untouched twin, or already proved unsafe to
+convert naively once tried for the literal-root/CSVPATHS GROUP case).
+Built autonomously overnight while David was asleep, on his own
+instruction to pick something that did not need him.
+
+`_star_pool_and_reduce()`'s own `if len(run_homes) > 1 and accessor is
+not None: raise` (POOL mode, i.e. `pointer is None` -- every matched run
+comes back unreduced) is exactly the run-level twin of the literal-root
+check already converted when `:path()`/Rule 1 moved to `resolve()`:
+count-based, and this specific branch has no per-partition pointer
+reduction anywhere nearby to conflate with (GROUP mode is a completely
+separate method, `_star_group_and_reduce`, deliberately left alone).
+Converted to the same `ReferenceResults3.ambiguous_content_read`
+deferred-to-`resolve()` pattern -- `query()` now always succeeds and
+returns every matched run's own content-accessor results; only
+`resolve()` raises if more than one run's content is actually being
+read at once.
+
+Tests: `test_no_pointer_pool_with_content_accessor_and_multiple_runs_is_rejected`
+(`tests/references/test_results_reference_finder_3.py`) rewritten into
+the query()-succeeds/resolve()-raises split, matching the pattern
+already used for the literal-root conversions; added
+`test_no_pointer_pool_with_content_accessor_and_one_run_still_works`
+(new -- the positive counterpart, a single named-results group with one
+run, proving a genuinely unambiguous single-run case actually resolves
+real content, not just "does not raise"). `tests/references/` now 1433
+passed, up from 1432.
+
+The other three items in the parent bucket-list entry are untouched --
+they either need a decision made together with a sibling, or already
+proved unsafe to convert without the "was a pointer applied per
+partition" reasoning the literal-root fix needed; see that entry.
+
+---
+
 ## `#name_two` (XLSX worksheet marker) built for FILES — BUILT 2026-08-26
 
 David, 2026-08-21: does `ReferenceResult3` need a field for which

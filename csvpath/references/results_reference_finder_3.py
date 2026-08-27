@@ -841,18 +841,21 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         threading through every star-traversal shape identically. A
         missing pointer (added 2026-08-19, see _star_run_selector_chain()'s
         own comment for why) means every matched run comes back,
-        unreduced -- which can now be MORE than one run, so the same
-        "more than one candidate + content accessor" guard the GROUP
-        case already needs applies here too."""
+        unreduced -- which can now be MORE than one run. Resolving full
+        well-known-file content for more than one run at once is still
+        illegal (Rule 1) -- moved from an immediate raise here to the
+        same ReferenceResults3.ambiguous_content_read deferred-to-
+        resolve() pattern the literal-root run-level case already uses
+        (2026-08-26/27, see the ":path()" retirement/Rule 1 bucket-list
+        entry) -- query() itself is always allowed to return every
+        match. Safe to convert here specifically (unlike GROUP mode's
+        own equivalent check in _star_group_and_reduce, left untouched):
+        when `pointer` is None there is no per-partition reduction at
+        all in THIS branch to worry about conflating with -- every
+        matched run is genuinely unreduced, so the flag's own count
+        check at resolve() time means exactly what it says."""
         run_homes = sorted(run_homes, key=self._run_dir_sort_key)
         if pointer is None:
-            if len(run_homes) > 1 and accessor is not None:
-                raise ReferenceException3(
-                    "ResultsReferenceFinder3 does not yet support combining "
-                    "unreduced '*' traversal (no pointer, more than one "
-                    "matched run) with a name_three content accessor -- "
-                    "resolve the matched runs on their own first."
-                )
             results = []
             for run_dir in run_homes:
                 results.extend(
@@ -860,7 +863,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         run_dir, identity, match_all, range_bounds, accessor
                     )
                 )
-            return ReferenceResults3(results=results)
+            return ReferenceResults3(
+                results=results,
+                ambiguous_content_read=accessor is not None and len(run_homes) > 1,
+            )
         selected = self._apply_pointer(pointer, run_homes)
         if selected is None:
             return ReferenceResults3(results=[])

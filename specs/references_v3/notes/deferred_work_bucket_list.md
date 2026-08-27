@@ -44,9 +44,11 @@ candidates for that re-audit, all still unconditional/immediate raises in
   below), not converted, so this one should be decided together with that
   one, not in isolation.
 - `ResultsReferenceFinder3._star_pool_and_reduce()`'s `len(run_homes) > 1
-  and accessor is not None` check — this one IS count-based (unlike the
-  one above), structurally identical in shape to the literal-root run-level
-  check that WAS converted — a strong candidate to convert the same way.
+  and accessor is not None` check — **converted 2026-08-27**, see
+  `deferred_work_done_list.md`. Confirmed safe before converting: this
+  branch only runs when `pointer is None`, so there is no per-partition
+  reduction anywhere nearby to conflate with, unlike the GROUP-mode cases
+  below.
 - `ResultsReferenceFinder3._star_group_and_reduce()`'s `accessor is not
   None and pointer is not None` check (`'*'`-traversal GROUP mode + a
   content accessor) — mirrors FILES'/CSVPATHS' own GROUP-mode restrictions
@@ -401,12 +403,19 @@ and a stale-entry correction, are both done — see
 ## Functions
 
 - Functions named in the spec/example-queries docs with no `Function3`
-  subclass yet: `:before()`/`:after()`, `:yesterday()`, `:quarter()`,
-  `:choice()`, `:names()`, `:message()`, `:count()`, `:above()`,
-  `:has_errors()`, `:at()`. (Corrected 2026-08-26: `:type()` used to be
-  listed here too, but it was built as part of the Table 1 field-accessor
-  batch — confirmed live, `Type3` is registered, `NAME = "type"` — this
-  list had gone stale; removed.)
+  subclass yet: `:before()`/`:after()`, `:quarter()`, `:choice()`,
+  `:names()`, `:message()`, `:count()`, `:above()`, `:has_errors()`,
+  `:at()`. (Corrected 2026-08-26: `:type()` used to be listed here too,
+  but it was built as part of the Table 1 field-accessor batch —
+  confirmed live, `Type3` is registered, `NAME = "type"` — this list had
+  gone stale; removed. Corrected again 2026-08-27: `:yesterday()` was
+  also stale — confirmed live, `Yesterday3` is registered, built
+  alongside `:today()` in the "pure value" date/time functions batch —
+  removed.) None of the remaining names here have settled semantics
+  beyond their bare mention in the spec/example-queries docs — unlike
+  every other item in this file, there is no worked example or design
+  note to build from, so picking one to build means guessing its
+  intended behavior, not implementing an already-decided design.
 
 ## Bigger, standing items
 

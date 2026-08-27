@@ -2551,6 +2551,11 @@ class TestStarTraversalPointerIsOptional:
     def test_no_pointer_pool_with_content_accessor_and_multiple_runs_is_rejected(
         self, tmp_path
     ):
+        # query() itself succeeds now (moved 2026-08-27, see the
+        # "'*'-traversal content-accessor guards" bucket-list entry --
+        # this is the one item explicitly marked a safe, count-based
+        # conversion candidate) -- only resolve() raises, once something
+        # actually tries to read more than one run's own content at once.
         acme_run = _make_run(
             tmp_path / "acme",
             "2026-01-01_00-00-00",
@@ -2566,10 +2571,35 @@ class TestStarTraversalPointerIsOptional:
         _write_archive_manifest_multi(
             tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
         )
+        finder = _finder("$*.results.:home().invoices:errors()", str(tmp_path))
+        assert len(finder.query()) > 1
         with pytest.raises(ReferenceException3):
-            _finder(
-                "$*.results.:home().invoices:errors()", str(tmp_path)
-            ).query()
+            finder.resolve()
+
+    def test_no_pointer_pool_with_content_accessor_and_one_run_still_works(
+        self, tmp_path
+    ):
+        # the positive counterpart to the test above -- exactly one run
+        # matches (a single named-results group here, rather than a
+        # pointer picking one out of several), so reading its own
+        # content is unambiguous and must not raise.
+        acme_run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {"invoices": "acme-invoices"},
+        )
+        _write_archive_manifest_multi(tmp_path, {"acme": [acme_run]})
+        errors = [{"error": "bad row", "line": 3}]
+        with open(
+            os.path.join(acme_run, "invoices", "errors.json"), "w"
+        ) as f:
+            json.dump(errors, f)
+        results = _finder(
+            "$*.results.:home().invoices:errors()", str(tmp_path)
+        ).resolve()
+        assert len(results) == 1
+        assert results.results[0].data == errors
 
     def test_no_pointer_with_a_field_accessor_is_poolable(self, tmp_path):
         acme_run = _make_run(
