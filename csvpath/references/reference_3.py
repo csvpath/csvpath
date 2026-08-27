@@ -93,11 +93,19 @@ class InterpolatedString3:
     "{{"/"}}" escape a literal brace (same convention already used by
     csvpath/util/var_utility.py's substitute()).
 
-    Parsing/validation only for now: turning this into an actual
-    resolved string (looking up @variables, computing value functions)
-    needs a runtime CsvPaths context this object graph deliberately
-    has none of -- that is deferred until variable resolution and a
-    real VALUE function exist. See check_valid()."""
+    Both halves are now evaluated for real (2026-08-26) by
+    ReferenceFinder3._resolve_value() -- called wherever a Function3's
+    own str-typed arg needs its final value (currently :name("...")'s
+    own arg, see _compile_path_pattern()): each literal-str part passes
+    through; each FunctionCall3 part is built and its own compute()
+    called (only SOURCE == "clock" functions are wired up so far --
+    see year_3.py); each Variable3 part is looked up in the resolving
+    finder's own registered variables (compendium 3.12 -- "prior to
+    query, a reference finder can be given variables" -- see
+    ReferenceFinder3.set_variable()/set_variables()), raising if
+    nothing was registered for that name. See check_valid() for the
+    parse-time-only structural check (which functions/roles are legal
+    inside "{...}" at all, not whether they can actually be evaluated)."""
 
     def __init__(self, *, parts: list) -> None:
         if not parts:
@@ -342,16 +350,23 @@ _METADATA_FILE_FUNCTIONS = (
     "meta",
     "data",
     "unmatched",
+    "printouts",
     "file",
     "definition",
     "manifest",
+    "log",
 )
 _METADATA_FIELD_FUNCTIONS = (
     "idchain",
     "uuid",
+    "template",
     "time",
     "fingerprint",
-    "home",
+    "file_home",
+    "group_home",
+    "run_home",
+    "instance_home",
+    "host",
     "origin",
     "mark",
     "named_paths_identities",
@@ -383,6 +398,48 @@ _METADATA_FIELD_FUNCTIONS = (
     "file_fingerprints",
     "source_mode_preceding",
     "preceding_instance_identity",
+    "type",
+    "reference",
+    "file_path",
+    "archive",
+    "group_file",
+    "named_paths",
+    "error_count",
+    "named_paths_uuid",
+    "named_file_uuid",
+    "named_file_path",
+    "named_file_size",
+    "named_file_last_change",
+    "named_file_fingerprint",
+    "run_dir",
+    "instance_index",
+    "named_paths_group",
+    "run_method",
+    "file_manifest",
+    "group_manifest",
+    "archive_path",
+    "named_files_root",
+    "named_paths_root",
+    "source_address",
+    "source_port",
+    "source_username",
+    "source_password",
+    "destination_address",
+    "destination_port",
+    "destination_username",
+    "destination_password",
+    "transfer_on_complete_all",
+    "transfer_on_complete_valid",
+    "transfer_on_complete_invalid",
+    "transfer_on_complete_error",
+    "script_on_complete_all",
+    "script_on_complete_valid",
+    "script_on_complete_invalid",
+    "script_on_complete_error",
+    "webhooks_on_complete_all",
+    "webhooks_on_complete_valid",
+    "webhooks_on_complete_invalid",
+    "webhooks_on_complete_error",
 )
 
 
@@ -520,28 +577,24 @@ class Reference3:
         return self._name_three
 
     @property
-    def resolve_kind(self) -> str:
-        """which of the three resolve outcomes this reference asks for
-        -- FIRST_PARTY (the underlying bytes/content, the default),
-        METADATA_FILE (a whole well-known/named file), or
-        METADATA_FIELD (one value drilled out of such a file). computed
-        from whichever function chain is terminal: name_three's if
-        name_three is present, else name_one's own complete function
-        chain (a legal terminus now that name_three is optional
-        everywhere) -- which includes any function-valued name_one path
-        segment (e.g. a "path-less, function-only" name_one like
-        ":all()"/":manifest()" occupying the sole segment), not just its
-        trailing chain: a metadata-file function can be the whole of
-        name_one with nothing following it (":manifest()" needs
-        exactly this shape to be recognized at all). Safe to widen this
-        way -- an ordinary path-matching function like :name("...")
-        never appears in _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_
-        FUNCTIONS, so including path segments here only lets the real
-        metadata functions be seen, it does not change what gets
-        flagged. see the _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_
-        FUNCTIONS placeholder comment above -- both lists are stand-ins
-        for traits the future function registry will own."""
-        terminal_functions = (
+    def terminal_functions(self) -> list:
+        """this reference's own terminal function chain -- name_three's
+        own chain if name_three is present, else name_one's complete
+        function chain (a legal terminus now that name_three is
+        optional everywhere), which includes any function-valued
+        name_one path segment (e.g. a "path-less, function-only"
+        name_one like ":all()"/":manifest()" occupying the sole
+        segment), not just its trailing chain: a metadata-file function
+        can be the whole of name_one with nothing following it
+        (":manifest()" needs exactly this shape to be recognized at
+        all). Extracted 2026-08-26 (previously inlined only in
+        resolve_kind below) so ReferenceExpression3's own paths-vs-
+        values classifier can compute the same terminal chain without
+        duplicating the traversal -- that classifier checks each
+        function's own ROLE directly against the registry, not via
+        resolve_kind's own hardcoded name tuples, so extracting this
+        shared piece does not entangle the two mechanisms."""
+        return (
             self._name_three.functions
             if self._name_three is not None
             else [
@@ -553,6 +606,22 @@ class Reference3:
                 *self._name_one.functions,
             ]
         )
+
+    @property
+    def resolve_kind(self) -> str:
+        """which of the three resolve outcomes this reference asks for
+        -- FIRST_PARTY (the underlying bytes/content, the default),
+        METADATA_FILE (a whole well-known/named file), or
+        METADATA_FIELD (one value drilled out of such a file). computed
+        from terminal_functions (below). Safe to widen this
+        way -- an ordinary path-matching function like :name("...")
+        never appears in _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_
+        FUNCTIONS, so including path segments here only lets the real
+        metadata functions be seen, it does not change what gets
+        flagged. see the _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_
+        FUNCTIONS placeholder comment above -- both lists are stand-ins
+        for traits the future function registry will own."""
+        terminal_functions = self.terminal_functions
         for f in terminal_functions:
             if any(
                 f.contains_function_named(name)

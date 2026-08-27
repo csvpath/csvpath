@@ -89,19 +89,20 @@ grammar stays permissive on purpose (see `reference_grammar_3.py`'s own
 notes on deferring datatype-specific semantic checks out of the grammar);
 this is one more instance of that same split, not a new exception to it.
 
-**Rule 2 — path accessors are exempt from Rule 1 and are always poolable.**
-A new function, `:path()`, takes any whole-resource content function as its
-argument and returns the filesystem path to that resource instead of its
-content — `:path(:errors())`, `:path(:manifest())`, `:path(:definition())`,
-`:path(:vars())`, etc. (The grammar already allows a function as another
-function's argument, so this needs no grammar change.) One wrapping function
-instead of a `_path()`-suffixed sibling per well-known file, so any future
-well-known file gets a path accessor for free. Because a path is a cheap
-scalar, not a raw structure, `:path()` calls are allowed to pool across `*`
-and across unresolved versions/runs — `$*.results.:path(:errors())` returns
-a list of paths, one per matching instance.
-
-*REVIEW NEEDED ABOVE: `$*.results.:path(:errors())` may no longer be accepted *
+**Rule 2 — path accessors are exempt from Rule 1 and are always poolable
+(RETIRED 2026-08-26).** `:path()`, built per this rule, wrapped any
+whole-resource content function and returned the filesystem path to that
+resource instead of its content. Retired once Rule 1's own enforcement moved
+from `query()` to `resolve()`/`resolve_from()` (see the `deferred_work_
+done_list.md` entry) — `:path()` existed only to route around `query()`-time
+enforcement (a path is cheap/poolable, so wrapping a content function in
+`:path()` let a caller get *that*, sidestepping the single-entity gate the
+content function itself would hit). Once the gate itself moved to
+`resolve()` and `query()` became unconditionally allowed to return multiple
+matches regardless of accessor, the same job is just `query()` on the
+ordinary content accessor directly, without resolving it — no wrapper
+function needed. `Path3`/`wrappers/path_3.py` removed; `_find_path_call`/
+`_resolve_path_call` removed from `ReferenceFinder3`.
 
 
 **Rule 3 — field/key accessors (Part A and Part B below) are also exempt

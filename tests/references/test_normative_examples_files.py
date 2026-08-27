@@ -651,9 +651,11 @@ class TestFieldAccessorsOnOneMatchedVersion:
         ).resolve()
         assert results.results[0].data == "bbbb"
 
-    def test_home_gives_file_home(self):
+    def test_file_home_gives_file_home(self):
+        # :home() split 2026-08-26 -- FILES' own field-read job is now
+        # :file_home().
         results = _finder(
-            '$rich.files.:name("orders.csv").:last():home()',
+            '$rich.files.:name("orders.csv").:last():file_home()',
             RICH_HOME,
             RICH_MANIFEST,
         ).resolve()
@@ -676,26 +678,6 @@ class TestFieldAccessorsOnOneMatchedVersion:
             RICH_MANIFEST,
         ).resolve()
         assert results.results[0].data is None
-
-
-class TestPathFunction:
-    # doc lines "### The filesystem path to a whole-resource function's
-    # own resource, rather than its content"
-    def test_path_wrapping_manifest_bare(self):
-        results = _finder(
-            '$alpha.files.:name("orders.csv").:path(:manifest())',
-            ALPHA_HOME,
-            ALPHA_MANIFEST,
-        ).resolve()
-        assert results.results[0].data == f"{ALPHA_HOME}/manifest.json"
-
-    def test_path_wrapping_manifest_beside_a_pointer(self):
-        results = _finder(
-            '$alpha.files.:name("orders.csv").:last():path(:manifest())',
-            ALPHA_HOME,
-            ALPHA_MANIFEST,
-        ).resolve()
-        assert results.results[0].data == f"{ALPHA_HOME}/manifest.json"
 
 
 class TestComputedFields:

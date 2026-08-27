@@ -89,12 +89,35 @@ class ReferenceResult3:
 
 
 class ReferenceResults3:
-    def __init__(self, *, results: list[ReferenceResult3] | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        results: list[ReferenceResult3] | None = None,
+        ambiguous_content_read: bool = False,
+    ) -> None:
         self._results = results or []
+        #
+        # set by a finder's own query() (2026-08-26, moved here alongside
+        # the ":path()" retirement/Rule 1 relocation -- see reference_
+        # finder_3.py's own resolve_from()) when query() found more than
+        # one raw, unreduced candidate for a whole-resource content
+        # accessor (:manifest(), :definition(), :errors(), etc.) with no
+        # pointer to pick one -- Rule 1 (manifest_field_functions_
+        # proposal.md's "Entity resolution and pooling" section) still
+        # makes this illegal, but query() itself no longer raises for it;
+        # only resolve()/resolve_from() does, once a caller actually
+        # tries to read content rather than merely search. False for
+        # every other query() result -- the common case.
+        #
+        self._ambiguous_content_read = ambiguous_content_read
 
     @property
     def results(self) -> list[ReferenceResult3]:
         return self._results
+
+    @property
+    def ambiguous_content_read(self) -> bool:
+        return self._ambiguous_content_read
 
     @property
     def files(self) -> list[str]:
@@ -136,7 +159,9 @@ class ReferenceResults3:
             for r in self._results
             if r.path in wanted or r.uuid in wanted or r.identity in wanted
         ]
-        return ReferenceResults3(results=selected)
+        return ReferenceResults3(
+            results=selected, ambiguous_content_read=self._ambiguous_content_read
+        )
 
     def deduplicated(self) -> "ReferenceResults3":
         """a new ReferenceResults3 with duplicate entries (by

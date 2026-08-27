@@ -86,6 +86,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
 
     def query(self) -> ReferenceResults3:
         reference = self.ref.parsed
+        log_results = self._query_log_call(reference)
+        if log_results is not None:
+            return log_results
         root_major = reference.root_major
         if isinstance(root_major, Star3):
             if self._is_bare_pointer_reference(reference, "manifest"):
@@ -136,33 +139,26 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
 
         manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
         selected_versions = self._resolve_versions(name_one, manifest)
-
-        if len(selected_versions) > 1:
-            combined = [
-                seg
-                for seg in (name_one.path[0], *name_one.functions)
-                if isinstance(seg, FunctionCall3)
-            ]
-            # checked by direct name, not contains_function_named's
-            # recursive search -- :manifest() is never itself nested
-            # inside another function's arg except :path()'s (e.g.
-            # :path(:manifest())), which is deliberately exempt from
-            # this rule (Rule 2, poolable). A recursive check would
-            # incorrectly flag that case too.
-            has_manifest = any(seg.name == "manifest" for seg in combined)
-            if has_manifest:
-                # Resolving full manifest content always touches exactly
-                # one entity (settled 2026-08-07, see manifest_field_
-                # functions_proposal.md's "Entity resolution and pooling"
-                # section) -- more than one version here needs a pointer
-                # to pick which one.
-                raise ReferenceException3(
-                    "CsvpathsReferenceFinder3 requires a pointer (:first()/"
-                    ":last()/:index(n)) to pick one version when combining "
-                    ":manifest() with no pointer matches more than one "
-                    "version -- resolving full manifest content always "
-                    "touches exactly one entity."
-                )
+        # Resolving full manifest content for more than one version at
+        # once is still illegal (Rule 1, manifest_field_functions_
+        # proposal.md's "Entity resolution and pooling" section) -- but
+        # query() itself is always allowed to return every matching
+        # version, regardless of accessor (moved 2026-08-26, see the
+        # ":path()" retirement/Rule 1 bucket-list entry); this flags the
+        # result instead of raising, and ReferenceFinder3.resolve_from()
+        # raises only if a caller actually tries to resolve more than
+        # one of these at once. _resolve_versions() itself already
+        # guarantees at most one entry whenever a pointer was present
+        # (see its own docstring), so len(selected_versions) > 1 here
+        # already implies no pointer was involved -- no separate
+        # pointer-presence check is needed.
+        combined = [
+            seg
+            for seg in (name_one.path[0], *name_one.functions)
+            if isinstance(seg, FunctionCall3)
+        ]
+        has_manifest = any(seg.name == "manifest" for seg in combined)
+        ambiguous_content_read = has_manifest and len(selected_versions) > 1
 
         name_three = reference.name_three
         from_call = to_call = None
@@ -246,7 +242,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                         identity=name_three.body,
                     )
                 )
-        return ReferenceResults3(results=results)
+        return ReferenceResults3(
+            results=results, ambiguous_content_read=ambiguous_content_read
+        )
 
     def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
         """root_major == "*" -- query across every named-paths group,
@@ -282,9 +280,19 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
           anything -- there is no path dimension to dedupe to, unlike
           FILES.
 
-        Deliberately narrow, matching FILES' own scoping: combining '*'
-        traversal with :manifest(), name_three, is not yet supported --
-        raises clearly rather than guessing. A registered field-accessor
+        ':manifest()' riding alongside the pointer/':all()' (e.g.
+        ":last():manifest()", ":all():manifest()") IS now supported
+        (fixed 2026-08-26, closing the gap this docstring used to flag
+        as open) -- gives the matched version's own manifest entry
+        instead of the whole group's raw manifest; see _extract_data()'s
+        Star3 branch under METADATA_FILE for the disambiguation against
+        Rule 1a/1b's own bare-pointer-plus-manifest shape, which reaches
+        query() through a completely different branch (_pointer_before_
+        manifest below) and never lands here at all.
+
+        Still deliberately narrow, matching FILES' own scoping: combining
+        '*' traversal with name_three is not yet supported -- raises
+        clearly rather than guessing. A registered field-accessor
         function (e.g. :uuid(), :named_paths_name()) IS now supported
         alongside the pointer (added 2026-08-18, mirroring RESULTS' own
         equivalent fix) -- _extract_data() resolves it via
@@ -339,6 +347,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         is_grouped = all_call is not None
         having_call = next((f for f in built if f.name == "having"), None)
         field_call = self._find_field_function_call(built)
+        manifest_call = next((f for f in built if f.name == "manifest"), None)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         # whitelist-based (settled 2026-08-19), replacing an earlier
         # blacklist-based check (any(name=="manifest") or any(name in
@@ -351,6 +360,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         # rejected either) once the "no pointer" case stopped forcing a
         # raise for an unrelated reason. Mirrors RESULTS' own
         # non_pointers pattern in _star_run_selector_chain() exactly.
+        # :manifest() itself exempted 2026-08-26 (closing the "active
+        # next task" gap) -- see _extract_data()'s own comment for how
+        # it now tells this shape apart from Rule 1a/1b.
         non_pointers = [
             f
             for f in built
@@ -358,6 +370,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             and f is not all_call
             and f is not having_call
             and f is not field_call
+            and f is not manifest_call
         ]
         if non_pointers:
             raise ReferenceException3(
@@ -365,8 +378,8 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 f":{non_pointers[0].name}() combined with '*' traversal -- "
                 "only a plain pointer (:first()/:last()/:index(n)), "
                 "optionally combined with :all(), :having(\"identity\"), "
-                "or a registered field-accessor function (e.g. :uuid()), "
-                "is supported so far."
+                ":manifest(), or a registered field-accessor function "
+                "(e.g. :uuid()), is supported so far."
             )
 
         def _having_filtered(manifest: list) -> list:
@@ -431,20 +444,15 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
 
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
-        # :path(...) is checked before resolve_kind's content-oriented
-        # dispatch -- see FilesReferenceFinder3._extract_data() for why.
+        log_call = self._bare_log_call(reference)
+        if log_call is not None:
+            return self._read_log_file(result.path, log_call.arg)
         name_one = reference.name_one
         combined_for_path = [
             seg
             for seg in (name_one.path[0], *name_one.functions)
             if isinstance(seg, FunctionCall3)
         ]
-        path_call = self._find_path_call(combined_for_path)
-        if path_call is not None:
-            home = self.csvpaths.paths_manager.named_paths_home(
-                reference.root_major
-            )
-            return self._resolve_path_call(path_call, home)
         kind = reference.resolve_kind
         if kind == Reference3.METADATA_FILE:
             if self._is_bare_pointer_reference(
@@ -454,13 +462,38 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # path itself (set by query()'s _query_well_known_file()
                 # branch above).
                 return self._read_well_known_file(result.path)
-            if isinstance(reference.root_major, Star3) and result.uuid is not None:
-                # Rule 1b -- a pointer already reduced the global ledger
-                # to one entry in query(); re-derive it the same way the
-                # per-group branch below does, just against the ledger
-                # instead of a named-paths groups own manifest.
-                ledger = self.csvpaths.paths_manager.paths_root_manifest
-                return self._find_manifest_entry_by_uuid(ledger, result.uuid)
+            if isinstance(reference.root_major, Star3):
+                # Rule 1a/1b vs. a genuine traversal-selected version
+                # both reach here now (fixed 2026-08-26) -- both carry a
+                # real, non-None uuid once _query_star_traversal supports
+                # :manifest() combined with real narrowing, so
+                # `result.uuid is not None` alone can no longer tell them
+                # apart (the "active next task" gap this closes).
+                # Compare result.path against the ledger's own known,
+                # fixed path instead: Rule 1a/1b's own query() branches
+                # always set result.path to the named-paths root's
+                # manifest.json itself, never a group's own manifest.
+                home = self.csvpaths.config.inputs_csvpaths_path
+                ledger_path = Nos(home).join("manifest.json")
+                if result.path == ledger_path:
+                    if result.uuid is not None:
+                        # Rule 1b -- a pointer already reduced the global
+                        # ledger to one entry in query(); re-derive it
+                        # the same way the per-group branch below does,
+                        # just against the ledger instead of a named-
+                        # paths group's own manifest.
+                        ledger = self.csvpaths.paths_manager.paths_root_manifest
+                        return self._find_manifest_entry_by_uuid(
+                            ledger, result.uuid
+                        )
+                    # global-ledger case (Rule 1a) -- result.path is
+                    # already the ledger file itself.
+                    return self._read_well_known_file(result.path)
+                # else: a genuine traversal-selected version -- fall
+                # through to the ordinary has_manifest branch below,
+                # which already reads the matched group's own manifest
+                # by uuid regardless of whether root_major was literal
+                # or '*' (via _group_manifest_entry()).
             name_one = reference.name_one
             has_manifest = any(
                 seg.contains_function_named("manifest")
@@ -471,13 +504,11 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # :manifest() riding alongside the real version-selecting
                 # pointer already in name_one's own combined chain (e.g.
                 # ":last():manifest()") -- give the matched version's own
-                # manifest entry, not the whole raw file. root_major is
-                # never the '*' token here -- Rule 1b above already
-                # claims the star + bare-pointer-plus-manifest shape, and
-                # _query_star_traversal itself still rejects ':manifest()'
-                # combined with '*' traversal -- but routed through
-                # _group_manifest_entry() anyway for consistency with the
-                # field-accessor branch below, which genuinely does need
+                # manifest entry, not the whole raw file. Routed through
+                # _group_manifest_entry() for both literal and '*' root
+                # -- that helper already re-derives which real group a
+                # star-traversal result belongs to, needed by the
+                # field-accessor branch below regardless.
                 # to handle root_major being '*'.
                 _, entry = self._group_manifest_entry(
                     reference.root_major, result.uuid
@@ -495,12 +526,22 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     field_call.name
                 )
                 key_path = function_cls.KEY.get(reference.datatype)
-                if function_cls.SOURCE == "definition":
+                key_path = self._apply_key_arg(key_path, field_call.arg)
+                use_definition = function_cls.SOURCE == "definition" or (
+                    function_cls.BARE_SOURCE == "definition"
+                    and not self._pointer_present(combined_for_path)
+                )
+                if use_definition:
                     # a definition.json-backed field (e.g. :scripts(),
                     # :webhooks()) is keyed by group NAME, not uuid --
                     # _group_manifest_entry() re-derives which real group
                     # this is even when root_major is the '*' token
                     # (added 2026-08-18, see that method's own docstring).
+                    # A BARE_SOURCE field (":template()" -- added
+                    # 2026-08-26, see Template3's own docstring) only
+                    # takes this path when no real pointer rode alongside
+                    # it -- with one, it means the matched version's own
+                    # historical snapshot instead, falling through below.
                     group_name, _ = self._group_manifest_entry(
                         reference.root_major, result.uuid
                     )
@@ -508,11 +549,19 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                         group_name
                     )
                     entry = config.model_dump(exclude_none=True)
-                else:
-                    _, entry = self._group_manifest_entry(
-                        reference.root_major, result.uuid
-                    )
-                return self._extract_field_value(entry, key_path)
+                    return self._extract_field_value(entry, key_path)
+                _, entry = self._group_manifest_entry(
+                    reference.root_major, result.uuid
+                )
+                return self._extract_field_value_with_ledger_fallback(
+                    entry=entry,
+                    key_path=key_path,
+                    function_cls=function_cls,
+                    datatype=reference.datatype,
+                    ledger_entry_getter=lambda: self._find_manifest_entry_by_uuid(
+                        self.csvpaths.paths_manager.paths_root_manifest, result.uuid
+                    ),
+                )
         if kind != Reference3.FIRST_PARTY:
             raise ReferenceException3(
                 f"CsvpathsReferenceFinder3 does not yet support "

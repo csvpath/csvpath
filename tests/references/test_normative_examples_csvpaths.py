@@ -536,9 +536,11 @@ class TestFieldAccessorsOnOneMatchedVersion:
         ).resolve()
         assert results.results[0].data == "aaaa"
 
-    def test_home_reads_named_paths_home(self):
+    def test_group_home_reads_named_paths_home(self):
+        # :home() split 2026-08-26 -- CSVPATHS' own share is now
+        # :group_home().
         results = _finder(
-            "$acme.csvpaths.:last():home()", FIELD_ACCESSOR_MANIFEST
+            "$acme.csvpaths.:last():group_home()", FIELD_ACCESSOR_MANIFEST
         ).resolve()
         assert results.results[0].data == GROUP_HOME
 
@@ -577,14 +579,3 @@ class TestFieldAccessorsOnOneMatchedVersion:
             "$acme.csvpaths.:last():named_paths_count()", FIELD_ACCESSOR_MANIFEST
         ).resolve()
         assert results.results[0].data == 2
-
-
-class TestPathFunction:
-    # doc line "### The filesystem path to a whole-resource function's own
-    # resource"
-    def test_path_wrapping_manifest_with_no_pointer_gives_every_version(self):
-        results = _finder("$acme.csvpaths.:path(:manifest())", ACME_MANIFEST).resolve()
-        assert [r.data for r in results.results] == [
-            f"{GROUP_HOME}/manifest.json",
-            f"{GROUP_HOME}/manifest.json",
-        ]

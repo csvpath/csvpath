@@ -7,6 +7,7 @@ import pytest
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.results_reference_finder_3 import ResultsReferenceFinder3
+from csvpath.util.date_util import DateUtility as daut
 
 #
 # unlike files/csvpaths (which read a fake in-memory manifest list), results
@@ -22,8 +23,9 @@ from csvpath.references.results_reference_finder_3 import ResultsReferenceFinder
 
 
 class _FakeConfig:
-    def __init__(self, archive: str):
+    def __init__(self, archive: str, log_file: str | None = None):
         self._archive = archive
+        self.log_file = log_file
 
     def get(self, *, section, name):
         assert (section, name) == ("results", "archive")
@@ -44,9 +46,9 @@ class _FakeResultsManager:
 
 
 class _FakeCsvPaths:
-    def __init__(self, archive: str):
+    def __init__(self, archive: str, log_file: str | None = None):
         self.results_manager = _FakeResultsManager(archive)
-        self.config = _FakeConfig(archive)
+        self.config = _FakeConfig(archive, log_file=log_file)
 
 
 def _write_json(path, data) -> None:
@@ -80,8 +82,10 @@ def _write_archive_manifest_multi(archive, groups: dict) -> None:
     _write_json(archive / "manifest.json", entries)
 
 
-def _finder(reference: str, archive: str) -> ResultsReferenceFinder3:
-    csvpaths = _FakeCsvPaths(archive)
+def _finder(
+    reference: str, archive: str, log_file: str | None = None
+) -> ResultsReferenceFinder3:
+    csvpaths = _FakeCsvPaths(archive, log_file=log_file)
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
     return ResultsReferenceFinder3(csvpaths=csvpaths, ref=ref)
 
@@ -208,6 +212,39 @@ class TestNoPointerReturnsEveryRun:
     def test_no_pointer_returns_every_run_unreduced(self, acme_archive):
         results = _finder("$acme.results.customers/2025", acme_archive).query()
         assert results.uuids == ["run1-uuid", "run2-uuid"]
+
+
+class TestNameRegexPathSegment:
+    # :name(/regex/) as a template path segment -- added 2026-08-27, see
+    # the "name_one path segment cannot be a regex" bucket-list entry.
+    @pytest.fixture
+    def two_year_archive(self, tmp_path):
+        run_2025 = _make_run(
+            tmp_path / "acme" / "customers" / "2025",
+            "2026-01-01_00-00-00",
+            "run-2025-uuid",
+            {},
+        )
+        run_2026 = _make_run(
+            tmp_path / "acme" / "customers" / "2026",
+            "2026-02-01_00-00-00",
+            "run-2026-uuid",
+            {},
+        )
+        _write_archive_manifest(tmp_path, "acme", [run_2025, run_2026])
+        return str(tmp_path)
+
+    def test_regex_matches_only_the_one_year_it_searches(self, two_year_archive):
+        results = _finder(
+            "$acme.results.customers/:name(/2025/):first()", two_year_archive
+        ).query()
+        assert results.uuids == ["run-2025-uuid"]
+
+    def test_regex_matching_neither_year_returns_empty(self, two_year_archive):
+        results = _finder(
+            "$acme.results.customers/:name(/2027/):first()", two_year_archive
+        ).query()
+        assert results.files == []
 
     def test_no_pointer_no_matching_prefix_returns_empty(self, acme_archive):
         results = _finder("$acme.results.orders/2025", acme_archive).query()
@@ -771,10 +808,13 @@ class TestRunLevelRange:
     def test_from_with_manifest_and_more_than_one_run_requires_a_pointer(
         self, five_runs
     ):
+        # query() itself succeeds (moved 2026-08-26, see the ":path()"
+        # retirement/Rule 1 bucket-list entry) -- only resolve() raises,
+        # once something actually tries to read the content.
+        finder = _finder("$acme.results.customers:from(-3):manifest()", five_runs)
+        assert len(finder.query()) > 1
         with pytest.raises(ReferenceException3):
-            _finder(
-                "$acme.results.customers:from(-3):manifest()", five_runs
-            ).query()
+            finder.resolve()
 
 
 class TestRunLevelDateRange:
@@ -1198,12 +1238,15 @@ class TestManifestOnNameOne:
     ):
         # "customers/2025" matches both run1 and run2. Resolving full
         # manifest content always touches exactly one entity (settled
-        # 2026-08-07), so this is illegal now, not "every run's own
-        # manifest, pooled" as it used to be -- a pointer is required to
-        # pick one run.
+        # 2026-08-07), so this is illegal -- a pointer is required to
+        # pick one run. query() itself succeeds (moved 2026-08-26, see
+        # the ":path()" retirement/Rule 1 bucket-list entry) -- only
+        # resolve() raises, once something actually tries to read the
+        # content.
         finder = _finder("$acme.results.customers/2025:manifest()", acme_archive)
+        assert len(finder.query()) > 1
         with pytest.raises(ReferenceException3):
-            finder.query()
+            finder.resolve()
 
     def test_manifest_with_no_pointer_and_exactly_one_matching_run_still_works(
         self, tmp_path
@@ -1266,12 +1309,11 @@ class TestFieldAccessorFunctions:
         ).resolve()
         assert results.results[0].data == "run1-uuid"
 
-    def test_home_at_run_scope_reads_run_home(self, tmp_path):
-        # doc line ~171: "$widgets.results.:first():home() >> run_home"
-        # -- no committed test locked this in before (found during the
-        # 2026-08-12 normative-doc sweep); confirmed against
-        # results_registrar.py that "run_home" is a real, written field,
-        # not just documented.
+    def test_run_home_at_run_scope_reads_run_home(self, tmp_path):
+        # :home() split 2026-08-26 -- run scope's own field-read job is
+        # now :run_home() (:home() itself keeps only the zero-level
+        # placeholder role). Confirmed against results_registrar.py that
+        # "run_home" is a real, written field, not just documented.
         base = tmp_path / "widgets"
         run_dir = base / "2026-01-01_00-00-00"
         _write_json(
@@ -1280,13 +1322,13 @@ class TestFieldAccessorFunctions:
         )
         _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
         results = _finder(
-            "$widgets.results.:first():home()", str(tmp_path)
+            "$widgets.results.:first():run_home()", str(tmp_path)
         ).resolve()
         assert results.results[0].data == str(run_dir)
 
-    def test_home_at_instance_scope_reads_instance_home(self, tmp_path):
-        # doc line ~192: "$widgets.results.:first().company_names:home()
-        # >> instance_home" -- same gap as above, confirmed against
+    def test_instance_home_at_instance_scope_reads_instance_home(self, tmp_path):
+        # :home() split 2026-08-26 -- instance scope's own field-read
+        # job is now :instance_home(). Confirmed against
         # result_registrar.py that "instance_home" is a real field.
         base = tmp_path / "widgets"
         run_dir = base / "2026-01-01_00-00-00"
@@ -1298,7 +1340,8 @@ class TestFieldAccessorFunctions:
         )
         _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
         results = _finder(
-            "$widgets.results.:first().company_names:home()", str(tmp_path)
+            "$widgets.results.:first().company_names:instance_home()",
+            str(tmp_path),
         ).resolve()
         assert results.results[0].data == str(instance_dir)
 
@@ -1587,6 +1630,203 @@ class TestFieldAccessorFunctions:
         ).resolve()
         assert instance_time.results[0].data == "2026-01-01T00:00:05+00:00"
 
+    def test_run_scope_fields_added_2026_08_25(self, tmp_path):
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json",
+            {
+                "run_uuid": "run1-uuid",
+                "error_count": 3,
+                "named_paths_uuid": "paths-uuid-1",
+                "named_file_uuid": "file-uuid-1",
+                "named_file_path": "/inputs/named_files/widgets/data.csv",
+                "named_file_size": 1024,
+                "named_file_last_change": "2026-01-01T00:00:00+00:00",
+                "named_file_fingerprint": "deadbeef",
+            },
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        def _val(fn):
+            return _finder(
+                f"$widgets.results.:first():{fn}()", str(tmp_path)
+            ).resolve().results[0].data
+
+        assert _val("error_count") == 3
+        assert _val("named_paths_uuid") == "paths-uuid-1"
+        assert _val("named_file_uuid") == "file-uuid-1"
+        assert _val("named_file_path") == "/inputs/named_files/widgets/data.csv"
+        assert _val("named_file_size") == 1024
+        assert _val("named_file_last_change") == "2026-01-01T00:00:00+00:00"
+        assert _val("named_file_fingerprint") == "deadbeef"
+
+    def test_instance_scope_fields_added_2026_08_25(self, tmp_path):
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            run_dir / "company_names" / "manifest.json",
+            {
+                "uuid": "inst1-uuid",
+                "run": "2026-01-01_00-00-00",
+                "instance_index": 2,
+                "named_paths_uuid": "paths-uuid-1",
+                "archive_name": "archive-2026",
+            },
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        def _val(fn):
+            return (
+                _finder(
+                    f"$widgets.results.:first().company_names:{fn}()",
+                    str(tmp_path),
+                )
+                .resolve()
+                .results[0]
+                .data
+            )
+
+        assert _val("run_dir") == "2026-01-01_00-00-00"
+        assert _val("instance_index") == 2
+        assert _val("named_paths_uuid") == "paths-uuid-1"
+        assert _val("archive") == "archive-2026"
+
+    def test_template_at_run_scope(self, tmp_path):
+        # :template() (built 2026-08-26) is simple at RESULTS run scope
+        # -- no bare/definition duality the way FILES/CSVPATHS have,
+        # since a run is not a versioned, editable config artifact.
+        # Ordinary SOURCE == "manifest" read, direct from the run's own
+        # manifest.json.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json",
+            {"run_uuid": "run1-uuid", "template": "run-template"},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+        results = _finder(
+            "$widgets.results.:first():template()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data == "run-template"
+
+
+class TestArchiveLedgerFallback:
+    # Table 7 (the Archive Run Manifest, RESULTS' own global ledger) is
+    # per-statement-execution, keyed by "run_uuid" + "identity", not a
+    # single "uuid" the way FILES/CSVPATHS ledgers are -- wired in
+    # 2026-08-26 via ResultsReferenceFinder3._find_archive_ledger_entry(),
+    # closing the last open gap in the field-accessor ledger-fallback
+    # mechanism (see FILES'/CSVPATHS' own :file_manifest()/:group_
+    # manifest() precedent). archive_name/archive_path/named_files_root/
+    # named_paths_root are run-level facts (same value across every
+    # statement in one run, confirmed against run_registrar.py), so a
+    # run-scope lookup only needs to match run_uuid, not identity too.
+    def test_run_scope_archive_falls_back_to_the_ledger_entry(self, tmp_path):
+        # the run's own manifest (table 5, written by results_registrar.py)
+        # never has "archive_name" -- only the ledger entry (table 7,
+        # written by run_registrar.py) does.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            tmp_path / "manifest.json",
+            [
+                {
+                    "run_uuid": "run1-uuid",
+                    "identity": "company_names",
+                    "named_paths_name": "widgets",
+                    "run_home": str(run_dir),
+                    "archive_name": "archive-2026",
+                }
+            ],
+        )
+        results = _finder(
+            "$widgets.results.:first():archive()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data == "archive-2026"
+
+    def test_run_scope_ledger_only_fields_resolve(self, tmp_path):
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            tmp_path / "manifest.json",
+            [
+                {
+                    "run_uuid": "run1-uuid",
+                    "identity": "company_names",
+                    "named_paths_name": "widgets",
+                    "run_home": str(run_dir),
+                    "archive_path": "/archives/archive-2026",
+                    "named_files_root": "/inputs/named_files",
+                    "named_paths_root": "/inputs/named_paths",
+                }
+            ],
+        )
+
+        def _val(fn):
+            return (
+                _finder(f"$widgets.results.:first():{fn}()", str(tmp_path))
+                .resolve()
+                .results[0]
+                .data
+            )
+
+        assert _val("archive_path") == "/archives/archive-2026"
+        assert _val("named_files_root") == "/inputs/named_files"
+        assert _val("named_paths_root") == "/inputs/named_paths"
+
+    def test_run_scope_ledger_only_field_with_no_matching_entry_gives_none(
+        self, tmp_path
+    ):
+        # the run's own uuid genuinely has no ledger entry at all (e.g.
+        # a stale/hand-built fixture) -- falls through to None, same as
+        # any other missing field, rather than raising.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            tmp_path / "manifest.json",
+            [
+                {
+                    # discovery still needs named_paths_name/run_home to
+                    # find this run at all -- but run_uuid deliberately
+                    # does not match "run1-uuid", so the fallback lookup
+                    # itself finds nothing.
+                    "run_uuid": "some-other-run-uuid",
+                    "identity": "company_names",
+                    "named_paths_name": "widgets",
+                    "run_home": str(run_dir),
+                }
+            ],
+        )
+        results = _finder(
+            "$widgets.results.:first():archive_path()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_instance_scope_archive_still_reads_its_own_manifest_directly(
+        self, tmp_path
+    ):
+        # regression guard: instance scope (table 6) already has its own
+        # "archive_name" field (confirmed against result_registrar.py) --
+        # this must keep resolving directly, never touching the ledger.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        instance_dir = run_dir / "company_names"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            instance_dir / "manifest.json",
+            {"uuid": "inst1-uuid", "archive_name": "instance-own-archive"},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+        results = _finder(
+            "$widgets.results.:first().company_names:archive()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data == "instance-own-archive"
+
 
 class TestWellKnownFileAccessors:
     # :errors()/:vars()/:meta() resolve to parsed JSON; :data()/
@@ -1668,6 +1908,25 @@ class TestWellKnownFileAccessors:
         ).resolve()
         assert results.results[0].data == [errors[0], errors[1]]
 
+    def test_errors_with_idchain_not_none_filters_to_entries_that_have_any_source(
+        self, acme_archive, instance_dir
+    ):
+        # compendium 5.31/5.36/4.13's own settled worked example --
+        # :not_none() (built 2026-08-26) nested inside :idchain() means
+        # "any idchain at all", not one specific value/pattern.
+        errors = [
+            {"source": "add[0]string[2]", "message": "bad add"},
+            {"message": "no source recorded for this one"},
+        ]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names"
+            ":errors(:idchain(:not_none()))",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == [errors[0]]
+
     def test_vars_resolves_parsed_json(self, acme_archive, instance_dir):
         variables = {"count": 5, "label": "totals"}
         with open(os.path.join(instance_dir, "vars.json"), "w") as f:
@@ -1718,6 +1977,27 @@ class TestWellKnownFileAccessors:
             acme_archive,
         ).resolve()
         assert results.results[0].data == content
+
+    def test_printouts_resolves_raw_bytes(self, acme_archive, instance_dir):
+        content = b"---- PRINTOUT: line 1 ----\nhello\n"
+        with open(os.path.join(instance_dir, "printouts.txt"), "wb") as f:
+            f.write(content)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:printouts()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == content
+
+    def test_printouts_resolves_none_when_never_written(
+        self, acme_archive, instance_dir
+    ):
+        # printouts.txt is only written if the csvpath statement printed
+        # something -- genuinely optional, same as data.csv/unmatched.csv.
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:printouts()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data is None
 
     def test_file_resolves_a_user_named_output(self, acme_archive, instance_dir):
         content = b"custom output"
@@ -2304,6 +2584,11 @@ class TestStarTraversalPointerIsOptional:
     def test_no_pointer_pool_with_content_accessor_and_multiple_runs_is_rejected(
         self, tmp_path
     ):
+        # query() itself succeeds now (moved 2026-08-27, see the
+        # "'*'-traversal content-accessor guards" bucket-list entry --
+        # this is the one item explicitly marked a safe, count-based
+        # conversion candidate) -- only resolve() raises, once something
+        # actually tries to read more than one run's own content at once.
         acme_run = _make_run(
             tmp_path / "acme",
             "2026-01-01_00-00-00",
@@ -2319,10 +2604,35 @@ class TestStarTraversalPointerIsOptional:
         _write_archive_manifest_multi(
             tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
         )
+        finder = _finder("$*.results.:home().invoices:errors()", str(tmp_path))
+        assert len(finder.query()) > 1
         with pytest.raises(ReferenceException3):
-            _finder(
-                "$*.results.:home().invoices:errors()", str(tmp_path)
-            ).query()
+            finder.resolve()
+
+    def test_no_pointer_pool_with_content_accessor_and_one_run_still_works(
+        self, tmp_path
+    ):
+        # the positive counterpart to the test above -- exactly one run
+        # matches (a single named-results group here, rather than a
+        # pointer picking one out of several), so reading its own
+        # content is unambiguous and must not raise.
+        acme_run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {"invoices": "acme-invoices"},
+        )
+        _write_archive_manifest_multi(tmp_path, {"acme": [acme_run]})
+        errors = [{"error": "bad row", "line": 3}]
+        with open(
+            os.path.join(acme_run, "invoices", "errors.json"), "w"
+        ) as f:
+            json.dump(errors, f)
+        results = _finder(
+            "$*.results.:home().invoices:errors()", str(tmp_path)
+        ).resolve()
+        assert len(results) == 1
+        assert results.results[0].data == errors
 
     def test_no_pointer_with_a_field_accessor_is_poolable(self, tmp_path):
         acme_run = _make_run(
@@ -2399,18 +2709,40 @@ class TestPositionEnforcement:
 
 
 class TestScopeLimits:
-    def test_manifest_combined_with_traversal_still_not_yet_supported(
-        self, two_group_archive
-    ):
-        # a real, still-open, separate gap -- see _extract_data()'s own
-        # has_manifest comment for why: it cannot yet tell a Rule-1a/1b
-        # global-ledger result apart from a traversal-selected run
-        # directory, unlike the field accessor/':all()'/':flatten()'
-        # gaps already closed.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$*.results.:all():last():manifest()", two_group_archive
-            ).query()
+    def test_manifest_combined_with_traversal_now_works(self, tmp_path):
+        # previously a real, open gap -- fixed 2026-08-26. Once
+        # _query_star_traversal's own combining-guard exempted
+        # ':manifest()' (alongside the field accessor/':all()'/
+        # ':flatten()' exemptions already in place), a genuine
+        # traversal-selected run also carries a real, non-None uuid --
+        # identical in shape to what Rule 1a/1b's own bare-pointer-plus-
+        # manifest result carries. _extract_data() now disambiguates by
+        # comparing result.path against the archive ledger's own known,
+        # fixed path (manifest.json directly under the archive root)
+        # rather than checking uuid presence, so this correctly reads
+        # each matched group's own run manifest.json, not the ledger.
+        # ':all()' needs exactly one level of nesting -- two_group_
+        # archive's runs are deliberately flat (zero-level), so this
+        # uses its own one-level fixture instead, mirroring
+        # test_all_combined_with_a_field_accessor_also_works above.
+        acme_run = _make_run(
+            tmp_path / "acme" / "east", "2026-01-01_00-00-00", "acme-east", {}
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets" / "east", "2026-01-02_00-00-00", "widgets-east", {}
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
+        )
+        results = _finder(
+            "$*.results.:all():last():manifest()", str(tmp_path)
+        ).resolve()
+        assert len(results.results) == 2
+        data_by_uuid = {r.uuid: r.data for r in results.results}
+        assert data_by_uuid == {
+            "acme-east": {"run_uuid": "acme-east"},
+            "widgets-east": {"run_uuid": "widgets-east"},
+        }
 
     def test_name_two_worksheet_marker_not_supported(self, acme_archive):
         finder = _finder(
@@ -2473,3 +2805,49 @@ class TestScopeLimits:
         finder = _finder("$acme.results.:quarter()/2025:last()", acme_archive)
         with pytest.raises(ReferenceException3):
             finder.query()
+
+
+class TestClockFunctionInPathSegments:
+    # see test_files_reference_finder_3.py's own
+    # TestClockFunctionInPathSegments for the full design (
+    # ReferenceFinder3._compile_path_pattern()/_resolve_value(), shared
+    # by FILES and RESULTS). Proven here against the real current year,
+    # not a mocked clock.
+    def test_bare_clock_function_as_a_path_segment(self, tmp_path):
+        year = str(daut.now().year)
+        base = tmp_path / "acme" / "customers" / year
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_archive_manifest(tmp_path, "acme", [str(run_dir)])
+        results = _finder(
+            "$acme.results.customers/:year():first()", str(tmp_path)
+        ).query()
+        assert results.uuids == ["run1-uuid"]
+
+    def test_interpolated_name_containing_a_clock_function(self, tmp_path):
+        year = str(daut.now().year)
+        base = tmp_path / "acme" / f"orders-{year}"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_archive_manifest(tmp_path, "acme", [str(run_dir)])
+        results = _finder(
+            '$acme.results.:name("orders-{:year()}"):first()', str(tmp_path)
+        ).query()
+        assert results.uuids == ["run1-uuid"]
+
+
+class TestLog:
+    # compendium 5.16(b) -- see test_csvpaths_reference_finder_3.py's
+    # own TestLog for the full scenario set (shared ABC mechanism,
+    # ReferenceFinder3._bare_log_call()/_query_log_call()/
+    # _read_log_file()); this just confirms it composes correctly with
+    # ResultsReferenceFinder3's own query()/_extract_data() dispatch
+    # too, and that it takes priority over the archive-ledger '*'
+    # handling that would otherwise apply to a bare '*' root_major.
+    def test_bare_log_resolves_the_whole_file(self, tmp_path, acme_archive):
+        log_path = tmp_path / "csvpath.log"
+        log_path.write_text("line1\nline2\n")
+        results = _finder(
+            "$*.results.:log()", acme_archive, log_file=str(log_path)
+        ).resolve()
+        assert results.results[0].data == "line1\nline2\n"

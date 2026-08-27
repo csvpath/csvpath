@@ -1,5 +1,6 @@
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
+from csvpath.util.xlsx.xlsx_reader_helper import XlsxReaderHelper
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
@@ -20,8 +21,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    implements the spec's flatten (bare '*'/path narrowing, pooled
     #    and reduced by one pointer) vs. group (bare ':all()', one
     #    result per named-file+path pair) semantics -- deliberately
-    #    narrow itself: combining '*' traversal with :manifest()/:path()/
-    #    a field-accessor function is not yet supported, see that
+    #    narrow itself: combining '*' traversal with :manifest()/a
+    #    field-accessor function is not yet supported, see that
     #    method's own docstring.
     #  - name_one is "*", a literal path segment, :name("...") (for a
     #    literal name containing characters -- e.g. a real filename's
@@ -43,8 +44,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    latest version even when a name's paths do not all sit at the
     #    same depth (the case that originally motivated this whole
     #    depth-matrix pass). ':all()'/':groups()' (both GROUP) combined
-    #    with :manifest()/:path()/a field-accessor function is not yet
-    #    supported (same under-specified-interaction reasoning as
+    #    with :manifest()/a field-accessor function is not yet supported
+    #    (same under-specified-interaction reasoning as
     #    ResultsReferenceFinder3's own ':all()' restriction) --
     #    ':flatten()' (POOL) has no such restriction here, since
     #    root_major is always known at this position (unlike '*'
@@ -100,6 +101,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
     def query(self) -> ReferenceResults3:
         reference = self.ref.parsed
+        log_results = self._query_log_call(reference)
+        if log_results is not None:
+            return log_results
         root_major = reference.root_major
         if isinstance(root_major, Star3):
             if self._is_bare_pointer_reference(reference, "manifest"):
@@ -131,10 +135,25 @@ class FilesReferenceFinder3(ReferenceFinder3):
             return self._query_star_traversal(reference)
 
         name_one = reference.name_one
-        if name_one.name_two is not None:
+        if (
+            name_one.name_two is not None
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name != "name"
+        ):
+            # '#worksheet' only means anything against a literal named-
+            # file path (there is one specific file to have worksheets
+            # in) -- ':name("...")' is path-BUILDING (a literal name),
+            # same as any other literal path segment, so it is exempt
+            # here same as it is from _is_bare_function_only's own
+            # "bare marker" test; a bare context-setter/pointer/marker
+            # function occupying name_one's entire content (':manifest()',
+            # ':all()', ':home()', etc.) has no file of its own to read
+            # a worksheet from.
             raise ReferenceException3(
-                "FilesReferenceFinder3 does not yet support the '#worksheet' "
-                "marker (name_two)."
+                "FilesReferenceFinder3 does not support the '#worksheet' "
+                "marker (name_two) combined with a bare context-setter/"
+                "pointer function in name_one -- it only applies to a "
+                "literal named-file path."
             )
 
         if self._is_bare_pointer_reference(
@@ -286,6 +305,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
         name_three = reference.name_three
         if name_three is None:
+            if name_one.name_two is not None:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 requires a version-selecting "
+                    "pointer (:first()/:last()/:index(n)) alongside the "
+                    "'#worksheet' marker (name_two) -- there is no single "
+                    "version to read a worksheet from otherwise."
+                )
             file_homes = []
             for entry in candidates:
                 if entry["file_home"] not in file_homes:
@@ -337,9 +363,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "it takes none."
                 )
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
+        if name_one.name_two is not None and not pointers:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 requires a version-selecting "
+                "pointer (:first()/:last()/:index(n)) alongside the "
+                "'#worksheet' marker (name_two) -- there is no single "
+                "version to read a worksheet from otherwise."
+            )
         has_manifest = any(f.name == "manifest" for f in built)
         has_field_function = self._find_field_function_call(built) is not None
-        has_path = self._find_path_call(built) is not None
         has_all = any(f.name == "all" for f in built)
         from_call = next((f for f in built if f.name == "from"), None)
         to_call = next((f for f in built if f.name == "to"), None)
@@ -399,24 +431,24 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # _check_position() loop above already guarantees every element
         # of `built` (which is itself guaranteed non-empty, see that
         # loop's own comment) is one of exactly the categories checked
-        # below (pointers/has_manifest/has_field_function/has_path/
-        # has_all/has_range cover the complete set of name_three-legal
-        # FILES functions), so at least one of them is always true here.
+        # below (pointers/has_manifest/has_field_function/has_all/
+        # has_range cover the complete set of name_three-legal FILES
+        # functions), so at least one of them is always true here.
 
-        if partitioned and (has_range or (pointers and (has_manifest or has_field_function or has_path))):
+        if partitioned and (has_range or (pointers and (has_manifest or has_field_function))):
             # mirrors ResultsReferenceFinder3's own ':all()'-grouping
             # restriction (settled 2026-08-11 there): grouping (one-
             # level ':all()' or any-depth ':groups()') plus :manifest()/
-            # :path()/a field-accessor is an under-specified interaction,
-            # not decided -- resolve the grouped versions on their own
+            # a field-accessor is an under-specified interaction, not
+            # decided -- resolve the grouped versions on their own
             # first, rather than guessing what "the manifest entry of
             # every group's own latest version, all at once" should even
             # resolve to.
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support combining "
-                "':all()'/':groups()' grouping with :manifest(), :path(), "
-                "or a field-accessor function -- resolve the grouped "
-                "versions on their own first."
+                "':all()'/':groups()' grouping with :manifest() or a "
+                "field-accessor function -- resolve the grouped versions "
+                "on their own first."
             )
 
         if has_range:
@@ -454,32 +486,31 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 selected = self._apply_pointer(pointers[0], candidates)
                 selected_candidates = [selected] if selected is not None else []
         else:
-            # :manifest() alone, no pointer -- legal only when name_one's
-            # own path narrowing already resolves to at most one version.
-            # Resolving full manifest content always touches exactly one
-            # entity (settled 2026-08-07, see manifest_field_functions_
-            # proposal.md's "Entity resolution and pooling" section) --
-            # more than one candidate here needs a pointer to pick which
-            # one. Field accessors and :path() are deliberately exempt
-            # (Rules 2/3 in the same doc section) -- a scalar field value
-            # or a path string is cheap to pool, unlike raw manifest
-            # content, so :uuid()/:path(...) etc. stay poolable across
-            # every matched candidate with no pointer at all.
-            if has_manifest and len(candidates) > 1:
-                raise ReferenceException3(
-                    "FilesReferenceFinder3 requires a pointer (:first()/"
-                    ":last()/:index(n)) to pick one version when combining "
-                    ":manifest() with path narrowing that matches more "
-                    "than one version -- resolving full manifest content "
-                    "always touches exactly one entity."
-                )
+            # :manifest() alone, no pointer -- every matching version's
+            # own manifest entry, unreduced. Resolving full manifest
+            # content for more than one entity at once is still illegal
+            # (Rule 1, manifest_field_functions_proposal.md's "Entity
+            # resolution and pooling" section) -- but query() itself is
+            # always allowed to return every match, regardless of
+            # accessor (moved 2026-08-26, see the ":path()" retirement/
+            # Rule 1 bucket-list entry); it flags the result instead of
+            # raising, and ReferenceFinder3.resolve_from() raises only
+            # if a caller actually tries to resolve more than one of
+            # these at once. Field accessors are exempt from Rule 1
+            # entirely (Rule 3, same doc section) -- a scalar field
+            # value is cheap to pool, so :uuid() etc. stay poolable
+            # across every matched candidate with no pointer at all,
+            # same as before.
             selected_candidates = candidates
 
         return ReferenceResults3(
             results=[
-                ReferenceResult3(path=c["file"], uuid=c["uuid"])
+                ReferenceResult3(
+                    path=c["file"], uuid=c["uuid"], identity=name_one.name_two
+                )
                 for c in selected_candidates
-            ]
+            ],
+            ambiguous_content_read=has_manifest and len(selected_candidates) > 1,
         )
 
     def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
@@ -516,11 +547,38 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
         Deliberately narrow for now, matching only the spec's own worked
         examples: combining '*'/':flatten()'/':groups()' traversal with
-        :manifest()/:path()/a field-accessor function in name_three is
-        not yet supported -- those all assume exactly one already-known
-        manifest to re-read in _extract_data(), which does not hold when
-        a result could have come from any of several named-files'
-        manifests.
+        :manifest()/a field-accessor function in name_three is not yet
+        supported -- those all assume exactly one already-known manifest
+        to re-read in _extract_data(), which does not hold when a result
+        could have come from any of several named-files' manifests.
+
+        ':home()' and ':definition()' as name_one's own content -- added
+        2026-08-27 (FILES '*' traversal generalization bucket-list
+        entry), closing three of that entry's four identified gaps (the
+        fourth, a predicate argument to filter by, is separately unbuilt
+        -- see the predicate-argument bucket-list entry). Two independent
+        shapes, both METADATA_FILE (definition.json is never versioned,
+        so there is no "which version" left for name_three to narrow --
+        combining either shape with name_three is rejected):
+        - bare ':definition()' alone -- every named-file's own
+          definition.json, one result per named-file, regardless of
+          whether it has any zero-level registration at all.
+        - ':home()' with ':definition()' chained onto it -- the SAME
+          per-named-file definition.json lookup, but FILTERED to only
+          named-files that have at least one zero-level ("no template")
+          registration, per the concrete worked example that motivated
+          this ("$*.files.:home():definition(:on_arrival(:not_none()))"
+          -- "which named-files have on_arrival set," restricted to
+          plain, non-templated registrations). ':home()' here is a
+          filter, not the placeholder-value role it plays bare -- it has
+          nothing to be a placeholder FOR, since ':definition()' does not
+          vary by version/path the way a pointer's target would.
+        A bare ':home()' with nothing chained onto it (no ':definition()')
+        is a separate, third shape -- see the is_home branch below -- and
+        falls through to the ordinary candidate/pointer machinery every
+        other bare shape uses, since it is FIRST_PARTY-style path
+        narrowing (an empty, zero-level pattern), not a metadata-file
+        read.
         """
         name_one = reference.name_one
         if name_one.name_two is not None:
@@ -528,6 +586,41 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "FilesReferenceFinder3 does not yet support the '#worksheet' "
                 "marker (name_two)."
             )
+        is_home = self._is_home_prefixed_reference(name_one)
+        is_bare_definition = self._is_bare_definition_reference(name_one)
+        if is_bare_definition or (
+            is_home and self._chained_definition_call(name_one) is not None
+        ):
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not yet support combining "
+                    "':definition()' with name_three during '*' traversal "
+                    "-- definition.json is not versioned, there is no "
+                    "version to select."
+                )
+            names = self.csvpaths.file_manager.named_file_names
+            if is_home:
+                names = [
+                    name for name in names if self._candidates_for_name(name, [])
+                ]
+            results = []
+            for name in names:
+                home = self.csvpaths.file_manager.named_file_home(name)
+                path = Nos(home).join("definition.json")
+                results.append(ReferenceResult3(path=path, uuid=None))
+            return ReferenceResults3(
+                results=results,
+                # Rule 1 (manifest_field_functions_proposal.md): resolving
+                # full METADATA_FILE content for more than one entity at
+                # once is illegal -- more than one named-file's own
+                # definition.json is exactly that case, same as :manifest()
+                # already flags via has_manifest/len(selected_candidates)
+                # below. query() itself still returns every match; only
+                # resolve_from() raises if a caller actually tries to
+                # resolve more than one of these at once.
+                ambiguous_content_read=len(results) > 1,
+            )
+
         is_grouped = self._is_bare_all_reference(name_one)
         is_flattened = self._is_bare_flatten_reference(name_one)
         is_deep_grouped = self._is_bare_groups_reference(name_one)
@@ -540,6 +633,28 @@ class FilesReferenceFinder3(ReferenceFinder3):
             candidates = []
             for name in self.csvpaths.file_manager.named_file_names:
                 candidates.extend(self._all_candidates_for_name(name))
+        elif is_home:
+            # bare ':home()', nothing chained onto it -- the zero-level
+            # ("no template") placeholder, exactly like the literal-root
+            # case's own is_bare_home_reference branch in query(), just
+            # gathered across every named-file instead of one. Not
+            # partitioned: an empty pattern is still a POOL-mode narrowing
+            # (one level, just zero segments), the same peer relationship
+            # a literal/'*' pattern already has to '*' traversal's own
+            # bare-path POOL mode above -- a terminal pointer picks one
+            # overall winner by time across every named-file's zero-level
+            # version, it does not pick one winner per named-file (that
+            # is what ':all()' is for).
+            if name_one.functions:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not yet support chaining "
+                    f":{name_one.functions[0].name}() onto ':home()' "
+                    "during '*' traversal -- only ':definition()' is "
+                    "supported so far."
+                )
+            candidates = []
+            for name in self.csvpaths.file_manager.named_file_names:
+                candidates.extend(self._candidates_for_name(name, []))
         else:
             if name_one.functions:
                 raise ReferenceException3(
@@ -576,14 +691,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
         unsupported = (
             any(f.name == "manifest" for f in built)
             or self._find_field_function_call(built) is not None
-            or self._find_path_call(built) is not None
         )
         if unsupported:
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support combining '*' "
-                "traversal with :manifest(), :path(), or a field-accessor "
-                "function -- only a plain pointer (:first()/:last()/"
-                ":index(n)) is supported so far."
+                "traversal with :manifest() or a field-accessor function -- "
+                "only a plain pointer (:first()/:last()/:index(n)) is "
+                "supported so far."
             )
         if not pointers:
             raise ReferenceException3(
@@ -717,6 +831,56 @@ class FilesReferenceFinder3(ReferenceFinder3):
         )
 
     @staticmethod
+    def _is_home_prefixed_reference(name_one) -> bool:
+        """true when name_one's path is exactly a single, argument-less
+        ':home()' call -- UNLIKE _is_bare_home_reference, this does NOT
+        also require name_one.functions to be empty, since ':home()' is
+        legal here either bare (the zero-level placeholder, see
+        _query_star_traversal's own is_home branch) or with exactly one
+        ':definition()' chained onto it (the filtered-definition-lookup
+        shape, see _chained_definition_call) -- '*' traversal only,
+        added 2026-08-27 alongside that pair of shapes."""
+        return (
+            len(name_one.path) == 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == "home"
+            and name_one.path[0].arg is None
+        )
+
+    @staticmethod
+    def _is_bare_definition_reference(name_one) -> bool:
+        """true when name_one's entire content is a single, argument-
+        less ':definition()' call, with no trailing function chain --
+        the '*'-traversal counterpart to _is_bare_pointer_reference's
+        identical literal-root check (added 2026-08-27, see
+        _query_star_traversal's own early METADATA_FILE branch)."""
+        return (
+            not name_one.functions
+            and len(name_one.path) == 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == "definition"
+            and name_one.path[0].arg is None
+        )
+
+    @staticmethod
+    def _chained_definition_call(name_one) -> "FunctionCall3 | None":
+        """returns the ':definition()' FunctionCall3 when it is the ONE
+        thing chained onto name_one.functions (e.g. the "'home()':
+        ':definition()'" shape ':home():definition()'), else None. Added
+        2026-08-27 alongside _is_home_prefixed_reference -- the two are
+        meant to be checked together (is_home and this both non-None) to
+        recognize the filtered-definition-lookup shape specifically,
+        rather than any other function someone might try to chain onto
+        ':home()' during '*' traversal (still rejected, see the is_home
+        branch's own functions check)."""
+        if len(name_one.functions) != 1:
+            return None
+        call = name_one.functions[0]
+        if isinstance(call, FunctionCall3) and call.name == "definition" and call.arg is None:
+            return call
+        return None
+
+    @staticmethod
     def _is_bare_fingerprint_reference(name_one) -> bool:
         """same shape as _is_bare_home_reference, for ':fingerprint(...)'
         -- settled 2026-08-13, but the OPPOSITE arg requirement: WITH an
@@ -751,39 +915,43 @@ class FilesReferenceFinder3(ReferenceFinder3):
     @staticmethod
     def _bare_definition_field_call(name_one) -> "FunctionCall3 | None":
         """returns the field-accessor FunctionCall3 when name_one's
-        entire content is a single, argument-less function whose
-        registered class is SOURCE == "definition" (":on_arrival()"/
-        ":sources()" today) -- these values live in the named-file's own
+        entire content is a single function whose registered class is
+        SOURCE == "definition" (":on_arrival()"/":sources()"/etc.), OR
+        whose BARE_SOURCE == "definition" (currently only ":template()"
+        -- added 2026-08-26, see Template3's own docstring: bare/no-
+        pointer means "the current default," genuinely a different
+        resource than SOURCE == "manifest"'s own matched-version
+        snapshot) -- these values live in the named-file's own
         definition.json, not any particular file/version's manifest
         entry, so (like ":definition()" itself) they need no
-        :name(...)/matched-version context to resolve. None for every
-        other shape, including SOURCE == "manifest" field accessors
-        (":uuid()"/":time()"/etc.), which DO vary by which version
-        matched and still need a real candidate."""
+        :name(...)/matched-version context to resolve. An argument is
+        fine here too (e.g. ":source_port(\"email\")" -- added
+        2026-08-26 for the arg-keyed sources.<name>.* fields, see
+        SourcePort3's own KEY docstring): the arg parameterizes the KEY
+        lookup itself, not which version matched, so it does not need a
+        candidate any more than an argument-less definition field does.
+        None for every other shape, including a plain SOURCE ==
+        "manifest" field accessor with no BARE_SOURCE (":uuid()"/
+        ":time()"/etc.), which DOES vary by which version matched and
+        still needs a real candidate."""
         if name_one.functions or len(name_one.path) != 1:
             return None
         segment = name_one.path[0]
-        if not isinstance(segment, FunctionCall3) or segment.arg is not None:
+        if not isinstance(segment, FunctionCall3):
             return None
         function_cls = ReferenceFunctionFactory.get_registered_class(segment.name)
-        if function_cls is not None and function_cls.SOURCE == "definition":
+        if function_cls is not None and (
+            function_cls.SOURCE == "definition"
+            or function_cls.BARE_SOURCE == "definition"
+        ):
             return segment
         return None
 
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed
-        # :path(...) is checked before resolve_kind's content-oriented
-        # dispatch, since resolve_kind cannot tell ":path(:manifest())"
-        # apart from bare ":manifest()" -- both contain "manifest" via
-        # FunctionCall3.contains_function_named's recursive search, but
-        # :path() wants the resource's PATH, not its content.
-        if reference.name_three is not None:
-            path_call = self._find_path_call(reference.name_three.functions)
-            if path_call is not None:
-                home = self.csvpaths.file_manager.named_file_home(
-                    reference.root_major
-                )
-                return self._resolve_path_call(path_call, home)
+        log_call = self._bare_log_call(reference)
+        if log_call is not None:
+            return self._read_log_file(result.path, log_call.arg)
         kind = reference.resolve_kind
         if kind == Reference3.FIRST_PARTY:
             if reference.name_three is None:
@@ -793,6 +961,29 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # references v3.txt"'s "Resolve terminating at
                 # name_one, with no pointer: no default" rule.
                 return None
+            worksheet = reference.name_one.name_two
+            if worksheet is not None:
+                # '#worksheet' marker (settled 2026-08-26, see the
+                # "#name_two" bucket-list entry) -- XLSX only, enforced
+                # structurally by query() (a pointer is required
+                # alongside it, so result.path is always exactly one
+                # version file here). XlsxDataReader is row-oriented
+                # (.next(), a generator of str lists), not the raw-bytes
+                # ".source.read()" every other FIRST_PARTY read uses --
+                # DataFileReader itself already understands the
+                # "path#sheet" convention (see file_readers.py's own
+                # __new__), so the sheet just needs appending to the
+                # path, same as any other caller of that convention.
+                if not XlsxReaderHelper.is_xlsx(result.path):
+                    raise ReferenceException3(
+                        f"FilesReferenceFinder3 cannot apply the "
+                        f"'#worksheet' marker to {result.path!r} -- it is "
+                        "not an XLSX file."
+                    )
+                with DataFileReader(
+                    path=f"{result.path}#{worksheet}", mode="rb"
+                ) as reader:
+                    return list(reader.next())
             with DataFileReader(path=result.path, mode="rb") as reader:
                 return reader.source.read()
         if kind == Reference3.METADATA_FILE:
@@ -801,7 +992,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
             ) or self._is_bare_pointer_reference(reference, "definition"):
                 # result.path is already the manifest.json/definition.json
                 # path itself (set by query()'s _query_well_known_file()
-                # branch above).
+                # branch above). Also covers bare ':definition()' during
+                # '*' traversal -- _is_bare_pointer_reference does not
+                # look at root_major, and _query_star_traversal's own
+                # early METADATA_FILE branch sets result.path the same
+                # way for that shape (added 2026-08-27).
+                return self._read_well_known_file(result.path)
+            if (
+                reference.name_three is None
+                and self._chained_definition_call(reference.name_one) is not None
+            ):
+                # ':home():definition()' chained during '*' traversal --
+                # added 2026-08-27. result.path is already the matched
+                # named-file's own definition.json path, set by
+                # _query_star_traversal's own early METADATA_FILE branch.
                 return self._read_well_known_file(result.path)
             if isinstance(reference.root_major, Star3) and result.uuid is not None:
                 # Rule 1b -- a pointer already reduced the global ledger
@@ -822,17 +1026,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
                 return self._find_manifest_entry_by_uuid(manifest, result.uuid)
         if kind == Reference3.METADATA_FIELD:
-            if reference.name_three is not None:
+            is_bare_field_call = reference.name_three is None
+            if not is_bare_field_call:
                 field_call = self._find_field_function_call(
                     reference.name_three.functions
                 )
             else:
                 # a bare, SOURCE == "definition" field accessor occupying
-                # name_one's entire content (":on_arrival()"/":sources()")
-                # -- settled 2026-08-12, see query()'s own comment. Never
-                # reads result.uuid below (function_cls.SOURCE is always
-                # "definition" for anything _bare_definition_field_call
-                # returns), so result.uuid being None here is fine.
+                # name_one's entire content (":on_arrival()"/":sources()"),
+                # OR a bare BARE_SOURCE == "definition" field accessor
+                # (":template()" -- added 2026-08-26, see Template3's own
+                # docstring) -- settled 2026-08-12/2026-08-26, see
+                # query()'s own comment. Never reads result.uuid below for
+                # a plain SOURCE == "definition" function (result.uuid
+                # being None here is fine for those); a BARE_SOURCE
+                # function reached here specifically because NO version
+                # was selected at all, same reasoning.
                 field_call = self._bare_definition_field_call(reference.name_one)
             if field_call is not None:
                 function_cls = ReferenceFunctionFactory.get_registered_class(
@@ -851,17 +1060,29 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     # reasoning as the "computed" SOURCE branch above.
                     return reference.root_major
                 key_path = function_cls.KEY.get(reference.datatype)
-                if function_cls.SOURCE == "definition":
+                key_path = self._apply_key_arg(key_path, field_call.arg)
+                use_definition = function_cls.SOURCE == "definition" or (
+                    is_bare_field_call and function_cls.BARE_SOURCE == "definition"
+                )
+                if use_definition:
                     config = self.csvpaths.file_manager.describer.get_config(
                         reference.root_major
                     )
                     entry = config.model_dump(exclude_none=True)
-                else:
-                    manifest = self.csvpaths.file_manager.get_manifest(
-                        reference.root_major
-                    )
-                    entry = self._find_manifest_entry_by_uuid(manifest, result.uuid)
-                return self._extract_field_value(entry, key_path)
+                    return self._extract_field_value(entry, key_path)
+                manifest = self.csvpaths.file_manager.get_manifest(
+                    reference.root_major
+                )
+                entry = self._find_manifest_entry_by_uuid(manifest, result.uuid)
+                return self._extract_field_value_with_ledger_fallback(
+                    entry=entry,
+                    key_path=key_path,
+                    function_cls=function_cls,
+                    datatype=reference.datatype,
+                    ledger_entry_getter=lambda: self._find_manifest_entry_by_uuid(
+                        self.csvpaths.file_manager.files_root_manifest, result.uuid
+                    ),
+                )
         raise ReferenceException3(
             f"FilesReferenceFinder3 does not yet support resolve_kind={kind!r} "
             "-- only :manifest()/:definition() and registered field-accessor "
@@ -889,9 +1110,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if len(segments) != len(pattern):
             return False
         for actual, expected in zip(segments, pattern):
-            if isinstance(expected, Star3):
-                continue
-            if actual != expected:
+            if not ReferenceFinder3._segment_matches(expected, actual):
                 return False
         return True
 
@@ -914,8 +1133,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
             return False
         trailing = segments[len(segments) - len(pattern) :]
         for actual, expected in zip(trailing, pattern):
-            if isinstance(expected, Star3):
-                continue
-            if actual != expected:
+            if not ReferenceFinder3._segment_matches(expected, actual):
                 return False
         return True

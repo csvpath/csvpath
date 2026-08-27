@@ -26,6 +26,7 @@ class RunUuid3(Function3):
     ARG_TYPES = ()
     ARG_REQUIRED = False
     SOURCE = "manifest"
+    KIND = "uuid"
     KEY = {
         Reference3.RESULTS: "run_uuid",
         Reference3.RESULT: "run_uuid",

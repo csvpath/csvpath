@@ -1,4 +1,5 @@
 import json
+import re
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -6,7 +7,14 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
-from .reference_3 import FunctionCall3, Reference3, Star3
+from .reference_3 import (
+    FunctionCall3,
+    InterpolatedString3,
+    Reference3,
+    Regex3,
+    Star3,
+    Variable3,
+)
 from .reference_exceptions_3 import ReferenceException3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -22,13 +30,32 @@ class ReferenceFinder3(ABC):
     # resolve_from() are shared here: "call query(), then maybe extract
     # a value" is the same shape regardless of datatype.
     #
-    def __init__(self, *, csvpaths, ref: ReferenceParser3) -> None:
+    def __init__(
+        self, *, csvpaths, ref: ReferenceParser3, variables: dict | None = None
+    ) -> None:
         if csvpaths is None:
             raise ValueError("Csvpaths cannot be None")
         if ref is None:
             raise ValueError("Reference cannot be None")
         self._csvpaths = csvpaths
         self._ref = ref
+        #
+        # compendium 3.12: "prior to query, a reference finder can be
+        # given variables that may be used in references... a variable
+        # can be any Python object, but the variable value will be put
+        # into a string context so its __str__ must make sense."
+        # Registration is deliberately simple and explicit -- a plain
+        # {name: value} mapping the caller hands the finder, not a
+        # lookup into any live CsvPath instance's own runtime variables
+        # (those are scoped to one running statement, which does not
+        # exist at all when a reference is resolved standalone -- v3
+        # is not wired into production yet, see the bucket list). Added
+        # 2026-08-26, added alongside @variable's first real consumer,
+        # "{...}" interpolation (see _resolve_value()) -- usability as
+        # some OTHER function's own direct argument is a separate,
+        # still-open question, not addressed by this.
+        #
+        self._variables: dict = dict(variables) if variables else {}
 
     @property
     def ref(self) -> ReferenceParser3:
@@ -37,6 +64,26 @@ class ReferenceFinder3(ABC):
     @property
     def csvpaths(self):
         return self._csvpaths
+
+    @property
+    def variables(self) -> dict:
+        return self._variables
+
+    def set_variable(self, name: str, *, value) -> None:
+        """registers one @name -> value mapping, usable inside "{...}"
+        interpolation once this finder resolves a reference containing
+        it. Callable any time before resolve() actually needs the
+        value -- see __init__'s own docstring comment for the design."""
+        if not name:
+            raise ValueError("name cannot be None or empty")
+        self._variables[name] = value
+
+    def set_variables(self, variables: dict) -> None:
+        """bulk form of set_variable() -- merges `variables` into
+        whatever is already registered, rather than replacing it."""
+        if variables is None:
+            raise ValueError("variables cannot be None")
+        self._variables.update(variables)
 
     @abstractmethod
     def query(self) -> ReferenceResults3:
@@ -59,11 +106,42 @@ class ReferenceFinder3(ABC):
         selection is either a ReferenceResults3 (resolve all of it) or
         a list[str | UUID] of specific paths/uuids to pull out of a
         fresh query() first.
+
+        Rule 1 (manifest_field_functions_proposal.md's "Entity
+        resolution and pooling" section) -- reading a whole-resource
+        content accessor (:manifest(), :definition(), :errors(), etc.)
+        always touches exactly one entity -- is enforced HERE, not in
+        query(), as of 2026-08-26 (see the ":path()" retirement/Rule 1
+        bucket-list entry). query() is always allowed to return more
+        than one match, regardless of which accessor is present; a
+        finder's own query() instead flags the ReferenceResults3 it
+        returns (ReferenceResults3.ambiguous_content_read) when it found
+        more than one raw, unreduced candidate for such an accessor with
+        no pointer to pick one -- deliberately NOT a generic "is the
+        final count > 1" check computed here: a pointer applied WITHIN
+        each of several matched entities (e.g. ':all():last():manifest()'
+        across several named-paths groups, one manifest entry per group)
+        is perfectly legitimate even though the final count is > 1, so
+        only each finder's own query() -- which alone knows whether a
+        pointer actually reduced its candidates -- can tell a genuine
+        Rule 1 violation apart from several already-disambiguated
+        entities. Kept as a flag rather than an immediate raise purely
+        so query() itself never raises for this -- only resolve()/
+        resolve_from() (actually reading content) does.
         """
         if isinstance(selection, ReferenceResults3):
             results = selection
         else:
             results = self.query().select(selection)
+        if results.ambiguous_content_read and len(results) > 1:
+            raise ReferenceException3(
+                f"{type(self).__name__} cannot resolve more than one match "
+                "at once for a whole-resource content accessor (e.g. "
+                ":manifest(), :definition(), :errors()) -- a pointer "
+                "(:first()/:last()/:index(n)) or a narrower identity is "
+                "required to pick exactly one entity. query() itself is "
+                "unaffected -- it may still return every match."
+            )
         for result in results.results:
             result.data = self._extract_data(result)
         return results
@@ -293,6 +371,92 @@ class ReferenceFinder3(ABC):
             return reader.source.read()
 
     @staticmethod
+    def _log_call_anywhere(reference: Reference3) -> "FunctionCall3 | None":
+        """returns the :log() FunctionCall3 if it appears anywhere in
+        name_one (regardless of whether the overall shape is legal),
+        else None -- added 2026-08-26 (compendium 5.16(b)). Checked
+        separately from _bare_log_call() so a caller can give a clear,
+        specific error ("must be standalone") for an illegal
+        combination, rather than falling through to whatever generic
+        "not supported" message the ordinary dispatch would raise for
+        an unrecognized shape."""
+        name_one = reference.name_one
+        segments = [*name_one.path, *name_one.functions]
+        for seg in segments:
+            if isinstance(seg, FunctionCall3) and seg.name == "log":
+                return seg
+        return None
+
+    @staticmethod
+    def _bare_log_call(reference: Reference3) -> "FunctionCall3 | None":
+        """returns the :log() FunctionCall3 only if name_one is EXACTLY
+        a bare, standalone :log() call -- nothing else in name_one's
+        path or function chain, and no name_two/name_three -- per the
+        compendium's own "standalone, not-combinable" requirement
+        (5.16(b)). Does NOT check root_major -- :log() is a single,
+        datatype-independent global resource (the configured log_file),
+        not tied to any named entity, so root_major being '*' is a
+        separate, dedicated check the caller makes itself (a literal
+        root_major gets its own clear error, not silent misuse). Note
+        name_two (the "#worksheet" marker) lives on name_one itself,
+        not on Reference3 directly."""
+        if reference.name_three is not None:
+            return None
+        name_one = reference.name_one
+        if name_one.name_two is not None:
+            return None
+        if len(name_one.path) != 1 or name_one.functions:
+            return None
+        call = name_one.path[0]
+        if not isinstance(call, FunctionCall3) or call.name != "log":
+            return None
+        return call
+
+    def _query_log_call(self, reference: Reference3) -> "ReferenceResults3 | None":
+        """query()'s own entry point for :log() -- shared by all three
+        finders since the log file is identical regardless of
+        datatype. Returns None if :log() is not present at all (an
+        ordinary reference, unaffected); raises if it is present but
+        the shape is illegal; otherwise returns the one-result
+        ReferenceResults3 pointing at the configured log file itself
+        (uuid=None, same convention _query_well_known_file() uses for
+        a fixed, non-versioned resource)."""
+        if self._log_call_anywhere(reference) is None:
+            return None
+        if self._bare_log_call(reference) is None:
+            raise ReferenceException3(
+                ":log() must be a standalone, not-combinable function -- "
+                "it cannot ride alongside a pointer or any other "
+                "function in name_one, and does not support name_two/"
+                "name_three."
+            )
+        if not isinstance(reference.root_major, Star3):
+            raise ReferenceException3(
+                ":log() requires root_major to be '*' -- it resolves a "
+                "single, global log file, not tied to any specific "
+                "named entity."
+            )
+        path = self.csvpaths.config.log_file
+        return ReferenceResults3(results=[ReferenceResult3(path=path, uuid=None)])
+
+    @classmethod
+    def _read_log_file(cls, path: str, lines: int | None):
+        """reads the configured log file as text -- the whole thing if
+        `lines` is None, otherwise just its last `lines` lines,
+        rejoined with newlines (settled with David, 2026-08-26: a
+        single string, not raw bytes or a list of line strings, per
+        the compendium's own "gives... a string" resolve-type framing
+        for text content). None if the log file does not exist yet
+        (nothing has ever been logged)."""
+        if not Nos(path).exists():
+            return None
+        with DataFileReader(path=path) as reader:
+            text = reader.source.read()
+        if lines is None:
+            return text
+        return "\n".join(text.splitlines()[-lines:])
+
+    @staticmethod
     def _read_well_known_json(path: str):
         """reads a well-known, JSON-shaped resource (results' errors.json/
         vars.json/meta.json) as a parsed Python structure -- None if it
@@ -315,36 +479,164 @@ class ReferenceFinder3(ABC):
         classification), rather than the whole raw file."""
         return next((entry for entry in manifest if entry["uuid"] == uuid), None)
 
-    @staticmethod
-    def _compile_path_pattern(path: list) -> list:
+    def _compile_path_pattern(self, path: list) -> list:
         """turns a name_one path into a list of str/Star3 to match
         against real path segments (a manifest entry's file_home for
         files, real directory names for results). a literal str or
         Star3 segment passes through unchanged; a :name("...") segment
-        is compiled and unwrapped to its literal string, so matching
-        downstream doesn't need to know the difference -- built
-        specifically because a literal name containing characters a
-        bare PATH_SEGMENT cannot hold (e.g. a real filename's ".") has
-        no other way to appear. any other function-valued segment is
-        explicitly not yet supported. shared by files and results --
-        both have a real, literal/star/:name(...) path to match; csvpaths
-        does not (its whole name_one is version-selecting functions)."""
+        is compiled and its own arg run through _resolve_value() (so a
+        "{...}"-interpolated name, e.g. :name("orders-{:year()}.csv"),
+        unwraps to its final literal string the same way a plain
+        literal name always has) -- built specifically because a
+        literal name containing characters a bare PATH_SEGMENT cannot
+        hold (e.g. a real filename's ".") has no other way to appear.
+
+        A bare SOURCE == "clock" function (e.g. :year()) is ALSO now a
+        legal path segment in its own right (added 2026-08-26, see
+        Year3's own docstring) -- e.g. "$acme.files.orders/:year()" ->
+        matches "acme/orders/2026" today, at whatever the current year
+        actually is. Evaluated the same way _resolve_value() evaluates
+        one inside "{...}" -- build the Function3, call compute(),
+        stringify. Any other function-valued segment is still not
+        supported. Shared by files and results -- both have a real,
+        literal/star/:name(...)/clock-function path to match; csvpaths
+        does not (its whole name_one is version-selecting functions).
+
+        Instance method (not a staticmethod, since 2026-08-26) purely
+        because _resolve_value() now needs this finder's own registered
+        variables -- callers already invoke this as self._compile_path_
+        pattern(...) everywhere, so nothing else changes."""
         pattern = []
         for segment in path:
             if isinstance(segment, FunctionCall3):
-                if segment.name != "name":
+                if segment.name == "name":
+                    built = ReferenceFunctionFactory.build(segment)
+                    pattern.append(self._resolve_value(built.arg))
+                    continue
+                function_cls = ReferenceFunctionFactory.get_registered_class(
+                    segment.name
+                )
+                if function_cls is None or function_cls.SOURCE != "clock":
                     raise ReferenceException3(
                         f"Does not yet support :{segment.name}() as a "
-                        "name_one path segment -- only :name(\"...\") and "
+                        "name_one path segment -- only :name(\"...\"), a "
+                        "clock value function (e.g. :year()), and "
                         "literal/'*' segments are supported."
                     )
                 built = ReferenceFunctionFactory.build(segment)
-                pattern.append(built.arg)
+                pattern.append(str(built.compute()))
             elif isinstance(segment, (str, Star3)):
                 pattern.append(segment)
             else:
                 raise ReferenceException3(f"Unsupported name_one path segment: {segment!r}")
         return pattern
+
+    @staticmethod
+    def _segment_matches(expected, actual: str) -> bool:
+        """true if `actual` (one real path/run-directory segment) matches
+        `expected` (one already-compiled pattern element from
+        _compile_path_pattern) -- Star3 is a wildcard (matches anything);
+        a Regex3 (added 2026-08-27, ":name(/pattern/)" -- see Name3's own
+        docstring) searches, not anchored to the start/whole segment,
+        the same established semantics :idchain()'s own Regex3 argument
+        already uses (David's call there, reused rather than
+        reinvented: search() so the pattern does not need to match the
+        whole segment, just find something within it); anything else (a
+        plain str, from a literal segment or a resolved ":name(\"...\")")
+        is exact equality. Shared by FilesReferenceFinder3's own
+        _matches/_matches_suffix and ResultsReferenceFinder3's own
+        _matches_prefix/_matches_prefix_at_least -- one comparison rule,
+        not four copies of it."""
+        if isinstance(expected, Star3):
+            return True
+        if isinstance(expected, Regex3):
+            return re.search(expected.pattern, actual) is not None
+        return actual == expected
+
+    def _resolve_value(self, value):
+        """returns `value` unchanged if it is a plain literal (str, int,
+        etc.); evaluates it if it is an InterpolatedString3 -- each
+        literal-str part passes through, each FunctionCall3 part is
+        built and its compute() called (only SOURCE == "clock"
+        functions are legal inside "{...}" for now -- see
+        InterpolatedString3.check_valid(), which already restricts
+        parts to ROLE == VALUE; a non-clock VALUE function landing here
+        would mean check_valid() itself needs widening first, so this
+        raises a clear error rather than silently mishandling it), each
+        Variable3 part is looked up in this finder's own registered
+        self._variables (added 2026-08-26, compendium 3.12 -- "a
+        reference finder can be given variables"; see set_variable()/
+        set_variables()), each part joined into one final string.
+        Instance method so this lookup has something to read from."""
+        if not isinstance(value, InterpolatedString3):
+            return value
+        pieces = []
+        for part in value.parts:
+            if isinstance(part, str):
+                pieces.append(part)
+            elif isinstance(part, FunctionCall3):
+                function_cls = ReferenceFunctionFactory.get_registered_class(
+                    part.name
+                )
+                if function_cls is None or function_cls.SOURCE != "clock":
+                    raise ReferenceException3(
+                        f":{part.name}() cannot be evaluated inside "
+                        "\"{...}\" interpolation yet -- only clock value "
+                        "functions (e.g. :year()) are supported so far."
+                    )
+                built = ReferenceFunctionFactory.build(part)
+                pieces.append(str(built.compute()))
+            elif isinstance(part, Variable3):
+                if part.name not in self._variables:
+                    raise ReferenceException3(
+                        f"@{part.name} has no registered value -- call "
+                        "set_variable()/set_variables() on this finder "
+                        "before resolving a reference that uses it."
+                    )
+                pieces.append(str(self._variables[part.name]))
+            else:
+                raise ReferenceException3(
+                    f"{part!r} cannot be evaluated inside \"{{...}}\" "
+                    "interpolation."
+                )
+        return "".join(pieces)
+
+    @staticmethod
+    def _pointer_present(calls: list) -> bool:
+        """true if any function in `calls` is a real, top-level version-
+        selecting pointer (:first()/:last()/:index()) -- used to decide,
+        for a Function3.BARE_SOURCE-declaring field accessor (currently
+        only :template()), whether a specific version was actually
+        selected (read that version's own manifest snapshot, the
+        ordinary SOURCE) or not (read the entity's current
+        definition.json default instead, BARE_SOURCE). Added 2026-08-26.
+        Uses the same literal-name check already established in
+        _pointer_before_manifest() above, rather than a registry lookup
+        -- deliberately narrow/cheap, matching that precedent."""
+        return any(
+            isinstance(f, FunctionCall3) and f.name in ("first", "last", "index")
+            for f in calls
+        )
+
+    @staticmethod
+    def _apply_key_arg(key_path: str | None, arg) -> str | None:
+        """fills a "{}" placeholder in an arg-parameterized Function3.KEY
+        dotted path with the field-accessor call's own arg -- e.g.
+        "sources.{}.port".format("email") -> "sources.email.port".
+        Added 2026-08-26 for the first field accessors whose manifest/
+        definition key genuinely depends on a per-call value, not just
+        the datatype (sources.<name>.*/destinations.<name>.*/
+        transfers.path_transfers.<name>.on_complete_* -- see
+        SourcePort3/DestinationPort3/TransferOnCompleteAll3's own
+        docstrings for the worked argument). A no-op for every static,
+        placeholder-free KEY (arg is None for those, or the path simply
+        has no "{}" to fill) -- call this unconditionally before
+        _extract_field_value()/_extract_field_value_with_ledger_
+        fallback() rather than only for the functions that need it; it
+        costs nothing for the ones that do not."""
+        if key_path is None or arg is None:
+            return key_path
+        return key_path.format(arg)
 
     @staticmethod
     def _extract_field_value(container: dict | None, key_path: str) -> object:
@@ -367,6 +659,36 @@ class ReferenceFinder3(ABC):
             value = value[segment]
         return value
 
+    @classmethod
+    def _extract_field_value_with_ledger_fallback(
+        cls,
+        *,
+        entry: dict | None,
+        key_path: str | None,
+        function_cls: type,
+        datatype: str,
+        ledger_entry_getter,
+    ) -> object:
+        """like _extract_field_value(), but for SOURCE == "manifest"
+        field accessors that also declare a Function3.LEDGER_KEY: if the
+        entity's own manifest entry does not have the field, falls back
+        to that same entity's own global-ledger entry instead of just
+        returning None -- added 2026-08-25, see Function3.LEDGER_KEY's
+        own docstring for why (some fields, e.g. a named-file's pointer
+        back to its own manifest, only exist in the ledger, never in the
+        entity's own manifest). `ledger_entry_getter` is a zero-arg
+        callable, called only if actually needed, so a normal field
+        lookup that succeeds against the entity's own manifest never
+        pays for fetching/searching the ledger at all."""
+        value = cls._extract_field_value(entry, key_path)
+        if value is not None:
+            return value
+        ledger_key_path = function_cls.LEDGER_KEY.get(datatype)
+        if ledger_key_path is None:
+            return None
+        ledger_entry = ledger_entry_getter()
+        return cls._extract_field_value(ledger_entry, ledger_key_path)
+
     @staticmethod
     def _find_field_function_call(functions: list) -> "FunctionCall3 | None":
         """returns the first function in `functions` that is a
@@ -382,39 +704,6 @@ class ReferenceFinder3(ABC):
                 return f
         return None
 
-    @staticmethod
-    def _find_path_call(functions: list) -> "FunctionCall3 | None":
-        """returns the first ":path(...)" call in `functions`, or None
-        if absent. Checked by literal name rather than a registry
-        lookup, since ":path()" is a single fixed name, not a growing
-        list of field-accessor names -- matching how ":manifest()"
-        itself is already detected by name elsewhere in these finders."""
-        for f in functions:
-            if f.name == "path":
-                return f
-        return None
-
-    @staticmethod
-    def _resolve_path_call(path_call, home: str) -> str:
-        """given a raw ":path(inner)" FunctionCall3 and the already-
-        computed home directory for the enclosing entity, returns the
-        filesystem path to whatever well-known file `inner` names.
-        :manifest()/:definition() are the only ones available at the
-        FILES/CSVPATHS datatypes this covers so far -- see wrappers/
-        path_3.py. Shared by files/csvpaths: home is computed
-        differently per datatype (named_file_home vs named_paths_home),
-        but the join is identical once you have it."""
-        inner = path_call.arg
-        inner_name = inner.name if inner is not None else None
-        if inner_name not in ("manifest", "definition"):
-            raise ReferenceException3(
-                f":path() does not yet support wrapping :{inner_name}() -- "
-                "only :manifest()/:definition() are supported so far."
-            )
-        filename = f"{inner_name}.json"
-        return ReferenceFinder3._query_well_known_file(home, filename).results[
-            0
-        ].path
 
     @staticmethod
     def _find_by_identity(identity: str, identities: list) -> int | None:

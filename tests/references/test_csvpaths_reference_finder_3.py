@@ -98,14 +98,24 @@ class _FakePathsManager:
 
 
 class _FakeConfig:
-    def __init__(self, inputs_csvpaths_path: str | None = None):
+    def __init__(
+        self,
+        inputs_csvpaths_path: str | None = None,
+        log_file: str | None = None,
+    ):
         self.inputs_csvpaths_path = inputs_csvpaths_path
+        self.log_file = log_file
 
 
 class _FakeCsvPaths:
-    def __init__(self, paths_manager, inputs_csvpaths_path: str | None = None):
+    def __init__(
+        self,
+        paths_manager,
+        inputs_csvpaths_path: str | None = None,
+        log_file: str | None = None,
+    ):
         self.paths_manager = paths_manager
-        self.config = _FakeConfig(inputs_csvpaths_path)
+        self.config = _FakeConfig(inputs_csvpaths_path, log_file=log_file)
 
 
 def _finder(
@@ -116,6 +126,7 @@ def _finder(
     ledger: list | None = None,
     by_name: dict | None = None,
     definitions_by_name: dict | None = None,
+    log_file: str | None = None,
 ) -> CsvpathsReferenceFinder3:
     csvpaths = _FakeCsvPaths(
         _FakePathsManager(
@@ -126,6 +137,7 @@ def _finder(
             definitions_by_name=definitions_by_name,
         ),
         inputs_csvpaths_path=inputs_csvpaths_path,
+        log_file=log_file,
     )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
     return CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
@@ -448,12 +460,15 @@ class TestManifestFunction:
         # :all() (CONTEXT_SETTER) plus :manifest() (VALUE) -- neither is
         # a pointer, and ACME_MANIFEST has two versions. Resolving full
         # manifest content always touches exactly one entity (settled
-        # 2026-08-07), so this is illegal now, not "every version,
-        # unreduced" as it used to be -- a pointer is required to pick
-        # one version.
+        # 2026-08-07), so this is illegal -- a pointer is required to
+        # pick one version. query() itself succeeds (moved 2026-08-26,
+        # see the ":path()" retirement/Rule 1 bucket-list entry) -- only
+        # resolve() raises, once something actually tries to read the
+        # content.
         finder = _finder("$acme.csvpaths.:all():manifest()")
+        assert len(finder.query()) > 1
         with pytest.raises(ReferenceException3):
-            finder.query()
+            finder.resolve()
 
     def test_manifest_with_no_pointer_and_exactly_one_version_still_works(self):
         single_version = [ACME_MANIFEST[0]]
@@ -595,7 +610,14 @@ STAR_BY_NAME = {"beta": STAR_BETA_MANIFEST, "alpha": STAR_ALPHA_MANIFEST}
 
 
 def _star_finder(reference: str) -> CsvpathsReferenceFinder3:
-    return _finder(reference, by_name=STAR_BY_NAME)
+    # inputs_csvpaths_path is needed even for genuine (non-Rule-1a/1b)
+    # traversal now: _extract_data()'s Star3 branch always computes the
+    # ledger's own fixed path to disambiguate against, whether or not
+    # this particular reference turns out to be the ledger-ordinal case
+    # (fixed 2026-08-26, see csvpaths_reference_finder_3.py).
+    return _finder(
+        reference, by_name=STAR_BY_NAME, inputs_csvpaths_path="inputs/named_paths"
+    )
 
 
 class TestStarTraversalFlatten:
@@ -620,14 +642,15 @@ class TestStarTraversalFlatten:
         results = _star_finder("$*.csvpaths.:index(1)").query()
         assert results.uuids == ["a-v2"]
 
-    def test_combining_with_manifest_is_not_yet_supported(self):
-        # note: a plain pointer + :manifest() (e.g. ":last():manifest()")
-        # is intercepted earlier by Rule 1b (the global-ledger ordinal
-        # case, same structural shape) before ever reaching traversal --
-        # :all():manifest() is not a pointer-first shape, so it reaches
-        # _query_star_traversal's own combining-guard instead.
-        with pytest.raises(ReferenceException3):
-            _star_finder("$*.csvpaths.:all():manifest()").query()
+    # no "combined with :manifest()" test in this class: a bare pointer
+    # plus a bare ':manifest()' (e.g. ":last():manifest()") is always
+    # exactly the two-function shape _pointer_before_manifest() matches
+    # -- it is intercepted by Rule 1b in query() before ever reaching
+    # _query_star_traversal, regardless of root_major being '*'. See
+    # TestGlobalLoadsLedger for that already-existing, unaffected
+    # behavior. TestStarTraversalGroup's own ':all():last():manifest()'
+    # test below is what actually proves this class's sibling fix (the
+    # traversal-guard exemption fixed 2026-08-26).
 
     def test_name_three_combined_with_traversal_is_not_yet_supported(self):
         with pytest.raises(ReferenceException3):
@@ -756,17 +779,43 @@ class TestStarTraversalFieldAccessor:
         assert {r.data for r in results.results} == {"alpha", "beta"}
         assert {r.uuid for r in results.results} == {"a-v2", "b-v1"}
 
-    def test_field_accessor_exemption_does_not_let_manifest_through_too(self):
-        # a field accessor is now exempt from the unsupported check, but
-        # a genuinely unsupported extra (:manifest()) riding alongside
-        # it is still rejected -- the exemption is narrow, not "anything
-        # goes once one field accessor is present". A third function
-        # also pushes this reference past _pointer_before_manifest's own
-        # exactly-two-functions Rule 1b shape, so it genuinely reaches
-        # _query_star_traversal's guard rather than being intercepted
-        # earlier.
-        with pytest.raises(ReferenceException3):
-            _star_finder("$*.csvpaths.:last():named_paths_name():manifest()").query()
+    def test_field_accessor_combined_with_manifest_now_also_works(self):
+        # ':manifest()' is now exempted from _query_star_traversal's
+        # unsupported-combination check too (fixed 2026-08-26, the same
+        # change that let a bare pointer/':all()' combine with it) -- so
+        # this three-function chain no longer raises. resolve_kind()
+        # gives a field-accessor function priority over ':manifest()'
+        # when both are present in the same terminal chain (see
+        # reference_3.py's own resolve_kind docstring: METADATA_FIELD is
+        # checked before METADATA_FILE), so named_paths_name()'s own
+        # value wins here and ':manifest()' rides along harmlessly,
+        # unused -- same outcome as test_flatten_shape_with_a_field_
+        # accessor_now_works above, just proving the extra function does
+        # not change it.
+        by_name = {
+            "alpha": [
+                {
+                    "group_file_path": "named_paths/alpha/group.csvpath",
+                    "uuid": "a-v1",
+                    "time": "2026-01-01T00:00:00+00:00",
+                    "named_paths_name": "alpha",
+                }
+            ],
+            "beta": [
+                {
+                    "group_file_path": "named_paths/beta/group.csvpath",
+                    "uuid": "b-v1",
+                    "time": "2026-01-03T00:00:00+00:00",
+                    "named_paths_name": "beta",
+                }
+            ],
+        }
+        results = _finder(
+            "$*.csvpaths.:last():named_paths_name():manifest()", by_name=by_name
+        ).resolve()
+        assert len(results.results) == 1
+        assert results.results[0].uuid == "b-v1"
+        assert results.results[0].data == "beta"
 
     def test_definition_sourced_field_reads_the_matched_groups_own_config(self):
         # :scripts() (SOURCE == "definition") is the other branch
@@ -860,6 +909,20 @@ class TestStarTraversalGroup:
         results = _star_finder("$*.csvpaths.:all()").query()
         assert len(results.results) == 3
         assert set(results.uuids) == {"a-v1", "a-v2", "b-v1"}
+
+    def test_all_with_last_and_manifest_gives_each_groups_own_manifest_entry(self):
+        # previously unsupported (raised); fixed 2026-08-26 -- see
+        # TestStarTraversalFlatten's own manifest test for the FLATTEN-
+        # mode sibling of this fix. Proves the GROUP-mode reduction
+        # (one version per group) and the manifest-entry lookup compose
+        # correctly together, not just each in isolation.
+        results = _star_finder("$*.csvpaths.:all():last():manifest()").resolve()
+        assert len(results.results) == 2
+        data_by_uuid = {r.uuid: r.data for r in results.results}
+        assert data_by_uuid == {
+            "a-v2": STAR_ALPHA_MANIFEST[1],
+            "b-v1": STAR_BETA_MANIFEST[0],
+        }
 
 
 class TestStarTraversalHaving:
@@ -1040,8 +1103,14 @@ class TestFieldAccessorFunctions:
         ).resolve()
         assert results.results[0].data == "aaaa"
 
-    def test_home(self):
-        results = _finder("$acme.csvpaths.:first():home()", RICH_MANIFEST).resolve()
+    def test_group_home(self):
+        # :home() split 2026-08-26 -- CSVPATHS' own share of the old
+        # field-read job is now :group_home() (:home() itself keeps
+        # only the FILES/RESULTS zero-level placeholder role, which
+        # CSVPATHS has no equivalent concept for).
+        results = _finder(
+            "$acme.csvpaths.:first():group_home()", RICH_MANIFEST
+        ).resolve()
         assert results.results[0].data == GROUP_HOME
 
     def test_origin_reads_the_source_path_key(self):
@@ -1066,6 +1135,35 @@ class TestFieldAccessorFunctions:
         ).resolve()
         assert [r.data for r in results.results] == [2, 1]
 
+    def test_group_file(self):
+        results = _finder(
+            "$acme.csvpaths.:first():group_file()", RICH_MANIFEST
+        ).resolve()
+        assert results.results[0].data == GROUP_FILE_PATH
+
+    def test_named_paths(self):
+        results = _finder(
+            "$acme.csvpaths.:first():named_paths()", RICH_MANIFEST
+        ).resolve()
+        assert results.results[0].data == ["stmt text A", "stmt text B"]
+
+    def test_archive(self):
+        manifest = [
+            {**RICH_MANIFEST[0], "archive_name": "archive-2026"},
+        ]
+        results = _finder("$acme.csvpaths.:first():archive()", manifest).resolve()
+        assert results.results[0].data == "archive-2026"
+
+    def test_group_manifest_falls_back_to_the_global_ledger(self):
+        # group_manifest_3.py's KEY is empty -- the named-paths group's
+        # own manifest never has this field, only the global ledger does
+        # (see the shared LEDGER_KEY fallback mechanism this proves).
+        ledger = [{"uuid": "v1-uuid", "paths_manifest": "named_paths/acme/manifest.json"}]
+        results = _finder(
+            "$acme.csvpaths.:last():group_manifest()", RICH_MANIFEST, ledger=ledger
+        ).resolve()
+        assert results.results[0].data == "named_paths/acme/manifest.json"
+
     def test_function_not_legal_here_is_rejected_not_silently_degraded(self):
         # :mark()'s own DATATYPES is FILES-only, and it has no POSITIONS
         # entry for csvpaths at all -- added 2026-08-14: this now raises
@@ -1076,6 +1174,52 @@ class TestFieldAccessorFunctions:
         # lock in).
         with pytest.raises(ReferenceException3):
             _finder("$acme.csvpaths.:first():mark()", RICH_MANIFEST).query()
+
+    def test_username_hostname_host_fall_back_to_the_global_ledger(self):
+        # widened 2026-08-26 -- RICH_MANIFEST's own entries never have
+        # username/hostname/ip_address (the Named-Paths Manifest
+        # genuinely has no such fields), only the global loads ledger
+        # does.
+        ledger = [
+            {
+                "uuid": "v1-uuid",
+                "username": "bot",
+                "hostname": "worker-1",
+                "ip_address": "10.0.0.5",
+            }
+        ]
+        assert (
+            _finder(
+                "$acme.csvpaths.:last():username()", RICH_MANIFEST, ledger=ledger
+            )
+            .resolve()
+            .results[0]
+            .data
+            == "bot"
+        )
+        assert (
+            _finder(
+                "$acme.csvpaths.:last():hostname()", RICH_MANIFEST, ledger=ledger
+            )
+            .resolve()
+            .results[0]
+            .data
+            == "worker-1"
+        )
+        assert (
+            _finder("$acme.csvpaths.:last():host()", RICH_MANIFEST, ledger=ledger)
+            .resolve()
+            .results[0]
+            .data
+            == "10.0.0.5"
+        )
+
+    def test_username_no_matching_ledger_entry_gives_none(self):
+        ledger = [{"uuid": "some-other-uuid", "username": "bot"}]
+        results = _finder(
+            "$acme.csvpaths.:last():username()", RICH_MANIFEST, ledger=ledger
+        ).resolve()
+        assert results.results[0].data is None
 
 
 class TestDefinitionFieldAccessorFunctions:
@@ -1144,27 +1288,172 @@ class TestDefinitionFieldAccessorFunctions:
         assert first.results[0].data == last.results[0].data
 
 
-class TestPathFunction:
-    # :path(inner) returns the filesystem path to whatever well-known
-    # resource `inner` points at, instead of its content.
-    def test_path_wrapping_manifest(self):
-        results = _finder("$acme.csvpaths.:first():path(:manifest())").resolve()
-        assert results.results[0].data == f"{GROUP_HOME}/manifest.json"
+class TestDefinitionSubFieldAccessorFunctions:
+    # the arg-keyed (destinations.<name>.*, transfers.<name>.
+    # on_complete_*) and fixed-state (scripts.on_complete_*, webhooks.
+    # on_complete_*) sub-field accessors built 2026-08-26 -- see
+    # ReferenceFinder3._apply_key_arg()'s own docstring for the shared
+    # "{}"-placeholder mechanism the arg-keyed ones need.
+    DEFINITION = {
+        "scripts": {
+            "on_complete_all": "notify.sh",
+            "on_complete_error": "alert.sh",
+        },
+        "webhooks": {
+            "on_complete_valid": {"url": "https://example.com/hook"},
+        },
+        "transfers": {
+            "path_transfers": {
+                "company_names": {
+                    "on_complete_all": [{"file": "data", "transfer_to": "@out"}]
+                }
+            }
+        },
+        "destinations": {
+            "main": {
+                "address": "example.com",
+                "port": 22,
+                "username": "bot",
+                "password": "secret",
+            }
+        },
+    }
 
-    def test_path_wrapping_definition(self):
-        results = _finder("$acme.csvpaths.:first():path(:definition())").resolve()
-        assert results.results[0].data == f"{GROUP_HOME}/definition.json"
+    def test_script_on_complete_all(self):
+        results = _finder(
+            "$acme.csvpaths.:first():script_on_complete_all()",
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == "notify.sh"
 
-    def test_path_alone_with_no_pointer_gives_every_version(self):
-        results = _finder("$acme.csvpaths.:path(:manifest())").resolve()
-        assert [r.data for r in results.results] == [
-            f"{GROUP_HOME}/manifest.json",
-            f"{GROUP_HOME}/manifest.json",
+    def test_script_on_complete_error(self):
+        results = _finder(
+            "$acme.csvpaths.:first():script_on_complete_error()",
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == "alert.sh"
+
+    def test_script_on_complete_valid_not_configured_gives_none(self):
+        results = _finder(
+            "$acme.csvpaths.:first():script_on_complete_valid()",
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_webhooks_on_complete_valid(self):
+        results = _finder(
+            "$acme.csvpaths.:first():webhooks_on_complete_valid()",
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == {
+            "url": "https://example.com/hook",
+            "headers": [],
+        }
+
+    def test_destination_address_by_name(self):
+        results = _finder(
+            '$acme.csvpaths.:first():destination_address("main")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == "example.com"
+
+    def test_destination_port_by_name(self):
+        results = _finder(
+            '$acme.csvpaths.:first():destination_port("main")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == 22
+
+    def test_destination_username_by_name(self):
+        results = _finder(
+            '$acme.csvpaths.:first():destination_username("main")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == "bot"
+
+    def test_destination_password_by_name(self):
+        results = _finder(
+            '$acme.csvpaths.:first():destination_password("main")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == "secret"
+
+    def test_destination_unknown_name_gives_none_not_an_error(self):
+        results = _finder(
+            '$acme.csvpaths.:first():destination_address("nope")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_transfer_on_complete_all_by_identity(self):
+        results = _finder(
+            '$acme.csvpaths.:first():transfer_on_complete_all("company_names")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data == [
+            {"file": "data", "transfer_to": "@out"}
         ]
 
-    def test_path_wrapping_a_field_accessor_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _finder("$acme.csvpaths.:first():path(:uuid())").resolve()
+    def test_transfer_on_complete_unknown_identity_gives_none(self):
+        results = _finder(
+            '$acme.csvpaths.:first():transfer_on_complete_all("nope")',
+            RICH_MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert results.results[0].data is None
+
+
+class TestTemplateBareVsPointerDualSource:
+    # :template() (built 2026-08-26) is the first field accessor using
+    # Function3.BARE_SOURCE -- bare (no pointer at all) reads
+    # definition.json's current default; alongside a real pointer, it
+    # reads that specific matched version's own manifest snapshot
+    # instead. See ReferenceFinder3._pointer_present()/Template3's own
+    # docstring for the full design.
+    MANIFEST = [
+        {**RICH_MANIFEST[0], "template": "snapshot-v0"},
+        {**RICH_MANIFEST[1], "template": "snapshot-v1"},
+    ]
+    DEFINITION = {"template": "current-default"}
+
+    def test_bare_reads_the_current_definition_default(self):
+        results = _finder(
+            "$acme.csvpaths.:template()", self.MANIFEST, self.DEFINITION
+        ).resolve()
+        # no pointer -- pools every version, each reading the SAME
+        # current default (definition.json is not versioned).
+        assert [r.data for r in results.results] == [
+            "current-default",
+            "current-default",
+        ]
+
+    def test_first_reads_that_versions_own_manifest_snapshot(self):
+        results = _finder(
+            "$acme.csvpaths.:first():template()", self.MANIFEST, self.DEFINITION
+        ).resolve()
+        assert results.results[0].data == "snapshot-v0"
+
+    def test_last_reads_that_versions_own_manifest_snapshot(self):
+        results = _finder(
+            "$acme.csvpaths.:last():template()", self.MANIFEST, self.DEFINITION
+        ).resolve()
+        assert results.results[0].data == "snapshot-v1"
+
+    def test_bare_never_configured_gives_none_not_an_error(self):
+        results = _finder(
+            "$acme.csvpaths.:template()", self.MANIFEST
+        ).resolve()
+        assert [r.data for r in results.results] == [None, None]
 
 
 class TestScopeLimits:
@@ -1252,3 +1541,45 @@ class TestPositionEnforcement:
         # (where it has never been meaningful) is rejected the same way.
         with pytest.raises(ReferenceException3):
             _finder('$acme.csvpaths.:last().:having("x")', RICH_MANIFEST).query()
+
+
+class TestLog:
+    # compendium 5.16(b) -- an outlier: a single, global, datatype-
+    # independent resource (config.ini's own log_file), not tied to any
+    # named-paths group at all. Built and shared identically across all
+    # three finders (ReferenceFinder3._bare_log_call()/_query_log_call()/
+    # _read_log_file()) -- this class exercises the full scenario set
+    # once here (csvpaths needs no real fixture beyond a log file path,
+    # simplest of the three datatypes to set up); see
+    # test_files_reference_finder_3.py/test_results_reference_finder_3.py
+    # for one confirming end-to-end test each, proving the shared
+    # mechanism composes correctly with each datatype's own query()
+    # dispatch too, not just in isolation.
+    def test_bare_log_resolves_the_whole_file(self, tmp_path):
+        log_path = tmp_path / "csvpath.log"
+        log_path.write_text("line1\nline2\nline3\n")
+        results = _finder("$*.csvpaths.:log()", log_file=str(log_path)).resolve()
+        assert results.results[0].data == "line1\nline2\nline3\n"
+
+    def test_log_with_int_arg_gives_last_n_lines(self, tmp_path):
+        log_path = tmp_path / "csvpath.log"
+        log_path.write_text("\n".join(f"line{i}" for i in range(1, 21)) + "\n")
+        results = _finder("$*.csvpaths.:log(3)", log_file=str(log_path)).resolve()
+        assert results.results[0].data == "line18\nline19\nline20"
+
+    def test_log_resolves_none_when_file_does_not_exist_yet(self, tmp_path):
+        log_path = tmp_path / "does-not-exist.log"
+        results = _finder("$*.csvpaths.:log()", log_file=str(log_path)).resolve()
+        assert results.results[0].data is None
+
+    def test_log_combined_with_a_pointer_is_rejected(self):
+        # "standalone, not-combinable" -- riding alongside anything else
+        # in name_one is illegal, even a plain pointer.
+        with pytest.raises(ReferenceException3):
+            _finder("$*.csvpaths.:log():last()", log_file="x.log").query()
+
+    def test_log_with_literal_root_major_is_rejected(self):
+        # root_major must be '*' -- a literal named-paths group name is
+        # misleading here (there is no acme-specific log content).
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.csvpaths.:log()", log_file="x.log").query()

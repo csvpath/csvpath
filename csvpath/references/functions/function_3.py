@@ -80,6 +80,103 @@ class Function3:
     SOURCE: str = None
     KEY: dict = {}
 
+    #
+    # optional fallback for SOURCE == "manifest" field accessors only --
+    # {datatype: dotted key path} within that same entity's own global-
+    # ledger entry, consulted only when KEY's own lookup in the entity's
+    # own manifest/definition comes back None. Added 2026-08-25: some
+    # fields exist only in the global ledger, never in the entity's own
+    # manifest (e.g. a named-file's own manifest never records a pointer
+    # back to itself -- see file_manifest_3.py, and issue #261 for the
+    # related core-Framework gap this works around at the reference
+    # layer). Per David's own framing: a reference resolves one
+    # conceptual entity, not "one manifest entry here, another there" --
+    # the caller should not need to know which physical file a field
+    # actually lives in. Left empty ({}) for every function that does
+    # not need it -- the common case, where a field is never absent
+    # from its own entity's manifest. See ReferenceFinder3's own shared
+    # fallback helper for how this is actually consulted.
+    #
+    LEDGER_KEY: dict = {}
+
+    #
+    # optional second resource for a SOURCE == "manifest" field accessor
+    # that means something genuinely different when NO version was
+    # actually selected -- currently only :template() (added 2026-08-26):
+    # riding alongside a real pointer (":first():template()") reads that
+    # matched version's own manifest snapshot (the ordinary SOURCE/KEY
+    # path); used bare, with no pointer at all, it instead reads the
+    # entity's CURRENT definition.json default (BARE_SOURCE ==
+    # "definition") -- the same KEY string works for both, since it is
+    # genuinely the same literal field name in both resources, just
+    # captured at a different moment (registration/load time vs. right
+    # now). None for every function that does not need this distinction
+    # -- the common case. See ReferenceFinder3._pointer_present() for how
+    # a finder decides which resource applies, and Template3's own
+    # docstring for the full worked example.
+    #
+    BARE_SOURCE: str = None
+
+    #
+    # declares which conceptual "family" this VALUE-role function's own
+    # resolved value belongs to, for ReferenceExpression3's own UNION
+    # compatibility check (references_v3_expressions.md) -- e.g.
+    # KIND = "uuid" for :uuid()/:run_uuid()/:named_file_uuid()/
+    # :named_paths_uuid(), KIND = "name" for :named_paths_name()/
+    # :named_results_name()/:named_file_name(). Two VALUE-role
+    # accessors with the SAME non-None KIND are UNION-compatible even
+    # though they are different functions (settled 2026-08-26, directly
+    # from David's own "compare by conceptual purpose, not literal
+    # accessor identity" framing -- :uuid() and :run_uuid() both
+    # produce a uuid and are comparable; :fingerprint() and :type()
+    # both happen to produce a string but are NOT comparable, since a
+    # content hash and a file extension are not the same kind of
+    # thing). None (the default) means this function has no declared
+    # family -- UNION then falls back to requiring the two sides'
+    # accessors be literally identical (same function, same argument).
+    # Checked generically by ReferenceExpression3, not hardcoded by
+    # function name -- same declarative-over-hardcoded-list principle
+    # as POSITIONS/_check_position() (see the resolve_kind bucket-list
+    # entry for the anti-pattern this deliberately avoids repeating).
+    # Also doubles as the old PRODUCES_UUID's own job (superseded --
+    # KIND == "uuid" is what ReferenceExpression3._produces_uuid() now
+    # checks): a "paths"-side (no VALUE-role accessor of its own) can
+    # still be compared against a "values"-side INTERSECT/SUBTRACT
+    # right-hand side specifically when that right side's own accessor
+    # is uuid-valued -- the paths side's own NATIVE uuid (always
+    # present, no accessor needed) is compared directly against it.
+    #
+    KIND: str | None = None
+
+    #
+    # SOURCE == "clock" (added 2026-08-26): a fourth SOURCE value for
+    # the compendium's own "dumb value-producing functions" (5.29 --
+    # :year()/:month()/:day()/:hour()/etc.) -- these are never stored
+    # anywhere and have no dependency on any resolved entity/reference
+    # state at all, unlike "computed" (which reads already-resolved
+    # reference/finder state, e.g. named_file_home) -- their value
+    # comes purely from the current wall-clock moment. KEY/LEDGER_KEY/
+    # BARE_SOURCE are all left empty/None for these; a finder never
+    # reads a manifest/definition for them at all. Each SOURCE ==
+    # "clock" function overrides compute() below instead.
+    #
+    def compute(self) -> Any:
+        """returns this function's own computed value -- overridden by
+        every SOURCE == "clock" function (e.g. Year3, Today3); never
+        called for any other SOURCE. Deliberately takes no arguments at
+        all (not even self._arg, which SOURCE == "clock" functions
+        never declare via ARG_TYPES) -- the value comes purely from the
+        current moment, nothing else. Called directly wherever a pure
+        value is needed: a bare/standalone resolve(), a name_one path
+        segment (ReferenceFinder3._compile_path_pattern()), or a
+        "{...}" interpolation span (InterpolatedString3's own
+        evaluation) -- the same computed value regardless of which of
+        those three contexts calls it, by design."""
+        raise NotImplementedError(
+            f":{self.NAME}() does not implement compute() -- only "
+            "SOURCE == \"clock\" functions do."
+        )
+
     def __init__(self, *, arg: Any = None) -> None:
         self._arg = arg
 

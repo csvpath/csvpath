@@ -4,55 +4,66 @@ A running, flat list of everything punted to a later commit/branch/design
 conversation while working on references v3 — the single place to check
 "how close are we." Add to this whenever something gets deferred, whether
 mid-conversation or mid-code. Remove/check off an item once it's actually
-built, rather than leaving it to rot.
+built, rather than leaving it to rot — moved to `deferred_work_done_list.md`
+instead, so the completed reasoning trail isn't lost, it's just off this
+list (see that file's own header, and the "Process note" at the bottom of
+this one).
 
-## Retire `:path()`; move Rule 1 enforcement from `query()` to `resolve()`
+## Results Run Manifest has no `named_paths_fingerprint` field
 
-David, 2026-08-22, deciding while reviewing the compendium's "Rule 2/Rule 3"
-notes (path/field accessors exempt from Rule 1, always poolable): **getting
-paths is not the same as accessing files.** A field/file accessor trying to
-read *content* for more than one matched entity is illegal, no argument —
-but a `query()` that merely points to multiple entities is fine in
-principle. `:path()` exists today only to route around Rule 1's query()-time
-restriction (wrap a whole-resource content function, return its path
-instead of content, since a path is cheap/poolable) — but that whole
-function becomes redundant if the restriction itself simply moves to
-`resolve()` instead of being enforced inside `query()`. David's decision:
-**`query()` should always be allowed to return multiple matches, regardless
-of which accessor function is present; only `resolve()` (actually reading
-content) raises when asked to resolve more than one match at once.**
-`:path()` is retired — the same job is done by just calling `query()` on
-the ordinary accessor and not resolving it.
+Surfaced by David, 2026-08-26, while correcting the UNION `KIND`
+taxonomy (see `deferred_work_done_list.md`'s "UNION compatibility
+revised again... to compare by conceptual `KIND`" entry): the Results
+Run Manifest (table 5) records `named_file_fingerprint` (which named-
+file content drove the run) but has no equivalent field for which
+named-paths group *content* drove the run — only `named_paths_uuid`
+(the group version's registration identity, not its content). David's
+own words: "it's not, but should be." This is what would let a run be
+compared, by `:fingerprint()`/`KIND == "fingerprint"`, against the
+named-paths group whose *content* (not registration event) produced it
+-- catching the case where the same `group.csvpath` text was loaded
+under two different names (different uuids, identical fingerprint).
+Not yet built: no `NamedPathsFingerprint3` function, no manifest field,
+no registrar change to populate it.
 
-This actually realigns the code with what Rule 1's own docstring already
-said: "resolving full manifest content always touches exactly one entity"
-— resolve-scoped language, even though the current enforcement
-(`if has_manifest and len(candidates) > 1: raise ...`) lives inside
-`query()` itself, in all three finders.
+## `'*'`-traversal content-accessor guards — candidates for the same query()/resolve() split, not yet re-audited
 
-**Likely a bigger simplification than just deleting `:path()`, not just a
-retirement** — a lot of the currently-tracked `'*'`-traversal guards (both
-the FILES-untouched entry and the RESULTS/CSVPATHS partial generalization)
-reject combining `'*'` traversal with `:manifest()`/`:path()`/a field-
-accessor specifically *because* of this same query()-time ambiguity. Once
-that restriction no longer applies at query() time, several of those
-guards may turn out to be unnecessary rather than needing to be built out
-— re-audit case by case once this lands, rather than assuming it dissolves
-everything at once.
+Left over from retiring `:path()`/moving Rule 1 to `resolve()` (see
+`deferred_work_done_list.md`) — that pass deliberately touched only each
+finder's own LITERAL-root `query()` method, per its own explicit scoping
+note ("re-audit case by case once this lands, rather than assuming it
+dissolves everything at once"). These are the concrete, now-identified
+candidates for that re-audit, all still unconditional/immediate raises in
+`query()` today, none yet converted to the
+`ReferenceResults3.ambiguous_content_read` deferred-to-`resolve()` pattern:
 
-**Explicitly a deliberate breaking change, not an oversight** (David: "now
-is the time to break things... it is never too soon to make a better
-decision") — the current query()-time raise has real tests locking it in
-(`TestManifestCombinedWithNameThree` and siblings, across all three
-finders' test files). Those need rewriting to assert the new query()-
-succeeds/resolve()-raises split, not just deleted.
-
-Work: remove `Path3`/`path_3.py` and its factory registration; move the
-single-entity check out of each finder's `query()` and into `resolve()`/
-`_extract_data()` (all three finders — `files_reference_finder_3.py`,
-`csvpaths_reference_finder_3.py`, `results_reference_finder_3.py`); rewrite
-the tests that currently assert query()-time raising; re-audit the `'*'`-
-traversal guards afterward to see which are still actually needed.
+- `ResultsReferenceFinder3._query_star_traversal()`'s own `match_all and
+  accessor is not None` check (instance-level `:all()` + a well-known-file
+  accessor, during `'*'` traversal) — the literal-root twin of this was
+  deliberately left as an unconditional raise too (see the done-list entry
+  below), not converted, so this one should be decided together with that
+  one, not in isolation.
+- `ResultsReferenceFinder3._star_pool_and_reduce()`'s `len(run_homes) > 1
+  and accessor is not None` check — **converted 2026-08-27**, see
+  `deferred_work_done_list.md`. Confirmed safe before converting: this
+  branch only runs when `pointer is None`, so there is no per-partition
+  reduction anywhere nearby to conflate with, unlike the GROUP-mode cases
+  below.
+- `ResultsReferenceFinder3._star_group_and_reduce()`'s `accessor is not
+  None and pointer is not None` check (`'*'`-traversal GROUP mode + a
+  content accessor) — mirrors FILES'/CSVPATHS' own GROUP-mode restrictions
+  below, not obviously safe to convert (see next item).
+- `FilesReferenceFinder3._query_star_traversal()`'s unconditional
+  `:manifest()`/field-accessor-during-traversal rejection, and the literal-
+  root `':all()'/':groups()' grouping + content accessor` rejection in
+  `query()` (both files and results) — these are NOT simple count checks;
+  they reject the combination outright regardless of how many entities
+  would actually match. Converting them naively to a count-based deferred
+  check already proved unsafe once (a CSVPATHS `:all():last():manifest()`
+  test, spanning several groups each already reduced to one match via the
+  pointer, is legitimate and must NOT raise) — any change here needs the
+  same "was a pointer actually applied within each partition" reasoning
+  the literal-root fix used, not a blind port.
 
 ## `resolve_kind`'s hardcoded name-tuple dispatch — needs examination for clarity/impact before deciding
 
@@ -60,9 +71,12 @@ Found 2026-08-22 while checking whether the compendium's old §6 ("Known
 gaps") still had anything current in it. `Reference3.resolve_kind` (`reference_3.py`)
 dispatches `METADATA_FILE`/`METADATA_FIELD` classification off two hardcoded
 name-string tuples, `_METADATA_FILE_FUNCTIONS`/`_METADATA_FIELD_FUNCTIONS`
-(38 names total) — confirmed every single name in both tuples *is* backed
-by a real, registered `Function3` today (checked all 38 directly against
-the function registry, none missing). So nothing is factually broken.
+(now over 60 names combined, after several rounds of new field accessors
+each needing their own name added by hand) — confirmed every single name in
+both tuples *is* backed by a real, registered `Function3` today. So nothing
+is factually broken, but the tuples have kept growing by hand with every
+new batch of field accessors — a maintenance cost, and exactly the kind of
+thing a declarative check would eliminate.
 
 But the code comment sitting directly above those two tuples says: "both
 lists will be replaced by real per-function trait lookups once `Function3`
@@ -82,7 +96,9 @@ switched to a declarative check, whether the two tuples could shrink to
 one shared mechanism, whether this connects to the still-unrecognized
 "file/well-known-file accessor" category from the four-function-types
 discussion) before deciding whether/how to act on it. Flagging for
-clarity, not yet a committed-to fix.
+clarity, not yet a committed-to fix. Still true as of 2026-08-26 — every
+new field-accessor batch since has kept adding to the tuples by hand
+rather than resolving this.
 
 **A precedent for exactly this kind of fix already exists in the codebase**
 (found while scanning the old compendium copy before it was deleted):
@@ -97,7 +113,7 @@ call, rolled out incrementally one finder at a time. Whatever `resolve_kind`
 ends up doing should probably follow the same template (a declarative
 class attribute + one shared check) rather than inventing a new pattern.
 
-## Predicate-argument field accessors (`:on_arrival(:not_none())`) — not built anywhere
+## Predicate-argument field accessors (`:on_arrival(:not_none())`) — filter half built for `:idchain()`, generic mechanism still not built
 
 David, 2026-08-21, drafting the compendium's replacement `:manifest()`/
 `:definition()` section: an AI needs to answer "which named-files trigger a
@@ -165,32 +181,48 @@ cleanly onto two different grammar positions, not one ambiguous shape:
 
 This rule is now written up directly in the two functions' own code
 comments (`errors_3.py`, `idchain_3.py`) as the most load-bearing place for
-it to live, cross-referenced to this bucket-list entry. Still to design/
-build: the actual GATE dispatch mechanism (a chained sibling function
-whose own predicate argument controls whether the preceding function's
-result is emitted) — this is additive to `:idchain()`'s existing filter
-behavior, not a replacement for it.
+it to live, cross-referenced to this bucket-list entry.
 
-## Corrections needed in the new `:manifest()`/`:definition()` compendium section (David's draft, 2026-08-21)
+**Settled 2026-08-24, now in the compendium itself (§4.13/4.14)** — the
+concrete, confirmed acceptance criteria for both filter and gate, using
+`:idchain()` for both rather than the earlier, more speculative
+`:error_count(:above(5))`-only framing:
+```
+$acme.results.:last().:errors()                             -- path+uuid; resolves to full content
+$acme.results.:last().:errors(:idchain(:not_none()))         -- path+uuid; resolves to all errors that HAVE an idchain (filter)
+$acme.results.:last().:errors(:idchain("add[0]"))            -- path+uuid; resolves to all errors matching that idchain (filter)
+$acme.results.:last().:errors():idchain(:not_none())         -- path+uuid; resolves to full content, iff some idchain exists (gate)
+$acme.results.:last().:errors():idchain("add[0]")            -- path+uuid; resolves to full content, iff a matching idchain exists (gate)
+```
+This settles the mechanism as reusing `:idchain()` in *both* positions
+(nested = filter, chained = gate) rather than needing a separate, purpose-
+built gate function — the predicate argument (`:not_none()`, or a literal/
+`Regex3`) works the same way in either slot; only the position changes
+what happens with the result.
 
-While reviewing David's own replacement text for the "root `:manifest()`
-and `:definition()` files" section (aimed at cutting implementation-history
-cruft down to design intent, which the old section had a lot of):
+**The FILTER half, and the six missing predicate functions themselves
+(compendium 5.31) — BUILT 2026-08-26** — see `deferred_work_done_list.md`
+for the full writeup (`:true()`/`:false()`/`:none()`/`:not_none()`/
+`:empty()`/`:not_empty()`, a new shared `PredicateFunction3` base class,
+and `Idchain3.ARG_TYPES` widened to accept one). `:regex()` as a
+*function* (as opposed to `Regex3`, the literal type `:idchain()`
+already accepted) is still unbuilt — separately tracked under the
+grammar/argument-type-gaps entry, not double-counted here.
 
-- `$acme.files.:manifest():last()` was given as an example returning "the
-  last file registration data captured in the **global** files ledger
-  manifest" — wrong on two counts. A literal root_major (`acme`) can never
-  mean the global ledger — only `$*` reaches that; `$acme` always means
-  acme's own manifest.json. And even read as "acme's own manifest, last
-  entry" (not the global one), that exact shape is the unbuilt gap in the
-  bucket-list entry directly above this one — it raises today, it doesn't
-  work. Needs splitting into two correct examples: `$*.files.:manifest()
-  :last()` (global ledger's last entry — genuinely works today) and
-  `$acme.files.:manifest():last()` (acme's own manifest's last entry — does
-  not work yet).
-- The draft called the definition-file function `:description()`; the real,
-  existing function is `:definition()`. David confirmed this was just a
-  slip while drafting, not an intentional rename.
+Still to design/build:
+- **The generic "any field accessor takes a predicate argument"
+  mechanism** (`:on_arrival(:not_none())`, the FILES definition-field
+  example that originally motivated this whole entry) — NOT built.
+  `Idchain3` accepting a predicate is a narrow, specific fix for one
+  function; nothing generic exists yet for arbitrary field accessors to
+  do the same. Still needs the design work described above (how a
+  predicate argument is recognized/dispatched generically) before
+  building.
+- The actual GATE dispatch mechanism — a chained sibling function whose
+  own predicate argument controls whether the *preceding* function's
+  result is emitted at all — is additive to `:idchain()`'s existing filter
+  behavior, not a replacement for it, and still needs building from
+  scratch; nothing dispatches this today.
 
 ## `$name.files.:manifest():last()` (ordinal pointer into a single named-file's own manifest) — not built
 
@@ -209,7 +241,11 @@ name_one -- put the version-selecting function in name_three instead.`
 (`files_reference_finder_3.py:169-174`). The reason: `_pointer_before_
 manifest()` (the mechanism behind Rule 1b) is only invoked in the
 `isinstance(root_major, Star3)` branch (`files_reference_finder_3.py:116`)
-— there is no equivalent call for a literal root_major.
+— there is no equivalent call for a literal root_major. Re-confirmed still
+true 2026-08-26 (`_pointer_before_manifest` is still only called from the
+`Star3` branch of `query()`, unchanged) — the related doc-example
+correction (which examples were wrong, not whether this code gap exists)
+was fixed separately, see `deferred_work_done_list.md`.
 
 Open question David flagged, not yet settled: is this actually a good/
 wanted alternative to a full `:name(...)` + name_three reference (which
@@ -218,69 +254,15 @@ narrower thing), or just a symmetry nicety worth having anyway? Worth
 resolving before building, not just building because Rule 1b's shape
 suggests it.
 
-## Retire `:home()`, split into scope-specific home functions
+## `#name_two` combined with `'*'` traversal — still not supported
 
-David, 2026-08-21: no manifest anywhere has a literal `"home"` key — confirmed,
-`Home3.KEY` (`home_3.py`) reads `file_home` (FILES), `named_paths_home`
-(CSVPATHS), `run_home` (RESULTS run scope), `instance_home` (RESULTS
-instance scope), never a bare `"home"`. Proposed replacement: separate,
-obviously-named functions matching the real keys — `:file_home()`,
-`:group_home()`, `:instance_home()`, `:run_home()` (David also listed
-`:name_home()`; couldn't confidently map that fifth name onto any of
-`Home3`'s current four keys — clarify when actually designing this).
-
-Two things to check/preserve, not just the field-read, before splitting:
-- `:home()` today does **two** jobs, not one — the field read (going
-  away), and (FILES + RESULTS only, not CSVPATHS, which has no path
-  dimension) the *only* legal way to express "nothing narrows here" at a
-  bare, zero-segment position — a truly empty `name_one` isn't legal
-  grammar at all (`path_prefix` requires >= 1 segment). Whichever new
-  function replaces `:home()` for FILES/RESULTS-run needs to keep serving
-  that placeholder role, not just the field-read.
-- `:group_home()` (CSVPATHS)/`:instance_home()` (RESULTS instance) likely
-  only ever need the field-read job — `Home3.POSITIONS`' own comment
-  already notes CSVPATHS has no "bare zero-level selector" case, and the
-  same reasoning likely applies to a specific instance.
-- **`:home()` vs. `:all()`, precisely (David, 2026-08-21)**: not just a
-  different depth — a different axis entirely. `:home()`'s placeholder
-  role indicates the zero-level ("no template") homes as a **complete
-  path** — nothing narrows further, so the result already *is* the whole
-  entity's own home directory. `:all()` indicates **any value of one path
-  segment** — a path *part*, the observed value at exactly one wildcarded
-  position — with the complete path only emerging once that grouping
-  resolves (and reduces, if a pointer is present). Whichever function
-  replaces `:home()`'s placeholder role needs to preserve this distinction
-  too, not just the depth (zero vs. one level).
-
-Work: re-verify `:home()`'s complete current behavior (both jobs, every
-`POSITIONS` entry) as the actual starting point, then build the new
-functions preserving whichever job each one actually needs, then remove
-`:home()` and fix the compendium's own now-incorrect claim about it
-"reverting to its ordinary job of reading the field."
-
-## `#name_two` (XLSX worksheet marker) — not built anywhere
-
-David, 2026-08-21: raised while reviewing the compendium — does
-`ReferenceResult3` need a field for which worksheet was found? Confirmed
-it does not have one today, and neither does anything else exist yet to
-make that field meaningful. **Resolved, 2026-08-21: reuse `identity`**
-(David: "identity works quite well with worksheet (name_two)") rather
-than adding a dedicated field — no `ReferenceResult3` change needed when
-this actually gets built, just populate `identity` with the worksheet
-name the same way CSVPATHS already populates it with a statement
-identifier.
-
-- The grammar already has the slot (`name_one: path_prefix ("#" name_two)?
-  func_chain?`, `reference_grammar_3.py:102,109`), and it parses fine
-  (`NameOne3.name_two`, `ReferenceParser3.name_two`) — but **every** finder
-  rejects it outright the moment it's present, including `FilesReference
-  Finder3` itself (`files_reference_finder_3.py:134-138`), where it's
-  documented as the eventual, files-only, XLSX-worksheet meaning.
-  CSVPATHS/RESULTS correctly reject it as files-only; FILES rejecting it
-  too just means the feature isn't built yet anywhere.
-- Work still needed: teach `FilesReferenceFinder3` to accept `#name_two`
-  and actually read the named worksheet, then populate the resulting
-  `ReferenceResult3.identity` with it.
+Left over from building `#name_two` support for `FilesReferenceFinder3`
+(see `deferred_work_done_list.md`) — deliberately scoped to the literal-
+root `query()` only, same scoping discipline as the recent `:path()`/
+Rule 1 and `:home()` splits. `_query_star_traversal()`'s own `#worksheet`
+rejection is untouched, still unconditional. Not yet a concrete worked
+example driving this — add one if/when a real use case asks for reading
+a named worksheet across every named-file matched by `'*'`.
 
 ## Function self-documentation — dual selector/value-accessor behavior
 
@@ -328,27 +310,31 @@ identifier.
   (lines 79-80) says it should. No `:regex()` *function* exists anywhere in
   v3 today, for any position (`Regex3` is a `/pattern/` *literal* type,
   usable as some other function's argument value — a different thing).
-- A name_one path segment cannot be a regex either — `_compile_path_
-  pattern()` only accepts `:name("...")` as a function-valued segment, and
-  `Name3.ARG_TYPES = (str,)` (no `Regex3` support).
-- `@variable` (`Variable3`) is parsed but not usable anywhere as a real
-  argument — no currently-registered function's `ARG_TYPES` includes it.
-  The only place it's structurally accepted at all is a bare `@variable`
-  inside `{...}` string interpolation, and even there it can't be
-  *evaluated* yet (see interpolation-evaluation item below).
+  Confirmed 2026-08-27, while building `:name(/regex/)` (see
+  `deferred_work_done_list.md`), that this is a genuinely different,
+  bigger question, not a small extension of that fix: a root_major
+  regex would select among *distinct named-files/groups themselves*
+  (root_major's own job), not a path segment *within* one already-
+  chosen entity, and would need real grammar changes plus a decision on
+  how it composes with `'*'` traversal's own existing semantics — left
+  alone, not attempted.
+- `@variable` (`Variable3`) registration and `{...}` interpolation
+  evaluation are both **built 2026-08-26** — see `deferred_work_done_list.md`.
+  Still not built: `@variable` used as some OTHER function's *own direct
+  argument* (e.g. a hypothetical `:uuid(@myvar)`, per the dual-selector/
+  value-accessor entry above) — no currently-registered function's
+  `ARG_TYPES` includes `Variable3` at all. This is a separate,
+  independent gap from interpolation, not shared machinery — nothing
+  about the registration API or `_resolve_value()` built for
+  interpolation would need to change to also cover this, it is a
+  per-function `ARG_TYPES` question.
 
 ## `'*'` traversal — RESULTS/CSVPATHS remaining gap
 
-- `:manifest()` combined with real `'*'`-traversal narrowing (`:all()`/
-  `:flatten()`/a literal prefix) is still unsupported, both
-  `ResultsReferenceFinder3` and `CsvpathsReferenceFinder3` — the one
-  traversal restriction that survived every other generalization pass.
-  `_extract_data()` can't yet reliably tell a Rule-1b global-ledger result
-  apart from a genuine traversal result once both carry a real uuid;
-  comparing `result.path` against the ledger's own known, fixed path
-  (rather than `result.uuid is not None`) is the identified fix. See
-  `references_v3_compendium.md` §6 for the full writeup. **Currently the
-  active next task.**
+The `:manifest()`-combined-with-narrowing gap this section used to track,
+and a stale-entry correction, are both done — see
+`deferred_work_done_list.md`. Still open:
+
 - `:groups()` combined with `'*'` traversal (RESULTS) — no established
   per-GROUP-of-named-results-groups meaning settled yet for the any-depth
   case.
@@ -357,69 +343,40 @@ identifier.
   where the named-paths group included a csvpath with a given identity"
   vs. "just give me the matching instances" both want this on RESULTS
   directly. See `references_expressions.md`.
-- **`CsvpathsReferenceFinder3`'s own `'*'` traversal still requires a
-  pointer in POOL/flatten mode, but not in GROUP/`:all()` mode — a known,
-  deliberately-left inconsistency, not yet fixed.** Found while scanning
-  the old compendium copy before it was deleted — this was an explicit
-  observation made while generalizing traversal, not something newly
-  discovered here: `FilesReferenceFinder3` and `ResultsReferenceFinder3`'s
-  own literal-root `query()` never require a pointer in *any* mode (a
-  missing pointer means "every matched candidate comes back, unreduced"),
-  and both finders' `'*'` traversal were fixed to match — CSVPATHS'
-  traversal was the one left as the actual outlier, on purpose, since
-  fixing it wasn't blocking anything built at the time. Still true today,
-  as far as this pass could tell; worth a real look now that traversal
-  work is being picked back up (this list's `:manifest()` +
-  `'*'`-traversal item above).
 
 ## `'*'` traversal — FILES, essentially untouched by the recent RESULTS/CSVPATHS work
 
 - `FilesReferenceFinder3`'s own `_query_star_traversal()` still rejects
-  combining `'*'` traversal with `:manifest()`/`:definition()`/`:path()`/a
-  field-accessor function outright — the same class of gap RESULTS/CSVPATHS
-  just had fixed (field accessors, then `:having()`/`:flatten()`/`:all()`,
-  then path narrowing/`name_three`, then pointer optionality), never
-  applied to FILES. FILES' traversal already never requires a pointer
-  (confirmed — no fix needed there), but everything else in that
-  generalization sequence hasn't been revisited for this datatype.
-  (`:definition()` added by name 2026-08-21 — previously only `:manifest()`
-  was called out here, but it has the identical gap, confirmed below.)
+  combining `'*'` traversal with `:manifest()`/a field-accessor function
+  outright (`:definition()` is now the one exception, see below) — the
+  same class of gap RESULTS/CSVPATHS just had fixed (field accessors,
+  then `:having()`/`:flatten()`/`:all()`, then path narrowing/`name_three`,
+  then pointer optionality), never applied to FILES otherwise. FILES'
+  traversal already never requires a pointer (confirmed — no fix needed
+  there), but everything else in that generalization sequence hasn't been
+  revisited for this datatype.
 
-- **Concrete worked example motivating this (David, 2026-08-21)**: "which
+- **Concrete worked example that drove this (David, 2026-08-21)**: "which
   named-files have `on_arrival` set" needs `$*.files.:home():definition
   (:on_arrival(:not_none()))` — every named-file, zero-level (no-template)
   registrations only, with `definition.json`'s `on_arrival` field present.
-  Live-tested each piece independently (dropping the not-yet-built
-  predicate, since it can't even parse) to confirm exactly what's missing,
-  rather than assuming one gap covers it — turns out this one reference
-  needs **four independent fixes**, not one:
-  1. Typo aside (`home()` needs its leading colon), `:home()` + `'*'`
-     traversal doesn't exist — `$*.files.:home()` alone raises `"Does not
-     yet support :home() as a name_one path segment."` `:home()`'s
-     zero-level-selector behavior (`_is_bare_home_reference`) was only ever
-     built for a literal root_major, never extended to traversal.
-  2. `:definition()` + `'*'` traversal doesn't exist either — same
-     rejection, confirmed independently. `:definition()` is only wired for
-     the literal-root bare case (`_is_bare_pointer_reference`); nothing
-     routes it through `_query_star_traversal` at all.
-  3. Chaining them together is *separately* blocked even once #1/#2 are
-     fixed — `$*.files.:home():definition()` raises a different, more
-     specific error: `"does not yet support functions attached directly to
-     name_one for '*' traversal."` A dedicated guard rejects any
-     function-in-name_one during `'*'` traversal, so fixing `:home()` and
-     `:definition()` individually would not automatically make the
-     combination work.
-  4. The predicate itself, `:on_arrival(:not_none())` — see the
-     predicate-argument entry above; not built anywhere, independent of
-     all three traversal issues above.
-
-  Use this reference as the acceptance test once all four pieces are
-  built: `$*.files.:home():definition(:on_arrival(:not_none()))` should
-  return exactly the zero-level named-files whose `definition.json` has a
-  non-`None` `on_arrival`.
+  Turned out to need four independent fixes, not one:
+  1. **`:home()` + `'*'` traversal — BUILT 2026-08-27**, see
+     `deferred_work_done_list.md`.
+  2. **`:definition()` + `'*'` traversal — BUILT 2026-08-27**, see
+     `deferred_work_done_list.md`.
+  3. **Chaining `:home():definition()` together — BUILT 2026-08-27**, see
+     `deferred_work_done_list.md`.
+  4. **The predicate itself, `:on_arrival(:not_none())` — still NOT
+     built.** See the predicate-argument entry above (the "any field
+     accessor takes a predicate argument" mechanism it needs is still
+     unbuilt). The full acceptance test
+     (`$*.files.:home():definition(:on_arrival(:not_none()))`) still
+     cannot parse until this lands — #1/#2/#3 were tested with the
+     predicate dropped, per the done-list entry's own worked examples.
 - FILES' `:all()`/`:groups()` (GROUP modes) combined with `:manifest()`/
-  `:path()`/a field-accessor — same single-entity-vs-grouping restriction
-  RESULTS' `name_three` content accessor now has, not yet built for FILES.
+  a field-accessor — same single-entity-vs-grouping restriction RESULTS'
+  `name_three` content accessor now has, not yet built for FILES.
 - A literal prefix *before* `:flatten()` for FILES, e.g. `"2025/:flatten()
   /:name('orders.csv')"` — "any `orders.csv` below 2025, at any depth in
   between." Explicitly deferred 2026-08-12 — David wants it eventually,
@@ -433,13 +390,20 @@ identifier.
 
 ## Functions
 
-- `:path()` does not support RESULTS at all yet (`DATATYPES = (FILES,
-  CSVPATHS)`) — can't wrap RESULTS' own `:manifest()` or any well-known
-  instance file (`:errors()`, `:vars()`, etc.).
 - Functions named in the spec/example-queries docs with no `Function3`
-  subclass yet: `:before()`/`:after()`, `:yesterday()`, `:quarter()`,
-  `:choice()`, `:names()`, `:message()`, `:count()`, `:above()`,
-  `:has_errors()`, `:type()`, `:at()`.
+  subclass yet: `:before()`/`:after()`, `:quarter()`, `:choice()`,
+  `:names()`, `:message()`, `:count()`, `:above()`, `:has_errors()`,
+  `:at()`. (Corrected 2026-08-26: `:type()` used to be listed here too,
+  but it was built as part of the Table 1 field-accessor batch —
+  confirmed live, `Type3` is registered, `NAME = "type"` — this list had
+  gone stale; removed. Corrected again 2026-08-27: `:yesterday()` was
+  also stale — confirmed live, `Yesterday3` is registered, built
+  alongside `:today()` in the "pure value" date/time functions batch —
+  removed.) None of the remaining names here have settled semantics
+  beyond their bare mention in the spec/example-queries docs — unlike
+  every other item in this file, there is no worked example or design
+  note to build from, so picking one to build means guessing its
+  intended behavior, not implementing an already-decided design.
 
 ## Bigger, standing items
 
@@ -448,11 +412,12 @@ identifier.
   `parse_interactive()`/`InteractiveParser.choices()` plus a datatype/slot-
   filtered function registry), but it predates the merged grammar and
   isn't wired into `REFERENCE_GRAMMAR_3`/`Function3`/`describe()` at all.
-- **`{...}` interpolation evaluation.** Parsing/validation is built;
-  actually resolving an `InterpolatedString3` into final text at runtime
-  is not — needs variable resolution (`@name` against a real `CsvPaths`/
-  scope context) and something to actually call a real `VALUE`-role
-  function at evaluation time.
+- **`{...}` interpolation evaluation — BUILT 2026-08-26**, both halves
+  (function-call and `@variable`) — see `deferred_work_done_list.md`.
+  `_resolve_value()`'s function-call handling is still narrow (only
+  `SOURCE == "clock"` functions), worth widening once other `VALUE`-role
+  functions exist that make sense inside `{...}` — not urgent, no such
+  function exists yet.
 - **v3 is not wired into production.** `results_manager.py`/
   `file_manager.py` still dispatch through the older v2 reference system
   (`csvpath/util/references/`). Everything built so far has been
@@ -466,3 +431,11 @@ level. This list is the lighter-weight, more granular working companion to
 that — check both, but don't feel obligated to keep every item in perfect
 sync between the two; this list is allowed to be the messier, more
 immediate one.
+
+As of 2026-08-26, completed entries live in a paired file,
+`deferred_work_done_list.md`, rather than being deleted outright — the
+reasoning behind *why* something was built a particular way is often
+exactly what the next person touching that code needs, so it's kept in
+full there rather than trimmed to a one-line changelog. When an item on
+*this* list gets built, move it (with its full history) to that file
+instead of just deleting it.

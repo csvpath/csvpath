@@ -13,6 +13,7 @@ class NamedResultsName3(Function3):
     ARG_TYPES = ()
     ARG_REQUIRED = False
     SOURCE = "manifest"
+    KIND = "name"
     KEY = {
         Reference3.RESULTS: "named_results_name",
         Reference3.RESULT: "named_results_name",

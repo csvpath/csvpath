@@ -38,6 +38,7 @@ class Uuid3(Function3):
     ARG_TYPES = ()
     ARG_REQUIRED = False
     SOURCE = "manifest"
+    KIND = "uuid"
     KEY = {
         Reference3.FILES: "uuid",
         Reference3.CSVPATHS: "uuid",

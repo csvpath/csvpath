@@ -5,12 +5,26 @@ from ..function_3 import Function3
 class Fingerprint3(Function3):
     #
     # see uuid_3.py for the shared field-accessor design this follows.
-    # deliberately not unified with the Results Run Manifest's
-    # named_file_fingerprint or the Result Instance Manifest's
-    # file_fingerprints -- those describe the fingerprint of other
-    # content this result consumed/produced, not of the entity itself,
-    # per manifest_field_functions_proposal.md's Part A note on this
-    # function.
+    #
+    # KIND = "fingerprint" (added 2026-08-26, revised same day from an
+    # initial "leave uncategorized" call -- see ReferenceExpression3's
+    # own UNION-compatibility notes): a fingerprint is a cryptographic
+    # identity of BYTES, not of an entity/event the way a uuid is --
+    # two fingerprints being equal means "the same content," full stop,
+    # regardless of which manifest field recorded it or which distinct
+    # entity that field belongs to. David's own worked case: a named-
+    # paths group's own content (this function) legitimately compares
+    # against a run's own record of which named-paths content drove it
+    # (a field the run manifest does not carry yet, but should --
+    # tracked on the deferred-work bucket list) -- something :uuid()
+    # cannot do, since two groups loaded from identical group.csvpaths
+    # text under different names get different uuids but identical
+    # fingerprints. Grouped with the Results Run Manifest's own
+    # named_file_fingerprint and the Result Instance Manifest's own
+    # file_fingerprints under this same KIND for exactly that reason,
+    # even though each describes a different entity's content -- the
+    # conceptual purpose (byte-identity) is what UNION compares, not
+    # which entity happens to own the field.
     #
     # ARG_TYPES accepts an optional str -- added 2026-08-13, for FILES
     # only, to support the bare-lookup shape
@@ -44,6 +58,7 @@ class Fingerprint3(Function3):
     ARG_TYPES = (str,)
     ARG_REQUIRED = False
     SOURCE = "manifest"
+    KIND = "fingerprint"
     KEY = {
         Reference3.FILES: "fingerprint",
         Reference3.CSVPATHS: "fingerprint",

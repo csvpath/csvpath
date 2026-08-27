@@ -7,20 +7,18 @@ from csvpath.references.reference_exceptions_3 import ReferenceException3
 
 
 def test_metadata():
+    # narrowed 2026-08-26 -- :home() keeps only the FILES/RESULTS
+    # zero-level placeholder role; the old field-read job (SOURCE/KEY)
+    # moved to :file_home()/:group_home()/:run_home()/:instance_home().
     f = Home3()
     assert f.name == "home"
     assert f.ROLE == Function3.VALUE
-    assert f.DATATYPES == (
-        Reference3.FILES,
-        Reference3.CSVPATHS,
-        Reference3.RESULTS,
-    )
-    assert f.SOURCE == "manifest"
-    assert f.KEY == {
-        Reference3.FILES: "file_home",
-        Reference3.CSVPATHS: "named_paths_home",
-        Reference3.RESULTS: "run_home",
-        Reference3.RESULT: "instance_home",
+    assert f.DATATYPES == (Reference3.FILES, Reference3.RESULTS)
+    assert f.SOURCE is None
+    assert f.KEY == {}
+    assert f.POSITIONS == {
+        Reference3.FILES: (Reference3.NAME_ONE,),
+        Reference3.RESULTS: (Reference3.NAME_ONE,),
     }
 
 

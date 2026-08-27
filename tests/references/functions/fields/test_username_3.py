@@ -10,9 +10,17 @@ def test_metadata():
     f = Username3()
     assert f.name == "username"
     assert f.ROLE == Function3.VALUE
-    assert f.DATATYPES == (Reference3.RESULTS,)
+    assert f.DATATYPES == (
+        Reference3.FILES,
+        Reference3.CSVPATHS,
+        Reference3.RESULTS,
+    )
     assert f.SOURCE == "manifest"
     assert f.KEY == {Reference3.RESULTS: "username"}
+    assert f.LEDGER_KEY == {
+        Reference3.FILES: "username",
+        Reference3.CSVPATHS: "username",
+    }
 
 
 def test_no_arg_is_valid():

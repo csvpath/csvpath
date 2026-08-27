@@ -10,9 +10,17 @@ def test_metadata():
     f = Hostname3()
     assert f.name == "hostname"
     assert f.ROLE == Function3.VALUE
-    assert f.DATATYPES == (Reference3.RESULTS,)
+    assert f.DATATYPES == (
+        Reference3.FILES,
+        Reference3.CSVPATHS,
+        Reference3.RESULTS,
+    )
     assert f.SOURCE == "manifest"
     assert f.KEY == {Reference3.RESULTS: "hostname"}
+    assert f.LEDGER_KEY == {
+        Reference3.FILES: "hostname",
+        Reference3.CSVPATHS: "hostname",
+    }
 
 
 def test_no_arg_is_valid():

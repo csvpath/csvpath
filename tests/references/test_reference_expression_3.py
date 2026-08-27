@@ -188,6 +188,83 @@ class TestSubtract:
         assert result.files == ["b-run1"]
 
 
+class TestFilterByIdentity:
+    # paths/paths, or values(LHS)/paths(RHS) -- the comparison basis is
+    # identity (path+uuid together), never .data. Built 2026-08-26, the
+    # references_v3_expressions.md paths-vs-values compatibility matrix.
+    def test_intersect_keeps_left_items_whose_identity_matches(self):
+        left = ReferenceResults3(
+            results=[
+                ReferenceResult3(path="p1", uuid="u1", data="ignored"),
+                ReferenceResult3(path="p2", uuid="u2"),
+            ]
+        )
+        right = ReferenceResults3(results=[ReferenceResult3(path="p1", uuid="u1")])
+        result = ReferenceExpression3._filter_by_identity(left, right, keep=True)
+        assert result.files == ["p1"]
+        # LHS's own .data survives intact -- the comparison basis
+        # changed, the output shape did not.
+        assert result.results[0].data == "ignored"
+
+    def test_subtract_removes_left_items_whose_identity_matches(self):
+        left = ReferenceResults3(
+            results=[
+                ReferenceResult3(path="p1", uuid="u1"),
+                ReferenceResult3(path="p2", uuid="u2"),
+            ]
+        )
+        right = ReferenceResults3(results=[ReferenceResult3(path="p1", uuid="u1")])
+        result = ReferenceExpression3._filter_by_identity(left, right, keep=False)
+        assert result.files == ["p2"]
+
+    def test_same_path_different_uuid_does_not_match(self):
+        # e.g. CSVPATHS shares one group.csvpath path across every
+        # version -- path alone is not enough, uuid must agree too.
+        left = ReferenceResults3(results=[ReferenceResult3(path="p1", uuid="u1")])
+        right = ReferenceResults3(results=[ReferenceResult3(path="p1", uuid="u2")])
+        result = ReferenceExpression3._filter_by_identity(left, right, keep=True)
+        assert result.results == []
+
+
+class TestFilterByNativeUuid:
+    # paths(LHS)/values(RHS) where RHS's own accessor is uuid-valued --
+    # LHS's own NATIVE uuid (no accessor needed) is compared directly
+    # against RHS's .data.
+    def test_intersect_keeps_left_items_whose_native_uuid_is_in_the_right_values(self):
+        left = ReferenceResults3(
+            results=[
+                ReferenceResult3(path="p1", uuid="file-uuid-1"),
+                ReferenceResult3(path="p2", uuid="file-uuid-2"),
+            ]
+        )
+        right = ReferenceResults3(
+            results=[ReferenceResult3(path="r1", uuid=None, data="file-uuid-1")]
+        )
+        result = ReferenceExpression3._filter_by_native_uuid(left, right, keep=True)
+        assert result.files == ["p1"]
+
+    def test_subtract_removes_left_items_whose_native_uuid_is_in_the_right_values(self):
+        left = ReferenceResults3(
+            results=[
+                ReferenceResult3(path="p1", uuid="file-uuid-1"),
+                ReferenceResult3(path="p2", uuid="file-uuid-2"),
+            ]
+        )
+        right = ReferenceResults3(
+            results=[ReferenceResult3(path="r1", uuid=None, data="file-uuid-1")]
+        )
+        result = ReferenceExpression3._filter_by_native_uuid(left, right, keep=False)
+        assert result.files == ["p2"]
+
+    def test_left_item_with_no_native_uuid_never_matches(self):
+        left = ReferenceResults3(results=[ReferenceResult3(path="p1", uuid=None)])
+        right = ReferenceResults3(
+            results=[ReferenceResult3(path="r1", uuid=None, data="file-uuid-1")]
+        )
+        result = ReferenceExpression3._filter_by_native_uuid(left, right, keep=True)
+        assert result.results == []
+
+
 #
 # ---- constructor validation
 #
@@ -257,6 +334,7 @@ GROUPA_MANIFEST = [
         "named_paths": ["stmt orders text"],
         "named_paths_identities": ["orders"],
         "named_paths_name": "groupa",
+        "fingerprint": "groupa-fp",
     }
 ]
 GROUPB_MANIFEST = [
@@ -323,12 +401,14 @@ def _write_json(path, data) -> None:
     path.write_text(json.dumps(data))
 
 
-def _make_run(base, run_name: str, run_uuid: str, group_name: str) -> str:
+def _make_run(
+    base, run_name: str, run_uuid: str, group_name: str, *, named_file_fingerprint=None
+) -> str:
     run_dir = base / run_name
-    _write_json(
-        run_dir / "manifest.json",
-        {"run_uuid": run_uuid, "named_paths_name": group_name},
-    )
+    manifest = {"run_uuid": run_uuid, "named_paths_name": group_name}
+    if named_file_fingerprint is not None:
+        manifest["named_file_fingerprint"] = named_file_fingerprint
+    _write_json(run_dir / "manifest.json", manifest)
     return str(run_dir)
 
 
@@ -346,7 +426,13 @@ def orders_archive(tmp_path):
     # example (references_notes/notes/reference_expressions_notes.txt).
     archive = tmp_path / "archive"
     a_runs = [
-        _make_run(archive / "groupa", "2026-01-01_00-00-00", "a1", "groupa"),
+        _make_run(
+            archive / "groupa",
+            "2026-01-01_00-00-00",
+            "a1",
+            "groupa",
+            named_file_fingerprint="groupa-fp",
+        ),
         _make_run(archive / "groupa", "2026-01-02_00-00-00", "a2", "groupa"),
     ]
     b_runs = [
@@ -473,6 +559,172 @@ class TestOrdersExampleEndToEnd:
             csvpaths=orders_archive,
         )
         assert len(expr3.resolve()) == 5
+
+
+class TestPathsVsValuesEndToEnd:
+    # references_v3_expressions.md's own paths-vs-values compatibility
+    # matrix, proven through real reference strings/resolve(), not just
+    # the synthetic-ReferenceResults3 unit tests above -- confirms
+    # _kind()/_produces_uuid() classify real references correctly and
+    # resolve() dispatches to the right comparison basis. UNION's own
+    # rule is separate and LHS-driven, revised 2026-08-26 (same day, but
+    # a real second revision, not the original build) to compare by
+    # conceptual KIND ("uuid", "name", ...) rather than requiring the
+    # two sides' accessors to be literally identical -- see the tests
+    # immediately below.
+    def test_union_of_a_paths_left_and_values_right_succeeds_by_path(
+        self, orders_archive
+    ):
+        # LHS is paths -- RHS unions freely, by path, regardless of its
+        # own kind.
+        expr = ReferenceExpression3(
+            left="$*.results.:flatten()",  # paths -- no trailing accessor
+            op=ReferenceExpression3.UNION,
+            right=_right_side(orders_archive),  # values -- :named_paths_name()
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert sorted(r.uuid for r in result.results if r.uuid) == [
+            "a1",
+            "a2",
+            "b1",
+            "b2",
+            "b3",
+            "gva",
+            "gvb",
+        ]
+
+    def test_union_of_a_values_left_and_paths_right_raises(self, orders_archive):
+        # LHS is values -- a paths-only RHS has no accessor at all, so it
+        # cannot match the left side's own terminal accessor.
+        expr = ReferenceExpression3(
+            left=_left_side(orders_archive),  # values -- :named_paths_name()
+            op=ReferenceExpression3.UNION,
+            right="$*.results.:flatten()",  # paths -- no trailing accessor
+            csvpaths=orders_archive,
+        )
+        with pytest.raises(ReferenceException3):
+            expr.resolve()
+
+    def test_union_of_two_values_sides_with_different_kinds_raises(
+        self, orders_archive
+    ):
+        # both sides are values, but the accessors are neither the same
+        # function nor the same KIND (:named_paths_name() is "name",
+        # :run_uuid() is "uuid") -- not comparable, even though both
+        # happen to resolve to strings.
+        expr = ReferenceExpression3(
+            left=_left_side(orders_archive),  # values -- :named_paths_name()
+            op=ReferenceExpression3.UNION,
+            right="$groupa.results.:flatten():run_uuid()",  # values -- :run_uuid()
+            csvpaths=orders_archive,
+        )
+        with pytest.raises(ReferenceException3):
+            expr.resolve()
+
+    def test_union_of_two_values_sides_with_the_same_kind_succeeds(
+        self, orders_archive
+    ):
+        # :uuid() and :run_uuid() are different functions but share
+        # KIND == "uuid" -- comparable under the revised rule, where the
+        # earlier, now-superseded "accessor must be literally identical"
+        # draft would have raised.
+        expr = ReferenceExpression3(
+            left="$groupa.results.:flatten():uuid()",  # values -- KIND "uuid"
+            op=ReferenceExpression3.UNION,
+            right="$groupb.results.:flatten():run_uuid()",  # values -- KIND "uuid"
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert sorted(r.data for r in result.results) == [
+            "a1",
+            "a2",
+            "b1",
+            "b2",
+            "b3",
+        ]
+
+    def test_union_of_two_name_accessors_with_the_same_kind_succeeds(
+        self, orders_archive
+    ):
+        # :named_paths_name() and :named_results_name() are different
+        # functions but share KIND == "name".
+        expr = ReferenceExpression3(
+            left="$groupa.results.:flatten():named_paths_name()",
+            op=ReferenceExpression3.UNION,
+            right="$groupa.results.:flatten():named_results_name()",
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert len(result) > 0
+
+    def test_union_of_fingerprint_and_named_file_fingerprint_succeeds(
+        self, orders_archive
+    ):
+        # :fingerprint() (the named-paths group's own content) and
+        # :named_file_fingerprint() (a RESULTS run's record of a
+        # DIFFERENT entity's content) are different functions describing
+        # different entities, but both share KIND == "fingerprint" --
+        # David's own correction (2026-08-26) to an earlier, narrower
+        # taxonomy that had left the fingerprint functions uncategorized
+        # on the reasoning that different entities cannot be compared.
+        # A fingerprint is a cryptographic identity of bytes, so "same
+        # content" is meaningful across entities, unlike uuid/name.
+        expr = ReferenceExpression3(
+            left="$groupa.csvpaths.:fingerprint()",  # values -- KIND "fingerprint"
+            op=ReferenceExpression3.UNION,
+            right="$groupa.results.:flatten():named_file_fingerprint()",  # values -- KIND "fingerprint"
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert "groupa-fp" in {r.data for r in result.results}
+
+    def test_intersect_paths_paths_compares_by_identity(self, orders_archive):
+        expr = ReferenceExpression3(
+            left="$*.results.:flatten()",
+            op=ReferenceExpression3.INTERSECT,
+            right="$groupa.results.:flatten()",
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert sorted(r.uuid for r in result.results) == ["a1", "a2"]
+
+    def test_intersect_values_left_paths_right_keeps_lhs_data(self, orders_archive):
+        expr = ReferenceExpression3(
+            left="$*.results.:flatten():named_paths_name()",  # values
+            op=ReferenceExpression3.INTERSECT,
+            right="$groupa.results.:flatten()",  # paths
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert sorted(r.uuid for r in result.results) == ["a1", "a2"]
+        # LHS's own .data (the group name) survives -- the comparison
+        # basis fell back to identity, the output shape did not change.
+        assert all(r.data == "groupa" for r in result.results)
+
+    def test_intersect_paths_left_values_right_non_uuid_raises(self, orders_archive):
+        expr = ReferenceExpression3(
+            left="$*.results.:flatten()",  # paths
+            op=ReferenceExpression3.INTERSECT,
+            right=_right_side(orders_archive),  # values, :named_paths_name() -- not uuid-valued
+            csvpaths=orders_archive,
+        )
+        with pytest.raises(ReferenceException3):
+            expr.resolve()
+
+    def test_intersect_paths_left_values_right_uuid_valued_compares_native_uuid(
+        self, orders_archive
+    ):
+        # paths(LHS)/values(RHS), RHS's own accessor (KIND == "uuid")
+        # compares LHS's native uuid directly against RHS's own .data.
+        expr = ReferenceExpression3(
+            left="$*.results.:flatten()",  # paths -- native uuids a1,a2,b1,b2,b3
+            op=ReferenceExpression3.INTERSECT,
+            right="$groupa.results.:flatten():run_uuid()",  # values, uuid-valued -- a1, a2
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert sorted(r.uuid for r in result.results) == ["a1", "a2"]
 
 
 class TestStarTraversalPlusFieldAccessorNowWorks:

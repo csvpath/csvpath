@@ -521,3 +521,49 @@ class TestResolveKind:
             name_one=self._name_one(FunctionCall3(name="manifest")),
         )
         assert r.resolve_kind == Reference3.METADATA_FILE
+
+
+class TestTerminalFunctions:
+    # extracted 2026-08-26 from resolve_kind's own inline computation --
+    # same traversal, now a public property ReferenceExpression3's own
+    # paths-vs-values classifier also relies on.
+    def _name_one(self, *path, functions=None):
+        return NameOne3(path=list(path), functions=functions)
+
+    def test_empty_when_no_functions_anywhere(self):
+        r = Reference3(
+            root_major="acme", datatype=Reference3.RESULTS, name_one=self._name_one("a")
+        )
+        assert r.terminal_functions == []
+
+    def test_uses_name_three_functions_when_present(self):
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.RESULTS,
+            name_one=self._name_one("a"),
+            name_three=NameThree3(functions=[FunctionCall3(name="errors")]),
+        )
+        names = [f.name for f in r.terminal_functions]
+        assert names == ["errors"]
+
+    def test_uses_name_one_functions_when_name_three_absent(self):
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=self._name_one("a", functions=[FunctionCall3(name="uuid")]),
+        )
+        names = [f.name for f in r.terminal_functions]
+        assert names == ["uuid"]
+
+    def test_includes_a_function_valued_path_segment(self):
+        # a "path-less, function-only" name_one has its function in
+        # .path, not .functions -- terminal_functions must include it.
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.FILES,
+            name_one=self._name_one(
+                FunctionCall3(name="last"), functions=[FunctionCall3(name="uuid")]
+            ),
+        )
+        names = [f.name for f in r.terminal_functions]
+        assert names == ["last", "uuid"]

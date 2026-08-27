@@ -1,0 +1,36 @@
+
+
+### UNION of paths
+
+UNION of paths found by `query()` without regard for UUID or any data accessible
+after `resolve()` must be possible.
+- If the LHS does not `resolve()` further than `query()` because no field accessor
+  is used, the RHS added by path.
+- If the LHS `resolve()` yields a UUID the RHS must add UUIDs.
+- If the LHS `resolve()` yields a value that doesn't match the type of the RHS's
+  `resolve()` yielded value, an error is raised because the sides are not
+  comparable.
+
+#### Examples
+
+Get all results with template :year/:run_dir and the last of any results with
+template :year/reruns/:run_dir:
+`$*.results.:year()/all() UNION $*.results.:year()/reruns/:last()`
+
+Get last four CSV versions and all TSV versions from the acme named-file where
+template is `data/:filename`:
+`$acme.files.data/:type("csv").:from(-4):to(-1) UNION $acme.files.data/:type("tsv").:all()`
+
+Get all acme reruns (template == `reruns/:filename`) and all the files from
+acme with no template that were used in a run with no template:
+```
+$acme.files.reruns/all()
+UNION
+$acme.files.home().:fingerprint() INTERSECT $acme.results.home().:fingerprint()
+```
+
+Note that in the 3rd example the RHS's INTERSECT is compared by function type and retrieved value. `:fingerprint()` retrieves a string. The reference would not accept a comparison of `:fingerprint()` to `:type()` because the function types do not serve the same conceptual purpose, making the values not the same, regardless of actual bytes value. A comparison of `:named_paths_name()` to `:named_results_name()` would work because names are conceptually the same kind of thing. This makes it important to know the purpose of the function in order to use it correctly for comparison. `:uuid()` and `:run_uuid()` are comparable. `:named_file_name()` and `:fingerprint()` are not.
+
+
+
+

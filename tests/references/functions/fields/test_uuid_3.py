@@ -16,6 +16,7 @@ def test_metadata():
         Reference3.RESULTS,
     )
     assert f.SOURCE == "manifest"
+    assert f.KIND == "uuid"
     assert f.KEY == {
         Reference3.FILES: "uuid",
         Reference3.CSVPATHS: "uuid",

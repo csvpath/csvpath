@@ -1,9 +1,12 @@
+import os
+
 import pytest
 
 from csvpath.references.files_reference_finder_3 import FilesReferenceFinder3
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.reference_results_3 import ReferenceResult3
+from csvpath.util.date_util import DateUtility as daut
 
 
 #
@@ -127,14 +130,20 @@ class _FakeFileManager:
 
 
 class _FakeConfig:
-    def __init__(self, inputs_files_path: str | None = None):
+    def __init__(self, inputs_files_path: str | None = None, log_file: str | None = None):
         self.inputs_files_path = inputs_files_path
+        self.log_file = log_file
 
 
 class _FakeCsvPaths:
-    def __init__(self, file_manager, inputs_files_path: str | None = None):
+    def __init__(
+        self,
+        file_manager,
+        inputs_files_path: str | None = None,
+        log_file: str | None = None,
+    ):
         self.file_manager = file_manager
-        self.config = _FakeConfig(inputs_files_path)
+        self.config = _FakeConfig(inputs_files_path, log_file=log_file)
 
 
 def _finder(
@@ -145,13 +154,16 @@ def _finder(
     inputs_files_path: str | None = None,
     ledger: list | None = None,
     by_name: dict | None = None,
+    log_file: str | None = None,
+    variables: dict | None = None,
 ) -> FilesReferenceFinder3:
     csvpaths = _FakeCsvPaths(
         _FakeFileManager(home, manifest, definition, ledger=ledger, by_name=by_name),
         inputs_files_path=inputs_files_path,
+        log_file=log_file,
     )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
-    return FilesReferenceFinder3(csvpaths=csvpaths, ref=ref)
+    return FilesReferenceFinder3(csvpaths=csvpaths, ref=ref, variables=variables)
 
 
 class TestStarFlattensAcrossAllFiles:
@@ -204,6 +216,29 @@ class TestNameFunctionAsPathSegment:
         )
         assert finder.query().files == []
 
+    def test_name_with_a_regex_arg_searches_not_exact_matches(self):
+        # added 2026-08-27, see the "name_one path segment cannot be a
+        # regex" bucket-list entry -- ALPHA_MANIFEST has "zero.csv" and
+        # "one.csv" (two versions); /one/ must match only "one.csv".
+        finder = _finder(
+            "$alpha.files.:name(/one/).:index(0)", ALPHA_HOME, ALPHA_MANIFEST
+        )
+        assert finder.query().files == [
+            "inputs/named_files/alpha/one.csv/1111111111abcdef.csv"
+        ]
+
+    def test_name_with_a_regex_arg_matching_nothing_returns_empty(self):
+        finder = _finder(
+            "$alpha.files.:name(/nope/).:first()", ALPHA_HOME, ALPHA_MANIFEST
+        )
+        assert finder.query().files == []
+
+    def test_name_with_an_invalid_regex_arg_raises(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:name(/(unclosed/).:first()", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
 
 class TestLiteralMultiSegmentPath:
     def test_extensionless_template_path_matches(self):
@@ -227,6 +262,65 @@ class TestLiteralMultiSegmentPath:
         assert finder.query().files == [
             "inputs/named_files/acme/Q2/test-data/aaaa.csv"
         ]
+
+
+class TestClockFunctionInPathSegments:
+    # a bare SOURCE == "clock" function (e.g. :year()) is now a legal
+    # name_one path segment in its own right (added 2026-08-26, see
+    # ReferenceFinder3._compile_path_pattern()'s own docstring), and
+    # :name("...")'s own string argument now evaluates any "{...}"
+    # interpolation spans it contains (ReferenceFinder3._resolve_value())
+    # -- both proven here against the real current year rather than a
+    # mocked clock, so a fixture built from daut.now() itself always
+    # matches regardless of when the suite actually runs.
+    def test_bare_clock_function_as_a_path_segment(self):
+        year = str(daut.now().year)
+        home = f"inputs/named_files/acme/{year}/test-data"
+        manifest = [{"file": f"{home}/aaaa.csv", "file_home": home, "uuid": "u-1"}]
+        finder = _finder(
+            "$acme.files.:year()/test-data.:first()", TEMPLATED_HOME, manifest
+        )
+        assert finder.query().files == [f"{home}/aaaa.csv"]
+
+    def test_interpolated_name_containing_a_clock_function(self):
+        year = str(daut.now().year)
+        home = f"inputs/named_files/acme/orders-{year}.csv"
+        manifest = [{"file": f"{home}/aaaa.csv", "file_home": home, "uuid": "u-1"}]
+        finder = _finder(
+            '$acme.files.:name("orders-{:year()}.csv").:first()',
+            TEMPLATED_HOME,
+            manifest,
+        )
+        assert finder.query().files == [f"{home}/aaaa.csv"]
+
+    def test_non_clock_function_still_rejected_as_a_path_segment(self):
+        # regression guard: the widening is specifically for SOURCE ==
+        # "clock" functions, not "any function at all" -- a field
+        # accessor like :uuid() still raises, same as before.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.files.:uuid()/test-data.:first()",
+                TEMPLATED_HOME,
+                TEMPLATED_MANIFEST,
+            ).query()
+
+    def test_interpolated_name_combining_a_variable_and_a_clock_function(self):
+        # matches the compendium's own worked example (5.37):
+        # :name("partner-{:year()}-{@company}"). @variable resolution
+        # (compendium 3.12, built 2026-08-26) is the other half of
+        # interpolation, registered on the finder itself before
+        # resolving -- see ReferenceFinder3.set_variable()'s own
+        # docstring.
+        year = str(daut.now().year)
+        home = f"inputs/named_files/acme/partner-{year}-acme-corp"
+        manifest = [{"file": f"{home}/aaaa.csv", "file_home": home, "uuid": "u-1"}]
+        finder = _finder(
+            '$acme.files.:name("partner-{:year()}-{@company}").:first()',
+            TEMPLATED_HOME,
+            manifest,
+            variables={"company": "acme-corp"},
+        )
+        assert finder.query().files == [f"{home}/aaaa.csv"]
 
 
 class TestIndexOutOfRange:
@@ -272,12 +366,16 @@ class TestScopeLimits:
         finder = _finder("$*.files.*.:last()", ALPHA_HOME, ALPHA_MANIFEST)
         assert finder.query().results == []
 
-    def test_name_two_worksheet_marker_not_yet_supported(self):
+    def test_name_two_worksheet_marker_beside_a_pointer_now_works(self):
+        # '#worksheet' settled 2026-08-26 -- legal against a literal
+        # path (a wildcard path segment counts, same as :name("...")),
+        # combined with a real version-selecting pointer. See
+        # TestNameTwoWorksheetMarker below for actually resolving one.
         finder = _finder(
             '$alpha.files.*#sheet1.:last()', ALPHA_HOME, ALPHA_MANIFEST
         )
-        with pytest.raises(ReferenceException3):
-            finder.query()
+        results = finder.query()
+        assert results.results[0].identity == "sheet1"
 
     def test_functions_directly_on_name_one_not_yet_supported(self):
         finder = _finder("$alpha.files.*:last().v1", ALPHA_HOME, ALPHA_MANIFEST)
@@ -365,17 +463,17 @@ class TestGlobalArrivalsLedger:
         results = finder.resolve()
         assert results.results[0].data == content
 
-    def test_star_with_definition_is_still_not_supported(self):
-        # :definition() has no equivalent global resource anywhere in
-        # the codebase -- stays unsupported at "*" root_major.
-        finder = _finder(
-            "$*.files.:definition()",
-            ALPHA_HOME,
-            ALPHA_MANIFEST,
-            inputs_files_path="inputs/named_files",
-        )
-        with pytest.raises(ReferenceException3):
-            finder.query()
+    # :manifest() alone stays the one function with a real GLOBAL
+    # resource to fall back to at "*" root_major (Rule 1a, above) --
+    # :definition() has no such global resource, so a bare ':definition()'
+    # at "*" root_major means something different: every named-file's own
+    # definition.json, one per name. See TestStarTraversalDefinition
+    # below (added 2026-08-27, FILES '*' traversal generalization
+    # bucket-list entry) -- this used to be unsupported outright, since
+    # nothing routed :definition() through _query_star_traversal() at
+    # all; a fixture with only one named-file (ALPHA_HOME/ALPHA_MANIFEST,
+    # by_name=None means named_file_names is []) could not have exercised
+    # the real "*" case anyway.
 
 LEDGER = [
     {"named_file_name": "alpha", "uuid": "u-ledger-1"},
@@ -679,6 +777,159 @@ class TestStarTraversalGroupsAnyDepth:
             _flatten_star_finder("$*.files.:groups().:last():manifest()").query()
 
 
+#
+# alpha has TWO zero-level ("no template") entries directly at its own
+# home; beta has only a ONE-level "orders.csv" entry -- proves ':home()'
+# traversal pools zero-level candidates ACROSS named-files (not just
+# within one, which TestHomeAsAZeroLevelSelector already covers), and
+# that a named-file with no zero-level registration at all is correctly
+# excluded/contributes nothing -- both to the plain pooled-candidate
+# shape and to the ':home():definition()' filtered-lookup shape below.
+#
+HOME_STAR_ALPHA_HOME = "inputs/named_files/alpha"
+HOME_STAR_ALPHA_MANIFEST = [
+    {
+        "file": "inputs/named_files/alpha/aaa.csv",
+        "file_home": "inputs/named_files/alpha",
+        "uuid": "u-alpha-zero-1",
+        "time": "2026-01-01T00:00:00+00:00",
+    },
+    {
+        "file": "inputs/named_files/alpha/bbb.csv",
+        "file_home": "inputs/named_files/alpha",
+        "uuid": "u-alpha-zero-2",
+        "time": "2026-01-03T00:00:00+00:00",
+    },
+]
+HOME_STAR_BETA_HOME = "inputs/named_files/beta"
+HOME_STAR_BETA_MANIFEST = [
+    {
+        "file": "inputs/named_files/beta/orders.csv/ccc.csv",
+        "file_home": "inputs/named_files/beta/orders.csv",
+        "uuid": "u-beta-one-level",
+        "time": "2026-01-02T00:00:00+00:00",
+    },
+]
+HOME_STAR_BY_NAME = {
+    "alpha": (HOME_STAR_ALPHA_HOME, HOME_STAR_ALPHA_MANIFEST),
+    "beta": (HOME_STAR_BETA_HOME, HOME_STAR_BETA_MANIFEST),
+}
+
+
+def _home_star_finder(reference: str) -> FilesReferenceFinder3:
+    return _finder(
+        reference, HOME_STAR_ALPHA_HOME, HOME_STAR_ALPHA_MANIFEST, by_name=HOME_STAR_BY_NAME
+    )
+
+
+class TestStarTraversalHome:
+    # bare ':home()' as name_one's entire content during '*' traversal --
+    # added 2026-08-27 (FILES '*' traversal generalization bucket-list
+    # entry, gap #1: ":home()" + "'*'" traversal did not exist at all,
+    # raising "Does not yet support :home() as a name_one path segment").
+    # Not partitioned (mirrors the plain-path POOL branch immediately
+    # above, just with an empty pattern instead of a compiled one) -- a
+    # terminal pointer picks ONE overall winner by time across every
+    # named-file's own zero-level candidates, it does not pick one winner
+    # per named-file (':all()' already does that).
+    def test_last_pools_zero_level_candidates_across_named_files(self):
+        results = _home_star_finder("$*.files.:home().:last()").query()
+        assert results.uuids == ["u-alpha-zero-2"]
+
+    def test_a_named_file_with_no_zero_level_entry_contributes_nothing(self):
+        # beta's only entry is one level deep -- must never appear,
+        # regardless of pointer.
+        results = _home_star_finder("$*.files.:home().:first()").query()
+        assert "u-beta-one-level" not in results.uuids
+        assert results.uuids == ["u-alpha-zero-1"]
+
+    def test_with_no_name_three_dedupes_to_zero_level_file_homes_only(self):
+        results = _home_star_finder("$*.files.:home()").query()
+        assert results.files == [HOME_STAR_ALPHA_HOME]
+
+    def test_chaining_anything_other_than_definition_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _home_star_finder("$*.files.:home():uuid().:last()").query()
+
+
+class TestStarTraversalDefinition:
+    # bare ':definition()' during '*' traversal (gap #2) and ':home()'
+    # with ':definition()' chained onto it (gap #3, "does not yet support
+    # functions attached directly to name_one for '*' traversal" even
+    # once #1/#2 individually work) -- both added 2026-08-27, same
+    # bucket-list entry as TestStarTraversalHome above. Neither takes
+    # name_three -- definition.json is never versioned, so there is
+    # nothing left to narrow once a named-file is matched.
+    def test_bare_definition_gives_one_result_per_named_file(self):
+        results = _home_star_finder("$*.files.:definition()").query()
+        assert set(results.files) == {
+            f"{HOME_STAR_ALPHA_HOME}/definition.json",
+            f"{HOME_STAR_BETA_HOME}/definition.json",
+        }
+        assert all(r.uuid is None for r in results.results)
+
+    def test_bare_definition_flags_ambiguous_content_read_when_plural(self):
+        # Rule 1 (manifest_field_functions_proposal.md): resolving full
+        # METADATA_FILE content for more than one entity at once is
+        # illegal -- more than one named-file's own definition.json is
+        # exactly that case, same as :manifest() already flags.
+        results = _home_star_finder("$*.files.:definition()").query()
+        assert results.ambiguous_content_read is True
+
+    def test_home_prefixed_definition_filters_to_zero_level_named_files_only(self):
+        # beta has no zero-level registration -- must be excluded, even
+        # though it has its own definition.json like any named-file would.
+        results = _home_star_finder("$*.files.:home():definition()").query()
+        assert results.files == [f"{HOME_STAR_ALPHA_HOME}/definition.json"]
+        assert results.ambiguous_content_read is False
+
+    def test_bare_definition_combined_with_name_three_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _home_star_finder("$*.files.:definition().:last()").query()
+
+    def test_home_prefixed_definition_combined_with_name_three_is_not_yet_supported(
+        self,
+    ):
+        with pytest.raises(ReferenceException3):
+            _home_star_finder("$*.files.:home():definition().:last()").query()
+
+    def test_resolve_reads_each_named_files_own_definition_bytes(self, tmp_path):
+        # manifest file_home values must actually match the tmp_path
+        # homes below (unlike HOME_STAR_ALPHA_MANIFEST's hardcoded
+        # "inputs/named_files/..." strings) -- ':home()' filters by real
+        # file_home-vs-home matching, not by name alone.
+        alpha_home = tmp_path / "alpha"
+        alpha_home.mkdir()
+        (alpha_home / "definition.json").write_bytes(b'{"on_arrival": "go"}')
+        alpha_manifest = [
+            {
+                "file": str(alpha_home / "aaa.csv"),
+                "file_home": str(alpha_home),
+                "uuid": "u-alpha-zero-1",
+            }
+        ]
+        beta_home = tmp_path / "beta"
+        beta_home.mkdir()
+        (beta_home / "definition.json").write_bytes(b'{"on_arrival": null}')
+        beta_manifest = [
+            {
+                "file": str(beta_home / "orders.csv" / "ccc.csv"),
+                "file_home": str(beta_home / "orders.csv"),
+                "uuid": "u-beta-one-level",
+            }
+        ]
+        by_name = {
+            "alpha": (str(alpha_home), alpha_manifest),
+            "beta": (str(beta_home), beta_manifest),
+        }
+        finder = _finder(
+            "$*.files.:home():definition()", str(alpha_home), [], by_name=by_name
+        )
+        results = finder.resolve()
+        assert len(results.results) == 1
+        assert results.results[0].data == b'{"on_arrival": "go"}'
+
+
 class TestAllForOneNamedFile:
     # bare ':all()' as name_one's entire content, for a LITERAL (non-'*')
     # root_major -- settled 2026-08-12, CORRECTED same day: ':all()' is
@@ -940,12 +1191,24 @@ class TestHomeAsAZeroLevelSelector:
                 '$homer.files.:home("x").:last()', HOME_TEST_HOME, HOME_TEST_MANIFEST
             ).query()
 
-    def test_home_in_name_three_position_is_unaffected(self):
-        # ':home()' keeps its ordinary field-accessor job (SOURCE ==
-        # "manifest", reading "file_home") when it appears in name_three
-        # instead of bare in name_one -- different position, no collision.
+    def test_home_in_name_three_position_now_raises(self):
+        # ':home()' no longer has an ordinary field-accessor job at all
+        # (split 2026-08-26 -- see :file_home() for FILES' own share of
+        # that retired job) -- it keeps only the bare, name_one, zero-
+        # level placeholder role, so using it in name_three now raises
+        # via POSITIONS/_check_position, rather than silently reading
+        # "file_home" the way it used to.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$homer.files.:name("orders.csv").:first():home()',
+                HOME_TEST_HOME,
+                HOME_TEST_MANIFEST,
+            ).query()
+
+    def test_file_home_in_name_three_position_works(self):
+        # :file_home() is the retired job's new home.
         results = _finder(
-            '$homer.files.:name("orders.csv").:first():home()',
+            '$homer.files.:name("orders.csv").:first():file_home()',
             HOME_TEST_HOME,
             HOME_TEST_MANIFEST,
         ).resolve()
@@ -1243,13 +1506,16 @@ class TestManifestCombinedWithNameThree:
     def test_manifest_alone_with_more_than_one_matching_version_raises(self):
         # "one.csv" has two versions in ALPHA_MANIFEST -- resolving full
         # manifest content always touches exactly one entity (settled
-        # 2026-08-07), so no pointer to pick between them is illegal now,
-        # not "every entry, unreduced" as it used to be.
+        # 2026-08-07), so no pointer to pick between them is illegal.
+        # query() itself succeeds (moved 2026-08-26, see the ":path()"
+        # retirement/Rule 1 bucket-list entry) -- only resolve() raises,
+        # once something actually tries to read the content.
         finder = _finder(
             '$alpha.files.:name("one.csv").:manifest()', ALPHA_HOME, ALPHA_MANIFEST
         )
+        assert len(finder.query()) > 1
         with pytest.raises(ReferenceException3):
-            finder.query()
+            finder.resolve()
 
     def test_manifest_alone_with_exactly_one_matching_version_still_works(self):
         # "zero.csv" has only one version -- no pointer needed, since
@@ -1376,9 +1642,11 @@ class TestFieldAccessorFunctions:
         results = finder.resolve()
         assert results.results[0].data == "aaaa"
 
-    def test_home(self):
+    def test_file_home(self):
+        # :home() split 2026-08-26 -- FILES' own field-read job is now
+        # :file_home().
         finder = _finder(
-            '$rich.files.:name("orders.csv").:first():home()',
+            '$rich.files.:name("orders.csv").:first():file_home()',
             RICH_HOME,
             RICH_MANIFEST,
         )
@@ -1446,6 +1714,117 @@ class TestFieldAccessorFunctions:
         results = finder.query()
         assert len(results.results) == 2
 
+    def test_type_and_reference_and_file_path(self):
+        manifest = [
+            {**RICH_MANIFEST[0], "type": "csv", "reference": "ref-aaaa"},
+        ]
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():type()', RICH_HOME, manifest
+        )
+        assert finder.resolve().results[0].data == "csv"
+
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():reference()', RICH_HOME, manifest
+        )
+        assert finder.resolve().results[0].data == "ref-aaaa"
+
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():file_path()', RICH_HOME, manifest
+        )
+        assert finder.resolve().results[0].data == manifest[0]["file"]
+
+
+class TestLedgerFallbackFieldAccessor:
+    # :file_manifest() has KEY = {} (RICH_MANIFEST's own entries never
+    # have this field -- confirmed, the named-file's own manifest has no
+    # self-reference to itself, see issue #261) and LEDGER_KEY pointing
+    # at the global ledger instead -- proves Function3.LEDGER_KEY's
+    # fallback mechanism actually reaches the ledger, not just that it
+    # is declared.
+    LEDGER = [
+        {
+            "uuid": "u-rich-2",
+            "file_manifest": "inputs/named_files/rich/manifest.json",
+        },
+    ]
+
+    def test_field_missing_from_own_manifest_falls_back_to_ledger_entry(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:last():file_manifest()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            ledger=self.LEDGER,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == "inputs/named_files/rich/manifest.json"
+
+    def test_no_matching_ledger_entry_gives_none(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():file_manifest()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            ledger=self.LEDGER,
+        )
+        # RICH_MANIFEST's first entry is u-rich-1, which has no matching
+        # LEDGER entry (only u-rich-2 does) -- falls through to None
+        # rather than raising, same "absence is normal" treatment as
+        # every other field lookup.
+        results = finder.resolve()
+        assert results.results[0].data is None
+
+
+class TestUsernameHostnameHostLedgerFallback:
+    # username/hostname/host widened 2026-08-26 to also cover FILES --
+    # RICH_MANIFEST's own entries never have these fields (confirmed,
+    # the Named-File Manifest genuinely has no such fields), only the
+    # global arrivals ledger does.
+    LEDGER = [
+        {
+            "uuid": "u-rich-2",
+            "username": "bot",
+            "hostname": "worker-1",
+            "ip_address": "10.0.0.5",
+        },
+    ]
+
+    def test_username_falls_back_to_the_ledger_entry(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:last():username()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            ledger=self.LEDGER,
+        )
+        assert finder.resolve().results[0].data == "bot"
+
+    def test_hostname_falls_back_to_the_ledger_entry(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:last():hostname()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            ledger=self.LEDGER,
+        )
+        assert finder.resolve().results[0].data == "worker-1"
+
+    def test_host_falls_back_to_the_ledger_entry(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:last():host()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            ledger=self.LEDGER,
+        )
+        assert finder.resolve().results[0].data == "10.0.0.5"
+
+    def test_no_matching_ledger_entry_gives_none(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():username()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            ledger=self.LEDGER,
+        )
+        # RICH_MANIFEST's first entry is u-rich-1, which has no
+        # matching LEDGER entry (only u-rich-2 does).
+        assert finder.resolve().results[0].data is None
+
 
 class TestDefinitionFieldAccessorFunctions:
     # :on_arrival()/:sources() are SOURCE="definition" -- resolved
@@ -1482,6 +1861,23 @@ class TestDefinitionFieldAccessorFunctions:
         )
         results = finder.resolve()
         assert results.results[0].data == {"a": {"address": "localhost", "port": 22}}
+
+    def test_named_paths_group_and_run_method(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():named_paths_group()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "order validations"
+
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():run_method()',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "collect_paths"
 
     def test_never_configured_gives_none_not_an_error(self):
         finder = _finder(
@@ -1552,48 +1948,126 @@ class TestDefinitionFieldAccessorFunctions:
             _finder("$rich.files.:uuid()", RICH_HOME, RICH_MANIFEST).query()
 
 
-class TestPathFunction:
-    # :path(inner) returns the filesystem path to whatever well-known
-    # resource `inner` points at, instead of its content -- and, unlike
-    # :manifest()/:definition() themselves, is meant to be poolable
-    # across "*"/unresolved versions (not exercised here, since "*" as
-    # root_major is not yet supported -- see manifest_field_functions_
-    # proposal.md's Rule 2).
-    def test_path_wrapping_manifest(self):
-        finder = _finder(
-            '$rich.files.:name("orders.csv").:first():path(:manifest())',
-            RICH_HOME,
-            RICH_MANIFEST,
-        )
-        results = finder.resolve()
-        assert results.results[0].data == f"{RICH_HOME}/manifest.json"
+class TestSourceSubFieldAccessorFunctions:
+    # sources.<name>.* -- arg-keyed (built 2026-08-26, see
+    # ReferenceFinder3._apply_key_arg()'s own docstring for the shared
+    # "{}"-placeholder mechanism). Same bare-name_one treatment as
+    # :sources() itself (SOURCE="definition", no version needed), plus
+    # the ordinary name_three position beside a matched pointer.
+    DEFINITION = {
+        "sources": {
+            "email": {
+                "address": "mail.example.com",
+                "port": 993,
+                "username": "bot",
+                "password": "secret",
+            }
+        }
+    }
 
-    def test_path_wrapping_definition(self):
+    def test_source_address_bare(self):
         finder = _finder(
-            '$rich.files.:name("orders.csv").:first():path(:definition())',
+            '$rich.files.:source_address("email")',
             RICH_HOME,
             RICH_MANIFEST,
+            self.DEFINITION,
         )
-        results = finder.resolve()
-        assert results.results[0].data == f"{RICH_HOME}/definition.json"
+        assert finder.resolve().results[0].data == "mail.example.com"
 
-    def test_path_alone_satisfies_the_no_pointer_gate(self):
+    def test_source_port_bare(self):
         finder = _finder(
-            '$rich.files.:name("orders.csv").:path(:manifest())',
+            '$rich.files.:source_port("email")',
             RICH_HOME,
             RICH_MANIFEST,
+            self.DEFINITION,
         )
-        results = finder.query()
-        assert len(results.results) == 2
+        assert finder.resolve().results[0].data == 993
 
-    def test_path_wrapping_a_field_accessor_is_not_yet_supported(self):
+    def test_source_username_bare(self):
         finder = _finder(
-            '$rich.files.:name("orders.csv").:first():path(:uuid())',
+            '$rich.files.:source_username("email")',
             RICH_HOME,
             RICH_MANIFEST,
+            self.DEFINITION,
         )
-        with pytest.raises(ReferenceException3):
-            finder.resolve()
+        assert finder.resolve().results[0].data == "bot"
+
+    def test_source_password_bare(self):
+        finder = _finder(
+            '$rich.files.:source_password("email")',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "secret"
+
+    def test_source_address_at_name_three(self):
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():source_address("email")',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "mail.example.com"
+
+    def test_unknown_source_name_gives_none_not_an_error(self):
+        finder = _finder(
+            '$rich.files.:source_address("nope")',
+            RICH_HOME,
+            RICH_MANIFEST,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data is None
+
+
+class TestTemplateBareVsMatchedDualSource:
+    # :template() (built 2026-08-26) is the first field accessor using
+    # Function3.BARE_SOURCE -- bare, name_one-only (no :name(...)/match
+    # at all) reads definition.json's current default; matched at
+    # name_three beside a real version, it reads that version's own
+    # manifest snapshot instead. See ReferenceFinder3._bare_definition_
+    # field_call()/Template3's own docstring for the full design.
+    DEFINITION = {"template": "current-default"}
+
+    def test_bare_reads_the_current_definition_default(self):
+        manifest = [
+            {**RICH_MANIFEST[0], "template": "snapshot-v1"},
+            {**RICH_MANIFEST[1], "template": "snapshot-v2"},
+        ]
+        finder = _finder(
+            "$rich.files.:template()", RICH_HOME, manifest, self.DEFINITION
+        )
+        assert finder.resolve().results[0].data == "current-default"
+
+    def test_matched_first_reads_that_versions_own_manifest_snapshot(self):
+        manifest = [
+            {**RICH_MANIFEST[0], "template": "snapshot-v1"},
+            {**RICH_MANIFEST[1], "template": "snapshot-v2"},
+        ]
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():template()',
+            RICH_HOME,
+            manifest,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "snapshot-v1"
+
+    def test_matched_last_reads_that_versions_own_manifest_snapshot(self):
+        manifest = [
+            {**RICH_MANIFEST[0], "template": "snapshot-v1"},
+            {**RICH_MANIFEST[1], "template": "snapshot-v2"},
+        ]
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:last():template()',
+            RICH_HOME,
+            manifest,
+            self.DEFINITION,
+        )
+        assert finder.resolve().results[0].data == "snapshot-v2"
+
+    def test_bare_never_configured_gives_none_not_an_error(self):
+        finder = _finder("$rich.files.:template()", RICH_HOME, RICH_MANIFEST)
+        assert finder.resolve().results[0].data is None
 
 
 class TestExtractData:
@@ -1671,3 +2145,103 @@ class TestPositionEnforcement:
                 ALPHA_HOME,
                 ALPHA_MANIFEST,
             ).query()
+
+
+BOOK1_XLSX = os.path.join(
+    "tests", "csvpaths", "test_resources", "Book1.xlsx"
+)
+
+
+class TestNameTwoWorksheetMarker:
+    # '#worksheet' (name_two) -- settled 2026-08-26, see the "#name_two"
+    # bucket-list entry. Book1.xlsx (a real, shared test fixture -- also
+    # used by tests/csvpaths/test_csvpaths_xlsx.py) has two known real
+    # worksheets, "hello" and "world".
+    def test_query_populates_identity_with_the_worksheet_name(self):
+        manifest = [
+            {"file": BOOK1_XLSX, "file_home": f"{ALPHA_HOME}/Book1.xlsx", "uuid": "u-1"}
+        ]
+        results = _finder(
+            '$alpha.files.:name("Book1.xlsx")#hello.:last()',
+            ALPHA_HOME,
+            manifest,
+        ).query()
+        assert results.results[0].identity == "hello"
+        assert results.results[0].path == BOOK1_XLSX
+
+    def test_resolve_reads_the_named_worksheets_own_rows(self):
+        manifest = [
+            {"file": BOOK1_XLSX, "file_home": f"{ALPHA_HOME}/Book1.xlsx", "uuid": "u-1"}
+        ]
+        results = _finder(
+            '$alpha.files.:name("Book1.xlsx")#hello.:last()',
+            ALPHA_HOME,
+            manifest,
+        ).resolve()
+        rows = results.results[0].data
+        assert isinstance(rows, list)
+        assert len(rows) > 0
+        assert all(isinstance(row, list) for row in rows)
+
+    def test_a_different_worksheet_gives_different_rows(self):
+        manifest = [
+            {"file": BOOK1_XLSX, "file_home": f"{ALPHA_HOME}/Book1.xlsx", "uuid": "u-1"}
+        ]
+        hello = _finder(
+            '$alpha.files.:name("Book1.xlsx")#hello.:last()',
+            ALPHA_HOME,
+            manifest,
+        ).resolve()
+        world = _finder(
+            '$alpha.files.:name("Book1.xlsx")#world.:last()',
+            ALPHA_HOME,
+            manifest,
+        ).resolve()
+        assert hello.results[0].data != world.results[0].data
+
+    def test_worksheet_marker_requires_a_pointer(self):
+        # no name_three pointer at all -- there is no single version to
+        # read a worksheet from.
+        manifest = [
+            {"file": BOOK1_XLSX, "file_home": f"{ALPHA_HOME}/Book1.xlsx", "uuid": "u-1"}
+        ]
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$alpha.files.:name("Book1.xlsx")#hello', ALPHA_HOME, manifest
+            ).query()
+
+    def test_worksheet_marker_rejects_a_non_xlsx_file(self):
+        results = _finder(
+            '$alpha.files.:name("one.csv")#hello.:last()',
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+        )
+        with pytest.raises(ReferenceException3):
+            results.resolve()
+
+    def test_worksheet_marker_rejects_a_bare_marker_function(self):
+        # ':all()' (or ':manifest()'/':home()'/etc.) occupies name_one's
+        # entire content on its own -- there is no literal file for a
+        # worksheet marker to apply to.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:all()#hello.:last()", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
+
+class TestLog:
+    # compendium 5.16(b) -- see test_csvpaths_reference_finder_3.py's
+    # own TestLog for the full scenario set (shared ABC mechanism,
+    # ReferenceFinder3._bare_log_call()/_query_log_call()/
+    # _read_log_file()); this just confirms it composes correctly with
+    # FilesReferenceFinder3's own query()/_extract_data() dispatch too.
+    def test_bare_log_resolves_the_whole_file(self, tmp_path):
+        log_path = tmp_path / "csvpath.log"
+        log_path.write_text("line1\nline2\n")
+        results = _finder(
+            "$*.files.:log()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            log_file=str(log_path),
+        ).resolve()
+        assert results.results[0].data == "line1\nline2\n"

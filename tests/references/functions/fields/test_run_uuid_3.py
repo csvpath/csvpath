@@ -12,6 +12,7 @@ def test_metadata():
     assert f.ROLE == Function3.VALUE
     assert f.DATATYPES == (Reference3.RESULTS,)
     assert f.SOURCE == "manifest"
+    assert f.KIND == "uuid"
     assert f.KEY == {
         Reference3.RESULTS: "run_uuid",
         Reference3.RESULT: "run_uuid",
