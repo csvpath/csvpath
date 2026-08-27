@@ -52,7 +52,7 @@ It is one flat, append-only array per named-file, one entry per registered versi
 | time |  | :time() | The moment the registration occurred in UTC. |
 | from |  | :source() | The source path of the original data file that is registered and copied into the named-file. This is the path segments data that the named-file's default template, or a template provided by the user at registration-time, uses to construct the path within the named-file. |
 | mark | optional | N/A | The name of a worksheet in an Excel file. This is accessible via `name_two` |
-| template |  | :template() | A string with braces-bracketed replacement tokens that determines the path within the named-file of the file home, where a registered file is stored. The replacement tokens are of two kinds: 1. the indexes of the path segments found in the origin path. E.g. :0 for the first directory below the root, :1 for the next path segment, and so on, and 2. tokens for elements of the current datetime, e.g. :day, :month, :year, etc. |
+| template |  | :template() | This function returns the actual template used in a registration. A string with braces-bracketed replacement tokens that determines the path within the named-file of the file home, where a registered file is stored. The replacement tokens are of two kinds: 1. the indexes of the path segments found in the origin path. E.g. :0 for the first directory below the root, :1 for the next path segment, and so on, and 2. tokens for elements of the current datetime, e.g. :day, :month, :year, etc. |
 
 ---
 
@@ -79,7 +79,7 @@ named-file.
 | file_home |  | :file_home() | The path to the directory representing the original physical file registered and named by the same name, including extension. This directory holds the version files. The path is constructed using the [inputs] files key in config.ini. That means in some contexts, for e.g. FlightPath Server, it will always be fully qualified to the filesystem root. File homes are derived using a template, if one is provided in the registration method call or a default is configured for the named-file. |
 | file_name |  | :file_name() | The named of the original physical file that was registered. This is the same name as the file home directory. |
 | name_home |  | :home() | The named-file's root directory. It is named by the named-paths name and contains all the template-driven and non-template filesystem paths within the named-file. |
-| template | optional | :template() | A string with braces-bracketed replacement tokens that determines the path within the named-file of the file home, where a registered file is stored. The replacement tokens are of two kinds: 1. the indexes of the path segments found in the origin path. E.g. :0 for the first directory below the root, :1 for the next path segment, and so on, and 2. tokens for elements of the current datetime, e.g. :day, :month, :year, etc. |
+| template | optional | :template() | This function returns the actual template used in a registration. A string with braces-bracketed replacement tokens that determines the path within the named-file of the file home, where a registered file is stored. The replacement tokens are of two kinds: 1. the indexes of the path segments found in the origin path. E.g. :0 for the first directory below the root, :1 for the next path segment, and so on, and 2. tokens for elements of the current datetime, e.g. :day, :month, :year, etc. |
 | mark | optional | N/A | The name of a worksheet in an Excel file. This is accessible via `name_two` |
 | manifest_path |  | :manifest()  | The path to the file holding this entry. |
 | status | optional | :status() | Contains a message if registration failed for some reason. E.g. if HTTP files are disallowed, an attempt to register an http://... URL will fail and a message will appear in this field. |
@@ -242,13 +242,13 @@ manifest.json, this file is optional and is not versioned.
 
 | Field | Optional | References v3 Function | Description |
 |---|---|---|---|
-| template | optional | :template() | Path template string for this named file. Same token syntax as the Named-File Manifest's own `template` field. |
+| template | optional | :template() | The default template string for this named file. Same token syntax as the Named-File Manifest's own `template` field. |
 | on_arrival | optional | :on_arrival() | Object. Configures a run to be triggered automatically when a new version of this named-file arrives. Absent entirely if no arrival action is configured. |
 | on_arrival.named_paths_group | optional | :named_paths_group() | The named-paths group to run when this named-file receives a new version. |
 | on_arrival.run_method | optional | :run_method() | The method to invoke on arrival, e.g. `collect_paths`. |
 | sources | optional | :sources() | Object, keyed by an arbitrary source name chosen by whoever configured it. Each value is a `ServerConfig` (see below). Holds the credentials/target used to poll or reach a remote source for this named-file. |
 | sources.\<name\>.address | optional | :source_address(str) | Hostname or IP of the source, for the named source entry. Requires a source name argument. |
-| sources.\<name\>.port | optional | :source_host(str) | Port number of the source. Coerced from a numeric string if needed. Requires a source name argument. |
+| sources.\<name\>.port | optional | :source_port(str) | Port number of the source. Coerced from a numeric string if needed. Requires a source name argument. |
 | sources.\<name\>.username | optional | :source_username(str) | Login username for the source, may itself be an env-var name rather than a literal value. Requires a source name argument. |
 | sources.\<name\>.password | optional | :source_password(str) | Login password for the source, may itself be an env-var name rather than a literal value. Requires a source name argument. |
 
@@ -271,16 +271,16 @@ versioned.
 | webhooks | optional | :webhooks() | Object. |
 | webhooks.on_complete_all | optional | :webhooks_on_complete_all(str) | An object containing URL, headers, params for a webhook. |
 | webhooks.on_complete_valid | optional | :webhooks_on_complete_valid(str) | An object containing URL, headers, params for a webhook. |
-| webhooks.on_complete_all | optional | :webhooks_on_complete_invalid:(str) | An object containing URL, headers, params for a webhook. |
-| webhooks.on_complete_all | optional | :webhooks_on_complete_error(str) | An object containing URL, headers, params for a webhook. |
-| transfers.path_transfers | optional | :definition() | Object, keyed by csvpath identity or index within the group. Each value declares transfers for the same four completion states as `scripts`/`webhooks`, but as a list of `{file, transfer_to}` per state rather than a single value. This is the descriptor-based transfer mechanism referenced in issues #224 and #226 — `on_complete_invalid` and `on_complete_error` here are accepted by the schema but, per #226, never actually triggered at runtime. |
-| transfers.\<name\>.address | optional | :transfer_on_complete_all(str) | An object containing a file name or ID and a variable name containing a destination. Requires a transfer name argument. |
-| transfers.\<name\>.port | optional | :transfer_on_complete_valid(str) | An object containing a file name or ID and a variable name containing a destination. Requires a transfer name argument. |
-| transfers.\<name\>.username | optional | :transfer_on_complete_invalid(str) | An object containing a file name or ID and a variable name containing a destination. Requires a transfer name argument. |
-| transfers.\<name\>.password | optional | :transfer_on_complete_error(str) | An object containing a file name or ID and a variable name containing a destination. Requires a transfer name argument. |
-| destinations | optional | :definition() | Object, keyed by an arbitrary destination name. Each value is a `ServerConfig` (`address`, `port`, `username`, `password`) — same shape as table 8's `sources`, but for where this group sends things rather than where a file is polled from. |
+| webhooks.on_complete_invalid | optional | :webhooks_on_complete_invalid:(str) | An object containing URL, headers, params for a webhook. |
+| webhooks.on_complete_errors | optional | :webhooks_on_complete_error(str) | An object containing URL, headers, params for a webhook. |
+| transfers.path_transfers | optional | :transfers() | Object, keyed by csvpath identity or index within the group. Each value declares transfers for the same four completion states as `scripts`/`webhooks`, but as a list of `{file, transfer_to}` per state rather than a single value. This is the descriptor-based transfer mechanism referenced in issues #224 and #226 — `on_complete_invalid` and `on_complete_error` here are accepted by the schema but, per #226, never actually triggered at runtime. |
+| transfers.\<name\>.on_complete_all | optional | :transfer_on_complete_all(str) | An object containing a file name or ID and a variable name containing a destination. Requires a transfer name argument. |
+| transfers.\<name\>.on_complete_valid | optional | :transfer_on_complete_valid(str) | An object containing a file name or ID and a variable name containing a destination. Requires a transfer name argument. |
+| transfers.\<name\>.on_complete_invalid | optional | :transfer_on_complete_invalid(str) | An object containing a file name or ID and a variable name containing a destination. Requires a transfer name argument. |
+| transfers.\<name\>.on_complete_error | optional | :transfer_on_complete_error(str) | An object containing a file name or ID and a variable name containing a destination. Requires a transfer name argument. |
+| destinations | optional | :destinations() | Object, keyed by an arbitrary destination name. Each value is a `ServerConfig` (`address`, `port`, `username`, `password`) — same shape as table 8's `sources`, but for where this group sends things rather than where a file is polled from. |
 | destinations.\<name\>.address | optional | :destination_address(str) | Hostname or IP of the destination, for the named source entry. Requires a destination name argument. |
-| destinations.\<name\>.port | optional | :destination_host(str) | Port number of the destination. Coerced from a numeric string if needed. Requires a destination name argument. |
+| destinations.\<name\>.port | optional | :destination_port(str) | Port number of the destination. Coerced from a numeric string if needed. Requires a destination name argument. |
 | destinations.\<name\>.username | optional | :destination_username(str) | Login username for the destination, may itself be an env-var name rather than a literal value. Requires a destination name argument. |
 | destinations.\<name\>.password | optional | :destination_password(str) | Login password for the destination, may itself be an env-var name rather than a literal value. Requires a destination name argument. |
 

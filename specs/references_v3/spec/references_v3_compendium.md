@@ -97,8 +97,8 @@ operations are:
 - SUBTRACT
 
 #### 2.3
-There are a few requirements below, but most reference expressions
-requirements are in `specs/references_v3/spec/references_v3_expressions.md`
+Most reference expressions requirements are in
+`specs/references_v3/spec/references_v3_expressions.md`
 
 ---
 
@@ -565,7 +565,33 @@ We talk about these as:
 - file accessors (pull the full content of a file)
 - field accessors (pull a value from a metadata file)
 
-#### 5.6
+#### 5.6a
+Note that in reference expressions, as defined elsewhere, values may be
+compared by function type and retrieved value. `:fingerprint()` retrieves
+a string. A reference expression would not accept a comparison of
+`:fingerprint()` to `:type()` because the function types do not serve the
+same conceptual purpose, making the values not the same, regardless of
+actual bytes value.
+
+- A comparison of `:named_paths_name()` to `:named_results_name()` would
+  work because names are conceptually the same kind of thing.
+- A comparison of `:named_file_name()` to `:fingerprint()` would not work
+  because names and fingerprints are not the same kind of thing.
+- `:uuid()` and `:run_uuid()` are comparable.
+
+This makes it important to know the purpose of the function in order to use
+it correctly for comparison. The taxonomy for existing functions is this
+set of groupings:
+  - "uuid": :uuid(), :run_uuid(), :named_file_uuid(), :named_paths_uuid()
+  - "name": :named_paths_name(), :named_results_name(), :named_file_name()
+  - "fingerprint": :fingerprint(), :named_file_fingerprint() (Note:
+    `:file_fingerprints()` is list-valued so does not compare in practice)
+  - "type": :type()
+  - Everything else (:host(), :status(), :template(), :archive(),
+    :identity(), etc.) is undeclared, for now, and falls back to
+    exact-accessor-equality required for value comparison
+
+#### 5.6b
 Note: when a function is used to retrieve the content of a file only one
 file may match the reference. For e.g., it is not possible to pull the
 contents of all the errors.json files for a run at once. You can identify all
@@ -601,7 +627,7 @@ The complete class of file accessors is:
 - :meta() — the meta.json file containing both the metadata key-value pairs from leading comment and the runtime indicators
 - :unmatched() — the optional standard unmatched lines output to unmatched.csv
 - :file("...") — arbitrary files, primarily Parquet output and print report files when print-mode is set to create separate files
-- :log() — the project csvpath.log file
+- :log() — the project csvpath.log file, discussed below
 
 #### 5.10
 #### The root `:manifest()` and `:definition()` file accessors
@@ -656,6 +682,27 @@ whatever manifest data is currently in scope". It resolves three ways:
   `$acme.files.:manifest()`
 - The manifest entry of the first orders.csv registration returned by the file accessor after matching within the contained list
   `$acme.files.:name("orders.csv").:first():manifest()`
+
+#### 5.16(b)
+A `:log()` must be available `name_one` as a standalone, not-combinable
+function. It provides access to the raw log file usually configured to
+be at `logs/csvpath.log`.
+
+This is an outlier function because it is not connected to just one
+datatype. It exists as a convenience for users that can more easily
+manipulate references than call functions. Case in point, agents that
+have full range of motion to use reference expressions but may not
+have a tool context where they can run python scripts that could pull
+the log file. This makes it a practicality over logical fit feature.
+
+Retrieving the main log file is one of:
+- `$*.files.:log()`
+- `$*.results.:log()`
+- `$*.csvpaths.:log()`
+
+An optional int argument indicates how many of the most recent lines to
+return. `$*.csvpaths.:log(10)` returns the last 10 lines of the log.
+Without the argument all lines are returned.
 
 ### Ordinal functions
 
@@ -891,7 +938,7 @@ access references give you either programmatically or using reference
 expressions (multiple references with set operations; discussed elsewhere).
 
 ### At most one pointer per chain, per nesting level
-#### 5.4
+#### 5.44
 A chain may contain any number of context setters but at most one pointer.
 Critically, **a pointer used as another function's argument does not count
 toward, or act as, the pointer of the chain it is nested in** — it resolves
