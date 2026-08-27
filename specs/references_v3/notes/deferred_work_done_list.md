@@ -9,6 +9,94 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `:path()` retired; Rule 1 enforcement moved from `query()` to `resolve()` — BUILT 2026-08-26
+
+David, 2026-08-22: **getting paths is not the same as accessing files.** A
+field/file accessor trying to read *content* for more than one matched
+entity is illegal, no argument — but a `query()` that merely points to
+multiple entities is fine in principle. `:path()` existed only to route
+around Rule 1's `query()`-time restriction (wrap a whole-resource content
+function, return its path instead of content, since a path is cheap/
+poolable); that whole function becomes redundant once the restriction
+itself moves to `resolve()`. David's decision: **`query()` should always be
+allowed to return multiple matches, regardless of accessor; only
+`resolve()` (actually reading content) raises when asked to resolve more
+than one at once.**
+
+**Scope, decided while implementing, not just assumed**: only each finder's
+own LITERAL-root `query()` method was touched — the bucket list's own
+"likely a bigger simplification... re-audit case by case" caution turned
+out to be well-founded once actually tried (see below); the `'*'`-traversal
+guards are deliberately left exactly as they were, as a new, more specific
+bucket-list entry enumerating the concrete candidates.
+
+**Built**:
+- `Path3`/`csvpath/references/functions/wrappers/` (the whole package,
+  `Path3` was its only file) deleted; factory registration removed.
+  `ReferenceFinder3._find_path_call`/`_resolve_path_call` (the shared
+  helpers `:path()` used) removed — nothing calls them anymore.
+- `ReferenceResults3` gained a new field, `ambiguous_content_read: bool =
+  False` (`reference_results_3.py`), and `select()` propagates it. Set by
+  a finder's own `query()` when it found more than one raw, unreduced
+  candidate for a whole-resource content accessor (`:manifest()`,
+  `:definition()`, `:errors()`, etc.) with no pointer to pick one — Rule 1
+  still makes this illegal, but `query()` no longer raises for it.
+- `ReferenceFinder3.resolve_from()` (`reference_finder_3.py`) now raises
+  if `results.ambiguous_content_read and len(results) > 1`, instead of
+  each finder raising inside `query()` itself. `resolve()` is unaffected
+  otherwise (still `resolve_from(query())`).
+- `FilesReferenceFinder3.query()`, `CsvpathsReferenceFinder3.query()`,
+  `ResultsReferenceFinder3.query()` (their own literal-root branches only)
+  no longer raise for "no pointer + more than one matching version/run +
+  a content accessor" — each now computes the same condition it used to
+  raise on and passes it as `ambiguous_content_read` on the
+  `ReferenceResults3` it returns instead.
+
+**A naive version of this broke a legitimate, already-shipped case, caught
+by the existing test suite rather than assumed safe**: the first attempt
+computed `ambiguous_content_read` (or, before that flag existed, a raw
+`resolve_kind == METADATA_FILE and len(final_results) > 1` check) purely
+from the FINAL result count, which incorrectly rejected
+`$acme.csvpaths.:all():last():manifest()`-style GROUP-mode traversal
+(several named-paths groups, each already reduced to its OWN one manifest
+entry by the `:last()` pointer applied WITHIN each group/partition) —
+legitimate and already tested, even though the final count is > 1. The
+fix: the flag is computed by each finder's own `query()`, which alone
+knows whether a pointer actually reduced ITS candidates — not a generic
+post-hoc count check computed once, centrally, from the final list alone.
+Confirmed, live, that `_resolve_versions()`/`_apply_pointer()` already
+guarantee at most one candidate whenever a pointer was actually present,
+for all three finders, before relying on that guarantee.
+
+**Deliberately did NOT convert every `'*'`-traversal content-accessor
+guard** — several are unconditional/syntax-based rejections ("not yet
+supported," not a count-dependent Rule 1 check), and one further deferred
+count-based one (`ResultsReferenceFinder3._query_star_traversal()`'s own
+instance-level `match_all + accessor` check) was left as an immediate raise
+deliberately, since no established case needs it to succeed even when it
+happens to match exactly one instance — see the bucket list's new,
+specific entry for exactly which guards remain and why each one is/isn't
+an obvious candidate.
+
+Tests: rewrote the `query()`-time-raise tests that the bucket list itself
+flagged as needing rewriting, not deleting (`TestManifestCombinedWithNameThree`
+in `test_files_reference_finder_3.py`, plus the CSVPATHS/RESULTS
+equivalents) into `query()`-succeeds-with-`len() > 1`/`resolve()`-raises
+pairs. Deleted `TestPathFunction` (four files: `test_files_reference_finder_3.py`,
+`test_csvpaths_reference_finder_3.py`, `test_normative_examples_files.py`,
+`test_normative_examples_csvpaths.py`) and `tests/references/functions/
+wrappers/test_path_3.py` entirely — the function no longer exists. Full
+`tests/references/` suite: 1413 passed (down from 1428 before this PR,
+net of 15 `:path()`-specific tests removed and no tests added, since every
+other rewritten test kept the same coverage under the new split).
+
+`manifest_field_functions_proposal.md`'s own Rule 2 (design-notes file,
+kept as history rather than rewritten) annotated "RETIRED 2026-08-26"
+rather than deleted, matching that file's own existing convention of
+inline revision notes.
+
+---
+
 ## Fingerprint functions grouped under `KIND = "fingerprint"` — CORRECTED 2026-08-26
 
 Fourth revision, same conversation, same day, of `UNION`'s own

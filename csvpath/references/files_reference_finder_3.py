@@ -20,8 +20,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    implements the spec's flatten (bare '*'/path narrowing, pooled
     #    and reduced by one pointer) vs. group (bare ':all()', one
     #    result per named-file+path pair) semantics -- deliberately
-    #    narrow itself: combining '*' traversal with :manifest()/:path()/
-    #    a field-accessor function is not yet supported, see that
+    #    narrow itself: combining '*' traversal with :manifest()/a
+    #    field-accessor function is not yet supported, see that
     #    method's own docstring.
     #  - name_one is "*", a literal path segment, :name("...") (for a
     #    literal name containing characters -- e.g. a real filename's
@@ -43,8 +43,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    latest version even when a name's paths do not all sit at the
     #    same depth (the case that originally motivated this whole
     #    depth-matrix pass). ':all()'/':groups()' (both GROUP) combined
-    #    with :manifest()/:path()/a field-accessor function is not yet
-    #    supported (same under-specified-interaction reasoning as
+    #    with :manifest()/a field-accessor function is not yet supported
+    #    (same under-specified-interaction reasoning as
     #    ResultsReferenceFinder3's own ':all()' restriction) --
     #    ':flatten()' (POOL) has no such restriction here, since
     #    root_major is always known at this position (unlike '*'
@@ -342,7 +342,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         has_manifest = any(f.name == "manifest" for f in built)
         has_field_function = self._find_field_function_call(built) is not None
-        has_path = self._find_path_call(built) is not None
         has_all = any(f.name == "all" for f in built)
         from_call = next((f for f in built if f.name == "from"), None)
         to_call = next((f for f in built if f.name == "to"), None)
@@ -402,24 +401,24 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # _check_position() loop above already guarantees every element
         # of `built` (which is itself guaranteed non-empty, see that
         # loop's own comment) is one of exactly the categories checked
-        # below (pointers/has_manifest/has_field_function/has_path/
-        # has_all/has_range cover the complete set of name_three-legal
-        # FILES functions), so at least one of them is always true here.
+        # below (pointers/has_manifest/has_field_function/has_all/
+        # has_range cover the complete set of name_three-legal FILES
+        # functions), so at least one of them is always true here.
 
-        if partitioned and (has_range or (pointers and (has_manifest or has_field_function or has_path))):
+        if partitioned and (has_range or (pointers and (has_manifest or has_field_function))):
             # mirrors ResultsReferenceFinder3's own ':all()'-grouping
             # restriction (settled 2026-08-11 there): grouping (one-
             # level ':all()' or any-depth ':groups()') plus :manifest()/
-            # :path()/a field-accessor is an under-specified interaction,
-            # not decided -- resolve the grouped versions on their own
+            # a field-accessor is an under-specified interaction, not
+            # decided -- resolve the grouped versions on their own
             # first, rather than guessing what "the manifest entry of
             # every group's own latest version, all at once" should even
             # resolve to.
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support combining "
-                "':all()'/':groups()' grouping with :manifest(), :path(), "
-                "or a field-accessor function -- resolve the grouped "
-                "versions on their own first."
+                "':all()'/':groups()' grouping with :manifest() or a "
+                "field-accessor function -- resolve the grouped versions "
+                "on their own first."
             )
 
         if has_range:
@@ -457,32 +456,29 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 selected = self._apply_pointer(pointers[0], candidates)
                 selected_candidates = [selected] if selected is not None else []
         else:
-            # :manifest() alone, no pointer -- legal only when name_one's
-            # own path narrowing already resolves to at most one version.
-            # Resolving full manifest content always touches exactly one
-            # entity (settled 2026-08-07, see manifest_field_functions_
-            # proposal.md's "Entity resolution and pooling" section) --
-            # more than one candidate here needs a pointer to pick which
-            # one. Field accessors and :path() are deliberately exempt
-            # (Rules 2/3 in the same doc section) -- a scalar field value
-            # or a path string is cheap to pool, unlike raw manifest
-            # content, so :uuid()/:path(...) etc. stay poolable across
-            # every matched candidate with no pointer at all.
-            if has_manifest and len(candidates) > 1:
-                raise ReferenceException3(
-                    "FilesReferenceFinder3 requires a pointer (:first()/"
-                    ":last()/:index(n)) to pick one version when combining "
-                    ":manifest() with path narrowing that matches more "
-                    "than one version -- resolving full manifest content "
-                    "always touches exactly one entity."
-                )
+            # :manifest() alone, no pointer -- every matching version's
+            # own manifest entry, unreduced. Resolving full manifest
+            # content for more than one entity at once is still illegal
+            # (Rule 1, manifest_field_functions_proposal.md's "Entity
+            # resolution and pooling" section) -- but query() itself is
+            # always allowed to return every match, regardless of
+            # accessor (moved 2026-08-26, see the ":path()" retirement/
+            # Rule 1 bucket-list entry); it flags the result instead of
+            # raising, and ReferenceFinder3.resolve_from() raises only
+            # if a caller actually tries to resolve more than one of
+            # these at once. Field accessors are exempt from Rule 1
+            # entirely (Rule 3, same doc section) -- a scalar field
+            # value is cheap to pool, so :uuid() etc. stay poolable
+            # across every matched candidate with no pointer at all,
+            # same as before.
             selected_candidates = candidates
 
         return ReferenceResults3(
             results=[
                 ReferenceResult3(path=c["file"], uuid=c["uuid"])
                 for c in selected_candidates
-            ]
+            ],
+            ambiguous_content_read=has_manifest and len(selected_candidates) > 1,
         )
 
     def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
@@ -519,11 +515,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
         Deliberately narrow for now, matching only the spec's own worked
         examples: combining '*'/':flatten()'/':groups()' traversal with
-        :manifest()/:path()/a field-accessor function in name_three is
-        not yet supported -- those all assume exactly one already-known
-        manifest to re-read in _extract_data(), which does not hold when
-        a result could have come from any of several named-files'
-        manifests.
+        :manifest()/a field-accessor function in name_three is not yet
+        supported -- those all assume exactly one already-known manifest
+        to re-read in _extract_data(), which does not hold when a result
+        could have come from any of several named-files' manifests.
         """
         name_one = reference.name_one
         if name_one.name_two is not None:
@@ -579,14 +574,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
         unsupported = (
             any(f.name == "manifest" for f in built)
             or self._find_field_function_call(built) is not None
-            or self._find_path_call(built) is not None
         )
         if unsupported:
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support combining '*' "
-                "traversal with :manifest(), :path(), or a field-accessor "
-                "function -- only a plain pointer (:first()/:last()/"
-                ":index(n)) is supported so far."
+                "traversal with :manifest() or a field-accessor function -- "
+                "only a plain pointer (:first()/:last()/:index(n)) is "
+                "supported so far."
             )
         if not pointers:
             raise ReferenceException3(
@@ -791,18 +785,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
         log_call = self._bare_log_call(reference)
         if log_call is not None:
             return self._read_log_file(result.path, log_call.arg)
-        # :path(...) is checked before resolve_kind's content-oriented
-        # dispatch, since resolve_kind cannot tell ":path(:manifest())"
-        # apart from bare ":manifest()" -- both contain "manifest" via
-        # FunctionCall3.contains_function_named's recursive search, but
-        # :path() wants the resource's PATH, not its content.
-        if reference.name_three is not None:
-            path_call = self._find_path_call(reference.name_three.functions)
-            if path_call is not None:
-                home = self.csvpaths.file_manager.named_file_home(
-                    reference.root_major
-                )
-                return self._resolve_path_call(path_call, home)
         kind = reference.resolve_kind
         if kind == Reference3.FIRST_PARTY:
             if reference.name_three is None:

@@ -775,10 +775,13 @@ class TestRunLevelRange:
     def test_from_with_manifest_and_more_than_one_run_requires_a_pointer(
         self, five_runs
     ):
+        # query() itself succeeds (moved 2026-08-26, see the ":path()"
+        # retirement/Rule 1 bucket-list entry) -- only resolve() raises,
+        # once something actually tries to read the content.
+        finder = _finder("$acme.results.customers:from(-3):manifest()", five_runs)
+        assert len(finder.query()) > 1
         with pytest.raises(ReferenceException3):
-            _finder(
-                "$acme.results.customers:from(-3):manifest()", five_runs
-            ).query()
+            finder.resolve()
 
 
 class TestRunLevelDateRange:
@@ -1202,12 +1205,15 @@ class TestManifestOnNameOne:
     ):
         # "customers/2025" matches both run1 and run2. Resolving full
         # manifest content always touches exactly one entity (settled
-        # 2026-08-07), so this is illegal now, not "every run's own
-        # manifest, pooled" as it used to be -- a pointer is required to
-        # pick one run.
+        # 2026-08-07), so this is illegal -- a pointer is required to
+        # pick one run. query() itself succeeds (moved 2026-08-26, see
+        # the ":path()" retirement/Rule 1 bucket-list entry) -- only
+        # resolve() raises, once something actually tries to read the
+        # content.
         finder = _finder("$acme.results.customers/2025:manifest()", acme_archive)
+        assert len(finder.query()) > 1
         with pytest.raises(ReferenceException3):
-            finder.query()
+            finder.resolve()
 
     def test_manifest_with_no_pointer_and_exactly_one_matching_run_still_works(
         self, tmp_path

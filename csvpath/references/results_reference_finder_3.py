@@ -492,28 +492,26 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             selected = self._apply_pointer(pointer, candidates)
             selected_runs = [selected] if selected is not None else []
         else:
+            # Resolving full manifest/well-known-file content for more
+            # than one run at once is still illegal (Rule 1, manifest_
+            # field_functions_proposal.md's "Entity resolution and
+            # pooling" section) -- but query() itself is always allowed
+            # to return every match, regardless of accessor (moved
+            # 2026-08-26, see the ":path()" retirement/Rule 1 bucket-
+            # list entry); this flags the result instead of raising, and
+            # ReferenceFinder3.resolve_from() raises only if a caller
+            # actually tries to resolve more than one of these at once.
             selected_runs = candidates
-            if len(selected_runs) > 1 and wants_full_content:
-                # Resolving full manifest/well-known-file content always
-                # touches exactly one entity (settled 2026-08-07, see
-                # manifest_field_functions_proposal.md's "Entity
-                # resolution and pooling" section) -- more than one run
-                # here needs a pointer to pick which one, whether the
-                # content lives at the run level (:manifest()) or the
-                # instance level (an accessor riding on name_three).
-                raise ReferenceException3(
-                    "ResultsReferenceFinder3 requires a pointer (:first()/"
-                    ":last()/:index(n)) to pick one run when reading full "
-                    "content and more than one run matches -- resolving "
-                    "full content always touches exactly one entity."
-                )
 
         if match_all and accessor is not None:
             # :all() pools every instance in the run -- each instance has
-            # its own separate well-known file on disk, so this is the
-            # same "more than one entity" case as above, just one level
-            # down. A specific identity is still fine: that is already
-            # exactly one instance.
+            # its own separate well-known file on disk. Unlike the
+            # run-level case above, this stays an immediate, unconditional
+            # rejection for now (not deferred to resolve()) -- no
+            # established case needs ":all()" combined with a content
+            # accessor to succeed even when it happens to match exactly
+            # one instance, so this is left as-is rather than widened
+            # speculatively.
             raise ReferenceException3(
                 "ResultsReferenceFinder3 requires a specific statement "
                 "identity, not :all(), to read full well-known-file "
@@ -528,7 +526,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     run_dir, identity, match_all, range_bounds, accessor
                 )
             )
-        return ReferenceResults3(results=results)
+        return ReferenceResults3(
+            results=results,
+            ambiguous_content_read=wants_full_content and len(selected_runs) > 1,
+        )
 
     def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
         """root_major == "*" -- query across every named-results group,

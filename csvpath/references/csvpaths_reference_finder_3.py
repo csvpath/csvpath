@@ -139,33 +139,26 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
 
         manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
         selected_versions = self._resolve_versions(name_one, manifest)
-
-        if len(selected_versions) > 1:
-            combined = [
-                seg
-                for seg in (name_one.path[0], *name_one.functions)
-                if isinstance(seg, FunctionCall3)
-            ]
-            # checked by direct name, not contains_function_named's
-            # recursive search -- :manifest() is never itself nested
-            # inside another function's arg except :path()'s (e.g.
-            # :path(:manifest())), which is deliberately exempt from
-            # this rule (Rule 2, poolable). A recursive check would
-            # incorrectly flag that case too.
-            has_manifest = any(seg.name == "manifest" for seg in combined)
-            if has_manifest:
-                # Resolving full manifest content always touches exactly
-                # one entity (settled 2026-08-07, see manifest_field_
-                # functions_proposal.md's "Entity resolution and pooling"
-                # section) -- more than one version here needs a pointer
-                # to pick which one.
-                raise ReferenceException3(
-                    "CsvpathsReferenceFinder3 requires a pointer (:first()/"
-                    ":last()/:index(n)) to pick one version when combining "
-                    ":manifest() with no pointer matches more than one "
-                    "version -- resolving full manifest content always "
-                    "touches exactly one entity."
-                )
+        # Resolving full manifest content for more than one version at
+        # once is still illegal (Rule 1, manifest_field_functions_
+        # proposal.md's "Entity resolution and pooling" section) -- but
+        # query() itself is always allowed to return every matching
+        # version, regardless of accessor (moved 2026-08-26, see the
+        # ":path()" retirement/Rule 1 bucket-list entry); this flags the
+        # result instead of raising, and ReferenceFinder3.resolve_from()
+        # raises only if a caller actually tries to resolve more than
+        # one of these at once. _resolve_versions() itself already
+        # guarantees at most one entry whenever a pointer was present
+        # (see its own docstring), so len(selected_versions) > 1 here
+        # already implies no pointer was involved -- no separate
+        # pointer-presence check is needed.
+        combined = [
+            seg
+            for seg in (name_one.path[0], *name_one.functions)
+            if isinstance(seg, FunctionCall3)
+        ]
+        has_manifest = any(seg.name == "manifest" for seg in combined)
+        ambiguous_content_read = has_manifest and len(selected_versions) > 1
 
         name_three = reference.name_three
         from_call = to_call = None
@@ -249,7 +242,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                         identity=name_three.body,
                     )
                 )
-        return ReferenceResults3(results=results)
+        return ReferenceResults3(
+            results=results, ambiguous_content_read=ambiguous_content_read
+        )
 
     def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
         """root_major == "*" -- query across every named-paths group,
@@ -452,20 +447,12 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         log_call = self._bare_log_call(reference)
         if log_call is not None:
             return self._read_log_file(result.path, log_call.arg)
-        # :path(...) is checked before resolve_kind's content-oriented
-        # dispatch -- see FilesReferenceFinder3._extract_data() for why.
         name_one = reference.name_one
         combined_for_path = [
             seg
             for seg in (name_one.path[0], *name_one.functions)
             if isinstance(seg, FunctionCall3)
         ]
-        path_call = self._find_path_call(combined_for_path)
-        if path_call is not None:
-            home = self.csvpaths.paths_manager.named_paths_home(
-                reference.root_major
-            )
-            return self._resolve_path_call(path_call, home)
         kind = reference.resolve_kind
         if kind == Reference3.METADATA_FILE:
             if self._is_bare_pointer_reference(

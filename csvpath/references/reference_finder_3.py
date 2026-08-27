@@ -98,11 +98,42 @@ class ReferenceFinder3(ABC):
         selection is either a ReferenceResults3 (resolve all of it) or
         a list[str | UUID] of specific paths/uuids to pull out of a
         fresh query() first.
+
+        Rule 1 (manifest_field_functions_proposal.md's "Entity
+        resolution and pooling" section) -- reading a whole-resource
+        content accessor (:manifest(), :definition(), :errors(), etc.)
+        always touches exactly one entity -- is enforced HERE, not in
+        query(), as of 2026-08-26 (see the ":path()" retirement/Rule 1
+        bucket-list entry). query() is always allowed to return more
+        than one match, regardless of which accessor is present; a
+        finder's own query() instead flags the ReferenceResults3 it
+        returns (ReferenceResults3.ambiguous_content_read) when it found
+        more than one raw, unreduced candidate for such an accessor with
+        no pointer to pick one -- deliberately NOT a generic "is the
+        final count > 1" check computed here: a pointer applied WITHIN
+        each of several matched entities (e.g. ':all():last():manifest()'
+        across several named-paths groups, one manifest entry per group)
+        is perfectly legitimate even though the final count is > 1, so
+        only each finder's own query() -- which alone knows whether a
+        pointer actually reduced its candidates -- can tell a genuine
+        Rule 1 violation apart from several already-disambiguated
+        entities. Kept as a flag rather than an immediate raise purely
+        so query() itself never raises for this -- only resolve()/
+        resolve_from() (actually reading content) does.
         """
         if isinstance(selection, ReferenceResults3):
             results = selection
         else:
             results = self.query().select(selection)
+        if results.ambiguous_content_read and len(results) > 1:
+            raise ReferenceException3(
+                f"{type(self).__name__} cannot resolve more than one match "
+                "at once for a whole-resource content accessor (e.g. "
+                ":manifest(), :definition(), :errors()) -- a pointer "
+                "(:first()/:last()/:index(n)) or a narrower identity is "
+                "required to pick exactly one entity. query() itself is "
+                "unaffected -- it may still return every match."
+            )
         for result in results.results:
             result.data = self._extract_data(result)
         return results
@@ -643,39 +674,6 @@ class ReferenceFinder3(ABC):
                 return f
         return None
 
-    @staticmethod
-    def _find_path_call(functions: list) -> "FunctionCall3 | None":
-        """returns the first ":path(...)" call in `functions`, or None
-        if absent. Checked by literal name rather than a registry
-        lookup, since ":path()" is a single fixed name, not a growing
-        list of field-accessor names -- matching how ":manifest()"
-        itself is already detected by name elsewhere in these finders."""
-        for f in functions:
-            if f.name == "path":
-                return f
-        return None
-
-    @staticmethod
-    def _resolve_path_call(path_call, home: str) -> str:
-        """given a raw ":path(inner)" FunctionCall3 and the already-
-        computed home directory for the enclosing entity, returns the
-        filesystem path to whatever well-known file `inner` names.
-        :manifest()/:definition() are the only ones available at the
-        FILES/CSVPATHS datatypes this covers so far -- see wrappers/
-        path_3.py. Shared by files/csvpaths: home is computed
-        differently per datatype (named_file_home vs named_paths_home),
-        but the join is identical once you have it."""
-        inner = path_call.arg
-        inner_name = inner.name if inner is not None else None
-        if inner_name not in ("manifest", "definition"):
-            raise ReferenceException3(
-                f":path() does not yet support wrapping :{inner_name}() -- "
-                "only :manifest()/:definition() are supported so far."
-            )
-        filename = f"{inner_name}.json"
-        return ReferenceFinder3._query_well_known_file(home, filename).results[
-            0
-        ].path
 
     @staticmethod
     def _find_by_identity(identity: str, identities: list) -> int | None:

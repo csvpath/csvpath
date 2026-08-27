@@ -577,14 +577,3 @@ class TestFieldAccessorsOnOneMatchedVersion:
             "$acme.csvpaths.:last():named_paths_count()", FIELD_ACCESSOR_MANIFEST
         ).resolve()
         assert results.results[0].data == 2
-
-
-class TestPathFunction:
-    # doc line "### The filesystem path to a whole-resource function's own
-    # resource"
-    def test_path_wrapping_manifest_with_no_pointer_gives_every_version(self):
-        results = _finder("$acme.csvpaths.:path(:manifest())", ACME_MANIFEST).resolve()
-        assert [r.data for r in results.results] == [
-            f"{GROUP_HOME}/manifest.json",
-            f"{GROUP_HOME}/manifest.json",
-        ]

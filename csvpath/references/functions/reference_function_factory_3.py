@@ -141,8 +141,6 @@ class ReferenceFunctionFactory:
         from .filters.not_none_3 import NotNone3
         from .filters.true_3 import True3
 
-        from .wrappers.path_3 import Path3
-
         cls._FUNCTIONS = {
             First3.NAME: First3,
             Last3.NAME: Last3,
@@ -219,7 +217,6 @@ class ReferenceFunctionFactory:
             DestinationPort3.NAME: DestinationPort3,
             DestinationUsername3.NAME: DestinationUsername3,
             DestinationPassword3.NAME: DestinationPassword3,
-            Path3.NAME: Path3,
             RunUuid3.NAME: RunUuid3,
             Serial3.NAME: Serial3,
             Valid3.NAME: Valid3,

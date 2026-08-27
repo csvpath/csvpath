@@ -26,53 +26,42 @@ under two different names (different uuids, identical fingerprint).
 Not yet built: no `NamedPathsFingerprint3` function, no manifest field,
 no registrar change to populate it.
 
-## Retire `:path()`; move Rule 1 enforcement from `query()` to `resolve()`
+## `'*'`-traversal content-accessor guards — candidates for the same query()/resolve() split, not yet re-audited
 
-David, 2026-08-22, deciding while reviewing the compendium's "Rule 2/Rule 3"
-notes (path/field accessors exempt from Rule 1, always poolable): **getting
-paths is not the same as accessing files.** A field/file accessor trying to
-read *content* for more than one matched entity is illegal, no argument —
-but a `query()` that merely points to multiple entities is fine in
-principle. `:path()` exists today only to route around Rule 1's query()-time
-restriction (wrap a whole-resource content function, return its path
-instead of content, since a path is cheap/poolable) — but that whole
-function becomes redundant if the restriction itself simply moves to
-`resolve()` instead of being enforced inside `query()`. David's decision:
-**`query()` should always be allowed to return multiple matches, regardless
-of which accessor function is present; only `resolve()` (actually reading
-content) raises when asked to resolve more than one match at once.**
-`:path()` is retired — the same job is done by just calling `query()` on
-the ordinary accessor and not resolving it.
+Left over from retiring `:path()`/moving Rule 1 to `resolve()` (see
+`deferred_work_done_list.md`) — that pass deliberately touched only each
+finder's own LITERAL-root `query()` method, per its own explicit scoping
+note ("re-audit case by case once this lands, rather than assuming it
+dissolves everything at once"). These are the concrete, now-identified
+candidates for that re-audit, all still unconditional/immediate raises in
+`query()` today, none yet converted to the
+`ReferenceResults3.ambiguous_content_read` deferred-to-`resolve()` pattern:
 
-This actually realigns the code with what Rule 1's own docstring already
-said: "resolving full manifest content always touches exactly one entity"
-— resolve-scoped language, even though the current enforcement
-(`if has_manifest and len(candidates) > 1: raise ...`) lives inside
-`query()` itself, in all three finders.
-
-**Likely a bigger simplification than just deleting `:path()`, not just a
-retirement** — a lot of the currently-tracked `'*'`-traversal guards (both
-the FILES-untouched entry and the RESULTS/CSVPATHS partial generalization)
-reject combining `'*'` traversal with `:manifest()`/`:path()`/a field-
-accessor specifically *because* of this same query()-time ambiguity. Once
-that restriction no longer applies at query() time, several of those
-guards may turn out to be unnecessary rather than needing to be built out
-— re-audit case by case once this lands, rather than assuming it dissolves
-everything at once.
-
-**Explicitly a deliberate breaking change, not an oversight** (David: "now
-is the time to break things... it is never too soon to make a better
-decision") — the current query()-time raise has real tests locking it in
-(`TestManifestCombinedWithNameThree` and siblings, across all three
-finders' test files). Those need rewriting to assert the new query()-
-succeeds/resolve()-raises split, not just deleted.
-
-Work: remove `Path3`/`path_3.py` and its factory registration; move the
-single-entity check out of each finder's `query()` and into `resolve()`/
-`_extract_data()` (all three finders — `files_reference_finder_3.py`,
-`csvpaths_reference_finder_3.py`, `results_reference_finder_3.py`); rewrite
-the tests that currently assert query()-time raising; re-audit the `'*'`-
-traversal guards afterward to see which are still actually needed.
+- `ResultsReferenceFinder3._query_star_traversal()`'s own `match_all and
+  accessor is not None` check (instance-level `:all()` + a well-known-file
+  accessor, during `'*'` traversal) — the literal-root twin of this was
+  deliberately left as an unconditional raise too (see the done-list entry
+  below), not converted, so this one should be decided together with that
+  one, not in isolation.
+- `ResultsReferenceFinder3._star_pool_and_reduce()`'s `len(run_homes) > 1
+  and accessor is not None` check — this one IS count-based (unlike the
+  one above), structurally identical in shape to the literal-root run-level
+  check that WAS converted — a strong candidate to convert the same way.
+- `ResultsReferenceFinder3._star_group_and_reduce()`'s `accessor is not
+  None and pointer is not None` check (`'*'`-traversal GROUP mode + a
+  content accessor) — mirrors FILES'/CSVPATHS' own GROUP-mode restrictions
+  below, not obviously safe to convert (see next item).
+- `FilesReferenceFinder3._query_star_traversal()`'s unconditional
+  `:manifest()`/field-accessor-during-traversal rejection, and the literal-
+  root `':all()'/':groups()' grouping + content accessor` rejection in
+  `query()` (both files and results) — these are NOT simple count checks;
+  they reject the combination outright regardless of how many entities
+  would actually match. Converting them naively to a count-based deferred
+  check already proved unsafe once (a CSVPATHS `:all():last():manifest()`
+  test, spanning several groups each already reduced to one match via the
+  pointer, is legitimate and must NOT raise) — any change here needs the
+  same "was a pointer actually applied within each partition" reasoning
+  the literal-root fix used, not a blind port.
 
 ## `resolve_kind`'s hardcoded name-tuple dispatch — needs examination for clarity/impact before deciding
 

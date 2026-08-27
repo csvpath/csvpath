@@ -460,12 +460,15 @@ class TestManifestFunction:
         # :all() (CONTEXT_SETTER) plus :manifest() (VALUE) -- neither is
         # a pointer, and ACME_MANIFEST has two versions. Resolving full
         # manifest content always touches exactly one entity (settled
-        # 2026-08-07), so this is illegal now, not "every version,
-        # unreduced" as it used to be -- a pointer is required to pick
-        # one version.
+        # 2026-08-07), so this is illegal -- a pointer is required to
+        # pick one version. query() itself succeeds (moved 2026-08-26,
+        # see the ":path()" retirement/Rule 1 bucket-list entry) -- only
+        # resolve() raises, once something actually tries to read the
+        # content.
         finder = _finder("$acme.csvpaths.:all():manifest()")
+        assert len(finder.query()) > 1
         with pytest.raises(ReferenceException3):
-            finder.query()
+            finder.resolve()
 
     def test_manifest_with_no_pointer_and_exactly_one_version_still_works(self):
         single_version = [ACME_MANIFEST[0]]
@@ -1445,29 +1448,6 @@ class TestTemplateBareVsPointerDualSource:
             "$acme.csvpaths.:template()", self.MANIFEST
         ).resolve()
         assert [r.data for r in results.results] == [None, None]
-
-
-class TestPathFunction:
-    # :path(inner) returns the filesystem path to whatever well-known
-    # resource `inner` points at, instead of its content.
-    def test_path_wrapping_manifest(self):
-        results = _finder("$acme.csvpaths.:first():path(:manifest())").resolve()
-        assert results.results[0].data == f"{GROUP_HOME}/manifest.json"
-
-    def test_path_wrapping_definition(self):
-        results = _finder("$acme.csvpaths.:first():path(:definition())").resolve()
-        assert results.results[0].data == f"{GROUP_HOME}/definition.json"
-
-    def test_path_alone_with_no_pointer_gives_every_version(self):
-        results = _finder("$acme.csvpaths.:path(:manifest())").resolve()
-        assert [r.data for r in results.results] == [
-            f"{GROUP_HOME}/manifest.json",
-            f"{GROUP_HOME}/manifest.json",
-        ]
-
-    def test_path_wrapping_a_field_accessor_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _finder("$acme.csvpaths.:first():path(:uuid())").resolve()
 
 
 class TestScopeLimits:

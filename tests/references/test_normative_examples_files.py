@@ -678,26 +678,6 @@ class TestFieldAccessorsOnOneMatchedVersion:
         assert results.results[0].data is None
 
 
-class TestPathFunction:
-    # doc lines "### The filesystem path to a whole-resource function's
-    # own resource, rather than its content"
-    def test_path_wrapping_manifest_bare(self):
-        results = _finder(
-            '$alpha.files.:name("orders.csv").:path(:manifest())',
-            ALPHA_HOME,
-            ALPHA_MANIFEST,
-        ).resolve()
-        assert results.results[0].data == f"{ALPHA_HOME}/manifest.json"
-
-    def test_path_wrapping_manifest_beside_a_pointer(self):
-        results = _finder(
-            '$alpha.files.:name("orders.csv").:last():path(:manifest())',
-            ALPHA_HOME,
-            ALPHA_MANIFEST,
-        ).resolve()
-        assert results.results[0].data == f"{ALPHA_HOME}/manifest.json"
-
-
 class TestComputedFields:
     # doc lines "### Computed fields -- never stored, derived from the
     # reference itself"

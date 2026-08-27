@@ -1312,13 +1312,16 @@ class TestManifestCombinedWithNameThree:
     def test_manifest_alone_with_more_than_one_matching_version_raises(self):
         # "one.csv" has two versions in ALPHA_MANIFEST -- resolving full
         # manifest content always touches exactly one entity (settled
-        # 2026-08-07), so no pointer to pick between them is illegal now,
-        # not "every entry, unreduced" as it used to be.
+        # 2026-08-07), so no pointer to pick between them is illegal.
+        # query() itself succeeds (moved 2026-08-26, see the ":path()"
+        # retirement/Rule 1 bucket-list entry) -- only resolve() raises,
+        # once something actually tries to read the content.
         finder = _finder(
             '$alpha.files.:name("one.csv").:manifest()', ALPHA_HOME, ALPHA_MANIFEST
         )
+        assert len(finder.query()) > 1
         with pytest.raises(ReferenceException3):
-            finder.query()
+            finder.resolve()
 
     def test_manifest_alone_with_exactly_one_matching_version_still_works(self):
         # "zero.csv" has only one version -- no pointer needed, since
@@ -1869,50 +1872,6 @@ class TestTemplateBareVsMatchedDualSource:
     def test_bare_never_configured_gives_none_not_an_error(self):
         finder = _finder("$rich.files.:template()", RICH_HOME, RICH_MANIFEST)
         assert finder.resolve().results[0].data is None
-
-
-class TestPathFunction:
-    # :path(inner) returns the filesystem path to whatever well-known
-    # resource `inner` points at, instead of its content -- and, unlike
-    # :manifest()/:definition() themselves, is meant to be poolable
-    # across "*"/unresolved versions (not exercised here, since "*" as
-    # root_major is not yet supported -- see manifest_field_functions_
-    # proposal.md's Rule 2).
-    def test_path_wrapping_manifest(self):
-        finder = _finder(
-            '$rich.files.:name("orders.csv").:first():path(:manifest())',
-            RICH_HOME,
-            RICH_MANIFEST,
-        )
-        results = finder.resolve()
-        assert results.results[0].data == f"{RICH_HOME}/manifest.json"
-
-    def test_path_wrapping_definition(self):
-        finder = _finder(
-            '$rich.files.:name("orders.csv").:first():path(:definition())',
-            RICH_HOME,
-            RICH_MANIFEST,
-        )
-        results = finder.resolve()
-        assert results.results[0].data == f"{RICH_HOME}/definition.json"
-
-    def test_path_alone_satisfies_the_no_pointer_gate(self):
-        finder = _finder(
-            '$rich.files.:name("orders.csv").:path(:manifest())',
-            RICH_HOME,
-            RICH_MANIFEST,
-        )
-        results = finder.query()
-        assert len(results.results) == 2
-
-    def test_path_wrapping_a_field_accessor_is_not_yet_supported(self):
-        finder = _finder(
-            '$rich.files.:name("orders.csv").:first():path(:uuid())',
-            RICH_HOME,
-            RICH_MANIFEST,
-        )
-        with pytest.raises(ReferenceException3):
-            finder.resolve()
 
 
 class TestExtractData:
