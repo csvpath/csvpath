@@ -213,6 +213,39 @@ class TestNoPointerReturnsEveryRun:
         results = _finder("$acme.results.customers/2025", acme_archive).query()
         assert results.uuids == ["run1-uuid", "run2-uuid"]
 
+
+class TestNameRegexPathSegment:
+    # :name(/regex/) as a template path segment -- added 2026-08-27, see
+    # the "name_one path segment cannot be a regex" bucket-list entry.
+    @pytest.fixture
+    def two_year_archive(self, tmp_path):
+        run_2025 = _make_run(
+            tmp_path / "acme" / "customers" / "2025",
+            "2026-01-01_00-00-00",
+            "run-2025-uuid",
+            {},
+        )
+        run_2026 = _make_run(
+            tmp_path / "acme" / "customers" / "2026",
+            "2026-02-01_00-00-00",
+            "run-2026-uuid",
+            {},
+        )
+        _write_archive_manifest(tmp_path, "acme", [run_2025, run_2026])
+        return str(tmp_path)
+
+    def test_regex_matches_only_the_one_year_it_searches(self, two_year_archive):
+        results = _finder(
+            "$acme.results.customers/:name(/2025/):first()", two_year_archive
+        ).query()
+        assert results.uuids == ["run-2025-uuid"]
+
+    def test_regex_matching_neither_year_returns_empty(self, two_year_archive):
+        results = _finder(
+            "$acme.results.customers/:name(/2027/):first()", two_year_archive
+        ).query()
+        assert results.files == []
+
     def test_no_pointer_no_matching_prefix_returns_empty(self, acme_archive):
         results = _finder("$acme.results.orders/2025", acme_archive).query()
         assert results.files == []

@@ -9,6 +9,60 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `:name(/regex/)` — a name_one path segment can now be a regex — BUILT 2026-08-27
+
+From the "grammar / argument-type gaps" bucket-list entry: `Name3.
+ARG_TYPES = (str,)` had no `Regex3` support, even though `Name3`'s own
+docstring already flagged this as deliberately deferred ("the grammar
+also allows... a regex here, but those need machinery... this first
+pass does not need yet") and the grammar itself already allows a REGEX
+token everywhere a STRING is allowed. Built autonomously overnight
+while David was asleep, on his own instruction to pick something that
+did not need him -- chosen specifically because `:idchain()` had
+already settled every real design question a second `Regex3` consumer
+would otherwise need decided (search(), not anchored; `re.compile` at
+build time, not deferred) -- confirmed by reading `idchain_3.py`'s own
+docstring before starting, not assumed, so this was applying an
+already-decided design to a second consumer, not inventing one.
+
+**Built**: `Name3.ARG_TYPES` widened to `(str, Regex3)`; `Name3.
+check_valid()` (new override, calling `super().check_valid()` first)
+eagerly compiles a `Regex3` arg's pattern and raises
+`ReferenceException3` on a bad one, same fail-fast timing `:idchain()`
+gets via its own `__init__` (`ReferenceFunctionFactory.build()` already
+calls `check_valid()` right after constructing, so this fires at parse
+time, not deep inside matching). A new shared helper,
+`ReferenceFinder3._segment_matches(expected, actual)` (`reference_
+finder_3.py`), replaces the identical `if isinstance(expected, Star3):
+continue; if actual != expected: return False` block that used to be
+hand-duplicated in FOUR places (`FilesReferenceFinder3._matches`/
+`_matches_suffix`, `ResultsReferenceFinder3._matches_prefix`/
+`_matches_prefix_at_least`) -- one shared comparison rule (`Star3` ->
+always matches, `Regex3` -> `re.search()`, anything else -> `==`)
+instead of four copies that would each need the same `Regex3` case
+added separately. `_compile_path_pattern()` itself needed NO change --
+`_resolve_value()` already passes a non-`InterpolatedString3` value
+(a `Regex3` included) through unchanged, so the parsed regex lands in
+the pattern list as-is, ready for `_segment_matches()`.
+
+Tests: `test_name_3.py` (valid/invalid regex arg); new `TestSegmentMatches`
+and a new `TestCompilePathPattern` case (`test_reference_finder_3.py`,
+confirming a `:name(/regex/)` segment stays a `Regex3`, not unwrapped to
+a string); real end-to-end FILES tests (`ALPHA_MANIFEST`'s existing
+"zero.csv"/"one.csv" fixture, no new fixture needed -- `/one/` matches
+only "one.csv", an invalid regex raises) and RESULTS tests (a new
+two-year archive fixture, `:name(/2025/)` matches only that year's own
+run). `tests/references/` now 1445 passed, up from 1433.
+
+**`@variable` as an argument and `root_major`'s own separate `:regex()`
+function gap are untouched** -- confirmed, while working on this, that
+the `root_major` gap is a bigger, different question (selecting among
+distinct entities, not a path segment within one already-chosen entity)
+and updated the bucket list to say so explicitly, rather than leaving
+it looking like a small follow-on to this fix.
+
+---
+
 ## `ResultsReferenceFinder3._star_pool_and_reduce()`'s content-accessor guard converted — BUILT 2026-08-27
 
 One piece of the "`'*'`-traversal content-accessor guards" bucket-list

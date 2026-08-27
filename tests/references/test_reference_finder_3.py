@@ -1,6 +1,13 @@
 import pytest
 
-from csvpath.references.reference_3 import FunctionCall3, NameOne3, NameThree3, Reference3
+from csvpath.references.reference_3 import (
+    FunctionCall3,
+    NameOne3,
+    NameThree3,
+    Reference3,
+    Regex3,
+    Star3,
+)
 from csvpath.references.reference_finder_3 import ReferenceFinder3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -425,6 +432,39 @@ class TestCompilePathPattern:
         path = _ref("$acme.files.:uuid()").parsed.name_one.path
         with pytest.raises(Exception):
             _dummy()._compile_path_pattern(path)
+
+    def test_name_function_with_a_regex_arg_stays_a_regex3(self):
+        # added 2026-08-27 -- unlike a plain string arg, a Regex3 is NOT
+        # unwrapped to a str here; it passes through as-is for
+        # _segment_matches() to compare with a search(), not equality.
+        path = _ref("$acme.files.:name(/orders.*\\.csv/)").parsed.name_one.path
+        pattern = _dummy()._compile_path_pattern(path)
+        assert len(pattern) == 1
+        assert isinstance(pattern[0], Regex3)
+        assert pattern[0].pattern == "orders.*\\.csv"
+
+
+class TestSegmentMatches:
+    # shared by every finder's own path-matching primitive (FILES'
+    # _matches/_matches_suffix, RESULTS' _matches_prefix/
+    # _matches_prefix_at_least) -- added 2026-08-27 alongside :name()'s
+    # own Regex3 support.
+    def test_star_matches_anything(self):
+        assert ReferenceFinder3._segment_matches(Star3(), "whatever") is True
+
+    def test_plain_str_requires_exact_equality(self):
+        assert ReferenceFinder3._segment_matches("orders.csv", "orders.csv") is True
+        assert ReferenceFinder3._segment_matches("orders.csv", "returns.csv") is False
+
+    def test_regex_searches_not_anchored(self):
+        pattern = Regex3(pattern="orders")
+        assert ReferenceFinder3._segment_matches(pattern, "my-orders-file.csv") is True
+        assert ReferenceFinder3._segment_matches(pattern, "returns.csv") is False
+
+    def test_regex_anchored_pattern_still_works(self):
+        pattern = Regex3(pattern=r"^orders.*\.csv$")
+        assert ReferenceFinder3._segment_matches(pattern, "orders-2026.csv") is True
+        assert ReferenceFinder3._segment_matches(pattern, "not-orders-2026.csv") is False
 
 
 class TestResolveValue:

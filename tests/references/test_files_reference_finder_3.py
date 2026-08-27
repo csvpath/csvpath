@@ -216,6 +216,29 @@ class TestNameFunctionAsPathSegment:
         )
         assert finder.query().files == []
 
+    def test_name_with_a_regex_arg_searches_not_exact_matches(self):
+        # added 2026-08-27, see the "name_one path segment cannot be a
+        # regex" bucket-list entry -- ALPHA_MANIFEST has "zero.csv" and
+        # "one.csv" (two versions); /one/ must match only "one.csv".
+        finder = _finder(
+            "$alpha.files.:name(/one/).:index(0)", ALPHA_HOME, ALPHA_MANIFEST
+        )
+        assert finder.query().files == [
+            "inputs/named_files/alpha/one.csv/1111111111abcdef.csv"
+        ]
+
+    def test_name_with_a_regex_arg_matching_nothing_returns_empty(self):
+        finder = _finder(
+            "$alpha.files.:name(/nope/).:first()", ALPHA_HOME, ALPHA_MANIFEST
+        )
+        assert finder.query().files == []
+
+    def test_name_with_an_invalid_regex_arg_raises(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:name(/(unclosed/).:first()", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
 
 class TestLiteralMultiSegmentPath:
     def test_extensionless_template_path_matches(self):

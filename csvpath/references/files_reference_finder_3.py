@@ -962,9 +962,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if len(segments) != len(pattern):
             return False
         for actual, expected in zip(segments, pattern):
-            if isinstance(expected, Star3):
-                continue
-            if actual != expected:
+            if not ReferenceFinder3._segment_matches(expected, actual):
                 return False
         return True
 
@@ -987,8 +985,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
             return False
         trailing = segments[len(segments) - len(pattern) :]
         for actual, expected in zip(trailing, pattern):
-            if isinstance(expected, Star3):
-                continue
-            if actual != expected:
+            if not ReferenceFinder3._segment_matches(expected, actual):
                 return False
         return True

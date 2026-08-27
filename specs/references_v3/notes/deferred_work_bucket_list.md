@@ -310,11 +310,14 @@ a named worksheet across every named-file matched by `'*'`.
   (lines 79-80) says it should. No `:regex()` *function* exists anywhere in
   v3 today, for any position (`Regex3` is a `/pattern/` *literal* type,
   usable as some other function's argument value — a different thing).
-- A name_one path segment cannot be a regex either — `_compile_path_
-  pattern()` accepts `:name("...")` and any `SOURCE == "clock"` function
-  (widened 2026-08-26, see `deferred_work_done_list.md`'s date/time-
-  functions entry) as function-valued segments, but not a regex, and
-  `Name3.ARG_TYPES = (str,)` (no `Regex3` support).
+  Confirmed 2026-08-27, while building `:name(/regex/)` (see
+  `deferred_work_done_list.md`), that this is a genuinely different,
+  bigger question, not a small extension of that fix: a root_major
+  regex would select among *distinct named-files/groups themselves*
+  (root_major's own job), not a path segment *within* one already-
+  chosen entity, and would need real grammar changes plus a decision on
+  how it composes with `'*'` traversal's own existing semantics — left
+  alone, not attempted.
 - `@variable` (`Variable3`) registration and `{...}` interpolation
   evaluation are both **built 2026-08-26** — see `deferred_work_done_list.md`.
   Still not built: `@variable` used as some OTHER function's *own direct

@@ -1516,9 +1516,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if prefix_segments is None or len(prefix_segments) != len(pattern):
             return False
         for actual, expected in zip(prefix_segments, pattern):
-            if isinstance(expected, Star3):
-                continue
-            if actual != expected:
+            if not cls._segment_matches(expected, actual):
                 return False
         return True
 
@@ -1535,9 +1533,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if prefix_segments is None or len(prefix_segments) < len(pattern):
             return False
         for actual, expected in zip(prefix_segments, pattern):
-            if isinstance(expected, Star3):
-                continue
-            if actual != expected:
+            if not cls._segment_matches(expected, actual):
                 return False
         return True
 

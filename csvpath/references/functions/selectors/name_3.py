@@ -1,4 +1,7 @@
-from ...reference_3 import Reference3
+import re
+
+from ...reference_3 import Reference3, Regex3
+from ...reference_exceptions_3 import ReferenceException3
 from ..function_3 import Function3
 
 
@@ -7,19 +10,27 @@ class Name3(Function3):
     # matches an exact literal name at this position -- specifically for
     # names that cannot appear as a bare PATH_SEGMENT (e.g. a real
     # filename with a "." in it, which the grammar reserves as the
-    # name_one/name_three separator). str arg only for now -- the
-    # grammar also allows "*", "@var", and a regex here, but those need
-    # machinery (wildcard-as-arg semantics, runtime variable lookup,
-    # regex matching) this first pass does not need yet.
+    # name_one/name_three separator). Also matches a /regex/ (added
+    # 2026-08-27, see the "name_one path segment cannot be a regex"
+    # bucket-list entry) -- the grammar already allowed a REGEX arg
+    # everywhere a STRING is allowed, this just wires it up here too.
+    # Comparison itself lives in ReferenceFinder3._segment_matches(),
+    # shared by every finder's own path-matching primitive, reusing
+    # :idchain()'s own already-settled Regex3 semantics (search(), not
+    # anchored -- see idchain_3.py's own docstring for why) rather than
+    # inventing a second convention. "@var" here is a separate, still-
+    # open gap (runtime variable lookup as some OTHER function's own
+    # direct argument) -- not addressed by this.
     #
     NAME = "name"
     SUMMARY = (
-        "Matches an exact literal name at this position -- for names "
-        "(e.g. a filename) that cannot appear in a bare path segment."
+        "Matches an exact literal name, or searches a /regex/, at this "
+        "position -- for names (e.g. a filename) that cannot appear in "
+        "a bare path segment."
     )
     ROLE = Function3.CONTEXT_SETTER
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    ARG_TYPES = (str,)
+    ARG_TYPES = (str, Regex3)
     ARG_REQUIRED = True
     #
     # CSVPATHS deliberately maps to an EMPTY tuple, not an absent key --
@@ -45,3 +56,16 @@ class Name3(Function3):
         Reference3.CSVPATHS: (),
         Reference3.RESULTS: (Reference3.NAME_ONE,),
     }
+
+    def check_valid(self) -> None:
+        """same ARG_TYPES/ARG_REQUIRED check every function gets, plus
+        an eager regex-syntax check when the arg is a Regex3 -- fail at
+        build time (ReferenceFunctionFactory.build() already calls this
+        right after constructing), not later, deep inside path-matching,
+        the first time a candidate happens to be compared against it."""
+        super().check_valid()
+        if isinstance(self._arg, Regex3):
+            try:
+                re.compile(self._arg.pattern)
+            except re.error as e:
+                raise ReferenceException3(f":name() regex is invalid: {e}") from e

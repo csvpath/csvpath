@@ -1,4 +1,5 @@
 import json
+import re
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -6,7 +7,14 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
-from .reference_3 import FunctionCall3, InterpolatedString3, Reference3, Star3, Variable3
+from .reference_3 import (
+    FunctionCall3,
+    InterpolatedString3,
+    Reference3,
+    Regex3,
+    Star3,
+    Variable3,
+)
 from .reference_exceptions_3 import ReferenceException3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -522,6 +530,28 @@ class ReferenceFinder3(ABC):
             else:
                 raise ReferenceException3(f"Unsupported name_one path segment: {segment!r}")
         return pattern
+
+    @staticmethod
+    def _segment_matches(expected, actual: str) -> bool:
+        """true if `actual` (one real path/run-directory segment) matches
+        `expected` (one already-compiled pattern element from
+        _compile_path_pattern) -- Star3 is a wildcard (matches anything);
+        a Regex3 (added 2026-08-27, ":name(/pattern/)" -- see Name3's own
+        docstring) searches, not anchored to the start/whole segment,
+        the same established semantics :idchain()'s own Regex3 argument
+        already uses (David's call there, reused rather than
+        reinvented: search() so the pattern does not need to match the
+        whole segment, just find something within it); anything else (a
+        plain str, from a literal segment or a resolved ":name(\"...\")")
+        is exact equality. Shared by FilesReferenceFinder3's own
+        _matches/_matches_suffix and ResultsReferenceFinder3's own
+        _matches_prefix/_matches_prefix_at_least -- one comparison rule,
+        not four copies of it."""
+        if isinstance(expected, Star3):
+            return True
+        if isinstance(expected, Regex3):
+            return re.search(expected.pattern, actual) is not None
+        return actual == expected
 
     def _resolve_value(self, value):
         """returns `value` unchanged if it is a plain literal (str, int,
