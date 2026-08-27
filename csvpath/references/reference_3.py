@@ -411,6 +411,7 @@ _METADATA_FIELD_FUNCTIONS = (
     "named_file_size",
     "named_file_last_change",
     "named_file_fingerprint",
+    "named_paths_fingerprint",
     "run_dir",
     "instance_index",
     "named_paths_group",

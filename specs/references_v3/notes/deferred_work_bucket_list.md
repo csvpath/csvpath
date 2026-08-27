@@ -9,23 +9,6 @@ instead, so the completed reasoning trail isn't lost, it's just off this
 list (see that file's own header, and the "Process note" at the bottom of
 this one).
 
-## Results Run Manifest has no `named_paths_fingerprint` field
-
-Surfaced by David, 2026-08-26, while correcting the UNION `KIND`
-taxonomy (see `deferred_work_done_list.md`'s "UNION compatibility
-revised again... to compare by conceptual `KIND`" entry): the Results
-Run Manifest (table 5) records `named_file_fingerprint` (which named-
-file content drove the run) but has no equivalent field for which
-named-paths group *content* drove the run — only `named_paths_uuid`
-(the group version's registration identity, not its content). David's
-own words: "it's not, but should be." This is what would let a run be
-compared, by `:fingerprint()`/`KIND == "fingerprint"`, against the
-named-paths group whose *content* (not registration event) produced it
--- catching the case where the same `group.csvpath` text was loaded
-under two different names (different uuids, identical fingerprint).
-Not yet built: no `NamedPathsFingerprint3` function, no manifest field,
-no registrar change to populate it.
-
 ## `'*'`-traversal content-accessor guards — candidates for the same query()/resolve() split, not yet re-audited
 
 Left over from retiring `:path()`/moving Rule 1 to `resolve()` (see

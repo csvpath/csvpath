@@ -1639,6 +1639,7 @@ class TestFieldAccessorFunctions:
                 "run_uuid": "run1-uuid",
                 "error_count": 3,
                 "named_paths_uuid": "paths-uuid-1",
+                "named_paths_fingerprint": "cafef00d",
                 "named_file_uuid": "file-uuid-1",
                 "named_file_path": "/inputs/named_files/widgets/data.csv",
                 "named_file_size": 1024,
@@ -1655,6 +1656,7 @@ class TestFieldAccessorFunctions:
 
         assert _val("error_count") == 3
         assert _val("named_paths_uuid") == "paths-uuid-1"
+        assert _val("named_paths_fingerprint") == "cafef00d"
         assert _val("named_file_uuid") == "file-uuid-1"
         assert _val("named_file_path") == "/inputs/named_files/widgets/data.csv"
         assert _val("named_file_size") == 1024

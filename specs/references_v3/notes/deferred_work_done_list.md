@@ -9,6 +9,94 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## Results Run Manifest `named_paths_fingerprint` field — BUILT 2026-08-27 (closes issue #262)
+
+Surfaced by David, 2026-08-26, while correcting the UNION `KIND`
+taxonomy (see this file's own "UNION compatibility revised again... to
+compare by conceptual `KIND`" entry below): the Results Run Manifest
+(table 5) records `named_file_fingerprint` (which named-file content
+drove the run) but had no equivalent field for which named-paths group
+*content* drove the run — only `named_paths_uuid` (the group version's
+registration identity, not its content). David's own words: "it's not,
+but should be." This is what lets a run be compared, by
+`:fingerprint()`/`KIND == "fingerprint"`, against the named-paths group
+whose *content* (not registration event) produced it -- catching the
+case where the same `group.csvpaths` text was loaded under two
+different names (different uuids, identical fingerprint). Also filed
+as GitHub issue #262.
+
+**Built, mirroring `named_file_fingerprint`'s own shape exactly (same
+manifest, same UNION `KIND`, same field-accessor pattern) end to end:**
+
+- **`PathsManager.get_fingerprint_for_name(name)`** (`paths_manager.py`)
+  -- new method, deliberately copy-shaped after the existing
+  `get_named_paths_uuid(name)` right above it (same `None`/`"#"`-
+  fragment/`"$"`-reference handling, same manifest-read-and-raise-if-
+  missing shape), just returning the last manifest entry's own
+  `"fingerprint"` key instead of `"uuid"`. Not factored into a shared
+  helper with `get_named_paths_uuid` -- the two methods are already
+  small and independently readable; extracting a helper for two
+  one-line-different call sites would be the premature-abstraction
+  CLAUDE.md style guidance warns against, not a real simplification.
+- **`ResultsMetadata.named_paths_fingerprint`** (`results_metadata.py`)
+  -- new attribute (plain `str`, unlike `named_paths_uuid`'s `UUID`
+  typing/property pair -- a fingerprint is just an opaque hash string,
+  same as `named_file_fingerprint`'s own plain-`str` treatment), wired
+  into `from_manifest()` alongside `named_paths_uuid_string`.
+- **`ResultsRegistrar.register_start()`/`metadata_update()`**
+  (`results_registrar.py`) -- populates
+  `mdata.named_paths_fingerprint` via
+  `self.csvpaths.paths_manager.get_fingerprint_for_name(self.pathsname)`,
+  right alongside the existing named-file fingerprint fetch (same
+  method, same registrar, same call shape); writes it into the run
+  manifest dict as `"named_paths_fingerprint"`, right alongside
+  `"named_paths_uuid"`.
+- **`NamedPathsFingerprint3`** (new `Function3` subclass,
+  `named_paths_fingerprint_3.py`) -- `RESULTS`-only field accessor,
+  `SOURCE = "manifest"`, `KIND = "fingerprint"` (the same `KIND` as
+  `Fingerprint3`/`NamedFileFingerprint3` -- byte-identity is meaningful
+  across different entities, per `Fingerprint3`'s own already-settled
+  2026-08-26 KIND-taxonomy note), `KEY = {RESULTS: "named_paths_fingerprint"}`.
+  Registered in `reference_function_factory_3.py`; `"named_paths_fingerprint"`
+  added to `reference_3.py`'s `_METADATA_FIELD_FUNCTIONS` tuple. No
+  finder-specific code needed anywhere -- field accessors resolve
+  generically off `SOURCE`/`KEY`, and UNION `KIND` comparison
+  (`reference_expression_3.py`) reads `Function3.KIND` declaratively
+  off the registered class, so declaring `KIND = "fingerprint"` was
+  the only wiring `ReferenceExpression3` needed.
+
+**Deliberately scoped out, on request (David, 2026-08-27, asked
+directly rather than assumed):** the SQLite (`sqlite_results_listener.py`)
+and SQL (`sql_results_listener.py`/`tables.py`) integrations already
+mirror `named_file_fingerprint` into their own DB schemas, but wiring
+`named_paths_fingerprint` into those too would need real schema/DDL
+changes (`Sqliter`'s schema.sql, a new SQLAlchemy `Column`) -- beyond
+what the original bucket-list ask actually specified (function +
+manifest field + registrar change, not the downstream DB integrations).
+Left untouched; the field is still fully usable via
+`:named_paths_fingerprint()` and directly in `manifest.json`. The OTLP
+integration (`otlp_results_listener.py`) WAS wired in -- a single
+additive dict key in an existing `core_meta()` override, no schema
+involved, so no scope-expansion risk.
+
+Tests: new `test_named_paths_fingerprint_3.py` (Function3 metadata/
+arg-validation, mirrors `test_named_file_fingerprint_3.py`); new
+`PathsManager.get_fingerprint_for_name` coverage in
+`test_csvpaths_managers_paths_manager.py` (happy path against a real
+`add_named_paths`-registered group, `None`-name raise, no-manifest
+raise); new `ResultsMetadata` coverage in
+`test_csvpaths_managers_results_metadata.py` (`from_manifest` reads
+the field, defaults to `None`); extended
+`test_results_reference_finder_3.py`'s existing
+`test_run_scope_fields_added_2026_08_25` with the new field; extended
+`test_reference_expression_3.py`'s `orders_archive` fixture with a
+`named_paths_fingerprint` value and added
+`test_union_of_fingerprint_and_named_paths_fingerprint_succeeds` --
+the actual originally-motivating end-to-end case (`$groupa.csvpaths.
+:fingerprint()` UNION `$groupa.results.:flatten():named_paths_fingerprint()`).
+Full local-backend suite green (3045/3045, run twice); pre-existing
+SFTP/S3 env-dependent failures unrelated to this change.
+
 ## `:home()`/`:definition()` during `'*'` traversal for FILES — three of four gaps BUILT 2026-08-27
 
 From the "FILES '*' traversal — essentially untouched by the recent
