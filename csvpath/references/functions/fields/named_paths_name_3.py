@@ -21,6 +21,7 @@ class NamedPathsName3(Function3):
     ARG_TYPES = ()
     ARG_REQUIRED = False
     SOURCE = "manifest"
+    KIND = "name"
     KEY = {
         Reference3.CSVPATHS: "named_paths_name",
         Reference3.RESULTS: "named_paths_name",

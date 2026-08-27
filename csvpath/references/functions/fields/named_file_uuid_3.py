@@ -16,7 +16,7 @@ class NamedFileUuid3(Function3):
     ARG_TYPES = ()
     ARG_REQUIRED = False
     SOURCE = "manifest"
-    PRODUCES_UUID = True
+    KIND = "uuid"
     KEY = {
         Reference3.RESULTS: "named_file_uuid",
     }

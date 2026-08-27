@@ -30,12 +30,15 @@ class ReferenceExpression3:
     # structural (settled 2026-08-26, see _check_union_compatible) -- if
     # the left side is PATHS, any right side unions freely, by path
     # alone. If the left side is VALUES, the right side's own terminal
-    # accessor must be IDENTICAL to the left's (same function name, same
-    # argument, via FunctionCall3's own __eq__), not merely "the same
-    # kind" or "both produce a uuid" -- comparing the accessors
-    # themselves, not the values they resolve to, is what decides
-    # comparability; the values are a downstream question, not this
-    # class's.
+    # accessor must share the left's own conceptual KIND (Function3.KIND
+    # -- e.g. "uuid", "name": :uuid()/:run_uuid() are both "uuid",
+    # :named_paths_name()/:named_results_name() are both "name", even
+    # though each pair is two different functions), or else be the
+    # literally identical accessor (same function name, same argument)
+    # when neither side has a declared KIND -- comparing the accessors'
+    # own conceptual purpose, not the values they resolve to, is what
+    # decides comparability; the values are a downstream question, not
+    # this class's.
     #
     # INTERSECT/SUBTRACT use a join key instead: whatever scalar each
     # side's own trailing field accessor resolved to (result.data,
@@ -183,7 +186,8 @@ class ReferenceExpression3:
 
     def _side_reference_parsed(self, side: "str | ReferenceExpression3"):
         """the single, definitive parsed Reference3 that determines a
-        side's own kind (PATHS/VALUES) and PRODUCES_UUID-ness -- for a
+        side's own kind (PATHS/VALUES) and uuid-ness (Function3.KIND ==
+        "uuid") -- for a
         plain reference string, that is just its own parse; for a
         sub-ReferenceExpression3, recurses into ITS OWN left side
         (regardless of that sub-expression's own op) -- INTERSECT/
@@ -218,42 +222,56 @@ class ReferenceExpression3:
         return None
 
     def _check_union_compatible(self) -> None:
-        """UNION's own compatibility rule -- LHS-driven, purely
-        structural, settled 2026-08-26 directly from David's own "compare
-        the accessors, not the value types" proposal: a :uuid() side and
-        a :run_uuid() side both produce a uuid, but they are NOT the same
-        accessor, so they are not union-compatible under this rule --
-        only two sides whose own terminal accessor (function name and
-        argument together) are identical qualify, e.g. :uuid()==:uuid()
-        or :type()==:type() (a bare :type() vs. another bare :type() is
-        accessor-equal even though the two sides' actual resolved values
-        may or may not agree -- that is a downstream question, not this
-        method's). :type("csv") and :type("xlsx") are NOT accessor-equal
-        (different argument), so they would not be union-compatible
-        either, if either side's own trailing accessor were :type()
-        itself -- in practice :type(...) is normally a mid-chain filter,
-        not the terminal accessor, so this rarely applies to it directly.
-        If the left side is PATHS (no terminal VALUE-role accessor at
-        all), any right side unions freely, by path alone -- this is the
-        "RHS added by path" case from the design note."""
+        """UNION's own compatibility rule -- LHS-driven, revised
+        2026-08-26 (same day as the first, now-superseded "accessor must
+        be literally identical" draft) directly from David's own refined
+        design note: comparability is about conceptual PURPOSE, not raw
+        accessor identity or resolved-value type. :uuid() and
+        :run_uuid() are comparable (both KIND == "uuid") even though
+        they are different functions; :named_paths_name() and
+        :named_results_name() are comparable (both KIND == "name") for
+        the same reason. :fingerprint() and :type() are NOT comparable
+        even though both happen to resolve to a string -- a content hash
+        and a file extension are not the same kind of thing, and
+        neither has a declared KIND, so they fall back to (and fail)
+        the literal-identity check below. A bare :type() against another
+        bare :type() IS comparable under that same fallback -- identical
+        accessor, regardless of KIND -- even though the two sides' own
+        resolved values may or may not actually agree; that is a
+        downstream question, not this method's. If the left side is
+        PATHS (no terminal VALUE-role accessor at all), any right side
+        unions freely, by path alone -- the "RHS added by path" case
+        from the design note."""
         left_call = self._terminal_value_call(self._left)
         if left_call is None:
             return
+        left_cls = ReferenceFunctionFactory.get_registered_class(left_call.name)
         right_call = self._terminal_value_call(self._right)
-        if right_call != left_call:
-            raise ReferenceException3(
-                f"ReferenceExpression3 UNION cannot combine the left "
-                f"side's accessor {left_call!r} with the right side's "
-                f"accessor {right_call!r} -- both sides' own terminal "
-                "accessor (function name and argument together) must "
-                "match exactly to be comparable."
-            )
+        if left_cls.KIND is not None and self._terminal_kind(right_call) == left_cls.KIND:
+            return
+        if right_call == left_call:
+            return
+        raise ReferenceException3(
+            f"ReferenceExpression3 UNION cannot combine the left side's "
+            f"accessor {left_call!r} with the right side's accessor "
+            f"{right_call!r} -- neither shares a declared KIND (e.g. "
+            "\"uuid\", \"name\") nor is the same accessor (function name "
+            "and argument together), so the two sides are not "
+            "comparable."
+        )
+
+    @staticmethod
+    def _terminal_kind(call) -> str | None:
+        if call is None:
+            return None
+        function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+        return function_cls.KIND if function_cls is not None else None
 
     def _produces_uuid(self, side: "str | ReferenceExpression3") -> bool:
         parsed = self._side_reference_parsed(side)
         for f in parsed.terminal_functions:
             function_cls = ReferenceFunctionFactory.get_registered_class(f.name)
-            if function_cls is not None and function_cls.PRODUCES_UUID:
+            if function_cls is not None and function_cls.KIND == "uuid":
                 return True
         return False
 
@@ -316,7 +334,7 @@ class ReferenceExpression3:
         cls, left: ReferenceResults3, right: ReferenceResults3, *, keep: bool
     ) -> ReferenceResults3:
         """paths(LHS)/values(RHS), where the right side's own accessor
-        is uuid-valued (Function3.PRODUCES_UUID) -- the left side has
+        is uuid-valued (Function3.KIND == "uuid") -- the left side has
         no value of its own, but its own NATIVE uuid (always present,
         no accessor needed) is compared directly against the right
         side's own .data as a real uuid-to-uuid match. This is what

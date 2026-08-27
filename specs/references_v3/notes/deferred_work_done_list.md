@@ -81,6 +81,88 @@ accessor). Updated `references_v3_expressions.md`'s own matrix and
 "Why SUBTRACT/INTERSECT's raise is asymmetric" section to describe the
 new rule instead of the superseded symmetric one.
 
+**Superseded within the hour** -- see the entry above this one
+("`ReferenceExpression3` UNION compatibility revised again, to compare
+by conceptual `KIND`"). David reopened this almost immediately: the
+"accessor must be literally identical" rule above is exactly what makes
+`:uuid()`/`:run_uuid()` incompatible, which turned out not to be what he
+actually wanted once he worked through it further with a concrete
+worked example. The `_terminal_value_call()`/`_kind()` machinery built
+here is unchanged; only `_check_union_compatible()`'s own comparison
+(and the now-generalized `Function3.KIND`, replacing `PRODUCES_UUID`)
+changed again.
+
+---
+
+## `ReferenceExpression3` UNION compatibility revised again, to compare by conceptual `KIND` — BUILT 2026-08-26
+
+Same conversation, same day, third and (so far) final revision of
+`UNION`'s own compatibility rule. David reopened the "accessor must be
+literally identical" rule (the entry directly below this one) almost as
+soon as it was confirmed, pasting back his own original design note with
+one new closing paragraph added:
+
+> Note that in the 3rd example the RHS's INTERSECT is compared by
+> function type and retrieved value. `:fingerprint()` retrieves a
+> string. The reference would not accept a comparison of
+> `:fingerprint()` to `:type()` because the function types do not serve
+> the same conceptual purpose, making the values not the same,
+> regardless of actual bytes value. A comparison of
+> `:named_paths_name()` to `:named_results_name()` would work because
+> names are conceptually the same kind of thing. This makes it important
+> to know the purpose of the function in order to use it correctly for
+> comparison. `:uuid()` and `:run_uuid()` are comparable.
+> `:named_file_name()` and `:fingerprint()` are not.
+
+This directly contradicts the literal-identity rule just built (which
+would have rejected `:uuid()`/`:run_uuid()`) -- confirmed with David
+before touching code, since the taxonomy of "which functions share a
+conceptual purpose" spans dozens of field-accessor files and is a real
+judgment call, not something safely inferred. Proposed a concrete
+mechanism plus a first-pass taxonomy (uuid/name/fingerprint/type
+groups); David: "Yes, that is perfect."
+
+**Built**: `Function3.PRODUCES_UUID: bool` generalized into
+`Function3.KIND: str | None` (`function_3.py`) -- a declarative
+conceptual-family tag, not just a uuid-specific flag. Set `KIND =
+"uuid"` on the same four functions that used to set `PRODUCES_UUID =
+True` (`Uuid3`, `RunUuid3`, `NamedFileUuid3`, `NamedPathsUuid3`); set
+`KIND = "name"` on `NamedPathsName3`, `NamedResultsName3`,
+`NamedFileName3`. `ReferenceExpression3._check_union_compatible()`
+rewritten: compatible if the right side's terminal accessor shares the
+left's own non-`None` `KIND`, OR (regardless of `KIND`) the two
+accessors are literally identical -- the second branch is what keeps a
+bare `:type()` comparable to another bare `:type()` even though `:type()`
+has no declared `KIND` of its own. `_produces_uuid()` (still used by
+`SUBTRACT`/`INTERSECT`'s own, separate, unchanged uuid-valued-RHS case)
+now checks `KIND == "uuid"` instead of the retired `PRODUCES_UUID`.
+
+**Deliberately did NOT group the fingerprint functions**, despite an
+initial proposal to do so, which David approved before this specific
+tension was noticed while re-reading the code: `Fingerprint3`'s own
+existing docstring already explains why it is "deliberately not unified
+with... `named_file_fingerprint` or... `file_fingerprints`" -- those
+describe the fingerprint of a *different* entity's content (the
+named-file input a run/instance consumed), not the resolved entity's
+own content. Grouping them under one `KIND` would have directly
+contradicted that already-settled reasoning. Left `Fingerprint3`,
+`NamedFileFingerprint3`, `FileFingerprints3`, and `Type3` all with no
+declared `KIND` for now (falls back to the literal-identity rule) --
+flagged to David as a discovered tension rather than silently
+overridden either way; revisit if/when a real cross-entity fingerprint
+comparison use case actually comes up.
+
+Tests: renamed `test_union_of_two_values_sides_with_different_accessors_raises`
+to `test_union_of_two_values_sides_with_different_kinds_raises` (still
+raises -- `:named_paths_name()` is `KIND "name"`, `:run_uuid()` is `KIND
+"uuid"`); added `test_union_of_two_values_sides_with_the_same_kind_succeeds`
+(`:uuid()` vs. `:run_uuid()` -- the concrete case the literal-identity
+rule got wrong) and `test_union_of_two_name_accessors_with_the_same_kind_succeeds`
+(`:named_paths_name()` vs. `:named_results_name()`), both in
+`test_reference_expression_3.py`. Widened the four uuid functions' own
+`PRODUCES_UUID` assertions to `KIND == "uuid"`. `tests/references/` now
+1427 passed, up from 1425.
+
 ---
 
 ## `ReferenceExpression3` `paths`-vs-`values` compatibility matrix — BUILT 2026-08-26

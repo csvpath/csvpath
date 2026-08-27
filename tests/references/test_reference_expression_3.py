@@ -558,9 +558,11 @@ class TestPathsVsValuesEndToEnd:
     # the synthetic-ReferenceResults3 unit tests above -- confirms
     # _kind()/_produces_uuid() classify real references correctly and
     # resolve() dispatches to the right comparison basis. UNION's own
-    # rule is separate and LHS-driven (settled 2026-08-26) -- see the
-    # three tests immediately below, which replace an earlier, now-
-    # outdated "both sides must be the same kind" version of this test.
+    # rule is separate and LHS-driven, revised 2026-08-26 (same day, but
+    # a real second revision, not the original build) to compare by
+    # conceptual KIND ("uuid", "name", ...) rather than requiring the
+    # two sides' accessors to be literally identical -- see the tests
+    # immediately below.
     def test_union_of_a_paths_left_and_values_right_succeeds_by_path(
         self, orders_archive
     ):
@@ -595,12 +597,13 @@ class TestPathsVsValuesEndToEnd:
         with pytest.raises(ReferenceException3):
             expr.resolve()
 
-    def test_union_of_two_values_sides_with_different_accessors_raises(
+    def test_union_of_two_values_sides_with_different_kinds_raises(
         self, orders_archive
     ):
-        # both sides are values, but the accessors themselves differ
-        # (:named_paths_name() vs. :run_uuid()) -- not comparable, even
-        # though both happen to resolve to strings.
+        # both sides are values, but the accessors are neither the same
+        # function nor the same KIND (:named_paths_name() is "name",
+        # :run_uuid() is "uuid") -- not comparable, even though both
+        # happen to resolve to strings.
         expr = ReferenceExpression3(
             left=_left_side(orders_archive),  # values -- :named_paths_name()
             op=ReferenceExpression3.UNION,
@@ -609,6 +612,42 @@ class TestPathsVsValuesEndToEnd:
         )
         with pytest.raises(ReferenceException3):
             expr.resolve()
+
+    def test_union_of_two_values_sides_with_the_same_kind_succeeds(
+        self, orders_archive
+    ):
+        # :uuid() and :run_uuid() are different functions but share
+        # KIND == "uuid" -- comparable under the revised rule, where the
+        # earlier, now-superseded "accessor must be literally identical"
+        # draft would have raised.
+        expr = ReferenceExpression3(
+            left="$groupa.results.:flatten():uuid()",  # values -- KIND "uuid"
+            op=ReferenceExpression3.UNION,
+            right="$groupb.results.:flatten():run_uuid()",  # values -- KIND "uuid"
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert sorted(r.data for r in result.results) == [
+            "a1",
+            "a2",
+            "b1",
+            "b2",
+            "b3",
+        ]
+
+    def test_union_of_two_name_accessors_with_the_same_kind_succeeds(
+        self, orders_archive
+    ):
+        # :named_paths_name() and :named_results_name() are different
+        # functions but share KIND == "name".
+        expr = ReferenceExpression3(
+            left="$groupa.results.:flatten():named_paths_name()",
+            op=ReferenceExpression3.UNION,
+            right="$groupa.results.:flatten():named_results_name()",
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert len(result) > 0
 
     def test_intersect_paths_paths_compares_by_identity(self, orders_archive):
         expr = ReferenceExpression3(
@@ -646,7 +685,7 @@ class TestPathsVsValuesEndToEnd:
     def test_intersect_paths_left_values_right_uuid_valued_compares_native_uuid(
         self, orders_archive
     ):
-        # paths(LHS)/values(RHS), RHS's own accessor (PRODUCES_UUID)
+        # paths(LHS)/values(RHS), RHS's own accessor (KIND == "uuid")
         # compares LHS's native uuid directly against RHS's own .data.
         expr = ReferenceExpression3(
             left="$*.results.:flatten()",  # paths -- native uuids a1,a2,b1,b2,b3

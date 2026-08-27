@@ -118,23 +118,35 @@ class Function3:
     BARE_SOURCE: str = None
 
     #
-    # declares that this VALUE-role function's own resolved value IS a
-    # uuid (e.g. :uuid(), :run_uuid(), :named_file_uuid(),
-    # :named_paths_uuid()) -- added 2026-08-26 for ReferenceExpression3's
-    # own paths-vs-values compatibility matrix (references_v3_
-    # expressions.md): a "paths"-side (no VALUE-role accessor of its
-    # own) can still be compared against a "values"-side INTERSECT/
-    # SUBTRACT right-hand side specifically when that right side's own
-    # accessor is uuid-valued -- the paths side's own NATIVE uuid
-    # (always present, no accessor needed) is compared directly against
-    # it. Checked generically by ReferenceExpression3, not hardcoded by
+    # declares which conceptual "family" this VALUE-role function's own
+    # resolved value belongs to, for ReferenceExpression3's own UNION
+    # compatibility check (references_v3_expressions.md) -- e.g.
+    # KIND = "uuid" for :uuid()/:run_uuid()/:named_file_uuid()/
+    # :named_paths_uuid(), KIND = "name" for :named_paths_name()/
+    # :named_results_name()/:named_file_name(). Two VALUE-role
+    # accessors with the SAME non-None KIND are UNION-compatible even
+    # though they are different functions (settled 2026-08-26, directly
+    # from David's own "compare by conceptual purpose, not literal
+    # accessor identity" framing -- :uuid() and :run_uuid() both
+    # produce a uuid and are comparable; :fingerprint() and :type()
+    # both happen to produce a string but are NOT comparable, since a
+    # content hash and a file extension are not the same kind of
+    # thing). None (the default) means this function has no declared
+    # family -- UNION then falls back to requiring the two sides'
+    # accessors be literally identical (same function, same argument).
+    # Checked generically by ReferenceExpression3, not hardcoded by
     # function name -- same declarative-over-hardcoded-list principle
     # as POSITIONS/_check_position() (see the resolve_kind bucket-list
     # entry for the anti-pattern this deliberately avoids repeating).
-    # False for every function that does not produce a uuid -- the
-    # common case.
+    # Also doubles as the old PRODUCES_UUID's own job (superseded --
+    # KIND == "uuid" is what ReferenceExpression3._produces_uuid() now
+    # checks): a "paths"-side (no VALUE-role accessor of its own) can
+    # still be compared against a "values"-side INTERSECT/SUBTRACT
+    # right-hand side specifically when that right side's own accessor
+    # is uuid-valued -- the paths side's own NATIVE uuid (always
+    # present, no accessor needed) is compared directly against it.
     #
-    PRODUCES_UUID: bool = False
+    KIND: str | None = None
 
     #
     # SOURCE == "clock" (added 2026-08-26): a fourth SOURCE value for
