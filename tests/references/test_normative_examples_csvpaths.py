@@ -536,9 +536,11 @@ class TestFieldAccessorsOnOneMatchedVersion:
         ).resolve()
         assert results.results[0].data == "aaaa"
 
-    def test_home_reads_named_paths_home(self):
+    def test_group_home_reads_named_paths_home(self):
+        # :home() split 2026-08-26 -- CSVPATHS' own share is now
+        # :group_home().
         results = _finder(
-            "$acme.csvpaths.:last():home()", FIELD_ACCESSOR_MANIFEST
+            "$acme.csvpaths.:last():group_home()", FIELD_ACCESSOR_MANIFEST
         ).resolve()
         assert results.results[0].data == GROUP_HOME
 

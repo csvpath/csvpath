@@ -651,9 +651,11 @@ class TestFieldAccessorsOnOneMatchedVersion:
         ).resolve()
         assert results.results[0].data == "bbbb"
 
-    def test_home_gives_file_home(self):
+    def test_file_home_gives_file_home(self):
+        # :home() split 2026-08-26 -- FILES' own field-read job is now
+        # :file_home().
         results = _finder(
-            '$rich.files.:name("orders.csv").:last():home()',
+            '$rich.files.:name("orders.csv").:last():file_home()',
             RICH_HOME,
             RICH_MANIFEST,
         ).resolve()

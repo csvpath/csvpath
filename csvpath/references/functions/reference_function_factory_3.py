@@ -62,16 +62,19 @@ class ReferenceFunctionFactory:
         from .fields.destinations_3 import Destinations3
         from .fields.error_count_3 import ErrorCount3
         from .fields.file_fingerprints_3 import FileFingerprints3
+        from .fields.file_home_3 import FileHome3
         from .fields.file_manifest_3 import FileManifest3
         from .fields.file_path_3 import FilePath3
         from .fields.files_complete_3 import FilesComplete3
         from .fields.fingerprint_3 import Fingerprint3
         from .fields.group_file_3 import GroupFile3
+        from .fields.group_home_3 import GroupHome3
         from .fields.group_manifest_3 import GroupManifest3
         from .fields.home_3 import Home3
         from .fields.host_3 import Host3
         from .fields.hostname_3 import Hostname3
         from .fields.identity_3 import Identity3
+        from .fields.instance_home_3 import InstanceHome3
         from .fields.instance_index_3 import InstanceIndex3
         from .fields.manifest_path_3 import ManifestPath3
         from .fields.mark_3 import Mark3
@@ -100,6 +103,7 @@ class ReferenceFunctionFactory:
         )
         from .fields.reference_field_3 import ReferenceField3
         from .fields.run_dir_3 import RunDir3
+        from .fields.run_home_3 import RunHome3
         from .fields.run_method_3 import RunMethod3
         from .fields.run_uuid_3 import RunUuid3
         from .fields.script_on_complete_all_3 import ScriptOnCompleteAll3
@@ -186,6 +190,10 @@ class ReferenceFunctionFactory:
             Time3.NAME: Time3,
             Fingerprint3.NAME: Fingerprint3,
             Home3.NAME: Home3,
+            FileHome3.NAME: FileHome3,
+            GroupHome3.NAME: GroupHome3,
+            RunHome3.NAME: RunHome3,
+            InstanceHome3.NAME: InstanceHome3,
             Host3.NAME: Host3,
             Origin3.NAME: Origin3,
             Mark3.NAME: Mark3,

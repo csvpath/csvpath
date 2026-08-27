@@ -252,71 +252,6 @@ narrower thing), or just a symmetry nicety worth having anyway? Worth
 resolving before building, not just building because Rule 1b's shape
 suggests it.
 
-## Split `:home()`'s field-read job into scope-specific functions; `:home()` itself stays, for the zero-level placeholder role only
-
-David, 2026-08-21, refined 2026-08-24: no manifest anywhere has a literal
-`"home"` key — confirmed, `Home3.KEY` (`home_3.py`) reads `file_home`
-(FILES), `named_paths_home` (CSVPATHS), `run_home` (RESULTS run scope),
-`instance_home` (RESULTS instance scope), never a bare `"home"`. Still
-true as of 2026-08-26 — `Home3` is unchanged, and no `file_home_3.py`/
-`group_home_3.py`/`run_home_3.py`/`instance_home_3.py` exist yet.
-
-**`:home()` today does two jobs, and only one of them is being retired.**
-- **The field-read job (going away)** — reading whichever of the four real
-  keys above off whatever entity a pointer already selected. Replaced by
-  four separate, obviously-named functions matching the real keys:
-  `:file_home()`, `:group_home()`, `:run_home()`, `:instance_home()`. (An
-  earlier version of this note also considered a fifth name, `:name_home()`
-  — dropped, 2026-08-24: there is no fifth job needing a name, only these
-  four real keys exist.)
-- **The zero-level placeholder job (staying, under the same name)** —
-  David, 2026-08-24, explicit: "`:home()` as the means of accessing the
-  0-level template files and results has to remain. That `:home()` we
-  don't have a replacement for — and I can't think of a better name for
-  the function." FILES and RESULTS only (CSVPATHS has no path dimension,
-  so no zero-level concept to place-hold for). This is the *only* legal
-  way to express "nothing narrows here" at a bare, zero-segment position —
-  a truly empty `name_one` isn't legal grammar at all (`path_prefix`
-  requires >= 1 segment).
-
-So this is no longer a full retirement, just a narrowing of `:home()`'s
-scope to exactly one job. Live-confirmed 2026-08-24 exactly what that
-remaining job still does and doesn't do today, using
-`$acme.results.:last()` / `:home():last()` / `:flatten():last()` as the
-test case (fixture: one zero-level run 2026-01-01, one 1-level-templated
-run 2026-01-05, later):
-- `$acme.results.:last()` and `$acme.results.:home():last()` give the
-  **identical** result (the zero-level run only, templated run excluded
-  even though it's chronologically later) — `:home()` combined with a
-  real pointer is fully redundant with the bare pointer alone today, since
-  a bare pointer is *already* zero-level-scoped (settled 2026-08-10). The
-  placeholder role only does something distinct when `:home()` is used
-  *alone*, no pointer present (`$acme.results.:home()` -> every zero-level
-  run, unreduced — the one thing nothing else can express).
-- `$acme.results.:flatten():last()` gives the templated run instead
-  (2026-01-05) — the true any-depth latest, correctly different from both
-  of the above.
-
-**`:home()` vs. `:all()`, precisely (David, 2026-08-21, still applies)**:
-not just a different depth — a different axis entirely. `:home()`'s
-placeholder role indicates the zero-level ("no template") homes as a
-**complete path** — nothing narrows further, so the result already *is*
-the whole entity's own home directory. `:all()` indicates **any value of
-one path segment** — a path *part*, the observed value at exactly one
-wildcarded position — with the complete path only emerging once that
-grouping resolves (and reduces, if a pointer is present).
-
-Work: build the four new field-read functions (`:file_home()`,
-`:group_home()`, `:run_home()`, `:instance_home()`); narrow `Home3`
-(`home_3.py`) itself down to only the zero-level placeholder role
-(`SOURCE`/`KEY`-driven field read goes away, the bare-zero-level query()
-branches in `files_reference_finder_3.py`/`results_reference_finder_3.py`
-stay); fix the compendium's own now-incorrect claim about `:home()`
-"reverting to its ordinary job of reading the field" once a pointer joins
-the chain — per the live test above, it doesn't revert to reading
-anything, it's simply redundant/inert once a pointer is present, since
-the pointer's own zero-level scoping already does the same narrowing.
-
 ## `#name_two` (XLSX worksheet marker) — not built anywhere
 
 David, 2026-08-21: raised while reviewing the compendium — does
@@ -421,8 +356,8 @@ and a stale-entry correction, are both done — see
 ## `'*'` traversal — FILES, essentially untouched by the recent RESULTS/CSVPATHS work
 
 - `FilesReferenceFinder3`'s own `_query_star_traversal()` still rejects
-  combining `'*'` traversal with `:manifest()`/`:definition()`/`:path()`/a
-  field-accessor function outright — the same class of gap RESULTS/CSVPATHS
+  combining `'*'` traversal with `:manifest()`/`:definition()`/a field-
+  accessor function outright — the same class of gap RESULTS/CSVPATHS
   just had fixed (field accessors, then `:having()`/`:flatten()`/`:all()`,
   then path narrowing/`name_three`, then pointer optionality), never
   applied to FILES. FILES' traversal already never requires a pointer
@@ -464,8 +399,8 @@ and a stale-entry correction, are both done — see
   return exactly the zero-level named-files whose `definition.json` has a
   non-`None` `on_arrival`.
 - FILES' `:all()`/`:groups()` (GROUP modes) combined with `:manifest()`/
-  `:path()`/a field-accessor — same single-entity-vs-grouping restriction
-  RESULTS' `name_three` content accessor now has, not yet built for FILES.
+  a field-accessor — same single-entity-vs-grouping restriction RESULTS'
+  `name_three` content accessor now has, not yet built for FILES.
 - A literal prefix *before* `:flatten()` for FILES, e.g. `"2025/:flatten()
   /:name('orders.csv')"` — "any `orders.csv` below 2025, at any depth in
   between." Explicitly deferred 2026-08-12 — David wants it eventually,
@@ -479,11 +414,6 @@ and a stale-entry correction, are both done — see
 
 ## Functions
 
-- `:path()` does not support RESULTS at all yet (`DATATYPES = (FILES,
-  CSVPATHS)`) — can't wrap RESULTS' own `:manifest()` or any well-known
-  instance file (`:errors()`, `:vars()`, etc.). Note: `:path()` itself is
-  slated for retirement (see that entry above) — this gap becomes moot
-  once that lands, but isn't moot yet.
 - Functions named in the spec/example-queries docs with no `Function3`
   subclass yet: `:before()`/`:after()`, `:yesterday()`, `:quarter()`,
   `:choice()`, `:names()`, `:message()`, `:count()`, `:above()`,

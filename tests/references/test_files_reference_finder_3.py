@@ -1009,12 +1009,24 @@ class TestHomeAsAZeroLevelSelector:
                 '$homer.files.:home("x").:last()', HOME_TEST_HOME, HOME_TEST_MANIFEST
             ).query()
 
-    def test_home_in_name_three_position_is_unaffected(self):
-        # ':home()' keeps its ordinary field-accessor job (SOURCE ==
-        # "manifest", reading "file_home") when it appears in name_three
-        # instead of bare in name_one -- different position, no collision.
+    def test_home_in_name_three_position_now_raises(self):
+        # ':home()' no longer has an ordinary field-accessor job at all
+        # (split 2026-08-26 -- see :file_home() for FILES' own share of
+        # that retired job) -- it keeps only the bare, name_one, zero-
+        # level placeholder role, so using it in name_three now raises
+        # via POSITIONS/_check_position, rather than silently reading
+        # "file_home" the way it used to.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$homer.files.:name("orders.csv").:first():home()',
+                HOME_TEST_HOME,
+                HOME_TEST_MANIFEST,
+            ).query()
+
+    def test_file_home_in_name_three_position_works(self):
+        # :file_home() is the retired job's new home.
         results = _finder(
-            '$homer.files.:name("orders.csv").:first():home()',
+            '$homer.files.:name("orders.csv").:first():file_home()',
             HOME_TEST_HOME,
             HOME_TEST_MANIFEST,
         ).resolve()
@@ -1448,9 +1460,11 @@ class TestFieldAccessorFunctions:
         results = finder.resolve()
         assert results.results[0].data == "aaaa"
 
-    def test_home(self):
+    def test_file_home(self):
+        # :home() split 2026-08-26 -- FILES' own field-read job is now
+        # :file_home().
         finder = _finder(
-            '$rich.files.:name("orders.csv").:first():home()',
+            '$rich.files.:name("orders.csv").:first():file_home()',
             RICH_HOME,
             RICH_MANIFEST,
         )

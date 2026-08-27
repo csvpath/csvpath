@@ -1276,12 +1276,11 @@ class TestFieldAccessorFunctions:
         ).resolve()
         assert results.results[0].data == "run1-uuid"
 
-    def test_home_at_run_scope_reads_run_home(self, tmp_path):
-        # doc line ~171: "$widgets.results.:first():home() >> run_home"
-        # -- no committed test locked this in before (found during the
-        # 2026-08-12 normative-doc sweep); confirmed against
-        # results_registrar.py that "run_home" is a real, written field,
-        # not just documented.
+    def test_run_home_at_run_scope_reads_run_home(self, tmp_path):
+        # :home() split 2026-08-26 -- run scope's own field-read job is
+        # now :run_home() (:home() itself keeps only the zero-level
+        # placeholder role). Confirmed against results_registrar.py that
+        # "run_home" is a real, written field, not just documented.
         base = tmp_path / "widgets"
         run_dir = base / "2026-01-01_00-00-00"
         _write_json(
@@ -1290,13 +1289,13 @@ class TestFieldAccessorFunctions:
         )
         _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
         results = _finder(
-            "$widgets.results.:first():home()", str(tmp_path)
+            "$widgets.results.:first():run_home()", str(tmp_path)
         ).resolve()
         assert results.results[0].data == str(run_dir)
 
-    def test_home_at_instance_scope_reads_instance_home(self, tmp_path):
-        # doc line ~192: "$widgets.results.:first().company_names:home()
-        # >> instance_home" -- same gap as above, confirmed against
+    def test_instance_home_at_instance_scope_reads_instance_home(self, tmp_path):
+        # :home() split 2026-08-26 -- instance scope's own field-read
+        # job is now :instance_home(). Confirmed against
         # result_registrar.py that "instance_home" is a real field.
         base = tmp_path / "widgets"
         run_dir = base / "2026-01-01_00-00-00"
@@ -1308,7 +1307,8 @@ class TestFieldAccessorFunctions:
         )
         _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
         results = _finder(
-            "$widgets.results.:first().company_names:home()", str(tmp_path)
+            "$widgets.results.:first().company_names:instance_home()",
+            str(tmp_path),
         ).resolve()
         assert results.results[0].data == str(instance_dir)
 

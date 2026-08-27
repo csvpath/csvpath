@@ -768,7 +768,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         _results_for_run() already builds each candidate's
         ReferenceResult3 from its own real run directory, independent
         of any group-name context, so resolving a field from it needs
-        nothing star-traversal-specific.
+        nothing star-traversal-specific. ':home()' is exempted the same
+        way, but explicitly by name (added 2026-08-26, alongside its own
+        SOURCE/KEY narrowing to the zero-level placeholder role only --
+        see home_3.py) rather than falling out of the field-accessor
+        exemption above for free the way it used to when it still
+        declared SOURCE == "manifest".
 
         A pointer itself is now OPTIONAL here (changed 2026-08-19) --
         absence means "every matched run, unreduced," the SAME meaning
@@ -793,6 +798,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         all_call = next((f for f in built if f.name == "all"), None)
         flatten_call = next((f for f in built if f.name == "flatten"), None)
         manifest_call = next((f for f in built if f.name == "manifest"), None)
+        home_call = next((f for f in built if f.name == "home"), None)
         if all_call is not None and flatten_call is not None:
             raise ReferenceException3(
                 "ResultsReferenceFinder3 does not support combining "
@@ -807,6 +813,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             and f is not flatten_call
             and f is not all_call
             and f is not manifest_call
+            and f is not home_call
         ]
         if non_pointers:
             raise ReferenceException3(

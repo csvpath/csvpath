@@ -1103,8 +1103,14 @@ class TestFieldAccessorFunctions:
         ).resolve()
         assert results.results[0].data == "aaaa"
 
-    def test_home(self):
-        results = _finder("$acme.csvpaths.:first():home()", RICH_MANIFEST).resolve()
+    def test_group_home(self):
+        # :home() split 2026-08-26 -- CSVPATHS' own share of the old
+        # field-read job is now :group_home() (:home() itself keeps
+        # only the FILES/RESULTS zero-level placeholder role, which
+        # CSVPATHS has no equivalent concept for).
+        results = _finder(
+            "$acme.csvpaths.:first():group_home()", RICH_MANIFEST
+        ).resolve()
         assert results.results[0].data == GROUP_HOME
 
     def test_origin_reads_the_source_path_key(self):

@@ -9,6 +9,92 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `:home()`'s field-read job split into four scope-specific functions — BUILT 2026-08-26
+
+David, 2026-08-21, refined 2026-08-24: no manifest anywhere has a literal
+`"home"` key — `Home3.KEY` read `file_home` (FILES), `named_paths_home`
+(CSVPATHS), `run_home` (RESULTS run scope), `instance_home` (RESULTS
+instance scope), never a bare `"home"`. `:home()` did two jobs under one
+name: reading whichever of those four real keys a pointer already
+selected, AND acting as the zero-level ("no template") placeholder when
+used bare, alone, as `name_one`'s entire content. Only the field-read job
+is retired — David, 2026-08-24, explicit: "`:home()` as the means of
+accessing the 0-level template files and results has to remain... I
+can't think of a better name for the function."
+
+**Built**: four new field-accessor functions, one per real key --
+`FileHome3`/`:file_home()` (FILES, `KEY = {FILES: "file_home"}`,
+`POSITIONS = {FILES: (NAME_THREE,)}`), `GroupHome3`/`:group_home()`
+(CSVPATHS, `KEY = {CSVPATHS: "named_paths_home"}`, `POSITIONS =
+{CSVPATHS: (NAME_ONE,)}` -- CSVPATHS' entire share of the old job, since
+it has no zero-level concept to leave anything behind for),
+`RunHome3`/`:run_home()` (RESULTS run scope, `KEY = {RESULTS:
+"run_home"}` only -- deliberately does NOT also declare a `RESULT` key
+the way `:home()` used to, since it is meant to be scope-specific, not
+polymorphic), `InstanceHome3`/`:instance_home()` (RESULTS instance
+scope, `KEY = {RESULT: "instance_home"}` only, symmetric reasoning).
+Confirmed each one's own `KEY` dict is looked up correctly before
+assuming it: FILES/CSVPATHS' generic `function_cls.KEY.get(reference.
+datatype)` dispatch needed nothing new (single-scope datatypes), but
+RESULTS' own `_extract_data()` has two SEPARATE, hardcoded call sites
+(`function_cls.KEY.get(Reference3.RESULTS)` for a name_one-riding run-
+level field, `function_cls.KEY.get(Reference3.RESULT)` for a name_three-
+riding instance-level one) -- each new function's single-entry `KEY`
+dict lines up with exactly one of those two call sites, by construction,
+not by coincidence.
+
+`Home3` itself narrowed to the placeholder role only: `SOURCE`/`KEY`
+removed entirely (nothing reads a manifest field off it anymore),
+`DATATYPES` narrowed to `(FILES, RESULTS)` (CSVPATHS dropped -- no
+zero-level concept), `POSITIONS` narrowed to `{FILES: (NAME_ONE,),
+RESULTS: (NAME_ONE,)}` (the ordinary field-accessor positions --
+`NAME_THREE` for FILES, the same `NAME_ONE` slot but riding beside a
+real pointer for RESULTS -- both removed). Also removed `"home"` from
+`Reference3._METADATA_FIELD_FUNCTIONS` and added the four new names --
+confirmed necessary the hard way: `resolve_kind` dispatches off that
+hardcoded tuple (a separate, already-flagged piece of debt, not touched
+here beyond this one addition), so the new functions silently resolved
+to `FIRST_PARTY`/raw-bytes reads instead of their own manifest field
+until this was added, caught by the test suite (`FileNotFoundError`
+trying to open a directory as a CSV file) rather than assumed correct.
+
+**A second regression caught by the test suite, not assumed safe**:
+`ResultsReferenceFinder3._star_run_selector_chain()`'s own `'*'`-
+traversal validation used to exempt `:home()` from the "no unknown
+non-pointer function" rejection only as a side effect of it being
+recognized as a field accessor (`SOURCE is not None`) -- once `:home()`
+lost `SOURCE`, that exemption silently disappeared too, breaking
+`$*.results.:home()` (previously-shipped, tested behavior). Fixed by
+adding an explicit, separate `:home()`-by-name exemption alongside the
+existing `:all()`/`:flatten()`/`:manifest()` ones, rather than
+special-casing `SOURCE` again.
+
+**Compendium's own now-stale claim** ("`:home()` reverts to its ordinary
+job of reading the field once a pointer joins the chain") still needs
+fixing -- not touched here, since David is mid-edit on that file
+directly; flagged to him instead of editing around him.
+
+Tests: `test_home_3.py` rewritten for the narrowed shape (`SOURCE is
+None`, `KEY == {}`, narrowed `POSITIONS`); four new unit-test files,
+one per new function (`test_file_home_3.py`/`test_group_home_3.py`/
+`test_run_home_3.py`/`test_instance_home_3.py`), mirroring
+`test_named_file_home_3.py`'s own style. Rewrote every existing
+finder-level test that exercised the old field-read job through
+`:home()` itself (FILES: `test_home_in_name_three_position_is_
+unaffected` -> `test_home_in_name_three_position_now_raises` (new,
+proves the retirement is enforced) plus `test_file_home_in_name_three_
+position_works`; two `test_home` methods -> `test_file_home`;
+CSVPATHS: `test_home`/`test_home_reads_named_paths_home` ->
+`test_group_home`/`test_group_home_reads_named_paths_home`; RESULTS:
+`test_home_at_run_scope_reads_run_home`/`test_home_at_instance_scope_
+reads_instance_home` -> `test_run_home_at_run_scope_reads_run_home`/
+`test_instance_home_at_instance_scope_reads_instance_home`) --
+every bare/zero-level-placeholder `:home()` test (the much larger
+share) is untouched, still passing unchanged. `tests/references/` now
+1426 passed, up from 1414.
+
+---
+
 ## `:path()` retired; Rule 1 enforcement moved from `query()` to `resolve()` — BUILT 2026-08-26
 
 David, 2026-08-22: **getting paths is not the same as accessing files.** A
