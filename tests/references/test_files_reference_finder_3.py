@@ -1113,26 +1113,102 @@ class TestFlattenPrefixedWithSuffix:
                 ANCHOR_MANIFEST,
             ).query()
 
-    def test_a_literal_prefix_before_flatten_is_not_yet_supported(self):
-        # a THIRD shape -- literal prefix, THEN ':flatten()', THEN a
-        # literal/:name(...) suffix (e.g. "2025/:flatten()/:name(...)"
-        # -- "any orders.csv below 2025, at any depth") -- is a real,
-        # separate extension David flagged wanting eventually, deferred
-        # 2026-08-12 rather than built now. ':flatten()' is only
-        # recognized as name_one's FIRST segment today
-        # (_is_flatten_prefixed_reference); anywhere else it falls
-        # through to the ordinary _compile_path_pattern path, which
-        # raises cleanly rather than silently matching wrong -- adding
-        # this later is expected to be additive (a new elif branch
-        # keyed on ':flatten()' appearing at some OTHER position in
-        # name_one.path) and should not touch any non-prefixed shape's
-        # behavior, including the bare/no-prefix ':flatten()/...' shape
-        # this class already covers.
+    # a literal prefix BEFORE ':flatten()' -- a THIRD shape, e.g.
+    # "2025/:flatten()/:name('orders.csv')" ("any orders.csv below 2025,
+    # at any depth in between") -- used to raise unconditionally here
+    # (deferred 2026-08-12); BUILT 2026-08-27, see TestPrefixedFlatten
+    # below for its own dedicated fixture/coverage.
+
+
+PREFIXED_FLATTEN_HOME = "inputs/named_files/vault"
+PREFIXED_FLATTEN_MANIFEST = [
+    {
+        "file": "inputs/named_files/vault/2025/orders.csv/aaa.csv",
+        "file_home": "inputs/named_files/vault/2025/orders.csv",
+        "uuid": "u-2025-direct",
+    },
+    {
+        "file": "inputs/named_files/vault/2025/q1/orders.csv/bbb.csv",
+        "file_home": "inputs/named_files/vault/2025/q1/orders.csv",
+        "uuid": "u-2025-q1",
+    },
+    {
+        "file": "inputs/named_files/vault/2026/orders.csv/ccc.csv",
+        "file_home": "inputs/named_files/vault/2026/orders.csv",
+        "uuid": "u-2026-direct",
+    },
+    {
+        "file": "inputs/named_files/vault/2025/returns.csv/ddd.csv",
+        "file_home": "inputs/named_files/vault/2025/returns.csv",
+        "uuid": "u-2025-returns",
+    },
+    {
+        "file": "inputs/named_files/vault/orders.csv/eee.csv",
+        "file_home": "inputs/named_files/vault/orders.csv",
+        "uuid": "u-no-prefix",
+    },
+]
+
+
+class TestPrefixedFlatten:
+    # a literal/'*'/:name(...) PREFIX, THEN ':flatten()', THEN an
+    # OPTIONAL literal/'*'/:name(...) SUFFIX -- built 2026-08-27, closing
+    # the gap deferred 2026-08-12 (David: "any orders.csv below 2025, at
+    # any depth in between"). PREFIXED_FLATTEN_MANIFEST has "orders.csv"
+    # directly under "2025" (zero-segment gap), under "2025/q1" (one-
+    # segment gap, proving "any depth in between"), under "2026" (wrong
+    # prefix -- must be excluded), "returns.csv" under "2025" (right
+    # prefix, wrong suffix -- must be excluded), and "orders.csv" with
+    # no prefix at all (must be excluded).
+    def test_matches_zero_and_nonzero_gap_but_not_wrong_prefix_or_suffix(self):
+        results = _finder(
+            '$vault.files.2025/:flatten()/:name("orders.csv")',
+            PREFIXED_FLATTEN_HOME,
+            PREFIXED_FLATTEN_MANIFEST,
+        ).query()
+        assert set(results.files) == {
+            "inputs/named_files/vault/2025/orders.csv",
+            "inputs/named_files/vault/2025/q1/orders.csv",
+        }
+
+    def test_last_picks_the_last_matching_entry_in_array_order(self):
+        results = _finder(
+            '$vault.files.2025/:flatten()/:name("orders.csv").:last()',
+            PREFIXED_FLATTEN_HOME,
+            PREFIXED_FLATTEN_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-2025-q1"]
+
+    def test_first_picks_the_first_matching_entry_in_array_order(self):
+        results = _finder(
+            '$vault.files.2025/:flatten()/:name("orders.csv").:first()',
+            PREFIXED_FLATTEN_HOME,
+            PREFIXED_FLATTEN_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-2025-direct"]
+
+    def test_missing_suffix_means_prefix_then_any_depth_no_further_constraint(
+        self,
+    ):
+        # "2025/:flatten()" alone -- prefix-only, no suffix anchor --
+        # matches every distinct file_home under "2025" at any depth,
+        # both orders.csv and returns.csv, but nothing under "2026" or
+        # with no prefix at all.
+        results = _finder(
+            "$vault.files.2025/:flatten()", PREFIXED_FLATTEN_HOME, PREFIXED_FLATTEN_MANIFEST
+        ).query()
+        assert set(results.files) == {
+            "inputs/named_files/vault/2025/orders.csv",
+            "inputs/named_files/vault/2025/q1/orders.csv",
+            "inputs/named_files/vault/2025/returns.csv",
+        }
+
+    def test_prefixed_flatten_rejects_an_argument(self):
         with pytest.raises(ReferenceException3):
             _finder(
-                '$anchor.files.2025/:flatten()/:name("orders.csv").:last()',
-                ANCHOR_HOME,
-                ANCHOR_MANIFEST,
+                '$vault.files.2025/:flatten("x")/:name("orders.csv")',
+                PREFIXED_FLATTEN_HOME,
+                PREFIXED_FLATTEN_MANIFEST,
             ).query()
 
 

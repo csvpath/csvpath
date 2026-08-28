@@ -9,6 +9,67 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## A literal prefix before `:flatten()` for FILES — BUILT 2026-08-27
+
+From the FILES `'*'`-traversal bucket-list section: `:flatten()` was
+only recognized as name_one's own FIRST segment (`_is_flatten_prefixed_
+reference`, built 2026-08-12 -- any depth, THEN a fixed literal/`:name(...)`
+SUFFIX anchor) or as the whole of name_one (bare, any depth, no anchor
+at all). A THIRD shape -- a literal/`'*'`/`:name(...)` PREFIX, THEN
+`:flatten()`, THEN an OPTIONAL suffix (e.g.
+`"2025/:flatten()/:name('orders.csv')"` -- "any `orders.csv` below
+2025, at any depth in between") -- was explicitly deferred 2026-08-12,
+David wanting it eventually but not urgently. Fell through cleanly to
+`_compile_path_pattern`'s own "not a legal path segment" rejection
+before this, never matching silently wrong.
+
+**Built, purely additive as originally scoped -- does not touch the
+bare or `:flatten()`-first shapes:**
+
+- **`_is_prefixed_flatten_reference(name_one)`** (`files_reference_
+  finder_3.py`) -- true when exactly one bare `:flatten()` call appears
+  in `name_one.path`, NOT at index 0 (that is the existing
+  `_is_flatten_prefixed_reference`'s own shape, checked first via the
+  `elif` chain, so it always wins when `:flatten()` genuinely is
+  first). A second `:flatten()` anywhere is not this shape either --
+  falls through to the ordinary path with no special handling, which
+  raises its own clear error for the extra one (no established meaning
+  for two "any depth" markers in one pattern, not attempted).
+- **`_matches_prefix_then_suffix(entry, home, prefix_pattern,
+  suffix_pattern)`** (new static method, mirrors the existing
+  `_matches_suffix`'s own shape) -- requires the file_home's relative
+  segments to START WITH `prefix_pattern`, and (only if
+  `suffix_pattern` is non-empty) END WITH `suffix_pattern`, with any
+  number of segments (including zero) in between. An empty
+  `suffix_pattern` falls out for free as "prefix, then any depth, no
+  further constraint" -- e.g. `"2025/:flatten()"` alone -- the same
+  "empty pattern is legal" convention `_candidates_for_name(name, [])`
+  already uses elsewhere in this file, not a special case needing its
+  own guard.
+- **`_candidates_for_name_by_prefix_and_suffix`** -- thin wrapper
+  fetching the named-file's manifest and filtering by the matcher
+  above, mirroring `_candidates_for_name_by_suffix`'s own shape.
+
+Scoped to the literal-root `query()` case only, matching the concrete
+worked example exactly (`$anchor.files...`, not `$*.files...`) -- `'*'`
+traversal support for this same shape was not part of this ask and was
+not attempted.
+
+Tests: new `TestPrefixedFlatten` class (`test_files_reference_finder_3.py`)
+with a dedicated `PREFIXED_FLATTEN_MANIFEST` fixture proving: zero-gap
+and nonzero-gap matches both count, wrong prefix excludes, wrong suffix
+excludes, no-prefix-at-all excludes, `:last()`/`:first()` pick by array
+order same as every other FILES pointer, a missing suffix means
+"prefix then any depth," and an argument to `:flatten()` still raises.
+The old stale test asserting this always raised (`test_a_literal_
+prefix_before_flatten_is_not_yet_supported`, present in BOTH
+`test_files_reference_finder_3.py` and, found only by running the wider
+suite, a second copy in `test_normative_examples_files.py`) was updated
+in both places to assert the new, real behavior rather than deleted --
+confirms the same worked example is covered from the normative-examples
+angle too. Full local-backend suite green (3059/3059, run twice);
+pre-existing SFTP/S3 env-dependent failures unrelated to this change.
+
 ## `:having()` widened to RESULTS — BUILT 2026-08-27
 
 From the "'*' traversal — RESULTS/CSVPATHS remaining gap" bucket-list
