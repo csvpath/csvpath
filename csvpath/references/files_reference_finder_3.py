@@ -247,20 +247,26 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # undefined (only SOURCE == "definition" functions get bare
             # treatment via _bare_definition_field_call).
             candidates = self._candidates_for_name(root_major, [])
-        elif self._is_bare_fingerprint_reference(name_one):
-            # bare ':fingerprint("hash...")' -- added 2026-08-13. Content-
-            # hash identity does not care which file/path slot a version
-            # happens to be registered under (unlike ':name()', which
-            # matches file_home, a path identity, not a content one), so
-            # this searches the WHOLE named-file's manifest directly --
-            # every file_home/path, not just a pattern-matched subset --
-            # for the entry whose own "fingerprint" field matches.
-            # Confirmed against FileRegistrar's real write path: the
-            # version file itself is literally stored/named by its own
-            # fingerprint, so an exact match here is reliable. At most
-            # one match is expected in practice (two DIFFERENT logical
-            # files sharing byte-identical content is the only way to
-            # get more than one) -- not specially guarded against.
+        elif self._is_bare_selector_reference(name_one):
+            # bare ':fingerprint("hash...")' -- added 2026-08-13, the
+            # shape generalized 2026-08-28 (see Function3.
+            # SELECTOR_WHEN_ARGUED/ReferenceFinder3.
+            # _is_bare_selector_reference() -- Fingerprint3 is still the
+            # only function that declares it, so behavior here is
+            # unchanged, just no longer hand-written to the literal name
+            # "fingerprint"). Content-hash identity does not care which
+            # file/path slot a version happens to be registered under
+            # (unlike ':name()', which matches file_home, a path
+            # identity, not a content one), so this searches the WHOLE
+            # named-file's manifest directly -- every file_home/path,
+            # not just a pattern-matched subset -- for the entry whose
+            # own field (this function's own KEY) matches. Confirmed
+            # against FileRegistrar's real write path: the version file
+            # itself is literally stored/named by its own fingerprint,
+            # so an exact match here is reliable. At most one match is
+            # expected in practice (two DIFFERENT logical files sharing
+            # byte-identical content is the only way to get more than
+            # one) -- not specially guarded against.
             #
             # Returns the matched version(s) directly, with their real
             # path/uuid, and does NOT fall through to the shared "no
@@ -270,15 +276,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # narrowing step to defer. name_three combined with this
             # shape is not yet supported (redundant by construction --
             # there is nothing left to narrow).
+            call = name_one.path[0]
             if reference.name_three is not None:
                 raise ReferenceException3(
-                    "FilesReferenceFinder3 does not yet support combining "
-                    "a bare ':fingerprint(...)' lookup with name_three -- "
+                    f"FilesReferenceFinder3 does not yet support combining "
+                    f"a bare ':{call.name}(...)' lookup with name_three -- "
                     "it already identifies one specific version on its own."
                 )
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            key = function_cls.KEY.get(Reference3.FILES)
             manifest = self.csvpaths.file_manager.get_manifest(root_major)
-            fingerprint = name_one.path[0].arg
-            matched = [e for e in manifest if e.get("fingerprint") == fingerprint]
+            value = call.arg
+            matched = [e for e in manifest if e.get(key) == value]
             return ReferenceResults3(
                 results=[
                     ReferenceResult3(path=e["file"], uuid=e["uuid"]) for e in matched
@@ -958,22 +967,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if isinstance(call, FunctionCall3) and call.name == "definition" and call.arg is None:
             return call
         return None
-
-    @staticmethod
-    def _is_bare_fingerprint_reference(name_one) -> bool:
-        """same shape as _is_bare_home_reference, for ':fingerprint(...)'
-        -- settled 2026-08-13, but the OPPOSITE arg requirement: WITH an
-        arg (the hash to search for), not without -- a bare, argument-
-        less ':fingerprint()' has no candidate to read the field off of
-        at this position, so it is deliberately NOT recognized here and
-        falls through to the ordinary "not yet supported" rejection."""
-        return (
-            not name_one.functions
-            and len(name_one.path) == 1
-            and isinstance(name_one.path[0], FunctionCall3)
-            and name_one.path[0].name == "fingerprint"
-            and name_one.path[0].arg is not None
-        )
 
     @staticmethod
     def _is_flatten_prefixed_reference(name_one) -> bool:

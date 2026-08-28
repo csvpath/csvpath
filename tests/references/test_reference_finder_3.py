@@ -153,6 +153,50 @@ class TestIsBarePointerReference:
         assert not ReferenceFinder3._is_bare_pointer_reference(r, "manifest")
 
 
+class TestIsBareSelectorReference:
+    # added 2026-08-28 alongside Function3.SELECTOR_WHEN_ARGUED -- the
+    # generic replacement for FilesReferenceFinder3's original bespoke
+    # _is_bare_fingerprint_reference(). "fingerprint" is a real
+    # registered function that declares SELECTOR_WHEN_ARGUED = True;
+    # "all" is a real registered function that does not, used as the
+    # negative control.
+    def test_true_for_bare_argued_selector_function(self):
+        name_one = NameOne3(path=[FunctionCall3(name="fingerprint", arg="x")])
+        assert ReferenceFinder3._is_bare_selector_reference(name_one)
+
+    def test_false_when_no_arg(self):
+        # mirrors _is_bare_fingerprint_reference's own original
+        # reasoning -- a bare, argument-less call has nothing to search
+        # a manifest for, so it is deliberately not recognized here.
+        name_one = NameOne3(path=[FunctionCall3(name="fingerprint")])
+        assert not ReferenceFinder3._is_bare_selector_reference(name_one)
+
+    def test_false_for_function_that_does_not_declare_the_flag(self):
+        name_one = NameOne3(path=[FunctionCall3(name="all", arg="x")])
+        assert not ReferenceFinder3._is_bare_selector_reference(name_one)
+
+    def test_false_for_unregistered_function_name(self):
+        name_one = NameOne3(path=[FunctionCall3(name="bogus", arg="x")])
+        assert not ReferenceFinder3._is_bare_selector_reference(name_one)
+
+    def test_false_with_extra_path_segment(self):
+        name_one = NameOne3(
+            path=["a", FunctionCall3(name="fingerprint", arg="x")]
+        )
+        assert not ReferenceFinder3._is_bare_selector_reference(name_one)
+
+    def test_false_with_trailing_functions(self):
+        name_one = NameOne3(
+            path=[FunctionCall3(name="fingerprint", arg="x")],
+            functions=[FunctionCall3(name="first")],
+        )
+        assert not ReferenceFinder3._is_bare_selector_reference(name_one)
+
+    def test_false_for_literal_path_segment(self):
+        name_one = NameOne3(path=["fingerprint"])
+        assert not ReferenceFinder3._is_bare_selector_reference(name_one)
+
+
 class TestPointerBeforeManifest:
     # shared by every finder that supports ordinal indexing into a
     # global ledger (Rule 1b) -- files/csvpaths/results all read a flat

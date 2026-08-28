@@ -593,6 +593,39 @@ class ReferenceFinder3(ABC):
             return names
         return [n for n in names if re.search(name_filter, n)]
 
+    @staticmethod
+    def _is_bare_selector_reference(name_one) -> bool:
+        """true when name_one's entire content is a single, argued
+        FunctionCall3 whose registered Function3 class declares
+        SELECTOR_WHEN_ARGUED -- e.g. ':fingerprint("hash...")' as
+        name_one's sole content, selecting the entity whose own
+        fingerprint field matches, rather than reading a field off an
+        already-selected one. Added 2026-08-28 as the generic,
+        declarative replacement for FilesReferenceFinder3's own
+        original bespoke, hand-written _is_bare_fingerprint_reference()
+        -- same structural shape every _is_bare_X_reference sibling
+        there already uses (no chained functions, exactly one path
+        segment, that segment a FunctionCall3), just with the function-
+        name check replaced by a registry lookup so any future
+        SELECTOR_WHEN_ARGUED function is recognized here for free,
+        without a new hand-written check per function. The OPPOSITE arg
+        requirement from ':all()'/':flatten()'/':groups()'/':home()'
+        (WITH an argument, not without) mirrors
+        _is_bare_fingerprint_reference()'s own original reasoning: a
+        bare, argument-less call has no value to search a manifest
+        for, so it is deliberately not recognized here."""
+        if name_one.functions:
+            return False
+        if len(name_one.path) != 1 or not isinstance(
+            name_one.path[0], FunctionCall3
+        ):
+            return False
+        call = name_one.path[0]
+        if call.arg is None:
+            return False
+        function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+        return function_cls is not None and function_cls.SELECTOR_WHEN_ARGUED
+
     def _resolve_value(self, value):
         """returns `value` unchanged if it is a plain literal (str, int,
         etc.); resolves it if it is a bare Variable3 (added 2026-08-27,

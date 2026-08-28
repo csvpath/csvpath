@@ -32,16 +32,19 @@ class Fingerprint3(Function3):
     # search the WHOLE named-file's manifest for the entry whose own
     # fingerprint matches, since content-hash identity does not care
     # which file/path slot a version happens to be registered under
-    # (unlike :name(), which matches file_home, a path identity). See
-    # FilesReferenceFinder3._is_bare_fingerprint_reference/query() for
-    # where this is actually recognized and handled -- this class's own
-    # ROLE stays VALUE (unchanged) specifically so it keeps NOT counting
-    # as a second pointer when it rides alongside a real one in its
-    # ordinary field-accessor position (e.g.
+    # (unlike :name(), which matches file_home, a path identity). This
+    # class's own ROLE stays VALUE (unchanged) specifically so it keeps
+    # NOT counting as a second pointer when it rides alongside a real
+    # one in its ordinary field-accessor position (e.g.
     # ":name('orders.csv').:first():fingerprint()"); the bare-lookup
-    # shape is recognized structurally (bare, sole content of name_one,
-    # WITH an arg), the same way ':all()'/':flatten()'/':groups()'/
-    # ':home()' are already recognized, not via ROLE.
+    # shape is instead recognized declaratively via SELECTOR_WHEN_ARGUED
+    # (added 2026-08-28, replacing the original bespoke, hand-written
+    # FilesReferenceFinder3._is_bare_fingerprint_reference() check -- see
+    # ReferenceFinder3._is_bare_selector_reference() for the shared
+    # mechanism this and any future selector-when-argued function now
+    # go through).
+    #
+    SELECTOR_WHEN_ARGUED = True
     #
     NAME = "fingerprint"
     SUMMARY = (

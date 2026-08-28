@@ -138,6 +138,7 @@ class TestProperties:
             "role": Function3.CONTEXT_SETTER,
             "datatypes": ("files",),
             "resolves_as": None,
+            "selector_when_argued": False,
         }
 
     def test_equality(self):
@@ -209,3 +210,29 @@ class TestMetadataKind:
 
     def test_resolves_as_override_works_with_no_source_at_all(self):
         assert _NarrowingFunction.metadata_kind() == Reference3.METADATA_FIELD
+
+
+class TestSelectorWhenArgued:
+    # added 2026-08-28 -- declarative replacement for
+    # FilesReferenceFinder3's original bespoke
+    # _is_bare_fingerprint_reference(). See ReferenceFinder3.
+    # _is_bare_selector_reference() for the shared recognition helper
+    # that reads this flag.
+    def test_defaults_to_false(self):
+        assert _NoArgFunction.SELECTOR_WHEN_ARGUED is False
+
+    def test_can_be_declared_true(self):
+        class _SelectorFunction(Function3):
+            NAME = "selectorish"
+            SUMMARY = "selects by a known field value when argued"
+            ROLE = Function3.VALUE
+            DATATYPES = ("files",)
+            ARG_TYPES = (str,)
+            ARG_REQUIRED = False
+            SELECTOR_WHEN_ARGUED = True
+
+        assert _SelectorFunction.SELECTOR_WHEN_ARGUED is True
+
+    def test_surfaces_in_describe(self):
+        f = _NoArgFunction()
+        assert f.describe()["selector_when_argued"] is False

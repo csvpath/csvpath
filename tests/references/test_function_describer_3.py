@@ -1,4 +1,5 @@
 from csvpath.references.function_describer_3 import Function3Describer
+from csvpath.references.functions.fields.fingerprint_3 import Fingerprint3
 from csvpath.references.functions.fields.template_3 import Template3
 from csvpath.references.functions.fields.uuid_3 import Uuid3
 from csvpath.references.functions.filters.idchain_3 import Idchain3
@@ -75,6 +76,16 @@ class TestDescribeOneFunction:
         doc = Function3Describer.describe(Uuid3)
         assert "Resolves as" in doc
         assert "metadata_field" in doc
+
+    def test_selector_when_argued_function_shows_its_own_row(self):
+        # added 2026-08-28 -- Fingerprint3 is the only function that
+        # declares SELECTOR_WHEN_ARGUED today.
+        doc = Function3Describer.describe(Fingerprint3)
+        assert "Selector when argued" in doc
+
+    def test_non_selector_function_has_no_selector_when_argued_row(self):
+        doc = Function3Describer.describe(Uuid3)
+        assert "Selector when argued" not in doc
 
     def test_non_metadata_function_has_no_resolves_as_row(self):
         # Having3 is a plain CONTEXT_SETTER with no SOURCE and no

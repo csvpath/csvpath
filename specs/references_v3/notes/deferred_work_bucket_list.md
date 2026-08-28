@@ -48,8 +48,6 @@ candidates for that re-audit, all still unconditional/immediate raises in
   same "was a pointer actually applied within each partition" reasoning
   the literal-root fix used, not a blind port.
 
-## `resolve_kind`'s hardcoded name-tuple dispatch — BUILT 2026-08-28, see `deferred_work_done_list.md`
-
 ## Predicate-argument field accessors (`:on_arrival(:not_none())`) — filter half built for `:idchain()`, generic mechanism still not built
 
 David, 2026-08-21, drafting the compendium's replacement `:manifest()`/
@@ -203,41 +201,39 @@ a named worksheet across every named-file matched by `'*'`.
 
 ## Function self-documentation — dual selector/value-accessor behavior
 
-- **`:uuid(known_uuid)` should select the entity whose uuid *is* that value**
-  (probably via `@variable`), not just read the uuid off an already-selected
-  one. Currently `Uuid3.ARG_TYPES = ()` — any argument at all is rejected
-  outright.
-- **`:fingerprint(...)` already does exactly this, but only for FILES, and
-  only as a one-off special case** — `$alpha.files.:fingerprint('hash...')`
-  (bare, sole content of name_one, with an arg) searches the whole named-
-  file's manifest for the entry whose own fingerprint matches
-  (`fingerprint_3.py:15-30`). `ROLE` stays `VALUE` (so it never wrongly
-  counts as a second pointer riding beside a real one); the selector
-  behavior is recognized structurally by a bespoke, hand-written
-  `FilesReferenceFinder3._is_bare_fingerprint_reference()` check — the only
-  place this pattern exists today. Not generalized to CSVPATHS/RESULTS, and
-  not built for any other field accessor.
-- **`:idchain("add[0]")` already does the same underlying thing, one level
-  down** — it doesn't just extract a value, it filters `errors.json`'s
-  array to entries whose own `"source"` field matches the given chain
-  string. Same "match against your own key/field, not just read it" idea,
-  applied to array elements instead of whole entities. (`ARG_REQUIRED =
-  True` today — no bare, unargued form exists or is implied to mean
-  anything yet.)
-- **The general capability doesn't exist as a declarative mechanism** —
-  each instance so far is its own hand-built, per-function, per-finder
-  special case (`_is_bare_fingerprint_reference`, the pointer-adjacent
-  `:home()`/`:all()`/`:flatten()`/`:groups()` structural checks). Proposed
-  direction, discussed 2026-08-21 (David: "we don't need to subclass, but
-  we do need to be able to indicate that certain functions may select
-  files or retrieve values, depending on how they are used" — mirroring
-  match functions' own `ValueProducer`/`MatchDecider` idea, but declaratively
-  rather than via subclassing): a new `Function3` class attribute (e.g.
-  `SELECTOR_WHEN_ARGUED`), defaulting `False`, that a single shared helper
-  checks the same way `_is_bare_pointer_reference`/
-  `_is_bare_fingerprint_reference` already do today, generically instead of
-  one hand-written check per function. `ROLE` stays declared `VALUE`
-  either way, for the same reason `Fingerprint3` already needs it to.
+The declarative `SELECTOR_WHEN_ARGUED` mechanism itself is **BUILT
+2026-08-28** — see `deferred_work_done_list.md`. Still open, deliberately
+NOT part of that build:
+
+- **`:idchain("add[0]")` already does a related thing, one level down** —
+  it doesn't just extract a value, it filters `errors.json`'s array to
+  entries whose own `"source"` field matches the given chain string. Same
+  "match against your own key/field, not just read it" idea as
+  `SELECTOR_WHEN_ARGUED`, but applied to array elements inside an already-
+  selected entity, not to selecting the entity itself — a different shape,
+  not migrated onto the new flag. (`ARG_REQUIRED = True` today — no bare,
+  unargued form exists or is implied to mean anything yet.)
+
+- **Cross-datatype "select by known uuid" + set operations — reframed
+  2026-08-28 (David), still fully open.** UUID is the connective tissue
+  between *every* datatype: every place the system registers/loads
+  something (a named-file version, a named-paths group version) or
+  generates something (a run, a run's per-file instance) attaches a uuid
+  that links it to the other datatypes. So "select an entity by a known
+  uuid, and do set operations (union/intersect/exclude) across uuid-linked
+  entities across datatypes" is a wide, foundational capability, not a
+  one-function special case — closer in size to the predicate-argument
+  mechanism above than to a single-function fix. Two separate pieces, both
+  undesigned:
+  1. **What "select by uuid" means per datatype** — a different lookup
+     shape for a named-file entry vs. a named-paths group vs. a run vs. a
+     run's file vs. a result.
+  2. **What "set operations" over uuid-linked entities means** — e.g. "the
+     files that fed this run," "the runs that consumed this file"; a
+     genuinely new query capability, not just a selector.
+  Needs worked examples per datatype before anything is buildable —
+  currently `Uuid3.ARG_TYPES = ()`, any argument at all is rejected
+  outright, so nothing here parses yet.
 
 ## Grammar / argument-type gaps (spec says it should work, code doesn't yet)
 
