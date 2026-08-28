@@ -208,6 +208,52 @@ class TestVersionPointer:
         ]
 
 
+class TestHavingFiltersRunsByInstanceIdentity:
+    # ':having("identity")' widened to RESULTS 2026-08-27 (deferred-work
+    # bucket-list entry) -- mirrors CsvpathsReferenceFinder3's own
+    # ':having()' one level down: filters the candidate RUN pool to
+    # those containing an instance (csvpath statement result) with the
+    # given identity, BEFORE any pointer reduces. acme_archive's run1
+    # has "company_names"/"1"; run2 has only "0" -- proves filtering,
+    # not just "identity happens to exist somewhere."
+    def test_having_then_pointer_gives_the_qualifying_run(self, acme_archive):
+        results = _finder(
+            "$acme.results.customers/2025:last():having(\"company_names\")",
+            acme_archive,
+        ).query()
+        assert results.uuids == ["run1-uuid"]
+
+    def test_order_of_pointer_and_having_does_not_matter(self, acme_archive):
+        results = _finder(
+            "$acme.results.customers/2025:having(\"company_names\"):last()",
+            acme_archive,
+        ).query()
+        assert results.uuids == ["run1-uuid"]
+
+    def test_having_excludes_a_run_without_the_identity(self, acme_archive):
+        # run2 is chronologically last, but only run1 "has" company_names
+        # -- proves the filter really runs before the pointer, not after.
+        results = _finder(
+            "$acme.results.customers/2025:last():having(\"0\")", acme_archive
+        ).query()
+        assert results.uuids == ["run2-uuid"]
+
+    def test_having_with_no_matching_run_gives_empty(self, acme_archive):
+        results = _finder(
+            "$acme.results.customers/2025:last():having(\"nonexistent\")",
+            acme_archive,
+        ).query()
+        assert results.uuids == []
+
+    def test_having_with_no_pointer_returns_every_qualifying_run_unreduced(
+        self, acme_archive
+    ):
+        results = _finder(
+            "$acme.results.customers/2025:having(\"company_names\")", acme_archive
+        ).query()
+        assert results.uuids == ["run1-uuid"]
+
+
 class TestNoPointerReturnsEveryRun:
     def test_no_pointer_returns_every_run_unreduced(self, acme_archive):
         results = _finder("$acme.results.customers/2025", acme_archive).query()
@@ -2326,6 +2372,117 @@ class TestStarTraversal:
         # on a bare star-traversal reference before this fix.
         result = _finder("$*.results.:last()", two_group_archive).resolve()
         assert result.results[0].data is None
+
+
+class TestStarTraversalHaving:
+    # ':having("identity")' widened to RESULTS star traversal 2026-08-27
+    # (same bucket-list entry as the literal-root case above) -- filters
+    # the candidate run pool, across every group, down to runs
+    # containing a matching instance, before the pointer/grouping
+    # reduces. Exercises both shared-tail methods: _star_pool_and_reduce
+    # (bare pointer/':flatten()') and _star_group_and_reduce (':all()').
+    def test_bare_pointer_with_having_finds_the_qualifying_run(self, tmp_path):
+        acme_run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "acme-run-uuid",
+            {"orders": "acme-orders-uuid"},
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets",
+            "2026-01-02_00-00-00",
+            "widgets-run-uuid",
+            {"other": "widgets-other-uuid"},
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
+        )
+        # widgets is chronologically later, but only acme "has" orders --
+        # proves the pool is filtered before :last() reduces it.
+        results = _finder(
+            '$*.results.:having("orders"):last()', str(tmp_path)
+        ).query()
+        assert results.uuids == ["acme-run-uuid"]
+
+    def test_no_pointer_returns_every_qualifying_run_unreduced(self, tmp_path):
+        acme_run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "acme-run-uuid",
+            {"orders": "acme-orders-uuid"},
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets",
+            "2026-01-02_00-00-00",
+            "widgets-run-uuid",
+            {"other": "widgets-other-uuid"},
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
+        )
+        results = _finder('$*.results.:having("orders")', str(tmp_path)).query()
+        assert results.uuids == ["acme-run-uuid"]
+
+    def test_no_matching_run_gives_empty(self, tmp_path):
+        acme_run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "acme-run-uuid",
+            {"orders": "acme-orders-uuid"},
+        )
+        _write_archive_manifest_multi(tmp_path, {"acme": [acme_run]})
+        results = _finder(
+            '$*.results.:having("nonexistent"):last()', str(tmp_path)
+        ).query()
+        assert results.uuids == []
+
+    def test_flatten_with_having_finds_the_qualifying_run_at_any_depth(
+        self, tmp_path
+    ):
+        acme_run = _make_run(
+            tmp_path / "acme" / "east",
+            "2026-01-01_00-00-00",
+            "acme-run-uuid",
+            {"orders": "acme-orders-uuid"},
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets",
+            "2026-01-02_00-00-00",
+            "widgets-run-uuid",
+            {"other": "widgets-other-uuid"},
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
+        )
+        results = _finder(
+            '$*.results.:flatten():having("orders")', str(tmp_path)
+        ).query()
+        assert results.uuids == ["acme-run-uuid"]
+
+    def test_all_grouping_with_having_filters_before_partitioning(self, tmp_path):
+        # both groups have a one-level template, matching ':all()'s own
+        # exactly-one-level restriction -- widgets is filtered out by
+        # ':having()' entirely, so only acme's own (group, template)
+        # partition survives to be reduced.
+        acme_run = _make_run(
+            tmp_path / "acme" / "east",
+            "2026-01-01_00-00-00",
+            "acme-run-uuid",
+            {"orders": "acme-orders-uuid"},
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets" / "west",
+            "2026-01-02_00-00-00",
+            "widgets-run-uuid",
+            {"other": "widgets-other-uuid"},
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
+        )
+        results = _finder(
+            '$*.results.:all():having("orders"):last()', str(tmp_path)
+        ).query()
+        assert results.uuids == ["acme-run-uuid"]
 
 
 class TestStarTraversalPathNarrowingAndNameThree:

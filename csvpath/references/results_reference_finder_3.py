@@ -402,6 +402,29 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             ]
         candidates = sorted(candidates, key=self._run_dir_sort_key)
 
+        having_call = next(
+            (f for f in ReferenceFunctionFactory.build_chain(calls) if f.name == "having"),
+            None,
+        )
+        if having_call is not None:
+            # filters the run pool down to runs that contain an instance
+            # (a csvpath statement result) with this identity -- added
+            # 2026-08-27, mirroring CsvpathsReferenceFinder3's own
+            # ':having()' (manifest-array membership there; a real
+            # filesystem listing here, since RESULTS has no equivalent
+            # "named_paths_identities" field to read off a run). Applied
+            # BEFORE ':from()'/':to()'/the pointer reduce below, same
+            # position ':having()' occupies in CSVPATHS' own
+            # _resolve_versions(). group_key_for (if set) needs no
+            # separate trim -- its own consumer below only ever looks up
+            # keys for `rh in candidates`, so extra now-unused entries
+            # for filtered-out runs are simply never read.
+            candidates = [
+                rh
+                for rh in candidates
+                if having_call.arg in self._list_instance_identities(rh)
+            ]
+
         from_call, to_call = self._range_calls_from_calls(calls)
         if from_call is not None or to_call is not None:
             # ':from()'/':to()' as a run-level range -- added 2026-08-13,
@@ -610,7 +633,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
         if self._is_bare_function_only(name_one):
             calls = self._combined_name_one_calls(name_one)
-            pointer, all_call, flatten_call = self._star_run_selector_chain(calls)
+            pointer, all_call, flatten_call, having_call = self._star_run_selector_chain(
+                calls
+            )
             if all_call is not None:
                 # exactly one level, wildcarded -- the SAME [Star3()]
                 # restriction bare ':all()' already applies for one
@@ -629,7 +654,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                             (rh, (group, self._group_key(rh, home)))
                         )
                 return self._star_group_and_reduce(
-                    partitioned, pointer, identity, match_all, range_bounds, accessor
+                    partitioned,
+                    pointer,
+                    identity,
+                    match_all,
+                    range_bounds,
+                    accessor,
+                    having_call,
                 )
             if flatten_call is not None:
                 # any depth, every group -- _discover_run_homes(None)
@@ -655,7 +686,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     )
                 ]
             return self._star_pool_and_reduce(
-                run_homes, pointer, identity, match_all, range_bounds, accessor
+                run_homes,
+                pointer,
+                identity,
+                match_all,
+                range_bounds,
+                accessor,
+                having_call,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -672,7 +709,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             prefix_pattern = self._compile_path_pattern(name_one.path[:-1])
             calls = list(name_one.functions)
-            pointer, _, _ = self._star_run_selector_chain(calls)
+            pointer, _, _, having_call = self._star_run_selector_chain(calls)
             run_homes = [
                 rh
                 for rh, group in self._discover_run_homes(None)
@@ -683,7 +720,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             ]
             return self._star_pool_and_reduce(
-                run_homes, pointer, identity, match_all, range_bounds, accessor
+                run_homes,
+                pointer,
+                identity,
+                match_all,
+                range_bounds,
+                accessor,
+                having_call,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -702,7 +745,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             prefix = self._compile_path_pattern(name_one.path[:-1])
             pattern = prefix + [Star3()]
             calls = list(name_one.functions)
-            pointer, _, _ = self._star_run_selector_chain(calls)
+            pointer, _, _, having_call = self._star_run_selector_chain(calls)
             partitioned = []
             for rh, group in self._discover_run_homes(None):
                 home = self.csvpaths.results_manager.get_named_results_home(group)
@@ -719,7 +762,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         )
                     )
             return self._star_group_and_reduce(
-                partitioned, pointer, identity, match_all, range_bounds, accessor
+                partitioned,
+                pointer,
+                identity,
+                match_all,
+                range_bounds,
+                accessor,
+                having_call,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -737,7 +786,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # to each candidate's OWN group home), reduced by the pointer.
         pattern = self._compile_path_pattern(name_one.path)
         calls = list(name_one.functions)
-        pointer, _, _ = self._star_run_selector_chain(calls)
+        pointer, _, _, having_call = self._star_run_selector_chain(calls)
         run_homes = [
             rh
             for rh, group in self._discover_run_homes(None)
@@ -746,7 +795,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
         ]
         return self._star_pool_and_reduce(
-            run_homes, pointer, identity, match_all, range_bounds, accessor
+            run_homes,
+            pointer,
+            identity,
+            match_all,
+            range_bounds,
+            accessor,
+            having_call,
         )
 
     def _star_run_selector_chain(self, calls: list) -> tuple:
@@ -755,7 +810,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         and literal/'*'-prefixed alike) -- added 2026-08-19, factored
         out of what used to be inline-only-for-the-bare-case logic once
         the literal/'*'-prefixed shapes needed the identical validation.
-        Returns (pointer, all_call, flatten_call); all_call/flatten_call
+        Returns (pointer, all_call, flatten_call, having_call); all_call/flatten_call
         are only ever non-None for the bare shape (calls includes
         name_one.path[0] itself there) -- for a prefixed shape, calls is
         just name_one.functions, and the ':all()'/':flatten()' marker
@@ -774,6 +829,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         see home_3.py) rather than falling out of the field-accessor
         exemption above for free the way it used to when it still
         declared SOURCE == "manifest".
+
+        A run-filtering ':having("identity")' (added 2026-08-27,
+        mirroring CsvpathsReferenceFinder3's own star-traversal support)
+        is exempt the same way -- filters the candidate run pool down to
+        runs containing a matching instance, applied by the shared
+        _star_pool_and_reduce()/_star_group_and_reduce() tail methods
+        rather than here, since `built` alone (this method only ever
+        sees ONE candidate-gathering shape's own combined chain, not the
+        full run list to filter) has nothing to filter yet at this point.
 
         A pointer itself is now OPTIONAL here (changed 2026-08-19) --
         absence means "every matched run, unreduced," the SAME meaning
@@ -799,6 +863,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         flatten_call = next((f for f in built if f.name == "flatten"), None)
         manifest_call = next((f for f in built if f.name == "manifest"), None)
         home_call = next((f for f in built if f.name == "home"), None)
+        having_call = next((f for f in built if f.name == "having"), None)
         if all_call is not None and flatten_call is not None:
             raise ReferenceException3(
                 "ResultsReferenceFinder3 does not support combining "
@@ -814,6 +879,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             and f is not all_call
             and f is not manifest_call
             and f is not home_call
+            and f is not having_call
         ]
         if non_pointers:
             raise ReferenceException3(
@@ -821,11 +887,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 f":{non_pointers[0].name}() combined with '*' traversal -- "
                 "only a bare pointer (:first()/:last()/:index(n)), "
                 "optionally combined with ':all()'/':flatten()', :manifest(), "
-                "and/or a run-level field-accessor function (e.g. :uuid()), "
-                "is supported so far."
+                "':having(\"identity\")', and/or a run-level field-accessor "
+                "function (e.g. :uuid()), is supported so far."
             )
         pointer = self._pointer_from_calls(calls)
-        return pointer, all_call, flatten_call
+        return pointer, all_call, flatten_call, having_call
 
     def _star_pool_and_reduce(
         self,
@@ -835,10 +901,19 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         match_all: bool,
         range_bounds: tuple | None,
         accessor,
+        having_call=None,
     ) -> ReferenceResults3:
         """POOL mode's shared tail -- added 2026-08-19, alongside
         _star_group_and_reduce(), factored out once name_three needed
-        threading through every star-traversal shape identically. A
+        threading through every star-traversal shape identically.
+        `having_call` (added 2026-08-27) filters `run_homes` down to
+        runs containing an instance with the given identity, BEFORE the
+        pointer reduces -- applied here, centrally, rather than in each
+        of _query_star_traversal's own four candidate-gathering
+        branches, since every one of them already funnels into this
+        shared tail (or _star_group_and_reduce's, which applies the same
+        filter itself before delegating here for its own no-pointer
+        case). A
         missing pointer (added 2026-08-19, see _star_run_selector_chain()'s
         own comment for why) means every matched run comes back,
         unreduced -- which can now be MORE than one run. Resolving full
@@ -854,6 +929,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         all in THIS branch to worry about conflating with -- every
         matched run is genuinely unreduced, so the flag's own count
         check at resolve() time means exactly what it says."""
+        if having_call is not None:
+            run_homes = [
+                rh
+                for rh in run_homes
+                if having_call.arg in self._list_instance_identities(rh)
+            ]
         run_homes = sorted(run_homes, key=self._run_dir_sort_key)
         if pointer is None:
             results = []
@@ -884,10 +965,17 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         match_all: bool,
         range_bounds: tuple | None,
         accessor,
+        having_call=None,
     ) -> ReferenceResults3:
         """GROUP mode's shared tail (":all()", bare or literal/'*'-
         prefixed) -- added 2026-08-19. `partitioned`: list of
-        (run_home, composite_key) pairs. Unlike POOL mode, a pointer
+        (run_home, composite_key) pairs. `having_call` (added
+        2026-08-27) filters `partitioned` down to runs containing an
+        instance with the given identity, BEFORE partitioning/reducing
+        -- same position/reasoning as _star_pool_and_reduce's own copy
+        of this filter (not shared as one call, since the two methods
+        filter different-shaped inputs -- a flat list here vs. pairs).
+        Unlike POOL mode, a pointer
         here can still select MORE than one run overall (one per
         partition) -- so a name_three CONTENT accessor (:errors()/
         :vars()/etc, as opposed to a poolable field accessor like
@@ -913,6 +1001,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         "list everything, unreduced" case _star_pool_and_reduce()
         already handles -- delegated there directly rather than
         duplicating that logic."""
+        if having_call is not None:
+            partitioned = [
+                (rh, key)
+                for rh, key in partitioned
+                if having_call.arg in self._list_instance_identities(rh)
+            ]
         if accessor is not None and pointer is not None:
             # the content-accessor rejection only applies when grouping
             # can still yield more than one run (pointer present, one

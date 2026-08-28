@@ -10,7 +10,11 @@ def test_metadata():
     f = Having3(arg="my_validations")
     assert f.name == "having"
     assert f.ROLE == Function3.CONTEXT_SETTER
-    assert f.DATATYPES == (Reference3.CSVPATHS,)
+    assert f.DATATYPES == (Reference3.CSVPATHS, Reference3.RESULTS)
+    assert f.POSITIONS == {
+        Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+        Reference3.RESULTS: (Reference3.NAME_ONE,),
+    }
 
 
 def test_str_arg_is_valid():
