@@ -18,6 +18,10 @@ class Data3(Function3):
         "lines matched (the file was never written)."
     )
     ROLE = Function3.VALUE
+    # metadata_kind() override -- a whole-resource read, not a
+    # single field, see Function3.RESOLVES_AS's own docstring for
+    # why this class needs one (added 2026-08-28).
+    RESOLVES_AS = Reference3.METADATA_FILE
     DATATYPES = (Reference3.RESULTS,)
     ARG_TYPES = ()
     ARG_REQUIRED = False

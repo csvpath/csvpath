@@ -48,6 +48,10 @@ class Errors3(Function3):
         "filtered to entries matching a nested :idchain(...) argument."
     )
     ROLE = Function3.VALUE
+    # metadata_kind() override -- a whole-resource read, not a
+    # single field, see Function3.RESOLVES_AS's own docstring for
+    # why this class needs one (added 2026-08-28).
+    RESOLVES_AS = Reference3.METADATA_FILE
     DATATYPES = (Reference3.RESULTS,)
     ARG_TYPES = (Idchain3,)
     ARG_REQUIRED = False

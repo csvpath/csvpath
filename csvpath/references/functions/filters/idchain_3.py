@@ -55,6 +55,18 @@ class Idchain3(Function3):
         "nested inside :errors()."
     )
     ROLE = Function3.VALUE
+    # metadata_kind() override -- added 2026-08-28. Idchain3 has no
+    # SOURCE of its own (it never reads a manifest/definition key by a
+    # dotted path the way an ordinary field accessor does), so nothing
+    # would otherwise mark a reference containing it METADATA_FIELD --
+    # but per the "position decides meaning" rule above, being NESTED
+    # as :errors()'s own argument is exactly what narrows that whole-
+    # resource read down to a field-level one. This is the one function
+    # in the registry that needed an explicit override for this reason
+    # specifically (every other METADATA_FIELD function gets there for
+    # free via its own SOURCE) -- see Function3.RESOLVES_AS's own
+    # docstring for the full accounting.
+    RESOLVES_AS = Reference3.METADATA_FIELD
     DATATYPES = (Reference3.RESULTS,)
     ARG_TYPES = (str, Regex3, PredicateFunction3)
     ARG_REQUIRED = True

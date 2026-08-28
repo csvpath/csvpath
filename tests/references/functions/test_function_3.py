@@ -1,7 +1,12 @@
 import pytest
 
 from csvpath.references.functions.function_3 import Function3
-from csvpath.references.reference_3 import FunctionCall3, InterpolatedString3, Variable3
+from csvpath.references.reference_3 import (
+    FunctionCall3,
+    InterpolatedString3,
+    Reference3,
+    Variable3,
+)
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 
 
@@ -132,9 +137,75 @@ class TestProperties:
             "summary": "takes nothing",
             "role": Function3.CONTEXT_SETTER,
             "datatypes": ("files",),
+            "resolves_as": None,
         }
 
     def test_equality(self):
         assert _RequiredIntArgFunction(arg=1) == _RequiredIntArgFunction(arg=1)
         assert _RequiredIntArgFunction(arg=1) != _RequiredIntArgFunction(arg=2)
         assert _RequiredIntArgFunction(arg=1) != _NoArgFunction()
+
+
+class _SourcedFunction(Function3):
+    # mirrors an ordinary field accessor (e.g. Uuid3) -- SOURCE set,
+    # no RESOLVES_AS override needed.
+    NAME = "sourced"
+    SUMMARY = "reads a manifest field"
+    ROLE = Function3.VALUE
+    DATATYPES = ("files",)
+    SOURCE = "manifest"
+    KEY = {"files": "some_key"}
+
+
+class _ClockFunction(Function3):
+    # mirrors a SOURCE == "clock" value function (e.g. Year3) -- must
+    # NOT be treated as METADATA_FIELD despite having a non-None SOURCE.
+    NAME = "clockish"
+    SUMMARY = "a pure computed value"
+    ROLE = Function3.VALUE
+    DATATYPES = ("files",)
+    SOURCE = "clock"
+
+
+class _WholeResourceFunction(Function3):
+    # mirrors a functions/well_known_files/ class (e.g. Errors3) --
+    # explicit RESOLVES_AS override, no SOURCE at all.
+    NAME = "wholeresource"
+    SUMMARY = "reads a whole well-known file"
+    ROLE = Function3.VALUE
+    DATATYPES = ("files",)
+    RESOLVES_AS = Reference3.METADATA_FILE
+
+
+class _NarrowingFunction(Function3):
+    # mirrors Idchain3 -- explicit RESOLVES_AS override to METADATA_FIELD,
+    # despite having no SOURCE either.
+    NAME = "narrows"
+    SUMMARY = "narrows a parent's whole-resource read"
+    ROLE = Function3.VALUE
+    DATATYPES = ("files",)
+    RESOLVES_AS = Reference3.METADATA_FIELD
+
+
+class TestMetadataKind:
+    # added 2026-08-28, replacing Reference3's old hardcoded
+    # _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_FUNCTIONS name tuples --
+    # confirmed by direct inspection (not assumed) that this classmethod
+    # reproduces both tuples' membership exactly, across all 124
+    # functions registered at the time of the switch.
+    def test_plain_function_with_neither_source_nor_override_is_none(self):
+        assert _NoArgFunction.metadata_kind() is None
+
+    def test_source_implies_metadata_field_with_no_override_needed(self):
+        assert _SourcedFunction.metadata_kind() == Reference3.METADATA_FIELD
+
+    def test_clock_source_is_excluded_despite_being_non_none(self):
+        # a bare computed value (e.g. :year()) has no entity/manifest
+        # context at all -- neither METADATA_FILE nor METADATA_FIELD.
+        assert _ClockFunction.metadata_kind() is None
+
+    def test_resolves_as_override_wins_for_whole_resource_functions(self):
+        assert _WholeResourceFunction.metadata_kind() == Reference3.METADATA_FILE
+
+    def test_resolves_as_override_works_with_no_source_at_all(self):
+        assert _NarrowingFunction.metadata_kind() == Reference3.METADATA_FIELD

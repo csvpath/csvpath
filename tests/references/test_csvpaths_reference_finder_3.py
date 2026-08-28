@@ -1511,14 +1511,13 @@ class TestScopeLimits:
             finder.query()
 
     def test_metadata_kind_not_yet_supported(self):
-        # :meta() matches resolve_kind's METADATA_FILE placeholder list
-        # (Reference3._METADATA_FILE_FUNCTIONS) even though it is not
-        # an actual registered function -- query() would already reject
-        # this reference for a different reason first (functions on
-        # name_three are rejected outright), so _extract_data() is
-        # called directly to test its own resolve_kind branching in
-        # isolation, ahead of any real metadata-access function
-        # existing for csvpaths.
+        # :meta() is a real registered function (Meta3, RESOLVES_AS ==
+        # Reference3.METADATA_FILE -- see Function3.metadata_kind()),
+        # but query() would already reject this reference for a
+        # different reason first (functions on name_three are rejected
+        # outright for csvpaths), so _extract_data() is called directly
+        # to test its own resolve_kind branching in isolation, ahead of
+        # any real metadata-access function existing for csvpaths.
         finder = _finder("$acme.csvpaths.:first().:meta()")
         with pytest.raises(ReferenceException3):
             finder._extract_data(ReferenceResult3(path="p", uuid="v0-uuid"))

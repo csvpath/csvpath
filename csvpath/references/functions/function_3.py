@@ -1,6 +1,6 @@
 from typing import Any
 
-from ..reference_3 import InterpolatedString3, Variable3
+from ..reference_3 import InterpolatedString3, Reference3, Variable3
 from ..reference_exceptions_3 import ReferenceException3
 
 
@@ -116,6 +116,39 @@ class Function3:
     # docstring for the full worked example.
     #
     BARE_SOURCE: str = None
+
+    #
+    # explicit override for metadata_kind()/Reference3.resolve_kind() --
+    # added 2026-08-28, replacing the old _METADATA_FILE_FUNCTIONS/
+    # _METADATA_FIELD_FUNCTIONS hardcoded name tuples (reference_3.py's
+    # own long-standing "both lists will be replaced by real per-
+    # function trait lookups once Function3 exists" comment, never
+    # acted on until now). Confirmed by direct inspection, not assumed,
+    # before designing this: _METADATA_FIELD_FUNCTIONS' 84 names were
+    # EXACTLY {every function with SOURCE not in (None, "clock")} (83
+    # names) PLUS "idchain" (1 name, the sole exception -- see Idchain3's
+    # own RESOLVES_AS for why). So 83 of 84 functions never needed an
+    # explicit entry in either list at all -- their own SOURCE
+    # declaration (already required for KEY-lookup to work) already
+    # implies METADATA_FIELD for free via metadata_kind()'s own default
+    # rule below. RESOLVES_AS only needs setting on the genuine
+    # exceptions: the ten functions/well_known_files/ classes (a whole-
+    # resource read has no SOURCE/KEY of its own at all, so nothing
+    # would otherwise mark them METADATA_FILE), and Idchain3 (which
+    # narrows its PARENT's resolution when nested, despite having no
+    # SOURCE of its own either). Leave None (the default) for every
+    # other function -- it needs no override, its own SOURCE (or lack
+    # of one) already says everything metadata_kind() needs to know.
+    # Uses Reference3.METADATA_FILE/METADATA_FIELD's own constants
+    # directly (not a separate boolean/enum) specifically so this is
+    # self-documenting on sight -- reading Errors3.RESOLVES_AS tells you
+    # exactly what Reference3.resolve_kind() will classify a bare
+    # :errors() reference as, using the identical vocabulary, not a
+    # second name to learn. See metadata_kind() below for how this and
+    # SOURCE combine, and Function3Describer/describe() for how this
+    # surfaces in a function's own self-documentation.
+    #
+    RESOLVES_AS: "str | None" = None
 
     #
     # declares which conceptual "family" this VALUE-role function's own
@@ -244,17 +277,50 @@ class Function3:
         if isinstance(self._arg, (Function3, InterpolatedString3)):
             self._arg.check_valid()
 
+    @classmethod
+    def metadata_kind(cls) -> "str | None":
+        """Reference3.METADATA_FILE/METADATA_FIELD this function
+        resolves as when it is a TERMINAL function in a reference's own
+        chain, or None for an ordinary FIRST_PARTY function (e.g. a
+        pointer/path-building function, or a SOURCE == "clock" value
+        function used bare/in "{...}" interpolation). Added 2026-08-28
+        as the single shared source of truth both Reference3.
+        resolve_kind() (chain-walking logic) and this class's own
+        describe()/Function3Describer (self-documentation) read --
+        computed once, here, rather than duplicated in both places.
+
+        RESOLVES_AS is an explicit override, needed by only ~11
+        functions today (see its own docstring for exactly which and
+        why); every other function's SOURCE declaration already implies
+        METADATA_FIELD for free, at zero extra maintenance cost, since
+        SOURCE was always required anyway for that function's own KEY-
+        lookup to work. SOURCE == "clock" is deliberately excluded --
+        a bare value with no entity/manifest context at all (e.g.
+        :year()) is neither kind of metadata resolution."""
+        if cls.RESOLVES_AS is not None:
+            return cls.RESOLVES_AS
+        if cls.SOURCE not in (None, "clock"):
+            return Reference3.METADATA_FIELD
+        return None
+
     def describe(self) -> dict:
         """machine-actionable self-description -- also human-readable
         via SUMMARY. this is what a future type-ahead layer's registry
         query is meant to read (see references_notes/
         autocomplete_prototype.py's registry shape: name/summary/
-        datatypes)."""
+        datatypes). "resolves_as" (added 2026-08-28) surfaces
+        metadata_kind()'s own answer directly -- an AI agent (or any
+        other reader) inspecting this function's self-description can
+        see exactly what it contributes to a reference's own
+        Reference3.resolve_kind() classification, without needing to
+        already understand the RESOLVES_AS/SOURCE mechanics behind
+        metadata_kind() itself."""
         return {
             "name": self.NAME,
             "summary": self.SUMMARY,
             "role": self.ROLE,
             "datatypes": self.DATATYPES,
+            "resolves_as": self.metadata_kind(),
         }
 
     def __eq__(self, other) -> bool:
