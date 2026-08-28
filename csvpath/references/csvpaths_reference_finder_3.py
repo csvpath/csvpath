@@ -119,6 +119,23 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 )
             return self._query_star_traversal(reference)
 
+        if isinstance(root_major, FunctionCall3):
+            # :regex() at root_major -- added 2026-08-27. Structurally
+            # identical to the Star3 case just above (every group is a
+            # candidate), just pre-filtered by pattern before
+            # _query_star_traversal() enumerates -- see its own
+            # name_filter docstring. No other function is legal here;
+            # the grammar itself is permissive (any function, see
+            # reference_grammar_3.py's own note) so this is a semantic
+            # check, not a grammar-level one.
+            if root_major.name != "regex":
+                raise ReferenceException3(
+                    f":{root_major.name}() is not a legal root_major "
+                    "function -- only :regex() is supported."
+                )
+            built = self._build(root_major)
+            return self._query_star_traversal(reference, name_filter=built.pattern)
+
         name_one = reference.name_one
         if name_one.name_two is not None:
             raise ReferenceException3(
@@ -246,9 +263,18 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             results=results, ambiguous_content_read=ambiguous_content_read
         )
 
-    def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
+    def _query_star_traversal(
+        self, reference: Reference3, name_filter: "str | None" = None
+    ) -> ReferenceResults3:
         """root_major == "*" -- query across every named-paths group,
-        not just one. Unlike FILES, csvpaths' version-selecting pointer
+        not just one. `name_filter` (added 2026-08-27, query()'s own
+        :regex()-at-root_major branch) restricts both enumeration loops
+        below (via ReferenceFinder3._matching_names()) to groups whose
+        own name matches the pattern -- "every group whose name matches
+        this pattern" is the SAME candidate-gathering '*' already does
+        here, just pre-filtered before enumeration, not a new traversal
+        mode. None (the default) means every group, the ordinary '*'
+        case, unchanged. Unlike FILES, csvpaths' version-selecting pointer
         and ':all()' both already live in name_one's own combined chain
         (see _resolve_versions) -- there is no separate name_three
         pointer slot to borrow the way FILES uses. Two semantics, each
@@ -393,7 +419,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
 
         if is_grouped:
             selected_versions = []
-            for name in self.csvpaths.paths_manager.named_paths_names:
+            for name in self._matching_names(
+                self.csvpaths.paths_manager.named_paths_names, name_filter
+            ):
                 manifest = _having_filtered(
                     self.csvpaths.paths_manager.get_manifest_for_name(name)
                 )
@@ -422,7 +450,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # needs a pointer to be meaningful, same as GROUP mode already
             # proved.
             pooled = []
-            for name in self.csvpaths.paths_manager.named_paths_names:
+            for name in self._matching_names(
+                self.csvpaths.paths_manager.named_paths_names, name_filter
+            ):
                 pooled.extend(
                     _having_filtered(
                         self.csvpaths.paths_manager.get_manifest_for_name(name)
@@ -605,10 +635,15 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
 
     def _group_manifest_entry(self, root_major, uuid: str) -> tuple:
         """returns (group_name, manifest_entry) for the version matching
-        uuid. When root_major is the '*' token (a '*' traversal result --
-        added 2026-08-18) the matched version could belong to any named-
-        paths group, so every group's own manifest is searched for the
-        matching uuid -- uuids are assumed globally unique, the same
+        uuid. When root_major spans potentially more than one group --
+        the '*' token, or a :regex() selector (added 2026-08-27, see
+        ReferenceFinder3._is_traversal_root()) -- the matched version
+        could belong to any named-paths group, so every group's own
+        manifest is searched for the matching uuid (searched by uuid,
+        not filtered by the regex pattern again -- a :regex() match
+        already narrowed which groups were candidates back in query(),
+        this just needs to find which ONE of them this particular uuid
+        came from) -- uuids are assumed globally unique, the same
         assumption _find_manifest_entry_by_uuid's every other call site
         already makes. Otherwise root_major is a literal group name --
         looked up directly, same as every call site used to do inline
@@ -617,7 +652,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         RESULTS' potentially-large run history (RESULTS did not need an
         equivalent helper for this same reason -- see
         ResultsReferenceFinder3._extract_data's own comment on why)."""
-        if isinstance(root_major, Star3):
+        if self._is_traversal_root(root_major):
             for name in self.csvpaths.paths_manager.named_paths_names:
                 manifest = self.csvpaths.paths_manager.get_manifest_for_name(name)
                 entry = self._find_manifest_entry_by_uuid(manifest, uuid)

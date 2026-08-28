@@ -71,6 +71,13 @@ POSITIVE_CASES = [
     '$acme.results.:name(/^(?:Mon|Tue)day$/)/2025:first().invoices',
     '$acme.results.:name(/^(Mon|Tue)day$/)/2025:first().invoices',
     '$acme.results.:name(/contains"quote/)/2025:first().invoices',
+    # :regex() at root_major (added 2026-08-27) -- a function, not just
+    # STAR/IDENTIFIER, symmetric across all three datatypes.
+    '$:regex(/^acme_.*/).files.:all()',
+    '$:regex("acme_.*").files.:all()',
+    '$:regex(@aregex).files.:all()',
+    '$:regex(/^acme_.*/).csvpaths.:last()',
+    '$:regex(/^acme_.*/).results.:last()',
 ]
 
 NEGATIVE_CASES = [
@@ -83,6 +90,11 @@ NEGATIVE_CASES = [
     '$acme.files.:name("x".:data()',  # unclosed function paren
     '$acme.files.:last.:data()',  # function missing parens entirely
     '$acme.files.:().:data()',  # empty function name
+    # a bare "/pattern/" is not legal directly at root_major (added
+    # 2026-08-27) -- only a function (":regex(/pattern/)") is, per the
+    # grammar's existing invariant that REGEX only ever appears inside
+    # an argument, never occupying a whole grammatical slot on its own.
+    '$/^acme_.*/.files.:all()',
 ]
 
 

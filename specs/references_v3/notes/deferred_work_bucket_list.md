@@ -287,45 +287,8 @@ a named worksheet across every named-file matched by `'*'`.
 
 ## Grammar / argument-type gaps (spec says it should work, code doesn't yet)
 
-- `root_major` does not accept a `:regex(...)` function — grammar only
-  defines `root_major: STAR | IDENTIFIER` (`reference_grammar_3.py`), no
-  function alternative at all, even though `creating references v3.txt`
-  (lines 79-80) says it should. No `:regex()` *function* exists anywhere in
-  v3 today, for any position (`Regex3` is a `/pattern/` *literal* type,
-  usable as some other function's argument value — a different thing).
-  Confirmed 2026-08-27, while building `:name(/regex/)` (see
-  `deferred_work_done_list.md`), that this is a genuinely different,
-  bigger question, not a small extension of that fix: a root_major
-  regex would select among *distinct named-files/groups themselves*
-  (root_major's own job), not a path segment *within* one already-
-  chosen entity, and would need real grammar changes plus a decision on
-  how it composes with `'*'` traversal's own existing semantics.
-
-  **Design settled 2026-08-27 (David), not yet built:**
-  - Function-only, no bare `/pattern/` form at `root_major` — consistent
-    with the grammar's existing invariant that `REGEX` only ever appears
-    inside `arg` (an argument value), never occupying a whole
-    grammatical slot on its own; `:regex(/pattern/)`/`:regex("pattern")`/
-    `:regex(@aregex)` are legal, a bare `/pattern/` directly as
-    `root_major` is not.
-  - Symmetric across all three datatypes (FILES/CSVPATHS/RESULTS), not
-    FILES-only — the crowded-namespace motivation (`acme_orders`/
-    `acme_invoices`/`abba_invoices`, disambiguating by partner-name
-    prefix) applies identically to named-paths/named-results groups.
-  - Composition with `'*'` traversal: a `:regex()` root_major is
-    structurally "every named-file/group whose name matches this
-    pattern" -- the same candidate-gathering `_query_star_traversal()`
-    already does for `'*'` (enumerating `named_file_names`/
-    `named_paths_names`/etc.), just pre-filtered by the pattern before
-    enumeration, not a new traversal mode.
-  - Real dependency, not an afterthought: `:regex(@aregex)` needs
-    `@variable` to work as `:regex()`'s own direct argument — **now
-    built**, see the entry immediately below and
-    `deferred_work_done_list.md`.
-  Still not built: the grammar change (`root_major` needs a function
-  alternative), the `Regex3`-producing `:regex()` function itself
-  (nothing like it exists anywhere in v3 yet), and the traversal-filter
-  threading through each finder's own name-enumeration call sites.
+- `root_major` accepting a `:regex(...)` function — **BUILT 2026-08-27**,
+  see `deferred_work_done_list.md`.
 - `@variable` (`Variable3`) registration and `{...}` interpolation
   evaluation are both **built 2026-08-26** — see `deferred_work_done_list.md`.
   `@variable` used as some OTHER function's *own direct argument* (e.g.

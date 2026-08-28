@@ -26,6 +26,7 @@ class ReferenceFunctionFactory:
         from .selectors.index_3 import Index3
         from .selectors.last_3 import Last3
         from .selectors.name_3 import Name3
+        from .selectors.regex_3 import RegexSelector3
         from .selectors.to_3 import To3
 
         from .well_known_files.data_3 import Data3
@@ -151,6 +152,7 @@ class ReferenceFunctionFactory:
             Last3.NAME: Last3,
             Index3.NAME: Index3,
             Name3.NAME: Name3,
+            RegexSelector3.NAME: RegexSelector3,
             All3.NAME: All3,
             Flatten3.NAME: Flatten3,
             Groups3.NAME: Groups3,

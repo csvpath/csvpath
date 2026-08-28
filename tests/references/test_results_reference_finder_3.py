@@ -3025,3 +3025,47 @@ class TestLog:
             "$*.results.:log()", acme_archive, log_file=str(log_path)
         ).resolve()
         assert results.results[0].data == "line1\nline2\n"
+
+
+class TestRegexRootMajor:
+    # :regex() at root_major -- added 2026-08-27, the crowded-namespace
+    # motivating case (David): "acme_group"/"abba_group" are more
+    # manageable when a reference can target "/abba_.*/" directly.
+    # Reuses ResultsReferenceFinder3's own '*'-traversal machinery, just
+    # pre-filtered by pattern before _discover_run_homes() enumerates.
+    @pytest.fixture
+    def regex_archive(self, tmp_path):
+        acme_run = _make_run(
+            tmp_path / "acme_group", "2026-01-01_00-00-00", "acme-run-uuid", {}
+        )
+        abba_run = _make_run(
+            tmp_path / "abba_group", "2026-01-02_00-00-00", "abba-run-uuid", {}
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme_group": [acme_run], "abba_group": [abba_run]}
+        )
+        return str(tmp_path)
+
+    def test_regex_filters_to_matching_groups(self, regex_archive):
+        results = _finder("$:regex(/^abba_.*/).results.:last()", regex_archive).query()
+        assert results.uuids == ["abba-run-uuid"]
+
+    def test_regex_excludes_non_matching_groups(self, regex_archive):
+        results = _finder("$:regex(/^abba_.*/).results.:last()", regex_archive).query()
+        assert "acme-run-uuid" not in results.uuids
+
+    def test_regex_with_no_matches_gives_empty(self, regex_archive):
+        results = _finder("$:regex(/^zzz_.*/).results.:last()", regex_archive).query()
+        assert results.uuids == []
+
+    def test_wrong_root_major_function_is_rejected(self, regex_archive):
+        with pytest.raises(ReferenceException3):
+            _finder('$:having("x").results.:last()', regex_archive).query()
+
+    def test_regex_accepts_a_registered_variable(self, regex_archive):
+        results = _finder(
+            "$:regex(@aregex).results.:last()",
+            regex_archive,
+            variables={"aregex": "^abba_.*"},
+        ).query()
+        assert results.uuids == ["abba-run-uuid"]

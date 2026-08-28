@@ -489,6 +489,7 @@ class Reference3:
     # CsvpathsReferenceFinder3._resolve_versions() had no such guard at
     # all, while query()'s name_three handling did).
     #
+    ROOT_MAJOR = "root_major"
     NAME_ONE = "name_one"
     NAME_TWO = "name_two"
     NAME_THREE = "name_three"
@@ -548,6 +549,18 @@ class Reference3:
                 "not '*' alone."
             )
             raise ReferenceException3(msg)
+
+        # root_major's own structural validation -- added 2026-08-27,
+        # alongside :regex() -- root_major is a FunctionCall3 only for
+        # that one function today (see reference_grammar_3.py's own
+        # note on why the grammar stays permissive here rather than
+        # baking ":regex()" in as its own production); ARG_REQUIRED/
+        # ARG_TYPES get checked the same way any other function's do.
+        # Semantic legality (IS ":regex()" -- as opposed to some other,
+        # not-legal-here function -- actually the one present) is a
+        # separate check, made by each finder's own query(), not here.
+        if isinstance(self._root_major, FunctionCall3):
+            self._root_major.check_valid()
 
         # validates any "{...}" interpolation nested anywhere in this
         # reference's functions -- see FunctionCall3.check_valid()/

@@ -75,6 +75,20 @@ from lark import Lark, Tree, UnexpectedInput
 #   unquoted catch-all argument token: every regex argument, grouped or
 #   not, goes through REGEX, so there is exactly one way to write one.
 #
+# - root_major also accepts a function (added 2026-08-27, for :regex()) --
+#   NOT a bare REGEX token directly at this position. This mirrors the
+#   grammar's existing invariant that REGEX only ever appears inside
+#   `arg` (an argument value), never occupying a whole grammatical slot
+#   on its own -- a bare "/pattern/" as root_major would be the one
+#   place that broke that rule. The grammar stays permissive here (any
+#   function, not specifically :regex()) the same way it already is
+#   everywhere else in this file -- which specific function names are
+#   legal at which position is a semantic check the finder/Reference3
+#   makes, not a grammar-level restriction (see e.g. name_one's own
+#   function-valued segments, validated by each finder's own recognized-
+#   shape checks, not baked into the grammar as separate productions per
+#   function name).
+#
 REFERENCE_GRAMMAR_3 = r"""
     ?start: reference
 
@@ -82,6 +96,7 @@ REFERENCE_GRAMMAR_3 = r"""
 
     root_major: STAR
               | IDENTIFIER
+              | function
 
     datatype: FILES
             | CSVPATHS

@@ -346,6 +346,31 @@ class TestReference3:
         )
         r.check_valid()  # should not raise
 
+    def test_check_valid_accepts_a_function_valued_root_major(self):
+        # added 2026-08-27, for :regex() at root_major -- a plain,
+        # structurally-valid FunctionCall3 there should not raise.
+        r = Reference3(
+            root_major=FunctionCall3(name="regex", arg="acme_.*"),
+            datatype=Reference3.FILES,
+            name_one=self._name_one("a"),
+        )
+        r.check_valid()  # should not raise
+
+    def test_check_valid_recurses_into_root_majors_own_function(self):
+        # root_major's own FunctionCall3.check_valid() gets called too
+        # (not just name_one/name_three's) -- proven here via a nested
+        # InterpolatedString3 containing an illegal POINTER-role
+        # function, the same recursion TestFunctionCall3's own
+        # equivalent test proves for an ordinary name_one segment.
+        bad = InterpolatedString3(parts=["x-", FunctionCall3(name="first")])
+        r = Reference3(
+            root_major=FunctionCall3(name="regex", arg=bad),
+            datatype=Reference3.FILES,
+            name_one=self._name_one("a"),
+        )
+        with pytest.raises(ReferenceException3):
+            r.check_valid()
+
     def test_check_valid_rejects_bare_trailing_star(self):
         # "*" alone: "any of the data that ___" with nothing to
         # complete it -- no name_three, no trailing function on

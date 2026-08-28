@@ -9,6 +9,124 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `:regex()` at `root_major` — BUILT 2026-08-27
+
+From the "grammar / argument-type gaps" bucket-list entry: `root_major`
+only accepted `STAR`/`IDENTIFIER` -- no way to select among distinct
+named-files/named-paths groups/named-results groups by pattern, even
+though `creating references v3.txt` (lines 79-80) said it should exist.
+Motivating case (David): a crowded namespace -- "acme_orders"/
+"acme_invoices"/"acme_shipping" alongside another partner's
+"abba_invoices" -- is more manageable when a reference can target
+"/abba_.*/" vs "/acme_.*/" directly, instead of enumerating every exact
+name. Design settled 2026-08-27 before building (function-only, no bare
+`/pattern/` form; symmetric across all three datatypes; composes with
+`'*'` traversal as a pre-filter, not a new mode) -- see that design
+discussion, kept in full in the git history of this same entry's earlier
+bucket-list form. Depended on `@variable` working as a function's own
+direct argument (`:regex(@aregex)`), built the same day (see the entry
+below).
+
+**Built:**
+
+- **Grammar**: `root_major: STAR | IDENTIFIER | function`
+  (`reference_grammar_3.py`) -- deliberately permissive (any function,
+  not a `:regex()`-specific production), mirroring how the grammar
+  stays generic everywhere else and leaves "which function names are
+  actually legal here" to a semantic check. Confirmed no LALR conflict
+  (the grammar's own design note already required this) -- COLON
+  (function) vs IDENTIFIER vs STAR are lexically distinguishable with
+  zero lookahead. The transformer needed no changes at all: `root_major`
+  was already a pure passthrough (`def root_major(self, value): return
+  value`), so a `FunctionCall3` child (already built bottom-up by the
+  existing `function` rule) just flows through unchanged.
+- **`Reference3.check_valid()`** now also calls `.check_valid()` on
+  `root_major` when it is a `FunctionCall3` (mirroring the same call
+  already made for `name_one`/`name_three`'s own functions) -- recurses
+  into a nested `InterpolatedString3`, same structural check every other
+  function gets.
+- **`RegexSelector3`** (new, `functions/selectors/regex_3.py`) --
+  `NAME = "regex"`, `ROLE = CONTEXT_SETTER` (mirrors `Having3` exactly:
+  narrows the candidate NAME set without resolving to exactly one
+  entity), `DATATYPES`/`POSITIONS` cover all three datatypes at a new
+  `Reference3.ROOT_MAJOR` position constant (added alongside
+  `NAME_ONE`/`NAME_TWO`/`NAME_THREE`, purely for documentation/future
+  type-ahead purposes -- nothing calls `_check_position()` with it, same
+  as every other bare/structurally-recognized function in this
+  codebase). `ARG_TYPES = (str, Regex3)` -- unlike `Name3` (where a
+  plain `str` means "exact literal match", a different thing from its
+  `Regex3` case), `:regex()`'s whole point is pattern matching, so a
+  plain `str` arg here IS the pattern, treated identically to a
+  `Regex3`'s own `.pattern` -- this is also what makes `:regex(@aregex)`
+  actually usable, since a caller registering a variable via
+  `set_variable()` most naturally hands over a plain Python string, not
+  a v3-internal `Regex3` instance. `check_valid()` eagerly
+  `re.compile()`s the pattern regardless of which arg form was used
+  (mirrors `Name3`'s own eager regex-syntax check) -- fail at build
+  time, not later, deep inside name matching.
+- **Each finder's `query()`** gained a new `isinstance(root_major,
+  FunctionCall3)` branch (checked after the existing `Star3` branch,
+  before the literal-root path) -- semantically rejects any function
+  other than `:regex()` (`":{name}() is not a legal root_major function
+  -- only :regex() is supported"`), then `self._build(root_major)`
+  (resolving `@variable` for free, via the central-eager-resolution
+  mechanism built earlier the same day) and dispatches to
+  `_query_star_traversal(reference, name_filter=built.pattern)` --
+  structurally identical to the `Star3` case, just pre-filtered.
+- **`_query_star_traversal()` in all three finders** gained an optional
+  `name_filter: str | None = None` parameter, `None` meaning "every
+  name," the ordinary `'*'` case, completely unchanged. Each finder
+  threads it through differently, matching its own existing
+  architecture rather than forcing one shape onto all three:
+  - **RESULTS**: `_discover_run_homes()` already had ONE shared funnel
+    point for every one of `_query_star_traversal()`'s 6 internal call
+    sites -- widened its own signature to accept `name_filter` directly
+    (`re.search()`'d against each entry's own group name), single-point
+    change.
+  - **FILES**/**CSVPATHS**: no equivalent shared funnel existed (5 and 2
+    raw `named_file_names`/`named_paths_names` enumeration sites,
+    respectively) -- added a new shared `ReferenceFinder3._matching_
+    names(names, name_filter)` helper (filters a name list by
+    `re.search()`, or returns it unchanged when `name_filter` is `None`)
+    and swapped each raw enumeration site to call it.
+- **`ReferenceFinder3._is_traversal_root(root_major)`** (new, shared) --
+  true for `Star3` OR a `:regex()` `FunctionCall3`, as opposed to a
+  literal single-entity `IDENTIFIER`. Used by
+  `CsvpathsReferenceFinder3._group_manifest_entry()` (widened from an
+  `isinstance(root_major, Star3)` check) to decide "could this matched
+  uuid have come from any of several groups, search all of them" --
+  needed for field-accessor/`:manifest()` content resolution on a
+  `:regex()`-matched result to work at all. Confirmed by tracing
+  (not assumed) that this is the ONLY place across all three finders'
+  `_extract_data()` methods that actually needed widening -- every other
+  `isinstance(root_major, Star3)` check found (FILES/RESULTS' own Rule
+  1a/1b global-arrivals/archive-ledger disambiguation, both
+  `Star3`-only) is specifically about a global-ledger shortcut
+  `:regex()` never reaches (it has no equivalent global-ledger special
+  case of its own, unlike `'*'`) and already falls through correctly to
+  the ordinary per-entity handling beneath it when the check does not
+  match -- confirmed by reading what each one falls through to, not by
+  guessing. FILES has no `_group_manifest_entry()`-equivalent helper at
+  all (its own star traversal already unconditionally rejects
+  `:manifest()`/field-accessor combined with traversal outside the
+  `:home()`/`:definition()` exemptions built earlier the same day), so
+  needed no widening there either.
+
+Tests: widened `test_references_3_grammar.py` (positive cases for
+`:regex()` across all three datatypes including `@variable`, a negative
+case confirming a bare `/pattern/` still is NOT legal directly at
+`root_major`); widened `test_reference_3.py`'s `TestReference3` (a
+function-valued `root_major` passes `check_valid()`, and recursion into
+its own nested `InterpolatedString3` is proven); new
+`test_regex_selector_3.py` (metadata, both arg forms, eager invalid-
+pattern rejection); new `TestRegexRootMajor` end-to-end classes in all
+three finders' own test files (crowded-namespace filtering, exclusion,
+empty-match, wrong-function rejection, `@variable` form) plus a new
+regex-specific case in CSVPATHS' existing `TestGroupManifestEntry` and
+an end-to-end content-resolution test proving the whole chain composes.
+Full local-backend suite green (3108/3108, run twice); pre-existing
+SFTP/S3 env-dependent failures unrelated to this change.
+
 ## `@variable` as some other function's own direct argument — BUILT 2026-08-27
 
 From the "grammar / argument-type gaps" bucket-list entry: `@variable`
