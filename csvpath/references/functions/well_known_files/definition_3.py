@@ -36,6 +36,10 @@ class Definition3(Function3):
         "explicitly configured (no definition.json written yet)."
     )
     ROLE = Function3.VALUE
+    # metadata_kind() override -- a whole-resource read, not a
+    # single field, see Function3.RESOLVES_AS's own docstring for
+    # why this class needs one (added 2026-08-28).
+    RESOLVES_AS = Reference3.METADATA_FILE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS)
     ARG_TYPES = ()
     ARG_REQUIRED = False

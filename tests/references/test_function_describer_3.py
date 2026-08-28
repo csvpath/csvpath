@@ -1,9 +1,11 @@
 from csvpath.references.function_describer_3 import Function3Describer
 from csvpath.references.functions.fields.template_3 import Template3
+from csvpath.references.functions.fields.uuid_3 import Uuid3
 from csvpath.references.functions.filters.idchain_3 import Idchain3
 from csvpath.references.functions.reference_function_factory_3 import (
     ReferenceFunctionFactory,
 )
+from csvpath.references.functions.selectors.having_3 import Having3
 from csvpath.references.functions.values.year_3 import Year3
 from csvpath.references.functions.well_known_files.log_3 import Log3
 
@@ -47,6 +49,39 @@ class TestDescribeOneFunction:
     def test_positions_are_rendered_when_declared(self):
         doc = Function3Describer.describe(Template3)
         assert "name_one" in doc
+
+    def test_whole_resource_function_shows_resolves_as_metadata_file(self):
+        # RESOLVES_AS override -- added 2026-08-28, replacing the old
+        # hardcoded _METADATA_FILE_FUNCTIONS tuple.
+        doc = Function3Describer.describe(Log3)
+        assert "Resolves as" in doc
+        assert "metadata_file" in doc
+
+    def test_narrowing_function_with_no_source_still_shows_resolves_as_metadata_field(
+        self,
+    ):
+        # Idchain3 has no SOURCE of its own -- its METADATA_FIELD
+        # classification comes entirely from its own RESOLVES_AS
+        # override, proving the row reflects metadata_kind()'s actual
+        # answer, not just a raw SOURCE passthrough.
+        doc = Function3Describer.describe(Idchain3)
+        assert "Resolves as" in doc
+        assert "metadata_field" in doc
+
+    def test_ordinary_field_accessor_shows_resolves_as_metadata_field_via_source(self):
+        # Uuid3 has no RESOLVES_AS override at all -- metadata_kind()
+        # derives METADATA_FIELD purely from its SOURCE == "manifest".
+        assert Uuid3.RESOLVES_AS is None
+        doc = Function3Describer.describe(Uuid3)
+        assert "Resolves as" in doc
+        assert "metadata_field" in doc
+
+    def test_non_metadata_function_has_no_resolves_as_row(self):
+        # Having3 is a plain CONTEXT_SETTER with no SOURCE and no
+        # RESOLVES_AS -- the row should not appear at all, same as
+        # "having" never appeared in either old hardcoded tuple.
+        doc = Function3Describer.describe(Having3)
+        assert "Resolves as" not in doc
 
 
 class TestDescribeAll:

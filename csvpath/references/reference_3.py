@@ -317,12 +317,6 @@ class NameThree3:
 
 
 #
-# PLACEHOLDER pending the real function registry (see "requirements for
-# functions.txt" -- functions are looked up/validated at runtime by a
-# registry that does not exist yet). Once it does, this belongs on
-# Function3 itself as self-description metadata, not here as bare name
-# lists.
-#
 # per "creating references v3.txt"'s "Query vs. Resolve" section, a
 # reference resolves to exactly one of three things:
 #   - first-party data: the actual underlying bytes/content, when no
@@ -337,111 +331,17 @@ class NameThree3:
 #     file rather than the file as a whole (e.g.
 #     :errors(:idchain("add[0]string[2]"))).
 #
-# these two lists are deliberately narrow placeholders, not a general
-# rule -- e.g. _METADATA_FIELD_FUNCTIONS is NOT "any nested function
-# arg": name_one already nests pointers inside functions all the time
-# for ordinary version/range selection (:from(:index(0)) is still
-# picking a file/version, not extracting a value). both lists will be
-# replaced by real per-function trait lookups once Function3 exists.
+# WAS two hardcoded name-string tuples here (_METADATA_FILE_FUNCTIONS/
+# _METADATA_FIELD_FUNCTIONS) -- replaced 2026-08-28 by
+# Function3.metadata_kind() (see that classmethod's own docstring, and
+# Function3.RESOLVES_AS), a declarative per-function trait lookup, the
+# real fix this file's own old placeholder comment had been pointing at
+# since Function3 was first built ("both lists will be replaced by real
+# per-function trait lookups once Function3 exists" -- it existed, the
+# replacement had just never been done). Confirmed the two mechanisms
+# agree on every one of the 124 functions registered at the time of the
+# switch before removing the tuples, not assumed.
 #
-_METADATA_FILE_FUNCTIONS = (
-    "errors",
-    "vars",
-    "meta",
-    "data",
-    "unmatched",
-    "printouts",
-    "file",
-    "definition",
-    "manifest",
-    "log",
-)
-_METADATA_FIELD_FUNCTIONS = (
-    "idchain",
-    "uuid",
-    "template",
-    "time",
-    "fingerprint",
-    "file_home",
-    "group_home",
-    "run_home",
-    "instance_home",
-    "host",
-    "origin",
-    "mark",
-    "named_paths_identities",
-    "named_paths_count",
-    "on_arrival",
-    "sources",
-    "scripts",
-    "webhooks",
-    "transfers",
-    "destinations",
-    "run_uuid",
-    "serial",
-    "valid",
-    "completed",
-    "files_complete",
-    "named_file_name",
-    "named_file_home",
-    "named_results_name",
-    "named_paths_name",
-    "status",
-    "method",
-    "hostname",
-    "username",
-    "time_completed",
-    "manifest_path",
-    "identity",
-    "actual_data_file",
-    "origin_data_file",
-    "file_fingerprints",
-    "source_mode_preceding",
-    "preceding_instance_identity",
-    "type",
-    "reference",
-    "file_path",
-    "archive",
-    "group_file",
-    "named_paths",
-    "error_count",
-    "named_paths_uuid",
-    "named_file_uuid",
-    "named_file_path",
-    "named_file_size",
-    "named_file_last_change",
-    "named_file_fingerprint",
-    "named_paths_fingerprint",
-    "run_dir",
-    "instance_index",
-    "named_paths_group",
-    "run_method",
-    "file_manifest",
-    "group_manifest",
-    "archive_path",
-    "named_files_root",
-    "named_paths_root",
-    "source_address",
-    "source_port",
-    "source_username",
-    "source_password",
-    "destination_address",
-    "destination_port",
-    "destination_username",
-    "destination_password",
-    "transfer_on_complete_all",
-    "transfer_on_complete_valid",
-    "transfer_on_complete_invalid",
-    "transfer_on_complete_error",
-    "script_on_complete_all",
-    "script_on_complete_valid",
-    "script_on_complete_invalid",
-    "script_on_complete_error",
-    "webhooks_on_complete_all",
-    "webhooks_on_complete_valid",
-    "webhooks_on_complete_invalid",
-    "webhooks_on_complete_error",
-)
 
 
 class Reference3:
@@ -627,23 +527,52 @@ class Reference3:
         -- FIRST_PARTY (the underlying bytes/content, the default),
         METADATA_FILE (a whole well-known/named file), or
         METADATA_FIELD (one value drilled out of such a file). computed
-        from terminal_functions (below). Safe to widen this
-        way -- an ordinary path-matching function like :name("...")
-        never appears in _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_
-        FUNCTIONS, so including path segments here only lets the real
+        from terminal_functions (below), reading each terminal
+        function's own registered Function3.metadata_kind() (added
+        2026-08-28, replacing the old hardcoded name-tuple dispatch --
+        see this module's own comment a few lines above class
+        Reference3). Safe to walk every path segment this way -- an
+        ordinary path-matching function like :name("...") has no
+        RESOLVES_AS override and no SOURCE, so metadata_kind() returns
+        None for it; including path segments here only lets the real
         metadata functions be seen, it does not change what gets
-        flagged. see the _METADATA_FILE_FUNCTIONS/_METADATA_FIELD_
-        FUNCTIONS placeholder comment above -- both lists are stand-ins
-        for traits the future function registry will own."""
+        flagged.
+
+        METADATA_FIELD is checked first, and can come from ANYWHERE in
+        a terminal function's own nested-arg chain, not just the
+        terminal function itself -- e.g. :errors(:idchain(...)):
+        :errors() itself is METADATA_FILE on its own, but :idchain()
+        nested inside it is METADATA_FIELD, and that nested reading
+        wins (mirrors FunctionCall3.contains_function_named()'s own
+        one-level-of-FunctionCall3-nesting walk, the same shape the old
+        tuple-based check used via that same method). METADATA_FILE, by
+        contrast, only ever looks at each terminal function directly --
+        a metadata-FILE function nested inside another call is not a
+        real shape anything currently produces (nothing takes a whole-
+        resource function as its own argument), so no equivalent nested
+        walk is needed for it."""
+        # local import: the function registry lives in functions/,
+        # which already depends on this module (e.g. these very
+        # datatype/position constants) -- importing it back at module
+        # level here would be circular. deferred import breaks the
+        # cycle at exactly this one, narrow, unavoidable point (same
+        # reasoning as InterpolatedString3.check_valid()'s own deferred
+        # import above).
+        from .functions.reference_function_factory_3 import ReferenceFunctionFactory
+
+        def _kind_of(call: FunctionCall3) -> "str | None":
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            return function_cls.metadata_kind() if function_cls is not None else None
+
         terminal_functions = self.terminal_functions
         for f in terminal_functions:
-            if any(
-                f.contains_function_named(name)
-                for name in _METADATA_FIELD_FUNCTIONS
-            ):
-                return Reference3.METADATA_FIELD
+            call = f
+            while call is not None:
+                if _kind_of(call) == Reference3.METADATA_FIELD:
+                    return Reference3.METADATA_FIELD
+                call = call.arg if isinstance(call.arg, FunctionCall3) else None
         for f in terminal_functions:
-            if f.name in _METADATA_FILE_FUNCTIONS:
+            if _kind_of(f) == Reference3.METADATA_FILE:
                 return Reference3.METADATA_FILE
         return Reference3.FIRST_PARTY
 

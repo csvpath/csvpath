@@ -48,53 +48,7 @@ candidates for that re-audit, all still unconditional/immediate raises in
   same "was a pointer actually applied within each partition" reasoning
   the literal-root fix used, not a blind port.
 
-## `resolve_kind`'s hardcoded name-tuple dispatch — needs examination for clarity/impact before deciding
-
-Found 2026-08-22 while checking whether the compendium's old §6 ("Known
-gaps") still had anything current in it. `Reference3.resolve_kind` (`reference_3.py`)
-dispatches `METADATA_FILE`/`METADATA_FIELD` classification off two hardcoded
-name-string tuples, `_METADATA_FILE_FUNCTIONS`/`_METADATA_FIELD_FUNCTIONS`
-(now over 60 names combined, after several rounds of new field accessors
-each needing their own name added by hand) — confirmed every single name in
-both tuples *is* backed by a real, registered `Function3` today. So nothing
-is factually broken, but the tuples have kept growing by hand with every
-new batch of field accessors — a maintenance cost, and exactly the kind of
-thing a declarative check would eliminate.
-
-But the code comment sitting directly above those two tuples says: "both
-lists will be replaced by real per-function trait lookups once `Function3`
-exists." `Function3` (with `ROLE`/`SOURCE`) now fully exists — that refactor
-was always the intended end state, and it appears to have never happened.
-`resolve_kind` still dispatches off two hardcoded name lists instead of a
-declarative check on the function classes themselves (e.g. `SOURCE is not
-None`, or similar). This is the same *kind* of architectural debt as the
-`SELECTOR_WHEN_ARGUED` idea already on this list (dual selector/value-
-accessor behavior), but it is a distinct mechanism — that entry is about
-declaring dual selector/value behavior; this one is about *how function
-category is recognized at all* — and isn't covered by that entry.
-
-**David, 2026-08-22: not yet clear on the meaning/impact of this one** —
-needs a real look (what would break or simplify if `resolve_kind` were
-switched to a declarative check, whether the two tuples could shrink to
-one shared mechanism, whether this connects to the still-unrecognized
-"file/well-known-file accessor" category from the four-function-types
-discussion) before deciding whether/how to act on it. Flagging for
-clarity, not yet a committed-to fix. Still true as of 2026-08-26 — every
-new field-accessor batch since has kept adding to the tuples by hand
-rather than resolving this.
-
-**A precedent for exactly this kind of fix already exists in the codebase**
-(found while scanning the old compendium copy before it was deleted):
-`ReferenceFinder3._check_position()` replaced a near-identical class of
-problem — scattered, hand-written, per-finder "is this recognized" guards
-that silently no-opped on anything genuinely unrecognized instead of
-raising (confirmed live at the time: `$acme.csvpaths.:name("x")`, a
-FILES-only function, silently did nothing instead of erroring). The fix
-was a declarative `Function3.POSITIONS: dict[datatype, tuple[position,
-...]]` class attribute, checked centrally by one shared `_check_position()`
-call, rolled out incrementally one finder at a time. Whatever `resolve_kind`
-ends up doing should probably follow the same template (a declarative
-class attribute + one shared check) rather than inventing a new pattern.
+## `resolve_kind`'s hardcoded name-tuple dispatch — BUILT 2026-08-28, see `deferred_work_done_list.md`
 
 ## Predicate-argument field accessors (`:on_arrival(:not_none())`) — filter half built for `:idchain()`, generic mechanism still not built
 

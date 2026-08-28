@@ -68,6 +68,9 @@ class Function3Describer:
             rows.append(["Ledger fallback key", ledger_key])
         if function_cls.BARE_SOURCE:
             rows.append(["Bare source", function_cls.BARE_SOURCE])
+        kind = function_cls.metadata_kind()
+        if kind:
+            rows.append(["Resolves as", kind])
         lines.append(tabulate(rows, tablefmt="pipe"))
         return "\n".join(lines)
 

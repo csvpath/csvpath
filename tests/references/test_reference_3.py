@@ -534,6 +534,29 @@ class TestResolveKind:
         )
         assert r.resolve_kind == Reference3.METADATA_FILE
 
+    def test_unregistered_nested_function_name_does_not_crash(self):
+        # added 2026-08-28, alongside the declarative metadata_kind()
+        # rewrite -- an unknown function name anywhere in the chain
+        # (get_registered_class() returns None for it) must be treated
+        # as contributing nothing, same as the old tuple-membership
+        # check already did for free via plain string comparison.
+        r = Reference3(
+            root_major="acme",
+            datatype=Reference3.RESULTS,
+            name_one=self._name_one("a"),
+            name_three=NameThree3(
+                functions=[
+                    FunctionCall3(
+                        name="errors",
+                        arg=FunctionCall3(name="totally_unknown_function"),
+                    )
+                ]
+            ),
+        )
+        # errors() itself is still METADATA_FILE; the unknown nested
+        # name just does not promote it to METADATA_FIELD.
+        assert r.resolve_kind == Reference3.METADATA_FILE
+
     def test_uses_name_one_path_segment_function_when_it_is_the_sole_content(self):
         # a "path-less, function-only" name_one (e.g. ":manifest()" or
         # ":all()" occupying the sole path segment) has its function in

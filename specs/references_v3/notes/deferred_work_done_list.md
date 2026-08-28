@@ -9,6 +9,113 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `resolve_kind`'s hardcoded name-tuple dispatch replaced with `Function3.metadata_kind()` — BUILT 2026-08-28
+
+`Reference3.resolve_kind` used to dispatch `METADATA_FILE`/`METADATA_FIELD`
+classification off two hardcoded name-string tuples,
+`_METADATA_FILE_FUNCTIONS`/`_METADATA_FIELD_FUNCTIONS` (94 names combined) --
+flagged 2026-08-22 as a maintenance cost (every new field accessor needed
+its own name added by hand) with a code comment sitting right above them
+saying "both lists will be replaced by real per-function trait lookups once
+`Function3` exists" -- `Function3` had existed for a while, that refactor
+had just never been done. David: "not yet clear on the meaning/impact of
+this one -- needs a real look... before deciding."
+
+**Investigated before designing anything, not guessed:**
+- `_METADATA_FILE_FUNCTIONS` (10 names) turned out to be **exactly** the
+  set of functions living in `csvpath/references/functions/well_known_files/`
+  -- a perfect 1:1 match, confirmed by listing the directory. But none of
+  them declared anything distinguishing them from an ordinary field
+  accessor (`ROLE = Function3.VALUE`, no `SOURCE`) -- this **is** the
+  "still-unrecognized file/well-known-file accessor category" from the
+  four-function-types discussion David asked whether this connected to --
+  confirmed connected, not speculative.
+- `_METADATA_FIELD_FUNCTIONS` (84 names) turned out to be **exactly**
+  `{every function with SOURCE not in (None, "clock")}` (83 names) **plus
+  one exception, `idchain`** (no `SOURCE` at all, in `functions/filters/`
+  not `functions/fields/`). Confirmed by counting: 83 of 85 files in
+  `fields/` declare `SOURCE`; the one exception (`Home3`) correctly has
+  neither `SOURCE` nor tuple membership -- a real confirming data point.
+  `idchain`'s inclusion is structurally different: it is a nested filter/
+  predicate marker (`:errors(:idchain(...))`) that narrows a whole-
+  resource read into a field-level one, per the already-settled "position
+  decides meaning" rule (2026-08-21) -- not a stored-field read itself.
+- Verified programmatically, not just by counting: iterated all 124
+  functions registered in the factory at the time of the switch, computed
+  each one's classification both the old (tuple-membership) and new
+  (`metadata_kind()`) ways, and confirmed byte-for-byte agreement before
+  removing the tuples -- zero discrepancies in either direction.
+
+**Second goal, stated explicitly by David alongside approving the design**:
+"there are two goals here: 1) make the mechanics work, and 2) make
+functions able to be super-clear in their self-documenting output... it is
+very important that a function can clearly and completely educate a user,
+particularly an AI agent." This shaped the naming and the wiring, not just
+the mechanism:
+
+**Built:**
+
+- **`Function3.RESOLVES_AS: str | None = None`** (new class attribute,
+  `function_3.py`) -- an explicit override, using `Reference3.METADATA_FILE`/
+  `METADATA_FIELD`'s own constants directly rather than a new boolean/enum,
+  specifically so it is self-documenting on sight: reading
+  `Errors3.RESOLVES_AS == Reference3.METADATA_FILE` tells a reader exactly
+  what `resolve_kind` will classify a bare `:errors()` reference as, using
+  the identical vocabulary, not a second name to learn. Needed on only 11
+  classes total: the ten `well_known_files` classes (`Errors3`, `Vars3`,
+  `Meta3`, `Data3`, `Unmatched3`, `Printouts3`, `File3`, `Definition3`,
+  `Manifest3`, `Log3`) get `METADATA_FILE`; `Idchain3` gets `METADATA_FIELD`
+  (with its own docstring explaining why, despite having no `SOURCE`).
+  Every other function needs no override at all -- its own `SOURCE`
+  declaration (already required for its `KEY`-lookup to work) implies
+  `METADATA_FIELD` for free, zero added maintenance for future field
+  accessors.
+- **`Function3.metadata_kind()`** (new classmethod) -- the single shared
+  source of truth: `RESOLVES_AS` if set, else `METADATA_FIELD` when
+  `SOURCE not in (None, "clock")`, else `None`. Both `Reference3.
+  resolve_kind` (chain-walking) and the self-documentation surfaces below
+  read this SAME computation, rather than duplicating the rule in two
+  places that could drift apart.
+- **`Reference3.resolve_kind`** rewritten to walk `terminal_functions` and
+  call `metadata_kind()` via a locally-imported `ReferenceFunctionFactory`
+  (deferred import -- `functions/` already depends on `reference_3.py`,
+  so a module-level import back would be circular; mirrors
+  `InterpolatedString3.check_valid()`'s own already-established deferred-
+  import pattern in this same file). Preserves the exact original
+  precedence: `METADATA_FIELD` checked first and can come from anywhere in
+  a terminal function's own nested-arg chain (mirroring
+  `FunctionCall3.contains_function_named()`'s one-level-of-nesting walk);
+  `METADATA_FILE` only ever checked on the terminal function itself, no
+  nested walk (nothing today nests a whole-resource function as another's
+  argument, so none was needed).
+- **Self-documentation, the second explicit goal**: `Function3.describe()`
+  (the machine-readable dict) now includes `"resolves_as": self.
+  metadata_kind()` -- previously missing `SOURCE`-derived information
+  entirely. `Function3Describer.describe()` (the markdown renderer) gained
+  a new "Resolves as" table row, shown whenever `metadata_kind()` is not
+  `None` -- verified live against `:errors()` (shows `metadata_file`),
+  `:idchain()` (shows `metadata_field` despite having no `Source` row at
+  all -- proving the override, not a `SOURCE` passthrough), `:uuid()`
+  (shows `metadata_field`, derived purely from its own `Source: manifest`
+  row, no override needed), and `:having()` (no `Resolves as` row at all,
+  correctly, same as "having" never appeared in either old tuple).
+
+Tests: new `TestMetadataKind` in `test_function_3.py` (override precedence,
+`SOURCE`-implied default, `clock` exclusion, no-`SOURCE`-no-override case);
+widened `TestResolveKind` in `test_reference_3.py` (an unregistered nested
+function name does not crash); widened `test_function_describer_3.py` (the
+new row across all four cases above); widened `test_describe`'s own
+existing assertion in `test_function_3.py` for the new dict key. The
+existing, already-substantial `TestResolveKind`/`TestTerminalFunctions`
+suites needed no changes at all beyond one stale comment fix (a test
+comment in `test_csvpaths_reference_finder_3.py` referencing the now-
+deleted `_METADATA_FILE_FUNCTIONS` by name) -- they already exercised
+`resolve_kind` through real `Reference3` objects with real function names,
+so they transparently verified the rewrite's correctness as a side effect
+of already existing. Full local-backend suite green (3118/3118, run
+twice); pre-existing SFTP/S3 env-dependent failures unrelated to this
+change.
+
 ## `:regex()` at `root_major` — BUILT 2026-08-27
 
 From the "grammar / argument-type gaps" bucket-list entry: `root_major`
