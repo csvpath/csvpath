@@ -16,6 +16,7 @@ def test_metadata():
         Reference3.FILES: "fingerprint",
         Reference3.CSVPATHS: "fingerprint",
     }
+    assert f.SELECTOR_WHEN_ARGUED is True
 
 
 def test_no_arg_is_valid():
@@ -25,7 +26,9 @@ def test_no_arg_is_valid():
 def test_str_arg_is_valid():
     # settled 2026-08-13: an optional str arg supports the bare-lookup
     # shape for FILES ("$alpha.files.:fingerprint('hash...')") -- see
-    # FilesReferenceFinder3._is_bare_fingerprint_reference/query().
+    # ReferenceFinder3._is_bare_selector_reference()/
+    # FilesReferenceFinder3.query() (generalized 2026-08-28 via
+    # SELECTOR_WHEN_ARGUED).
     Fingerprint3(arg="x").check_valid()  # should not raise
 
 

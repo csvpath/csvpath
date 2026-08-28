@@ -71,6 +71,15 @@ class Function3Describer:
         kind = function_cls.metadata_kind()
         if kind:
             rows.append(["Resolves as", kind])
+        if function_cls.SELECTOR_WHEN_ARGUED:
+            rows.append(
+                [
+                    "Selector when argued",
+                    "bare with an argument, selects the entity whose own "
+                    "field matches it, rather than reading a field off an "
+                    "already-selected one",
+                ]
+            )
         lines.append(tabulate(rows, tablefmt="pipe"))
         return "\n".join(lines)
 

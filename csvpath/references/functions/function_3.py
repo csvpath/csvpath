@@ -182,6 +182,29 @@ class Function3:
     KIND: str | None = None
 
     #
+    # true when this function, used BARE (the sole content of name_one,
+    # no chained functions) WITH an argument, selects the entity whose
+    # own field matches that argument, rather than reading a field off
+    # an already-selected entity -- added 2026-08-28, replacing the
+    # bespoke, hand-written FilesReferenceFinder3._is_bare_fingerprint_
+    # reference() (the only place this shape existed before this flag).
+    # Fingerprint3 is the only function that sets this True today
+    # ("$alpha.files.:fingerprint('hash...')" searches the whole named-
+    # file's manifest for the entry whose own "fingerprint" field
+    # matches -- see its own docstring). ROLE stays declared VALUE
+    # either way, so this never wrongly counts as a second pointer
+    # riding beside a real one in this function's ordinary field-
+    # accessor position. See ReferenceFinder3._is_bare_selector_
+    # reference() for the shared, generic recognition this replaces the
+    # hand-written check with. Cross-datatype "select by known uuid"/
+    # set-operations (the bigger ask this flag was extracted from) is
+    # deliberately NOT part of this -- see the deferred-work bucket
+    # list's "Function self-documentation" entry for that larger,
+    # still-undesigned piece.
+    #
+    SELECTOR_WHEN_ARGUED: bool = False
+
+    #
     # SOURCE == "clock" (added 2026-08-26): a fourth SOURCE value for
     # the compendium's own "dumb value-producing functions" (5.29 --
     # :year()/:month()/:day()/:hour()/etc.) -- these are never stored
@@ -314,13 +337,17 @@ class Function3:
         see exactly what it contributes to a reference's own
         Reference3.resolve_kind() classification, without needing to
         already understand the RESOLVES_AS/SOURCE mechanics behind
-        metadata_kind() itself."""
+        metadata_kind() itself. "selector_when_argued" (added 2026-08-28)
+        surfaces SELECTOR_WHEN_ARGUED the same way -- always present,
+        so a reader can tell "not a selector" (False) apart from
+        "wasn't asked" (missing key)."""
         return {
             "name": self.NAME,
             "summary": self.SUMMARY,
             "role": self.ROLE,
             "datatypes": self.DATATYPES,
             "resolves_as": self.metadata_kind(),
+            "selector_when_argued": self.SELECTOR_WHEN_ARGUED,
         }
 
     def __eq__(self, other) -> bool:

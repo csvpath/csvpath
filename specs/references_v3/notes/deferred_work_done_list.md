@@ -9,6 +9,84 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `SELECTOR_WHEN_ARGUED` — declarative dual selector/value-accessor mechanism — BUILT 2026-08-28
+
+Replaces `FilesReferenceFinder3`'s original bespoke, hand-written
+`_is_bare_fingerprint_reference()` check with a generic, declarative
+`Function3` class attribute plus one shared recognition helper — the same
+declarative-over-hardcoded-check pattern just proven out for `resolve_kind`
+(see the entry below), applied here to a different gap. Proposed direction
+originally discussed 2026-08-21 (David: "we don't need to subclass, but we
+do need to be able to indicate that certain functions may select files or
+retrieve values, depending on how they are used").
+
+**Scoping decision, 2026-08-28**: the bucket-list entry this came from
+originally bundled two different-sized things — the declarative-refactor
+mechanism itself, and the much bigger, cross-datatype "select an entity by a
+known uuid, plus set operations across uuid-linked entities" capability
+David reframed the same day (see the bucket list's own updated "Function
+self-documentation" entry). Explicitly split: only the small, safe,
+behavior-preserving refactor is built here. The bigger uuid-selection/set-
+operations capability is deferred as its own design thread, needing worked
+examples per datatype first.
+
+**What was built:**
+- `Function3.SELECTOR_WHEN_ARGUED: bool = False` — a new declarative class
+  attribute (`function_3.py`). `True` when a function, used BARE (the sole
+  content of `name_one`, no chained functions) WITH an argument, selects
+  the entity whose own field matches that argument, rather than reading a
+  field off an already-selected entity. `ROLE` stays declared `VALUE`
+  either way, unchanged from before — this flag governs a structural
+  recognition, not the function's own role.
+- `ReferenceFinder3._is_bare_selector_reference(name_one)` — new shared
+  `@staticmethod` on the ABC (`reference_finder_3.py`), mirroring
+  `_is_traversal_root`/`_matching_names`'s own recent placement there. Same
+  structural shape every `_is_bare_X_reference` sibling in
+  `FilesReferenceFinder3` already uses (no chained functions, exactly one
+  path segment, that segment a `FunctionCall3`, WITH an arg present) — only
+  the function-name check is replaced with a `ReferenceFunctionFactory`
+  registry lookup of `SELECTOR_WHEN_ARGUED`, so any future function that
+  declares the flag is recognized here for free, with zero finder-side
+  changes needed.
+- `Fingerprint3.SELECTOR_WHEN_ARGUED = True` — the only function that
+  declares it today. Its own docstring updated to point at the new shared
+  mechanism instead of the old bespoke check.
+- `FilesReferenceFinder3.query()`'s bare-fingerprint branch: condition
+  swapped from `_is_bare_fingerprint_reference(name_one)` to
+  `_is_bare_selector_reference(name_one)`; the manifest-field lookup itself
+  generalized too (was hardcoded to the literal string `"fingerprint"`, now
+  reads the matched function's own `KEY[Reference3.FILES]`), and the
+  name_three-rejection error message generalized to name the actual
+  function (`call.name`) rather than hardcoding `"fingerprint"` in the
+  message text. `Fingerprint3.KEY[Reference3.FILES] == "fingerprint"`, so
+  behavior is byte-for-byte unchanged — confirmed via the full existing
+  `test_files_reference_finder_3.py` bare-fingerprint test coverage
+  (`test_two_different_logical_files_sharing_one_fingerprint_both_come_back`
+  and siblings), none of which needed changing.
+- `FilesReferenceFinder3._is_bare_fingerprint_reference()` removed entirely
+  — confirmed via grep no other call site referenced it before deleting.
+- `Function3.describe()` widened with a `"selector_when_argued"` key
+  (always present, mirroring `"resolves_as"`'s own always-present
+  convention) and `Function3Describer.describe()` widened with a "Selector
+  when argued" markdown row (only rendered when `True`, same convention as
+  the "Resolves as" row) — both goals from the `resolve_kind` PR restated
+  by David apply here too: mechanics AND self-documentation, so an AI agent
+  reading a function's own description can see this trait without already
+  knowing the mechanism exists.
+
+**Tests added**: `TestIsBareSelectorReference` (7 cases, mirroring
+`TestIsBarePointerReference`'s own shape) in `test_reference_finder_3.py`;
+`TestSelectorWhenArgued` (default-False, can-be-declared-True, surfaces-in-
+describe) in `test_function_3.py`; two new describer-row tests in
+`test_function_describer_3.py`; `test_fingerprint_3.py`'s `test_metadata`
+widened with a `SELECTOR_WHEN_ARGUED is True` assertion, and its stale
+comment referencing the removed `_is_bare_fingerprint_reference` by name
+corrected. Full suite run twice, stable both times: 3136 passed, 11 failed
+(the known, unrelated SFTP/S3 failures requiring unset env vars — issue
+#216), identical both runs.
+
+---
+
 ## `resolve_kind`'s hardcoded name-tuple dispatch replaced with `Function3.metadata_kind()` — BUILT 2026-08-28
 
 `Reference3.resolve_kind` used to dispatch `METADATA_FILE`/`METADATA_FIELD`
