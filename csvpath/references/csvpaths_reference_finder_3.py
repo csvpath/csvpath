@@ -164,7 +164,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         from_call = to_call = None
         if name_three is not None:
             if name_three.functions:
-                built = ReferenceFunctionFactory.build_chain(name_three.functions)
+                built = self._build_chain(name_three.functions)
                 # replaces a hand-written "unrecognized" check (settled
                 # 2026-08-14) -- see _check_position()'s own docstring
                 # and _resolve_versions()'s equivalent check for
@@ -342,7 +342,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         # combined with ':all()' (not a pointer-first shape) or a
         # 3+-function chain reaches the guard below.
         calls = [name_one.path[0], *name_one.functions]
-        built = ReferenceFunctionFactory.build_chain(calls)
+        built = self._build_chain(calls)
         all_call = next((f for f in built if f.name == "all"), None)
         is_grouped = all_call is not None
         having_call = next((f for f in built if f.name == "having"), None)
@@ -665,7 +665,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 "literal/'*' path-building is not meaningful for csvpaths."
             )
         calls = [name_one.path[0], *name_one.functions]
-        built = ReferenceFunctionFactory.build_chain(calls)
+        built = self._build_chain(calls)
         for f in built:
             self._check_position(f, Reference3.NAME_ONE, Reference3.CSVPATHS)
         having_call = next((f for f in built if f.name == "having"), None)

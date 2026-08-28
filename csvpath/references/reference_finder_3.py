@@ -6,6 +6,7 @@ from datetime import datetime
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
+from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_3 import (
     FunctionCall3,
@@ -15,7 +16,7 @@ from .reference_3 import (
     Star3,
     Variable3,
 )
-from .reference_exceptions_3 import ReferenceException3
+from .reference_exceptions_3 import ReferenceException3, ReferenceRuntimeException3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
 
@@ -510,8 +511,13 @@ class ReferenceFinder3(ABC):
         for segment in path:
             if isinstance(segment, FunctionCall3):
                 if segment.name == "name":
-                    built = ReferenceFunctionFactory.build(segment)
-                    pattern.append(self._resolve_value(built.arg))
+                    # self._build() already resolves a Variable3/
+                    # InterpolatedString3 arg in place (added
+                    # 2026-08-27) -- built.arg is already the final,
+                    # plain value here, no separate _resolve_value()
+                    # call needed anymore.
+                    built = self._build(segment)
+                    pattern.append(built.arg)
                     continue
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     segment.name
@@ -523,7 +529,7 @@ class ReferenceFinder3(ABC):
                         "clock value function (e.g. :year()), and "
                         "literal/'*' segments are supported."
                     )
-                built = ReferenceFunctionFactory.build(segment)
+                built = self._build(segment)
                 pattern.append(str(built.compute()))
             elif isinstance(segment, (str, Star3)):
                 pattern.append(segment)
@@ -555,19 +561,39 @@ class ReferenceFinder3(ABC):
 
     def _resolve_value(self, value):
         """returns `value` unchanged if it is a plain literal (str, int,
-        etc.); evaluates it if it is an InterpolatedString3 -- each
-        literal-str part passes through, each FunctionCall3 part is
-        built and its compute() called (only SOURCE == "clock"
-        functions are legal inside "{...}" for now -- see
-        InterpolatedString3.check_valid(), which already restricts
-        parts to ROLE == VALUE; a non-clock VALUE function landing here
-        would mean check_valid() itself needs widening first, so this
-        raises a clear error rather than silently mishandling it), each
-        Variable3 part is looked up in this finder's own registered
+        etc.); resolves it if it is a bare Variable3 (added 2026-08-27,
+        alongside _build()/_build_chain() -- returns the RAW registered
+        value, untouched, unlike the InterpolatedString3 case below,
+        since a bare argument (e.g. :regex(@aregex)) may need to stay a
+        real Regex3/int/whatever, not become text); evaluates it if it
+        is an InterpolatedString3 -- each literal-str part passes
+        through, each FunctionCall3 part is built and its compute()
+        called (only SOURCE == "clock" functions are legal inside
+        "{...}" for now -- see InterpolatedString3.check_valid(), which
+        already restricts parts to ROLE == VALUE; a non-clock VALUE
+        function landing here would mean check_valid() itself needs
+        widening first, so this raises a clear error rather than
+        silently mishandling it), each Variable3 PART is looked up the
+        same way and stringified (interpolation always assembles one
+        final string, unlike the bare-argument case above). Both
+        Variable3 lookups read this finder's own registered
         self._variables (added 2026-08-26, compendium 3.12 -- "a
         reference finder can be given variables"; see set_variable()/
-        set_variables()), each part joined into one final string.
-        Instance method so this lookup has something to read from."""
+        set_variables()) and raise ReferenceRuntimeException3 (not the
+        plain ReferenceException3 this used before 2026-08-27) if unset
+        -- a reference using an unregistered @variable is not
+        malformed, it is missing a runtime value it needs, the same
+        static-vs-runtime distinction _resolve_arg() draws for a
+        variable's resolved value having the wrong type. Instance
+        method so this lookup has something to read from."""
+        if isinstance(value, Variable3):
+            if value.name not in self._variables:
+                raise ReferenceRuntimeException3(
+                    f"@{value.name} has no registered value -- call "
+                    "set_variable()/set_variables() on this finder "
+                    "before resolving a reference that uses it."
+                )
+            return self._variables[value.name]
         if not isinstance(value, InterpolatedString3):
             return value
         pieces = []
@@ -584,11 +610,11 @@ class ReferenceFinder3(ABC):
                         "\"{...}\" interpolation yet -- only clock value "
                         "functions (e.g. :year()) are supported so far."
                     )
-                built = ReferenceFunctionFactory.build(part)
+                built = self._build(part)
                 pieces.append(str(built.compute()))
             elif isinstance(part, Variable3):
                 if part.name not in self._variables:
-                    raise ReferenceException3(
+                    raise ReferenceRuntimeException3(
                         f"@{part.name} has no registered value -- call "
                         "set_variable()/set_variables() on this finder "
                         "before resolving a reference that uses it."
@@ -600,6 +626,65 @@ class ReferenceFinder3(ABC):
                     "interpolation."
                 )
         return "".join(pieces)
+
+    def _build(self, call: FunctionCall3) -> Function3:
+        """ReferenceFunctionFactory.build(), plus resolving this
+        function's own arg in place -- added 2026-08-27 (David:
+        "central eager resolve of args is right, certainly for now, at
+        least"). A Variable3/InterpolatedString3 arg becomes its real,
+        already-resolved value here, once, so no other code in any
+        finder ever needs to know either of those two "deferred"
+        argument shapes exist -- it just reads .arg and gets a plain
+        value, exactly as it always could before @variable existed.
+        Every call site that used to call ReferenceFunctionFactory.
+        build()/build_chain() directly now calls this/`_build_chain()`
+        instead -- a mechanical swap, not a behavior change for any
+        existing (non-variable) reference, since _resolve_arg() is a
+        no-op whenever an arg is neither of those two shapes."""
+        built = ReferenceFunctionFactory.build(call)
+        self._resolve_arg(built)
+        return built
+
+    def _build_chain(self, calls: list) -> list:
+        """ReferenceFunctionFactory.build_chain(), plus resolving every
+        function's own arg in place -- see _build()'s own docstring."""
+        built = ReferenceFunctionFactory.build_chain(calls)
+        for f in built:
+            self._resolve_arg(f)
+        return built
+
+    def _resolve_arg(self, built: Function3) -> None:
+        """the actual per-function resolution step shared by _build()/
+        _build_chain() -- added 2026-08-27. Recurses into a nested
+        function's own arg first (ReferenceFunctionFactory.build()'s
+        own recursion already compiled it into a Function3 before this
+        runs, so e.g. :errors(:idchain(@pattern))'s inner :idchain()
+        gets the same treatment as any top-level call). Structural type
+        validation of the arg's own SHAPE already happened inside
+        build()'s check_valid() call, against Variable3/
+        InterpolatedString3 themselves (Function3.check_valid()'s own
+        ARG_TYPES widening) -- it could not check the RESOLVED value's
+        own type, since resolution had not happened yet, and might
+        never happen at all if set_variable() is never called. That
+        check happens here instead, now that the real value is known --
+        raises ReferenceRuntimeException3, not a plain
+        ReferenceException3, since the reference itself was perfectly
+        well-formed; only a variable's own runtime value did not
+        satisfy it (see that exception class's own docstring)."""
+        if isinstance(built.arg, Function3):
+            self._resolve_arg(built.arg)
+            return
+        if not isinstance(built.arg, (Variable3, InterpolatedString3)):
+            return
+        original = built.arg
+        resolved = self._resolve_value(original)
+        if built.ARG_TYPES and not isinstance(resolved, built.ARG_TYPES):
+            allowed = ", ".join(t.__name__ for t in built.ARG_TYPES)
+            raise ReferenceRuntimeException3(
+                f":{built.name}() argument {original} resolved to a "
+                f"{type(resolved).__name__}, expected one of ({allowed})"
+            )
+        built.arg = resolved
 
     @staticmethod
     def _pointer_present(calls: list) -> bool:

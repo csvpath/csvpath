@@ -349,7 +349,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "body -- name_three must resolve to a pointer function "
                 "(:first()/:last()/:index(n))."
             )
-        built = ReferenceFunctionFactory.build_chain(name_three.functions)
+        built = self._build_chain(name_three.functions)
         for f in built:
             # replaces the old "at least one recognized category
             # present" gate below (settled 2026-08-14) -- that gate only
@@ -706,7 +706,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "body -- name_three must resolve to a pointer function "
                 "(:first()/:last()/:index(n))."
             )
-        built = ReferenceFunctionFactory.build_chain(name_three.functions)
+        built = self._build_chain(name_three.functions)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         unsupported = (
             any(f.name == "manifest" for f in built)

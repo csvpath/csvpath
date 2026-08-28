@@ -1,6 +1,6 @@
 from typing import Any
 
-from ..reference_3 import InterpolatedString3
+from ..reference_3 import InterpolatedString3, Variable3
 from ..reference_exceptions_3 import ReferenceException3
 
 
@@ -188,6 +188,19 @@ class Function3:
     def arg(self) -> Any:
         return self._arg
 
+    @arg.setter
+    def arg(self, value: Any) -> None:
+        """overwritten exactly once, by ReferenceFinder3._resolve_arg(),
+        right after ReferenceFunctionFactory builds this instance --
+        replaces a Variable3/InterpolatedString3 arg with its actual
+        resolved value (central, eager resolution, settled 2026-08-27),
+        so no other code anywhere -- any finder's own query()/
+        _extract_data() logic -- ever needs to know either of those two
+        "deferred" argument shapes exist; it just reads .arg and gets a
+        plain, already-resolved value. Not meant to be called anywhere
+        else."""
+        self._arg = value
+
     def check_valid(self) -> None:
         """structural check; doesn't test or use the arg's value. mirrors
         csvpath.matching.productions.matchable.Matchable.check_valid()'s
@@ -206,6 +219,23 @@ class Function3:
             allowed = self.ARG_TYPES
             if str in allowed and InterpolatedString3 not in allowed:
                 allowed = (*allowed, InterpolatedString3)
+            # any function that takes SOME argument also accepts an
+            # @variable, unconditionally -- added 2026-08-27, alongside
+            # ReferenceFinder3._build()/_build_chain()'s own central
+            # resolution. Unlike InterpolatedString3 (always resolves to
+            # a str, so only meaningful where str is already legal), a
+            # Variable3's resolved value could be ANY type -- a
+            # :regex()-style function taking (Regex3,) should accept
+            # @aregex just as readily as one taking (str,) should. This
+            # check is deliberately structural only ("is this shaped
+            # like an argument at all") -- it cannot know whether the
+            # RESOLVED value will actually satisfy ARG_TYPES, since
+            # resolution has not happened yet and may depend on a
+            # set_variable() call that has not even happened yet either.
+            # That check happens later, once the real value is known --
+            # see ReferenceRuntimeException3's own docstring.
+            if Variable3 not in allowed:
+                allowed = (*allowed, Variable3)
             if not isinstance(self._arg, allowed):
                 raise ReferenceException3(
                     f":{self.NAME}() argument must be one of {self.ARG_TYPES}, "

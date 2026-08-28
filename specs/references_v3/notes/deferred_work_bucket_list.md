@@ -299,18 +299,38 @@ a named worksheet across every named-file matched by `'*'`.
   regex would select among *distinct named-files/groups themselves*
   (root_major's own job), not a path segment *within* one already-
   chosen entity, and would need real grammar changes plus a decision on
-  how it composes with `'*'` traversal's own existing semantics — left
-  alone, not attempted.
+  how it composes with `'*'` traversal's own existing semantics.
+
+  **Design settled 2026-08-27 (David), not yet built:**
+  - Function-only, no bare `/pattern/` form at `root_major` — consistent
+    with the grammar's existing invariant that `REGEX` only ever appears
+    inside `arg` (an argument value), never occupying a whole
+    grammatical slot on its own; `:regex(/pattern/)`/`:regex("pattern")`/
+    `:regex(@aregex)` are legal, a bare `/pattern/` directly as
+    `root_major` is not.
+  - Symmetric across all three datatypes (FILES/CSVPATHS/RESULTS), not
+    FILES-only — the crowded-namespace motivation (`acme_orders`/
+    `acme_invoices`/`abba_invoices`, disambiguating by partner-name
+    prefix) applies identically to named-paths/named-results groups.
+  - Composition with `'*'` traversal: a `:regex()` root_major is
+    structurally "every named-file/group whose name matches this
+    pattern" -- the same candidate-gathering `_query_star_traversal()`
+    already does for `'*'` (enumerating `named_file_names`/
+    `named_paths_names`/etc.), just pre-filtered by the pattern before
+    enumeration, not a new traversal mode.
+  - Real dependency, not an afterthought: `:regex(@aregex)` needs
+    `@variable` to work as `:regex()`'s own direct argument — **now
+    built**, see the entry immediately below and
+    `deferred_work_done_list.md`.
+  Still not built: the grammar change (`root_major` needs a function
+  alternative), the `Regex3`-producing `:regex()` function itself
+  (nothing like it exists anywhere in v3 yet), and the traversal-filter
+  threading through each finder's own name-enumeration call sites.
 - `@variable` (`Variable3`) registration and `{...}` interpolation
   evaluation are both **built 2026-08-26** — see `deferred_work_done_list.md`.
-  Still not built: `@variable` used as some OTHER function's *own direct
-  argument* (e.g. a hypothetical `:uuid(@myvar)`, per the dual-selector/
-  value-accessor entry above) — no currently-registered function's
-  `ARG_TYPES` includes `Variable3` at all. This is a separate,
-  independent gap from interpolation, not shared machinery — nothing
-  about the registration API or `_resolve_value()` built for
-  interpolation would need to change to also cover this, it is a
-  per-function `ARG_TYPES` question.
+  `@variable` used as some OTHER function's *own direct argument* (e.g.
+  `:having(@id)`, `:regex(@aregex)` once that function exists) — **BUILT
+  2026-08-27**, see `deferred_work_done_list.md`.
 
 ## `'*'` traversal — RESULTS/CSVPATHS remaining gap
 

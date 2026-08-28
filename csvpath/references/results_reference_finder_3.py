@@ -218,7 +218,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # name_one's own PATH-BUILDING segments (literal/'*'/:name()) --
         # those are already safe, validated separately and correctly by
         # the shared ReferenceFinder3._compile_path_pattern().
-        for f in ReferenceFunctionFactory.build_chain(calls):
+        for f in self._build_chain(calls):
             self._check_position(f, Reference3.NAME_ONE, Reference3.RESULTS)
         pointer = self._pointer_from_calls(calls)
         is_grouped = any(
@@ -403,7 +403,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         candidates = sorted(candidates, key=self._run_dir_sort_key)
 
         having_call = next(
-            (f for f in ReferenceFunctionFactory.build_chain(calls) if f.name == "having"),
+            (f for f in self._build_chain(calls) if f.name == "having"),
             None,
         )
         if having_call is not None:
@@ -857,7 +857,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         mode but not GROUP/':all()' mode, an asymmetry noted but not
         touched (a separate, already-merged PR, not blocking anything
         needed here)."""
-        built = ReferenceFunctionFactory.build_chain(calls)
+        built = self._build_chain(calls)
         field_call = self._find_field_function_call(built)
         all_call = next((f for f in built if f.name == "all"), None)
         flatten_call = next((f for f in built if f.name == "flatten"), None)
@@ -1402,30 +1402,34 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             and name_one.path[0].name != "name"
         )
 
-    @staticmethod
-    def _pointer_from_calls(calls: list):
+    def _pointer_from_calls(self, calls: list):
         """at most one pointer function (:first()/:last()/:index(n))
         among the combined chain selects which run -- build_chain()
         already enforces the "at most one" rule; absent means every run
-        comes back unreduced."""
+        comes back unreduced. Instance method (not a staticmethod,
+        since 2026-08-27) purely because self._build_chain() now needs
+        this finder's own registered variables to resolve any @variable
+        argument -- callers already invoke this as self._pointer_from_
+        calls(...) everywhere, so nothing else changes."""
         if not calls:
             return None
-        built = ReferenceFunctionFactory.build_chain(calls)
+        built = self._build_chain(calls)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         return pointers[0] if pointers else None
 
-    @staticmethod
-    def _range_calls_from_calls(calls: list) -> tuple:
+    def _range_calls_from_calls(self, calls: list) -> tuple:
         """(from_call, to_call) -- the built ':from()'/':to()' Function3
         instances among the combined chain, or None for whichever is
         absent. Neither is a POINTER (both ROLE == CONTEXT_SETTER), so
         they never compete with a real pointer for build_chain()'s "at
         most one pointer" rule -- a pointer riding alongside either one
         reduces the SLICE ':from()'/':to()' already narrowed to, same as
-        it already does for ':all()'/':groups()'."""
+        it already does for ':all()'/':groups()'. Instance method (not
+        a staticmethod, since 2026-08-27), same reason as
+        _pointer_from_calls() above."""
         if not calls:
             return None, None
-        built = ReferenceFunctionFactory.build_chain(calls)
+        built = self._build_chain(calls)
         from_call = next((f for f in built if f.name == "from"), None)
         to_call = next((f for f in built if f.name == "to"), None)
         return from_call, to_call
@@ -1476,8 +1480,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         "file",
     )
 
-    @staticmethod
     def _name_three_selector(
+        self,
         name_three,
     ) -> tuple[str | None, bool, object, object, tuple]:
         """returns (identity, match_all, accessor, field_call,
@@ -1509,7 +1513,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         build_chain() itself ("Unknown reference function") if it is
         not registered at all, or is rejected here directly if it is
         registered but not meaningful as a name_three function (e.g.
-        :manifest())."""
+        :manifest()). Instance method (not a staticmethod, since
+        2026-08-27), same reason as _pointer_from_calls()'s own
+        docstring: self._build_chain() needs this finder's own
+        registered variables."""
         if name_three is None:
             return None, False, None, None, None
 
@@ -1519,7 +1526,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         from_call = None
         to_call = None
         if name_three.functions:
-            built = ReferenceFunctionFactory.build_chain(name_three.functions)
+            built = self._build_chain(name_three.functions)
             field_call = ResultsReferenceFinder3._find_field_function_call(built)
             for f in built:
                 if f.name == "all":
