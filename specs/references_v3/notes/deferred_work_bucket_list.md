@@ -357,12 +357,8 @@ and a stale-entry correction, are both done — see
 - FILES' `:all()`/`:groups()` (GROUP modes) combined with `:manifest()`/
   a field-accessor — same single-entity-vs-grouping restriction RESULTS'
   `name_three` content accessor now has, not yet built for FILES.
-- A literal prefix *before* `:flatten()` for FILES, e.g. `"2025/:flatten()
-  /:name('orders.csv')"` — "any `orders.csv` below 2025, at any depth in
-  between." Explicitly deferred 2026-08-12 — David wants it eventually,
-  not urgent. Falls through today to a clean rejection (not a silent wrong
-  answer). See `files_reference_finder_3.py` (`test_a_literal_prefix_
-  before_flatten_is_not_yet_supported`).
+- A literal prefix *before* `:flatten()` for FILES — **BUILT 2026-08-27**,
+  see `deferred_work_done_list.md`.
 - FILES' `:from()`/`:to()` combined with `:all()`/`:groups()` grouping in
   name_one — not yet supported.
 - A literal name_three body for FILES (bypassing a pointer function

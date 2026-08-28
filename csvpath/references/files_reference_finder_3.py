@@ -286,19 +286,39 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
             suffix_pattern = self._compile_path_pattern(name_one.path[1:])
             candidates = self._candidates_for_name_by_suffix(root_major, suffix_pattern)
-        # NOT YET BUILT, deferred 2026-08-12 (David wants it eventually,
-        # not now): a literal prefix BEFORE ':flatten()', e.g.
-        # "2025/:flatten()/:name('orders.csv')" -- "any orders.csv
-        # below 2025, at any depth in between." Falls through to the
-        # ordinary _compile_path_pattern branch below today, which
-        # raises cleanly (":flatten() as a name_one path segment" is
-        # unsupported there) rather than matching silently wrong -- see
-        # TestFlattenPrefixedWithSuffix::
-        # test_a_literal_prefix_before_flatten_is_not_yet_supported.
-        # Expected to be additive when built (a new elif keyed on
-        # ':flatten()' appearing at some position other than first),
-        # not a change to this bare-":flatten()"-first shape or to any
-        # non-prefixed path.
+        elif self._is_prefixed_flatten_reference(name_one):
+            # a literal/'*'/:name(...) PREFIX, THEN ':flatten()' at some
+            # OTHER position (not first -- that's the elif above), THEN
+            # an OPTIONAL literal/'*'/:name(...) SUFFIX -- built
+            # 2026-08-27, closing the gap deferred 2026-08-12 (David
+            # wants it eventually: "any orders.csv below 2025, at any
+            # depth in between," e.g. "2025/:flatten()/:name('orders.csv')").
+            # Purely additive, as originally scoped -- does not touch the
+            # bare or ':flatten()'-first shapes above, and only reachable
+            # when ':flatten()' is neither name_one's only segment nor
+            # its first one. A missing suffix (e.g. "2025/:flatten()"
+            # alone) falls out of the same matcher for free -- "prefix,
+            # then any depth, no further constraint" -- same "empty
+            # pattern is legal" convention _candidates_for_name(name, [])
+            # already uses elsewhere in this file, not a special case
+            # needing its own guard.
+            flatten_index = next(
+                i
+                for i, seg in enumerate(name_one.path)
+                if isinstance(seg, FunctionCall3) and seg.name == "flatten"
+            )
+            if name_one.path[flatten_index].arg is not None:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3's ':flatten()' does not take an "
+                    "argument."
+                )
+            prefix_pattern = self._compile_path_pattern(name_one.path[:flatten_index])
+            suffix_pattern = self._compile_path_pattern(
+                name_one.path[flatten_index + 1 :]
+            )
+            candidates = self._candidates_for_name_by_prefix_and_suffix(
+                root_major, prefix_pattern, suffix_pattern
+            )
         else:
             pattern = self._compile_path_pattern(name_one.path)
             candidates = self._candidates_for_name(root_major, pattern)
@@ -755,6 +775,28 @@ class FilesReferenceFinder3(ReferenceFinder3):
             if self._matches_suffix(entry, home, suffix_pattern)
         ]
 
+    def _candidates_for_name_by_prefix_and_suffix(
+        self, name: str, prefix_pattern: list, suffix_pattern: list
+    ) -> list:
+        """every manifest entry for one named-file whose file_home's
+        LEADING segments match `prefix_pattern` AND (if non-empty)
+        TRAILING segments match `suffix_pattern`, with any number of
+        additional segments (including zero) allowed in between -- added
+        2026-08-27 for the "literal prefix BEFORE :flatten()" shape
+        (e.g. "2025/:flatten()/:name('orders.csv')"). An empty
+        `suffix_pattern` still matches -- "prefix, then any depth, no
+        further constraint" (a missing suffix, e.g. "2025/:flatten()"
+        alone)."""
+        manifest = self.csvpaths.file_manager.get_manifest(name)
+        home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
+        return [
+            entry
+            for entry in manifest
+            if self._matches_prefix_then_suffix(
+                entry, home, prefix_pattern, suffix_pattern
+            )
+        ]
+
     def _all_candidates_for_name(self, name: str) -> list:
         """every manifest entry for one named-file, at any path depth --
         ':flatten()'/':groups()' both match unconditionally, unlike a
@@ -911,6 +953,29 @@ class FilesReferenceFinder3(ReferenceFinder3):
             and isinstance(name_one.path[0], FunctionCall3)
             and name_one.path[0].name == "flatten"
         )
+
+    @staticmethod
+    def _is_prefixed_flatten_reference(name_one) -> bool:
+        """true when name_one's path contains exactly one bare
+        ':flatten()' call, NOT as the first segment (that is
+        _is_flatten_prefixed_reference's own shape, checked first) --
+        added 2026-08-27 for the "literal prefix BEFORE :flatten()"
+        shape, e.g. "2025/:flatten()/:name('orders.csv')". A second
+        ':flatten()' anywhere in the same path is not this shape (there
+        is no established meaning for two 'any depth' markers in one
+        pattern) -- correctly falls through to the ordinary
+        _compile_path_pattern path instead, which raises its own clear
+        "not a legal path segment" error for the second one. Does not
+        check the arg here, same reasoning
+        _is_flatten_prefixed_reference's own docstring gives -- query()
+        raises its own clear error for that once this shape is
+        confirmed."""
+        flatten_indices = [
+            i
+            for i, seg in enumerate(name_one.path)
+            if isinstance(seg, FunctionCall3) and seg.name == "flatten"
+        ]
+        return len(flatten_indices) == 1 and flatten_indices[0] > 0
 
     @staticmethod
     def _bare_definition_field_call(name_one) -> "FunctionCall3 | None":
@@ -1135,4 +1200,34 @@ class FilesReferenceFinder3(ReferenceFinder3):
         for actual, expected in zip(trailing, pattern):
             if not ReferenceFinder3._segment_matches(expected, actual):
                 return False
+        return True
+
+    @staticmethod
+    def _matches_prefix_then_suffix(
+        entry: dict, home: str, prefix_pattern: list, suffix_pattern: list
+    ) -> bool:
+        """like _matches_suffix, but ALSO requires file_home's own
+        relative segments to START WITH `prefix_pattern` -- the "literal
+        prefix BEFORE :flatten()" shape's own matcher (added
+        2026-08-27): a fixed prefix, then any depth, then an OPTIONAL
+        fixed suffix at the end. `suffix_pattern` may be empty (a
+        missing suffix, e.g. "2025/:flatten()" alone) -- in that case
+        only the prefix is checked, "any depth after it" with no further
+        constraint."""
+        file_home = entry["file_home"].rstrip("/")
+        if not file_home.startswith(home):
+            return False
+        rel = file_home[len(home) :].lstrip("/")
+        segments = rel.split("/") if rel else []
+        if len(segments) < len(prefix_pattern) + len(suffix_pattern):
+            return False
+        leading = segments[: len(prefix_pattern)]
+        for actual, expected in zip(leading, prefix_pattern):
+            if not ReferenceFinder3._segment_matches(expected, actual):
+                return False
+        if suffix_pattern:
+            trailing = segments[len(segments) - len(suffix_pattern) :]
+            for actual, expected in zip(trailing, suffix_pattern):
+                if not ReferenceFinder3._segment_matches(expected, actual):
+                    return False
         return True

@@ -342,17 +342,19 @@ class TestFlattenPrefixedWithSuffix:
             "inputs/named_files/anchor/2025/orders.csv",
         }
 
-    def test_a_literal_prefix_before_flatten_is_not_yet_supported(self):
+    def test_a_literal_prefix_before_flatten_now_matches_only_that_prefix(self):
         # doc note: a literal prefix BEFORE ':flatten()' (e.g. "2025/
-        # :flatten()/:name(...)") is a real, deliberately deferred
-        # extension -- not built yet, confirmed to raise cleanly rather
-        # than match silently wrong.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$anchor.files.2025/:flatten()/:name("orders.csv").:first()',
-                ANCHOR_HOME,
-                ANCHOR_MANIFEST,
-            ).query()
+        # :flatten()/:name(...)") -- BUILT 2026-08-27 (was deliberately
+        # deferred). Unlike the bare ':flatten()'-FIRST shape above
+        # (which pools both depths), the prefix restricts this to only
+        # the "2025/orders.csv" entry -- "orders.csv" with no "2025"
+        # prefix at all must NOT match.
+        results = _finder(
+            '$anchor.files.2025/:flatten()/:name("orders.csv").:first()',
+            ANCHOR_HOME,
+            ANCHOR_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-one-pre-1"]
 
 
 class TestGroupsForOneNamedFile:
