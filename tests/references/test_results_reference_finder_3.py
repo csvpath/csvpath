@@ -83,11 +83,14 @@ def _write_archive_manifest_multi(archive, groups: dict) -> None:
 
 
 def _finder(
-    reference: str, archive: str, log_file: str | None = None
+    reference: str,
+    archive: str,
+    log_file: str | None = None,
+    variables: dict | None = None,
 ) -> ResultsReferenceFinder3:
     csvpaths = _FakeCsvPaths(archive, log_file=log_file)
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
-    return ResultsReferenceFinder3(csvpaths=csvpaths, ref=ref)
+    return ResultsReferenceFinder3(csvpaths=csvpaths, ref=ref, variables=variables)
 
 
 @pytest.fixture
@@ -250,6 +253,18 @@ class TestHavingFiltersRunsByInstanceIdentity:
     ):
         results = _finder(
             "$acme.results.customers/2025:having(\"company_names\")", acme_archive
+        ).query()
+        assert results.uuids == ["run1-uuid"]
+
+    def test_having_accepts_a_registered_variable_as_its_argument(self, acme_archive):
+        # end-to-end proof of the central, eager @variable-argument
+        # resolution added 2026-08-27 -- real grammar parse through to a
+        # real registered function (:having(), ARG_TYPES = (str,)),
+        # same result as the literal-string version above.
+        results = _finder(
+            "$acme.results.customers/2025:last():having(@id)",
+            acme_archive,
+            variables={"id": "company_names"},
         ).query()
         assert results.uuids == ["run1-uuid"]
 

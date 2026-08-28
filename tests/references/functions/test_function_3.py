@@ -87,6 +87,37 @@ class TestCheckValid:
         with pytest.raises(ReferenceException3):
             _OptionalStrArgFunction(arg=bad).check_valid()
 
+    def test_str_typed_arg_accepts_a_bare_variable(self):
+        # added 2026-08-27 -- any function with a non-empty ARG_TYPES
+        # also accepts a bare @variable, unconditionally (unlike the
+        # str-gated InterpolatedString3 widening above) -- the resolved
+        # value could be any type, checked later at resolve time, not
+        # here.
+        _OptionalStrArgFunction(arg=Variable3(name="company")).check_valid()
+
+    def test_int_typed_arg_also_accepts_a_bare_variable(self):
+        # proves the widening is unconditional, not just for str-typed
+        # functions -- an int-only function accepts @var just as
+        # readily.
+        _RequiredIntArgFunction(arg=Variable3(name="n")).check_valid()
+
+    def test_no_arg_function_still_rejects_a_bare_variable(self):
+        # the Variable3 widening only applies once ARG_TYPES is
+        # non-empty -- a function declaring it takes no argument at all
+        # must still reject one, @variable included.
+        with pytest.raises(ReferenceException3):
+            _NoArgFunction(arg=Variable3(name="x")).check_valid()
+
+
+class TestArgSetter:
+    def test_arg_can_be_overwritten_after_construction(self):
+        # added 2026-08-27 for ReferenceFinder3._resolve_arg()'s own
+        # central, eager resolution -- a Variable3/InterpolatedString3
+        # arg gets replaced in place with its real resolved value.
+        f = _OptionalStrArgFunction(arg=Variable3(name="company"))
+        f.arg = "acme"
+        assert f.arg == "acme"
+
 
 class TestProperties:
     def test_name_and_arg(self):

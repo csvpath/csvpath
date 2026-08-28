@@ -7,7 +7,9 @@ from csvpath.references.reference_3 import (
     Reference3,
     Regex3,
     Star3,
+    Variable3,
 )
+from csvpath.references.reference_exceptions_3 import ReferenceRuntimeException3
 from csvpath.references.reference_finder_3 import ReferenceFinder3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -528,3 +530,70 @@ class TestResolveValue:
         finder = _dummy({"a": "1"})
         finder.set_variables({"b": "2"})
         assert finder._resolve_value(arg) == "1-2"
+
+    def test_bare_variable_resolves_to_its_raw_registered_value(self):
+        # added 2026-08-27 -- unlike the interpolation-part case above,
+        # a BARE Variable3 (not embedded in "{...}") returns the raw
+        # value, not a stringified one -- a direct function argument
+        # (e.g. :having(@id)) may need to stay whatever type it really
+        # is, not become text.
+        finder = _dummy({"n": 42})
+        assert finder._resolve_value(Variable3(name="n")) == 42
+
+    def test_bare_unregistered_variable_raises_runtime_exception(self):
+        with pytest.raises(ReferenceRuntimeException3):
+            _dummy()._resolve_value(Variable3(name="missing"))
+
+
+class TestBuildAndResolveArg:
+    # central, eager arg resolution (settled 2026-08-27, David: "central
+    # eager resolve of args is right, certainly for now, at least") --
+    # _build()/_build_chain() wrap ReferenceFunctionFactory.build()/
+    # build_chain(), resolving a Variable3/InterpolatedString3 arg in
+    # place so every other call site in every finder just reads .arg
+    # and gets a plain, already-resolved value.
+    def test_build_resolves_a_registered_variable_arg(self):
+        finder = _dummy({"id": "orders"})
+        call = FunctionCall3(name="having", arg=Variable3(name="id"))
+        built = finder._build(call)
+        assert built.arg == "orders"
+
+    def test_build_leaves_a_plain_arg_unchanged(self):
+        finder = _dummy()
+        call = FunctionCall3(name="having", arg="orders")
+        built = finder._build(call)
+        assert built.arg == "orders"
+
+    def test_build_raises_runtime_exception_for_unregistered_variable(self):
+        finder = _dummy()
+        call = FunctionCall3(name="having", arg=Variable3(name="id"))
+        with pytest.raises(ReferenceRuntimeException3):
+            finder._build(call)
+
+    def test_build_raises_runtime_exception_for_wrong_resolved_type(self):
+        # :having() takes (str,) -- a variable that resolves to an int
+        # passes check_valid()'s own structural check (Variable3 is
+        # unconditionally allowed there, regardless of ARG_TYPES) but
+        # fails here, once the real value is actually known.
+        finder = _dummy({"id": 5})
+        call = FunctionCall3(name="having", arg=Variable3(name="id"))
+        with pytest.raises(ReferenceRuntimeException3):
+            finder._build(call)
+
+    def test_build_chain_resolves_every_functions_own_arg(self):
+        finder = _dummy({"id": "orders"})
+        calls = [FunctionCall3(name="having", arg=Variable3(name="id"))]
+        built = finder._build_chain(calls)
+        assert built[0].arg == "orders"
+
+    def test_nested_function_arg_is_also_resolved(self):
+        # :errors(:idchain(@pattern))-style nesting -- ReferenceFunctionFactory.
+        # build() already recurses to compile the inner FunctionCall3
+        # into a real Function3 before the outer one is constructed;
+        # _resolve_arg() must recurse the same way to reach the INNER
+        # function's own arg, not just the outer one.
+        finder = _dummy({"pattern": "add[0]"})
+        inner = FunctionCall3(name="idchain", arg=Variable3(name="pattern"))
+        outer = FunctionCall3(name="errors", arg=inner)
+        built = finder._build(outer)
+        assert built.arg.arg == "add[0]"

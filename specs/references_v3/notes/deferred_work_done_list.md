@@ -9,6 +9,131 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `@variable` as some other function's own direct argument — BUILT 2026-08-27
+
+From the "grammar / argument-type gaps" bucket-list entry: `@variable`
+registration and `{...}` interpolation evaluation were built 2026-08-26,
+but a *bare* `@variable` used directly as some OTHER function's own
+argument (e.g. `:having(@id)`, the motivating case for a future
+`:regex(@aregex)`) was not -- no registered function's `ARG_TYPES`
+included `Variable3`, and even if one had, nothing resolved a bare
+`Variable3` to its real value (only `Variable3` *parts* nested inside an
+`InterpolatedString3` were resolved). Surfaced while scoping the
+`:regex()` root_major design (see that bucket-list entry) -- David:
+"many functions need to support variable arguments... what does making
+variables complete entail?"
+
+**Two decisions settled first, before building (David, 2026-08-27):**
+- Reference-level `@variable`s (this simple, explicit `set_variable()`/
+  `set_variables()` dict registration) must NEVER be tied to a live
+  running CsvPath instance's own runtime variables -- even in the
+  uncertain future case of v3 references being used as productions
+  within csvpath statements, only copy-by-value between the two, never
+  a shared pointer. Already true in the code (`ReferenceFinder3.__init__`'s
+  own comment); now also an explicit design constraint for any future
+  work in this area, not just an implementation detail.
+- Central, eager resolution (resolve every function's own arg once,
+  right after it is built, before any finder logic touches `.arg`) over
+  resolving lazily at each of the many places a finder reads some
+  function's `.arg` -- "certainly for now, at least."
+
+**Built:**
+
+- **`ReferenceRuntimeException3`** (new, `reference_exceptions_3.py`) --
+  a subclass of `ReferenceException3` (not a sibling, so every existing
+  broad `except`/`pytest.raises(ReferenceException3)` keeps working
+  unchanged), for problems only detectable at resolve time, not by
+  `check_valid()`'s parse-time structural check. Mirrors the matching
+  language's own static-vs-runtime split (`csvpath/matching/functions/
+  args.py`: `Args.validate()` raises `ChildrenException` for a syntax
+  problem, `Args.matches()` raises `MatchException` for a data problem
+  found while matching) -- David: "we just use a different exception
+  that indicates a 'runtime' error, as opposed to a static analysis
+  error." Deliberately does NOT bring over that split's other half, the
+  `error_manager`/`do_i_raise()` collect-vs-raise machinery -- references
+  v3 has never had that, every `ReferenceException3` (this one included)
+  always raises immediately. Two raise sites: an `@variable` used but
+  never registered (`_resolve_value()`, both the bare-argument and the
+  interpolation-part case -- the interpolation case's own existing raise
+  was reclassified from the plain `ReferenceException3` it used before
+  this, for the same reason), and a registered variable that resolved to
+  a value of the wrong type for its argument slot (`_resolve_arg()`).
+- **`Function3.check_valid()`** widened -- any function with a non-empty
+  `ARG_TYPES` now also accepts a bare `Variable3`, unconditionally (not
+  gated on `str` being in `ARG_TYPES`, unlike the existing
+  `InterpolatedString3` widening right above it in the same method --
+  reused that widening's *shape*, not its condition, since a variable's
+  resolved value could be any type, not just string-shaped). A function
+  declaring no argument at all (`ARG_TYPES = ()`) still rejects a
+  `Variable3` too, same as any other arg. Purely structural, same as
+  every other `check_valid()` check -- it cannot and does not check
+  whether the eventual resolved value will actually satisfy `ARG_TYPES`.
+- **`Function3.arg`** gained a setter -- overwritten exactly once, by the
+  new central-resolution step below, replacing a `Variable3`/
+  `InterpolatedString3` arg with its real resolved value in place.
+- **`ReferenceFinder3._resolve_value()`** gained a new top-level branch
+  for a bare `Variable3` (as opposed to one nested inside an
+  `InterpolatedString3`'s own `.parts`, already handled) -- returns the
+  RAW registered value, NOT stringified, unlike the interpolation-part
+  case (which always assembles one final string) -- `:regex(@aregex)`
+  needs `@aregex` to stay a real `Regex3`, not become `"/pattern/"` as
+  text.
+- **`ReferenceFinder3._build()`/`_build_chain()`** (new) -- wrap
+  `ReferenceFunctionFactory.build()`/`build_chain()`, then resolve the
+  built function's own arg in place via a new `_resolve_arg()` helper.
+  Recurses into a nested function's own arg too (e.g.
+  `:errors(:idchain(@pattern))` -- `ReferenceFunctionFactory.build()`
+  already compiles the inner `:idchain()` into a real `Function3`
+  before the outer `:errors()` is constructed, so `_resolve_arg()`
+  follows the same nesting to reach it). `_resolve_arg()` is where the
+  DEFERRED type check finally happens -- once the real resolved value is
+  known, checked against `ARG_TYPES`, raising `ReferenceRuntimeException3`
+  (not a plain `ReferenceException3`) on a mismatch, since the reference
+  itself was perfectly well-formed; only the variable's own runtime
+  value did not satisfy it.
+- **All 14 existing call sites** across `reference_finder_3.py` and the
+  three concrete finders that used to call `ReferenceFunctionFactory.
+  build()`/`build_chain()` directly now call `self._build()`/
+  `self._build_chain()` instead -- a mechanical swap, verified to be
+  behavior-neutral for every existing (non-variable) reference by the
+  full suite staying green throughout. Three methods that used to be
+  `@staticmethod`s (`ResultsReferenceFinder3._pointer_from_calls()`,
+  `_range_calls_from_calls()`, `_name_three_selector()`) became instance
+  methods, since `self._build_chain()` needs a finder's own registered
+  variables -- every existing call site already used `self.`, so this
+  was safe. `ReferenceFinder3._compile_path_pattern()`'s own `:name(...)`
+  handling, the ORIGINAL sole consumer of `_resolve_value()`, was
+  simplified to drop its now-redundant manual `_resolve_value(built.arg)`
+  call -- `self._build()` already resolves it.
+
+**Deliberately NOT built, on request:** wiring reference-level variables
+into a live, running CsvPath instance's own runtime variable store
+(`variables`/`csvpath`/`headers`/`metadata`, the current v2 runtime-
+reference concepts) -- explicitly ruled out as a goal here, and separate
+from and much bigger than this work regardless (overlaps the standing
+"v3 is not wired into production" item below). This work is scoped
+entirely to the simple, explicit `set_variable()`/`set_variables()` dict
+model that already existed.
+
+**Not built either, still on the bucket list:** `:regex()` itself (the
+root_major function this whole scoping exercise was originally
+motivated by) -- this work unblocks `:regex(@aregex)` specifically, it
+does not build `:regex()`.
+
+Tests: widened `test_function_3.py` (Variable3 accepted for str-typed
+AND int-typed `ARG_TYPES`, still rejected for no-arg functions, new
+`arg` setter coverage); new `test_reference_exceptions_3.py`
+(`ReferenceRuntimeException3` subclass relationship); widened
+`TestResolveValue` and new `TestBuildAndResolveArg` in
+`test_reference_finder_3.py` (bare-variable resolution, unregistered
+raise, `_build()`/`_build_chain()` resolving in place, wrong-resolved-
+type raise, nested-function-arg resolution); new end-to-end test in
+`test_results_reference_finder_3.py` (`$acme.results.customers/
+2025:last():having(@id)` against a real fixture, same result as the
+literal-string version). Full local-backend suite green (3074/3074, run
+twice); pre-existing SFTP/S3 env-dependent failures unrelated to this
+change.
+
 ## A literal prefix before `:flatten()` for FILES — BUILT 2026-08-27
 
 From the FILES `'*'`-traversal bucket-list section: `:flatten()` was
