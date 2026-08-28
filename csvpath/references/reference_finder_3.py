@@ -559,6 +559,40 @@ class ReferenceFinder3(ABC):
             return re.search(expected.pattern, actual) is not None
         return actual == expected
 
+    @staticmethod
+    def _is_traversal_root(root_major) -> bool:
+        """true when root_major spans potentially more than one entity
+        -- either the '*' token, or a :regex() selector (added
+        2026-08-27) -- as opposed to a literal, single-entity
+        IDENTIFIER. Used wherever a finder needs to decide "could this
+        matched result have come from any of several named-files/
+        named-paths groups/named-results groups" (e.g.
+        CsvpathsReferenceFinder3._group_manifest_entry()), as distinct
+        from the narrower, Star3-ONLY Rule 1a/1b global-ledger checks
+        each finder's own query()/_extract_data() also makes --
+        :regex() never reaches those, it has no equivalent global-
+        ledger shortcut of its own (see each finder's own query())."""
+        return isinstance(root_major, Star3) or (
+            isinstance(root_major, FunctionCall3) and root_major.name == "regex"
+        )
+
+    @staticmethod
+    def _matching_names(names: list, name_filter: "str | None") -> list:
+        """`names`, filtered down to those matching `name_filter` (a
+        regex pattern string, re.search()'d -- not anchored, same
+        convention _segment_matches() already uses for Regex3
+        everywhere else), or `names` unchanged when `name_filter` is
+        None. Added 2026-08-27 for :regex() at root_major -- shared by
+        FilesReferenceFinder3's/CsvpathsReferenceFinder3's own
+        _query_star_traversal(), each of which enumerates its own
+        datatype's full name list at several points; ResultsReference
+        Finder3 threads the same filter through its own single shared
+        _discover_run_homes() instead, since it already had one funnel
+        point these two finders don't."""
+        if name_filter is None:
+            return names
+        return [n for n in names if re.search(name_filter, n)]
+
     def _resolve_value(self, value):
         """returns `value` unchanged if it is a plain literal (str, int,
         etc.); resolves it if it is a bare Variable3 (added 2026-08-27,

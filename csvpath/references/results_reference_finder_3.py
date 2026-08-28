@@ -195,6 +195,23 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             return self._query_star_traversal(reference)
 
+        if isinstance(root_major, FunctionCall3):
+            # :regex() at root_major -- added 2026-08-27. Structurally
+            # identical to the Star3 case just above (every group is a
+            # candidate), just pre-filtered by pattern before
+            # _query_star_traversal() enumerates -- see its own
+            # name_filter docstring. No other function is legal here;
+            # the grammar itself is permissive (any function, see
+            # reference_grammar_3.py's own note) so this is a semantic
+            # check, not a grammar-level one.
+            if root_major.name != "regex":
+                raise ReferenceException3(
+                    f":{root_major.name}() is not a legal root_major "
+                    "function -- only :regex() is supported."
+                )
+            built = self._build(root_major)
+            return self._query_star_traversal(reference, name_filter=built.pattern)
+
         name_one = reference.name_one
         if name_one.name_two is not None:
             raise ReferenceException3(
@@ -554,7 +571,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             ambiguous_content_read=wants_full_content and len(selected_runs) > 1,
         )
 
-    def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
+    def _query_star_traversal(
+        self, reference: Reference3, name_filter: str | None = None
+    ) -> ReferenceResults3:
         """root_major == "*" -- query across every named-results group,
         not just one. Mirrors query()'s own dispatch tree (bare
         function-only / prefix+':flatten()' / prefix+':all()' /
@@ -563,7 +582,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         _discover_run_homes(None), which keeps each pair's group name
         specifically for this) instead of one fixed home -- added
         2026-08-19, closing the "literal/'*' path narrowing" gap this
-        method used to reject outright. ':groups()' (any-depth GROUP)
+        method used to reject outright. `name_filter` (added 2026-08-27,
+        query()'s own :regex()-at-root_major branch) restricts every
+        _discover_run_homes(None) call below to groups whose own name
+        matches the pattern -- "every group whose name matches this
+        pattern" is the SAME candidate-gathering '*' already does here,
+        just pre-filtered before enumeration, not a new traversal mode.
+        None (the default) means every group, the ordinary '*' case,
+        unchanged. ':groups()' (any-depth GROUP)
         stays unsupported here, same as bare ':groups()' already was --
         no established per-GROUP-of-named-results-groups meaning exists
         for it yet, left for if/when a real use case asks. name_three
@@ -645,7 +671,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # docstring and normative_reference_examples.txt's "THE
                 # ':all()' MEANING COLLISION AT STAR TRAVERSAL" section.
                 partitioned = []
-                for rh, group in self._discover_run_homes(None):
+                for rh, group in self._discover_run_homes(None, name_filter):
                     home = self.csvpaths.results_manager.get_named_results_home(
                         group
                     )
@@ -670,7 +696,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # the _matches_prefix filter, not by discovery itself),
                 # so no separate any-depth gathering logic is needed
                 # here.
-                run_homes = [rh for rh, _ in self._discover_run_homes(None)]
+                run_homes = [rh for rh, _ in self._discover_run_homes(None, name_filter)]
             else:
                 # zero-level (direct children of each run's own group's
                 # home) only -- same restriction the literal-root
@@ -678,7 +704,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # settled 2026-08-10.
                 run_homes = [
                     rh
-                    for rh, group in self._discover_run_homes(None)
+                    for rh, group in self._discover_run_homes(None, name_filter)
                     if self._matches_prefix(
                         rh,
                         self.csvpaths.results_manager.get_named_results_home(group),
@@ -712,7 +738,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             pointer, _, _, having_call = self._star_run_selector_chain(calls)
             run_homes = [
                 rh
-                for rh, group in self._discover_run_homes(None)
+                for rh, group in self._discover_run_homes(None, name_filter)
                 if self._matches_prefix_at_least(
                     rh,
                     self.csvpaths.results_manager.get_named_results_home(group),
@@ -747,7 +773,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             calls = list(name_one.functions)
             pointer, _, _, having_call = self._star_run_selector_chain(calls)
             partitioned = []
-            for rh, group in self._discover_run_homes(None):
+            for rh, group in self._discover_run_homes(None, name_filter):
                 home = self.csvpaths.results_manager.get_named_results_home(group)
                 if self._matches_prefix(rh, home, pattern):
                     partitioned.append(
@@ -789,7 +815,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         pointer, _, _, having_call = self._star_run_selector_chain(calls)
         run_homes = [
             rh
-            for rh, group in self._discover_run_homes(None)
+            for rh, group in self._discover_run_homes(None, name_filter)
             if self._matches_prefix(
                 rh, self.csvpaths.results_manager.get_named_results_home(group), pattern
             )
@@ -1284,7 +1310,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         path = Nos(instance_dir).join(accessor.arg)
         return cls._read_well_known_file(path)
 
-    def _discover_run_homes(self, root_major: str | None) -> list[tuple[str, str]]:
+    def _discover_run_homes(
+        self, root_major: str | None, name_filter: str | None = None
+    ) -> list[tuple[str, str]]:
         """every distinct, still-existing (run_home, named_paths_name)
         pair, read from the archive-root manifest.json -- see this
         module's own docstring for why this replaces directory-walking
@@ -1293,16 +1321,26 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         single-group case), or None to skip the filter entirely and
         discover across every group -- used by '*' traversal, which
         already has this same archive-wide ledger in hand for Rule
-        1a/1b, so no separate group-name enumeration is needed. Each
-        pair's own group name is kept (not just the run_home) so '*'
-        traversal can tell whether a given run is a direct child of
-        *its own* group's home -- needed once a plain bare pointer
-        means zero-level-only (settled 2026-08-10, see :flatten() for
-        the any-depth case) rather than "ignore depth entirely." Many
-        entries can share the same run_home (one entry per csvpath-
-        statement execution, several statements per run), so dedupe; a
-        stale entry (the run since deleted) is dropped via an
-        existence check."""
+        1a/1b, so no separate group-name enumeration is needed.
+        `name_filter` (added 2026-08-27, for :regex() at root_major) is
+        an independent, additional filter -- a regex pattern string
+        checked against each entry's own group name via re.search(),
+        same semantics ReferenceFinder3._segment_matches() already uses
+        for Regex3 everywhere else. Always called with root_major=None
+        alongside a real name_filter (a literal group name and a
+        pattern are mutually exclusive ways to pick which groups are in
+        play -- query() never combines them), but kept as two separate
+        parameters rather than one, since they mean genuinely different
+        things (exact identity vs. pattern match), not just to avoid
+        redundant plumbing. Each pair's own group name is kept (not
+        just the run_home) so '*' traversal can tell whether a given
+        run is a direct child of *its own* group's home -- needed once
+        a plain bare pointer means zero-level-only (settled 2026-08-10,
+        see :flatten() for the any-depth case) rather than "ignore
+        depth entirely." Many entries can share the same run_home (one
+        entry per csvpath-statement execution, several statements per
+        run), so dedupe; a stale entry (the run since deleted) is
+        dropped via an existence check."""
         archive = self.csvpaths.config.get(section="results", name="archive")
         manifest_path = Nos(archive).join("manifest.json")
         if not Nos(manifest_path).exists():
@@ -1314,6 +1352,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         for entry in entries:
             group = entry.get("named_paths_name")
             if root_major is not None and group != root_major:
+                continue
+            if name_filter is not None and not re.search(name_filter, group or ""):
                 continue
             run_home = entry.get("run_home")
             if run_home and run_home not in seen:

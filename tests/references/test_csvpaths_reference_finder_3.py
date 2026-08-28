@@ -127,6 +127,7 @@ def _finder(
     by_name: dict | None = None,
     definitions_by_name: dict | None = None,
     log_file: str | None = None,
+    variables: dict | None = None,
 ) -> CsvpathsReferenceFinder3:
     csvpaths = _FakeCsvPaths(
         _FakePathsManager(
@@ -140,7 +141,7 @@ def _finder(
         log_file=log_file,
     )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
-    return CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
+    return CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref, variables=variables)
 
 
 class TestVersionPointer:
@@ -871,6 +872,23 @@ class TestGroupManifestEntry:
         assert name == "beta"
         assert entry["uuid"] == "b-v1"
 
+    def test_regex_root_major_finds_the_correct_group(self):
+        # added 2026-08-27 -- a :regex() root_major spans potentially
+        # more than one group too (ReferenceFinder3._is_traversal_root()),
+        # same reasoning as the '*' case above.
+        from csvpath.references.reference_3 import FunctionCall3
+
+        by_name = {
+            "acme_group": [{"group_file_path": "x", "uuid": "a-v1"}],
+            "abba_group": [{"group_file_path": "y", "uuid": "b-v1"}],
+        }
+        finder = _finder("$acme_group.csvpaths.:last()", by_name=by_name)
+        name, entry = finder._group_manifest_entry(
+            FunctionCall3(name="regex", arg="abba_.*"), "b-v1"
+        )
+        assert name == "abba_group"
+        assert entry["uuid"] == "b-v1"
+
     def test_star_root_major_with_unknown_uuid_gives_none_none(self):
         by_name = {"alpha": [{"group_file_path": "x", "uuid": "a-v1"}]}
         finder = _finder("$*.csvpaths.:last()", by_name=by_name)
@@ -1583,3 +1601,74 @@ class TestLog:
         # misleading here (there is no acme-specific log content).
         with pytest.raises(ReferenceException3):
             _finder("$acme.csvpaths.:log()", log_file="x.log").query()
+
+
+REGEX_BY_NAME = {
+    "acme_group": [
+        {
+            "group_file_path": "named_paths/acme_group/group.csvpath",
+            "uuid": "acme-v1",
+            "time": "2026-01-01T00:00:00+00:00",
+            "named_paths_identities": [],
+        }
+    ],
+    "abba_group": [
+        {
+            "group_file_path": "named_paths/abba_group/group.csvpath",
+            "uuid": "abba-v1",
+            "time": "2026-01-02T00:00:00+00:00",
+            "named_paths_identities": [],
+        }
+    ],
+}
+
+
+class TestRegexRootMajor:
+    # :regex() at root_major -- added 2026-08-27, the crowded-namespace
+    # motivating case (David): "acme_group"/"abba_group" are more
+    # manageable when a reference can target "/abba_.*/" directly.
+    # Reuses CsvpathsReferenceFinder3's own '*'-traversal machinery,
+    # just pre-filtered by pattern before it enumerates
+    # named_paths_names.
+    def test_regex_filters_to_matching_groups(self):
+        results = _finder(
+            "$:regex(/^abba_.*/).csvpaths.:last()", by_name=REGEX_BY_NAME
+        ).query()
+        assert results.uuids == ["abba-v1"]
+
+    def test_regex_excludes_non_matching_groups(self):
+        results = _finder(
+            "$:regex(/^abba_.*/).csvpaths.:last()", by_name=REGEX_BY_NAME
+        ).query()
+        assert "acme-v1" not in results.uuids
+
+    def test_regex_with_no_matches_gives_empty(self):
+        results = _finder(
+            "$:regex(/^zzz_.*/).csvpaths.:last()", by_name=REGEX_BY_NAME
+        ).query()
+        assert results.uuids == []
+
+    def test_wrong_root_major_function_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$:having("x").csvpaths.:last()', by_name=REGEX_BY_NAME
+            ).query()
+
+    def test_regex_accepts_a_registered_variable(self):
+        results = _finder(
+            "$:regex(@aregex).csvpaths.:last()",
+            by_name=REGEX_BY_NAME,
+            variables={"aregex": "^abba_.*"},
+        ).query()
+        assert results.uuids == ["abba-v1"]
+
+    def test_content_resolution_finds_the_correct_group(self):
+        # proves _group_manifest_entry()'s own widened multi-group
+        # search (see TestGroupManifestEntry above) composes correctly
+        # through a real query()+resolve() -- not just unit-tested in
+        # isolation.
+        results = _finder(
+            "$:regex(/^abba_.*/).csvpaths.:last():uuid()",
+            by_name=REGEX_BY_NAME,
+        ).resolve()
+        assert results.results[0].data == "abba-v1"

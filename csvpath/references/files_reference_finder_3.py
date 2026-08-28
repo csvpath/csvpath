@@ -134,6 +134,23 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
             return self._query_star_traversal(reference)
 
+        if isinstance(root_major, FunctionCall3):
+            # :regex() at root_major -- added 2026-08-27. Structurally
+            # identical to the Star3 case just above (every named-file
+            # is a candidate), just pre-filtered by pattern before
+            # _query_star_traversal() enumerates -- see its own
+            # name_filter docstring. No other function is legal here;
+            # the grammar itself is permissive (any function, see
+            # reference_grammar_3.py's own note) so this is a semantic
+            # check, not a grammar-level one.
+            if root_major.name != "regex":
+                raise ReferenceException3(
+                    f":{root_major.name}() is not a legal root_major "
+                    "function -- only :regex() is supported."
+                )
+            built = self._build(root_major)
+            return self._query_star_traversal(reference, name_filter=built.pattern)
+
         name_one = reference.name_one
         if (
             name_one.name_two is not None
@@ -533,9 +550,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
             ambiguous_content_read=has_manifest and len(selected_candidates) > 1,
         )
 
-    def _query_star_traversal(self, reference: Reference3) -> ReferenceResults3:
+    def _query_star_traversal(
+        self, reference: Reference3, name_filter: "str | None" = None
+    ) -> ReferenceResults3:
         """root_major == "*" -- query across every named-file, not just
-        one. Four distinct semantics, corrected/extended 2026-08-12 to
+        one. `name_filter` (added 2026-08-27, query()'s own :regex()-at-
+        root_major branch) restricts every named_file_names enumeration
+        below (via ReferenceFinder3._matching_names()) to named-files
+        whose own name matches the pattern -- "every named-file whose
+        name matches this pattern" is the SAME candidate-gathering '*'
+        already does here, just pre-filtered before enumeration, not a
+        new traversal mode. None (the default) means every named-file,
+        the ordinary '*' case, unchanged. Four distinct semantics,
+        corrected/extended 2026-08-12 to
         match ResultsReferenceFinder3's own depth vocabulary exactly
         (David: keep functions meaning the same thing across datatypes):
 
@@ -618,7 +645,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "-- definition.json is not versioned, there is no "
                     "version to select."
                 )
-            names = self.csvpaths.file_manager.named_file_names
+            names = self._matching_names(
+                self.csvpaths.file_manager.named_file_names, name_filter
+            )
             if is_home:
                 names = [
                     name for name in names if self._candidates_for_name(name, [])
@@ -647,11 +676,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
         partitioned = is_grouped or is_deep_grouped
         if is_grouped:
             candidates = []
-            for name in self.csvpaths.file_manager.named_file_names:
+            for name in self._matching_names(
+                self.csvpaths.file_manager.named_file_names, name_filter
+            ):
                 candidates.extend(self._candidates_for_name(name, [Star3()]))
         elif is_flattened or is_deep_grouped:
             candidates = []
-            for name in self.csvpaths.file_manager.named_file_names:
+            for name in self._matching_names(
+                self.csvpaths.file_manager.named_file_names, name_filter
+            ):
                 candidates.extend(self._all_candidates_for_name(name))
         elif is_home:
             # bare ':home()', nothing chained onto it -- the zero-level
@@ -673,7 +706,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "supported so far."
                 )
             candidates = []
-            for name in self.csvpaths.file_manager.named_file_names:
+            for name in self._matching_names(
+                self.csvpaths.file_manager.named_file_names, name_filter
+            ):
                 candidates.extend(self._candidates_for_name(name, []))
         else:
             if name_one.functions:
@@ -684,7 +719,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
             pattern = self._compile_path_pattern(name_one.path)
             candidates = []
-            for name in self.csvpaths.file_manager.named_file_names:
+            for name in self._matching_names(
+                self.csvpaths.file_manager.named_file_names, name_filter
+            ):
                 candidates.extend(self._candidates_for_name(name, pattern))
 
         name_three = reference.name_three

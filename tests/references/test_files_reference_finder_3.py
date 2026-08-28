@@ -2321,3 +2321,79 @@ class TestLog:
             log_file=str(log_path),
         ).resolve()
         assert results.results[0].data == "line1\nline2\n"
+
+
+REGEX_ACME_HOME = "inputs/named_files/acme_orders"
+REGEX_ACME_MANIFEST = [
+    {
+        "file": "inputs/named_files/acme_orders/x.csv",
+        "file_home": "inputs/named_files/acme_orders",
+        "uuid": "u-acme-1",
+    },
+]
+REGEX_ABBA_HOME = "inputs/named_files/abba_invoices"
+REGEX_ABBA_MANIFEST = [
+    {
+        "file": "inputs/named_files/abba_invoices/y.csv",
+        "file_home": "inputs/named_files/abba_invoices",
+        "uuid": "u-abba-1",
+    },
+]
+REGEX_BY_NAME = {
+    "acme_orders": (REGEX_ACME_HOME, REGEX_ACME_MANIFEST),
+    "abba_invoices": (REGEX_ABBA_HOME, REGEX_ABBA_MANIFEST),
+}
+
+
+class TestRegexRootMajor:
+    # :regex() at root_major -- added 2026-08-27, the crowded-namespace
+    # motivating case (David): "acme_orders"/"acme_invoices"/
+    # "abba_invoices" are more manageable when a reference can target
+    # "/abba_.*/" directly, instead of enumerating every exact name.
+    # Reuses FilesReferenceFinder3's own '*'-traversal machinery, just
+    # pre-filtered by pattern before it enumerates named_file_names.
+    def test_regex_filters_to_matching_named_files(self):
+        results = _finder(
+            "$:regex(/^abba_.*/).files.:home()",
+            REGEX_ACME_HOME,
+            REGEX_ACME_MANIFEST,
+            by_name=REGEX_BY_NAME,
+        ).query()
+        assert results.files == [REGEX_ABBA_HOME]
+
+    def test_regex_excludes_non_matching_named_files(self):
+        results = _finder(
+            "$:regex(/^abba_.*/).files.:home()",
+            REGEX_ACME_HOME,
+            REGEX_ACME_MANIFEST,
+            by_name=REGEX_BY_NAME,
+        ).query()
+        assert REGEX_ACME_HOME not in results.files
+
+    def test_regex_with_no_matches_gives_empty(self):
+        results = _finder(
+            "$:regex(/^zzz_.*/).files.:home()",
+            REGEX_ACME_HOME,
+            REGEX_ACME_MANIFEST,
+            by_name=REGEX_BY_NAME,
+        ).query()
+        assert results.files == []
+
+    def test_wrong_root_major_function_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$:having("x").files.:home()',
+                REGEX_ACME_HOME,
+                REGEX_ACME_MANIFEST,
+                by_name=REGEX_BY_NAME,
+            ).query()
+
+    def test_regex_accepts_a_registered_variable(self):
+        results = _finder(
+            "$:regex(@aregex).files.:home()",
+            REGEX_ACME_HOME,
+            REGEX_ACME_MANIFEST,
+            by_name=REGEX_BY_NAME,
+            variables={"aregex": "^abba_.*"},
+        ).query()
+        assert results.files == [REGEX_ABBA_HOME]
