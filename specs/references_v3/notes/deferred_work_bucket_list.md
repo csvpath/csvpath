@@ -48,6 +48,53 @@ candidates for that re-audit, all still unconditional/immediate raises in
   same "was a pointer actually applied within each partition" reasoning
   the literal-root fix used, not a blind port.
 
+  **Ready for a quick decision, then a well-specified build — found
+  2026-08-29/30 while checking whether this was safe to build solo
+  overnight, deliberately NOT built without a check-in first.** FILES'
+  own GROUP-mode + field-accessor fix (2026-08-29, this session) narrowed
+  `query()`'s `if partitioned and (has_range or (pointers and has_
+  manifest)): raise` to keep `has_manifest` (whole-resource) rejected,
+  precisely BECAUSE the existing `ambiguous_content_read=has_manifest and
+  len(selected_candidates) > 1` flag just below it (in the shared return)
+  is a NAIVE count check — it does not know whether `partitioned` is
+  `True`, so it cannot currently tell "several groups, each already
+  reduced to exactly one via its own pointer" (legitimate, per this very
+  bucket-list item's own CSVPATHS precedent) apart from "several raw,
+  unreduced candidates sharing one accessor" (a genuine Rule 1
+  violation). Confirmed field accessors are unaffected by this — they
+  never set `has_manifest`, so `ambiguous_content_read` is always
+  `False` for them regardless of count, which is why narrowing the
+  rejection to field-accessors-only was safe to ship without touching
+  this flag at all (three PRs, 2026-08-28/29, none of which needed to
+  touch `ambiguous_content_read`).
+
+  To also let `:manifest()` (and any other whole-resource content
+  accessor) through here, the flag itself needs to become partition-
+  aware — something like `ambiguous_content_read = has_manifest and
+  len(selected_candidates) > 1 and not partitioned` (or, more precisely,
+  "and no per-partition pointer reduction actually happened") — mirroring
+  the exact reasoning CSVPATHS' own already-shipped fix used for the
+  identical shape. The SAME naive-count-check gap almost certainly also
+  affects: `ResultsReferenceFinder3._star_group_and_reduce()`'s own
+  `accessor is not None and pointer is not None` check (still an
+  unconditional raise, not a deferred count check at all yet); and
+  possibly RESULTS' own literal-root `match_all and accessor is not
+  None` check (the two are explicitly linked above, "should be decided
+  together"). FILES' `'*'`-traversal `:manifest()` rejection (this
+  session's other two PRs) is the SAME question at one more remove
+  (GROUP mode there also produces one candidate per file_home group).
+
+  **What would unblock building this**: confirm the fix direction above
+  is right (a partition-aware flag, not a blind removal of the
+  `has_manifest` guard), then decide scope — FILES only (continuing this
+  session's own thread) vs. also RESULTS/CSVPATHS in the same pass
+  (bigger, but closes the whole cross-datatype question the "should be
+  decided together" note above already flags). Once scoped, this is
+  concrete, mechanical work with a clear correctness bar (the CSVPATHS
+  "several groups, each pointer-reduced" test case already describes the
+  must-not-regress behavior) — not open design the way the predicate-
+  argument mechanism or RESULTS' `:groups()` semantics still are.
+
 ## Predicate-argument field accessors (`:on_arrival(:not_none())`) — filter half built for `:idchain()`, generic mechanism still not built
 
 David, 2026-08-21, drafting the compendium's replacement `:manifest()`/
