@@ -265,15 +265,15 @@ and a stale-entry correction, are both done — see
 
 ## `'*'` traversal — FILES, essentially untouched by the recent RESULTS/CSVPATHS work
 
-- `FilesReferenceFinder3`'s own `_query_star_traversal()` still rejects
-  combining `'*'` traversal with `:manifest()`/a field-accessor function
-  outright (`:definition()` is now the one exception, see below) — the
-  same class of gap RESULTS/CSVPATHS just had fixed (field accessors,
-  then `:having()`/`:flatten()`/`:all()`, then path narrowing/`name_three`,
-  then pointer optionality), never applied to FILES otherwise. FILES'
-  traversal already never requires a pointer (confirmed — no fix needed
-  there), but everything else in that generalization sequence hasn't been
-  revisited for this datatype.
+- `FilesReferenceFinder3`'s own `_query_star_traversal()` combining `'*'`
+  traversal with a field accessor riding beside the pointer in
+  `name_three` (POOL and GROUP modes alike) — **BUILT 2026-08-29**, see
+  `deferred_work_done_list.md`. `:manifest()` (whole-resource) still
+  stays rejected here, deliberately — GROUP mode can legitimately
+  produce more than one reduced candidate, and this method sets no
+  `ambiguous_content_read` flag to catch resolving several whole entries
+  at once (Rule 1); adding that flag correctly is its own separate,
+  still-open piece of work, not bundled into this fix.
 
 - **Concrete worked example that drove this (David, 2026-08-21)**: "which
   named-files have `on_arrival` set" needs `$*.files.:home():definition
