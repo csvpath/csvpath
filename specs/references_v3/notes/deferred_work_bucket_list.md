@@ -256,6 +256,32 @@ and a stale-entry correction, are both done — see
   case.
 - `:having()` for RESULTS — **BUILT 2026-08-27**, see
   `deferred_work_done_list.md`.
+- **Found 2026-08-28, while checking David's own uuid-set-operation worked
+  examples (see the `SELECTOR_WHEN_ARGUED` entry above) — a silent-drop
+  risk, not just a missing feature.** `$*.results.:flatten():manifest()
+  :named_file_uuid()` (a content-accessor chain riding directly on
+  `:flatten()` in `name_one.functions`, no separating `.` before
+  `:manifest()`) does NOT raise. `_star_run_selector_chain()` recognizes
+  and exempts `:manifest()`/a field-accessor call from its own "unsupported
+  function" rejection — but its caller
+  (`_query_star_traversal`'s `_is_bare_function_only` branch) only ever
+  unpacks `(pointer, all_call, flatten_call, having_call)` from it, never
+  the recognized `manifest_call`/`field_call`. The `accessor` that
+  actually gets applied comes from a separate call,
+  `_name_three_selector(reference.name_three)`, which is `None` here since
+  nothing follows a `.` after `:flatten()`. Net effect: the query silently
+  returns the flattened, unreduced run list — NOT `named_file_uuid`
+  values — with no error telling the caller their accessor was ignored.
+  The shape that IS wired up correctly needs an explicit `.` before the
+  accessor chain (`$*.results.:flatten().:manifest():named_file_uuid()`,
+  routing it into `name_three`) — confirmed via live parse this puts the
+  calls in the right place, though the field itself
+  (`NamedFileUuid3`, `POSITIONS = {RESULTS: (NAME_ONE,)}`) has not been
+  end-to-end tested via this exact dotted path. Needs a decision: either
+  make the undotted shape actually apply the accessor it already
+  recognizes (matching what a user would naturally write), or make it
+  raise instead of silently dropping — silently ignoring recognized syntax
+  is worse than either.
 
 ## `'*'` traversal — FILES, essentially untouched by the recent RESULTS/CSVPATHS work
 
@@ -287,6 +313,14 @@ and a stale-entry correction, are both done — see
      (`$*.files.:home():definition(:on_arrival(:not_none()))`) still
      cannot parse until this lands — #1/#2/#3 were tested with the
      predicate dropped, per the done-list entry's own worked examples.
+- **Bare `:manifest()` combined with one chained field accessor (e.g.
+  `:manifest():uuid()`, `:manifest():time()`), literal-root and `'*'`
+  alike — BUILT 2026-08-28**, see `deferred_work_done_list.md`. Driven by
+  David's own worked examples ("get uuids from all registrations," "get
+  all acme registration uuids"). `:all()`/`:flatten()`/`:groups()`
+  combined with a chained field accessor is a related but distinct
+  question (partitioning semantics differ per marker), still open, just
+  below.
 - FILES' `:all()`/`:groups()` (GROUP modes) combined with `:manifest()`/
   a field-accessor — same single-entity-vs-grouping restriction RESULTS'
   `name_three` content accessor now has, not yet built for FILES.
