@@ -662,6 +662,67 @@ class TestStarTraversalFlatten:
             _star_finder("$*.files.*:last().v1").query()
 
 
+MANIFEST_FIELD_LEDGER = [
+    {
+        "named_file_name": "alpha",
+        "uuid": "u-ledger-1",
+        "file_path": "inputs/named_files/alpha/one.csv/bbb.csv",
+    },
+    {
+        "named_file_name": "beta",
+        "uuid": "u-ledger-2",
+        "file_path": "inputs/named_files/beta/two.csv/ddd.csv",
+    },
+]
+
+
+class TestStarBareManifestFieldAccessor:
+    # ':manifest():uuid()' during '*' traversal -- added 2026-08-28,
+    # David's own worked example ("get uuids from all registrations").
+    # Reads the global arrivals ledger (Rule 1a's own resource for bare
+    # ':manifest()' at '*' root), same as the literal-root shape reads
+    # its one named-file's own manifest.json.
+    def test_query_gives_one_result_per_ledger_entry(self):
+        results = _finder(
+            "$*.files.:manifest():uuid()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=MANIFEST_FIELD_LEDGER,
+        ).query()
+        assert set(results.uuids) == {"u-ledger-1", "u-ledger-2"}
+
+    def test_resolve_reads_the_field_off_each_ledger_entry(self):
+        results = _finder(
+            "$*.files.:manifest():uuid()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=MANIFEST_FIELD_LEDGER,
+        ).resolve()
+        assert {r.data for r in results.results} == {"u-ledger-1", "u-ledger-2"}
+
+    def test_composes_with_a_regex_name_filter_at_root_major(self):
+        results = _finder(
+            "$:regex(/^al.*/).files.:manifest():uuid()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=MANIFEST_FIELD_LEDGER,
+        ).query()
+        assert results.uuids == ["u-ledger-1"]
+
+    def test_combined_with_name_three_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$*.files.:manifest():uuid().:last()",
+                ALPHA_HOME,
+                ALPHA_MANIFEST,
+                inputs_files_path="inputs/named_files",
+                ledger=MANIFEST_FIELD_LEDGER,
+            ).query()
+
+
 class TestStarTraversalGroup:
     # bare ':all()' as name_one's entire content partitions every
     # named-file's EXACTLY-one-level matches (corrected 2026-08-12 to
@@ -1431,6 +1492,90 @@ class TestBareFingerprintLookup:
             "inputs/named_files/finn/backups/orders.csv/aaaa.csv",
         ]
         assert results.uuids == ["u-orders-1", "u-orders-backup-1"]
+
+
+class TestBareManifestFieldAccessor:
+    # ':manifest():uuid()'/':manifest():time()' -- added 2026-08-28,
+    # David's own worked examples ("get uuids from all registrations,"
+    # "get all acme registration uuids"). Unlike the ordinary field-
+    # accessor position (riding beside a real pointer in name_three,
+    # exactly one already-selected entity), this maps the chained field
+    # over EVERY entry in the matched named-file's own manifest.json --
+    # a genuinely different shape, not a syntax variant of the same
+    # thing.
+    def test_query_gives_one_result_per_manifest_entry(self):
+        results = _finder(
+            "$alpha.files.:manifest():uuid()", ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert set(results.uuids) == {"u-zero-1", "u-one-1", "u-one-2"}
+
+    def test_resolve_gives_the_field_value_per_entry_not_the_whole_entry(self):
+        results = _finder(
+            "$alpha.files.:manifest():uuid()", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert {r.data for r in results.results} == {
+            "u-zero-1",
+            "u-one-1",
+            "u-one-2",
+        }
+        # every value is the plain uuid string, not the whole entry dict
+        assert all(isinstance(r.data, str) for r in results.results)
+
+    def test_single_entry_manifest_matches_davids_own_worked_example(self):
+        # the exact syntax from David's own worked examples
+        # ("$acme.files.:manifest():uuid()" -- get all acme registration
+        # uuids).
+        results = _finder(
+            "$acme.files.:manifest():uuid()", TEMPLATED_HOME, TEMPLATED_MANIFEST
+        ).resolve()
+        assert [r.data for r in results.results] == ["u-q2-1"]
+
+    def test_a_different_manifest_field_works_the_same_way(self):
+        # confirms this is a general mechanism, not hardcoded to :uuid()
+        # specifically -- STAR_ALPHA_MANIFEST's entries have a "time"
+        # field too.
+        results = _finder(
+            "$alpha.files.:manifest():time()", STAR_ALPHA_HOME, STAR_ALPHA_MANIFEST
+        ).resolve()
+        assert {r.data for r in results.results} == {
+            "2026-01-01T00:00:00+00:00",
+            "2026-01-02T00:00:00+00:00",
+            "2026-01-03T00:00:00+00:00",
+        }
+
+    def test_combined_with_name_three_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:manifest():uuid().:last()", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
+    def test_more_than_one_chained_function_is_not_recognized_here(self):
+        # falls through to the ordinary "functions attached directly to
+        # name_one" rejection -- picking one field per entry from more
+        # than one chained accessor at once is not a shape any worked
+        # example has asked for.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:manifest():uuid():time()", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
+    def test_chaining_a_non_field_accessor_is_not_recognized_here(self):
+        # ':last()' is a POINTER, not a registered field accessor
+        # (SOURCE is None) -- falls through the same way.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:manifest():last()", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
+    def test_the_ordinary_name_three_field_accessor_position_still_works(self):
+        # David: narrowing to one version via :name(...)+pointer, then
+        # reading :uuid() in name_three, is a different, equally valid
+        # way to reach a uuid -- this new shape does not replace or
+        # touch it.
+        results = _finder(
+            '$alpha.files.:name("one.csv").:first():uuid()', ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert results.results[0].data == "u-one-1"
 
 
 RANGE_HOME = "inputs/named_files/ranger"

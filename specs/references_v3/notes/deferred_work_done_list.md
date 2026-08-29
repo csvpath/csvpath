@@ -9,6 +9,109 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## Bare `:manifest()` combined with a chained field accessor (FILES) — BUILT 2026-08-28
+
+`$acme.files.:manifest():uuid()`/`$*.files.:manifest():uuid()` now work,
+literal-root and `'*'` alike. Driven directly by David's own worked
+examples (2026-08-28), written while scoping cross-datatype uuid selection/
+set-operations (see the `SELECTOR_WHEN_ARGUED` entry below): "get uuids
+from all registrations," "get all acme registration uuids," each meant to
+combine with `SUBTRACT`/`INTERSECT` against another reference expression.
+
+**Investigated before designing anything, not guessed.** David's first
+framing of the gap was "does this need a `.` before the field accessor" —
+traced live (parsing both forms) and by code-reading before answering:
+that framing turned out to be a red herring. `:first():fingerprint()`
+(pointer + field accessor, no dot, order-independent) already works today
+— but only because it reads a field off exactly ONE already-selected
+entity. `:manifest()` bare does not select one entity, it means "every
+entry in the manifest" (Rule 1a/1b's own territory) — chaining a field
+accessor onto THAT is asking to map a field over MANY entities at once,
+something no code path did before this, regardless of dot placement.
+Confirmed `Reference3.resolve_kind` already classified this shape as
+`METADATA_FIELD` correctly (via `terminal_functions`), so no change was
+needed there — the real gap was narrower than it first looked: `query()`
+producing N results instead of raising, and `_extract_data()` reading a
+field per result instead of only ever assuming one.
+
+David's own scope confirmation, given the analysis: build exactly the
+syntax he wrote (`:manifest():uuid()`, order-independent with future
+siblings, no dot needed), and explicitly keep the pre-existing
+`:name(...)+pointer` then `:uuid()`-in-`name_three` pattern (narrowing to
+ONE version, then reading its field) working unchanged — "different way
+to get a UUID, but should be equally valid." Confirmed via a dedicated
+test (`test_the_ordinary_name_three_field_accessor_position_still_works`)
+that this build did not touch that path at all.
+
+**What was built:**
+- `FilesReferenceFinder3._bare_manifest_field_call(name_one)` — new
+  `@staticmethod`, recognizes "name_one's path is a single, argument-less
+  `:manifest()` call, with exactly one chained function in
+  `name_one.functions` that is a registered field accessor (`SOURCE` is
+  not `None`)." Requires exactly one chained function deliberately — no
+  worked example has asked for stacking more than one field accessor on
+  this shape at once, so left unbuilt rather than guessed at. Reused
+  identically by `query()`, `_query_star_traversal()`, and
+  `_extract_data()` — one recognition helper, not three hand-rolled ones.
+- `query()` (literal root): new branch reading
+  `self.csvpaths.file_manager.get_manifest(root_major)` (the one named-
+  file's own manifest.json — every version/registration of THAT name),
+  building one `ReferenceResult3(path=e["file"], uuid=e["uuid"])` per
+  entry. Rejects combining with `name_three` (nothing left to narrow —
+  same reasoning `:fingerprint(...)`'s own bare-lookup shape already
+  uses).
+- `_query_star_traversal()`: new `elif` branch reading
+  `self.csvpaths.file_manager.files_root_manifest` (the global arrivals
+  ledger — Rule 1a's own resource for bare `:manifest()` at `'*'` root,
+  reused here rather than reassembling the same set by iterating every
+  name's own manifest separately). Ledger entries use different key names
+  than per-name manifest entries (confirmed by reading `FilesListener.
+  _prep_update()`: `"file_path"`/`"named_file_name"`, not `"file"` — a
+  real discrepancy that would have produced a `KeyError` if assumed
+  identical). Composes with `:regex()`-at-root_major's own `name_filter`
+  by matching each ledger entry's own `"named_file_name"` field, since the
+  ledger is a flat list, not organized by name.
+- `_extract_data()`'s `METADATA_FIELD` branch: widened the `is_bare_field_
+  call` path — when `_bare_definition_field_call()` finds nothing, now
+  also tries `_bare_manifest_field_call()` before giving up. Also widened
+  the manifest-fetch step to branch on `isinstance(reference.root_major,
+  Star3)`: `root_major` is the `'*'` token itself there, not a real name,
+  so `get_manifest(root_major)` cannot be called — reads
+  `files_root_manifest` instead in that case. Confirmed this branch was
+  previously unreachable for the ordinary name_three field-accessor shape
+  too (`_query_star_traversal()` has always unconditionally rejected
+  combining `'*'` traversal with a field accessor there), so widening it
+  here does not risk any pre-existing behavior.
+- `resolve()`/`resolve_from()` needed NO changes — confirmed by reading
+  them first: the existing `for result in results.results: result.data =
+  self._extract_data(result)` loop already turns "N query() results" into
+  "N resolved values" for any datatype, for free. The only genuinely new
+  work was producing real, multi-entry results in `query()`, and reading
+  the right field per result in `_extract_data()`.
+
+**Tests added** (`test_files_reference_finder_3.py`): `TestBareManifest
+FieldAccessor` (8 cases, literal root) covering one-result-per-entry,
+resolved values (not whole entries), David's own exact syntax, a second
+field (`:time()`) to prove genericity, name_three rejection, more-than-
+one-chained-function rejection, non-field-accessor (`:last()`) rejection,
+and the pre-existing name_three pattern staying unaffected;
+`TestStarBareManifestFieldAccessor` (4 cases, `'*'` root) covering the
+same shape against a dedicated `MANIFEST_FIELD_LEDGER` fixture (with the
+real `"file_path"`/`"named_file_name"` keys, not the simplified `LEDGER`
+fixture the existing ordinal-indexing tests use, which lacks them),
+`:regex()`-at-root_major composition, and name_three rejection. Full
+suite run twice, stable both times: 3148 passed, 11 failed (the known,
+unrelated SFTP/S3 failures requiring unset env vars — issue #216),
+identical both runs.
+
+**Deliberately not built**: `:all()`/`:flatten()`/`:groups()` combined
+with a chained field accessor — partitioning semantics differ per marker
+(one result vs. many, grouped vs. pooled), a distinct question from bare
+`:manifest()`'s "every entry, no partitioning" case, left on the bucket
+list.
+
+---
+
 ## `SELECTOR_WHEN_ARGUED` — declarative dual selector/value-accessor mechanism — BUILT 2026-08-28
 
 Replaces `FilesReferenceFinder3`'s original bespoke, hand-written

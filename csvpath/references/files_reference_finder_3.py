@@ -1,3 +1,5 @@
+import re
+
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 from csvpath.util.xlsx.xlsx_reader_helper import XlsxReaderHelper
@@ -201,6 +203,34 @@ class FilesReferenceFinder3(ReferenceFinder3):
             home = self.csvpaths.file_manager.named_file_home(root_major)
             path = Nos(home).join("definition.json")
             return ReferenceResults3(results=[ReferenceResult3(path=path, uuid=None)])
+
+        manifest_field_call = self._bare_manifest_field_call(name_one)
+        if manifest_field_call is not None:
+            # ':manifest():uuid()'/':manifest():time()' -- added
+            # 2026-08-28, David's own worked example ("get all acme
+            # registration uuids"). Maps the chained field over EVERY
+            # entry in this named-file's own manifest.json, one
+            # ReferenceResult3 per entry -- resolve()'s existing
+            # per-result "for result in results.results: result.data =
+            # self._extract_data(result)" loop already turns N results
+            # into N resolved values for free (confirmed by reading it
+            # before building this, see reference_finder_3.py's own
+            # resolve_from()), so no new resolution machinery is needed
+            # at that layer, only here (producing N real results) and
+            # in _extract_data() (reading the field per result).
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    f"FilesReferenceFinder3 does not yet support combining a "
+                    f"bare ':manifest():{manifest_field_call.name}()' lookup "
+                    "with name_three -- it already reads a field from every "
+                    "matched entry on its own."
+                )
+            manifest = self.csvpaths.file_manager.get_manifest(root_major)
+            return ReferenceResults3(
+                results=[
+                    ReferenceResult3(path=e["file"], uuid=e["uuid"]) for e in manifest
+                ]
+            )
 
         if name_one.functions:
             raise ReferenceException3(
@@ -719,6 +749,37 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 self.csvpaths.file_manager.named_file_names, name_filter
             ):
                 candidates.extend(self._candidates_for_name(name, []))
+        elif self._bare_manifest_field_call(name_one) is not None:
+            # ':manifest():uuid()' during '*' traversal -- added
+            # 2026-08-28, David's own worked example ("get uuids from
+            # all registrations"). Reads the global arrivals ledger
+            # (Rule 1a's own resource for bare ':manifest()' at '*'
+            # root), not each named-file's own manifest -- "every
+            # registration across every named-file" is literally what
+            # that ledger already tracks, so this stays consistent with
+            # Rule 1a rather than reassembling the same set by iterating
+            # every name's own manifest. `name_filter` (:regex() at
+            # root_major) is applied against each entry's own
+            # "named_file_name" field, since the ledger is a flat list,
+            # not organized by name the way per-name enumeration is
+            # elsewhere in this method.
+            manifest_field_call = self._bare_manifest_field_call(name_one)
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    f"FilesReferenceFinder3 does not yet support combining a "
+                    f"bare ':manifest():{manifest_field_call.name}()' lookup "
+                    "with name_three during '*' traversal -- it already "
+                    "reads a field from every matched entry on its own."
+                )
+            ledger = self.csvpaths.file_manager.files_root_manifest
+            return ReferenceResults3(
+                results=[
+                    ReferenceResult3(path=e["file_path"], uuid=e["uuid"])
+                    for e in ledger
+                    if name_filter is None
+                    or re.search(name_filter, e["named_file_name"])
+                ]
+            )
         else:
             if name_one.functions:
                 raise ReferenceException3(
@@ -1008,6 +1069,45 @@ class FilesReferenceFinder3(ReferenceFinder3):
         return len(flatten_indices) == 1 and flatten_indices[0] > 0
 
     @staticmethod
+    def _bare_manifest_field_call(name_one) -> "FunctionCall3 | None":
+        """returns the field-accessor FunctionCall3 chained onto a bare,
+        argument-less ':manifest()' occupying name_one's own path (e.g.
+        ':manifest():uuid()', ':manifest():time()'), or None if this
+        shape does not apply. Added 2026-08-28, David's own worked
+        examples ("get uuids from all registrations," "get all acme
+        registration uuids") -- maps the given field over EVERY entry in
+        the matched manifest (the named-file's own, for a literal root;
+        the global arrivals ledger, for '*'), unlike the ordinary field-
+        accessor position (riding beside a real pointer in name_three),
+        which reads the field off exactly the one entity a pointer
+        already picked. David confirmed both remain valid, distinct
+        ways to reach the same kind of value (narrow to one version via
+        :name(...)+pointer, THEN :uuid() in name_three; or map :uuid()
+        over every version at once via this shape) -- this does not
+        touch or replace the name_three path at all.
+
+        Requires exactly one chained function -- picking one field per
+        entry from more than one chained accessor at once is not a
+        shape any worked example has asked for yet, so left unbuilt
+        rather than guessed at."""
+        if (
+            len(name_one.path) != 1
+            or not isinstance(name_one.path[0], FunctionCall3)
+            or name_one.path[0].name != "manifest"
+            or name_one.path[0].arg is not None
+        ):
+            return None
+        if len(name_one.functions) != 1:
+            return None
+        call = name_one.functions[0]
+        if not isinstance(call, FunctionCall3):
+            return None
+        function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+        if function_cls is None or function_cls.SOURCE is None:
+            return None
+        return call
+
+    @staticmethod
     def _bare_definition_field_call(name_one) -> "FunctionCall3 | None":
         """returns the field-accessor FunctionCall3 when name_one's
         entire content is a single function whose registered class is
@@ -1138,6 +1238,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # function reached here specifically because NO version
                 # was selected at all, same reasoning.
                 field_call = self._bare_definition_field_call(reference.name_one)
+                if field_call is None:
+                    # ':manifest():uuid()'-style, chained onto a bare
+                    # ':manifest()' in name_one rather than definition-
+                    # sourced -- added 2026-08-28, see query()'s/
+                    # _query_star_traversal()'s own comment on this
+                    # shape. result.uuid is real here (query() built it
+                    # from the actual matched manifest entry), so the
+                    # ordinary manifest-entry-by-uuid read below applies
+                    # unchanged -- only the "which manifest to search"
+                    # step (just below) needs to know about '*' root.
+                    field_call = self._bare_manifest_field_call(
+                        reference.name_one
+                    )
             if field_call is not None:
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     field_call.name
@@ -1165,9 +1278,24 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     )
                     entry = config.model_dump(exclude_none=True)
                     return self._extract_field_value(entry, key_path)
-                manifest = self.csvpaths.file_manager.get_manifest(
-                    reference.root_major
-                )
+                if isinstance(reference.root_major, Star3):
+                    # ':manifest():uuid()' during '*' traversal -- added
+                    # 2026-08-28. root_major is the '*' token itself
+                    # here, not a real name, so get_manifest() cannot be
+                    # called with it -- read the same global arrivals
+                    # ledger query()'s own '*'-traversal branch built
+                    # these results from instead (this shape is the
+                    # only way a name_three-less, root_major-is-Star3
+                    # METADATA_FIELD read reaches this far -- the
+                    # ordinary name_three field-accessor position still
+                    # unconditionally rejects '*' traversal in
+                    # _query_star_traversal(), so this branch is never
+                    # reached for that shape).
+                    manifest = self.csvpaths.file_manager.files_root_manifest
+                else:
+                    manifest = self.csvpaths.file_manager.get_manifest(
+                        reference.root_major
+                    )
                 entry = self._find_manifest_entry_by_uuid(manifest, result.uuid)
                 return self._extract_field_value_with_ledger_fallback(
                     entry=entry,
