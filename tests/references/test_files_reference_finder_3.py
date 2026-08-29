@@ -618,9 +618,30 @@ STAR_BY_NAME = {
     "alpha": (STAR_ALPHA_HOME, STAR_ALPHA_MANIFEST),
 }
 
+# a field accessor riding alongside a pointer during '*' traversal --
+# narrowed 2026-08-29 -- resolves via _extract_data()'s Star3-aware
+# branch, which reads the global arrivals ledger (result.uuid alone does
+# not say which named-file a candidate came from) -- these tests need a
+# ledger entry for every uuid any of them might resolve, unlike every
+# OTHER star-traversal test in this file, which never reads the ledger
+# at all.
+STAR_LEDGER = [
+    {"uuid": "u-zero-1"},
+    {"uuid": "u-one-1"},
+    {"uuid": "u-one-2"},
+    {"uuid": "u-two-1"},
+    {"uuid": "u-two-2"},
+]
+
 
 def _star_finder(reference: str) -> FilesReferenceFinder3:
-    return _finder(reference, STAR_ALPHA_HOME, STAR_ALPHA_MANIFEST, by_name=STAR_BY_NAME)
+    return _finder(
+        reference,
+        STAR_ALPHA_HOME,
+        STAR_ALPHA_MANIFEST,
+        by_name=STAR_BY_NAME,
+        ledger=STAR_LEDGER,
+    )
 
 
 class TestStarTraversalFlatten:
@@ -653,9 +674,13 @@ class TestStarTraversalFlatten:
         with pytest.raises(ReferenceException3):
             _star_finder("$*.files.*.:last():manifest()").query()
 
-    def test_combining_with_a_field_accessor_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _star_finder("$*.files.*.:last():uuid()").query()
+    def test_combining_with_a_field_accessor_now_works(self):
+        # narrowed 2026-08-29 -- POOL mode always reduces to exactly one
+        # overall candidate, so a field accessor riding alongside the
+        # pointer is unambiguous the same way it already was for every
+        # other pointer+field-accessor position in this file.
+        results = _star_finder("$*.files.*.:last():uuid()").resolve()
+        assert results.results[0].data == "u-two-2"
 
     def test_functions_directly_on_name_one_not_yet_supported(self):
         with pytest.raises(ReferenceException3):
@@ -756,6 +781,16 @@ class TestStarTraversalGroup:
         with pytest.raises(ReferenceException3):
             _star_finder("$*.files.:all().:last():manifest()").query()
 
+    def test_all_combined_with_a_field_accessor_now_works(self):
+        # narrowed 2026-08-29 -- one value per (named-file, path) group,
+        # same as the literal-root ':all()' GROUP-mode fix the same day.
+        results = _star_finder("$*.files.:all().:last():uuid()").resolve()
+        assert {r.data for r in results.results} == {
+            "u-zero-1",
+            "u-one-2",
+            "u-two-2",
+        }
+
 
 #
 # adds one named-file ("gamma") with a TWO-level entry, chronologically
@@ -773,10 +808,13 @@ FLATTEN_GAMMA_MANIFEST = [
     },
 ]
 FLATTEN_BY_NAME = dict(STAR_BY_NAME, gamma=(FLATTEN_GAMMA_HOME, FLATTEN_GAMMA_MANIFEST))
+FLATTEN_LEDGER = STAR_LEDGER + [{"uuid": "u-gamma-deep-1"}]
 
 
 def _flatten_star_finder(reference: str) -> FilesReferenceFinder3:
-    csvpaths = _FakeCsvPaths(_FakeFileManager(None, None, by_name=FLATTEN_BY_NAME))
+    csvpaths = _FakeCsvPaths(
+        _FakeFileManager(None, None, by_name=FLATTEN_BY_NAME, ledger=FLATTEN_LEDGER)
+    )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
     return FilesReferenceFinder3(csvpaths=csvpaths, ref=ref)
 
@@ -808,11 +846,27 @@ class TestStarTraversalFlattenAnyDepth:
         }
 
     def test_combining_with_manifest_is_not_yet_supported(self):
-        # same structural reason '*' traversal has this restriction --
-        # root_major is "*" here, so _extract_data() cannot know which
-        # named-file's manifest to re-read.
+        # :manifest() (whole-resource) stays rejected here -- not a
+        # technical limit (_extract_data() can resolve it fine via the
+        # global ledger, same as Rule 1b's own :manifest()-with-pointer
+        # shape), but Rule 1: GROUP mode (see TestStarTraversalGroup/
+        # TestStarTraversalGroupsAnyDepth) can legitimately produce more
+        # than one reduced candidate, and this method's own return sets
+        # no ambiguous_content_read flag to catch that. ':flatten()' here
+        # is POOL mode though (always exactly one overall candidate) --
+        # kept consistent with :manifest()'s own blanket rejection in
+        # this method anyway, rather than carving out a POOL-only
+        # exception not asked for by any worked example.
         with pytest.raises(ReferenceException3):
             _flatten_star_finder("$*.files.:flatten().:last():manifest()").query()
+
+    def test_combining_with_a_field_accessor_now_works(self):
+        # narrowed 2026-08-29 -- POOL mode always reduces to exactly one
+        # overall candidate, so a field accessor riding alongside the
+        # pointer is unambiguous, the any-depth peer of '*' traversal's
+        # own POOL-mode fix (TestStarTraversalFlatten above).
+        results = _flatten_star_finder("$*.files.:flatten().:last():uuid()").resolve()
+        assert results.results[0].data == "u-gamma-deep-1"
 
 
 class TestStarTraversalGroupsAnyDepth:
@@ -836,6 +890,20 @@ class TestStarTraversalGroupsAnyDepth:
     def test_combining_with_manifest_is_not_yet_supported(self):
         with pytest.raises(ReferenceException3):
             _flatten_star_finder("$*.files.:groups().:last():manifest()").query()
+
+    def test_combining_with_a_field_accessor_now_works(self):
+        # narrowed 2026-08-29 -- one value per (named-file, path) group,
+        # any depth, including gamma's two-level entry ':all()' cannot
+        # reach.
+        results = _flatten_star_finder(
+            "$*.files.:groups().:last():uuid()"
+        ).resolve()
+        assert {r.data for r in results.results} == {
+            "u-zero-1",
+            "u-one-2",
+            "u-two-2",
+            "u-gamma-deep-1",
+        }
 
 
 #

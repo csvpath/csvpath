@@ -591,6 +591,28 @@ set of groupings:
     :identity(), etc.) is undeclared, for now, and falls back to
     exact-accessor-equality required for value comparison
 
+#### Using UUID in set operations as an example of field comparisons
+First two simple examples:
+- Get uuids from all registrations
+`$*.files.:manifest():uuid()`
+- Get all acme registration uuids
+`$acme.files.:manifest():uuid()`
+
+Now two example set operations that match/join on fields, UUID in this case.
+- Get all registration UUIDs, except those of the acme named-files
+```
+$*.files.:manifest():uuid()
+SUBTRACT
+$acme.files.:manifest():uuid()
+```
+
+- Get all the most recent acme registration UUIDs that have been used in runs
+```
+$acme.files.:manifest():uuid()
+INTERSECT
+$*.results.:flatten():manifest():named_file_uuid()
+```
+
 #### 5.6b
 Note: when a function is used to retrieve the content of a file only one
 file may match the reference. For e.g., it is not possible to pull the

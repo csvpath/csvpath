@@ -9,6 +9,79 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## FILES' `_query_star_traversal()` combined with a chained field accessor (POOL and GROUP alike) — BUILT 2026-08-29
+
+`$*.files.*.:last():uuid()` (POOL), `$*.files.:all().:last():uuid()`
+(GROUP, one level), and `$*.files.:groups().:last():uuid()`/
+`$*.files.:flatten().:last():uuid()` (any depth, GROUP/POOL) all now
+work, instead of raising. Found and fixed the same day as, and directly
+motivated by, the literal-root GROUP-mode fix just above — same class of
+gap, one level broader (every `'*'`-traversal shape, not just the
+literal-root one).
+
+**Investigated before designing anything, not guessed.** `_query_star_
+traversal()`'s shared name_three-processing tail had a single, blanket
+`unsupported = has_manifest OR field_accessor` check covering EVERY
+traversal shape (POOL and GROUP, one-level and any-depth alike) — even
+broader than the literal-root check the previous fix narrowed. Traced the
+reduction logic just below it (`if pointers: if partitioned: ...`)
+before touching anything: it already independently reduces each
+`file_home`'s own candidates in GROUP mode, or pools to one overall
+candidate in POOL mode, regardless of which accessor rides alongside the
+pointer — nothing there needed to change either.
+
+The one genuinely new question this fix raised (not present in the
+literal-root case): `_extract_data()`'s Star3-aware branch (added
+2026-08-28, previously only exercised by the bare `:manifest():field()`-
+in-name_one shape) reads the GLOBAL arrivals ledger to re-derive a
+matched candidate's own field, since `result.uuid` alone does not say
+which named-file a `'*'`-traversal candidate came from. Confirmed this
+generalizes correctly to a `name_three`-sourced `field_call` too (not
+just the name_one-sourced one it was built for) by reading `_extract_
+data()`'s own control flow: the Star3 branch lives inside `if field_call
+is not None:`, shared by both sources — no code change needed there
+either, only test fixtures needed a ledger they never previously
+required (see below).
+
+**What was built:** narrowed the shared `unsupported` check to `has_
+manifest` only, mirroring the literal-root fix exactly. `:manifest()`
+(whole-resource) stays rejected for every `'*'`-traversal shape,
+deliberately — same Rule 1 reasoning as the literal-root fix (GROUP mode
+can produce more than one reduced candidate; this method sets no
+`ambiguous_content_read` flag), restated in the method's own docstring
+and per-test comments rather than left to go stale silently the way the
+original comment did (see below). POOL mode (`:flatten()` and the plain
+`'*'`/prefixed shapes) always reduces to exactly one overall candidate,
+so `:manifest()` there has no real Rule-1 ambiguity risk either — kept
+rejected anyway, for consistency, rather than carving out a POOL-only
+exception no worked example has asked for.
+
+**A stale comment corrected in the process**: the method's own docstring,
+and two per-test comments, used to claim the restriction existed because
+"`root_major` is `'*'` here, so `_extract_data()` cannot know which
+named-file's manifest to re-read" — no longer true (the Star3-aware
+ledger branch already solves exactly that, added 2026-08-28) and, on
+closer inspection, was never really the FULL reason even before that —
+the real, still-current reason `:manifest()` stays rejected is Rule 1
+(the ambiguous-multiple-whole-entries risk), not a technical limitation.
+Rewritten to state that accurately rather than leaving the old
+explanation to mislead the next person who reads it.
+
+**Tests updated/added** (`test_files_reference_finder_3.py`): the one
+existing test asserting the old field-accessor rejection (POOL mode,
+`TestStarTraversalFlatten`) converted to a positive assertion; three new
+tests added for shapes that were never testable before (GROUP one-level,
+GROUP any-depth, POOL any-depth). `STAR_LEDGER`/`FLATTEN_LEDGER` fixtures
+added — `_star_finder`/`_flatten_star_finder` never needed a ledger
+before this fix, since the shapes reaching it were always rejected;
+every OTHER star-traversal test in this file still does not read it.
+`:manifest()`-combined tests (asserting the still-correct rejection)
+left unchanged in every mode. Full suite run twice, stable both times:
+3156 passed, 11 failed (the known, unrelated SFTP/S3 failures requiring
+unset env vars — issue #216), identical both runs.
+
+---
+
 ## FILES' `:all()`/`:groups()` GROUP-mode combined with a chained field accessor — BUILT 2026-08-29
 
 `$acme.files.:all().:last():uuid()`/`$mixed.files.:groups().:last():uuid()`

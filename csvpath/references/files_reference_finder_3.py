@@ -652,12 +652,31 @@ class FilesReferenceFinder3(ReferenceFinder3):
           -- one result per (named-file, path) pair regardless of how
           deep that pair's own path happens to be.
 
-        Deliberately narrow for now, matching only the spec's own worked
-        examples: combining '*'/':flatten()'/':groups()' traversal with
-        :manifest()/a field-accessor function in name_three is not yet
-        supported -- those all assume exactly one already-known manifest
-        to re-read in _extract_data(), which does not hold when a result
-        could have come from any of several named-files' manifests.
+        A field accessor (e.g. :uuid()) riding alongside the pointer in
+        name_three is supported (narrowed 2026-08-29, matching FILES'
+        own literal-root GROUP-mode fix the same day, and RESULTS' own
+        long-settled precedent for the identical shape) -- poolable, one
+        value per matched candidate, exempt from Rule 1 (manifest_field_
+        functions_proposal.md's "Entity resolution and pooling"
+        section) the same way it is everywhere else in this file.
+        _extract_data() already resolves this correctly for a Star3
+        root_major via the global arrivals ledger (added 2026-08-28,
+        alongside FILES' own bare ':manifest():field()' shape -- same
+        Star3-aware branch, reused here for free since it keys off
+        `field_call` generically, not off which grammar position found
+        it).
+
+        :manifest() (a whole-resource read) STAYS rejected here,
+        deliberately -- not because _extract_data() cannot resolve it
+        (it can, via that same Star3-aware ledger branch, already used
+        by Rule 1b's own :manifest()-with-a-global-pointer shape), but
+        because this method's own return here sets no `ambiguous_
+        content_read` flag at all: GROUP mode (':all()'/':groups()') can
+        legitimately produce more than one reduced candidate (one per
+        file_home group), and resolving each one's own WHOLE manifest
+        entry at once is exactly the Rule 1 violation that flag exists
+        to catch elsewhere -- adding it here, correctly, is its own
+        separate piece of work, not bundled into this fix.
 
         ':home()' and ':definition()' as name_one's own content -- added
         2026-08-27 (FILES '*' traversal generalization bucket-list
@@ -836,16 +855,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         built = self._build_chain(name_three.functions)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
-        unsupported = (
-            any(f.name == "manifest" for f in built)
-            or self._find_field_function_call(built) is not None
-        )
-        if unsupported:
+        if any(f.name == "manifest" for f in built):
+            # narrowed 2026-08-29 -- a field accessor is no longer
+            # caught by this check, see the method's own docstring for
+            # why :manifest() alone still is.
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support combining '*' "
-                "traversal with :manifest() or a field-accessor function -- "
-                "only a plain pointer (:first()/:last()/:index(n)) is "
-                "supported so far."
+                "traversal with :manifest() -- only a plain pointer "
+                "(:first()/:last()/:index(n)), optionally with a field "
+                "accessor, is supported so far."
             )
         if not pointers:
             raise ReferenceException3(
