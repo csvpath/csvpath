@@ -523,6 +523,112 @@ class TestFlatten:
         assert results.results[0].uuid == "deep-uuid"
         assert results.results[0].data == "acme"
 
+    def test_manifest_combined_with_a_field_accessor_narrows_not_whole_entry(
+        self, tmp_path
+    ):
+        # added 2026-08-28 -- David's own worked example ("get all the
+        # most recent acme registration uuids used in runs"),
+        # $*.results.:flatten():manifest():named_file_uuid(). Found by
+        # tracing (not guessed): _extract_data()'s own has_manifest
+        # branch used to return the WHOLE manifest.json entry the moment
+        # ':manifest()' was present anywhere in name_one, even with a
+        # field accessor ALSO chained alongside it -- it never checked
+        # for one, so the narrowing silently never applied. No pointer
+        # here (matches David's own syntax exactly) -- every matched run
+        # comes back, each narrowed to its own named_file_uuid value.
+        run1 = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "run1-uuid", {}
+        )
+        _write_json(
+            Path(run1) / "manifest.json",
+            {"run_uuid": "run1-uuid", "named_file_uuid": "file-uuid-1"},
+        )
+        run2 = _make_run(
+            tmp_path / "acme", "2026-01-02_00-00-00", "run2-uuid", {}
+        )
+        _write_json(
+            Path(run2) / "manifest.json",
+            {"run_uuid": "run2-uuid", "named_file_uuid": "file-uuid-2"},
+        )
+        _write_archive_manifest(tmp_path, "acme", [run1, run2])
+        results = _finder(
+            "$*.results.:flatten():manifest():named_file_uuid()", str(tmp_path)
+        ).resolve()
+        assert {r.data for r in results.results} == {"file-uuid-1", "file-uuid-2"}
+        # not the whole dict -- confirms narrowing actually happened,
+        # not just that no error was raised.
+        assert all(isinstance(r.data, str) for r in results.results)
+
+    def test_manifest_alone_with_no_field_accessor_still_gives_the_whole_entry(
+        self, tmp_path
+    ):
+        # regression check -- ':manifest()' bare (no field accessor
+        # chained) must keep its own pre-existing, already-shipped
+        # behavior unchanged.
+        run1 = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "run1-uuid", {}
+        )
+        _write_json(
+            Path(run1) / "manifest.json",
+            {"run_uuid": "run1-uuid", "named_file_uuid": "file-uuid-1"},
+        )
+        _write_archive_manifest(tmp_path, "acme", [run1])
+        results = _finder(
+            "$*.results.:flatten():manifest()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data == {
+            "run_uuid": "run1-uuid",
+            "named_file_uuid": "file-uuid-1",
+        }
+
+    def test_field_accessor_order_before_manifest_also_works(self, tmp_path):
+        # order-independence, same as the ordinary pointer+field-
+        # accessor position already has -- ':named_file_uuid():manifest()'
+        # means the same thing as ':manifest():named_file_uuid()'.
+        run1 = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "run1-uuid", {}
+        )
+        _write_json(
+            Path(run1) / "manifest.json",
+            {"run_uuid": "run1-uuid", "named_file_uuid": "file-uuid-1"},
+        )
+        _write_archive_manifest(tmp_path, "acme", [run1])
+        results = _finder(
+            "$*.results.:flatten():named_file_uuid():manifest()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data == "file-uuid-1"
+
+    def test_literal_root_also_gets_the_narrowing_fix(self, tmp_path):
+        # confirms this is not '*'-traversal-specific -- the bug lived
+        # in _extract_data(), shared by every root_major shape.
+        base = tmp_path / "acme" / "customers" / "2025"
+        run1 = _make_run(base, "2026-01-01_00-00-00", "run1-uuid", {})
+        _write_json(
+            Path(run1) / "manifest.json",
+            {"run_uuid": "run1-uuid", "named_file_uuid": "file-uuid-1"},
+        )
+        _write_archive_manifest(tmp_path, "acme", [run1])
+        results = _finder(
+            "$acme.results.customers/2025:first():manifest():named_file_uuid()",
+            str(tmp_path),
+        ).resolve()
+        assert results.results[0].data == "file-uuid-1"
+
+    def test_combined_with_name_three_is_not_supported(self, tmp_path):
+        run1 = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "run1-uuid", {"orders": "o1"}
+        )
+        _write_json(
+            Path(run1) / "manifest.json",
+            {"run_uuid": "run1-uuid", "named_file_uuid": "file-uuid-1"},
+        )
+        _write_archive_manifest(tmp_path, "acme", [run1])
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$*.results.:flatten():manifest():named_file_uuid().orders",
+                str(tmp_path),
+            ).resolve()
+
     def test_all_grouping_partitions_by_composite_group_and_template_key(
         self, tmp_path
     ):

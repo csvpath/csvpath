@@ -1157,9 +1157,46 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     "the run's own manifest on its own, without a "
                     "further instance selector."
                 )
-            return self._read_well_known_json(
+            entry = self._read_well_known_json(
                 Nos(result.path).join("manifest.json")
             )
+            manifest_field_call = self._find_field_function_call(name_one_calls)
+            if manifest_field_call is not None:
+                # ':manifest():named_file_uuid()'-style -- added
+                # 2026-08-28, David's own worked example ("get all the
+                # most recent acme registration uuids used in runs,"
+                # $*.results.:flatten():manifest():named_file_uuid()).
+                # Found by tracing, not guessed: this branch used to
+                # return the WHOLE manifest.json entry unconditionally
+                # the moment ':manifest()' was present anywhere in
+                # name_one_calls, even when a field accessor was ALSO
+                # chained alongside it -- never checking for one, so the
+                # narrowing silently never applied (no error, just the
+                # wrong shape of data back). :manifest() is not actually
+                # required for a run-level field read at all (see
+                # run_field_call's own branch just below, reached
+                # whenever :manifest() is ABSENT) -- it is legal but
+                # redundant here, the same "already reads the field off
+                # the matched entity, :manifest() adds nothing" relationship
+                # FILES' own :first():uuid() vs. :first():manifest():uuid()
+                # has. Reuses the identical extraction logic run_field_
+                # call's own branch below already has, just fed the
+                # entry already read above instead of re-reading it.
+                function_cls = ReferenceFunctionFactory.get_registered_class(
+                    manifest_field_call.name
+                )
+                key_path = function_cls.KEY.get(Reference3.RESULTS)
+                return self._extract_field_value_with_ledger_fallback(
+                    entry=entry,
+                    key_path=key_path,
+                    function_cls=function_cls,
+                    datatype=Reference3.RESULTS,
+                    ledger_entry_getter=lambda: self._find_archive_ledger_entry(
+                        ledger=self.csvpaths.results_manager.results_root_manifest,
+                        run_uuid=entry.get("run_uuid") if entry else None,
+                    ),
+                )
+            return entry
 
         run_field_call = self._find_field_function_call(name_one_calls)
         if run_field_call is not None:

@@ -9,6 +9,79 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `:manifest()` combined with a chained field accessor, run-level (RESULTS) — BUILT 2026-08-28
+
+`$*.results.:flatten():manifest():named_file_uuid()` (David's own exact
+worked example, "get all the most recent acme registration uuids used in
+runs," meant to `INTERSECT` against the FILES-side uuid set built in the
+previous PR) now narrows to the field value, not the whole manifest
+entry.
+
+**Investigated before designing anything, not guessed.** The initial
+framing (from checking this while scoping the FILES fix, see the
+`SELECTOR_WHEN_ARGUED` and prior FILES `:manifest()` entries below) was
+"does the undotted shape need to be made to apply an accessor it
+currently discards, or should it raise." Traced through
+`_query_star_traversal()`'s bare-function-only branch,
+`_star_run_selector_chain()`, and `_extract_data()` in full before
+answering. Two things turned out to be true that the original framing
+had not accounted for:
+1. `_query_star_traversal()` and `_star_run_selector_chain()` were
+   already fine — `_star_run_selector_chain()` already exempts
+   `:manifest()`/a field-accessor call from its "unsupported function"
+   rejection, and `query()` already produces real, per-run results (an
+   unreduced pool) regardless. Nothing needed changing there.
+2. The actual bug lived entirely in `_extract_data()`, and it is NOT
+   `'*'`-traversal-specific — the exact same bug exists for the literal-
+   root shape too (`$acme.results.customers/2025:first():manifest()
+   :named_file_uuid()`), just never exercised by any existing test.
+   `_extract_data()`'s `has_manifest` branch returned the WHOLE
+   `manifest.json` entry the moment `:manifest()` was present ANYWHERE in
+   `name_one_calls` (`has_manifest = any(seg.contains_function_named
+   ("manifest") for seg in name_one_calls ...)`), unconditionally,
+   BEFORE ever checking whether a field accessor was ALSO chained
+   alongside it to narrow further — the `run_field_call` branch just
+   below it that DOES do that narrowing was structurally unreachable
+   whenever `:manifest()` was also present, since the `has_manifest`
+   branch always returns first.
+
+Also confirmed, before building: `:manifest()` is not actually required
+for a run-level field read at all — `$*.results.:flatten()
+:named_file_uuid()` (no `:manifest()`) already worked correctly before
+this PR, via the pre-existing `run_field_call` branch, the exact same
+"already reads the field off the matched entity, `:manifest()` adds
+nothing" relationship the previous FILES PR's `:first():uuid()` vs.
+`:first():manifest():uuid()` distinction already established. `:manifest()`
+chained alongside a field accessor is legal but redundant, not a
+different, narrower shape needing its own separate design.
+
+**What was built:** widened `_extract_data()`'s `has_manifest` branch
+(shared by literal-root and `'*'`-root alike, since both funnel through
+the same method) to check for a field accessor in `name_one_calls`
+(reusing `_find_field_function_call()`, already used by the sibling
+`run_field_call` branch) after reading the entry, and — if one is
+present — narrow to that field using the identical extraction logic
+(`function_cls.KEY`, `_extract_field_value_with_ledger_fallback()`) the
+`run_field_call` branch already has, instead of returning the whole
+entry. Bare `:manifest()` with no field accessor keeps its own pre-
+existing behavior unchanged (confirmed via a dedicated regression test).
+Order-independence (`:named_file_uuid():manifest()` meaning the same as
+`:manifest():named_file_uuid()`) confirmed too, matching the same
+convention the ordinary pointer+field-accessor position already has.
+
+**Tests added** (`test_results_reference_finder_3.py`, in
+`TestStarTraversalFlatten`'s own class): narrowing works for `'*'` root
+with multiple pooled runs (no pointer, matching David's own syntax
+exactly); bare `:manifest()` alone still gives the whole entry
+(regression check); field-accessor-before-`:manifest()` order also
+works; the literal-root shape gets the same fix (not `'*'`-specific);
+combining with `name_three` still correctly raises. Full suite run
+twice, stable both times: 3153 passed, 11 failed (the known, unrelated
+SFTP/S3 failures requiring unset env vars — issue #216), identical both
+runs.
+
+---
+
 ## Bare `:manifest()` combined with a chained field accessor (FILES) — BUILT 2026-08-28
 
 `$acme.files.:manifest():uuid()`/`$*.files.:manifest():uuid()` now work,
