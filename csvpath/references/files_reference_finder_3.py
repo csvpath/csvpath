@@ -511,20 +511,41 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # has_range cover the complete set of name_three-legal FILES
         # functions), so at least one of them is always true here.
 
-        if partitioned and (has_range or (pointers and (has_manifest or has_field_function))):
-            # mirrors ResultsReferenceFinder3's own ':all()'-grouping
-            # restriction (settled 2026-08-11 there): grouping (one-
-            # level ':all()' or any-depth ':groups()') plus :manifest()/
-            # a field-accessor is an under-specified interaction, not
-            # decided -- resolve the grouped versions on their own
-            # first, rather than guessing what "the manifest entry of
-            # every group's own latest version, all at once" should even
-            # resolve to.
+        if partitioned and (has_range or (pointers and has_manifest)):
+            # narrowed 2026-08-29 -- this used to also reject
+            # `has_field_function`, but that was stale relative to
+            # ResultsReferenceFinder3's OWN, later-refined precedent:
+            # RESULTS' _star_group_and_reduce() only rejects a name_three
+            # CONTENT accessor (:errors()/:vars()/etc.) here, explicitly
+            # NOT a field accessor (e.g. ":all():last().invoices:uuid()"
+            # resolves fine there, confirmed live before that code was
+            # written -- poolable, one result per matched group). This
+            # comment used to claim FILES "mirrors" that RESULTS
+            # restriction, but it mirrored RESULTS' ORIGINAL, blanket
+            # 2026-08-11 rejection, before RESULTS' own later split --
+            # FILES was never updated to match. :manifest() (a whole-
+            # resource read) stays rejected here for the same reason it
+            # always was: "the manifest entry of every group's own latest
+            # version, all at once" is still Rule 1 territory (each
+            # group's own single reduced candidate is fine on its own,
+            # but pooling several groups' own whole entries together
+            # is not obviously the same "resolve one entity" contract).
+            # A field accessor is exempt from Rule 1 everywhere else in
+            # this file (see the `selected_candidates`/`ambiguous_
+            # content_read` comments just below, already correctly
+            # written to only flag `has_manifest`) -- this early check
+            # was the one place still treating the two the same.
+            #
+            # The reduction logic just below already does exactly the
+            # right thing once this stops blocking it: `partitioned`
+            # already reduces each distinct file_home's own candidates
+            # independently via the pointer, before a field accessor (or
+            # :manifest()'s own entry) is ever read -- no new machinery
+            # needed here, only removing the premature rejection.
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support combining "
-                "':all()'/':groups()' grouping with :manifest() or a "
-                "field-accessor function -- resolve the grouped versions "
-                "on their own first."
+                "':all()'/':groups()' grouping with :manifest() -- "
+                "resolve the grouped versions on their own first."
             )
 
         if has_range:

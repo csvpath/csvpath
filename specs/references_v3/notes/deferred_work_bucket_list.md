@@ -301,9 +301,13 @@ and a stale-entry correction, are both done — see
   combined with a chained field accessor is a related but distinct
   question (partitioning semantics differ per marker), still open, just
   below.
-- FILES' `:all()`/`:groups()` (GROUP modes) combined with `:manifest()`/
-  a field-accessor — same single-entity-vs-grouping restriction RESULTS'
-  `name_three` content accessor now has, not yet built for FILES.
+- FILES' `:all()`/`:groups()` (GROUP modes) combined with a chained field
+  accessor (e.g. `:all().:last():uuid()`) — **BUILT 2026-08-29**, see
+  `deferred_work_done_list.md`. `:manifest()` (whole-resource) combined
+  with GROUP modes stays rejected, unchanged — only the field-accessor
+  half of this item was ever under-specified; RESULTS had already
+  settled the field-accessor case, FILES just hadn't been updated to
+  match.
 - A literal prefix *before* `:flatten()` for FILES — **BUILT 2026-08-27**,
   see `deferred_work_done_list.md`.
 - FILES' `:from()`/`:to()` combined with `:all()`/`:groups()` grouping in

@@ -9,6 +9,77 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## FILES' `:all()`/`:groups()` GROUP-mode combined with a chained field accessor — BUILT 2026-08-29
+
+`$acme.files.:all().:last():uuid()`/`$mixed.files.:groups().:last():uuid()`
+now resolve to one field value per (named-file, path) group instead of
+raising.
+
+**Investigated before designing anything, not guessed.** The bucket-list
+entry read as a single, still-open question — "GROUP modes combined with
+`:manifest()`/a field-accessor... not yet built for FILES." Traced
+`query()`'s own GROUP-mode rejection (`if partitioned and (has_range or
+(pointers and (has_manifest or has_field_function))): raise`) and the
+reduction logic just below it before touching anything, and found the
+rejection was stricter than the code actually needed to be:
+- The reduction logic just below (`if pointers: if partitioned: ...`)
+  already independently reduces each distinct `file_home`'s own
+  candidates via the pointer, unconditionally — nothing about that logic
+  depends on whether `has_manifest`/`has_field_function` is also present.
+  `ReferenceResults3.ambiguous_content_read` was already correctly
+  written to flag ONLY `has_manifest`, never `has_field_function` (`has_
+  manifest and len(selected_candidates) > 1`) — the Rule-1-vs-Rule-3
+  (whole-resource vs. poolable-field) distinction this whole class of fix
+  depends on was already present, just not consistently applied.
+- The rejection's own comment claimed it "mirrors ResultsReferenceFinder3's
+  own `:all()`-grouping restriction (settled 2026-08-11 there)" — but
+  RESULTS' restriction was later refined and FILES was never updated to
+  match. RESULTS' actual, current `_star_group_and_reduce()` only rejects
+  a name_three CONTENT accessor (`:errors()`/`:vars()`/etc.) when
+  GROUP-mode partitioning combines with a pointer — a field accessor
+  (e.g. `":all():last().invoices:uuid()"`) is explicitly NOT rejected
+  there, confirmed live before that RESULTS code was even written. FILES'
+  comment was citing RESULTS' original, since-superseded blanket
+  rejection, not its current behavior — a real, confirmable staleness,
+  not a guess (the same class of drift the "cross-datatype function
+  consistency" principle exists to catch).
+- `_extract_data()` needed NO changes at all — the newly-reachable shape
+  (`:all().:last():uuid()`) routes `:uuid()` through `name_three`, the
+  same ordinary, already-tested field-accessor extraction path every
+  other `name_three` field accessor already uses. Confirmed by parsing
+  the exact reference live before writing any code: `:all()`/`:groups()`
+  bare occupies name_one's entire content by construction (`is_bare_all_
+  reference`/`is_bare_groups_reference` both require `not name_one.
+  functions`), so the trailing `:last():uuid()` has nowhere to land
+  except name_three — there is no alternate, name_one.functions-based
+  variant of this shape the way the two previous `:manifest()`+field-
+  accessor fixes needed to handle.
+
+**What was built:** narrowed `query()`'s GROUP-mode rejection from
+`pointers and (has_manifest or has_field_function)` to `pointers and
+has_manifest` — `:manifest()` (whole-resource) stays rejected in this
+position, unchanged, for the same Rule-1 reasoning it always had; a field
+accessor is no longer caught by the same check. No other code changes
+were needed anywhere.
+
+**Tests updated** (`test_files_reference_finder_3.py`): the two existing
+tests asserting the OLD field-accessor rejection
+(`test_all_combined_with_a_field_accessor_is_not_yet_supported`,
+`test_groups_combined_with_a_field_accessor_is_not_yet_supported`) were
+converted to positive assertions confirming one correct uuid per group
+(`ALPHA_MANIFEST`'s two file_home groups; `MIXED_MANIFEST`'s two
+different-depth groups). Their `:manifest()`-combined sibling tests
+(asserting the still-correct rejection) were left unchanged. `'*'`-
+traversal's own, separate and much broader field-accessor rejection in
+`_query_star_traversal()` (a bigger, still-open gap, unrelated to this
+fix's `partitioned`-plus-`pointers` scope) was not touched — confirmed
+its own existing tests (`_star_finder`/`_flatten_star_finder`-based)
+still pass unchanged. Full suite run twice, stable both times: 3153
+passed, 11 failed (the known, unrelated SFTP/S3 failures requiring unset
+env vars — issue #216), identical both runs.
+
+---
+
 ## `:manifest()` combined with a chained field accessor, run-level (RESULTS) — BUILT 2026-08-28
 
 `$*.results.:flatten():manifest():named_file_uuid()` (David's own exact
