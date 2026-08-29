@@ -1031,11 +1031,18 @@ class TestAllForOneNamedFile:
                 "$alpha.files.:all().:last():manifest()", ALPHA_HOME, ALPHA_MANIFEST
             ).query()
 
-    def test_all_combined_with_a_field_accessor_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$alpha.files.:all().:last():uuid()", ALPHA_HOME, ALPHA_MANIFEST
-            ).query()
+    def test_all_combined_with_a_field_accessor_gives_one_value_per_group(self):
+        # narrowed 2026-08-29 -- unlike ':manifest()' (a whole-resource
+        # read, still Rule 1 territory), a field accessor is poolable:
+        # each file_home group's own pointer-reduced candidate
+        # contributes its own field value. Matches
+        # ResultsReferenceFinder3's own already-settled precedent for
+        # the identical shape (a field accessor riding alongside a
+        # pointer during GROUP-mode partitioning is not rejected there).
+        results = _finder(
+            "$alpha.files.:all().:last():uuid()", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert {r.data for r in results.results} == {"u-zero-1", "u-one-2"}
 
 
 class TestFlattenForOneNamedFile:
@@ -1709,11 +1716,14 @@ class TestGroupsForOneNamedFile:
                 "$mixed.files.:groups().:last():manifest()", MIXED_HOME, MIXED_MANIFEST
             ).query()
 
-    def test_groups_combined_with_a_field_accessor_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$mixed.files.:groups().:last():uuid()", MIXED_HOME, MIXED_MANIFEST
-            ).query()
+    def test_groups_combined_with_a_field_accessor_gives_one_value_per_group(self):
+        # narrowed 2026-08-29, same fix as ':all()' above -- ':groups()'
+        # (any-depth GROUP) shares the identical `partitioned` reduction
+        # path.
+        results = _finder(
+            "$mixed.files.:groups().:last():uuid()", MIXED_HOME, MIXED_MANIFEST
+        ).resolve()
+        assert {r.data for r in results.results} == {"u-zero-2", "u-deep-2"}
 
 
 class TestManifestCombinedWithNameThree:
