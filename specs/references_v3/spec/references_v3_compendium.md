@@ -1,15 +1,19 @@
 # CsvPath References v3 — Compendium
 
-This document defines the References v3 subsystem, incorporating the
+This document defines the References v3 subsystem. It incorporates the
 following docs by reference:
-- requirements_for_functions.md
-- references_expressions.md
-- normative_reference_examples.txt
-- normative_reference_expressions_examples.txt
+#### Specs
+- specs/references_v3/spec/requirements_for_functions.md
+- specs/references_v3/spec/references_expressions.md
+#### Normative examples
+- specs/references_v3/spec/normative_reference_examples.txt
+- specs/references_v3/spec/normative_reference_expressions_examples.txt
+#### Required grammar
+- csvpath/references/reference_grammar_3.py
 
 No one doc controls. If there is a discrepency, lack of clarity, or
 logical question mark, the resolution is to raise the issue to David's
-attention for triage and a specification update.
+attention for triage and a spec update.
 
 Other non-normative, informational sources to read for background and
 dev history include:
@@ -23,6 +27,15 @@ comments documenting each decision made and referencing tests where a
 test might be illuminating. Any defered decisions or deferred
 implementation must be itemized specifically in the bucket list.
 
+
+## Outline
+1. What are References v3?
+2. Overall usage pattern
+3. The reference syntax model
+4. Query vs. Resolve
+5. Functions
+6. Grammar
+
 ---
 
 ## 1. What are References v3?
@@ -32,26 +45,26 @@ general access to the Framework's physical data and metadata model. This
 language enables users to ask questions in a declarative syntax rather than
 requiring them to programmatically work within the Framework's objects interface.
 
-The expectation is that references will be:
-- Easier to use than remembering how to use numerous classes
-- More flexible in terms of questions that can be answered practically
+References are:
+- Easier to use than remembering how to use numerous classes and tools
+- More flexible and concise for questions practical questions
 - More resiliant and safer in the face of user error
 - Less brittle than adding dozens of new methods supporting new querying and reasoning tools
 - More understandable when logged by an AI as it iterates through its work
 
 References give access to CsvPath Framework data stores. There are three data
 stores each holding a kind of named thing:
-- **named-files** — versioned sets of registered data files, with each version having a cryptographic identity
-- **named-paths groups** — versioned sets of CsvPath statements that are used as a single entity
-- **named-results** — sets of run outputs from applying a named-paths group to a named-file
+- **named-files** — versioned sets of registered data files, with each version
+  having a cryptographic identity
+- **named-paths groups** — versioned sets of CsvPath statements that are used
+  as a single entity
+- **named-results** — sets of run outputs from applying a named-paths group
+  to a named-file
 
-CsvPath already has two prior versions of CsvPath Reference Language:
+CsvPath has two prior versions of CsvPath Reference Language:
 
-- **v1** set the current `$`-prefixed path/name syntax users see everywhere
-  (e.g. `$myfile.files.abc`).
-- **v2** updated the parsing/resolving implementation behind that same
-  syntax (`csvpath/util/references/`: `ReferenceParser`, `FilesReferenceFinder2`,
-  `ResultsReferenceFinder2`, `reference_transformer.py`, etc., ~2500 lines).
+- **v1** set the basic syntax users see everywhere (e.g. `$myfile.files.abc`)
+- **v2** updated the parsing/resolving implementation behind that same syntax
 
 **v3 is a from-scratch replacement**, motivated by two things:
 - v1 and v2 have real tech debt and lack conceptual clarity
@@ -60,32 +73,50 @@ a single, concise, general-purpose exploration tool for digging into CsvPath
 Framework project states, instead of requiring many narrow, brittle,
 purpose-built tools.
 
+The most obvious differences between v2 and v3 are are covered below:
+- v3's heavy use of functions
+- The option to use variables
+- The option to perform set operations using reference expressions
+
 v3 is AI-facing only, for now. v1/v2 stay exactly where they are, untouched,
 and remain what end users see (identifying runs, registrations, named-paths
 loads). v3 lives in a new location, `csvpath/references/`, and follows v1/v2's
 naming convention: `_3.py` files, `3`-suffixed class names (`ReferenceParser3`).
 v3 tests live in `tests/references/`.
 
-v3 covers only named-file, named-paths-group, and named-results storage. It
-does not cover the four runtime datatypes (variables, headers, csvpath match
-state, metadata) used as primary CsvPath Validation Language productions and
-in `print()` and `error()` statements. Those will be addressed in a follow-on
+v3 covers only named-file, named-paths-group, and named-results storage. I.e
+the `files`, `csvpaths`, and `results` datatypes introduced below. It does not
+cover the four runtime datatypes (variables, headers, csvpath match state,
+metadata) used as primary CsvPath Validation Language productions and in
+`print()` and `error()` statements. Those will be addressed in a follow-on
 release post v3's launch.
 
 ---
 
 ## 2. Overall usage pattern
 
-A reference is a string that is interpreted as a query that gives access to
-file paths, identifiers, and metadata field values, as described below.
+A reference is a string that is interpreted as a query giving access to
+four types of data:
+- File paths
+- Identifiers (UUIDs and fingerprints)
+- Other individual metadata field values
+- Full data and metadata file contents
+
+References can query and resolve. Querying finds the location and identity
+of entities. Resolving retrieves field values, the full contents of files,
+and the full value of file-like entities (e.g. a named-paths group).
+
+A reference can only resolve the full contents of a single file or file-like
+entity. A query can return multiple files, but attempting to resolve (i.e.
+read) multiple files at once raises an error.
 
 #### 2.1
 The steps to using a reference are:
 1. Parse a reference string into a reference object
 2. Create a finder that will interpret the reference
 3. Register any required variables with the finder
-4. Use the finder's query() method to get a list of paths+UUID matching the reference
-5. If needed, use the finder's resolve() method to get a file's contents or the values of one or more metadata fields
+4. Use the finder's `query()` to get a list of paths+UUIDs
+5. If needed, use `resolve()` to get file contents or a metadata field
 
 #### 2.2
 References may be used within a lightweight expression language (also
@@ -102,7 +133,7 @@ Most reference expressions requirements are in
 
 ---
 
-## 3. The reference syntax model
+## 3. The reference model
 
 #### 3.1
 See `csvpath/references/reference_grammar_3.py` for the formal CsvPath
@@ -124,96 +155,217 @@ XLSX files).
 |---|---|---|
 | `root_major` | yes | The named object — a named-file name, named-paths group name, or named-results name. |
 | `datatype` | yes | One of `files`, `csvpaths`, `results`. |
-| `name_one` | yes | See below — meaning differs sharply by datatype. |
+| `name_one` | yes | An entity. |
 | `name_two` | optional, files only | An XLSX worksheet identifier, written as `#worksheet_name` appended directly to name_one's path. |
-| `name_three` | optional (for every datatype, per the current spec) | A more specific part of what name_one identified. |
+| `name_three` | optional | A more specific part of the entity name_one identified. |
 
 The names `root_major`/`name_one`/`name_two`/`name_three` are inherited from
 v1/v2's naming and are kept for continuity and because they make sense in
 context even if they aren't obvious names. v1/v2 also allows for a
-`name_four` based on a separator, `#`, same as used to create name_two.
+`name_four` based on a separator, `#`, same as is used to create name_two.
 `name_four` has few use cases, is rarely used, and is only applicable to the
 runtime datatype `variables`. It does not make an appearance in v3.
 
 ### `root_major`
 
 #### 3.4
-`root_major` is the name of a named-file, named-paths group, or named-results.
-It can take a wildcard as explained below. The datatype is a static field
-indicating which type of named-thing root_major refers to, one of `files`,
-`csvpaths`, or `results`.
+`root_major` is the name of a named-file, named-paths group, or named-results
+entity, depending on if the datatype of the reference is `files`, `csvpaths`,
+or `results`, respectively. `root_major` can take:
+- A string
+- A `*`
+- A variable in the form `@varname`
+- A `:regex(...)` function
 
-#### 3.5
-`root_major` can be a static string, a regex (wrapped in `/` chars) or `*`. As discussed further below, `*`
-means any existing named-thing.
+`*` means any existant named entity
 
-### The name_one datatype distinction
+### name_one
 
-`name_one` means structurally different things per datatype. The larger
-difference is between `csvpaths` and the other two.
+`name_one` means structurally different things per datatype. It points to:
+- `files`: a file home
+- `csvpaths`: a version of a named-paths group's `group.csvpath` file
+- `results`: a run dir
 
-#### 3.6
-- **`files` and `results`**: name_one is a path-like prefix search. It is
-  built from `/`-separated segments. A segment is:
-  - a literal name
-  - `*`
-  - a `:name("...")` function that may include a `.` char which would
-    otherwise be illegal.
+`name_one` for files and results is a file system namespace closely related
+to the physical file system layout.
 
-#### 3.7
-  Note that a regex in root_major can stand alone, but in name one and name
-  three the `:regex()` function must be used.
+A **file home** is a directory named by the original file name containing
+registered versions of that file
 
-#### 3.8
-  Segments identify *which logical file* (files) or *which run* (results) —
-  a location in a directory tree, matched by prefix. Note that a prefix can
-  `''`, i.e. no prefix. This is the case when no template is used during
-  file registration or when a run is triggered. Using templates is an optional
-  tool for semantically organizing files. If no template is used registrations
-  and runs are found directly under their name's home directory. We speak of
-  1-level templates, 2-level templates, etc. to describe how many path
-  segments the template adds to the path to the home directory.
+A **run dir** is a directory named by a disambiguated second-resolution
+datetime (e.g. `2026-01-01_01-01-01`) containing run metadata and the
+directories containing the output of each csvpath in the named-paths group
+
+
+### name_one and time
+
+Datetime functions exist, as discussed below, that can be used wherever a
+time dimension is available. In `name_one` the time dimension exists for
+`csvpaths` and `results`.
+
+Named-paths group loads are time-bound. The load time is carried in
+`name_one`; therefore, datetime functions are available in `name_one`.
+
+Likewise for `results`, there is a time dimension to `name_one`. `name_one`
+represents a run which begins at a moment in time. The run's start time, at the
+granularity of a second, becomes the run dir name; however, this only means
+that the path namespacing includes a datetime-derived segment. Separate from
+the run dir name, there is also datetime information carried in `name_one` that
+allows the use of datetime functions.
+
+There is not a time dimension in `name_one` for `files`. File registrations
+are time-bound; however, the datetime information is carried with the version
+registered, in `name_three`, not with the namespaced location of the file home.
+
+#### 3.5 finding a file registration by arrival time
+Given a named-file `acme`, to find the first registration in any location
+within `acme` that happened yesterday we do:
+```
+$acme.files.*.:yesterday():first()
+```
+Where `*` is `name_one` and the datetime information is carried in
+`name_three`.
+
+### 3.7 name_one and templates
+
+Templates are used to set the location of a registered file version with in
+a named-file or run dir within named-results. Templates are merged at
+registration or run time with:
+- The path to the original location of a registered file
+- Datetime tokens (e.g. `:day`, `:year`) representing the current moment
+A named-file template must end in `:filename`, indicating the file home. A
+named-results template must end in `:run_dir`, indicating the run dir
+(a.k.a. run home).
+
+`files` and `results` datatype entities are found at 0 or more path segments
+below the named-file or named-result home dir. The specific location is set by
+passing a template during registration or when a run is started. References
+include path segments, if any, in `name_one`.
+
+We speak of 0-level, 1-level, 2-level templates, etc. to describe how many
+path segments the template adds to the path to the home directory.
+
+#### 3.8b
+Regardless of the number of levels, the `:filename` or `:run_dir` must be
+represented in the reference. The representation is one of:
+- A string
+- A function
+- The `*`
+- A variable
+
+A string could look like `2026-01-01_01-01-01` or `orders.csv`.
+
+Typical `name_one` functions include:
+- `:all()`
+- `:name(...)`
+- `:flatten()`
+- `:group()`
+- `:regex("2026-01")`
+
+`*` can stand alone. It can also be inferred by the presence of a function
+such as `:last()`. In a reference like `$acme.results.:last()` the name
+is `*:last()` with the `*` inferred.
+
+A 0-level template (a.k.a. no template) is effectively just the home token.
+0-level template named-file registrations have their file homes directly
+below the named-file home. Likewise a run started with 0-level template (i.e.,
+in practice, no template) has its run dir (a.k.a. run home) directly below
+the named-results home directory.
+
+### Examples:
+Given a template `:0/:filename` and a file at `orders/2026/march.csv` a
+registration under the `acme` named file would result in this path:
+`named_files/acme/orders/march.csv` and could be found with these
+references:
+#### 3.5a exact path match returning path+uuid to file home
+- `$acme.files.orders/:name("march.csv")`
+#### 3.5b the last of the 1-level registrations
+- `$acme.files.*/*.:last()
+#### 3.5c the last of all registrations without regard for template levels
+- `$acme.files.:flatten().:last()
+#### 3.5d the path+uuid of all versions of 1-level template file homes starting with "march"
+- `$acme.files.*/:regex("^march")
+
+### name_one for the csvpaths datatype
 
 #### 3.9
-- **`csvpaths`**: name_one is a version-selecting expression, not a path.
-  A named-paths group has exactly one `group.csvpath` file on disk, updated
-  in place every time statements are (re)loaded; there is no per-version
-  physical file. Versioning instead lives entirely in the group's own
-  `manifest.json`, as an array of load events. So for csvpaths, name_one is a
-  time/index/ordinal/UUID expression that selects one or more *entries in
-  that manifest array* — every result shares the same `group.csvpath` path,
-  differentiated only by UUID (the manifest entry's identifying UUID).
+**`csvpaths`**: name_one is a version-selecting expression, not a path. A
+named-paths group has exactly one `group.csvpath` file on disk, updated in
+place every time statements are (re)loaded. There is no per-version physical
+file. Versioning instead lives entirely in the group's `manifest.json`.
 
-This is why the structure table (below) lists name_one's per-datatype meaning
-so differently.
+#### 3.9a
+Despite a verion's source being the manifest, each version of a named-paths
+group is equivalent to a file, and therefore only one version can be retrieved
+in full in one reference. This limitation is applied to other file and file-like
+records, for example, the standard `errors.json` file found in `results`.
+
+The manifest is an array of load events, each containing
+the complete text of the group's csvpath statements at that load. So for
+`csvpaths`, `name_one` selects one or more entries in that manifest array
+by:
+- Load datetime
+- Load index
+- Another ordinal function
+- A UUID
+
+#### 3.9b
+Every result shares the same `group.csvpath` path, differentiated only by
+the named-paths group version's UUID (i.e. the manifest entry's identifying UUID).
+
+#### 3.9c Examples
+Given a named-paths group `acme` loaded three times one day apart, at:
+- 2026-11-05 with UUID `2fc1995b2...`
+- 2026-11-06 with UUID `a8ab152c2...`
+- 2026-11-07 with UUID `091cb1fed...`
+
+- `$acme.csvpaths.:last()` retrieves the 3rd version loaded on 2026-11-07 as `named_paths/acme/group.csvpaths` + UUID `091cb1fed...`
+- `$acme.csvpaths.*` retrieves all versions as:
+  - `named_paths/acme/group.csvpaths` + UUID `091cb1fed...`
+  - `named_paths/acme/group.csvpaths` + UUID `a8ab152c2...`
+  - `named_paths/acme/group.csvpaths` + UUID `091cb1fed...`
+- `$acme.csvpaths.:date("2026-11-05"):after():first()` retrieves the 2nd version as `named_paths/acme/group.csvpaths` + UUID `a8ab152c2...`
+
+Note that the finder's `query()` method with reference `$acme.csvpaths.*` returns the three results shown above; however, the `resolve()` method raises an error because it is not possible to load multiple full documents at once and each version of a named-paths group is considered the equivalent of a document, even though it is sourced from a versioning key in the manifest entries.
 
 ### The role of functions
 
 #### 3.10
-Note: high level requirements for functions begin in
-`specs/references_v3/spec/requirements_for_functions.md`
+Note: high level requirements for functions began in
+`specs/references_v3/spec/requirements_for_functions.md` and continue in this
+spec.
 
 #### 3.11
 Functions look like `:name_of_function()` and can take 0 or 1 argument, which
-is a string, number, function, or regex string wrapped in forward slashes,
-like: `/.../`.
+is a:
+- String
+- Number
+- Function
+- Regex string wrapped in forward slashes (`/.../`)
+- Variable
 
 There is more information on functions below in their own section.
 
 ### The role of variables
 
 #### 3.12
-Prior to query, a reference finder can be given variables that may be used in
-references. A variable can be any Python object, but the variable value will
-be put into a string context so its __str__ must make sense for the reference.
+Variables can be set on the finder and used within references. They must be
+set prior to calling either the query or resolve method. A variable can be
+any Python object, but the variable value will be put into a string context so
+its __str__() must make sense to the reference.
 
 Variable syntax is `@` name, as in `@myvariable`.
 
-Variable support, including registration, is a required, must-have
-capability for RC — not optional or deferrable. This specification does
-not mandate a particular registration mechanism or user-level interface
-for it, but the capability itself must exist before v3 can be considered
-feature-complete.
+Setting variables is done on the finder using these methods:
+#### 3.12a
+```
+    def variables(self) -> dict:
+        ...
+    def set_variable(self, name: str, *, value) -> None:
+        ...
+    def set_variables(self, variables: dict) -> None:
+        ...
+```
 
 ### root_major, name_one, name_three
 
@@ -972,8 +1124,11 @@ level).
 
 ---
 
-## 6. Grammar (`csvpath/references/reference_grammar_3.py`)
+## 6. Grammar
+
 #### 6.1
+The v3 grammar is `csvpath/references/reference_grammar_3.py`.
+
 An LALR Lark grammar is required. LALR is required to support
 `parse_interactive()`-based type-ahead.
 
