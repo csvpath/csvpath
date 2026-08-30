@@ -1,0 +1,22 @@
+
+
+In every `results` reference, `:run_dir` must be named/represented:
+$acme.results.:last()                  # last of everything that has no template (implies `*:last()`)
+$acme.results.*:last()                 # last of everything that has no template
+$acme.results.one/2026-01-01_01-01-01  # run that has 1-level template `one/:run_dir` with a specific name
+
+
+$acme.files.:all():last()            # last where there was no template, grouped by `:filename`
+From these:
+-named_files/acme/one.csv/a1a2a3....csv
+-named_files/acme/one.csv/b1b2b3....csv
+-named_files/acme/two.csv/c1c2c3....csv
+-named_files/acme/two.csv/d1d2d3....csv
+Yields these:
+-named_files/acme/one.csv/b1b2b3....csv
+-named_files/acme/two.csv/d1d2d3....csv
+
+
+$acme.results.one/*:last()             # last of everything that has 1-level template `one/:run_dir`
+$acme.results.one/:all():last()        # last of everything that has 1-level template `one/:run_dir`
+

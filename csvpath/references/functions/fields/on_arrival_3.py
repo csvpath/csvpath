@@ -10,9 +10,7 @@ class OnArrival3(Function3):
     # manifest entry, and does not need result.uuid to do it:
     # definition.json is not versioned (see Definition3), so there is
     # only ever one on_arrival value regardless of which version a
-    # reference otherwise narrowed to. Almost certainly the function
-    # David originally had in mind calling ":activation()" -- see
-    # manifest_field_functions_proposal.md's Part B.
+    # reference otherwise narrowed to.
     #
     NAME = "on_arrival"
     SUMMARY = (

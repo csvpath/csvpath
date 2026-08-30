@@ -239,6 +239,22 @@ NOT part of that build:
 
 - `root_major` accepting a `:regex(...)` function — **BUILT 2026-08-27**,
   see `deferred_work_done_list.md`.
+- `:regex(...)` as a name_one selector for RESULTS (matching a run's own
+  directory name by pattern, at ANY template depth) — NOT built. Surfaced
+  2026-08-30 while working through worked examples for the `:home()`/
+  `:all()` investigation (see the content-accessor-guards entry above).
+  Confirmed live: `$alpha.results.:regex("2026-01-01_").header_checks
+  :errors()` raises `":regex() is not legal at name_one for results"`
+  today — a deliberate, explicit rejection, not an accidental gap.
+  Distinct from `:regex()` at root_major (matches named-results-GROUP
+  names) — this matches run NAMES instead, and is meant to be orthogonal
+  to `:home()`/`:all()`'s template-depth restriction (David, 2026-08-30):
+  filtering by the run's own name pattern regardless of how many
+  template segments precede it, not a replacement for the depth
+  selectors. Likely bundles naturally with whatever fix comes out of the
+  `:home()`/`:all()` work, since both touch the same name_one matching
+  code, but is its own distinct capability, not a symptom of the same
+  bug.
 - `@variable` (`Variable3`) registration and `{...}` interpolation
   evaluation are both **built 2026-08-26** — see `deferred_work_done_list.md`.
   `@variable` used as some OTHER function's *own direct argument* (e.g.

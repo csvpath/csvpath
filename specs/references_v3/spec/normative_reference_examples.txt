@@ -182,6 +182,12 @@ $acme.results.customers:first():manifest()
 ### every no-template run for alpha, unreduced
 $alpha.results.:home()
 
+$alpha.results.2026-01-01_01-01-01.header_checks:errors()
+$alpha.results.:home().header_checks:errors()
+$alpha.results.:all().header_checks:errors()
+$alpha.results.:regex("2026-01-01_").header_checks:errors()
+
+
 ### the most recent no-template run for alpha (same either order)
 $alpha.results.:home():last()
 $alpha.results.:last():home()
@@ -426,6 +432,15 @@ $alpha.files.:home().:last()
 
 ### every registration with no template, unreduced (paths only, no content)
 $alpha.files.:home()
+So:
+- named_files/alpha/one.csv
+- named_files/alpha/two.csv
+- named_files/alpha/three.csv
+But not:
+- named_files/alpha/updated/one.csv
+
+
+
 
 ### Pool across every path under one named-file, EXACTLY one level deep -- i.e. no template --
 ### single true-latest version. NOTE: unlike RESULTS' ':flatten()', a literal/
