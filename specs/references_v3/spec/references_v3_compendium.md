@@ -379,7 +379,7 @@ Given a named-paths group `acme` loaded three times one day apart, at:
 Expect the following references to have these results:
 - `$acme.csvpaths.:last()` retrieves the 3rd version loaded on 2026-11-07 as `named_paths/acme/group.csvpaths` + UUID `091cb1fed...`
 - `$acme.csvpaths.*` retrieves all versions as:
-  - `named_paths/acme/group.csvpaths` + UUID `091cb1fed...`
+  - `named_paths/acme/group.csvpaths` + UUID `2fc1995b2...`
   - `named_paths/acme/group.csvpaths` + UUID `a8ab152c2...`
   - `named_paths/acme/group.csvpaths` + UUID `091cb1fed...`
 - `$acme.csvpaths.:date("2026-11-05"):after():first()` retrieves the 2nd version as `named_paths/acme/group.csvpaths` + UUID `a8ab152c2...`
@@ -413,9 +413,9 @@ When `name_three` is a string or variable, the name is that of the entity:
 - `$acme.files.:name("orders.csv").:last()` returns the last version under the given
 file home within `acme`.
 
-- `$acme.csvpaths.:last().:after("headers_checks")` returns the sequence of csvpaths statements starting from the one following the statement with the identity `header_checks` from the last version of the `acme` named-paths group.
+- `$acme.csvpaths.:last().:after("header_checks")` returns the sequence of csvpaths statements starting from the one following the statement with the identity `header_checks` from the last version of the `acme` named-paths group.
 
-- `$acme.results.:groups()/:from(:index(-2)):to(:index(-1)).header_checks:errors_count()` returns the last two error counts of the runs that had a `header_checks` csvpath instance for all runs by template.
+- `$acme.results.:groups()/:from(:index(-2)):to(:index(-1)).header_checks:error_count()` returns the last two error counts of the runs that had a `header_checks` csvpath instance for all runs by template.
 
 
 
@@ -451,9 +451,20 @@ There are four wildcards:
 `*` flattens every wildcard position in the reference into one pooled
 search space.
 
-`:all()` anywhere in the reference groups. Every wildcard position (root_major
-included) becomes a dimension of a composite group key, and the terminal
-function distributes across the resulting cross-product.
+`:all()` anywhere in the `name_one` groups the remaining `name_one` search space by the
+names found at the grouping segment (`:all()`'s position). The reference processes each
+group independently of the other groups. That means that a `:last()` function that follows an
+`:all()` will give the last item found by looking solely at its group scope. At the same time
+the reference as a whole gains the possibility of having one last item per name found in the
+position occupied by the `:all()`.
+
+Note these limitations on grouping:
+- `name_one` can have only one `:all()` or `:groups()`
+- `:all()` cannot be combined with `:groups()`
+- `name_three` can have only one `:all()`
+- `name_three` does not accept `:groups()`
+- in `name_three` `:all()` does not have grouping power; there is no further search space to group
+
 
 #### Example 4.1
 Given named-file `alpha` with paths:
@@ -473,7 +484,9 @@ Expect the following results from these references:
 - `$alpha.files.*.:last()` → 1 most-recent registration from `alpha`
 - `$alpha.files.:all().:last()` → 2 most-recent registrations, one per file home
 - `$*.files.:groups().:last()` → 5 most-recent registrations, one per file home
-- `$*.files.:flatten().:from(5):to(:index(-1))` → last 4 most-recent registrations of all 8
+- `$*.files.:flatten().:from(4):to(:index(-1))` → last 4 most-recent registrations of all 8
+
+Note that the following references are equivalent. While References v3 prefers to have 1 way to do things, not multiple ways, these examples fall naturally out of desirable behavior, so are acceptable redundancies.
 - `$*.files.:flatten().:all()` → all 8 most-recent registrations
 - `$*.files.:flatten().*` → all 8 most-recent registrations
 - `$*.files.:groups().*` → all 8 most-recent registrations
@@ -481,7 +494,6 @@ Expect the following results from these references:
 
 
 ---
-
 
 
 ## 5. Query vs. Resolve
@@ -1015,7 +1027,9 @@ Note: this list may expand modestly before feature complete.
 ### Predicate support functions
 #### 6.35
 Every field accessor has the ability to match on a provided value, and thereby
-filter the reference. For e.g. `$*.files.:home():definition(:on_arrival(:not_none()))`
+filter the reference.
+
+For e.g. `$*.files.:definition(:on_arrival(:not_none()))`
 limits the registration file homes returned to 0-level template registrations where the
 named-file's `definition.json` has an `on_arrival` activation declared.
 
