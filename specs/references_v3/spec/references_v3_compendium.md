@@ -244,6 +244,58 @@ A **run dir** is a directory named by a disambiguated second-resolution
 datetime (e.g. `2026-01-01_01-01-01`) containing run metadata and the
 directories containing the output of each csvpath in the named-paths group
 
+#### 3.9a
+`name_one` cannot be `""` and a reference must have a `name_one`. A reference
+cannot end on a `.`.
+
+#### 3.9b
+The `name_one` position cannot start with a `/`. Paths are relative to the
+named-file home. As well, `name_one` cannot end in a `/`. Any legal syntax
+fills this requirement. For e.g. the first two of the following three
+references is legal, the third is not:
+- `$acme.files.orders/*`
+- `$acme.files.orders/:manifest()`
+- `$acme.files.orders/`
+
+#### 3.9c
+`name_one` supports functions, described below. It also supports a `*`
+wild card that matches any name segment of a path (`files`, `results`) or
+any version (`csvpaths`). Wild cards are discussed below. A function
+starting `name_one` or following directly after a path separator implies
+a `*` wild card, unless it falls in one of these categories of exceptions:
+
+- Is itself a wildcard. E.g. `:all()`, `:flatten()`, `:groups()`
+- It fully occupies the segment. E.g. `:name()`, `:regex()`, `:choice()`
+- It doesn't operate at segment level at all. E.g. `:manifest()`,
+`:definition()`, `:on_arrival()`, etc.
+
+More specifically:
+- `:all()` is a form of wild card itself, so there is no implication of `*`
+- `:flatten()` is the n-level form of `*`, so it supersedes `*`
+- `:groups()` is the n-level form of `:all()`; again not implying `*`
+- `:name(...)` and its equivalents fully occupy the path segment they
+occupy, precluding the possibility of a wild card at that location
+- A `:manifest()` standing alone in `name_one` with a entity name `*`
+always points to the named-entity ledger manifest, not those of individual
+named-entities or the events that happen within them.
+- `:definition()` in a named-file `name_one` always refers to the
+named-file's sole definition file without regard for template path;
+therefore, a `*` is not implied. Functions that directly address
+definition fields, e.g. `:on_arrival()`, likewise, do not imply a `*`.
+
+Note that `:regex(...)` and `:choice(...)` are a pattern-matching analogs
+of `:name(...)`.
+
+#### 3.9d
+The following two `name_one` values are functionally the same:
+- `$acme.files.:type("csv")`
+- `$acme.files.*:type("csv")`
+
+Likewise the following two references:
+- `$acme.files.orders/:type("csv")`
+- `$acme.files.orders/*:type("csv")`
+
+
 ### `name_one` and Time
 #### 3.10
 Datetime functions exist, as discussed below, that can be used wherever a
@@ -320,15 +372,11 @@ Typical `name_one` functions include:
 - `:regex("2026-01")`
 
 #### 3.13
-`*` can stand alone. It can also be inferred by the presence of a function
-such as `:last()`. In a reference like `$acme.results.:last()` the name
-is `*:last()` with the `*` inferred.
-
 A 0-level template (a.k.a. no template) is effectively just the home token.
-0-level template named-file registrations have their file homes directly
-below the named-file home. Likewise a run started with 0-level template (i.e.,
-in practice, no template) has its run dir (a.k.a. run home) directly below
-the named-results home directory.
+I.e. `:run_dir` or `:filename`. 0-level template named-file registrations have
+their file homes directly below the named-file home. Likewise a run started
+with 0-level template (i.e., in practice, no template) has its run dir (a.k.a.
+run home) directly below the named-results home directory.
 
 #### 3.14 Examples
 Given a template `:0/:filename` and a file at `orders/2026/march.csv` a
@@ -463,7 +511,7 @@ Note these limitations on grouping:
 - `:all()` cannot be combined with `:groups()`
 - `name_three` can have only one `:all()`
 - `name_three` does not accept `:groups()`
-- in `name_three` `:all()` does not have grouping power; there is no further search space to group
+- in `name_three`, `:all()` only has grouping power in `results` where there is further search space to group
 
 
 #### Example 4.1

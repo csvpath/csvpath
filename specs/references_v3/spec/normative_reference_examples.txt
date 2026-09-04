@@ -28,12 +28,12 @@ well.
 
 ### Finding the "last" run or runs of a type of information:
 $alpha.results.:last()                  >> run with no template
-$alpha.results.*:last()                 >> run with a 1-level template
-$alpha.results.:all():last()            >> runs for each 1-level template
-$alpha.results.:flatten():last()        >> run
+$alpha.results.*:last()                 >> run with no template, same as without the wildcard
+$alpha.results.:all():last()            >> run with no template, same as with wildcard
+$alpha.results.:flatten():last()        >> last run with any depth template
 $alpha.results.beta/:flatten():last()   >> run of all templates starting `beta`
-$alpha.results.beta/:all():last()       >> runs of all 2-level templates starting `beta`
-$alpha.results.beta/*:last()            >> run of all 2-level templates starting `beta`
+$alpha.results.beta/:all():last()       >> last runs of all runs w/1-level template starting `beta/` this groups by :run_dir and is better written as `$alpha.results.beta/*
+$alpha.results.beta/*:last()            >> run of all 1-level templates starting `beta/`
 $alpha.results.:manifest():last()       >> manifest entry of the most recent run with no template
 $*.results.:manifest():last()           >> manifest entry of the most recent run, period, across every named-result
 $alpha.results.:groups():last()         >> runs for every template and non-template run dir
@@ -49,19 +49,17 @@ $*.results.:flatten():from(:date("2026-01-01")):to(:date("2026-05-01"))
 
 ### use of :all()
 #### same as above
-$alpha.results.:all():last()            >> runs for each 1-level template
+$alpha.results.:all():last()            >> runs for each 0-level template (a.k.a. no template)
 #### more examples
-$alpha.results.:all().:all()            >> all csvpaths for all runs for each 1-level template
-#### NO GOOOD
-*   all in name_one returns all runs for each 1-level template resulting
-    in the expectation of multiple runs, and file accessors are only legal for 1
-    specific selection, not the possibility of multiple.*
-$alpha.results.:all().:manifest()       >> all csvpaths for all runs for each 1-level template
+$alpha.results.:all().:all()            >> all csvpaths for all runs having no template
+#### finds all csvpath instance manifests for all runs with no template. `query()`-able,
+but may break on `resolve()` if multiple runs found or groups have multiple csvpaths
+$alpha.results.:all().:manifest()       >> all csvpaths for all runs for each 0-level template
 #### same as above but with a pointer
-$alpha.results.:flatten():first():manifest()   >> the manifest of the last of all alpha results
-$alpha.results.:flatten():first().:last():manifest()   >> manifest of last statement of last alpha results
-$alpha.results.:flatten():first().:all():error_count() >> error cnt of all statements of last alpha results
-$alpha.results.:all():index(5).:all():error_count() >> error cnt of all statements of the 5th 1-level alpha results
+$alpha.results.:flatten():first():manifest()   >> the manifest of the first of all alpha results
+$alpha.results.:flatten():first().:last():manifest()   >> manifest of last statement of first alpha results
+$alpha.results.:flatten():first().:all():error_count() >> error count of all statements of first alpha results
+$alpha.results.:all():index(5).:all():error_count() >> error counts for all statements of the 5th 0-level alpha results
 
 
 
@@ -74,132 +72,92 @@ $acme.results.:flatten():from(:yesterday()).purchases:errors(:message(/customer:
 ### Did any csvpath generate more than 10 errors yesterday
 QUESTION: $acme.results.:flatten():yesterday().*:errors(:count(:above(10)))
 
-### Every run having a 1-level template
+### Every run having a 0-level template
 $acme.results.:all()
 
-### First run with template `customers/2025`
-$acme.results.customers/2025:first()
+### First run with template `customers/2025/:run_dir`
+$acme.results.customers/2025/:first()
 
-### `invoices` in 1st run w/2-level template `customers/2025`
-$acme.results.customers/2025:first().invoices
+### `invoices` csvpath instance path in 1st run having a 1-level template `customers/:run_dir`
+$acme.results.customers/*:first().invoices
 
-### `invoices` in 1st run w/2-level template ending `2025`
-$acme.results.*/2025:first().invoices
+### `invoices` in 1st run w/2-level template ending `2025/:run_dir`
+$acme.results.*/2025/:first().invoices
 
-### `invoices` in 1st run w/3-level template ending `2025`
-$acme.results.*/*/2025:first().invoices
+### `invoices` in 1st run w/3-level template ending `2025/:run_dir`
+$acme.results.*/*/2025/:first().invoices
 
-### `invoices` in 1st run w/2-level template starting with `M` and ending `2025`
-$acme.results.:name(/^M.*/)/2025:first().invoices
+### `invoices` in 1st run w/2-level template starting with `M` and ending `2025/:run_dir`
+$acme.results.:name(/^M.*/)/2025/:first().invoices
 
-### `invoices` from first run w/template ending `2025` and beginning with `acme`, `star`, or `general`
-$acme.results.:choice("acme|star|general")/2025:first().invoices
+### `invoices` from 1st run w/template ending `2025/:run_dir`, beginning with `acme`, `star`, or `general`
+$acme.results.:choice("acme|star|general")/2025/:first().invoices
 
-### `invoices` from first run w/2-level template starting with any name and ending with `2025` where the source data was CSV
-$acme.results.:name(*)/2025:first():type("csv").invoices
+### `invoices` from 1st run w/2-level template ending with `2025/:run_dir` w/source data CSV
+$acme.results.*/2025/:first():type("csv").invoices
 
-### `report.txt` (a print-mode printout file) within the `invoices` csvpath statement in the first run with a 2-level template starting with the value of @myname and ending in `2025`
-$acme.results.:name(@myname)/2025:first().invoices:file("report.txt")
+### `report.txt` (a print-mode printout file) within the `invoices` csvpath statement in the first run with a 2-level template starting with the value of @myname and ending in `2025/:run_dir`
+$acme.results.:name(@myname)/2025/:first().invoices:file("report.txt")
 
-### `report.txt` (a print-mode printout file) within the `invoices` csvpath statement in the first run with a 2-level template ending in `2025`
-$acme.results.*/2025:first().invoices:file("report.txt")
+### `report.txt` (a print-mode printout file) within the `invoices` csvpath statement in the first run with a 2-level template ending in `2025/:run_dir`
+$acme.results.*/2025/:first().invoices:file("report.txt")
 
-### the data.csv output of the `invoices` csvpath statement in the first run with a 2-level template `customers/2025`
-$acme.results.customers/2025:first().invoices:data()
+### the data.csv output of the `invoices` csvpath statement in the first run with a 2-level template `customers/2025/:run_dir`
+$acme.results.customers/2025/:first().invoices:data()
 
-### the vars.json output of the `invoices` csvpath statement in the first run with a 2-level template `customers/2025`
-$acme.results.customers/2025:first().invoices:vars()
+### the vars.json output of the `invoices` csvpath statement in the first run with a 2-level template `customers/2025/:run_dir`
+$acme.results.customers/2025/:first().invoices:vars()
 
-### the meta.json output of the `invoices` csvpath statement in the first run with a 2-level template `customers/2025`
-$acme.results.customers/2025:first().invoices:meta()
-
-### CORRECTED 2026-08-13 -- these next 5 lines are WRONG as written (David,
-### confirmed: "$acme.results...:from(:index(2)):unmatched() should
-### definitely not work"): ':from()'/':to()' selecting more than one
-### statement is "more than one entity," the same reason ':all()' already
-### cannot combine with a content accessor like ':unmatched()' -- built
-### 2026-08-13 as a count-DEPENDENT restriction (mirrors this file's own
-### run-level "more than one candidate" rule), so any of these that actually
-### match 2+ statements now correctly RAISES instead of silently doing the
-### wrong thing. Getting "unmatched.csv for each of the 3rd-through-last
-### statements" needs two steps, same as ':all()' + an accessor already
-### does: query() the range alone first (no accessor) to list the matched
-### statements, then resolve() each one's own ':unmatched()' separately, by
-### its own literal identity -- there is no one-shot reference for "content
-### from more than one entity at once." The range ITSELF (no accessor) is
-### fine and already covered by TestStatementLevelRange.
-
-### unmatched.csv output of the 3rd through last csvpath statements in the first run with a 2-level template `customers/2025`
-$acme.results.customers/2025:first().:from(2):unmatched()
-
-### unmatched.csv output of the 3rd through last csvpath statements in the first run with a 2-level template `customers/2026`, where the current year == 2026
-$acme.results.customers/:name(:year()):first().:from(2):unmatched()
-
-### unmatched.csv output of the 3rd through last csvpath statements in the first run with a 1-level template `customers` where the date of arrival was 2025-01-01
-$acme.results.customers:date("2025-01-01"):first().:from(2):unmatched()
-
-### unmatched.csv output of the 3rd through last csvpath statements in each run with a 1-level template `customers` where the date of arrival was 2025-01-01 or newer
-$acme.results.customers:from(:date("2025-01-01")).:from(2):unmatched()
-
-### unmatched.csv output of the 3rd through last csvpath statements in the last three runs with a 1-level template `customers`
-$acme.results.customers:from(:index(-3)).:from(2):unmatched()
-
-### all parquet files output of all of the csvpath statements in the last three runs with a 1-level template `customers`
-$acme.results.customers:from(:index(-3)).*:type("parquet")
-
-### The manifest of the first run with a 1-level template `customers`
-$acme.results.customers:manifest():first()
-
-### The manifest of the first run with a 1-level template `customers` (shows order of :first() and :manifest() not important)
-$acme.results.customers:first():manifest()
+### the meta.json output of the `invoices` csvpath statement in the first run with a 2-level template `customers/2025/:run_dir`
+$acme.results.customers/2025/:first().invoices:meta()
 
 
-#############################################################################
-# EVERYTHING BELOW THIS LINE WAS ADDED BY CLAUDE ON 2026-08-11 -- FOR DAVID
-# TO REVIEW. NOTHING ABOVE THIS LINE WAS TOUCHED.
-#############################################################################
+### unmatched.csv output of the 3rd through last csvpath statements in the first run with a 2-level template `customers/2025/:run_dir`. calling `resolve()` on finder will error.
+$acme.results.customers/2025/:first().:from(2):unmatched()
 
-## :home() as a zero-level selector -- decided jointly 2026-08-11, filling
-## the one real gap left in the depth model: there was no way to ask for
-## "every zero-level (no-template) run, unreduced" -- a bare pointer always
-## reduces to one, ':all()' is one-level not zero, ':flatten()' is any
-## depth not zero. ':home()' works here because it is a VALUE-role field
-## accessor, never a pointer -- when it is the only thing present, nothing
-## reduces the candidate set, so every zero-level run comes back unreduced
-## ("everything that has its home here"). The moment a real pointer joins
-## the chain (either order), it reduces to one and ':home()' reverts to
-## its ordinary job of reading the field off whatever got selected.
-##
-## Root-only, no prefixed form -- decided jointly 2026-08-11 (added), then
-## removed 2026-08-12 once we noticed a plain literal prefix with nothing
-## trailing (e.g. `$acme.results.beta`) already means "every run under this
-## exact prefix, unreduced" -- confirmed byte-for-byte identical results to
-## a prefixed ':home()' in every case tested, so ':home()' would just be a
-## second, more confusing spelling of something that already has one.
-## ':home()' is only load-bearing at the bare/root position, where the
-## grammar has no other way to say "zero segments."
+### unmatched.csv output of the 3rd through last csvpath statements in the first run with a 2-level template `customers/2026/:run_dir`, where the current year == 2026
+$acme.results.customers/:name(:year())/:first().:from(2):unmatched()
+
+### unmatched.csv output of the 3rd through last csvpath statements in the first run with a 1-level template `customers/:run_dir` where the date of arrival was 2025-01-01
+$acme.results.customers/:date("2025-01-01"):first().:from(2):unmatched()
+
+### unmatched.csv output of the 3rd through last csvpath statements in each run with a 1-level template `customers/:run_dir` where the date of arrival was 2025-01-01 or newer
+$acme.results.customers/:from(:date("2025-01-01")).:from(2):unmatched()
+
+### unmatched.csv output of the 3rd through last csvpath statements in the last three runs with a 1-level template `customers/:run_dir`
+$acme.results.customers/:from(:index(-3)).:from(2):unmatched()
+
+### all parquet files output of all of the csvpath statements in the last three runs with a 1-level template `customers/:run_dir`
+$acme.results.customers/:from(:index(-3)).*:type("parquet")
+
+### The manifest of the first run with a 1-level template `customers/:run_dir`
+$acme.results.customers/:manifest():first()
+
+### The manifest of the first run with a 1-level template `customers/:run_dir` (shows order of :first() and :manifest() not important)
+$acme.results.customers/:first():manifest()
+
+
+
 
 ### every no-template run for alpha, unreduced
-$alpha.results.:home()
+$alpha.results.*
 
+### errors file from the header_checks statement of a 0-length template (no template) run of the alpha group
 $alpha.results.2026-01-01_01-01-01.header_checks:errors()
-$alpha.results.:home().header_checks:errors()
+### all errors files from no-template alpha runs with header_checks statements -- :all() and * equivalent
+$alpha.results.*.header_checks:errors()
+### all errors files from no-template alpha runs with header_checks statements -- :all() and * equivalent
 $alpha.results.:all().header_checks:errors()
+### errors files from no-template alpha runs with header_checks statements that were run on 1/1/2026
 $alpha.results.:regex("2026-01-01_").header_checks:errors()
 
-
-### the most recent no-template run for alpha (same either order)
-$alpha.results.:home():last()
-$alpha.results.:last():home()
-
-### every run directly under the `beta` prefix, unreduced -- no ':home()'
-### needed, the plain prefix alone already means this
+### there is no run dir called `beta`. run dirs must be represented in name_one.
 $acme.results.beta
+### all runs with a `beta/:run_dir` template. data in finder `resolve()` is None.
+$acme.results.beta/*
 
-## The Results Datatype (continued) -- field accessors, currently built,
-## with no examples above
-
-### Run scope field accessors -- $widgets, one run, no template
+### Run scope field accessors -- $widgets, one run, no template -- these
+### all get fields from the run manifest, but `:manifest()` is optional
 $widgets.results.:first():serial()
 $widgets.results.:first():valid()
 $widgets.results.:first():completed()
@@ -214,11 +172,9 @@ $widgets.results.:first():named_paths_name()
 $widgets.results.:first():named_results_name()
 $widgets.results.:first():named_file_name()
 $widgets.results.:first():run_uuid()
-$widgets.results.:first():home()               >> run_home
 
-### settled 2026-08-11: mirrors :run_uuid(), not the run's own bare "uuid"
-### field (that field stays deprecated/vestigial and unread) -- fixed in PR #242
-$widgets.results.:first():uuid()                >> same value as :run_uuid()
+### this use of `:uuid()` gives the same result as `:run_uuid()`
+$widgets.results.:first():uuid()
 
 ### Instance scope field accessors -- $widgets, one run, statement identity `company_names`
 $widgets.results.:first().company_names:uuid()
@@ -235,7 +191,6 @@ $widgets.results.:first().company_names:source_mode_preceding()
 $widgets.results.:first().company_names:preceding_instance_identity()
 $widgets.results.:first().company_names:manifest_path()
 $widgets.results.:first().company_names:named_file_name()
-$widgets.results.:first().company_names:home()  >> instance_home
 
 ### Global archive ledger -- every run across every named-results group, one flat array
 $*.results.:manifest()
@@ -250,73 +205,18 @@ $*.results.:manifest():last()
 ### I.e. returns the last run of all runs without templates from all named-results
 $*.results.:last()
 
-### THE ':all()' MEANING COLLISION AT STAR TRAVERSAL -- illustrated 2026-08-18,
-### David asked for concrete examples over narrative. ':all()' already has TWO
-### settled, uncontested meanings depending on WHERE it sits:
-###
-### (A) at name_three -- "every instance within one already-selected run":
+### all at name_three -- "every instance within one already-selected run":
 $acme.results.:last().:all():uuid()   >> one result per statement instance in
                                        >> the last run, e.g. if that run has 3
                                        >> statements -> 3 results
-###
-### (B) at name_one, bare, ONE already-literal group -- "exactly one level of
+
+### all at name_one, bare, ONE already-literal group -- "exactly one level of
 ### template wildcarding, GROUPED by the observed value at that position"
-### (line 32/52 above, David's three-templates example):
-$alpha.results.:all():last()          >> one result per DISTINCT 1-level
-                                       >> template value alpha has ever used,
-                                       >> each that value's own last run
-###
-### Neither of those is in question. The collision is what ':all()' should
-### mean at name_one when root_major is ALSO '*' -- i.e. BOTH axes (which
-### named-results group, AND which 1-level template value) are open at once.
-### Worked example to make the ambiguity concrete -- two named-results groups,
-### each using a "region" 1-level template, ONE region name reused across both
-### groups on purpose (this is the crux of the ambiguity):
-###   acme:    east/run1 (2026-01-01), east/run2 (2026-01-03), west/run1 (2026-01-02)
-###   widgets: east/run1 (2026-01-04)
-### What should `$*.results.:all():last()` give back?
-###
-### Interpretation 1 -- POOL BY TEMPLATE VALUE ONLY, ignore which group (i.e.
-### just extend meaning (B) across every group's runs as one pooled bag,
-### using the template value alone as the group key):
-###   group "east" = {acme/east/run1, acme/east/run2, widgets/east/run1} -> last() -> widgets/east/run1 (01-04)
-###   group "west" = {acme/west/run1}                                   -> last() -> acme/west/run1 (01-02)
-###   => 2 results. BUT "east" just silently merged acme's and widgets' runs
-###   together because they happen to reuse the same subfolder name -- two
-###   unrelated named-results groups conflated by naming coincidence.
-###
-### Interpretation 2 -- GROUP BY NAMED-RESULTS GROUP ONLY (mirrors CSVPATHS'/
-### FILES' own star-traversal ':all()' precedent for THEIR entity, i.e. one
-### result per group, template value ignored once inside a group):
-###   group "acme"    = {east/run1, east/run2, west/run1} -> last() -> acme/east/run2 (01-03)
-###   group "widgets" = {east/run1}                        -> last() -> widgets/east/run1 (01-04)
-###   => 2 results, but the east/west template distinction is completely lost
-###   within a group -- "acme's last run" wins regardless of which region it
-###   was in.
-###
-### Interpretation 3 -- GROUP BY THE COMPOSITE (named-results group, template
-### value) PAIR -- neither axis collapses into the other:
-###   (acme, east)    = {run1, run2} -> last() -> acme/east/run2 (01-03)
-###   (acme, west)    = {run1}       -> last() -> acme/west/run1 (01-02)
-###   (widgets, east) = {run1}       -> last() -> widgets/east/run1 (01-04)
-###   => 3 results, one per group+template combination actually observed.
-###
-### THIS EXACT COLLISION WAS ALREADY DECIDED FOR FILES, and Interpretation 3
-### is what was chosen there -- see files_reference_finder_3.py's own
-### _query_star_traversal docstring (~line 496-505): bare ':all()' partitions
-### every candidate by its own "file_home" (which already embeds the named-
-### file's name as a path prefix, so it IS the composite key), "one result
-### per (named-file, path) pair" -- confirmed real, built, tested behavior,
-### not just a note (see $*.files.:all().:last() at line 462 above). RESULTS'
-### own _group_key() helper (used by its literal-root ':all()'/':groups()'
-### grouping already) computes something structurally similar per-group
-### today; extending it to also vary the "home" per named-results-group
-### during traversal would give RESULTS the same Interpretation-3 answer
-### FILES already committed to, without inventing a new mechanism.
+$alpha.results.:all():last()           >> one result per DISTINCT 0-level
+                                       >> template, the last run
 
 ### ':from()'/':to()' -- run-level range, built 2026-08-13. Packaged
-### together on purpose (David: "our version of BETWEEN in SQL or range()
-### in Python") -- ':to()' is INCLUSIVE of its own position/date. Two
+### together. ':to()' is INCLUSIVE of its own position/date. Two
 ### independent MODES, picked by each bound's own value type:
 ###
 ### index-mode (int/':index(n)') -- confirms the doc's own NOTES block:
@@ -328,8 +228,7 @@ $acme.results.customers:from(-3)
 ### the 2nd through 4th runs with template `customers` (0-based, inclusive)
 $acme.results.customers:from(1):to(3)
 
-### date-mode (str/':date(...)') -- added the same day, David: "arrival
-### and run order is even more important than indexing." FILTERS by each
+### date-mode (str/':date(...)'). FILTERS by each
 ### run's own arrival date (parsed from its directory name's own timestamp
 ### prefix), not a positional slice -- comparing positions would be
 ### meaningless for a date bound. ':date()' is DATE-only granularity for
@@ -351,31 +250,17 @@ $acme.results.customers:from(:date("2025-01-01")):to(:date("2025-01-31"))
 ### a real pointer alongside ':from()'/':to()' reduces the SLICE, not the
 ### full candidate set -- the true latest of the last three runs
 $acme.results.customers:from(-3):last()
+#
+# 3rd->last csvpath instances in first run with template `customers/2025/:run_dir`
+$acme.results.customers/2025/:first().:from(2)
 
-### ':from()'/':to()' as a STATEMENT-level range in name_three -- built
-### 2026-08-13, once the design fork above was settled (David: "should
-### definitely not work," confirming a range gets the same single-entity
-### restriction ':all()' already has for content accessors -- see the
-### CORRECTED note above lines 93-105, which were wrong for exactly this
-### reason). Count-DEPENDENT, not ':all()'s own blanket rejection --
-### mirrors this file's own run-level "more than one candidate" check.
-### Building this also surfaced and fixed a real, separate, pre-existing bug:
-### the statement list this and ':all()' both read from used to be raw
-### filesystem directory-listing order (unspecified, NOT declaration order)
-### -- ':all()' never cared, ':from()'/':to()' absolutely does. Now sorted
-### by each instance's own "instance_index" (confirmed via csvpaths.py's
-### enumerate(paths)/enumerate(csvpath_objects) through to the written
-### manifest.json key) -- real declaration order.
-### the 3rd-through-last statement, unreduced, no content access
-$acme.results.customers/2025:first().:from(2)
-
-### the 2nd-through-4th statement (0-based, inclusive), unreduced
-$acme.results.customers/2025:first().:from(1):to(3)
+### the 2nd-through-4th statement (0-based, inclusive)
+$acme.results.customers/2025/:first().:from(1):to(3)
 
 ### a range narrowed to exactly one statement IS fine with a content
 ### accessor -- count-dependent, same as a run-level pointer narrowing to
 ### one already is
-$acme.results.customers/2025:first().:from(2):to(2):unmatched()
+$acme.results.customers/2025/:first().:from(2):to(2):unmatched()
 
 ----------------------------
 ----------------------------
@@ -423,15 +308,9 @@ $alpha.files.:name("orders.csv").:from(-3):last()
 $alpha.files.:name("orders.csv").:from(:date("2026-01-01"))
 $alpha.files.:name("orders.csv").:from("2026-01-01"):to("2026-01-31")
 
-### ':home()' as a zero-level selector -- added 2026-08-12, mirroring
-### RESULTS' own ':home()' (David: keep functions meaning the same thing
-### across datatypes). Unlike RESULTS this needed real new code, since
-### FILES' name_one can never be empty -- there is no pre-existing "no
-### pattern" path for a bare pointer to fall into.
-$alpha.files.:home().:last()
 
 ### every registration with no template, unreduced (paths only, no content)
-$alpha.files.:home()
+$alpha.files.*
 So:
 - named_files/alpha/one.csv
 - named_files/alpha/two.csv
@@ -574,7 +453,6 @@ $*.files.:groups().:last()
 $alpha.files.:name("orders.csv").:last():uuid()
 $alpha.files.:name("orders.csv").:last():time()
 $alpha.files.:name("orders.csv").:last():fingerprint()
-$alpha.files.:name("orders.csv").:last():home()      >> file_home
 $alpha.files.:name("orders.csv").:last():origin()
 $alpha.files.:name("orders.csv").:last():mark()
 
@@ -582,7 +460,7 @@ $alpha.files.:name("orders.csv").:last():mark()
 ### 2026-08-12: needs the "." before the pointer, same rule as every other
 ### FILES example above (my own earlier draft of this line omitted it,
 ### which raises -- confirmed via direct testing during the pre-merge sweep)
-$alpha.files.:home().:first()
+$alpha.files.*.:first()
 
 ### The filesystem path to a whole-resource function's own resource, rather
 ### than its content -- also needs the literal name + "." (:path() bare, no
@@ -591,9 +469,6 @@ $alpha.files.:home().:first()
 $alpha.files.:name("orders.csv").:path(:manifest())
 $alpha.files.:name("orders.csv").:last():path(:manifest())
 
-### Computed fields -- never stored, derived from the reference itself
-$alpha.files.:name("orders.csv").:named_file_name()
-$alpha.files.:name("orders.csv").:first():named_file_home()
 
 ### bare ':fingerprint("hash")' -- built 2026-08-13, a content-hash lookup
 ### across the WHOLE named-file's manifest (every file_home/path), searching
@@ -775,7 +650,6 @@ $*.csvpaths.:all()
 $acme.csvpaths.:last():uuid()
 $acme.csvpaths.:last():time()
 $acme.csvpaths.:last():fingerprint()
-$acme.csvpaths.:last():home()          >> named_paths_home
 $acme.csvpaths.:last():origin()
 $acme.csvpaths.:last():manifest_path()
 $acme.csvpaths.:last():time_completed()
