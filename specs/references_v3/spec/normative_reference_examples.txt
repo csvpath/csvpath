@@ -6,7 +6,137 @@
 *Note*: all functions may not be available at v3 launch, but all must possible and
         have a well-known meaning that can be tested deterministically.
 
-# SIMPLE REFERENCES
+
+## Before and after, from and to
+Before and after, and from and to, are applicable to all three datatypes.
+They take:
+- Item indexes
+- Arrival/load/run datetimes
+- The identity of csvpath statements
+- Fingerprints, as a proxy for the named-file arrival-order index
+### `:before(...)`
+Identifies the lower order items before a reference, exclusive
+#### versions before a date
+$acme.csvpaths.:before(:date("2026-01-01"))
+#### versions before an index
+$acme.csvpaths.:before(:index(4))
+
+### `:after(...)`
+Indicates the higher order items after a reference, exclusive
+#### versions after a date
+$acme.csvpaths.:after(:date("2026-01-01"))
+#### versions after an index
+$acme.csvpaths.:after(:index(4))
+
+### `:to(...)`
+The lower order items before a reference, inclusive
+#### versions before a date
+$acme.csvpaths.:to(:date("2026-01-01"))
+#### versions up to and including an index
+$acme.csvpaths.:to(:index(4))
+
+### `:from(...)`
+The higher order items after a reference, inclusive
+#### versions on or after a date
+$acme.csvpaths.:from(:date("2026-01-01"))
+#### versions at or after an index
+$acme.csvpaths.:from(:index(4))
+
+---
+
+## Date and time functions
+These functions provide values that can be used in strings and as arguments to
+other functions. They are available in all datatypes and have two modes:
+- Returning their datetime component based on the `datetime.now()`
+- Returning their component based on a date passed as an argument
+The exception being `:date()` which can create a date from a string, but does
+not provide the current datetime.
+
+When a datetime component function is provided where a full datetime would be needed
+for ordering or indexing the function is interpreted as the first moment of that time.
+For e.g., `:year()` would be interpreted as the first second of the first minute of
+the first day of January in the present year.
+
+For that reason, a `:from(:year())`has meaning as a date range constratint, not as a
+four digit integer index constraint. I.e. `:from(:year())` and `:from(2026)` are not
+the same. The former is a date constraint based on `2026-01-01_00:00:00` and the
+latter says start at the 2026th index position.
+
+### :year()
+$acme.files.orders/:name(:year())/:last()
+$acme.files.orders/:from(:year(@the_year)).*
+
+### :month()
+$acme.files.orders/:name(:month())/:last()
+Evaluated in June yields a path of `orders/06/*`.
+
+### :month_name()
+$acme.files.orders/:name(:month_name())/:last()
+Evaluated in June yields a path of `orders/June/*`.
+
+### :day()
+$acme.files.orders/:name(:day())/:last()
+Evaluated on Aug 06 yields a path of `orders/06/*`.
+
+### :day_name()
+$acme.files.orders/:name(:day_name())/:last()
+Evaluated on a Tuesday yields a path of `orders/Tuesday/*`.
+
+### :hour()
+$acme.files.orders/:name(:hour())/:last()
+Evaluated at 3am UTC yields a path of `orders/03/*`.
+
+### :hour_24()
+$acme.files.orders/:name(:hour_24())/:last()
+Evaluated at 3pm UTC yields a path of `orders/15/*`.
+
+### :minute()
+$acme.files.orders/:name(:minute())/:last()
+Evaluated at 6:15 pm yields a path of `orders/15/*`.
+
+### :second()
+$acme.files.orders/:name(:second())/:last()
+Evaluated at 6:25:15 pm yields a path of `orders/15/*`.
+
+### :yesterday()
+$acme.files.orders/:name(:day_name(:yesterday()))/:last()
+Evaluated on a Tuesday yields a path of `orders/Monday/*`.
+
+### :today()
+$acme.files.orders/:name(:day_name(:yesterday()))/:last()
+Evaluated on a Tuesday yields a path of `orders/Tuesday/*`.
+
+### :date()
+$acme.files.orders/:name(:day_name(:date("2026-09-04")))/:last()
+Yields a path of `orders/Friday/*`.
+
+### :now()
+$acme.files.orders/:name(:minute(:now()))/:last()
+Evaluated at 6:15 pm yields a path of `orders/15/*`.
+
+---
+
+## Predicate support functions
+
+### :true()
+
+### :false()
+
+### :none()
+
+### :not_none()
+$acme.files.:on_arrival(:not_none()))
+
+### :empty()
+
+### :not_empty()
+
+### :regex()
+
+### :having()
+
+
+==================
 
 ## The Results Datatype
 
@@ -262,6 +392,25 @@ $acme.results.customers/2025/:first().:from(1):to(3)
 ### one already is
 $acme.results.customers/2025/:first().:from(2):to(2):unmatched()
 
+
+## Results file accesssors
+
+### Get the path and/or contents of the default printouts file, `printouts.txt`.
+The printouts file is a default that collects all printouts from `print()`, `error()`, `jinja()`, and built-in validations sent to the default printer as a named printstream. Each printstream is identitified in `printouts.txt` above its printouts content.
+$acme.results.:flatten():last().:printouts()
+
+### Get a printouts file named for its stream
+Given the csvpath `~ print-mode:separate ~$[*][ print("hello world", "greetings")]` get the resulting `greetings.txt` printouts. The following two references are equivalent.
+$acme.results.:flatten():last().:printouts("greetings")
+$acme.results.:flatten():last().:file("greetings.txt")
+
+### Get the log file for the current CsvPath Framework project.
+Note that `:log()` is a reference to a single log file that contains log output from all runs and other Framework activities. References v3 provides access to this resource at `name_one` to enable references users to access a high value source, despite the fact that the log file lives in a scope separate from every other aspect of references.
+$acme.results.:log()
+
+
+
+
 ----------------------------
 ----------------------------
 ----------------------------
@@ -486,15 +635,16 @@ $alpha.files.:name("orders.csv").:last():path(:manifest())
 ### deferred follow-up, not done here).
 $alpha.files.:fingerprint("a711df7d2846e8ba46125d3f7adb7aea0ede50eb20a6550fca2358628a05425b")
 
+### Get the README.md for a named-file, if existant
+Note that `:readme()` is a file accessor that has no relationship to the
+`name_one` path, and that there is only one README.md per named-file.
+Therefore, you cannot combine a path with the `:readme()` function in
+`name_one`.
+$acme.files.:readme()
 
 ----------------------------
 
-## The Csvpaths Datatype -- no examples existed above; this whole section is new.
-## Every example below was verified against real code on 2026-08-13 (the
-## normative pass) and is encoded as a real, running test in
-## tests/references/test_normative_examples_csvpaths.py -- all of it is
-## built; the one exception is the aspirational QUESTION line below, marked
-## inline as not buildable yet.
+## The Csvpaths Datatype
 
 ### Version pointer / every version unreduced
 $acme.csvpaths.:last()
@@ -660,6 +810,13 @@ $acme.csvpaths.:last():named_paths_count()
 ### The filesystem path to a whole-resource function's own resource
 $acme.csvpaths.:path(:manifest())
 
+
+### Get the README.md for a named-paths group, if existant
+Note that `:readme()` is a file accessor that has no relationship to the
+`name_one` version selection. There is only one README.md per named-paths
+group. Therefore, you cannot combine version selection with the `:readme()`
+function in `name_one`.
+$acme.csvpaths.:readme()
 
 
 
