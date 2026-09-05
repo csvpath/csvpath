@@ -259,31 +259,36 @@ references is legal, the third is not:
 
 #### 3.9c
 `name_one` supports functions, described below. It also supports a `*`
-wild card that matches any name segment of a path (`files`, `results`) or
+wildcard that matches any name segment of a path (`files`, `results`) or
 any version (`csvpaths`). Wild cards are discussed below. A function
 starting `name_one` or following directly after a path separator implies
-a `*` wild card, unless it falls in one of these categories of exceptions:
+a `*` wildcard, unless it falls in one of these categories of exceptions:
 
-- Is itself a wildcard. E.g. `:all()`, `:flatten()`, `:groups()`
-- It fully occupies the segment. E.g. `:name()`, `:regex()`, `:choice()`
-- It doesn't operate at segment level at all. E.g. `:manifest()`,
-`:definition()`, `:on_arrival()`, etc.
+- It is itself a wildcard: `:all()`, `:flatten()`, `:groups()`
+- It fully occupies a path segment. E.g. `:name()`, `:regex()`, `:choice()`
+- It doesn't operate as or in a path segment at all. E.g. `:manifest()`,
+`:definition()`, `:on_arrival()`, `:fingerprint()`, etc.
 
 More specifically:
-- `:all()` is a form of wild card itself, so there is no implication of `*`
+- `:all()` is a form of wildcard itself, so there is no implication of `*`
 - `:flatten()` is the n-level form of `*`, so it supersedes `*`
 - `:groups()` is the n-level form of `:all()`; again not implying `*`
 - `:name(...)` and its equivalents fully occupy the path segment they
-occupy, precluding the possibility of a wild card at that location
-- A `:manifest()` standing alone in `name_one` with a entity name `*`
-always points to the named-entity ledger manifest, not those of individual
+occupy, precluding the possibility of a wildcard at that location
+- A `:manifest()` standing alone in `name_one` with entity name `*`
+always points to the datatype's ledger manifest, not those of individual
 named-entities or the events that happen within them.
-- `:definition()` in a named-file `name_one` always refers to the
-named-file's sole definition file without regard for template path;
-therefore, a `*` is not implied. Functions that directly address
-definition fields, e.g. `:on_arrival()`, likewise, do not imply a `*`.
+- A `:manifest()` standing alone in `name_one` with a specific entity name
+implies a `*` in the case of the `results` datatype, there being one
+manifest file per run; however, in the case of `files`, and `csvpaths` the
+reference is to the entity's manifest file and no `*` is implied.
+- `:definition()` in a named-file or named-paths group `name_one` always
+refers to the named-entity's sole definition file, which has no
+relationship to template path; therefore, a `*` is not implied.
+- Functions that directly address definition fields, e.g. `:on_arrival()`,
+likewise, do not imply `*`.
 
-Note that `:regex(...)` and `:choice(...)` are a pattern-matching analogs
+Note that `:regex(...)` and `:choice(...)` are pattern-matching analogs
 of `:name(...)`.
 
 #### 3.9d
