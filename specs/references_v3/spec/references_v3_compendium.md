@@ -780,15 +780,15 @@ actual bytes value.
   because names and fingerprints are not the same kind of thing.
 - `:uuid()` and `:run_uuid()` are comparable.
 
-#### 6.7
+#### 6.7 functional taxonomy
 This makes it important to know the purpose of the function in order to use
 it correctly for comparison. The taxonomy for existing functions is this
 set of groupings:
-  - "uuid": :uuid(), :run_uuid(), :named_file_uuid(), :named_paths_uuid()
-  - "name": :named_paths_name(), :named_results_name(), :named_file_name()
-  - "fingerprint": :fingerprint(), :named_file_fingerprint() (Note:
+  - `uuid`: :uuid(), :run_uuid(), :named_file_uuid(), :named_paths_uuid()
+  - `name`: :named_paths_name(), :named_results_name(), :named_file_name()
+  - `fingerprint`: :fingerprint(), :named_file_fingerprint() (Note:
     `:file_fingerprints()` is list-valued so does not compare in practice)
-  - "type": :type()
+  - `type`: :type()
   - Everything else (:host(), :status(), :template(), :archive(),
     :identity(), etc.) is undeclared, for now, and falls back to
     exact-accessor-equality required for value comparison

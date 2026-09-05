@@ -42,6 +42,36 @@ $acme.csvpaths.:from(:date("2026-01-01"))
 #### versions at or after an index
 $acme.csvpaths.:from(:index(4))
 
+### Use as range generators
+`:above(...)` and `:below(...)` can be passed as an argument to create a predicate against a value that can be selected. The effect is like a less-than, greater-than, or range operator.
+
+#### Select all results with more than 3 errors:
+$*.results.:flatten():error_count(:above(3))
+
+#### Two ways of selecting runs without errors
+$*.results.:flatten():error_count(:below(1))
+$*.results.:flatten():error_count(0)
+
+---
+
+## Function argument string interpolation
+
+Functions that take a string argument can have interpolation strings that plug values from:
+- Variables
+- Functions
+
+### Form
+Interpolation has the form of braces wrapped variables or functions. Literal braces can be escaped by doubling them. E.g.
+- `"this is {@day}"` compiles to `"this is Monday"` when `@day` is equal to `Monday`
+- `"this is {{a day var goes here}}"` compiles to `"this is {a day var goes here}"`
+
+### Create a dynamic path using a variable
+$acme.files.orders/:name("Summary for {@businessunit}.xlsx")
+
+### Create a dynamic path using a function
+$acme.files.orders/:name("Summary for {:day_name(:yesterday())}.xlsx")
+
+
 ---
 
 ## Date and time functions
@@ -119,29 +149,122 @@ Evaluated at 6:15 pm yields a path of `orders/15/*`.
 ## Predicate support functions
 
 ### :true()
+Get the path+uuid to the manifest of any no-template `acme` runs where
+the run method is in `collect_paths()` or `fast_forward_paths()`, the
+serial run methods.
+$acme.results.:manifest():serial(:true())
+
+Get the path+uuid to the run home dir of any no-template `acme` runs
+where the run method is in `collect_paths()` or `fast_forward_paths()`,
+the serial run methods.
+$acme.results.:serial(:true())
 
 ### :false()
+Get the path+uuid to the run home dir of any no-template `acme` runs
+where the run method is in `collect_by_line()` or
+`fast_forward_by_line()`, the breadth-first run methods.
+$acme.results.:serial(:true())
 
 ### :none()
+Provides the `None` value for use in metadata predicates. Find all the
+`acme` run results with 0-level templates that are still in progress.
+$acme.results.*:run_completed(:none())
 
 ### :not_none()
-$acme.files.:on_arrival(:not_none()))
+Select the name home paths+uuid of all named-files that have an arrival
+activation set.
+$*.files.:on_arrival(:not_none()))
 
 ### :empty()
+Empty and none are for the most part synonymous. In a few cases there are distinctions. A field that defaulted to an empty list matches `:empty()` not `:none()`. A JSON file that serialized None as null does not match `:empty()`. A key that is not present matches `:none()`, but not `:empty()`.
+
+| Function | Matches |
+|---------------------|
+| `:empty()` | `''`, `[]`, `{}` |
+| `:none()`  | `''`, `null`, No such field |
+
+Find the name homes where `status` doesn't exist in the manifest entry (indicating a successful registration) and there was no template.
+$*.files.:status(:none()):template(:empty())
 
 ### :not_empty()
+Get a list of all templates used in registrations
+$*.files.:template(:not_empty())
 
-### :regex()
+---
 
-### :having()
+## The field accessor functional taxonomy
+Field accessor functions are assigned one of 5 functional groups:
+  - `uuid`: :uuid(), :run_uuid(), :named_file_uuid(), :named_paths_uuid()
+  - `name`: :named_paths_name(), :named_results_name(), :named_file_name()
+  - `fingerprint`: :fingerprint(), :named_file_fingerprint()
+  - `type`: :type()
+  - Everything else
 
+The values found by functions in the same functional group can be compared in reference expressions.
+
+A function that represents a unique identifier field may:
+- Retrieve the value when used without an argument
+- Select an entity when its value matches the function's argument
+
+### UUIDs
+
+#### Return the UUID of the named-file used in the run:
+$acme.results.:first():named_file_uuid()
+
+#### Return the UUID of the named-paths group version used in the run:
+$acme.results.:first():named_paths_uuid()
+
+#### Select a registered version of an `acme` file by its UUID:
+$acme.files.:uuid("ab37-fef3...")
+
+### Names
+
+#### Select named-files registrations for `orders` that failed
+$*.files.:status("Registration failed"):named_file_name("orders")
+
+#### Select the first run for each template for runs having the
+named-file name `orders`:
+$*.results.:groups():named_file_name("orders"):first()
+
+### Fingerprint
+
+#### Select a named-file version by fingerprint
+$acme.files.:fingerprint("4fd50acf4b5da0c2bcb8cb6c66a753a27c62280d0848824a6224647a5650ff3a")
+
+#### Select all runs that used a specific version of a named-file
+$*.results.:flatten():named_file_fingerprint("4fd50acf4b5da0c2bcb8cb6c66a753a27c62280d0848824a6224647a5650ff3a")
+
+#### Two ways of retrieving all `acme` fingerprints
+$acme.files.:flatten():fingerprint()
+$*.files.:fingerprint():named_file_name("acme")
+
+### Type
+
+#### Select all `acme` named-file versions by type
+$acme.files.:flatten():type("xlsx")
+
+---
+
+## Pointers
+
+A function can point to a certain item to the exclusion of other items. Examples include:
+- `:index(4)`  - the 5th item in an ordered set
+- `:last()` - the last item in an ordered set
+- `:errors()` - the `errors.json` file created by every run
+
+### One pointer per reference context
+Two pointers can not cohabitate the same reference in the same context, such as a `name_one`. For e.g. the following are not legal:
+- $acme.files.:index(3):last()  - cannot specify the 4th item and the last item at the same time, even if the last item is 4th.
+- $acme.results.orders:last().header_checks:manifest():errors() - cannot point to the manifest file and the errors file at the same time.
+
+
+---
 
 ==================
 
 ## The Results Datatype
-
-*
-#### Notes
+```
+Notes
 - A "1-level template" means a template like :1/:run_dir where the run is 1 path
 segment below a particular named-result home directory. A "non-template run dir"
 means a run dir that is a direct child of the named-result home.
@@ -153,7 +276,7 @@ technically prevented. Likewise, `:from(:yesterday())` is do able but not
 necessary -- a simple `:yesterday()` is enough. However,
 `:from(:date("2026-01-01"))` must be possible, so `:from(:yesterday())` is as
 well.
-*
+```
 
 
 ### Finding the "last" run or runs of a type of information:
