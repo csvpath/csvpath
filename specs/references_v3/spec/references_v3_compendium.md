@@ -447,7 +447,12 @@ Expect the following references to have these results:
   - `named_paths/acme/group.csvpaths` + UUID `091cb1fed...`
 - `$acme.csvpaths.:date("2026-11-05"):after():first()` retrieves the 2nd version as `named_paths/acme/group.csvpaths` + UUID `a8ab152c2...`
 
-Note that the finder's `query()` method with reference `$acme.csvpaths.*` returns the three results shown above; however, the `resolve()` method raises an error because it is not possible to load multiple full documents at once and each version of a named-paths group is considered the equivalent of a document, even though it is sourced from a versioning key in the manifest entries.
+Note that the finder's `query()` method with reference `$acme.csvpaths.*`
+returns the three results shown above; however, the `resolve()` method
+raises an error because it is not possible to load multiple full
+documents at once and each version of a named-paths group is considered
+the equivalent of a document, even though it is sourced from a versioning
+key in the manifest entries.
 
 ---
 
@@ -503,7 +508,8 @@ subdirectory with its own files).
 
 ## 4. Wildcards: `:all()` vs. `*`
 
-There are four wildcards that each fully occupy their `name_one` or `name_three` segment:
+There are four wildcards that, like `:name(...)` and other path components,
+each fully occupy their `name_one` or `name_three` segment:
 
 | flat     | grouping |
 |----------|----------|
@@ -514,14 +520,15 @@ There are four wildcards that each fully occupy their `name_one` or `name_three`
 `*` flattens its position in the reference into one pooled search space.
 
 #### 4.2
-`:all()` anywhere in the `name_one` groups the remaining `name_one` search space by the
-names found at the grouping segment (`:all()`'s position). The reference processes each
-group independently of the other groups. That means that a `:last()` function that follows an
-`:all()` will give the last item found by looking solely at its group scope. At the same time
-the reference as a whole gains the possibility of having one last item per name found in the
-position occupied by the `:all()`.
+`:all()` anywhere in the `name_one` groups the remaining `name_one` search
+space by the names found at the grouping segment (`:all()`'s position).
+The reference processes each group independently of the other groups. That
+means that a `:last()` function that follows an `:all()` will give the last
+item found by looking solely at its group scope. At the same time the
+reference as a whole gains the possibility of having one last item per name
+found in the position occupied by the `:all()`.
 
-#### 4.3
+#### 4.3 Limitations
 Note these limitations on grouping:
 - `name_one` can have only one `:all()` or `:groups()`
 - `:all()` cannot be combined with `:groups()`
@@ -529,7 +536,39 @@ Note these limitations on grouping:
 - `name_three` does not accept `:groups()`
 - in `name_three`, `:all()` devolves to having the same function as `*`
 
-The latter point is due to the limited variability in `results`. Since `results` files are generated reliably, 0 or 1, by default, in the usual case there is nothing to group. There are two exceptional cases: `print-mode:separate`, where multiple printouts files with arbitrary names may be generated, and the use of the `parquet()` function, which will output arbitrarily named Parquet files. However, in those two cases, there is no selection criteria for use in grouping beyond lexical comparison. That means grouping only has trivial or obscure power in `results` `name_three`. Rather than supporting that marginal at-best function, `all()` simply has the same meaning in `name_three` as `*`, a plain wildcard.
+#### 4.3a
+The latter point is due to the limited variability in `results`. Since
+`results` files are generated reliably, 0 or 1, by default, in the usual
+case there is nothing to group. There are two exceptional cases:
+`print-mode:separate`, where multiple printouts files with arbitrary names
+may be generated, and the use of the `parquet()` function, which will output
+arbitrarily named Parquet files. However, in those two cases, there is no
+selection criteria for use in grouping beyond lexical comparison. That means
+grouping only has trivial or obscure power in `results` `name_three`. Rather
+than supporting that marginal at-best function, `all()` simply has the same
+meaning in `name_three` as `*`, a plain wildcard.
+
+#### 4.3b
+For `files` and `results` the `name_one` path can have at most one grouping
+wildcard.
+The following are illegal:
+- $acme.files.:all()/:all()
+- $acme.files.:groups()/:all()
+- $acme.files.:groups()/:groups()
+
+#### 4.3c `*/:flatten()`
+Note that `$acme.files.*/:flatten() offers a subtle distinction over `:flatten()`:
+- `$acme.files.:flatten()` - all `acme` file homes
+- `$acme.files.*/:flatten()` - all `acme` file homes that have a template (a 1-level template)
+
+#### 4.3d  `:flatten()/*`
+Note, however, `$acme.files.:flatten()/*` is illegal because it is
+essentially contradictory. It says flatten all the layers as wildcards,
+except one last layer that is a wildcard. Because there is no functional
+difference between the last and the preceding layers it is not possible
+say if `:flatten()` or `:flatten()/*` was applied, so the combination is
+impractical and for clarity it is illegal.
+
 
 #### Examples 4.4
 Given named-file `alpha` with paths:
@@ -560,10 +599,10 @@ Note that the following references are equivalent. While References v3 prefers t
 #### 4.5
 The following combinations are legal in `name_one`:
 - Any combination of `:all()` and `*` where each has its own distinct path segment
-- `:all()` ahead of `:flatten()`
-- `*` ahead of `:groups()`
+- Any combination of `:all()` and `:flatten()`
+- Any combination of `*` and `:groups()`
 
-Note that following `flatten()` with a `*` path segment is essentially contriditory, so is not legal.
+Note that `flatten()` followed by a `*` path segment is essentially contriditory, so is not legal.
 
 The following are illustrative for both the templated datatypes, `files` and `results`:
 - `$acme.files.:flatten()/*` - illegal, cannot flatten all layers and then have another wildcard layer
@@ -1062,9 +1101,18 @@ Ordinals have roles:
   anchors, indexed.
 
 #### 6.28
-- :before(), :after(), :from(), :to() are directions — directions are
-  intermediate. I.e. a direction modifies an anchor or position.
-- Two directions can create a range between their anchor points. `:before()` or `:to()` may be combined with `:after()` or `:from()` to create a range. Combining `:before()` and `:to()` or `:after()` and `:from()` is not legal. For e.g., this reference finds all versions registered as `acme` from the beginning of 2026 through yesterday: `$acme.files.:flatten().:after(:date("2026-01-01")):to(:yesterday())`
+- Directions modifies an anchor or position:
+  - :before(...)
+  - :after(...)
+  - :from(...)
+  - :to(...)
+- Used by itself, a direction function is similar to a greater-than or less-than
+- Two not-alike directions can create a range between their anchor points.
+
+Combining `:before()` or `:to()` may be combined with `:after()` or `:from()` to create a range; however, combining `:before()` and `:to()` or `:after()` and `:from()` is not legal.
+
+#### 6.28a Find versions registered as `acme` from the beginning of 2026 through yesterday
+`$acme.files.:flatten().:after(:date("2026-01-01")):to(:yesterday())`
 
 #### 6.29
 - :index() is a position of a counter within a bounded number line — within
@@ -1097,9 +1145,7 @@ so registrations have a precedence advantage over runs and runs have a
 dependency relationship to registrations
 
 #### 6.33
-Note: historically we have had from/to as inclusive and before/after as
-exclusive. We also used from/to only with the `csvpaths` datatype. It may be
-practical to only offer one of these pairs or use aliases. TBD.
+* This section intentionally removed *
 
 ### Pure value functions
 #### 6.34
@@ -1141,6 +1187,11 @@ matching with variable or category values.
 - :not_empty() — value is not ""
 - :regex(/.../) — value matches regex
 - :having("...") — structure has a named/IDed child. Primary case: named-paths groups versions having a csvpath statement ID.
+- The directional functions listed above can be used as operators:
+  - `:above(...)` - greater-than
+  - `:from(...)` - greater-than-or-equal-to
+  - `:below(...)` - less-than
+  - `:to(...)` - less-than-or-equal-to
 
 ### Function arguments
 #### 6.37

@@ -89,7 +89,7 @@ named-file.
 | file_path |  | :file_path() | The fully qualified path to the version that was registered. |
 | file_home |  | :file_home() | The path to the directory representing the original physical file registered and named by the same name, including extension. This directory holds the version files. The path is constructed using the [inputs] files key in config.ini. That means in some contexts, for e.g. FlightPath Server, it will always be fully qualified to the filesystem root. File homes are derived using a template, if one is provided in the registration method call or a default is configured for the named-file. |
 | file_name |  | :file_name() | The named of the original physical file that was registered. This is the same name as the file home directory. |
-| name_home |  | :home() | The named-file's root directory. It is named by the named-paths name and contains all the template-driven and non-template filesystem paths within the named-file. |
+| name_home |  | :named_file_home() | The named-file's root directory. It is named by the named-paths name and contains all the template-driven and non-template filesystem paths within the named-file. |
 | template | optional | :template() | This function returns the actual template used in a registration. A string with braces-bracketed replacement tokens that determines the path within the named-file of the file home, where a registered file is stored. The replacement tokens are of two kinds: 1. the indexes of the path segments found in the origin path. E.g. :0 for the first directory below the root, :1 for the next path segment, and so on, and 2. tokens for elements of the current datetime, e.g. :day, :month, :year, etc. |
 | mark | optional | N/A | The name of a worksheet in an Excel file. This is accessible via `name_two` |
 | manifest_path |  | :manifest()  | The path to the file holding this entry. |
@@ -112,7 +112,7 @@ of the whole group.
 | source_path | optional | :source() | The path to the file or directory that housed the csvpath statements that make up the contents of the version of this named-paths group this entry represents. |
 | named_paths |  | :named_paths() | The full byte-for-byte text of the csvpath statements comprising this entry's version of this named-paths group. The value of this key can potentially be quite large. |
 | named_paths_identities |  | :named_paths_identities() | A list of the identities of the csvpaths in this version of this named-paths group. Identities are the names given to csvpaths in their leading comments using standard metadata keys (:id, :Id, :ID, :name, :Name, :NAME; in that order of precedence) or, if a name is not found, the 0-based index of their position within the named-paths group. |
-| named_paths_count |  | :named_paths_identities_count() | The number of csvpaths in this version of the named-paths group. |
+| named_paths_count |  | :named_paths_count() | The number of csvpaths in this version of the named-paths group. |
 | fingerprint |  | :fingerprint() | In most cases, the SHA256 hash of the `group.csvpaths` file. The exception is: files in S3 are identified by MD5 hash because AWS calculates that for us, improving performance at the tiny risk of a hash collision. For our purposes, the MD5 is equally effective to the SHA256. |
 | time |  | :time() | The moment this version of the named-paths group was loaded. |
 | time_started | optional | N/A | Technically, the beginning moment of the load. Use `:time()` |
@@ -197,7 +197,7 @@ named-paths group used by the run).
 | time |  | :time() | The moment this csvpath statement began running. |
 | uuid |  | :uuid()  | The unique identifier of this csvpath statement's results in this run. |
 | serial |  | :serial()  | True if the run completes csvpath statements serially, rather than completing a pass through all of them as each line is processed. |
-| archive_name |  | :archive() | The archive dir name at the time this result was generated. |
+| archive_name |  | :archive_name() | The archive dir name at the time this result was generated. |
 | named_results_name |  | :named_results_name()  | The named-results name of the run that includes this result. This is the same name as the named-paths group name. |
 | named_paths_uuid |  | :named_paths_uuid() | The unique reference to the version of the named-paths group that created the run this csvpath statement result is a member of. |
 | run |  | :run_dir() | The run dir name. A timestamp with disambiguation, if needed. `run_dir` is the commonly used name, not `run`. |

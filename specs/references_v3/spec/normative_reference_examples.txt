@@ -20,10 +20,10 @@ They take:
 Identifies the lower order items before a reference, exclusive
 #### versions before a date
 $acme.csvpaths.:before(:date("2026-01-01"))
-$acme.files.:before(:date("2026-01-01"))
+$acme.files.*.:before(:date("2026-01-01"))
 #### versions before an index
 $acme.csvpaths.:before(:index(4))
-$acme.files.:before(:index(4))
+$acme.files.*.:before(:index(4))
 #### all runs before an index
 $acme.results.:flatten():before(:index(4))
 
@@ -31,10 +31,10 @@ $acme.results.:flatten():before(:index(4))
 Indicates the higher order items after a reference, exclusive
 #### versions after a date
 $acme.csvpaths.:after(:date("2026-01-01"))
-$acme.files.:after(:date("2026-01-01"))
+$acme.files.*.:after(:date("2026-01-01"))
 #### versions after an index
 $acme.csvpaths.:after(:index(4))
-$acme.files.:after(:index(4))
+$acme.files.*.:after(:index(4))
 #### all runs after an index
 $acme.results.:flatten():after(:index(4))
 
