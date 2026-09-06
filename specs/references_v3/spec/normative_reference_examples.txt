@@ -14,19 +14,29 @@ They take:
 - Arrival/load/run datetimes
 - The identity of csvpath statements
 - Fingerprints, as a proxy for the named-file arrival-order index
+`:before(...)` and `:to(...)` are a pair, differing only in their reference point inclusivity. Likewise, `:after(...)` and `:from(...)`.
+
 ### `:before(...)`
 Identifies the lower order items before a reference, exclusive
 #### versions before a date
 $acme.csvpaths.:before(:date("2026-01-01"))
+$acme.files.:before(:date("2026-01-01"))
 #### versions before an index
 $acme.csvpaths.:before(:index(4))
+$acme.files.:before(:index(4))
+#### all runs before an index
+$acme.results.:flatten():before(:index(4))
 
 ### `:after(...)`
 Indicates the higher order items after a reference, exclusive
 #### versions after a date
 $acme.csvpaths.:after(:date("2026-01-01"))
+$acme.files.:after(:date("2026-01-01"))
 #### versions after an index
 $acme.csvpaths.:after(:index(4))
+$acme.files.:after(:index(4))
+#### all runs after an index
+$acme.results.:flatten():after(:index(4))
 
 ### `:to(...)`
 The lower order items before a reference, inclusive
@@ -43,7 +53,7 @@ $acme.csvpaths.:from(:date("2026-01-01"))
 $acme.csvpaths.:from(:index(4))
 
 ### Use as range generators
-`:above(...)` and `:below(...)` can be passed as an argument to create a predicate against a value that can be selected. The effect is like a less-than, greater-than, or range operator.
+`:above(...)` and `:below(...)` can be passed as an argument to create a predicate against a value that can be selected. The effect is like a less-than or greater-than operator, or a range running from a point to the beginning or end.
 
 #### Select all results with more than 3 errors:
 $*.results.:flatten():error_count(:above(3))
@@ -163,12 +173,12 @@ $acme.results.:serial(:true())
 Get the path+uuid to the run home dir of any no-template `acme` runs
 where the run method is in `collect_by_line()` or
 `fast_forward_by_line()`, the breadth-first run methods.
-$acme.results.:serial(:true())
+$acme.results.:serial(:false())
 
 ### :none()
 Provides the `None` value for use in metadata predicates. Find all the
 `acme` run results with 0-level templates that are still in progress.
-$acme.results.*:run_completed(:none())
+$acme.results.*:completed(:none())
 
 ### :not_none()
 Select the name home paths+uuid of all named-files that have an arrival
@@ -179,7 +189,7 @@ $*.files.:on_arrival(:not_none()))
 Empty and none are for the most part synonymous. In a few cases there are distinctions. A field that defaulted to an empty list matches `:empty()` not `:none()`. A JSON file that serialized None as null does not match `:empty()`. A key that is not present matches `:none()`, but not `:empty()`.
 
 | Function | Matches |
-|---------------------|
+|----------|---------|
 | `:empty()` | `''`, `[]`, `{}` |
 | `:none()`  | `''`, `null`, No such field |
 
@@ -257,6 +267,31 @@ Two pointers can not cohabitate the same reference in the same context, such as 
 - $acme.files.:index(3):last()  - cannot specify the 4th item and the last item at the same time, even if the last item is 4th.
 - $acme.results.orders:last().header_checks:manifest():errors() - cannot point to the manifest file and the errors file at the same time.
 
+---
+
+## Functions in `root_major`
+
+Root major holds the named-entity name. It can take for the following:
+- A static name string, as defined in the grammar
+- `*` - the only wildcard allowed
+- `:regex(...)` - a standard regex identifying a set of names
+- `:name(...)` - a name that may include variable interpolation or be the string form of a variable
+- `:choice(...) - a pipe-delimited sequence of matching names
+
+#### The set of all file homes of the acme named-file
+$acme.files.:flatten()
+
+#### The set of all file homes for all named-files
+$*.files.:flatten()
+
+#### The set of all file homes for all named-files starting with `B`
+$:regex(/^B/).files.:flatten()
+
+#### File homes matching `EMEA orders` given a variable `@where` equals `EMEA`
+$:name("{@where} orders").files.:flatten()
+
+#### The set of all file homes for the orders, invoices, and shipments named-files
+$:choice("orders|invoices|shipments").files.:flatten()
 
 ---
 
@@ -529,6 +564,10 @@ $acme.results.:flatten():last().:file("greetings.txt")
 
 ### Get the log file for the current CsvPath Framework project.
 Note that `:log()` is a reference to a single log file that contains log output from all runs and other Framework activities. References v3 provides access to this resource at `name_one` to enable references users to access a high value source, despite the fact that the log file lives in a scope separate from every other aspect of references.
+
+The following three references are functionally identical:
+$acme.files.:log()
+$acme.csvpaths.:log()
 $acme.results.:log()
 
 

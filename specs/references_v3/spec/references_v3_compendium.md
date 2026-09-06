@@ -961,10 +961,9 @@ be at `logs/csvpath.log`.
 
 This is an outlier function because it is not connected to just one
 datatype. It exists as a convenience for users that can more easily
-manipulate references than call functions. Case in point, agents that
-have full range of motion to use reference expressions but may not
-have a tool context where they can run python scripts that could pull
-the log file. This makes it a practicality-over-logical-fit feature.
+manipulate references than call functions. Agents that can use reference
+expressions could access the log file this way rather than using Python or
+shell.
 
 Retrieving the main log file is one of:
 - `$*.files.:log()`
@@ -1027,7 +1026,8 @@ Ordinals have roles:
 
 #### 6.28
 - :before(), :after(), :from(), :to() are directions — directions are
-  intermediate. I.e. a direction modifies an anchor or position
+  intermediate. I.e. a direction modifies an anchor or position.
+- Two directions can create a range between their anchor points. `:before()` or `:to()` may be combined with `:after()` or `:from()` to create a range. Combining `:before()` and `:to()` or `:after()` and `:from()` is not legal. For e.g., this reference finds all versions registered as `acme` from the beginning of 2026 through yesterday: `$acme.files.:flatten().:after(:date("2026-01-01")):to(:yesterday())`
 
 #### 6.29
 - :index() is a position of a counter within a bounded number line — within
@@ -1079,6 +1079,7 @@ The complete set of dumb value-producing functions is:
 - :yesterday() — datetime or str
 - :today() — datetime or str
 - :date("...")  — str
+- :now() - datetime
 
 Note: this list may expand modestly before feature complete.
 
