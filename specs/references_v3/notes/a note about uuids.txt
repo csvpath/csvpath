@@ -1,0 +1,23 @@
+
+
+
+# get uuids from all registrations
+$*.files.:manifest():uuid()
+# get all acme registration uuids
+$acme.files.:manifest():uuid()
+
+# get all registration UUIDs, except those of the acme named-files
+$*.files.:manifest():uuid()
+SUBTRACT
+$acme.files.:manifest():uuid()
+
+# get all the most recent acme registration UUIDs that have been used in runs
+$acme.files.:manifest():uuid()
+INTERSECT
+$*.results.:flatten():manifest():named_file_uuid()
+
+
+
+
+
+
