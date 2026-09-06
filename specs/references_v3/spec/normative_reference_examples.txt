@@ -347,8 +347,9 @@ wildcard.
 - $acme.files.:groups()/:groups()
 
 #### `*/:flatten()`
-Note that `$acme.files.*/:flatten() is not illegal, but offers no improvement over
-`$acme.files.:flatten()`.
+Note that `$acme.files.*/:flatten() offers a subtle distinction over `:flatten()`:
+- `$acme.files.:flatten()` - all `acme` file homes
+- `$acme.files.*/:flatten()` - all `acme` file homes that have a template (a 1-level template)
 
 #### `:flatten()/*`
 Note, however, `$acme.files.:flatten()/*` is illegal because it is essentially
@@ -378,21 +379,15 @@ Given the following name homes, each with 10 versions (not shown, named
 <named_files>/acme/shipments/jan/week2.csv/<version-number-10>.csv
 <named_files>/acme/shipments/feb/week2.csv/<version-number-10>.csv
 
-
 #### Other `files` and `results` paths wildcarding
 The following are illustrative for both the templated datatypes, `files` and `results`:
--  - illegal, cannot flatten all layers and then have another wildcard layer
+- `$acme.files.:flatten()/*` - illegal, cannot flatten all layers and then have another wildcard layer
 - `$acme.files.:flatten()/:all()` - legal, can flatten all layers except one last grouping layer
 - `$acme.files.*/:groups()` - legal, can wildcard one layer then group all other layers
 
 Note that the following unlikely references are legal and equivalent:
 - `$acme.files.*/:all()/*`
 - `$acme.files.*/*/*`
-- `$acme.files.:all()/*/:all()`
-- `$acme.files.:all()/:all()/:all()`
-
-
-
 
 ### Groups and flatten occur in `name_one` only
 #### The following are illegal:
@@ -933,20 +928,9 @@ $alpha.files.:name("orders.csv").:path(:manifest())
 $alpha.files.:name("orders.csv").:last():path(:manifest())
 
 
-### bare ':fingerprint("hash")' -- built 2026-08-13, a content-hash lookup
-### across the WHOLE named-file's manifest (every file_home/path), searching
-### by content identity rather than the path identity ':name()' matches.
-### Confirmed against FileRegistrar's real write path: the version file
-### itself is literally stored/named by its own fingerprint, so an exact
-### match is reliable. query() gives the matched version's real path/uuid
-### directly (no further name_three narrowing needed or supported -- a
-### fingerprint already identifies one specific version). resolve()-ing raw
-### content for this shape is NOT yet supported (Reference3.resolve_kind
-### currently classifies any "fingerprint" appearance as METADATA_FIELD
-### regardless of position, which is right for the ordinary field-accessor
-### use but wrong for this lookup use -- raises clearly rather than
-### resolving silently wrong; fixing resolve_kind itself is a separate,
-### deferred follow-up, not done here).
+### finds a named-file registered version by fingerprint. Note that this returns
+the first matching registered fingerprint. Multiple versions may have the same fingerprint
+if registered under different file homes.
 $alpha.files.:fingerprint("a711df7d2846e8ba46125d3f7adb7aea0ede50eb20a6550fca2358628a05425b")
 
 ### Get the README.md for a named-file, if existant

@@ -341,7 +341,7 @@ Where `*` is `name_one` and the datetime information is carried in
 `name_three`.
 
 ### `name_one` and Templates
-#### 3.11
+#### 3.12
 Templates are used to set the location of a registered file within a
 named-file or run dir within named-results. `csvpaths` does not use templates
 
@@ -360,7 +360,7 @@ include path segments, if any, in `name_one`.
 We speak of 0-level, 1-level, 2-level templates, etc. to describe how many
 path segments the template adds to the path to the home directory.
 
-#### 3.12 Examples
+#### 3.12a Examples
 Given a file at `acme/orders/2026/march/q1.csv` registered into `acme`.
 - A template `` registers the file home `named_files/acme/q1.csv`
 - A template `EMEA/:filename` registers the file home `named_files/acme/EMEA/q1.csv`
