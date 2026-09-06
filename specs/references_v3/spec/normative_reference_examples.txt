@@ -202,6 +202,27 @@ $*.files.:template(:not_empty())
 
 ---
 
+## Narrowing predicate forms and pointer selection in `results` files
+
+The following references return the path+uuid on `query()`.
+
+#### `resolve()` to the content of file
+`$acme.results.:last().:errors()`
+
+#### `resolve()` to all errors that have idchains
+`$acme.results.:last().:errors(:idchain(:not_none()))`
+
+#### `resolves()` to all errors with matching idchains
+`$acme.results.:last().:errors(:idchain("add[0]"))`
+
+#### `resolve()` to contents, iff idchain exists in file
+`$acme.results.:last().:errors():idchain(:not_none())`
+
+#### `resolve()` to contents, iff idchain matching exists in file
+`$acme.results.:last().:errors():idchain("add[0]")`
+
+---
+
 ## The field accessor functional taxonomy
 Field accessor functions are assigned one of 5 functional groups:
   - `uuid`: :uuid(), :run_uuid(), :named_file_uuid(), :named_paths_uuid()
@@ -292,6 +313,113 @@ $:name("{@where} orders").files.:flatten()
 
 #### The set of all file homes for the orders, invoices, and shipments named-files
 $:choice("orders|invoices|shipments").files.:flatten()
+
+---
+
+## Definition files
+Named-paths and named-files have definition.json files to hold configuration
+information. There is one unversioned definition.json in each named-entity
+within those datatypes.
+
+#### Point to a named-file's definition file
+$acme.files.:definition()
+
+#### Two equivalent ways to get arrival activation information
+$acme.files.:definition():on_arrival()
+$acme.files.:on_arrival()
+
+#### Query-only when multiple definitions selected
+In keeping with the limitation that references can only retrieve the contents
+of a single file at a time, querying across named-entities for path+uuid is
+possible, but then resolving the reference would raise an exception. This
+reference is not legal:
+$*.files.:definition()
+
+
+---
+
+### One grouping wildcard per `name_one` path
+For `files` and `results` the `name_one` path can have at most one grouping
+wildcard.
+#### The following are illegal:
+- $acme.files.:all()/:all()
+- $acme.files.:groups()/:all()
+- $acme.files.:groups()/:groups()
+
+#### `*/:flatten()`
+Note that `$acme.files.*/:flatten() is not illegal, but offers no improvement over
+`$acme.files.:flatten()`.
+
+#### `:flatten()/*`
+Note, however, `$acme.files.:flatten()/*` is illegal because it is essentially
+contradictory. It says flatten all the layers as wildcards, except one last layer
+that is a wildcard. Because there is no functional difference between the last and
+the preceding layers it is not possible say if `:flatten()` or `:flatten()/*` was
+applied, so the combination is impractical and for clarity it is illegal.
+
+#### `:groups()/*`
+In contrast to `:flatten()/*`, `:groups()/*` is legal. It says group in all names
+except wildcard the last one. Where there are not multiple levels, the `*` controls.
+
+Given the following name homes, each with 10 versions (not shown, named
+<version-number-N>.csv where N is the arrival index):
+<named_files>/acme/jan.csv
+<named_files>/acme/feb.csv
+<named_files>/acme/invoices/jan/invoice1.csv
+<named_files>/acme/invoices/jan/invoice2.csv
+<named_files>/acme/shipments/jan/week1.csv
+<named_files>/acme/shipments/jan/week2.csv
+<named_files>/acme/shipments/feb/week1.csv
+<named_files>/acme/shipments/feb/week2.csv
+
+- $acme.files.:groups()/*.:last() returns:
+<named_files>/acme/feb.csv/<version-number-10>.csv
+<named_files>/acme/invoices/jan/invoice2.csv/<version-number-10>.csv
+<named_files>/acme/shipments/jan/week2.csv/<version-number-10>.csv
+<named_files>/acme/shipments/feb/week2.csv/<version-number-10>.csv
+
+
+#### Other `files` and `results` paths wildcarding
+The following are illustrative for both the templated datatypes, `files` and `results`:
+-  - illegal, cannot flatten all layers and then have another wildcard layer
+- `$acme.files.:flatten()/:all()` - legal, can flatten all layers except one last grouping layer
+- `$acme.files.*/:groups()` - legal, can wildcard one layer then group all other layers
+
+Note that the following unlikely references are legal and equivalent:
+- `$acme.files.*/:all()/*`
+- `$acme.files.*/*/*`
+- `$acme.files.:all()/*/:all()`
+- `$acme.files.:all()/:all()/:all()`
+
+
+
+
+### Groups and flatten occur in `name_one` only
+#### The following are illegal:
+- $acme.csvpaths.:all().:flatten()
+- $acme.results.:last().:groups():manifest()
+
+### Limitations on wild cards in `name_three`
+- Only `*` and `:all()` may be used in `name_three`
+- At most one wildcard may be used in `name_three`
+- `:all()` devolves to being the equivalent of `*`
+
+#### The following are equivalent:
+- $acme.files.:name("orders.csv").*
+- $acme.files.:name("orders.csv").:all()
+
+#### The following are equivalent:
+- $acme.results.:last().:all()
+- $acme.results.:last().*
+
+#### The following are equivalent:
+- $acme.csvpaths.:last().:all()
+- $acme.csvpaths.:last().*
+
+#### The following are illegal:
+- $acme.files.*.:all():all()
+- $acme.results.:last().*:all()
+
 
 ---
 
@@ -578,7 +706,7 @@ $acme.results.:log()
 ----------------------------
 ----------------------------
 
-## The Files Datatype -- no examples existed above; this whole section is new
+## The Files Datatype
 
 ### Literal named-file, one version -- NOTE the "." before the pointer: for
 ### FILES the pointer/accessor lives in name_three, never chained directly
@@ -590,6 +718,32 @@ $alpha.files.:name("orders.csv").:index(1)
 
 ### Every version of a literal named-file, unreduced (paths + uuids, no content)
 $alpha.files.:name("orders.csv")
+
+### Referencing an Excel file
+References can point to Excel files (xlsx) and their worksheets. A reference
+to an Excel file that doesn't have a `name_two` value is a reference to
+the default worksheet within the files workbook.
+
+#### Point to an xlsx file home
+$acme.files.orders/:name("west coast.xlsx")
+
+#### Point to an xlsx file home with a specific reference to a worksheet.
+The reference result returned on `query()` is the typical path+uuid and
+the name_two value.
+$acme.files.orders/:name("west coast.xlsx")#march
+
+### Selecting versions by ordinal or date
+
+#### Find the first version registered yesterday
+Note that `:yesterday()` is dynamic shorthand for a datetime
+$acme.files.*.:yesterday():first()
+
+### Find versions created after the 4th of July in the last named-file
+in lexical order. Note that dates construct using their earliest moment
+forcing us to specify the last moment of the 4th in order for `:after()`
+to actually mean after. A slightly simpler approach would have been to
+use `:from(:date("{:year()}-07-05"))`
+$acme.files.:flatten():last().:after(:date("{:year()}-07-04_23:59:59"))
 
 ### ':all()' in name_three -- added 2026-08-12, mirroring CSVPATHS' own
 ### ':all()' precedent exactly (David: "is that right?" re: recalling the
@@ -746,8 +900,7 @@ $*.files.:manifest():last()
 $*.files.*.:last()
 
 ### "*" traversal, GROUP -- one result per (named-file, path) pair, each
-### match still exactly one level deep -- corrected 2026-08-12 alongside the
-### single named-file case above
+### match still exactly one level deep
 $*.files.:all().:last()
 
 ### "*" traversal, POOL, any depth -- reaches every named-file's matches
@@ -756,8 +909,7 @@ $*.files.:all().:last()
 $*.files.:flatten().:last()
 
 ### "*" traversal, GROUP, any depth -- one result per (named-file, path)
-### pair regardless of depth, built 2026-08-12 alongside the single
-### named-file case above
+### pair regardless of depth
 $*.files.:groups().:last()
 
 ### Field accessors on one matched version
@@ -808,16 +960,17 @@ $acme.files.:readme()
 
 ## The Csvpaths Datatype
 
-### Version pointer / every version unreduced
+### Version pointers
 $acme.csvpaths.:last()
 $acme.csvpaths.:first()
 $acme.csvpaths.:index(1)
 $acme.csvpaths.:all()
 
-### the set of my_validations csvpath statements from every version of the
-### `acme` group -- FIXED wording 2026-08-12 (the original description said
-### "from all named-paths groups," but this reference's root_major is the
-### literal group `acme`, not '*' -- confirmed working exactly as re-worded)
+### By UUID
+Find named-paths group version by UUID; the most specific reference possible
+$acme.csvpaths.:uuid("...")
+
+### collects the my_validations statement, if present, from every `acme` version
 $acme.csvpaths.:all().my_validations
 
 ### Three DIFFERENT queries below, not one -- kept side by side because each
@@ -885,27 +1038,57 @@ $acme.csvpaths.:having("my_validations"):last()
 ### which was stale/wrong -- confirmed working via direct testing).
 $acme.csvpaths.:having("my_validations")
 
-### ':from()'/':to()' as a name_one VERSION range -- built 2026-08-13,
-### mirroring RESULTS'/FILES' own version-level ranges (see those sections
-### above). David: a named-paths group's own load time is a real
-### arrival-date concept -- "give me the versions loaded between date-one
-### and date-two." Windows the (possibly ':having()'-filtered) version list;
-### ':to()' is INCLUSIVE; a real pointer riding alongside reduces the RANGE,
-### not the full candidate set. Two modes, same as RESULTS/FILES: index-mode
-### (int/:index(n)) POSITIONALLY slices; date-mode (str/:date(...)) FILTERS
-### by each version's own "time" manifest field. Mixing modes in one pair is
-### rejected. Not yet supported combined with '*' traversal.
+### ':from()' and ':to()' and ':before()' and ':after()' as version ranges
+As said elsewhere, the from and to functions are equivalent to the before and after functions with the sole exception being their inclusivity of the reference point. In any example `:from()` and `:after()` can be interchanged, minding the reference point; likewise, `:to()` and `:before()`.
+
+#### The `acme` versions from the -3 position to the last version
 $acme.csvpaths.:from(-3)
+
+#### Selecting the `acme` versions from 2nd to 4th, then keeping only the 4th
 $acme.csvpaths.:from(1):to(3):last()
+
+#### Selecting the `acme` versions loaded within January 2026. Not that
+`:date("2026-01-31")` expands to the very first moment of the 31st, so
+this reference effectively misses one day.
 $acme.csvpaths.:from(:date("2026-01-01")):to(:date("2026-01-31"))
+
+#### Collects the last three versions of `acme` if they have a
+`my_validations` statement
 $acme.csvpaths.:having("my_validations"):from(-3)
 
-### ':from()'/':to()' as a name_three STATEMENT range -- built 2026-08-13,
-### broadened from RESULTS-only alongside FILES (see that section above).
-### David's own FlightPath v2 use case: rewind/replay starting from a
-### specific csvpath statement, e.g. in FlightPath's Run Dialog
-### ("$acme.csvpaths.:last.:from:2" in v2) becomes, in v3:
+### ':from()' and ':to()' and ':before()' and ':after()' as instance ranges
+When used in `name_three`, the directionals/range functions are work on the
+indexes of the csvpath statements in the group using:
+- `:index()` or bare int
+- `:name()` with a string, int, or variable equaling the statement identity
+
+A csvpath statement within a group has an identity that is:
+- The index of the statement within the group
+- A name assigned by the writer using a metadata field (`id`, `Id, `ID`,
+`name`, `Name`, or `NAME`) in the statement's leading comment
+
+The index of a statement is always meaningful, regardless of it it is named.
+And the index is also used as the name, if another name is not assigned by
+the writer.
+
+#### Select the 3rd through last statements from the last version of `acme`
 $acme.csvpaths.:last().:from(:index(2))
+
+#### Select sequential statements from the index of `header checks` to the
+index of `validation summary`, inclusive, from the last version of `acme`.
+Note that if the names given do not match, the reference returns no results,
+no error is thrown, and no partial results given.
+$acme.csvpaths.:last().:from("header checks"):to("validation summary")
+
+#### Select statements from the last version of `acme` before `header checks`
+Note that if `header checks` is not found the reference returns nothing, but
+does not error. Also note that if `header checks` is the first statement, the
+reference simply doesn't match and returns nothing; it doesn't error, and
+doesn't wrap the index.
+$acme.csvpaths.:last().:before("header checks")
+
+
+
 
 ### windows the matched version's own ordered named_paths_identities list;
 ### ':to()' is INCLUSIVE, same as everywhere else. Index-mode only here --

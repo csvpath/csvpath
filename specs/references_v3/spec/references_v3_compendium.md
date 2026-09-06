@@ -199,8 +199,19 @@ its __str__() must make sense to the reference.
 
 Variable syntax is `@` name, as in `@myvariable`.
 
+#### 3.7a
+Variables may be used in the following ways:
+- In string interpolation
+- As arguments to functions
+
+#### 3.7b
+Since string interpolation is available only in function arguments, variables
+are only used in functions. The use of a variable in interpolation looks like
+this example that creates a file name using an `@country` variable:
+`$acme.files.:name("{@country}-annual-data.csv")`
+
+#### 3.7c
 Setting variables is done on the finder using these methods:
-#### 3.7
 ```
     def variables(self) -> dict:
         ...
@@ -220,8 +231,7 @@ entity, depending on if the datatype of the reference is `files`, `csvpaths`,
 or `results`, respectively. `root_major` can take:
 - A string
 - A `*`
-- A variable in the form `@varname`
-- A `:regex(...)` function
+- A `:regex(...)`, `:choice(...)`, or `:name(...)` function
 
 `*` means any existent named entity
 
@@ -452,7 +462,6 @@ by `name_one`. The `name_three` entities are:
 
 `name_three` can be:
 - A string
-- A variable
 - A function
 - The `*`
 
@@ -494,16 +503,17 @@ subdirectory with its own files).
 
 ## 4. Wildcards: `:all()` vs. `*`
 
-There are four wildcards:
+There are four wildcards that each fully occupy their `name_one` or `name_three` segment:
 
 | flat     | grouping |
 |----------|----------|
 | `*`      | `:all()` |
 | `:flatten()` | `:groups()` |
 
-`*` flattens every wildcard position in the reference into one pooled
-search space.
+#### 4.1
+`*` flattens its position in the reference into one pooled search space.
 
+#### 4.2
 `:all()` anywhere in the `name_one` groups the remaining `name_one` search space by the
 names found at the grouping segment (`:all()`'s position). The reference processes each
 group independently of the other groups. That means that a `:last()` function that follows an
@@ -511,15 +521,17 @@ group independently of the other groups. That means that a `:last()` function th
 the reference as a whole gains the possibility of having one last item per name found in the
 position occupied by the `:all()`.
 
+#### 4.3
 Note these limitations on grouping:
 - `name_one` can have only one `:all()` or `:groups()`
 - `:all()` cannot be combined with `:groups()`
 - `name_three` can have only one `:all()`
 - `name_three` does not accept `:groups()`
-- in `name_three`, `:all()` only has grouping power in `results` where there is further search space to group
+- in `name_three`, `:all()` devolves to having the same function as `*`
 
+The latter point is due to the limited variability in `results`. Since `results` files are generated reliably, 0 or 1, by default, in the usual case there is nothing to group. There are two exceptional cases: `print-mode:separate`, where multiple printouts files with arbitrary names may be generated, and the use of the `parquet()` function, which will output arbitrarily named Parquet files. However, in those two cases, there is no selection criteria for use in grouping beyond lexical comparison. That means grouping only has trivial or obscure power in `results` `name_three`. Rather than supporting that marginal at-best function, `all()` simply has the same meaning in `name_three` as `*`, a plain wildcard.
 
-#### Example 4.1
+#### Examples 4.4
 Given named-file `alpha` with paths:
 - `zero.csv` [1 version]
 - `one.csv` [2 versions]
@@ -544,6 +556,25 @@ Note that the following references are equivalent. While References v3 prefers t
 - `$*.files.:flatten().*` → all 8 most-recent registrations
 - `$*.files.:groups().*` → all 8 most-recent registrations
 - `$*.files.:groups().:all()` → all 8 most-recent registrations
+
+#### 4.5
+The following combinations are legal in `name_one`:
+- Any combination of `:all()` and `*` where each has its own distinct path segment
+- `:all()` ahead of `:flatten()`
+- `*` ahead of `:groups()`
+
+Note that following `flatten()` with a `*` path segment is essentially contriditory, so is not legal.
+
+The following are illustrative for both the templated datatypes, `files` and `results`:
+- `$acme.files.:flatten()/*` - illegal, cannot flatten all layers and then have another wildcard layer
+- `$acme.files.:flatten()/:all()` - legal, can flatten all layers except one last grouping layer
+- `$acme.files.*/:groups()` - legal, can wildcard one layer then group all other layers
+
+Note that the following unlikely references are legal and equivalent:
+- `$acme.files.*/:all()/*`
+- `$acme.files.*/*/*`
+- `$acme.files.:all()/*/:all()`
+- `$acme.files.:all()/:all()/:all()`
 
 
 ---
@@ -612,8 +643,10 @@ manifest file.
 
 #### 5.8
 
-Note that `:definition()` has no global ledger. A reference like
-`$*.files.:definition()` will raise an error.
+Note that `:definition()` has no global ledger. As with similar multiple
+files references, a reference like `$*.files.:definition()` will return the
+paths+uuid to the definition files on `query()` but will raise an error on
+`resolve()`.
 
 #### 5.9
 **Resolve**: pulls actual content a reference points to. When a reference
@@ -730,8 +763,12 @@ one argument. Functions chain with no separator (`:before(:yesterday()):
 index(3)`) and are implicitly ANDed together without regard for order.
 
 #### 6.2
-**Arguments** can be a quoted string, a signed int, an `@name` runtime-bound
-variable, a nested function call, a bare `*`, or a `/regex/` literal.
+**Arguments** can be a:
+- Quoted string
+- Signed int
+- Runtime-bound variable
+- Nested function call
+- Literal `/` wrapped regex.
 
 #### 6.3
 **Runtime lookup, not grammar knowledge**: the grammar has zero built-in
