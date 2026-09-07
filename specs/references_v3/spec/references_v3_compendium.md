@@ -235,6 +235,20 @@ or `results`, respectively. `root_major` can take:
 
 `*` means any existent named entity
 
+Note that `*` groups. Root major does not:
+- Have context setting, range, or pointer functions
+- Have a grouping function
+- Usurp the pointers of `name_one` or `name_three`
+
+Because of these limitations, every inquiry over `*` named-entities in a
+datatype returns one answer for each named-entity. The caller must handle the
+joint results as a full set.
+
+Note that `*`'s action isn't different. Rather what is different is that the
+action of `:groups()` and `:all()` have on pointers and other functions,
+shaping their inputs as groups rather than a flat set, is absent, as are
+those same pointers and other functions.
+
 ---
 
 ### `name_one`

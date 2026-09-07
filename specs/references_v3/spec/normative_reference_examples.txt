@@ -1,11 +1,12 @@
-#
-# DO NOT USE THIS AS A NORMATIVE REFERENCES TEST SET UNTIL DAVID REMOVES THIS NOTE
-# Until then, this is just a draft/WIP.
-#
 
-*Note*: all functions may not be available at v3 launch, but all must possible and
-        have a well-known meaning that can be tested deterministically.
+# Normative v3 References
 
+These references must be tested against and work before v3 is deemed
+ready for release. If there are inconsistencies between these references
+and the specification in references_v3_compendium.md they must resolved
+by comparison and decision, not simply updated or ignored.
+
+---
 
 ## Before and after, from and to
 Before and after, and from and to, are applicable to all three datatypes.
@@ -153,6 +154,7 @@ Yields a path of `orders/Friday/*`.
 ### :now()
 $acme.files.orders/:name(:minute(:now()))/:last()
 Evaluated at 6:15 pm yields a path of `orders/15/*`.
+
 
 ---
 
@@ -427,12 +429,15 @@ $acme.files.:log()
 $acme.csvpaths.:log()
 $acme.results.:log()
 
-
-
-
 ---
 
 ==================
+==================
+==================
+==================
+==================
+
+
 
 ## The Results Datatype
 ```
@@ -569,10 +574,8 @@ $acme.results.:choice("acme|star|general")/2025/:first().invoices
 #### `invoices` from 1st run w/2-level template ending with `2025/:run_dir` w/source data CSV
 $acme.results.*/2025/:first():type("csv").invoices
 
-#### The manifest of the first run with a 1-level template `customers/:run_dir`
+#### Two ways to get manifest of first run with 1-level template `customers/:run_dir`
 $acme.results.customers/:manifest():first()
-
-#### The manifest of the first run with a 1-level template `customers/:run_dir` (shows order of :first() and :manifest() not important)
 $acme.results.customers/:first():manifest()
 
 ---
@@ -644,16 +647,18 @@ $acme.results.:flatten():last().:file("greetings.txt")
 #### Manifest path+uuid for very run across every named-results group
 $*.results.:manifest()
 
-### Two ways to find the last item in the global ledger
+### Error: incorrect ways to find the last item in the global ledger
 $*.results.:last():manifest()
 $*.results.:manifest():last()
+
+Note that when we have information available without using a manifest we must get it that way. Practically all cases are covered by non-through-manifest means. Explicit uses of :manifest() should be used only to find the path to the file or retrieve the full contents of the manifest file or entry.
 
 
 ---
 
 ### Run manifest field accessors
 
-#### All pull field values from the run manifest, but `:manifest()` is optional
+#### All pull field values from the run manifest
 $widgets.results.:first():serial()
 $widgets.results.:first():valid()
 $widgets.results.:first():completed()
@@ -741,22 +746,37 @@ Note no exception on `resolve()` because the reference retrieves exactly 1 file.
 
 ---
 
-----------------------------
-----------------------------
-----------------------------
-----------------------------
 
 ## The Files Datatype
 
-### Find last version, first version, and a version at an index
-$alpha.files.:name("orders.csv").:last()
-$alpha.files.:name("orders.csv").:first()
-$alpha.files.:name("orders.csv").:index(1)
 
-### Every version of a literal named-file, unreduced (paths + uuids, no content)
+### File homes
+
+#### all no template file homes in `alpha`
+$alpha.files.*
+Note that file homes have paths but not UUID. On `query()` this reference
+gives a list of path+None.
+
+#### Two ways to get all file homes for `alpha`
+$alpha.files.:groups()
+$alpha.files.:flatten()
+
+Note that `:groups()`'s grouping behavior and `:flatten()`'s flattening behavior only matter if we have potentially multiple children of each group or potential group to pick from. In these cases we don't have child items because the reference stops at `name_one`; i.e. the file home. While `:groups()` may make grouping happen, because we don't use the groups, we don't see them, and therefore they effectively don't exist.
+
+#### The file home for `orders.csv`
 $alpha.files.:name("orders.csv")
+Note that the file home directory name will have a `.`. Because
+references use `.` as part of their structure the file home's `.` must be
+handled. References v3 uses the `:name()` function to effectively escape
+`.` in names.
 
-### Referencing an Excel file
+Note that file homes have paths but not UUID. On `query()` this reference
+gives a path+None. Unlike `FileManager`, references do not default to the
+most recent registration in any way.
+
+---
+### Referencing Excel files
+
 References can point to Excel files (xlsx) and their worksheets. A reference
 to an Excel file that doesn't have a `name_two` value is a reference to
 the default worksheet within the files workbook.
@@ -765,57 +785,77 @@ the default worksheet within the files workbook.
 $acme.files.orders/:name("west coast.xlsx")
 
 #### Point to an xlsx file home with a specific reference to a worksheet.
-The reference result returned on `query()` is the typical path+uuid and
-the name_two value.
 $acme.files.orders/:name("west coast.xlsx")#march
+Note that the reference result returned on `query()` is the typical path+uuid
+plus the name_two value
+
+---
+
+### Versions
+
+#### Two ways to get every version of a file home
+$alpha.files.:name("orders.csv").*
+$alpha.files.:name("orders.csv").:all()
+
+#### Two ways to get the first version
+$alpha.files.:name("orders.csv"):first()
+$alpha.files.:name("orders.csv").:first()
+
+Note that file homes do not have UUID but since both references point
+to the first version, both return a path+uuid
+
+---
+
+### Versions by indexes
+
+$alpha.files.:name("orders.csv").:last()
+$alpha.files.:name("orders.csv").:first()
+$alpha.files.:name("orders.csv").:index(1)
+
+
+---
 
 ### Selecting versions by ordinal or date
 
 #### Find the first version registered yesterday
-Note that `:yesterday()` is dynamic shorthand for a datetime
 $acme.files.*.:yesterday():first()
+Note that `:yesterday()` is dynamic shorthand for a datetime
 
-### Find the last `acme` version created after the 4th of July home. Note
-that dates construct using their earliest moment forcing us to specify the
+#### Find the last `acme` version created after the 4th of July home. Note
+$acme.files.:flatten():after(:date("{:year()}-07-04_23:59:59")).:last()
+
+Note that the `name_three` pointer provides the actual version file
+path+uuid and, on `resolve()` bytes.
+
+Note that dates construct using their earliest moment forcing us to specify the
 last moment of the 4th in order for `:after()` to actually mean after. A
 slightly simpler approach would have been to use
 `:from(:date("{:year()}-07-05"))`.
-$acme.files.:flatten():after(:date("{:year()}-07-04_23:59:59")).:last()
-Note that we use `name_three` for a pointer to the actual version file and
-bytes.
 
-### ':all()' in name_three -- added 2026-08-12, mirroring CSVPATHS' own
-### ':all()' precedent exactly (David: "is that right?" re: recalling the
-### v1/v2 token -- confirmed, it is not a POINTER, so its whole effect is
-### simply NOT reducing): every matched version, unreduced, with real
-### paths/uuids -- unlike name_three being absent entirely (line 223 above),
-### which dedupes to ONE directory-level result with uuid=None instead.
-$alpha.files.:name("orders.csv").:all()
-
-### ':from()'/':to()' as a name_three VERSION range -- built 2026-08-13,
-### broadened from RESULTS-only alongside CSVPATHS (see the csvpaths section
-### below), David: rewind/replay and comparing two or more versions for what
-### changed both need "the last N versions of a named-file" the same way
-### RESULTS' own run-level range does. Windows the already ':name()'-matched
-### file's own ordered version list; ':to()' is INCLUSIVE; a real pointer
-### riding alongside reduces the SLICE, not the full version list (same rule
-### as RESULTS). Two modes, picked by each bound's own value type:
-### index-mode (int/:index(n)) POSITIONALLY slices; date-mode
-### (str/:date(...)), also built 2026-08-13 (David caught that a named-file
-### version's own registration/load time IS a real arrival-date concept --
-### the initial rejection of date-mode here was wrong, not a real limit)
-### FILTERS by each version's own "time" manifest field. Mixing modes in one
-### pair is rejected.
+#### Find version by wrapping index
 $alpha.files.:name("orders.csv").:from(:index(-3))
-$alpha.files.:name("orders.csv").:from(1):to(3)
+
+#### Select the 3rd and 4th versions
+$alpha.files.:name("orders.csv").:after(1):to(3)
+
+#### Select the last three versions
 $alpha.files.:name("orders.csv").:from(-3):last()
+
+#### Select versions on or after a moment
 $alpha.files.:name("orders.csv").:from(:date("2026-01-01"))
+
+#### Select versions from one moment up to and including another
 $alpha.files.:name("orders.csv").:from("2026-01-01"):to("2026-01-31")
 
 
-### every registration with no template, unreduced (paths only, no content)
+
+---
+
+### Templates
+
+#### every registration with no template
 $alpha.files.*
-So:
+Note this returns:
 - named_files/alpha/one.csv
 - named_files/alpha/two.csv
 - named_files/alpha/three.csv
@@ -824,257 +864,133 @@ But not:
 
 
 
+---
 
-### Pool across every path under one named-file, EXACTLY one level deep -- i.e. no template --
-### single true-latest version. NOTE: unlike RESULTS' ':flatten()', a literal/
-### '*' pattern here always requires an exact segment count -- this is NOT
-### an any-depth match, see the ':all()' block below for that.
+#### The last registration in any no-template `alpha` file home
 $alpha.files.*.:last()
 
-### ':all()' for ONE named-file -- every distinct path under alpha, EXACTLY
-### one level deep (same match as '*' above), each independently reduced by
-### name_three's own pointer -- settled 2026-08-12, corrected same day to
-### stay a one-level peer of '*', kept in lockstep with RESULTS' own
-### ':all()'/'*' depth-peer vocabulary (David: keep functions meaning the
-### same thing across datatypes). One result per distinct one-level path.
+#### The last registration for every no-template `alpha` file home
 $alpha.files.:all().:last()
+
+#### The first registration for every no-template `alpha` file home
 $alpha.files.:all().:first()
 
-### every distinct one-level path under alpha, unreduced (paths only, no
-### content) -- the ':all()' analog of the "no name_three" dedupe case above
+### List all `alpha` no-template file homes
 $alpha.files.:all()
 
-### ':flatten()' for ONE named-file -- the any-depth POOL peer of ':all()'
-### (one-level GROUP)/'*' (one-level POOL), added 2026-08-12. Every distinct
-### path under alpha, at ANY depth, pooled into ONE reduced answer -- fills
-### the real gap a literal/'*' pattern cannot reach: a named-file whose
-### distinct paths do not all sit at the same depth. Mirrors RESULTS'
-### ':flatten()' exactly; FILES has the same variable-depth structure.
-$alpha.files.:flatten().:last()
-$alpha.files.:flatten().:first()
-
-### every distinct path under alpha, at any depth, unreduced (paths only, no
-### content)
+### List all `alpha` file homes
 $alpha.files.:flatten()
 
-### ':flatten()' as name_one's FIRST segment, followed by a fixed literal/
-### :name(...) suffix -- built 2026-08-12: "any orders.csv, no matter how
-### many template levels from 0 to n." Matches ANY number of segments
-### (including zero) before the suffix, then reduces the whole pooled set
-### with one pointer -- the mirror image of RESULTS' own prefixed
-### ':flatten()' (there, the literal comes first and any-depth comes last;
-### here any-depth comes first and the literal anchor comes last).
-$alpha.files.:flatten()/:name("orders.csv").:last()
+#### The last registration of all registrations in any `alpha` file home
+$alpha.files.:flatten().:last()
 
-### find all the orders.csv file homes (containing versions) no matter what depth
+#### The first registration of all registrations in any `alpha` file home
+$alpha.files.:flatten().:first()
+
+#### The last registration of all registrations in any file home ending in `orders.csv`
+$alpha.files.:flatten()/:name("orders.csv").:last()
+Note that this result will includes no-template registrations of `orders.csv`, i.e. when `flatten()` is applied to 0 levels between top of the path and the last level.
+
+#### The first registration of all registrations where the template begins `2025` and the file home ends in `orders.csv` with any number of template levels in between.
+$alpha.files.2025/:flatten()/:name("orders.csv").:first()
+
+#### find all the orders.csv file homes registered using any or no template
 $alpha.files.:flatten()/:name("orders.csv")
 
-### NOT YET BUILT, deferred 2026-08-12 (David: we probably want it, but it
-### can wait -- adding it later should not affect any non-prefixed path,
-### since ':flatten()' is only recognized as name_one's FIRST segment
-### today) -- a literal prefix BEFORE ':flatten()', e.g. find the first
-### orders.csv below `2025`, at any depth in between:
-### $alpha.files.2025/:flatten()/:name("orders.csv").:first()
 
-### ':groups()' for ONE named-file -- the any-depth GROUP peer of ':all()'
-### (one-level GROUP)/':flatten()' (any-depth POOL), built 2026-08-12
-### alongside RESULTS' own ':groups()' in the same pass. Every distinct
-### path under alpha, at ANY depth, each independently reduced -- reaches
-### the mixed-depth case ':all()' cannot.
+#### The last registration for every file home
 $alpha.files.:groups().:last()
-$alpha.files.:groups().:first()
 
-### every distinct path under alpha, at any depth, unreduced (paths only, no
-### content) -- identical to bare ':flatten()' above (with no pointer,
-### grouped and pooled candidate sets coincide)
-$alpha.files.:groups()
+#### The first registration for every file home
+$alpha.files.:groups().:first()
 
 ### The version's own manifest entry, either order
 $alpha.files.:name("orders.csv").:last():manifest()
 $alpha.files.:name("orders.csv").:manifest():last()
 
-### the whole named-file's raw definition.json bytes -- bare is correct here,
-### no :name(...)/version needed, since definition.json is per named-file not
-### per-version
-$alpha.files.:definition()
 
-### on_arrival/sources -- CORRECTED 2026-08-12 (was wrong -- David: "an
-### arrival activation is set in the named-file's description.json, it
-### doesn't go to the version level"): bare, no :name(.../version needed at
-### all, matching ":definition()" itself, which already gets this treatment
-### -- these are sub-objects of the SAME definition.json, root_major-scoped
-### only, and never read result.uuid to resolve
+---
+
+### Definition.json
+
+#### Retrieving the `alpha` named-file's definition.json contents
+$alpha.files.:definition()
+Note that there is always 1 definition.json is per named-file
+
+#### Getting the on_arrival value
 $alpha.files.:on_arrival()
+
+#### Getting the sources values
 $alpha.files.:sources()
 
-### The named-file's own manifest.json -- bare, no :name(...)/version needed,
-### same treatment as ':definition()' above -- built, confirmed working
+---
+
+### Manifests
+
+#### Retrieve the `alpha` manifest path and content
 $alpha.files.:manifest()
 
-### NOT YET BUILT, deferred 2026-08-21 (David, reviewing the compendium's
-### path-per-producer table: "I believe it should work that way... not sure
-### if it's a good alternative to a full name_one + name_three reference,
-### but maybe, and regardless, the symmetry" -- see deferred_work_bucket_
-### list.md). By symmetry with the global ledger's own Rule 1b (an ordinal
-### pointer riding alongside a bare ':manifest()', two lines below), this
-### should ordinal-select one entry out of alpha's OWN manifest.json array.
-### Confirmed via direct testing it raises today instead:
-### "FilesReferenceFinder3 does not yet support functions attached directly
-### to name_one -- put the version-selecting function in name_three
-### instead." The only similar thing built today is name_three's own
-### ':manifest()' (line 494-496 above), which means something narrower --
-### the matched VERSION's own manifest entry, not "the last entry of the
-### whole named-file's manifest array."
-### $alpha.files.:manifest():last()
+#### Retrieving the full manifest entry of the last no-template registration
+$alpha.files.:manifest():last()
 
-### Global arrivals ledger -- every named-file's arrival, the content of manifest: one flat array
+Note that we require references to use the field accessor, ranges, pointers, dates, etc. without going through the named-file's manifest, unless there is some corner case where the manifest is the only recourse. However, we allow retrieving the full contents of the manifest or manifest entry.
+
+#### Retrieve the named-file datatype's arrivals ledger
 $*.files.:manifest()
 
-### Ordinal indexing into the global ledger, either order
-$*.files.:last():manifest()
-$*.files.:manifest():last()
-
-### "*" traversal, POOL -- single true-latest version across every named-file,
-### each match still exactly one level deep (same '*' exact-depth rule as above)
-$*.files.*.:last()
-
-### "*" traversal, GROUP -- one result per (named-file, path) pair, each
-### match still exactly one level deep
-$*.files.:all().:last()
-
-### "*" traversal, POOL, any depth -- reaches every named-file's matches
-### regardless of depth, pooled into one true-latest answer -- the any-depth
-### peer of the exact-one-level POOL/GROUP cases above
+#### Ordinal indexing into the global ledger disallowed, instead use references like:
+$*.files.:flatten():last()
 $*.files.:flatten().:last()
 
-### "*" traversal, GROUP, any depth -- one result per (named-file, path)
-### pair regardless of depth
+#### grouping file homes across all named-files to find all last registrations
 $*.files.:groups().:last()
 
-### Field accessors on one matched version
+
+
+### Use field accessors on one matched version
 $alpha.files.:name("orders.csv").:last():uuid()
 $alpha.files.:name("orders.csv").:last():time()
 $alpha.files.:name("orders.csv").:last():fingerprint()
 $alpha.files.:name("orders.csv").:last():origin()
 $alpha.files.:name("orders.csv").:last():mark()
 
-### the first of all registrations under alpha without templates -- BUG FIXED
-### 2026-08-12: needs the "." before the pointer, same rule as every other
-### FILES example above (my own earlier draft of this line omitted it,
-### which raises -- confirmed via direct testing during the pre-merge sweep)
-$alpha.files.*.:first()
-
-### The filesystem path to a whole-resource function's own resource, rather
-### than its content -- also needs the literal name + "." (:path() bare, no
-### :name(...), is not supported -- verified 2026-08-11, my first draft of
-### this line was wrong too)
-$alpha.files.:name("orders.csv").:path(:manifest())
-$alpha.files.:name("orders.csv").:last():path(:manifest())
-
-
-### finds a named-file registered version by fingerprint. Note that this returns
-the first matching registered fingerprint. Multiple versions may have the same fingerprint
-if registered under different file homes.
+### Find a named-file registered version by fingerprint.
 $alpha.files.:fingerprint("a711df7d2846e8ba46125d3f7adb7aea0ede50eb20a6550fca2358628a05425b")
 
-### Get the README.md for a named-file, if existant
-Note that `:readme()` is a file accessor that has no relationship to the
-`name_one` path, and that there is only one README.md per named-file.
-Therefore, you cannot combine a path with the `:readme()` function in
-`name_one`.
+Note that this returns the first matching registered fingerprint. Multiple
+versions may have the same fingerprint if registered under different file homes.
+
+Note that we use the `:fingerprint()` accessor as a query predicate by passing in
+a match value.
+
+Note that the `:fingerprint()` function is in scope in `name_one` and `name_three`.
+
+### Get the README.md for a named-file, if existent
 $acme.files.:readme()
 
+Note that `:readme()` is a file accessor that has no relationship to the
+`name_one` file home path, and that there is only one README.md per named-file.
+Therefore, you cannot combine a path with the `:readme()` function in
+`name_one`.
 
 
 
-----------------------------
-----------------------------
-----------------------------
-----------------------------
-
+---
 
 ## The Csvpaths Datatype
 
+
 ### Version pointers
+Note that these return path+uuid, where path is always the same `group.csvpaths`. Each can be used to resolve the full content of `group.csvpath` for that version.
+
+#### The last version of `acme`
 $acme.csvpaths.:last()
+
+#### The first version of `acme`
 $acme.csvpaths.:first()
+
+#### The 2nd version of `acme`
 $acme.csvpaths.:index(1)
-$acme.csvpaths.:all()
-
-### By UUID
-Find named-paths group version by UUID; the most specific reference possible
-$acme.csvpaths.:uuid("...")
-
-### collects the my_validations statement, if present, from every `acme` version
-$acme.csvpaths.:all().my_validations
-
-### Three DIFFERENT queries below, not one -- kept side by side because each
-### explains why the next one exists.
-###
-### QUERY A (line above this note, already correct/built): literal root_major
-### `acme`, no pointer -- checks EVERY version of acme, keeps the ones with a
-### my_validations statement.
-###
-### QUERY B (NOT YET BUILT AS WRITTEN -- confirmed via direct testing during
-### the pre-merge sweep, 2026-08-12): $acme.csvpaths.:all():last().my_validations
-### -- same literal `acme`, now with :last() added. Once a real pointer
-### (:last()) is present, ':all()' is silently ignored (redundant, pointer
-### wins -- same rule as FILES' own ':all()' in name_three), so this reduces
-### to just "acme's own last version, if it has a my_validations statement."
-### Since `acme` is one specific literal group, this can never mean "every
-### named-paths group" no matter what gets added to it -- root_major alone
-### already rules that out.
-###
-### QUERY C (the QUESTION line -- aspirational, not buildable yet):
-### $*.csvpaths.:all():last().my_validations -- QUERY B with `acme` swapped
-### for `*`, which IS the right shape for "every group's own last version,
-### kept only if it has a my_validations statement." Reading it: '*' is
-### every named-paths group (not a path-depth thing -- CSVPATHS groups do
-### not nest, unlike RESULTS' templates); ':all()' switches
-### _query_star_traversal from FLATTEN (pool every group's whole version
-### list, one true-latest across everything) to GROUP (apply the pointer
-### independently inside each group's own list -- one result per group,
-### with no path dimension to dedupe to, unlike FILES); ':last()' then picks
-### each group's own latest version; '.my_validations' is the same identity
-### filter as QUERY A, just meant to apply per group instead of to one
-### literal group.
-###
-### Genuinely intermediate, not a design wall: query() itself would work
-### fine as a direct generalization of two already-built/tested patterns
-### (QUERY A's "check every selected version, keep matches" and the
-### single-group ":last().identity" lookup) -- _query_star_traversal already
-### fetches each group's manifest by its own real name inside the loop, not
-### by root_major. The real blocker is resolve(): _extract_data()'s
-### name_three content lookup re-derives the manifest via
-### get_manifest_for_name(reference.root_major), and root_major IS the '*'
-### token here -- there is no group literally named "*" to fetch. Today's
-### CsvpathsReferenceFinder3._query_star_traversal sidesteps diagnosing this
-### precisely by rejecting ANY name_three combined with '*' traversal up
-### front ("does not yet support name_three ... combined with '*'
-### traversal"), the same blanket guard that also covers the unrelated
-### :manifest()/field-accessor case (which hits an identical root_major-as-
-### '*' bug). Fix shape: the same "carry the real answer instead of
-### re-deriving it from root_major" idea already used for
-### ReferenceResult3.identity (added for the statement-range work) --
-### applied one level up, tracking which real group a star-traversal result
-### came from.
-### QUESTION: $*.csvpaths.:all():last().my_validations
-
-### ':having("identity")' -- built 2026-08-13, filters a group's version
-### list down to versions whose own named_paths_identities actually contains
-### that identity, before any pointer reduces further -- "the last version
-### that actually has a my_validations statement" (a group's statement set
-### can change release to release).
-$acme.csvpaths.:having("my_validations"):last()
-
-### ':having()' alone (no pointer) lists every matching version, unreduced,
-### same as ':all()' does -- built alongside the pointer-combined form above,
-### not deferred (an earlier draft of this doc said "NOT YET BUILT" here,
-### which was stale/wrong -- confirmed working via direct testing).
-$acme.csvpaths.:having("my_validations")
-
-### ':from()' and ':to()' and ':before()' and ':after()' as version ranges
-As said elsewhere, the from and to functions are equivalent to the before and after functions with the sole exception being their inclusivity of the reference point. In any example `:from()` and `:after()` can be interchanged, minding the reference point; likewise, `:to()` and `:before()`.
 
 #### The `acme` versions from the -3 position to the last version
 $acme.csvpaths.:from(-3)
@@ -1082,18 +998,83 @@ $acme.csvpaths.:from(-3)
 #### Selecting the `acme` versions from 2nd to 4th, then keeping only the 4th
 $acme.csvpaths.:from(1):to(3):last()
 
-#### Selecting the `acme` versions loaded within January 2026. Not that
-`:date("2026-01-31")` expands to the very first moment of the 31st, so
-this reference effectively misses one day.
-$acme.csvpaths.:from(:date("2026-01-01")):to(:date("2026-01-31"))
+
+---
+
+## All versions
+
+#### Two ways to get all versions
+$acme.csvpaths.:all()
+$acme.csvpaths.*
+
+#### All versions of all named-paths groups
+$*.csvpaths.*
+
+---
+
+### UUIDs
+
+#### Find `acme` version by UUID; the most specific reference possible
+$acme.csvpaths.:uuid("45ad7aa7-fe08-4f18-8b1b-e2d11675bf36")
+
+---
+
+#### Collect the my_validations statement, if present, from every `acme` version
+$acme.csvpaths.:all().my_validations
+
+#### Redundant but permitted
+$acme.csvpaths.:all():last().my_validations
+
+Note that the correct way to write this is
+$acme.csvpaths.:last().my_validations
+
+#### For all named-paths groups, find `my_validations` in any named-paths group's last version
+$*.csvpaths.:last().my_validations
+
+Note that `*` mimics grouping; therefore, this delivers a list or 0
+or more, not a single item
+
+
+---
+
+### Having
+
+#### Find last version containing `my_validations` for all named-paths groups
+$*.csvpaths.:having("my_validations"):index(-1)
+
+Note that `*` mimics grouping; therefore, this delivers a list or 0
+or more, not a single item
+
+#### Finding `my_validations` across versions with `*` implied
+$acme.csvpaths.:having("my_validations")
 
 #### Collects the last three versions of `acme` if they have a
 `my_validations` statement
 $acme.csvpaths.:having("my_validations"):from(-3)
 
+
+---
+
 ### ':from()' and ':to()' and ':before()' and ':after()' as instance ranges
-When used in `name_three`, the directionals/range functions are work on the
-indexes of the csvpath statements in the group using:
+
+#### Select the 3rd through last statements from the last version of `acme`
+$acme.csvpaths.:last().:from(:index(2))
+
+#### Selecting the `acme` versions loaded within January 2026. Not that
+`:date("2026-01-31")` expands to the very first moment of the 31st, so
+this reference effectively misses one day.
+$acme.csvpaths.:from(:date("2026-01-01")):to(:date("2026-01-31"))
+
+
+
+
+
+
+---
+
+### Identities
+
+In `name_three`, the directional/range functions can work on identities:
 - `:index()` or bare int
 - `:name()` with a string, int, or variable equaling the statement identity
 
@@ -1106,77 +1087,61 @@ The index of a statement is always meaningful, regardless of it it is named.
 And the index is also used as the name, if another name is not assigned by
 the writer.
 
-#### Select the 3rd through last statements from the last version of `acme`
-$acme.csvpaths.:last().:from(:index(2))
+#### Indexes are csvpath identities and are always available even when an
+explicit string overrides the default index-as-identity
+$acme.csvpaths.:last().:from(1):to(3)
 
-#### Select sequential statements from the index of `header checks` to the
-index of `validation summary`, inclusive, from the last version of `acme`.
+#### Select sequential statements
+$acme.csvpaths.:last().:from("header checks"):to("validation summary")
+Note this uses the index of `header checks` and the index of
+`validation summary`. The range is inclusive, from the last version of
+`acme`.
+
 Note that if the names given do not match, the reference returns no results,
 no error is thrown, and no partial results given.
-$acme.csvpaths.:last().:from("header checks"):to("validation summary")
 
 #### Select statements from the last version of `acme` before `header checks`
+$acme.csvpaths.:last().:before("header checks")
+
 Note that if `header checks` is not found the reference returns nothing, but
 does not error. Also note that if `header checks` is the first statement, the
 reference simply doesn't match and returns nothing; it doesn't error, and
 doesn't wrap the index.
-$acme.csvpaths.:last().:before("header checks")
 
-
-
-
-### windows the matched version's own ordered named_paths_identities list;
-### ':to()' is INCLUSIVE, same as everywhere else. Index-mode only here --
-### unlike the name_one VERSION range just above, an individual STATEMENT
-### has no arrival time of its own, only the GROUP VERSION it belongs to
-### does, so date-mode bounds are rejected specifically at this level.
-### Because csvpaths has no per-statement uuid (only the whole GROUP VERSION
-### has one), path/uuid are identical across every statement in the window
-### -- ReferenceResult3.identity is what lets resolve() give each windowed
-### statement its own correct text.
-$acme.csvpaths.:last().:from(1):to(3)
-
-### a literal statement identity and a range are mutually exclusive on the
-### same name_three -- they select statements two different, contradictory
-### ways, so combining them raises. Likewise, a pointer (or any other
-### function) riding alongside the range on name_three is not supported --
-### only a literal identity, or ':from()'/':to()' alone, are recognized
-### there.
-
-
-### Identity lookup into the selected version's own statements -- by name, or
-### by stringified load-time index for an unnamed statement
+#### Three ways to get the csvpath statement with identity `company_names` and index 0
 $acme.csvpaths.:last().company_names
 $acme.csvpaths.:last().0
+$acme.csvpaths.:last().:index(0)
 
-### The version's own manifest entry, either order
+Note that the middle reference uses `0` as the identity. While logically and grammatically this `0` is not the index, practically speaking, it doesn't matter.
+
+---
+
+#### The version's own manifest entry, either order
 $acme.csvpaths.:last():manifest()
 $acme.csvpaths.:manifest():last()
 
-### definition.json and its sub-objects
+#### definition.json and its sub-objects
 $acme.csvpaths.:definition()
 $acme.csvpaths.:scripts()
 $acme.csvpaths.:webhooks()
 $acme.csvpaths.:transfers()
 $acme.csvpaths.:destinations()
 
-### Global loads ledger -- every named-paths group's own load, one flat array
+#### Global group loads ledger including every named-paths group
 $*.csvpaths.:manifest()
 
-### Ordinal indexing into the global ledger, either order
+#### Ordinal indexing into the global ledger, either order works
 $*.csvpaths.:last():manifest()
 $*.csvpaths.:manifest():last()
 
-### "*" traversal, FLATTEN -- single true-latest version across every named-paths group
+#### Find the last loaded version of every named-paths group
 $*.csvpaths.:last()
 
-### "*" traversal, GROUP -- one result per named-paths group
-$*.csvpaths.:all():last()
-
-### "*" traversal -- every version from every group, unreduced
+#### Find every version from every group
 $*.csvpaths.:all()
 
-### Field accessors on one matched version
+#### Field accessors on one matched version
 $acme.csvpaths.:last():uuid()
 $acme.csvpaths.:last():time()
 $acme.csvpaths.:last():fingerprint()
@@ -1187,17 +1152,16 @@ $acme.csvpaths.:last():named_paths_name()
 $acme.csvpaths.:last():named_paths_identities()
 $acme.csvpaths.:last():named_paths_count()
 
-### The filesystem path to a whole-resource function's own resource
-$acme.csvpaths.:path(:manifest())
+#### The path and contents of the `acme` manifest
+$acme.csvpaths.:manifest()
 
+#### Get `acme`'s `README.md`, if existent
+$acme.csvpaths.:readme()
 
-### Get the README.md for a named-paths group, if existant
 Note that `:readme()` is a file accessor that has no relationship to the
 `name_one` version selection. There is only one README.md per named-paths
 group. Therefore, you cannot combine version selection with the `:readme()`
 function in `name_one`.
-$acme.csvpaths.:readme()
-
 
 
 
