@@ -315,7 +315,15 @@ Likewise the following two references:
 #### 3.10
 Datetime functions exist, as discussed below, that can be used wherever a
 time dimension is available. In `name_one` the time dimension exists for
-`csvpaths` and `results`.
+`files`, `csvpaths` and `results`.
+
+Files are registered with a timestamp. That timestamp gives a time dimension
+to the file home, the versions within the file home, and the entry in the
+manifest. `name_one` can answer most questions about a registration because
+manifest functions are available in `name_one`. To find the full path or
+retrieve the bytes of a version you must use `name_three`. `name_three` also
+has a time dimension. References to specific versions within a file home may
+be clearer when `name_three` is used, but `name_one` serves for most purposes.
 
 Named-paths group loads are time-bound. The load time is carried in
 `name_one`; therefore, datetime functions are available in `name_one`.
@@ -327,18 +335,24 @@ namespacing includes a datetime-derived path segment. Separate from the path,
 datetime information is also carried in `name_one`, allowing the use of datetime
 functions.
 
-There is no time dimension in `name_one` for `files`. File registrations
-are time-bound; however, the datetime information is carried with the version
-registered, in `name_three`, not with the namespaced location of the file home.
 
 #### 3.11 Example finding a file registration by arrival time
 Given a named-file `acme`, to find the first registration in any location
-within `acme` that happened yesterday we do:
-```
-$acme.files.*.:yesterday():first()
-```
-Where `*` is `name_one` and the datetime information is carried in
-`name_three`.
+within `acme` that happened yesterday using `name_three` we do:
+$acme.files.:flatten().:yesterday():first()
+
+Alternatively, this simpler `name_one` version is nearly grammatically identical,
+but it does not yield the same information:
+`$acme.files.:flatten():yesterday():first()`. There are two differences:
+- This version doesn't offer the path and bytes to the version selected
+- The scope of this reference is
+
+
+
+The first reference answers the question "what is the first version". The
+second answers the question "what is the first file". The difference is user
+perspective. In the second case, I'm thinking about the physical file so I'm
+asking a question regarding file homes, not versions of file homes.
 
 ### `name_one` and Templates
 #### 3.12
@@ -801,6 +815,12 @@ Functions are the mechanism for narrowing and pointing within a reference.
 one argument. Functions chain with no separator (`:before(:yesterday()):
 index(3)`) and are implicitly ANDed together without regard for order.
 
+Order independence achieves three things:
+- It eliminates subtle differences between orderings
+- It requires less learning to understand and create references, and
+- It offers the opportunity (though not the requirement) to order functions in the most English grammar-like way for readability
+
+
 #### 6.2
 **Arguments** can be a:
 - Quoted string
@@ -1109,7 +1129,30 @@ Ordinals have roles:
 - Used by itself, a direction function is similar to a greater-than or less-than
 - Two not-alike directions can create a range between their anchor points.
 
-Combining `:before()` or `:to()` may be combined with `:after()` or `:from()` to create a range; however, combining `:before()` and `:to()` or `:after()` and `:from()` is not legal.
+Note that `:before()`, `:after()`, `:from()`, `:to()` are aliased with
+other common words that may help a reference make more sense to a reader.
+All forms with the same meaning are equivalent.
+
+| alias   | meaning        |
+|---------|----------------|
+| before  | less-than      |
+| to      | less-than-equal  |
+| below   | less-than      |
+| lt      | less-than      |
+| lte     | less-than-equal  |
+| after   | greater-than   |
+| from    | greater-than-equal  |
+| above   | greater-than   |
+| gt      | greater-than   |
+| gte     | greater-than-equal  |
+
+Note that using multiple directional functions indicating the same direction
+is not meaningful so not legal. `:before()` or `:to()` (or their other
+aliases) may be combined with `:after()` or `:from()` to create a range;
+however, combining `:before()` and `:to()` or `:after()` and `:from()` is not
+legal.
+
+
 
 #### 6.28a Find versions registered as `acme` from the beginning of 2026 through yesterday
 `$acme.files.:flatten().:after(:date("2026-01-01")):to(:yesterday())`
@@ -1188,9 +1231,9 @@ matching with variable or category values.
 - :regex(/.../) — value matches regex
 - :having("...") — structure has a named/IDed child. Primary case: named-paths groups versions having a csvpath statement ID.
 - The directional functions listed above can be used as operators:
-  - `:above(...)` - greater-than
+  - `:after(...)` - greater-than
   - `:from(...)` - greater-than-or-equal-to
-  - `:below(...)` - less-than
+  - `:before(...)` - less-than
   - `:to(...)` - less-than-or-equal-to
 
 ### Function arguments
