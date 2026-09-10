@@ -86,10 +86,14 @@ $acme.files.orders/:name("Summary for {:day_name(:yesterday())}.xlsx")
 ---
 
 ## Date and time functions
-These functions provide values that can be used in strings and as arguments to
-other functions. They are available in all datatypes and have two modes:
+Time component functions provide values that can be used in strings and as
+arguments to other functions. They are available in all datatypes and have
+multiple modes:
 - Returning their datetime component based on the `datetime.now()`
 - Returning their component based on a date passed as an argument
+- Acting as a time anchor as input to a directional or range function
+- Acting as a range
+
 The exception being `:date()` which can create a date from a string, but does
 not provide the current datetime.
 
@@ -98,7 +102,7 @@ for ordering or indexing the function is interpreted as the first moment of that
 For e.g., `:year()` would be interpreted as the first second of the first minute of
 the first day of January in the present year.
 
-For that reason, a `:from(:year())`has meaning as a date range constratint, not as a
+For that reason, a `:from(:year())`has meaning as a date range constraint, not as a
 four digit integer index constraint. I.e. `:from(:year())` and `:from(2026)` are not
 the same. The former is a date constraint based on `2026-01-01_00:00:00` and the
 latter says start at the 2026th index position.
@@ -478,7 +482,7 @@ $alpha.results.beta/:flatten():last()
 
 #### Last runs of all runs w/1-level template starting `beta/`
 $alpha.results.beta/:all():last()
-Note that this groups by :run_dir and is better written as `$alpha.results.beta/*
+Note that this groups by :run_dir and is better written as `$alpha.results.beta/*`
 
 #### A run of all 1-level templates starting `beta/`
 $alpha.results.beta/*:last()
@@ -615,7 +619,7 @@ $alpha.results.:all().header_checks:errors()
 
 #### Two equivalent ways to get errors files from no-template alpha runs with header_checks statements that were run on 1/1/2026
 $alpha.results.:regex("2026-01-01_").header_checks:errors()
-$alpha.results.:from("2026-01-01").before("2026-01-02").header_checks:errors()
+$alpha.results.:from("2026-01-01").before("2026-01-02").:header_checks:errors()
 
 #### Get the path and/or contents of the default printouts file, `printouts.txt`
 $acme.results.:flatten():last().:printouts()

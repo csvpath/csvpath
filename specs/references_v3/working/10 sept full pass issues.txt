@@ -1,0 +1,44 @@
+Big pass, several real findings — leading with the most important one.
+
+1. Direct contradiction: does :yesterday() resolve to a range or a single "first moment"?
+
+§6.27 (new): ":yesterday() is syntactic sugar that is equivalent to a pair of functions creating a 1-day long range."
+
+§6.34 (unchanged, and :yesterday() is explicitly in its list): "When one of these datetime component functions is provided in a context where a full datetime is needed for ordering... the function is interpreted as the first moment of that time."
+
+These directly disagree about what $acme.files.:yesterday():last() actually does. §6.27 says it's a full-day range (find the last thing within that window). §6.34 says it collapses to a single point — the first moment of yesterday — for exactly this "ordering" use case. This is the same distinction we spent real effort nailing down a few turns back (window vs. point), and now the two sections that describe it disagree with each other. §6.34 needs an explicit carve-out excluding :yesterday()/:today() (and :now(), though that one's already called "instantaneous") from the first-moment collapse rule, or state clearly which one wins when they overlap.
+
+2. §3.11 ends mid-sentence
+
+`$acme.files.:flatten():yesterday():first()`. There are two differences:
+- This version doesn't offer the path and bytes to the version selected
+- The scope of this reference is
+
+
+The first reference answers the question "what is the first version"...
+Second bullet cuts off after "The scope of this reference is" — looks like an edit was interrupted.
+
+3. The "mixing index-mode and date-mode is possible" rule has no home in the compendium
+
+The normative doc states this plainly now ($alpha.results.*:from(2):to(:date(...)), "mixing... is possible"), but I can't find this rule stated anywhere in the compendium — not in §6.22-6.33 (ordinals), not in §6.28's directions/aliases discussion. Right now this is a rule that exists only as a normative example, which inverts the stated relationship between the two docs (spec states rules, examples demonstrate them). Worth a line in §6.29-6.32 area establishing it explicitly, including the resolution mechanism (index-mode picks a starting position first, date-mode independently bounds by date).
+
+4. Smaller clarity issue in the new §3.8 root_major text
+
+"Note that * groups." — opening line reads like it contradicts §4's own table, where * is explicitly the flat wildcard and :all()/:groups() are the grouping ones. Reading the rest of the paragraph, I think the actual point is: since root_major can't host a pointer or a grouping function at all, * there necessarily returns one result per named-entity, which looks grouping-like from the outside even though nothing about * itself changed — the last paragraph says as much ("*'s action isn't different"). The opening line just undercuts its own later clarification. Might read better as something like "Note that * at root_major behaves as if grouped" rather than "* groups."
+
+5. Still open from a few passes back, unresolved: does "implied *" apply at the start of name_three, not just name_one?
+
+§3.9c is still scoped explicitly to name_one. But the normative doc's "two equivalent ways" example (:yesterday().*:errors(...) vs. :yesterday().:errors(...)) still relies on the same implied-wildcard mechanism working at the start of name_three too. Not re-litigating the whole thing, just flagging it's still unaddressed in the spec text itself.
+
+Want me to keep going into the FILES/CSVPATHS bodies at this same level of scrutiny, or pause here since #1 is a real fork that might change other things once resolved?
+
+
+Done. To recover this exact point in a fresh session, all you need to do is start with something like "resume the references-v3 spec review" — the memory system will surface project_references_v3_spec_review.md automatically, and it has everything a cold session needs:
+
+- The exact resume point: my 5 numbered findings from this pass, not yet responded to, with #1 (the :yesterday() range-vs-point contradiction between §6.27 and §6.34) flagged as the one to resolve before continuing.
+- The working process we've settled into (I review read-only, you edit, repeat; construct concrete examples when a semantic question gets stuck).
+- Every major decision locked in this thread so a fresh session doesn't re-litigate settled ground: the :home() retirement/survival split, the FILES name_one time-dimension reversal and the dot-placement rule, name_three's stated purpose, the current (several-times-revised) wildcard combination rules, the direction-function alias table, and the time-anchor window-vs-point model.
+- The standing constraint that this is docs-only — no code touched, none should be started on resume without your explicit go-ahead.
+- Pointers to the three doc paths in their stated precedence order.
+
+Go ahead and passivate/shut down whenever you need to — this is safe to pick back up cold.

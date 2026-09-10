@@ -1125,14 +1125,43 @@ Ordinals have roles:
 
 #### Assignments of roles
 #### 6.27
-- :date(), :yesterday(), etc. are point-in-time anchors defining
-  point-in-sequence — anchors dominate. I.e. they are the most fundamental
-  positions. Unless otherwise determined, anchors are 1) arrival time, or
-  2) runtime, with 1 and 2 in general not competing in the way that
-  registration time does not compete with run time but does have a known
-  obvious relationship based on precedence / dependency.  The number line is
-  date ordered/date determined, but for the purpose of ordinals that are not
-  anchors, indexed.
+A time anchor informs a direction or range function as a starting or
+ending point.
+
+The following are time anchors:
+- :yesterday()
+- :today()
+- :now()
+
+Note that these functions may also produce a value when used in a context
+where a value is needed. For example, `:name("{:yesterday()} orders")` emits
+a date object which is being integrated into a name string.
+
+In addition to the anchor functions listed above, the time component
+functions may act as a time anchor when provided with an argument setting
+their anchor point. E.g. `:year(2022)` is an anchor point; whereas,
+`:year()` simply emits the current year.
+
+Functions like `:date(...)` and `:now()` are instantaneous. Those functions
+that are not instantaneous can also be used as a range. For example,
+`:yesterday()` is syntactic sugar that is equivalent to a pair of functions
+creating a 1-day long range. Nevertheless, the direction functions below that
+can create such a 1-day range themselves, will take `:yesterday()` as a time
+anchor.
+
+Anchors dominate other functions. I.e. they are the most fundamental
+positions. A reference like `$acme.files.:yesterday():last()` finds the
+last registration within the span of time defined as `:yesterday()`.
+
+Unless otherwise determined, anchors represent:
+1. arrival time, or
+2. runtime
+
+These two types of anchors, 1 and 2, in general do not compete.
+Registration time does not compete with run time but does have a known
+obvious relationship based on precedence / dependency.  The number line is
+date ordered/date determined, but for the purpose of ordinals that are not
+time anchors, indexed by sequence.
 
 #### 6.28
 - Directions modifies an anchor or position:
@@ -1204,9 +1233,10 @@ dependency relationship to registrations
 #### 6.33
 * This section intentionally removed *
 
-### Pure value functions
+### Time component functions
 #### 6.34
-The complete set of dumb value-producing functions is:
+The complete set of functions that can produce time-related values based
+on external conditions or arguments is:
 - :year() — int
 - :month() — int
 - :month_name() — str
@@ -1221,7 +1251,12 @@ The complete set of dumb value-producing functions is:
 - :date("...")  — str
 - :now() - datetime
 
-Note: this list may expand modestly before feature complete.
+When one of these datetime component functions is provided in a context where
+a full datetime is needed for ordering, directionality, ranging, or indexing
+the function is interpreted as the first moment of that time. For e.g.,
+`:year()` would be interpreted as the first second of the first minute of the
+first day of January in the present year.
+
 
 ### Predicate support functions
 #### 6.35
