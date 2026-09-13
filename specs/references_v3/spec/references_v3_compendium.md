@@ -235,12 +235,12 @@ or `results`, respectively. `root_major` can take:
 
 `*` means any existent named entity
 
-Note that `*` groups. Root major does not:
+Note that `*` appears to group. However, root major does not:
 - Have context setting, range, or pointer functions
 - Have a grouping function
 - Usurp the pointers of `name_one` or `name_three`
 
-Because of these limitations, every inquiry over `*` named-entities in a
+Because of these attributes, every inquiry over `*` named-entities in a
 datatype returns one answer for each named-entity. The caller must handle the
 joint results as a full set.
 
@@ -255,7 +255,7 @@ those same pointers and other functions.
 #### 3.9
 `name_one` means structurally different things per datatype. It points to:
 - `files`: a file home
-- `csvpaths`: a version of a named-paths group's `group.csvpath` file
+- `csvpaths`: a version of a named-paths group's `group.csvpaths` file
 - `results`: a run dir
 
 `name_one` for files and results is a file system namespace closely related
@@ -355,18 +355,18 @@ Given a named-file `acme`, to find the first registration in any location
 within `acme` that happened yesterday using `name_three` we do:
 $acme.files.:flatten().:yesterday():first()
 
-Alternatively, this simpler `name_one` version is nearly grammatically identical,
-but it does not yield the same information:
-`$acme.files.:flatten():yesterday():first()`. There are two differences:
-- This version doesn't offer the path and bytes to the version selected
-- The scope of this reference is
-
-
+Alternatively, this simpler `name_one` version is nearly grammatically
+identical, but it does not yield the same information:
+`$acme.files.:flatten():yesterday():first()`. The difference is that this
+reference doesn't offer the path and bytes to the version selected.
+Instead, on `query()` it returns file home path+uuid, rather than file
+version+uuid. In both cases the UUID is the UUID of the registration.
 
 The first reference answers the question "what is the first version". The
 second answers the question "what is the first file". The difference is user
-perspective. In the second case, I'm thinking about the physical file so I'm
-asking a question regarding file homes, not versions of file homes.
+perspective. In the second case, I'm thinking about the physical file, not
+the cryptographic identity of file bytes, so I'm asking a question regarding
+file homes, not versions within file homes.
 
 ### `name_one` and Templates
 #### 3.12
@@ -438,7 +438,7 @@ references.
 ### `name_one` For the `csvpaths` Datatype
 #### 3.15
 **`csvpaths`**: name_one is a version-selecting expression, not a path. A
-named-paths group has exactly one `group.csvpath` file on disk, updated in
+named-paths group has exactly one `group.csvpaths` file on disk, updated in
 place every time statements are (re)loaded. There is no per-version physical
 file. Versioning instead lives entirely in the group's `manifest.json`.
 
@@ -458,7 +458,7 @@ by:
 - The UUID assigned at a load event
 
 #### 3.17
-Every result shares the same `group.csvpath` path, differentiated only by
+Every result shares the same `group.csvpaths` path, differentiated only by
 the named-paths group version's UUID (i.e. the manifest entry's identifying UUID).
 
 #### 3.18 Examples
@@ -486,8 +486,8 @@ key in the manifest entries.
 
 ### `name_three`
 #### 3.19
-`name_three` points to one or more entity parts of the entity or entities indicated
-by `name_one`. The `name_three` entities are:
+`name_three` points to one or more entity parts of the entity or
+entities indicated by `name_one`. The `name_three` entities are:
   - For `files`: a specific cryptographically identified version of a named-file
   - For `csvpaths`: a csvpath statement contained in a named-paths group
   - For `results`: the specific results of running a csvpath statement contained in
@@ -498,7 +498,12 @@ by `name_one`. The `name_three` entities are:
 - A function
 - The `*`
 
-When `name_three` is a string or variable, the name is that of the entity:
+#### 3.19b
+When `name_three` is solely one or more functions, a `*` is implied, in
+the same way as in `name_one`.
+
+When `name_three` is a string or variable, the name is that of the
+entity:
 - For `files`: the fingerprint of the bytes registered as a version of the named-file
 - For `csvpaths`: the identity (ID or name metadata key) of a csvpath in the group
 - For `results`: the identity (ID or name metadata key) of a csvpath in the named-paths group
@@ -520,12 +525,12 @@ file home within `acme`.
 | Datatype | name_one | name_two | name_three (optional) | name_one returns | name_three returns |
 |---|---|---|---|---|---|
 | `files` | path (prefix search) | worksheet (XLSX) | version — index, fingerprint, or datetime | path to the named-file's file-home directory (dir of version files) | path to a specific version file |
-| `csvpaths` | version — index, datetime, or UUID | (none) | csvpath statement ID (ID+UUID) | list of (path-to-`group.csvpath`, uuid) pairs, one per selected manifest version | bytes of the one csvpath statement identified, within the version identified |
+| `csvpaths` | version — index, datetime, or UUID | (none) | csvpath statement ID (ID+UUID) | list of (path-to-`group.csvpaths`, uuid) pairs, one per selected manifest version | bytes of the one csvpath statement identified, within the version identified |
 | `results` | path (prefix search) | (none) | csvpath statement ID (path+UUID) | path to the run directory | path to a specific statement's result-subdirectory within the run dir |
 
 Note: `csvpaths` name three is a *csvpath statement ID*, not a separate file.
 There is no per-statement file on disk for a csvpaths group, only a whole
-`group.csvpath` file with `---- CSVPATH ----` delimiters between the ordered
+`group.csvpaths` file with `---- CSVPATH ----` delimiters between the ordered
 csvpath statements in the group. `results` name_three is also a statement ID,
 but it *is* a separate directory (each statement in a run gets its own result
 subdirectory with its own files).
@@ -534,7 +539,7 @@ subdirectory with its own files).
 
 ---
 
-## 4. Wildcards: `:all()` vs. `*`
+## 4. Wildcards
 
 There are four wildcards that, like `:name(...)` and other path components,
 each fully occupy their `name_one` or `name_three` segment:
@@ -544,6 +549,7 @@ each fully occupy their `name_one` or `name_three` segment:
 | `*`      | `:all()` |
 | `:flatten()` | `:groups()` |
 
+### `:all()` vs. `*`
 #### 4.1
 `*` flattens its position in the reference into one pooled search space.
 
@@ -556,7 +562,8 @@ item found by looking solely at its group scope. At the same time the
 reference as a whole gains the possibility of having one last item per name
 found in the position occupied by the `:all()`.
 
-#### 4.3 Limitations
+### Grouping limitations
+#### 4.2b
 Note these limitations on grouping:
 - `name_one` can have only one `:all()` or `:groups()`
 - `:all()` cannot be combined with `:groups()`
@@ -589,6 +596,8 @@ Note that `$acme.files.*/:flatten() offers a subtle distinction over `:flatten()
 - `$acme.files.:flatten()` - all `acme` file homes
 - `$acme.files.*/:flatten()` - all `acme` file homes that have a template (a 1-level template)
 
+### Limitations on `:flatten()`
+
 #### 4.3d  `:flatten()/*`
 Note, however, `$acme.files.:flatten()/*` is illegal because it is
 essentially contradictory. It says flatten all the layers as wildcards,
@@ -597,8 +606,12 @@ difference between the last and the preceding layers it is not possible
 say if `:flatten()` or `:flatten()/*` was applied, so the combination is
 impractical and for clarity it is illegal.
 
+#### 4.3e
+Note that in addition to the limitations on grouping, `:flatten()` is
+available in `name_one` only.
 
-#### Examples 4.4
+
+#### 4.4 Examples
 Given named-file `alpha` with paths:
 - `zero.csv` [1 version]
 - `one.csv` [2 versions]
@@ -737,7 +750,7 @@ which may be resolved to a value, if further resolution of the reference is poss
 | Datatype | What name_one-terminated query() returns |
 |---|---|
 | files | path to the named-file's file-home directory (directory of version files) |
-| csvpaths | path to the `group.csvpath` file |
+| csvpaths | path to the `group.csvpaths` file |
 | results | path to the run directory |
 
 #### 5.13
@@ -746,7 +759,7 @@ A query terminating at name_three:
 | Datatype | What name_three-terminated query() returns |
 |---|---|
 | files | path to the specific version file |
-| csvpaths | path to the `group.csvpath` file (same path as always; the combined version UUID and statement ID differ) |
+| csvpaths | path to the `group.csvpaths` file (same path as always; the combined version UUID and statement ID differ) |
 | results | path to the specific statement's instance directory within the run dir |
 
 ### Resolve — the three-way classification
@@ -1123,55 +1136,143 @@ Ordinals have roles:
 - Direction — which way do we count to progress from index to index
 - Stepping — what index position are we in the list of positions
 
-#### Assignments of roles
-#### 6.27
-A time anchor informs a direction or range function as a starting or
-ending point.
 
+
+### Time component functions
+#### 6.27
+The complete set of functions that can produce or represent time-related
+values based on external conditions or arguments is:
+- :year() — int
+- :month() — int
+- :month_name() — str
+- :day() — int
+- :day_name() — str
+- :hour() — int
+- :hour_24() — int
+- :minute() — int
+- :second() — int
+- :yesterday() — datetime or str
+- :today() — datetime or str
+- :date("...")  — str
+- :now() - datetime
+
+#### 6.27b
+When one of these datetime component functions is provided in a usage
+where a full datetime is needed for directionality, ranging, or
+indexing the function is interpreted as the first moment of that time.
+
+For e.g., `:year()` would be interpreted as the first second of the first
+minute of the first day of January in the present year.
+
+#### 6.27c
+As noted below, uses of time functions as context dominate the behavior
+of other functions. Conversely, when a time function is used as an
+argument it informs the function it is passed to as an anchor, but does
+not set the context for that function.
+
+When a time function is passed to a string, the time function is
+stringified as the most coarse-grained value the function indicates. E.g.
+`:day()` is an int `1`-`31`, `:year()` is an int equal to the current
+year, etc.
+
+#### 6.27d
+Examples:
+- `$acme.files.:yesterday():last()` - within the context of yesterday,
+  what was the last registration?
+- `$acme.files.:before(:yesterday())` - in the direction of earlier,
+  starting from yesterday, what were the registrations?
+- `$acme.files.:name("{:yesterday()}.csv")` - the file home, if any,
+  where the file name was like `2026-01-01.csv`.
+
+
+### Behavior of time components
+#### 6.27b
+A time component function informs a direction or range function as a
+context for a starting or ending point or as the starting or ending
+point.
+- Use as a range: `$acme.files.:yesterday()`
+- Use as a context for a pointer: `$acme.files.:yesterday():last()`
+- Use as a point-in-time directional anchor:
+  `$acme.files.:from(:yesterday()):before(:today())`
+
+#### 6.27c
+If interpreted on the date `2026-01-02`, the use of `:yesterday()`
+above is, respectively:
+- `2026-01-01_00:00:00` to `2026-01-01_23:59:59`
+- The last registration on or after `2026-01-01_00:00:00` and on or
+  before `2026-01-01_23:59:59`
+- `2026-01-01_00:00:00` to `2026-01-01_23:59:59`
+
+#### 6.27d
+More specifically, the time components have the following impacts,
+depending on usage:
+- Anchoring at the first possible moment in time associated with
+  the range indicated, such as `:now()` or `:yesterday()`
+- Providing a range of first moment to last moment associated with
+  a non-momentary concept like `:yesterday()`
+- The string value appropriate to the concept, using the first moment
+  if a specific moment in time is called for. (In the latter case,
+  an unlikely example might be `"{:second(:yesterday())}" resulting
+  in "00".)
+
+#### 6.27e
+Examples:
+- `:now()` indicates the exact moment of iterpretation to the
+  millisecond as a datetime object. It may also be used in variable
+  interpolation, resulting in a full datetime string.
+- `:yesterday()` indicates:
+   - The first moment of the prior day to the last moment of the
+     prior day, when used as a range. For e.g.
+     `$alpha.files.:yesterday()` lists all file homes with changes
+     from the first moment of the day prior to the last moment of
+     that day.
+   - The first moment of the day prior when used as a direction
+     anchor
+   - The stringified date (not datetime) or approprate datetime
+     component when used in a string interpolation. Or, when passed
+     a format string, the formatted date. E.g.
+     `:year(:date("2026-01-01"))` returns the int or string `2026`.
+   - Any of the above three functions relative to a datetime when
+     passed that datetime. E.g. `:yesterday(:date("2026-01-02"))`
+     returns the date, date range or string beginning at the first
+     moment of 2026.
+
+#### 6.27f
 The following are time anchors:
 - :yesterday()
 - :today()
 - :now()
+- Any of the datetime components such as `:day()`, `:hour()`, etc.
 
-Note that these functions may also produce a value when used in a context
-where a value is needed. For example, `:name("{:yesterday()} orders")` emits
-a date object which is being integrated into a name string.
+A time function setting a context dominates other functions. A
+reference like `$acme.files.:yesterday():last()` finds the last
+registration within the span of time defined as `:yesterday()` because
+`:yesterday()` determines `:last()`'s context.
 
-In addition to the anchor functions listed above, the time component
-functions may act as a time anchor when provided with an argument setting
-their anchor point. E.g. `:year(2022)` is an anchor point; whereas,
-`:year()` simply emits the current year.
+Unless used otherwise, context and directional anchors represent:
+- Arrival time, for `files`
+- Load time, for `csvpaths`
+- Runtime, for `results`
 
-Functions like `:date(...)` and `:now()` are instantaneous. Those functions
-that are not instantaneous can also be used as a range. For example,
-`:yesterday()` is syntactic sugar that is equivalent to a pair of functions
-creating a 1-day long range. Nevertheless, the direction functions below that
-can create such a 1-day range themselves, will take `:yesterday()` as a time
-anchor.
-
-Anchors dominate other functions. I.e. they are the most fundamental
-positions. A reference like `$acme.files.:yesterday():last()` finds the
-last registration within the span of time defined as `:yesterday()`.
-
-Unless otherwise determined, anchors represent:
-1. arrival time, or
-2. runtime
-
-These two types of anchors, 1 and 2, in general do not compete.
-Registration time does not compete with run time but does have a known
-obvious relationship based on precedence / dependency.  The number line is
-date ordered/date determined, but for the purpose of ordinals that are not
-time anchors, indexed by sequence.
+The number line for each datatype is date ordered/date determined, but
+for the purpose of ordinals that are not time related, indexed by
+sequence.
 
 #### 6.28
-- Directions modifies an anchor or position:
+- Directions act based on an anchor or position:
   - :before(...)
   - :after(...)
   - :from(...)
   - :to(...)
-- Used by itself, a direction function is similar to a greater-than or less-than
-- Two not-alike directions can create a range between their anchor points.
+- Used by itself, a direction function is similar to a greater-than or
+  less-than
+- Two not-alike directions can create a range between their anchor
+  points.
+- When two directions create a range, the directions may be anchored
+  by dissimilar functions. For example,
+  `:from(:index(5)):to(:yesterday())` is legal and sensible.
 
+#### 6.28b
 Note that `:before()`, `:after()`, `:from()`, `:to()` are aliased with
 other common words that may help a reference make more sense to a reader.
 All forms with the same meaning are equivalent.
@@ -1189,20 +1290,23 @@ All forms with the same meaning are equivalent.
 | gt      | greater-than   |
 | gte     | greater-than-equal  |
 
-Note that using multiple directional functions indicating the same direction
-is not meaningful so not legal. `:before()` or `:to()` (or their other
-aliases) may be combined with `:after()` or `:from()` to create a range;
-however, combining `:before()` and `:to()` or `:after()` and `:from()` is not
-legal.
+#### 6.28c
+Note that using multiple directional functions indicating the same
+direction is not meaningful so not legal. `:before()` or `:to()` (or
+their other aliases) may be combined with `:after()` or `:from()` to
+create a range; however, combining `:before()` and `:to()` or
+`:after()` and `:from()` is not legal.
 
-
-
-#### 6.28a Find versions registered as `acme` from the beginning of 2026 through yesterday
+#### 6.28d Example
+Find versions registered as `acme` from the beginning of 2026 through
+yesterday:
 `$acme.files.:flatten().:after(:date("2026-01-01")):to(:yesterday())`
 
+
+
 #### 6.29
-- :index() is a position of a counter within a bounded number line — within
-  a range defined by:
+- :index() is a position of a counter within a bounded number line —
+  within a range defined by:
   - date anchor
   - an ordered-list position of relative to next and last indexes
   - the 0th or last position.
@@ -1232,30 +1336,6 @@ dependency relationship to registrations
 
 #### 6.33
 * This section intentionally removed *
-
-### Time component functions
-#### 6.34
-The complete set of functions that can produce time-related values based
-on external conditions or arguments is:
-- :year() — int
-- :month() — int
-- :month_name() — str
-- :day() — int
-- :day_name() — str
-- :hour() — int
-- :hour_24() — int
-- :minute() — int
-- :second() — int
-- :yesterday() — datetime or str
-- :today() — datetime or str
-- :date("...")  — str
-- :now() - datetime
-
-When one of these datetime component functions is provided in a context where
-a full datetime is needed for ordering, directionality, ranging, or indexing
-the function is interpreted as the first moment of that time. For e.g.,
-`:year()` would be interpreted as the first second of the first minute of the
-first day of January in the present year.
 
 
 ### Predicate support functions
@@ -1485,7 +1565,7 @@ find results based on a ReferenceParser which represents a reference string.
 |---|---|
 | FILES, a version match | the specific version file |
 | FILES, name_one-terminal (no version pointer) | the named-file's file-home *directory* |
-| CSVPATHS, any version match | the group's `group.csvpath` *file* — always the same path; only `uuid`/`identity` distinguish versions/statements |
+| CSVPATHS, any version match | the group's `group.csvpaths` *file* — always the same path; only `uuid`/`identity` distinguish versions/statements |
 | RESULTS, a run-level match | the run's own home *directory* |
 | RESULTS, an instance-level match | the instance's own home *directory* (a subdirectory of the run) |
 | Rule 1a (bare `'*'`+`:manifest()`, a global ledger — see below) | the ledger file itself, e.g. `.../manifest.json` — `uuid` always `None` |
