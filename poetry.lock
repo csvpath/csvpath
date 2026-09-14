@@ -922,6 +922,22 @@ files = [
 ]
 
 [[package]]
+name = "elementpath"
+version = "5.1.4"
+description = "XPath 1.0/2.0/3.0/3.1 parsers and selectors for ElementTree and lxml"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "elementpath-5.1.4-py3-none-any.whl", hash = "sha256:5ec8d7bb44b16c98414a6a95e20cb150f3cbfc3cac65edc14773288c7a937376"},
+    {file = "elementpath-5.1.4.tar.gz", hash = "sha256:3c912a9c41311ac5244c038867670d7c0b0fec0e444813608e5b846dbb3428ac"},
+]
+
+[package.extras]
+dev = ["coverage", "flake8", "lxml", "lxml-stubs", "memray ; platform_python_implementation != \"PyPy\"", "mypy", "psutil", "sphinx", "tox (>=4.0)", "xmlschema (>=4.0.1)"]
+docs = ["readthedocs-sphinx-search", "sphinx"]
+
+[[package]]
 name = "email-validator"
 version = "2.3.0"
 description = "A robust email address syntax and deliverability validation library."
@@ -4091,6 +4107,26 @@ files = [
 ]
 
 [[package]]
+name = "xmlschema"
+version = "4.3.2"
+description = "An XML Schema validator and decoder"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "xmlschema-4.3.2-py3-none-any.whl", hash = "sha256:cf5c970a30f6ebcb3da35260e694704cc0b6794d8ace46125bb2a95e38ed9307"},
+    {file = "xmlschema-4.3.2.tar.gz", hash = "sha256:f3b33a21a2b2cdc404ddc3fb599d8bc1dee90b155d547370672e6e684746b8d6"},
+]
+
+[package.dependencies]
+elementpath = ">=5.1.3,<6.0.0"
+
+[package.extras]
+codegen = ["jinja2"]
+dev = ["coverage", "flake8", "lxml", "lxml-stubs", "mypy", "psutil", "tox", "xmlschema[docs]"]
+docs = ["jinja2", "sphinx", "sphinx_rtd_theme"]
+
+[[package]]
 name = "zipp"
 version = "3.23.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
@@ -4116,4 +4152,4 @@ pandas = ["pandas"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.10,<4.0"
-content-hash = "71f4313dbc3607955a760dbab6d110caa5f33236c6055ac408941597c90d5722"
+content-hash = "baf8d4d9972d16684645e9998dc7653d9b397c186ea26fb5c5e3d0c7f72cfb6d"

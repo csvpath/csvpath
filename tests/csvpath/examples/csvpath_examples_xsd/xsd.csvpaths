@@ -1,0 +1,7 @@
+~
+  validtion-mode:fail,print
+~
+$[0][
+    xsd("tests/csvpath/examples/csvpath_examples_xsd/automobiles.xsd")
+]
+

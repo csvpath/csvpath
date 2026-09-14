@@ -123,6 +123,7 @@ from .types.url import Url
 from .types.string import String
 from .types.datatype import Datatype
 from .xml.xpath import XPath
+from .xml.xsd import Xsd
 
 from .json.jsonpath import JsonPath
 
@@ -596,5 +597,6 @@ class FunctionFactory:
         fs["count_bytes"] = CountBytes
         fs["counter"] = Counter
         fs["xpath"] = XPath
+        fs["xsd"] = Xsd
 
         cls.MY_FUNCTIONS = fs

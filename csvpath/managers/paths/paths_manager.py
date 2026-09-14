@@ -797,8 +797,26 @@ class PathsManager:
         return temp
 
     def _group_file_path(self, name: NamedPathsName) -> str:
+        #
+        # TODO: note that in principle name could be a reference. should we allow
+        # that? We would just check for '$' and use ReferenceParser.
+        #
         temp = Nos(self.named_paths_home(name)).join("group.csvpaths")
         return temp
+
+    def group_file_path(self, name: NamedPathsName) -> str:
+        if name is None:
+            raise ValueError("Name cannot be None")
+        name = str(name).strip()
+        if len(name) == 0:
+            raise ValueError("Name cannot be length 0")
+        if name[0] == "$":
+            name = ReferenceParser(name, csvpaths=self.csvpaths).root_major
+        #
+        # TODO: future state references v3 can return * or a function. that might
+        # not be supported (quite reasonably) but it would be a legal root_major.
+        #
+        return self._group_file_path(name)
 
     def _get_csvpaths_from_file(self, file_path: str) -> list[Csvpath]:
         if self.can_load(file_path) is not True:
