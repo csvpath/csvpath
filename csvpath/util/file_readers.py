@@ -1,9 +1,7 @@
 import csv
 import importlib
-import hashlib
 import os
 from abc import ABC, abstractmethod
-import pylightxl as xl
 from .exceptions import InputException
 from .file_info import FileInfo
 from .class_loader import ClassLoader
@@ -57,6 +55,9 @@ class DataFileReader(ABC):
         self.load_if()
         return self
 
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.close()
+
     @property
     def mode(self) -> str:
         return self._mode
@@ -76,9 +77,6 @@ class DataFileReader(ABC):
     @encoding.setter
     def encoding(self, e: str) -> None:
         self._encoding = e
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        self.close()
 
     def close(self) -> None:
         if self.source is not None:
@@ -232,8 +230,7 @@ class DataFileReader(ABC):
     def next(self) -> list[str]:
         pass
 
-    def file_info(self) -> dict[str, str | int | float]:
-        ...
+    def file_info(self) -> dict[str, str | int | float]: ...
 
     #
     # no csv interpretation. used in FileManager.

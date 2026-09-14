@@ -126,6 +126,7 @@ from .xml.xpath import XPath
 from .xml.xsd import Xsd
 
 from .json.jsonpath import JsonPath
+from .json.jsonschema import JsonSchema
 
 
 class UnknownFunctionException(Exception):
@@ -525,6 +526,7 @@ class FunctionFactory:
         fs["dup_lines"] = DupLines
         fs["empty"] = Empty
         fs["jsonpath"] = JsonPath
+        fs["jsonschema"] = JsonSchema
         fs["advance"] = Advance
         fs["advance_all"] = AdvanceAll
         fs["collect"] = Collect

@@ -1,0 +1,7 @@
+~
+  validtion-mode:fail,print
+~
+$[0][
+    jsonschema("tests/csvpath/examples/csvpath_examples_jsonschema/automobiles.jsonschema")
+]
+

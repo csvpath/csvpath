@@ -70,6 +70,7 @@ jsonpickle = "4.1.1"
 psutil = "^7.2.2"
 ruff = "^0.15.8"
 xmlschema = "^4.3.2"
+jsonschema = "^4.26.0"
 
 [tool.poetry.extras]
 pandas = ["pandas"]
