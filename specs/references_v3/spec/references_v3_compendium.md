@@ -1156,6 +1156,16 @@ values based on external conditions or arguments is:
 - :date("...")  — str
 - :now() - datetime
 
+Unless used otherwise, time functions represent:
+- Arrival time, for `files`
+- Load time, for `csvpaths`
+- Runtime, for `results`
+
+The number line for each datatype is date ordered/date determined, but
+for the purpose of ordinals that are not time related, indexed by
+sequence.
+
+
 #### 6.27b
 When one of these datetime component functions is provided in a usage
 where a full datetime is needed for directionality, ranging, or
@@ -1164,16 +1174,12 @@ indexing the function is interpreted as the first moment of that time.
 For e.g., `:year()` would be interpreted as the first second of the first
 minute of the first day of January in the present year.
 
-#### 6.27c
-As noted below, uses of time functions as context dominate the behavior
-of other functions. Conversely, when a time function is used as an
-argument it informs the function it is passed to as an anchor, but does
-not set the context for that function.
 
-When a time function is passed to a string, the time function is
-stringified as the most coarse-grained value the function indicates. E.g.
-`:day()` is an int `1`-`31`, `:year()` is an int equal to the current
-year, etc.
+#### 6.27c
+Uses of time functions as context dominate the behavior of other
+functions. Conversely, when a time function is used as an argument it
+informs the function it is passed to as an anchor, but does not set the
+context for that function.
 
 #### 6.27d
 Examples:
@@ -1184,9 +1190,13 @@ Examples:
 - `$acme.files.:name("{:yesterday()}.csv")` - the file home, if any,
   where the file name was like `2026-01-01.csv`.
 
+Note the third bullet, when a time function is passed to a string, the
+time function is stringified as the most coarse-grained value the
+function indicates. E.g. `:day()` is an int `1`-`31`, `:year()` is an int
+equal to the current year, etc.
 
 ### Behavior of time components
-#### 6.27b
+#### 6.27e
 A time component function informs a direction or range function as a
 context for a starting or ending point or as the starting or ending
 point.
@@ -1195,7 +1205,7 @@ point.
 - Use as a point-in-time directional anchor:
   `$acme.files.:from(:yesterday()):before(:today())`
 
-#### 6.27c
+#### 6.27f
 If interpreted on the date `2026-01-02`, the use of `:yesterday()`
 above is, respectively:
 - `2026-01-01_00:00:00` to `2026-01-01_23:59:59`
@@ -1203,21 +1213,9 @@ above is, respectively:
   before `2026-01-01_23:59:59`
 - `2026-01-01_00:00:00` to `2026-01-01_23:59:59`
 
-#### 6.27d
-More specifically, the time components have the following impacts,
-depending on usage:
-- Anchoring at the first possible moment in time associated with
-  the range indicated, such as `:now()` or `:yesterday()`
-- Providing a range of first moment to last moment associated with
-  a non-momentary concept like `:yesterday()`
-- The string value appropriate to the concept, using the first moment
-  if a specific moment in time is called for. (In the latter case,
-  an unlikely example might be `"{:second(:yesterday())}" resulting
-  in "00".)
-
-#### 6.27e
+#### 6.27g
 Examples:
-- `:now()` indicates the exact moment of iterpretation to the
+- `:now()` indicates the exact moment of interpretation to the
   millisecond as a datetime object. It may also be used in variable
   interpolation, resulting in a full datetime string.
 - `:yesterday()` indicates:
@@ -1228,36 +1226,16 @@ Examples:
      that day.
    - The first moment of the day prior when used as a direction
      anchor
-   - The stringified date (not datetime) or approprate datetime
+   - The stringified date (not datetime) or appropriate datetime
      component when used in a string interpolation. Or, when passed
      a format string, the formatted date. E.g.
      `:year(:date("2026-01-01"))` returns the int or string `2026`.
    - Any of the above three functions relative to a datetime when
      passed that datetime. E.g. `:yesterday(:date("2026-01-02"))`
      returns the date, date range or string beginning at the first
-     moment of 2026.
+     moment of 2026-01-01.
 
-#### 6.27f
-The following are time anchors:
-- :yesterday()
-- :today()
-- :now()
-- Any of the datetime components such as `:day()`, `:hour()`, etc.
-
-A time function setting a context dominates other functions. A
-reference like `$acme.files.:yesterday():last()` finds the last
-registration within the span of time defined as `:yesterday()` because
-`:yesterday()` determines `:last()`'s context.
-
-Unless used otherwise, context and directional anchors represent:
-- Arrival time, for `files`
-- Load time, for `csvpaths`
-- Runtime, for `results`
-
-The number line for each datatype is date ordered/date determined, but
-for the purpose of ordinals that are not time related, indexed by
-sequence.
-
+### Direction-setting functions
 #### 6.28
 - Directions act based on an anchor or position:
   - :before(...)
@@ -1303,7 +1281,7 @@ yesterday:
 `$acme.files.:flatten().:after(:date("2026-01-01")):to(:yesterday())`
 
 
-
+### Indexes
 #### 6.29
 - :index() is a position of a counter within a bounded number line —
   within a range defined by:
@@ -1340,16 +1318,17 @@ dependency relationship to registrations
 
 ### Predicate support functions
 #### 6.35
-Every field accessor has the ability to match on a provided value, and thereby
-filter the reference.
+Every field accessor has the ability to match on a provided value, and
+thereby filter the reference.
 
 For e.g. `$*.files.:definition(:on_arrival(:not_none()))`
-limits the registration file homes returned to 0-level template registrations where the
-named-file's `definition.json` has an `on_arrival` activation declared.
+limits the registration file homes returned to 0-level template
+registrations where the named-file's `definition.json` has an `on_arrival`
+activation declared.
 
 #### 6.36
-The predicate support functions are those that make it possible to use predicate
-matching with variable or category values.
+The predicate support functions are those that make it possible to use
+predicate matching with variable or category values.
 
 - :true() — matches the JSON true / Python True
 - :false() — matches the JSON false / Python False
