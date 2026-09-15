@@ -1,0 +1,7 @@
+~
+  validation-mode:fail,print,raise
+~
+$[0][
+    xsd("automobiles.xsd")
+]
+

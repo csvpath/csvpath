@@ -31,6 +31,7 @@ class JsonReaderHelper:
             path.endswith("json")
             or path.endswith("jsonl")
             or path.endswith("ndjson")
+            or path.endswith("jsonlines")
             or path.endswith("jsonschema")
         ):
             return True

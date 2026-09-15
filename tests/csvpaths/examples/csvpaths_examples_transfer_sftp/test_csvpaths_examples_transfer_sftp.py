@@ -30,8 +30,6 @@ PATH = os.path.join(
 class TestCsvPathsExamplesTransferSftp(unittest.TestCase):
     def test_transfer_parquet_1(self):
         paths = Builder().build()
-        print(f"sfae: {paths.config.configpath}")
-        print(f"sfae: {paths.config.get(section='sftp', name='server')}")
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.config.set(section="sftp", name="username", value="python")
@@ -88,6 +86,8 @@ class TestCsvPathsExamplesTransferSftp(unittest.TestCase):
         #
         # check that transfer happened
         #
-        tpath = "sftp://192.168.1.182:2022/stores.parquet"
+        server = paths.config.get(section="sftp", name="server")
+        port = paths.config.get(section="sftp", name="port")
+        tpath = f"sftp://{server}:{port}/stores.parquet"
         print(f"checking {tpath}")
         assert Nos(tpath).exists()

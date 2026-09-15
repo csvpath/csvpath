@@ -8,7 +8,7 @@ GOOD = f"tests{os.sep}csvpath{os.sep}examples{os.sep}csvpath_examples_jsonschema
 BAD = f"tests{os.sep}csvpath{os.sep}examples{os.sep}csvpath_examples_jsonschema{os.sep}automobiles_bad.json"
 
 
-class TestFunctionsJsonSchema(unittest.TestCase):
+class TestCsvPathExamplesJsonSchema(unittest.TestCase):
     def test_jsonschema_1(self):
         path = CsvPath()
         path.parse(

@@ -1,11 +1,16 @@
+import io
 import xmlschema
+import lxml.etree as etree
+
 
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.productions import Term, Variable
 from csvpath.matching.functions.function import Function
 from csvpath.matching.functions.args import Args
 from csvpath.matching.functions.function_focus import MatchDecider
+from csvpath.util.line_spooler import XmlLineSpooler, ListLineSpooler
 
+from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
 
@@ -58,6 +63,23 @@ class Xsd(MatchDecider):
         )
         self.args.validate(self.siblings())
         super().check_valid()
+        #
+        # set a line spooler that knows XML. there is no chance that
+        # we are dealing with anything but XML, unless the user passed in
+        # the wrong file or something. if we have a ListLineSpooler or
+        # maybe a list, we're fine because we're not writing files.
+        #
+        if self.matcher.csvpath.lines is not None and not isinstance(
+            self.matcher.csvpath.lines, (ListLineSpooler, list)
+        ):
+            nos = Nos(self.matcher.csvpath.lines.path)
+            if nos.exists():
+                nos.remove()
+            sp = XmlLineSpooler(
+                spooler=self.matcher.csvpath.lines,
+                source=self.matcher.csvpath.scanner.filename,
+            )
+            self.matcher.csvpath.lines = sp
 
     def _produce_value(self, skip=None) -> None:
         xml = self.matcher.csvpath.scanner.filename
@@ -74,20 +96,47 @@ class Xsd(MatchDecider):
         xsd = self._value_one(skip=skip)
         if self.matcher.csvpath.csvpaths is not None:
             npn = self.matcher.csvpath.named_paths_name
-            path = self.matcher.csvpath.csvpaths.paths_manager.group_file_path(npn)
+            path = self.matcher.csvpath.csvpaths.paths_manager.asset_manager.assets_dir_path(
+                npn
+            )
             xsd = Nos(path).join(xsd)
+        res = self._validate(xsd_path=xsd, xml_path=xml)
+        """
         schema = xmlschema.XMLSchema(xsd)
         is_valid = schema.is_valid(xml)
-        print(f"Is XML valid? {is_valid}")
         try:
             schema.validate(xml)
         except xmlschema.XMLSchemaValidationError as e:
-            print(f"Validation error: {e}")
             self.value = False
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=f"{e}")
             if self.matcher.csvpath.do_i_raise:
                 raise MatchException(f"{e}")
-        self.value = is_valid
+        """
+        if isinstance(res, Exception):
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=f"{res}")
+            if self.matcher.csvpath.do_i_raise:
+                raise MatchException(f"{res}")
+
+        self.value = res is True
+
+    def _validate(self, *, xsd_path: str, xml_path: str) -> bool | Exception:
+        xsd = None
+        with DataFileReader(xsd_path) as file:
+            xsd = file.read()
+
+        xml = None
+        with DataFileReader(xml_path) as file:
+            xml = file.read()
+
+        xsd_schema = xmlschema.XMLSchema(io.StringIO(xsd))
+        xml_root = etree.fromstring(xml.encode())
+
+        # is_valid = xsd_schema.is_valid(xml_root)
+        try:
+            xsd_schema.validate(xml_root)  # no seek needed — etree Element is reusable
+        except xmlschema.XMLSchemaValidationError as e:
+            return e
+        return True
 
     def _decide_match(self, skip=None) -> None:
         self.to_value(skip=skip)

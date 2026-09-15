@@ -8,7 +8,7 @@ GOOD = f"tests{os.sep}csvpath{os.sep}examples{os.sep}csvpath_examples_xsd{os.sep
 BAD = f"tests{os.sep}csvpath{os.sep}examples{os.sep}csvpath_examples_xsd{os.sep}automobiles_bad.xml"
 
 
-class TestFunctionsXsd(unittest.TestCase):
+class TestCsvPathExamplesXsd(unittest.TestCase):
     def test_xsd_1(self):
         path = CsvPath()
         path.parse(

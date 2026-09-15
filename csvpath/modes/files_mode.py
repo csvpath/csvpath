@@ -6,13 +6,14 @@ class FilesMode:
     ALL = "all"
     MINIMUM = "errors, meta, vars"
     DATA = "data"
+    NO_DATA = "no-data"
     UNMATCHED = "unmatched"
     PRINTOUTS = "printouts"
     VARS = "vars"
     ERRORS = "errors"
     META = "meta"
 
-    ALL_TYPES = [VARS, ERRORS, META, DATA, UNMATCHED, PRINTOUTS]
+    ALL_TYPES = [VARS, ERRORS, META, DATA, UNMATCHED, PRINTOUTS, NO_DATA]
 
     def __init__(self, controller):
         self.controller = controller
@@ -33,7 +34,9 @@ class FilesMode:
     def update(self) -> None:
         fm = self.value
         if fm and fm.strip() == FilesMode.ALL:
-            self.all_expected_files = FilesMode.ALL_TYPES
+            self.all_expected_files = [
+                s for s in FilesMode.ALL_TYPES if s != FilesMode.NO_DATA
+            ]
             return
         fs = []
         if fm:

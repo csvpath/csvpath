@@ -1163,6 +1163,13 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             lines = []
             self.lines = ListLineSpooler(lines=lines)
         for _ in self.next():
+            if _ is None:
+                raise ValueError("Next line cannot be None")
+            #
+            # the line can be a non list if it is not CSV data
+            #
+            elif not isinstance(_, (list, tuple)):
+                _ = [_]
             _ = _[:]
             self.lines.append(_)
             if nexts == -1:

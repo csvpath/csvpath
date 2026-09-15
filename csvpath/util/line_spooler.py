@@ -1,9 +1,6 @@
-import os
 import csv
 import json
-import boto3
 import logging
-from pathlib import Path
 from abc import ABC, abstractmethod
 
 from .exceptions import InputException
@@ -59,6 +56,87 @@ class ListLineSpooler(LineSpooler):
 
     def __len__(self) -> int:
         return len(self.sink)
+
+
+#
+# we use this spooler in the jsonschema() function because if we are
+# using that function we definitely have JSON data and the CsvLineSpooler
+# doesn't do exactly what we want.
+#
+class JsonLineSpooler(LineSpooler):
+    def __init__(self, orig: LineSpooler) -> None:
+        super().__init__(orig.result)
+        self._orig = orig
+        self._bytes = -1
+
+    def append(self, line) -> None:
+        #
+        # if we append, we copy the whole data file on the theory
+        # that we validated it and it is valid
+        #
+        if not self.closed:
+            path = self._orig.path
+            path = path[0 : path.rfind(".")]
+            path = f"{path}.json"
+            with DataFileWriter(path=path, mode="w") as writer:
+                json.dump(line, writer.sink, indent=2)
+            self.close()
+
+    def close(self) -> None:
+        #
+        # remove data.csv
+        #
+        nos = Nos(self._orig.path)
+        if nos.exists():
+            nos.remove()
+        self.closed = True
+
+    def bytes_written(self) -> int:
+        return self._bytes
+
+
+#
+# we use this spooler in the xsd() function because if we are
+# using that function we definitely have XML data and the CsvLineSpooler
+# doesn't do exactly what we want.
+#
+class XmlLineSpooler(LineSpooler):
+    def __init__(self, *, spooler: LineSpooler, source: str) -> None:
+        super().__init__(spooler.result)
+        self._orig = spooler
+        self._source = source
+        self._bytes = -1
+
+    def append(self, line) -> None:
+        #
+        # if we append, we copy the whole data file on the theory
+        # that we validated it and it is valid
+        #
+        if not self.closed:
+            path = self._orig.path
+            path = path[0 : path.rfind(".")]
+            path = f"{path}.xml"
+            with DataFileReader(self._source) as file:
+                with DataFileWriter(path=path, mode="w") as writer:
+                    writer.write(file.read())
+            self.close()
+
+    def close(self) -> None:
+        #
+        # remove data.csv
+        #
+        nos = Nos(self._orig.path)
+        if nos.exists():
+            nos.remove()
+        self.closed = True
+
+    def bytes_written(self) -> int:
+        return self._bytes
+
+
+#
+# ----
+#
 
 
 class CsvLineSpooler(LineSpooler):
@@ -271,13 +349,13 @@ class CsvLineSpooler(LineSpooler):
             # drop the sink so no chance for recurse
             self.sink = None
             try:
-                if self.csvpath:
-                    self.csvpath.error_manager.handle_error(source=self, msg=f"{ex}")
-                elif self.csvpaths:
-                    self.csvpaths.error_manager.handle_error(source=self, msg=f"{ex}")
+                if self.result and self.result.csvpath:
+                    self.result.csvpath.error_manager.handle_error(
+                        source=self, msg=f"{ex}"
+                    )
                 else:
                     self.logger.error(str(ex))
             except Exception as e:
                 self.logger.error(
-                    f"Caught {e}. Not raising an exception because closing."
+                    f"Caught {e}. Not raising an exception because spooler is closing."
                 )

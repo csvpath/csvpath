@@ -6,8 +6,19 @@ from csvpath.util.hasher import Hasher
 from csvpath.util.exceptions import InputException
 
 CSV_PATH = os.path.join("tests", "util", "test_resources", "test.csv")
-XLSX_PATH = os.path.join("tests", "util", "test_resources", "xlsx", "Table_1.1_Primary_Energy_Overview.xlsx")
+XLSX_PATH = os.path.join(
+    "tests", "util", "test_resources", "xlsx", "Table_1.1_Primary_Energy_Overview.xlsx"
+)
+#
+# two types of JSON - regular and lines. there are relatively few well known extensions
+#
 JSONL_PATH = os.path.join("tests", "util", "test_resources", "test.jsonl")
+NDJSON_PATH = os.path.join("tests", "util", "test_resources", "test.ndjson")
+JSONLINES_PATH = os.path.join("tests", "util", "test_resources", "test.jsonlines")
+
+JSON_PATH = os.path.join("tests", "util", "test_resources", "test.json")
+JSONSCHEMA_PATH = os.path.join("tests", "util", "test_resources", "test.jsonschema")
+SCHEMADOTJSON_PATH = os.path.join("tests", "util", "test_resources", "test.schema.json")
 
 
 class TestUtilFileReaders(unittest.TestCase):
@@ -31,6 +42,18 @@ class TestUtilFileReaders(unittest.TestCase):
     def test_new_returns_json_data_reader_for_jsonl_path(self):
         reader = DataFileReader(JSONL_PATH)
         assert type(reader).__name__ == "JsonDataReader"
+        reader = DataFileReader(NDJSON_PATH)
+        assert type(reader).__name__ == "JsonDataReader"
+        reader = DataFileReader(JSONLINES_PATH)
+        assert type(reader).__name__ == "JsonDataReader"
+
+    def test_new_returns_json_document_reader_for_json_path(self):
+        reader = DataFileReader(JSON_PATH)
+        assert type(reader).__name__ == "JsonDocumentReader"
+        reader = DataFileReader(JSONSCHEMA_PATH)
+        assert type(reader).__name__ == "JsonDocumentReader"
+        reader = DataFileReader(SCHEMADOTJSON_PATH)
+        assert type(reader).__name__ == "JsonDocumentReader"
 
     def test_new_raises_for_hash_fragment_on_plain_csv_path(self):
         # DataFileReader.__new__ strips any "#..." fragment before

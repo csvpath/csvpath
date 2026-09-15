@@ -7,7 +7,7 @@ from csvpath.matching.productions import Term, Variable
 from csvpath.matching.functions.function import Function
 from csvpath.matching.functions.args import Args
 from csvpath.matching.functions.function_focus import MatchDecider
-
+from csvpath.util.line_spooler import JsonLineSpooler, ListLineSpooler
 from csvpath.util.nos import Nos
 
 
@@ -64,6 +64,19 @@ class JsonSchema(MatchDecider):
         )
         self.args.validate(self.siblings())
         super().check_valid()
+        #
+        # set a line spooler that knows JSON. there is no chance that
+        # we are dealing with anything but JSON, unless the user passed in
+        # the wrong file or something. if we have a ListLineSpooler or
+        # maybe a list, we're fine because we're not writing files.
+        #
+        inst = isinstance(self.matcher.csvpath.lines, (ListLineSpooler, list))
+        if self.matcher.csvpath.lines is not None and inst is False:
+            nos = Nos(self.matcher.csvpath.lines.path)
+            if nos.exists():
+                nos.remove()
+            sp = JsonLineSpooler(self.matcher.csvpath.lines)
+            self.matcher.csvpath.lines = sp
 
     def _produce_value(self, skip=None) -> None:
         file = self.matcher.csvpath.scanner.filename
@@ -80,7 +93,9 @@ class JsonSchema(MatchDecider):
         schema = self._value_one(skip=skip)
         if self.matcher.csvpath.csvpaths is not None:
             npn = self.matcher.csvpath.named_paths_name
-            path = self.matcher.csvpath.csvpaths.paths_manager.group_file_path(npn)
+            path = self.matcher.csvpath.csvpaths.paths_manager.asset_manager.assets_dir_path(
+                npn
+            )
             schema = Nos(path).join(schema)
         try:
             with DataFileReader(schema) as sr:
