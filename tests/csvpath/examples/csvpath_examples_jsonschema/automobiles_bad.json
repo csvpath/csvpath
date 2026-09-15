@@ -1,0 +1,26 @@
+{
+    "automobile":{
+        "annual":[
+          {
+            "year":2012,
+            "import":404975,
+            "export":302441
+          },
+          {
+            "year":2011,
+            "import":366768,
+            "export":283901
+          },
+          {
+            "year":2010,
+            "imports":469315,
+            "exports":225964
+          },
+          {
+            "year":2009,
+            "imports":423425,
+            "exports":194406
+          }
+       ]
+    }
+}

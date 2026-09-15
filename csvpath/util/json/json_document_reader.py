@@ -1,10 +1,9 @@
-import jsonlines
+import json
 from csvpath.util.file_info import FileInfo
 from csvpath.util.file_readers import DataFileReader
-from .json_reader_helper import JsonReaderHelper
 
 
-class JsonDataReader(DataFileReader):
+class JsonDocumentReader(DataFileReader):
     #
     # some classes may assume a delimiter and quotechar even though
     # that isn't needed for Json. if passed we ignore them.
@@ -26,20 +25,14 @@ class JsonDataReader(DataFileReader):
         self._updates_headers = True
 
     def next(self) -> list[str]:
-        with jsonlines.open(self.path) as reader:
-            i = 0
-            for obj in reader.iter(skip_invalid=True):
-                line = JsonReaderHelper.line_from_obj(obj, i)
-                if isinstance(line, tuple):
-                    headers = line[0]
-                    self.current_headers = headers
-                    line = line[1]
-                    # yield headers
-                    yield line
-                else:
-                    self.current_headers = line[:]
-                    yield line
-                i += 1
+        #
+        # if you use this class as a context manager you don't
+        # need to load_if and close. if that's not the case it
+        # must be managed.
+        #
+        # self.load_if()
+        yield json.load(self.source)
+        # self.close()
 
     def file_info(self) -> dict[str, str | int | float]:
         return FileInfo.info(self.path)

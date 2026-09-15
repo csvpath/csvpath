@@ -1,6 +1,4 @@
-import csv
 import time
-import os
 from typing import List, Any
 from csvpath.util.line_monitor import LineMonitor
 from .file_readers import DataFileReader
@@ -40,7 +38,12 @@ class LineCounter:
                 if reader.updates_headers and reader.current_headers:
                     line = reader.current_headers
                 if (not headers or len(headers) == 0) and line and len(line) > 0:
-                    headers = line[:]
+                    if isinstance(line, (list, tuple)):
+                        headers = line[:]
+                    elif isinstance(line, dict):
+                        headers = [""]
+                    else:
+                        raise ValueError("Unexpected type of line: {type(line)}")
         if not headers:
             headers = []
         headers = LineCounter.clean_headers(headers)

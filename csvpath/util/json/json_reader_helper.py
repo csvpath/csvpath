@@ -5,15 +5,34 @@ from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 
 class JsonReaderHelper:
     @classmethod
+    def _json_type(cls, path, filetype) -> bool:
+        #
+        # returns the "DocumentReader" if we're creating a reader for non-JSONL docs.
+        #
+        if (
+            filetype == "json"
+            or (path and path.endswith(".json"))
+            or (path and path.endswith(".jsonschema"))
+        ):
+            return ("json_document_reader", "JsonDocumentReader")
+        elif cls._is_json(path, filetype):
+            return ("json_data_reader", "JsonDataReader")
+        else:
+            raise ValueError("Must be a JSON type, not {path}/{filetype}")
+
+    @classmethod
     def _is_json(cls, path, filetype) -> bool:
         if filetype == "json":
             return True
         #
-        # shouldn't we be looking to config.ini for extension types? or is that already
-        # accounted for?
+        # look to config.ini for extension types?
         #
         if path and (
-            path.endswith("json") or path.endswith("jsonl") or path.endswith("ndjson")
+            path.endswith("json")
+            or path.endswith("jsonl")
+            or path.endswith("ndjson")
+            or path.endswith("jsonlines")
+            or path.endswith("jsonschema")
         ):
             return True
         return False
@@ -24,9 +43,10 @@ class JsonReaderHelper:
     ):
         if not cls._is_json(path, filetype):
             return None
+        clz, name = cls._json_type(path, filetype)
         if path.find("s3://") > -1:
             instance = ClassLoader.load(
-                "from csvpath.util.s3.s3_json_data_reader import S3JsonDataReader",
+                f"from csvpath.util.s3.s3_{clz} import S3{name}",
                 args=[path],
                 kwargs={
                     "delimiter": delimiter,
@@ -36,7 +56,7 @@ class JsonReaderHelper:
             return instance
         if path.find("sftp://") > -1:
             instance = ClassLoader.load(
-                "from csvpath.util.sftp.sftp_json_data_reader import SftpJsonDataReader",
+                f"from csvpath.util.sftp.sftp_{clz} import Sftp{name}",
                 args=[path],
                 kwargs={
                     "delimiter": delimiter,
@@ -46,7 +66,7 @@ class JsonReaderHelper:
             return instance
         if path.find("azure://") > -1:
             instance = ClassLoader.load(
-                "from csvpath.util.azure.azure_json_data_reader import AzureJsonDataReader",
+                f"from csvpath.util.azure.azure_{clz} import Azure{name}",
                 args=[path],
                 kwargs={
                     "delimiter": delimiter,
@@ -56,7 +76,7 @@ class JsonReaderHelper:
             return instance
         if path.find("gs://") > -1:
             instance = ClassLoader.load(
-                "from csvpath.util.gcs.gcs_json_data_reader import GcsJsonDataReader",
+                f"from csvpath.util.gcs.gcs_{clz} import Gcs{name}",
                 args=[path],
                 kwargs={
                     "delimiter": delimiter,
@@ -65,7 +85,7 @@ class JsonReaderHelper:
             )
             return instance
         instance = ClassLoader.load(
-            "from csvpath.util.json.json_data_reader import JsonDataReader", args=[path]
+            f"from csvpath.util.json.{clz} import {name}", args=[path]
         )
         return instance
 

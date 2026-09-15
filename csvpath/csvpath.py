@@ -1163,6 +1163,13 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             lines = []
             self.lines = ListLineSpooler(lines=lines)
         for _ in self.next():
+            if _ is None:
+                raise ValueError("Next line cannot be None")
+            #
+            # the line can be a non list if it is not CSV data
+            #
+            elif not isinstance(_, (list, tuple)):
+                _ = [_]
             _ = _[:]
             self.lines.append(_)
             if nexts == -1:
@@ -1311,22 +1318,26 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             raise FileException("There is no filename")
         #
         # DataFileReader is abstract. instantiating it results in a concrete subclass.
-        # pylint doesn't like that just because it doesn't see what we're doing.
-        # otoh, is this a bad way to do it? it works fine.
+        # ideally we use it as a context mgr.
         #
+        """
         reader = DataFileReader(  # pylint: disable=E0110
             self.scanner.filename, delimiter=self.delimiter, quotechar=self.quotechar
         )
-        for line in reader.next():
-            self.track_line(line=line)
-            #
-            # some formats embed headers in each line. JSONL headers are the dict keys in
-            # each line that uses a dict
-            #
-            if reader.updates_headers:
-                _ = reader.current_headers
-                self.headers = self.headers if _ is None else _
-            yield line
+        """
+        with DataFileReader(
+            self.scanner.filename, delimiter=self.delimiter, quotechar=self.quotechar
+        ) as reader:
+            for line in reader.next():
+                self.track_line(line=line)
+                #
+                # some formats embed headers in each line. JSONL headers are the dict keys in
+                # each line that uses a dict
+                #
+                if reader.updates_headers:
+                    _ = reader.current_headers
+                    self.headers = self.headers if _ is None else _
+                yield line
         self.finalize()
 
     def finalize(self) -> None:

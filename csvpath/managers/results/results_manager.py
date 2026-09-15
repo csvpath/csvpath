@@ -787,10 +787,6 @@ class ResultsManager:  # pylint: disable=C0115
         rs = [None for inst in instances if inst != "manifest.json"]
         for inst in instances:
             if inst.endswith(".json") or inst == "_extra_data":
-                #
-                # exp ^^^^
-                #
-                # if inst == "manifest.json":
                 continue
             r = self.get_named_result_for_instance(
                 name=name, run_dir=path, run=run, instance=inst
@@ -818,13 +814,6 @@ class ResultsManager:  # pylint: disable=C0115
         # it should be deleted.
         #
         _ = ""
-
-        """
-        print(
-            f"resman: get_named_result_for_instance: {name}, {run_dir}, {run}, {instance}"
-        )
-        """
-
         if run_dir.endswith(f"/{instance}") or run_dir.endswith(f"\\{instance}"):
             instance_dir = run_dir
         else:
@@ -853,6 +842,7 @@ class ResultsManager:  # pylint: disable=C0115
             csvpath.match = meta["runtime_data"]["match_part"]
             csvpath.delimiter = meta["runtime_data"]["delimiter"]
             csvpath.quotechar = meta["runtime_data"]["quotechar"]
+            csvpath.is_valid = meta["runtime_data"]["valid"]
         vars = ResultFileReader.vars(instance_dir)
         if vars:
             csvpath.variables = vars

@@ -13,6 +13,7 @@ from csvpath.util.nos import Nos
 from .paths_registrar import PathsRegistrar
 from .paths_metadata import PathsMetadata
 from .paths_describer import NamedPathsDescriber
+from .paths_asset_manager import PathsAssetManager
 from csvpath.util.template_util import TemplateUtility as temu
 from csvpath.matching.util.expression_utility import ExpressionUtility as expu
 
@@ -50,6 +51,17 @@ class PathsManager:
     @property
     def describer(self) -> NamedPathsDescriber:
         return NamedPathsDescriber(self)
+
+    @property
+    def asset_manager(self) -> PathsAssetManager:
+        return PathsAssetManager(self)
+
+    @property
+    def registrar(self) -> PathsRegistrar:
+        """@private"""
+        if self._registrar is None:
+            self._registrar = PathsRegistrar(self.csvpaths)
+        return self._registrar
 
     @property
     def last_add_metadata(self) -> PathsMetadata:
@@ -115,18 +127,9 @@ class PathsManager:
         # home = os.path.join(home, "manifest.json")
         return self.registrar.get_manifest(home)
 
-    @property
-    def registrar(self) -> PathsRegistrar:
-        """@private"""
-        if self._registrar is None:
-            self._registrar = PathsRegistrar(self.csvpaths)
-        return self._registrar
-
     def named_paths_home(self, name: NamedPathsName) -> str:
         """@private"""
         home = Nos(self.named_paths_dir).join(name)
-        # home = os.path.join(self.named_paths_dir, name)
-        # nos = self.nos
         nos = Nos(home)
         b = nos.dir_exists()
         if not b:
@@ -148,7 +151,6 @@ class PathsManager:
 
         path = self.named_paths_home(name)
         path = Nos(path).join("manifest.json")
-        # nos = self.nos
         nos = Nos(path)
         if nos.exists():
             with DataFileReader(path) as reader:
@@ -625,6 +627,10 @@ class PathsManager:
     ####################################################
 
     def store_json_paths_file(self, name: NamedPathsName, jsonpath: str) -> None:
+        #
+        # this method stores the definition.json file. it is not general purpose
+        # for any other json files
+        #
         if name is None:
             raise ValueError("Name cannot be None")
         if name.startswith("$"):
@@ -735,7 +741,7 @@ class PathsManager:
         return self.total_named_paths()
 
     #
-    # ================== internals =====================
+    # ==============================
     #
 
     def _get_named_paths(self, name: NamedPathsName) -> list[Csvpath]:
@@ -797,8 +803,29 @@ class PathsManager:
         return temp
 
     def _group_file_path(self, name: NamedPathsName) -> str:
+        #
+        # TODO: note that in principle name could be a reference. should we allow
+        # that? We would just check for '$' and use ReferenceParser.
+        #
         temp = Nos(self.named_paths_home(name)).join("group.csvpaths")
         return temp
+
+    def group_file_path(self, name: NamedPathsName) -> str:
+        #
+        # supports references as well as names
+        #
+        if name is None:
+            raise ValueError("Name cannot be None")
+        name = str(name).strip()
+        if len(name) == 0:
+            raise ValueError("Name cannot be length 0")
+        if name[0] == "$":
+            name = ReferenceParser(name, csvpaths=self.csvpaths).root_major
+        #
+        # TODO: future state references v3 can return * or a function. that might
+        # not be supported (quite reasonably) but it would be a legal root_major.
+        #
+        return self._group_file_path(name)
 
     def _get_csvpaths_from_file(self, file_path: str) -> list[Csvpath]:
         if self.can_load(file_path) is not True:

@@ -1,10 +1,7 @@
 # pylint: disable=C0114
 import hashlib
 from csvpath.util.hasher import Hasher
-from csvpath.matching.util.exceptions import DataException
-from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import SideEffect
-from ..function import Function
 from ..args import Args
 
 

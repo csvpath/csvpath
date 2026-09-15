@@ -1,0 +1,21 @@
+<goods>
+    <automobile>
+        <annual year="2012">
+            <imports>404975</imports>
+            <exports>302441</exports>
+        </annual>
+        <annual year="2011">
+            <imports>366768</imports>
+            <exports>283901</exports>
+        </annual>
+        <annual year="2010">
+            <imports>469315</imports>
+            <exports>225964</exports>
+        </annual>
+        <annual year="2009">
+            <imports>423425</imports>
+            <exports>194406</exports>
+        </annual>
+    </automobile>
+</goods>
+

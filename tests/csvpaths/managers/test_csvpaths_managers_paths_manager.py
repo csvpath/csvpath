@@ -1,7 +1,9 @@
 import unittest
 import os
 import json
+import time
 from uuid import uuid4
+
 from csvpath import CsvPaths
 from csvpath.managers.paths.paths_listener import PathsListener
 from csvpath.managers.paths.paths_metadata import PathsMetadata
@@ -16,6 +18,17 @@ PATH = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}named_paths{os.sep}m
 
 
 class TestCsvPathsManagersPathsManager(unittest.TestCase):
+    def test_get_group_file_path(self):
+        name = f"{uuid4()}"
+        apath = "$[*][yes()]"
+        paths = Builder().build()
+        paths.paths_manager.add_named_paths(name=name, paths=[apath])
+        groupfile = CsvPaths().paths_manager.group_file_path(name)
+        assert groupfile
+        mani = CsvPaths().paths_manager.get_manifest_for_name(name)
+        assert mani[-1]["group_file_path"]
+        CsvPaths().paths_manager.remove_named_paths(name)
+
     def test_named_paths_describer_no_nulls_1(self):
         name = f"{uuid4()}"
         apath = "$[*][yes()]"
@@ -97,8 +110,6 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         paths = Builder().build()
         paths.config.add_to_config("listeners", "groups", "default")
         mani = paths.paths_manager.paths_root_manifest
-        import time
-
         paths.paths_manager.add_named_paths(
             name="aname", paths=[f"""$[*][@t = "{time.time()}"]"""], source_path="a/b/c"
         )
