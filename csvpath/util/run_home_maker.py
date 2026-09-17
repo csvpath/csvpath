@@ -181,7 +181,6 @@ class RunHomeMaker:
             run_time = daut.now()
         if not isinstance(run_time, str):
             run_time = run_time.strftime("%Y-%m-%d_%H-%M-%S")
-            # run_time = self.get_run_dir_name_from_datetime(run_time)
         #
         # get the pathsname
         #

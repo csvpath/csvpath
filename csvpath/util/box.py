@@ -40,7 +40,15 @@ class Box:
         current_thread = threading.current_thread()
         return current_thread.native_id
 
-    # AID = None
+    def __setitem__(self, key, value):
+        self.add(key, value)
+
+    def __len__(self):
+        s = Box.STUFF.get(self._thread)
+        if s is None:
+            s = {}
+            Box.STUFF[self._thread] = s
+        return len(s)
 
     def add(self, key: str, value: Any) -> None:
         s = Box.STUFF.get(self._thread)
@@ -55,6 +63,13 @@ class Box:
             s = {}
             Box.STUFF[self._thread] = s
         return s.get(key)
+
+    def pop(self, key: str) -> Any:
+        s = Box.STUFF.get(self._thread)
+        if s is None:
+            s = {}
+            Box.STUFF[self._thread] = s
+        return s.pop(key)
 
     def empty_my_stuff(self) -> None:
         s = Box.STUFF.get(self._thread)

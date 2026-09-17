@@ -24,8 +24,10 @@ from .managers.files.file_manager import FileManager
 from .managers.results.results_manager import ResultsManager
 from .managers.results.result import Result
 from .util.box import Box
-from . import CsvPath
 
+from csvpath import CsvPath
+from csvpath.runners.runner import Runner
+from csvpath.runners.collect_dynamic import CollectDynamic
 
 # types for clarity
 Reference = NewType("Reference", str)
@@ -757,6 +759,40 @@ Cache: {cache}
     # =========================
     # main functions
     # =========================
+
+    #
+    # note that while this effort is focused on JSON, data frames should
+    # work equally well. in the case of a data frame the shape is not
+    # important, but must be Runner.DATA_FRAME or None.
+    #
+    def collect_dynamic(
+        self,
+        *,
+        pathsname: str,
+        dataname: str,
+        dataname_trust: bool = False,
+        data: Any,
+        shape: str = Runner.JSON,
+        run_template: str = None,
+        register: bool = False,
+        register_template=None,
+        register_path=None,
+        extra_data: Optional[dict[str, str]] = None,
+    ) -> list[Reference]:
+        runner = CollectDynamic(self)
+        refs = runner.collect_dynamic(
+            pathsname=pathsname,
+            data=data,
+            dataname=dataname,
+            dataname_trust=dataname_trust,
+            register=register,
+            register_template=register_template,
+            register_path=register_path,
+            run_template=run_template,
+            extra_data=extra_data,
+            shape=shape,
+        )
+        return refs
 
     #
     # a filename pointer is typically a named-file name. however, it can be a reference.

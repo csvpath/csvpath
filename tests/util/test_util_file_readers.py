@@ -23,9 +23,7 @@ SCHEMADOTJSON_PATH = os.path.join("tests", "util", "test_resources", "test.schem
 
 class TestUtilFileReaders(unittest.TestCase):
     def tearDown(self):
-        if DataFileReader.has_data():
-            for k in list(DataFileReader.DATA.keys()):
-                DataFileReader.deregister_data(k)
+        DataFileReader.DATA.empty_my_stuff()
 
     #
     # DataFileReader.__new__ dispatch

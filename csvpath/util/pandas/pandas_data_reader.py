@@ -1,7 +1,6 @@
 # pylint: disable=C0114
-import pandas as pd
-from .file_readers import DataFileReader
-from .exceptions import InputException
+from ..file_readers import DataFileReader
+from ..exceptions import InputException
 
 
 class PandasDataReader(DataFileReader):
@@ -29,6 +28,9 @@ class PandasDataReader(DataFileReader):
         self.path = path
         self._delimiter = delimiter if delimiter is not None else ","
         self._quotechar = quotechar if quotechar is not None else '"'
+        #
+        #
+        #
         self._frame = DataFileReader.DATA.get(path)
 
     @property
@@ -39,12 +41,25 @@ class PandasDataReader(DataFileReader):
     def dataframe(self, df) -> None:
         self._frame = df
 
-    def load_if(self) -> None:
+    def load_if(self) -> None: ...
+
+    def close(self) -> None:
+        #
+        # can't clear the box because in CsvPaths we use a context mgr
+        # form access multiple times within a run. that's what we want
+        # to do, generally, but in this case it would cause the data to
+        # vanish. CsvPaths will clear the box for us. CsvPath will not.
+        # we need to deregister data manually.
+        #
         ...
+        """
+        if self.path:
+            self.deregister_data(self.path)
+        """
 
     def next(self) -> list[str]:
         if self.dataframe is None:
-            raise InputException("No dataframe is registered on {self._path}")
+            raise InputException(f"No dataframe is registered on {self._path}")
         data = self.dataframe.copy()
         for row in data.itertuples(index=False):
             line = list(row)

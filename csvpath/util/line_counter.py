@@ -54,13 +54,21 @@ class LineCounter:
 
     @classmethod
     def clean_headers(self, headers: List[str]) -> List[str]:
+        if not isinstance(headers, list):
+            self.csvpathx.logger.warn(
+                "Lines and headers received a non-list %s", type(headers)
+            )
+            return []
         hs = []
         for header in headers:
-            header = header.strip()
-            header = header.replace(";", "")
-            header = header.replace(",", "")
-            header = header.replace("|", "")
-            header = header.replace("\t", "")
-            header = header.replace("`", "")
+            if not isinstance(header, str):
+                header = ""
+            else:
+                header = header.strip()
+                header = header.replace(";", "")
+                header = header.replace(",", "")
+                header = header.replace("|", "")
+                header = header.replace("\t", "")
+                header = header.replace("`", "")
             hs.append(header)
         return hs
