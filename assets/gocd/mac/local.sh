@@ -1,7 +1,7 @@
 CSVPATH_CONFIG_PATH="assets/config/config.ini"
 echo $CSVPATH_CONFIG_PATH
 source ~/dev/exports.sh
-poetry install -E
+poetry install --all-extras
 poetry run pytest
 
 

@@ -3,7 +3,7 @@ echo $CSVPATH_CONFIG_PATH
 whoami
 source ~/dev/exports.sh
 echo $GCS_CREDENTIALS_PATH
-poetry install -E
+poetry install --all-extras
 poetry run pytest
 
 
