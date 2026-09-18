@@ -24,8 +24,10 @@ from .managers.files.file_manager import FileManager
 from .managers.results.results_manager import ResultsManager
 from .managers.results.result import Result
 from .util.box import Box
-from . import CsvPath
 
+from csvpath import CsvPath
+from csvpath.runners.runner import Runner
+from csvpath.runners.collect_dynamic import CollectDynamic
 
 # types for clarity
 Reference = NewType("Reference", str)
@@ -664,6 +666,11 @@ Cache: {cache}
         # historic note: file references are resolved in the filemanager. and we don't care
         # for if we are using source-mode preceding for that.
         #
+        #
+        # note that index will only be passed in by collect_paths.
+        # collect_dynamic and collect_by_line don't support source-mode
+        # preceding, and non-of the other run method do either.
+        #
         if csvpath.data_from_preceding is True and index > 0:
             #
             # if index  == 0 we can't look to the preceding csvpath in the run.
@@ -757,6 +764,71 @@ Cache: {cache}
     # =========================
     # main functions
     # =========================
+
+    #
+    # note that while this effort is focused on JSON, data frames should
+    # work equally well. in the case of a data frame the shape is not
+    # important, but must be Runner.DATA_FRAME or None.
+    #
+    def collect_dynamic(
+        self,
+        *,
+        pathsname: str,
+        dataname: str,
+        dataname_trust: bool = False,
+        data: Any,
+        shape: str = Runner.JSON,
+        run_template: str = None,
+        register: bool = False,
+        register_template=None,
+        register_path=None,
+        extra_data: Optional[dict[str, str]] = None,
+    ) -> list[Reference]:
+        runner = CollectDynamic(self)
+        refs = runner.run(
+            method="collect",
+            pathsname=pathsname,
+            data=data,
+            dataname=dataname,
+            dataname_trust=dataname_trust,
+            register=register,
+            register_template=register_template,
+            register_path=register_path,
+            run_template=run_template,
+            extra_data=extra_data,
+            shape=shape,
+        )
+        return refs
+
+    def fast_forward_dynamic(
+        self,
+        *,
+        pathsname: str,
+        dataname: str,
+        dataname_trust: bool = False,
+        data: Any,
+        shape: str = Runner.JSON,
+        run_template: str = None,
+        register: bool = False,
+        register_template=None,
+        register_path=None,
+        extra_data: Optional[dict[str, str]] = None,
+    ) -> list[Reference]:
+        runner = CollectDynamic(self)
+        refs = runner.run(
+            method="fast_forward",
+            pathsname=pathsname,
+            data=data,
+            dataname=dataname,
+            dataname_trust=dataname_trust,
+            register=register,
+            register_template=register_template,
+            register_path=register_path,
+            run_template=run_template,
+            extra_data=extra_data,
+            shape=shape,
+        )
+        return refs
 
     #
     # a filename pointer is typically a named-file name. however, it can be a reference.
@@ -854,8 +926,6 @@ Cache: {cache}
         self._last_run_dir = crt
 
         results = []
-        #
-        # adding uuid for the run as a whole
         run_uuid = uuid4()
         #
         # run starts here
@@ -876,7 +946,11 @@ Cache: {cache}
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
             if not csvpath.will_run:
+                self.logger.debug(
+                    "Skipping CsvPath instance because marked no-run: %s", csvpath
+                )
                 continue
+            self.logger.debug("Beginning to CP CsvPath instance: %s", csvpath)
             result = Result(
                 csvpath=csvpath,
                 file_name=filename,
@@ -924,8 +998,6 @@ Cache: {cache}
                 #
                 result.unmatched = csvpath.unmatched
             except Exception as ex:  # pylint: disable=W0718
-                if self.error_manager.csvpaths is None:
-                    raise Exception("ErrorManager's CsvPaths cannot be None")
                 self.error_manager.handle_error(source=self, msg=f"{ex}")
                 if self.ecoms.do_i_raise():
                     self.results_manager.save(result)
@@ -938,23 +1010,12 @@ Cache: {cache}
         self.results_manager.complete_run(
             run_dir=crt, pathsname=pathsname, results=results
         )
-        #
-        # update/write run manifests here
-        #  - validity (are all paths valid)
-        #  - paths-completeness (did they all run and complete)
-        #  - method (collect, fast_forward, next)
-        #  - timestamp
-        #
         self.clear_run_coordination()
         self.logger.info(
             "Completed collect_paths %s with %s paths", pathsname, len(paths)
         )
         if self.wrap_up_automatically:
             self.wrap_up()
-        #
-        # the run home is the most specific reference we can return
-        #
-        # return f"${pathsname}.results.{crt}"
         ret = self._make_run_reference(pathsname=pathsname, crt=crt)
         return ret
 
@@ -1029,6 +1090,7 @@ Cache: {cache}
         #
         #
         #
+        results = []
         run_uuid = uuid4()
         #
         # run starts here
@@ -1045,9 +1107,13 @@ Cache: {cache}
         #
         #
         #
-        results = []
         for i, path in enumerate(paths):
             csvpath = self.csvpath()
+            if not csvpath.will_run:
+                self.logger.debug(
+                    "Skipping CsvPath instance because marked no-run: %s", csvpath
+                )
+                continue
             self.logger.debug("Beginning to FF CsvPath instance: %s", csvpath)
             result = Result(
                 csvpath=csvpath,

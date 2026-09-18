@@ -1,0 +1,13 @@
+~
+  validation-mode: no-raise, print
+~
+$[*][
+    print_line()
+    header_table()
+    line(
+        string.notnone(#a),
+        string.notnone(#b),
+        string(#c)
+    )
+    #a == "ant"
+]

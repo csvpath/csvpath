@@ -37,13 +37,23 @@ class LineCounter:
                 #
                 if reader.updates_headers and reader.current_headers:
                     line = reader.current_headers
+                if isinstance(line, str):
+                    line = [line]
                 if (not headers or len(headers) == 0) and line and len(line) > 0:
                     if isinstance(line, (list, tuple)):
                         headers = line[:]
                     elif isinstance(line, dict):
                         headers = [""]
                     else:
-                        raise ValueError("Unexpected type of line: {type(line)}")
+                        raise ValueError(
+                            f"""Unexpected type of line: {type(line)}.
+                                delimiter: {self.csvpathx.delimiter},
+                                quotechar: {self.csvpathx.quotechar},
+                                path: {path},
+                                current_headers: {reader.current_headers},
+                                updates_headers: {reader.updates_headers}.
+                            """
+                        )
         if not headers:
             headers = []
         headers = LineCounter.clean_headers(headers)
@@ -54,13 +64,21 @@ class LineCounter:
 
     @classmethod
     def clean_headers(self, headers: List[str]) -> List[str]:
+        if not isinstance(headers, list):
+            self.csvpathx.logger.warn(
+                "Lines and headers received a non-list %s", type(headers)
+            )
+            return []
         hs = []
         for header in headers:
-            header = header.strip()
-            header = header.replace(";", "")
-            header = header.replace(",", "")
-            header = header.replace("|", "")
-            header = header.replace("\t", "")
-            header = header.replace("`", "")
+            if not isinstance(header, str):
+                header = ""
+            else:
+                header = header.strip()
+                header = header.replace(";", "")
+                header = header.replace(",", "")
+                header = header.replace("|", "")
+                header = header.replace("\t", "")
+                header = header.replace("`", "")
             hs.append(header)
         return hs

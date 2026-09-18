@@ -200,7 +200,6 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         # disk, at least atm.
         #
         self.lines = None
-        """ @private """
         #
         # set by fail()
         #
@@ -211,11 +210,8 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         # CsvPath instances.
         #
         self.last_row_time = -1
-        """ @private """
         self.rows_time = -1
-        """ @private """
         self.total_iteration_time = -1
-        """ @private """
         #
         # limiting collection means returning fewer headers (values in the
         # line, a.k.a columns) then are available. limiting headers returned
@@ -280,6 +276,42 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         self._unmatched = None
         self._cacher = None
+
+    def rewind(self) -> None:
+        #
+        # experimental! roll back to rerun without requiring a reparse/rebuild
+        # of matcher. created for dynamic json and pandas runs. tested, but leave
+        # this warning for now because potential for edge cases seems huge.
+        #
+        self._unmatched = None
+        self._cacher = None
+        self._run_started_at = None
+        self._function_times_value = {}
+        self._function_times_match = {}
+        self._current_match_count = 0
+        self._errors: List[Error] = []
+        self._limit_collection_to = None  # []
+        self._is_valid = True
+        self.last_row_time = -1
+        self.rows_time = -1
+        self.total_iteration_time = -1
+        self.stopped = False
+        self._advance = 0
+        self.lines = None
+        self._freeze_path = False
+        self.scan_count = 0
+        self.match_count = 0
+        self._headers = None
+        self.variables: Dict[str, Any] = {}
+        self._flushes: list[Callable[[None], None]] = []
+        self._freeze_path = False
+        #
+        # reset matcher and line monitor
+        #
+        if self.line_monitor is not None:
+            self.line_monitor.set_end_lines_and_reset()
+        if self.matcher is not None:
+            self.matcher.reset()
 
     @property
     def run_dir(self) -> str:
@@ -1320,11 +1352,6 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         # DataFileReader is abstract. instantiating it results in a concrete subclass.
         # ideally we use it as a context mgr.
         #
-        """
-        reader = DataFileReader(  # pylint: disable=E0110
-            self.scanner.filename, delimiter=self.delimiter, quotechar=self.quotechar
-        )
-        """
         with DataFileReader(
             self.scanner.filename, delimiter=self.delimiter, quotechar=self.quotechar
         ) as reader:

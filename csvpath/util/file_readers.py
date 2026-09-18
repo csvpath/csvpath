@@ -9,10 +9,23 @@ from .hasher import Hasher
 from .path_util import PathUtility as pathu
 from .xlsx.xlsx_reader_helper import XlsxReaderHelper
 from .json.json_reader_helper import JsonReaderHelper
+from csvpath.util.box import Box
 
 
 class DataFileReader(ABC):
-    DATA = {}
+    #
+    # box holds thread-local file-like data frames and JSON
+    # structures that are used instead of files. data is keyed
+    # under a path so we don't confuse things even though a file
+    # reader may have file-like data registered for a while
+    # before it is used. however, at the time the data is used
+    # it is removed from the box. <<<< provisionally. this
+    # could change>>. at the end of a run, csvpaths clears the
+    # box for the current thread. if not using a csvpaths and
+    # using file like data, you should clear the box, regardless
+    # of if we continue to pop() the data, rather than get() it.
+    #
+    DATA = Box()
 
     def __init__(self, mode="r", encoding="utf-8") -> None:
         self._path = None
@@ -40,16 +53,16 @@ class DataFileReader(ABC):
         self._current_headers = headers
 
     @classmethod
-    def register_data(cls, *, path, filelike) -> None:
-        DataFileReader.DATA[path] = filelike
+    def register_data(cls, *, path, data, shape: str = None) -> None:
+        DataFileReader.DATA[path] = data
+        if shape:
+            DataFileReader.DATA[f"{path}.{shape}"] = True
 
     @classmethod
-    def has_data(cls) -> bool:
-        return len(DataFileReader.DATA) > 0
-
-    @classmethod
-    def deregister_data(cls, path) -> None:
-        del DataFileReader.DATA[path]
+    def deregister_data(cls, path, shape: str = None) -> None:
+        DataFileReader.DATA.remove(path)
+        if shape:
+            DataFileReader.DATA.remove(f"{path}.{shape}")
 
     def __enter__(self):
         self.load_if()
@@ -132,6 +145,13 @@ class DataFileReader(ABC):
         path = pathu.resep(path)
         self._path = path
 
+    #
+    # note that we don't clear dataframes and json structures out of
+    # the box here. we could clear them in the concrete readers, but
+    # at the moment we do not. CsvPaths will clear the box after a run
+    # so in a server context we are likely to not need to manage this
+    # but it is worth keeping in mind that we expect manual clearing.
+    #
     def __new__(
         cls,
         path: str,
@@ -155,11 +175,36 @@ class DataFileReader(ABC):
             # do we have a file-like / dataframe thing pre-registered?
             #
             thing = DataFileReader.DATA.get(path)
-            if thing is not None and thing.__class__.__name__.endswith("DataFrame"):
-                module = importlib.import_module("csvpath.util.pandas_data_reader")
-                class_ = getattr(module, "PandasDataReader")
-                instance = class_(path, delimiter=delimiter, quotechar=quotechar)
-                return instance
+            if thing is not None:
+                if thing.__class__.__name__.endswith("DataFrame"):
+                    module = importlib.import_module(
+                        "csvpath.util.pandas.pandas_data_reader"
+                    )
+                    class_ = getattr(module, "PandasDataReader")
+                    instance = class_(path, delimiter=delimiter, quotechar=quotechar)
+                    return instance
+                #
+                # alternatively, a JSON object?
+                # Note: if so, we need {path}.JSON or {path}.JSONL to be truthy in the box
+                #
+                elif DataFileReader.DATA.get(f"{path}.json"):
+                    module = importlib.import_module(
+                        "csvpath.util.json.json_dynamic_document_reader"
+                    )
+                    class_ = getattr(module, "JsonDynamicDocumentReader")
+                    instance = class_(path, delimiter=delimiter, quotechar=quotechar)
+                    return instance
+                elif DataFileReader.DATA.get(f"{path}.jsonl"):
+                    module = importlib.import_module(
+                        "csvpath.util.json.json_dynamic_lines_reader"
+                    )
+                    class_ = getattr(module, "JsonDynamicLinesReader")
+                    instance = class_(path, delimiter=delimiter, quotechar=quotechar)
+                    return instance
+                elif thing is not None:
+                    raise ValueError(
+                        "Data found in DataFileReader box, but no indication of its type"
+                    )
             #
             # is XLSX?
             #
@@ -173,7 +218,7 @@ class DataFileReader(ABC):
             if instance:
                 return instance
             #
-            # maybe JSON?
+            # maybe JSON file?
             #
             instance = JsonReaderHelper._json_if(
                 path=path,

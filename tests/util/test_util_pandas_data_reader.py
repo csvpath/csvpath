@@ -11,25 +11,23 @@ except ImportError:
     PANDAS_AVAILABLE = False
 
 if PANDAS_AVAILABLE:
-    from csvpath.util.pandas_data_reader import PandasDataReader
+    from csvpath.util.pandas.pandas_data_reader import PandasDataReader
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestUtilPandasDataReader(unittest.TestCase):
     def tearDown(self):
-        if DataFileReader.has_data():
-            for k in list(DataFileReader.DATA.keys()):
-                DataFileReader.deregister_data(k)
+        DataFileReader.DATA.empty_my_stuff()
 
-    def test_construct_without_registered_dataframe_has_none_frame(self):
+    def test_pandas_construct_without_registered_dataframe_has_none_frame(self):
         if not PANDAS_AVAILABLE:
             print("Pandas is not installed. Test will be skipped.")
             return
         reader = PandasDataReader("no-such-key")
         assert reader.dataframe is None
 
-    def test_construct_defaults_delimiter_and_quotechar(self):
+    def test_pandas_construct_defaults_delimiter_and_quotechar(self):
         if not PANDAS_AVAILABLE:
             print("Pandas is not installed. Test will be skipped.")
             return
@@ -37,7 +35,7 @@ class TestUtilPandasDataReader(unittest.TestCase):
         assert reader._delimiter == ","
         assert reader._quotechar == '"'
 
-    def test_construct_honors_explicit_delimiter_and_quotechar(self):
+    def test_pandas_construct_honors_explicit_delimiter_and_quotechar(self):
         if not PANDAS_AVAILABLE:
             print("Pandas is not installed. Test will be skipped.")
             return
@@ -45,16 +43,16 @@ class TestUtilPandasDataReader(unittest.TestCase):
         assert reader._delimiter == "|"
         assert reader._quotechar == "'"
 
-    def test_construct_picks_up_pre_registered_dataframe(self):
+    def test_pandas_construct_picks_up_pre_registered_dataframe(self):
         if not PANDAS_AVAILABLE:
             print("Pandas is not installed. Test will be skipped.")
             return
         df = pd.DataFrame([["a", "1"], ["b", "2"]])
-        DataFileReader.register_data(path="pdreader-test", filelike=df)
+        DataFileReader.register_data(path="pdreader-test", data=df)
         reader = PandasDataReader("pdreader-test")
         assert reader.dataframe is df
 
-    def test_dataframe_setter_replaces_frame(self):
+    def test_pandas_dataframe_setter_replaces_frame(self):
         if not PANDAS_AVAILABLE:
             print("Pandas is not installed. Test will be skipped.")
             return
@@ -63,7 +61,7 @@ class TestUtilPandasDataReader(unittest.TestCase):
         reader.dataframe = df
         assert reader.dataframe is df
 
-    def test_load_if_is_a_noop(self):
+    def test_pandas_load_if_is_a_noop(self):
         if not PANDAS_AVAILABLE:
             print("Pandas is not installed. Test will be skipped.")
             return
@@ -72,7 +70,7 @@ class TestUtilPandasDataReader(unittest.TestCase):
         reader.load_if()
         assert reader.source is None
 
-    def test_next_raises_input_exception_when_no_dataframe_registered(self):
+    def test_pandas_next_raises_input_exception_when_no_dataframe_registered(self):
         if not PANDAS_AVAILABLE:
             print("Pandas is not installed. Test will be skipped.")
             return
@@ -80,7 +78,7 @@ class TestUtilPandasDataReader(unittest.TestCase):
         with self.assertRaises(InputException):
             list(reader.next())
 
-    def test_next_yields_rows_as_lists(self):
+    def test_pandas_next_yields_rows_as_lists(self):
         if not PANDAS_AVAILABLE:
             print("Pandas is not installed. Test will be skipped.")
             return
@@ -90,7 +88,7 @@ class TestUtilPandasDataReader(unittest.TestCase):
         lines = list(reader.next())
         assert lines == [["a", 1], ["b", 2]]
 
-    def test_next_does_not_mutate_the_registered_dataframe(self):
+    def test_pandas_next_does_not_mutate_the_registered_dataframe(self):
         if not PANDAS_AVAILABLE:
             print("Pandas is not installed. Test will be skipped.")
             return
@@ -100,7 +98,9 @@ class TestUtilPandasDataReader(unittest.TestCase):
         list(reader.next())
         assert reader.dataframe.equals(df)
 
-    def test_factory_dispatches_to_pandas_data_reader_for_registered_dataframe(self):
+    def test_pandas_factory_dispatches_to_pandas_data_reader_for_registered_dataframe(
+        self,
+    ):
         # exercises DataFileReader.__new__'s dispatch logic: a path with a
         # pre-registered pandas DataFrame is routed to PandasDataReader
         # rather than CsvDataReader/XlsxReaderHelper/etc.
@@ -108,7 +108,7 @@ class TestUtilPandasDataReader(unittest.TestCase):
             print("Pandas is not installed. Test will be skipped.")
             return
         df = pd.read_csv(PATH, delimiter=",", quotechar='"', header=None)
-        DataFileReader.register_data(path="pdreader-factory-test", filelike=df)
+        DataFileReader.register_data(path="pdreader-factory-test", data=df)
         reader = DataFileReader("pdreader-factory-test")
         assert isinstance(reader, PandasDataReader)
 

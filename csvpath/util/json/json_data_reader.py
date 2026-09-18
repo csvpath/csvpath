@@ -34,9 +34,10 @@ class JsonDataReader(DataFileReader):
                     headers = line[0]
                     self.current_headers = headers
                     line = line[1]
-                    # yield headers
                     yield line
                 else:
+                    if not isinstance(line, (list, dict)):
+                        line = [line]
                     self.current_headers = line[:]
                     yield line
                 i += 1
