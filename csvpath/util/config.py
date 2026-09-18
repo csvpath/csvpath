@@ -73,7 +73,7 @@ class Config:
     DEFAULT_CONFIG = f"""
 [extensions]
 csvpath_files = csvpath, csvpaths
-csv_files = csv, tsv, dat, tab, psv, ssv, xlsx, jsonl
+csv_files = csv, tsv, dat, tab, psv, ssv, xlsx, jsonl, json, xml
 
 [errors]
 csvpath = collect, fail, print

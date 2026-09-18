@@ -277,7 +277,7 @@ class TestCsvPathsManagersResultsManager(unittest.TestCase):
         with pytest.raises(ValueError):
             paths.results_manager.get_specific_named_result("$food.results.candy check")
 
-    def test_get_runs(self):
+    def test_get_runs_1(self):
         paths = Builder().build()
         paths.file_manager.add_named_files_from_dir(FILES_DIR)
         paths.paths_manager.add_named_paths(
@@ -321,3 +321,72 @@ class TestCsvPathsManagersResultsManager(unittest.TestCase):
             else:
                 notfound = True
         assert found and notfound
+
+    def test_get_runs_2(self):
+        paths = Builder().build()
+        paths.file_manager.add_named_files_from_dir(FILES_DIR)
+        paths.paths_manager.add_named_paths(
+            name="grt2",
+            paths=[
+                """
+                ~ validation-mode: no-raise, print
+                $[3][
+                    add( "test", none() )
+                ]"""
+            ],
+        )
+        paths.fast_forward_paths(pathsname="grt2", filename="food")
+        results = paths.results_manager.get_named_results("grt2")
+        assert results
+        result = results[0]
+        assert result is not None
+
+        refs = paths.results_manager.get_runs("grt2")
+        print(f"refs 1: {refs}")
+        assert refs
+        assert len(refs) == 1
+        results2 = paths.results_manager.get_named_results(refs[0])
+        assert results2
+        result2 = results2[0]
+        assert result2.run_uuid == result.run_uuid
+
+        #
+        # remove a physical named_results, leaving the manifest
+        # as the evidence it used to exist
+        #
+        paths.results_manager.remove_named_results("grt2")
+        #
+        # it is easy, in a test, to delete a run and create a new one in the same
+        # second. when that happens we fail to identify correctly. since we're not
+        # advocating people actually do deletes out of their archive we're not going
+        # to let this be a problem. regular content ageing and compacting would not
+        # hit this limitation. and if/when we switch to allowing the use of a db as
+        # the metadata system of record this quirk will likely go away.
+        #
+        import time
+
+        time.sleep(0.95)
+
+        #
+        # add a second run
+        #
+        ref = paths.fast_forward_paths(pathsname="grt2", filename="food")
+
+        #
+        # we should have 1 physical run, 2 run refs, and 1 run ref
+        # to the available run
+        #
+        refs = paths.results_manager.get_runs("grt2")
+        print(f"refs 2: {refs}")
+        assert refs
+        assert ref in refs
+        assert len(refs) == 2
+
+        results2 = paths.results_manager.get_named_results(ref)
+        assert len(results2) == 1
+
+        refs2 = paths.results_manager.get_runs_available("grt2")
+        print(f"refs2: {refs2}")
+        assert refs2
+        assert ref in refs2
+        assert len(refs2) == 1

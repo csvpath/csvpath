@@ -523,7 +523,6 @@ class ResultsManager:  # pylint: disable=C0115
         rr.register_complete()
 
     def remove_named_results(self, name: str) -> None:
-        """@private"""
         if name in self.named_results:
             del self.named_results[name]
             self._variables = None
@@ -545,6 +544,20 @@ class ResultsManager:  # pylint: disable=C0115
             self.remove_named_results(name)
 
     def get_runs(self, named_results_name: str) -> list[str]:
+        return self._get_runs(named_results_name)
+
+    def get_runs_available(self, named_results_name: str) -> list[str]:
+        return self._get_runs(named_results_name, available=True)
+
+    #
+    # note that there are a few gotchas here. you can delete runs and named-results
+    # out of the archive, not recommended, but possible. you can truncate or roll your
+    # manifest. when these two resources get out of sync you can get persistently
+    # disconnected results. since we would not advocate deleting from the archive or
+    # ageing/compacting runs by hand, this is not a deal breaker. in the mid-term we
+    # will need to tool up to make ageing/compacting easier.
+    #
+    def _get_runs(self, named_results_name: str, available: bool = False) -> list[str]:
         if named_results_name is None:
             raise ValueError("Named_results_name cannot be None")
         named_results_name = named_results_name.strip()
@@ -564,7 +577,11 @@ class ResultsManager:  # pylint: disable=C0115
             if not _["named_paths_name"] == named_results_name:
                 continue
             n = _["run_home"]
-            ns[n] = n
+            if available:
+                if Nos(n).exists():
+                    ns[n] = n
+            else:
+                ns[n] = n
         #
         # get all the references by stripping the archive path.
         #

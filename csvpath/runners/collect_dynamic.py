@@ -38,7 +38,7 @@ class CollectDynamic(Runner):
             self.register(
                 data=placeholder,
                 dataname=dataname,
-                register_path=register_path,
+                register_path="placeholder" if register_path is None else register_path,
                 shape=shape,
                 register_template=register_template,
             )
@@ -71,9 +71,13 @@ class CollectDynamic(Runner):
                 writer.write(datastr.getvalue())
         elif shape == self.LIST_OF_JSON:
             register_path = f"{register_path}-{tid}.json"
+            if not isinstance(data, (list, tuple)):
+                data = [data]
             for _ in data:
                 with DataFileWriter(path=register_path, mode="w") as writer:
-                    json.dump(_, writer.sink)
+                    s = json.dumps(_)
+                    writer.sink.write(s)
+                    writer.sink.flush()
                     self.csvpaths.file_manager.add_named_file(
                         name=dataname, path=register_path, template=register_template
                     )
@@ -104,6 +108,7 @@ class CollectDynamic(Runner):
     def run(
         self,
         *,
+        method: str,
         data: dict | list,
         pathsname: str,
         dataname: str,
@@ -115,6 +120,29 @@ class CollectDynamic(Runner):
         extra_data: Optional[dict[str, str]] = None,
         shape: str = Runner.JSON,
     ) -> list[Reference]:
+
+        self.csvpaths.logger.debug(
+            """Dynamic run:
+            method: %s,
+            pathsname: %s,
+            dataname: %s,
+            dataname_trust: %s,
+            register: %s,
+            register_template: %s,
+            register_path: %s,
+            run_template: %s,
+            shape: %s""",
+            method,
+            pathsname,
+            dataname,
+            dataname_trust,
+            register,
+            register_template,
+            register_path,
+            run_template,
+            shape,
+        )
+
         #
         # caching should never help us
         #
@@ -145,7 +173,10 @@ class CollectDynamic(Runner):
             )
         if register is True and register_path is None:
             register_path = "unnamed bytes"
-        if register is True:
+        #
+        # we handle lists of json lower down because they are not unitary
+        #
+        if register is True and shape != self.LIST_OF_JSON:
             self.register(
                 data=data,
                 dataname=dataname,
@@ -153,7 +184,7 @@ class CollectDynamic(Runner):
                 register_path=register_path,
                 register_template=register_template,
             )
-        elif dataname_trust is False:
+        elif register is not True and dataname_trust is False:
             self.register_if(
                 data=data,
                 dataname=dataname,
@@ -178,7 +209,19 @@ class CollectDynamic(Runner):
         #
         if isinstance(data, (list, tuple)) and shape == self.LIST_OF_JSON:
             for d in data:
+                #
+                # we register each item in the list as a separate data "file"
+                #
+                if register is True:
+                    self.register(
+                        data=d,
+                        dataname=dataname,
+                        shape=shape,
+                        register_path=register_path,
+                        register_template=register_template,
+                    )
                 ref = self._collect_dynamic(
+                    method=method,
                     pathsname=pathsname,
                     dataname=dataname,
                     template=run_template,
@@ -197,6 +240,7 @@ class CollectDynamic(Runner):
             if isinstance(data, dict):
                 data = [data]
             ref = self._collect_dynamic(
+                method=method,
                 pathsname=pathsname,
                 dataname=dataname,
                 template=run_template,
@@ -206,7 +250,8 @@ class CollectDynamic(Runner):
             )
             refs.append(ref)
         elif isinstance(data, (list, tuple, dict)) and shape == self.JSON:
-            refs = self._collect_dynamic(
+            ref = self._collect_dynamic(
+                method=method,
                 pathsname=pathsname,
                 dataname=dataname,
                 template=run_template,
@@ -227,6 +272,7 @@ class CollectDynamic(Runner):
     def _collect_dynamic(
         self,
         *,
+        method: str,
         pathsname: str,
         data: dict | list,
         shape: str,
@@ -234,6 +280,8 @@ class CollectDynamic(Runner):
         template: str = None,
         extra_data: Optional[dict[str, str]] = None,
     ) -> Reference:
+        if method not in ["collect", "fast_forward"]:
+            raise ValueError(f"Unrecognized method: {method}")
         #
         # if template is None we need to go find any template that was given when
         # the named-paths were loaded.
@@ -249,7 +297,8 @@ class CollectDynamic(Runner):
         )
         self.csvpaths.clean(paths=pathsname)
         self.csvpaths.logger.info(
-            "Beginning collect_dynamic %s with %s paths using template %s",
+            "Beginning %s_dynamic %s with %s paths using template %s",
+            method,
             pathsname,
             len(paths),
             template,
@@ -270,7 +319,6 @@ class CollectDynamic(Runner):
         # when we're done with this run.
         #
         DataFileReader.register_data(path=file, data=data, shape=shape)
-
         #
         # run identification and directories created here
         #
@@ -282,24 +330,33 @@ class CollectDynamic(Runner):
         # capture the last run dir for the benefit of the caller
         #
         self.csvpaths._last_run_dir = crt
-
         results = []
-        #
-        # adding uuid for the run as a whole
         run_uuid = uuid4()
         #
         # run starts here
         #
-        self.csvpaths.run_metadata = self.csvpaths.results_manager.start_run(
-            run_dir=crt,
-            pathsname=pathsname,
-            filename=dataname,
-            file=file,
-            run_uuid=run_uuid,
-            method="collect_dynamic",
-            template=template,
-            extra_data=extra_data,
-        )
+        if method == "collect":
+            self.csvpaths.run_metadata = self.csvpaths.results_manager.start_run(
+                run_dir=crt,
+                pathsname=pathsname,
+                filename=dataname,
+                file=file,
+                run_uuid=run_uuid,
+                method="collect_dynamic",
+                template=template,
+                extra_data=extra_data,
+            )
+        else:
+            self.csvpaths.run_metadata = self.csvpaths.results_manager.start_run(
+                run_dir=crt,
+                pathsname=pathsname,
+                filename=dataname,
+                run_uuid=run_uuid,
+                method="fast_forward_dynamic",
+                template=template,
+                extra_data=extra_data,
+            )
+
         #
         #
         #
@@ -321,15 +378,25 @@ class CollectDynamic(Runner):
             # casting a broad net because if "raise" not in the error policy we
             # want to never fail during a run
             try:
-                self.csvpaths._load_csvpath(
-                    csvpath=csvpath,
-                    path=path,
-                    file=dataname,
-                    pathsname=pathsname,
-                    filename=dataname,
-                    crt=crt,
-                    index=i,
-                )
+                if method == "collect":
+                    self.csvpaths._load_csvpath(
+                        csvpath=csvpath,
+                        path=path,
+                        file=dataname,
+                        pathsname=pathsname,
+                        filename=dataname,
+                        crt=crt,
+                        index=i,
+                    )
+                else:
+                    self.csvpaths._load_csvpath(
+                        csvpath=csvpath,
+                        path=path,
+                        file=dataname,
+                        pathsname=pathsname,
+                        filename=dataname,
+                        crt=crt,
+                    )
                 #
                 # if run-mode: no-run we skip ahead without saving results
                 #
@@ -340,19 +407,32 @@ class CollectDynamic(Runner):
                 # to be stable and the identity is found in load, if it exists.
                 #
                 self.csvpaths.results_manager.add_named_result(result)
-                lines = result.lines
-                self.csvpaths.logger.debug("Collecting lines using a %s", type(lines))
-                csvpath.collect(lines=lines)
-                if lines is None:
-                    self.logger.error(  # pragma: no cover
-                        "Unexpected None for lines after collect_dynamic: file: %s, match: %s",
-                        dataname,
-                        csvpath.match,
+                if method == "collect":
+                    lines = result.lines
+                    self.csvpaths.logger.debug(
+                        "Collecting lines using a %s", type(lines)
                     )
-                #
-                # TODO: unmatched needs additional support for streaming very large files
-                #
-                result.unmatched = csvpath.unmatched
+                    csvpath.collect(lines=lines)
+                    if lines is None:
+                        self.logger.error(  # pragma: no cover
+                            "Unexpected None for lines after collect_dynamic: file: %s, match: %s",
+                            dataname,
+                            csvpath.match,
+                        )
+                    #
+                    # TODO: unmatched needs additional support for streaming very large files
+                    #
+                    result.unmatched = csvpath.unmatched
+                elif method == "fast_forward":
+                    self.csvpaths.logger.info(
+                        "Parsed csvpath %s pointed at %s and starting to fast-forward",
+                        i,
+                        file,
+                    )
+                    csvpath.fast_forward()
+                    self.csvpaths.logger.info(
+                        "Completed fast forward of csvpath %s against %s", i, file
+                    )
             except Exception as ex:  # pylint: disable=W0718
                 if self.csvpaths.error_manager.csvpaths is None:
                     raise Exception("ErrorManager's CsvPaths cannot be None")
