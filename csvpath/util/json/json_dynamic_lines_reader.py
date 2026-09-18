@@ -62,6 +62,8 @@ class JsonDynamicLinesReader(DataFileReader):
                 line = line[1]
                 yield line
             else:
+                if not isinstance(line, (dict, list)):
+                    line = [line]
                 self.current_headers = line[:]
                 yield line
             i += 1

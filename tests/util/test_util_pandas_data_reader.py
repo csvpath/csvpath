@@ -48,7 +48,7 @@ class TestUtilPandasDataReader(unittest.TestCase):
             print("Pandas is not installed. Test will be skipped.")
             return
         df = pd.DataFrame([["a", "1"], ["b", "2"]])
-        DataFileReader.register_data(path="pdreader-test", filelike=df)
+        DataFileReader.register_data(path="pdreader-test", data=df)
         reader = PandasDataReader("pdreader-test")
         assert reader.dataframe is df
 
@@ -108,7 +108,7 @@ class TestUtilPandasDataReader(unittest.TestCase):
             print("Pandas is not installed. Test will be skipped.")
             return
         df = pd.read_csv(PATH, delimiter=",", quotechar='"', header=None)
-        DataFileReader.register_data(path="pdreader-factory-test", filelike=df)
+        DataFileReader.register_data(path="pdreader-factory-test", data=df)
         reader = DataFileReader("pdreader-factory-test")
         assert isinstance(reader, PandasDataReader)
 

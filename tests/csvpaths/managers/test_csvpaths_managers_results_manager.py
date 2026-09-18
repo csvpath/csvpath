@@ -276,3 +276,48 @@ class TestCsvPathsManagersResultsManager(unittest.TestCase):
 
         with pytest.raises(ValueError):
             paths.results_manager.get_specific_named_result("$food.results.candy check")
+
+    def test_get_runs(self):
+        paths = Builder().build()
+        paths.file_manager.add_named_files_from_dir(FILES_DIR)
+        paths.paths_manager.add_named_paths(
+            name="get_runs_test",
+            paths=[
+                """
+                ~ validation-mode: no-raise, print
+                $[3][
+                    add( "test", none() )
+                ]"""
+            ],
+        )
+        paths.fast_forward_paths(pathsname="get_runs_test", filename="food")
+        results = paths.results_manager.get_named_results("get_runs_test")
+        assert results
+        result = results[0]
+        assert result is not None
+
+        refs = paths.results_manager.get_runs("get_runs_test")
+        print(f"refs: {refs}")
+        assert refs
+        assert len(refs) == 1
+        results2 = paths.results_manager.get_named_results(refs[0])
+        assert results2
+        result2 = results2[0]
+        assert result2.run_uuid == result.run_uuid
+
+        paths.fast_forward_paths(pathsname="get_runs_test", filename="food")
+
+        refs = paths.results_manager.get_runs("get_runs_test")
+        print(f"refs: {refs}")
+        assert refs
+        assert len(refs) == 2
+        found = False
+        notfound = False
+        for ref in refs:
+            results2 = paths.results_manager.get_named_results(ref)
+            result2 = results2[0]
+            if result2.run_uuid == result.run_uuid:
+                found = True
+            else:
+                notfound = True
+        assert found and notfound

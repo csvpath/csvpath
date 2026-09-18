@@ -780,7 +780,7 @@ Cache: {cache}
         extra_data: Optional[dict[str, str]] = None,
     ) -> list[Reference]:
         runner = CollectDynamic(self)
-        refs = runner.collect_dynamic(
+        refs = runner.run(
             pathsname=pathsname,
             data=data,
             dataname=dataname,

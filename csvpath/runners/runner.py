@@ -19,12 +19,12 @@ class Runner(ABC):
     LIST_OF_JSON = "listof"
     DATA_FRAME = "dataframe"
 
-    def __init__(self, csvpath) -> None:
-        self._csvpath = csvpath
+    def __init__(self, csvpaths) -> None:
+        self._csvpaths = csvpaths
 
     @property
-    def csvpath(self) -> None:
-        return self._csvpath
+    def csvpaths(self) -> None:
+        return self._csvpaths
 
     @abstractmethod
     def run(self) -> Reference | list[Reference]: ...

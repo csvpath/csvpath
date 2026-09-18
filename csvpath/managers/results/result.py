@@ -104,6 +104,8 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
         self._unmatched: list[list[Any]] = None
         self._lines: list[list[Any]] = None
         self._readers_facade = ResultReadersFacade(self)
+        if isinstance(run_uuid, str):
+            run_uuid = UUID(run_uuid)
         self._run_uuid = run_uuid
         self._template = template or ""
 
@@ -132,17 +134,17 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
             self._uuid = uuid.uuid4()
         return self._uuid
 
-    @property
-    def run_uuid(self) -> UUID:
-        if self._run_uuid is None:
-            self._run_uuid = uuid.uuid4()
-        return self._run_uuid
-
     @uuid.setter
     def uuid(self, u: UUID) -> None:
         if not isinstance(u, UUID):
             raise ValueError("Uuid must be a UUID")
         self._uuid = u
+
+    @property
+    def run_uuid(self) -> UUID:
+        if self._run_uuid is None:
+            self._run_uuid = uuid.uuid4()
+        return self._run_uuid
 
     @run_uuid.setter
     def run_uuid(self, u: UUID) -> None:

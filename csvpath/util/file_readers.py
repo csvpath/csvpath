@@ -53,8 +53,8 @@ class DataFileReader(ABC):
         self._current_headers = headers
 
     @classmethod
-    def register_data(cls, *, path, filelike, shape: str = None) -> None:
-        DataFileReader.DATA[path] = filelike
+    def register_data(cls, *, path, data, shape: str = None) -> None:
+        DataFileReader.DATA[path] = data
         if shape:
             DataFileReader.DATA[f"{path}.{shape}"] = True
 

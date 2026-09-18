@@ -9,13 +9,13 @@ from pandas import DataFrame
 import jsonlines
 
 
-from .util.run_home_maker import RunHomeMaker
-from .managers.results.result import Result
+from csvpath.util.run_home_maker import RunHomeMaker
+from csvpath.managers.results.result import Result
 
 from csvpath.util.nos import Nos
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
-from .runner import Runner
+from csvpath.runners.runner import Runner
 
 # types for clarity
 Reference = NewType("Reference", str)
@@ -31,7 +31,7 @@ class CollectDynamic(Runner):
         shape: str = "json",
         register_template=None,
     ):
-        if not self.csvpaths.has_named_file(dataname):
+        if not self.csvpaths.file_manager.has_named_file(dataname):
             placeholder = "Placeholder"
             if shape == self.JSONL:
                 placeholder = {"name": placeholder}
@@ -52,28 +52,38 @@ class CollectDynamic(Runner):
         shape: str = "json",
         register_template=None,
     ):
-        thread = threading.get_ident()
+        tid = threading.get_ident()
         if isinstance(data, DataFrame):
-            register_path = f"{register_path}-{thread}.jsonl"
+            register_path = f"{register_path}-{tid}.jsonl"
             datastr = data.to_json(orient="records", lines=True)
             with DataFileWriter(path=register_path, mode="w") as writer:
                 writer.write(datastr)
         elif shape == self.JSON:
-            register_path = f"{register_path}-{thread}.json"
+            register_path = f"{register_path}-{tid}.{shape}"
             with DataFileWriter(path=register_path, mode="w") as writer:
                 json.dump(data, writer.sink)
         elif shape == self.JSONL:
-            register_path = f"{register_path}-{thread}.jsonl"
+            register_path = f"{register_path}-{tid}.{shape}"
             datastr = io.StringIO()
             with jsonlines.Writer(datastr) as writer:
                 writer.write_all(data)
             with DataFileWriter(path=register_path, mode="w") as writer:
                 writer.write(datastr.getvalue())
+        elif shape == self.LIST_OF_JSON:
+            register_path = f"{register_path}-{tid}.json"
+            for _ in data:
+                with DataFileWriter(path=register_path, mode="w") as writer:
+                    json.dump(_, writer.sink)
+                    self.csvpaths.file_manager.add_named_file(
+                        name=dataname, path=register_path, template=register_template
+                    )
+            Nos(register_path).remove()
+            return
         #
         # do the registration
         #
         self.csvpaths.file_manager.add_named_file(
-            name=dataname, file=register_path, template=register_template
+            name=dataname, path=register_path, template=register_template
         )
         #
         # delete the temp file. we don't use a TemporaryFile because
@@ -104,17 +114,38 @@ class CollectDynamic(Runner):
         run_template: str = None,
         extra_data: Optional[dict[str, str]] = None,
         shape: str = Runner.JSON,
-    ) -> Reference | list[Reference]:
+    ) -> list[Reference]:
+        #
+        # caching should never help us
+        #
+        caching = self.csvpaths.config.get(section="cache", name="use_cache")
+        self.csvpaths.config.set(section="cache", name="use_cache", value="no")
 
         self.not_none(data, "Data cannot be None")
         self.not_empty(data, "Data cannot be empty")
 
-        self.not_none(pathsname, "Data cannot be None")
-        self.not_empty(pathsname, "Data cannot be empty")
+        self.not_none(pathsname, "Pathsname cannot be None")
+        self.not_empty(pathsname, "Pathsname cannot be empty")
 
         self.not_shape(shape)
 
-        if register is True and register_path is not None:
+        #
+        # getting the last file registered can be expensive. passing in
+        # register_path prevents that. otoh, if we're not registering and
+        # we're trusting that the named-file is available, we don't have
+        # that problem.
+        #
+        # if we use templates we must have an "original" source path to
+        # apply to the templates. in quotes because since this is a dynamic
+        # run it is not an actual file path, just a path used for templates.
+        #
+        if (run_template or register_template) and register_path is None:
+            raise ValueError(
+                "Cannot use templates when there is no register path to merge with them"
+            )
+        if register is True and register_path is None:
+            register_path = "unnamed bytes"
+        if register is True:
             self.register(
                 data=data,
                 dataname=dataname,
@@ -122,8 +153,6 @@ class CollectDynamic(Runner):
                 register_path=register_path,
                 register_template=register_template,
             )
-        elif register is True and register_path is None:
-            raise ValueError("Cannot register data because there is no register path")
         elif dataname_trust is False:
             self.register_if(
                 data=data,
@@ -144,10 +173,6 @@ class CollectDynamic(Runner):
         # which we can do ourselves back here.
         #
         refs = []
-        #
-        # shouldn't we just use dataname where csvpaths requires filename?
-        #
-        # filename = Runner.DYNAMIC
         #
         #
         #
@@ -192,6 +217,11 @@ class CollectDynamic(Runner):
             refs.append(ref)
         else:
             raise ValueError("Incorrect data and/or shape: {data}, {shape}")
+        #
+        # probably won't matter but replace caching
+        #
+        self.csvpaths.config.set(section="cache", name="use_cache", value=caching)
+
         return refs
 
     def _collect_dynamic(
@@ -208,6 +238,9 @@ class CollectDynamic(Runner):
         # if template is None we need to go find any template that was given when
         # the named-paths were loaded.
         #
+        file = self.csvpaths.file_manager.get_named_file(name=dataname)
+        if file is None:
+            raise ValueError("There must, at minimum, be a placeholder named-file")
         paths = self.csvpaths._get_named_paths(pathsname)
         if template is None:
             template = self.csvpaths.paths_manager.get_template_for_paths(pathsname)
@@ -226,24 +259,22 @@ class CollectDynamic(Runner):
         # data, not a file, and load the correct reader. the actual dynamic
         # json readers know how to find their data.
         #
+        # we have a file -- the named-file must have at least one registered
+        # placeholder. we use that file path as the key to register the
+        # dynamic data. so it looks like we're going after a file, but the
+        # DataFileReader checks for dynamic json/data frames before looking
+        # at actual files.
+        #
         # the data and the shape indicators are stored in a box's thread
         # local dict for the current thread. CsvPaths clears out the box
         # when we're done with this run.
         #
-        DataFileReader.DATA.put(dataname, data)
-        if shape == self.JSON:
-            DataFileReader.DATA.put(f"{dataname}.{shape}", True)
-        elif shape == self.JSONL:
-            DataFileReader.DATA.put(f"{dataname}.{shape}", True)
-        elif shape in [None, self.DATA_FRAME]:
-            ...  # nothing, dataframes don't have multiple shapes to pick from.
-        else:
-            raise ValueError(f"Unexpected data shape: {shape}")
+        DataFileReader.register_data(path=file, data=data, shape=shape)
 
         #
         # run identification and directories created here
         #
-        maker = RunHomeMaker(self)
+        maker = RunHomeMaker(self.csvpaths)
         crt = maker.get_run_dir(
             paths_name=pathsname, file_name=dataname, template=template
         )
@@ -263,7 +294,7 @@ class CollectDynamic(Runner):
             run_dir=crt,
             pathsname=pathsname,
             filename=dataname,
-            file=dataname,
+            file=file,
             run_uuid=run_uuid,
             method="collect_dynamic",
             template=template,
@@ -355,4 +386,5 @@ class CollectDynamic(Runner):
         #
         # return f"${pathsname}.results.{crt}"
         ret = self.csvpaths._make_run_reference(pathsname=pathsname, crt=crt)
+
         return ret

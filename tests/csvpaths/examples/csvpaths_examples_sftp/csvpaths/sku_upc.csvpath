@@ -7,7 +7,7 @@
 
     sftp-user:python
     sftp-password:hangzhou
-    sftp-server: 192.168.1.152
+    sftp-server: 192.168.1.159
     sftp-port: 2022
     sftp-target-path: var|name
     sftp-files: data.csv > data.csv, errors.json > foo.json, meta.json > var|name

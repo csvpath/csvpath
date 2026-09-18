@@ -278,7 +278,11 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         self._cacher = None
 
     def rewind(self) -> None:
-        # experimental! roll back to rerun without requiring a reparse/rebuild of matcher.
+        #
+        # experimental! roll back to rerun without requiring a reparse/rebuild
+        # of matcher. created for dynamic json and pandas runs. tested, but leave
+        # this warning for now because potential for edge cases seems huge.
+        #
         self._unmatched = None
         self._cacher = None
         self._run_started_at = None
@@ -304,8 +308,10 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         # reset matcher and line monitor
         #
-        self.line_monitor.set_end_lines_and_reset()
-        self.matcher.reset()
+        if self.line_monitor is not None:
+            self.line_monitor.set_end_lines_and_reset()
+        if self.matcher is not None:
+            self.matcher.reset()
 
     @property
     def run_dir(self) -> str:

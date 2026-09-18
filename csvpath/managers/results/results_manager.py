@@ -544,6 +544,40 @@ class ResultsManager:  # pylint: disable=C0115
         if name in self.named_results:
             self.remove_named_results(name)
 
+    def get_runs(self, named_results_name: str) -> list[str]:
+        if named_results_name is None:
+            raise ValueError("Named_results_name cannot be None")
+        named_results_name = named_results_name.strip()
+        if named_results_name == "":
+            raise ValueError("Named_results_name cannot be empty")
+        #
+        # note that this approach has issues:
+        #  - the manifest may not be complete because it may have been rotated or pruned
+        #  - the archive path could have changed
+        #
+        # the first problem will be overcome when we (optionally) switch to using the
+        # relational database as a source, not just an event sink.
+        #
+        ns = {}
+        mani = self.results_root_manifest
+        for _ in mani:
+            if not _["named_paths_name"] == named_results_name:
+                continue
+            n = _["run_home"]
+            ns[n] = n
+        #
+        # get all the references by stripping the archive path.
+        #
+        ap = self.csvpaths.config.get(section="results", name="archive")
+        apl = len(ap) + len(named_results_name) + 1
+        ref = f"${named_results_name}.results."
+        refs = []
+        for k in ns:
+            k = k[apl + 1 :]
+            k = k.lstrip("/\\")
+            refs.append(f"{ref}{k}")
+        return refs
+
     def all_run_dir_names(self, path, count) -> dict:
         mydirs = {}
         if count >= 0:

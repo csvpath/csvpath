@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AnimalHabitats",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "sky": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "insect": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "land": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "ocean": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "below": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    },
+    "additionalProperties": false
+  }
+}

@@ -14,7 +14,7 @@ class TestCsvPathPandas(unittest.TestCase):
             print("Pandas is not installed. Test will be skipped.")
             return
         df = pd.read_csv(PATH, delimiter=",", quotechar='"', header=None)
-        DataFileReader.register_data(path="pandastest", filelike=df)
+        DataFileReader.register_data(path="pandastest", data=df)
         c = """
             ~
               id: pandas test

@@ -4,6 +4,9 @@ from csvpath import CsvPath
 from csvpath.util.file_readers import DataFileReader
 
 SCHEMA = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}animals.schema.json"
+SCHEMA_LIST = (
+    f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}animals_list.schema.json"
+)
 
 
 class TestCsvPathDynamic(unittest.TestCase):
@@ -13,7 +16,7 @@ class TestCsvPathDynamic(unittest.TestCase):
             {"a": "ant", "b": "mouse", "c": "dog"},
             {"a": "elephant", "b": "tiger", "c": "snake"},
         ]
-        DataFileReader.register_data(path="dynamictest", filelike=jsonl, shape="jsonl")
+        DataFileReader.register_data(path="dynamictest", data=jsonl, shape="jsonl")
         c = """
             ~
               validation-mode: no-raise, print
@@ -41,7 +44,7 @@ class TestCsvPathDynamic(unittest.TestCase):
             ["ant", "mouse", "dog"],
             ["elephant", "tiger", "snake"],
         ]
-        DataFileReader.register_data(path="dynamictest", filelike=jsonl, shape="jsonl")
+        DataFileReader.register_data(path="dynamictest", data=jsonl, shape="jsonl")
         c = """
             ~
               validation-mode: no-raise, print
@@ -66,7 +69,7 @@ class TestCsvPathDynamic(unittest.TestCase):
             "insect": ["ant", "spider", "flea"],
             "land": ["elephant", "tiger", "snake"],
         }
-        DataFileReader.register_data(path="dynamictest", filelike=js, shape="json")
+        DataFileReader.register_data(path="dynamictest", data=js, shape="json")
         c = f"""
             ~
               validation-mode: no-raise, print
@@ -85,7 +88,7 @@ class TestCsvPathDynamic(unittest.TestCase):
             "insect": ["ant", "spider", "flea"],
             "land": ["elephant", "tiger", "snake"],
         }
-        DataFileReader.register_data(path="dynamictest", filelike=js, shape="json")
+        DataFileReader.register_data(path="dynamictest", data=js, shape="json")
         c = f"""
             ~
               validation-mode: no-raise, print
@@ -126,7 +129,7 @@ class TestCsvPathDynamic(unittest.TestCase):
         valid = 0
         path = None
         for _ in js:
-            DataFileReader.register_data(path="dynamictest", filelike=_, shape="json")
+            DataFileReader.register_data(path="dynamictest", data=_, shape="json")
             if path is None:
                 path = CsvPath()
                 path.parse(stmt)
@@ -134,5 +137,42 @@ class TestCsvPathDynamic(unittest.TestCase):
             valid += 1 if path.is_valid else 0
             DataFileReader.deregister_data("dynamictest", shape="json")
             path.rewind()
+        print(f"valid: {valid}")
+        assert valid == 1
+
+    def test_csvpath_dynamic_6(self):
+        js = [
+            {
+                "sky": ["bluebird", "bluejay", "blue-footed boobie"],
+                "insect": ["ant", "spider", "flea"],
+                "land": ["elephant", "tiger", "snake"],
+            },
+            {
+                "ocean": ["fish", "lobster", "clam"],
+                "insect": ["ant", "spider", "flea"],
+                "land": ["elephant", "tiger", "snake"],
+            },
+            {
+                "below": ["mole", "badger", "worm"],
+                "insect": ["ant", "spider", "flea"],
+                "land": ["elephant", "tiger", "snake"],
+            },
+        ]
+        stmt = f"""
+            ~ validation-mode: no-raise, print, fail ~
+            $dynamictest[*][
+                jsonschema("{SCHEMA_LIST}")
+            ]
+        """
+
+        valid = 0
+        path = None
+        DataFileReader.register_data(path="dynamictest", data=js, shape="json")
+        if path is None:
+            path = CsvPath()
+            path.parse(stmt)
+        path.fast_forward()
+        valid += 1 if path.is_valid else 0
+        DataFileReader.deregister_data("dynamictest", shape="json")
         print(f"valid: {valid}")
         assert valid == 1
