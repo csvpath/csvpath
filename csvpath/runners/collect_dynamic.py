@@ -464,7 +464,6 @@ class CollectDynamic(Runner):
         #
         # the run home is the most specific reference we can return
         #
-        # return f"${pathsname}.results.{crt}"
         ret = self.csvpaths._make_run_reference(pathsname=pathsname, crt=crt)
 
         return ret
