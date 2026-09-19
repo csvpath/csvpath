@@ -1,9 +1,23 @@
 # pylint: disable=C0114
 import hashlib
+import traceback
+import json
+from typing import Any
 from .path_util import PathUtility as pathu
 
 
 class Hasher:
+    def hash_json(self, js: Any, *, encode=True) -> str | None:
+        try:
+            string = json.dumps(js, sort_keys=True)
+            h = hashlib.sha256(string.encode()).hexdigest()
+            if encode:
+                h = Hasher.percent_encode(h)
+            return h
+        except Exception:
+            print(traceback.format_exc())
+            return None
+
     def hash(self, file_or_path, *, encode=True) -> str:
         #
         # some callers pass in a temp file object -- e.g. sftp.

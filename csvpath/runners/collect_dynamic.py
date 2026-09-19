@@ -351,6 +351,7 @@ class CollectDynamic(Runner):
                 run_dir=crt,
                 pathsname=pathsname,
                 filename=dataname,
+                file=file,
                 run_uuid=run_uuid,
                 method="fast_forward_dynamic",
                 template=template,

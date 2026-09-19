@@ -8,13 +8,19 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
+    "Framework :: OpenTelemetry",
     "Programming Language :: Python",
+    "Programming Language :: Other Scripting Engines",
     "Topic :: File Formats",
     "Topic :: Office/Business :: Financial :: Spreadsheet",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Testing",
     "Topic :: Text Processing",
+    "Topic :: Text Processing :: Markup :: XML",
+    "Topic :: Communications :: File Sharing",
+    "Topic :: File Formats :: JSON",
+    "Topic :: File Formats :: JSON :: JSON Schema",
     "Topic :: Utilities"
 ]
 include = ["config","assets"]
@@ -73,7 +79,7 @@ xmlschema = "^4.3.2"
 jsonschema = "^4.26.0"
 
 [tool.poetry.extras]
-pandas = ["pandas"]
+#pandas = ["pandas"]
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "3.8.0"

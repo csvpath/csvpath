@@ -175,6 +175,9 @@ class DataFileReader(ABC):
             # do we have a file-like / dataframe thing pre-registered?
             #
             thing = DataFileReader.DATA.get(path)
+
+            # print(f"fileresaeders: box: {DataFileReader.DATA}")
+
             if thing is not None:
                 if thing.__class__.__name__.endswith("DataFrame"):
                     module = importlib.import_module(
