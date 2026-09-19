@@ -18,6 +18,7 @@ class ResultsRegistrar(Registrar, Listener):
 
     COMPLETE = "complete"
     STARTED = "started"
+    DYNAMIC = "dynamic"
 
     def __init__(
         self, *, csvpaths, run_dir: str, pathsname: str, results: list[Result] = None
@@ -33,27 +34,52 @@ class ResultsRegistrar(Registrar, Listener):
         mdata.status = ResultsRegistrar.STARTED
         mdata.manifest_path = self.manifest_path
         filename = mdata.named_file_name
-        fingerprint = self.csvpaths.file_manager.get_fingerprint_for_name(filename)
+        #
+        # given the named file name/ref get the fingerprint that is for that version
+        #
         filepath = self.csvpaths.file_manager.get_named_file(filename)
-        if isinstance(filepath, list):
-            filepath = filepath[0]
-        ffingerprint = self._fingerprint_file(filepath)
-        mdata.named_file_fingerprint = ffingerprint
+        if mdata.method.endswith("dynamic"):
+            #
+            # we skip the fingerprint reconciliation for dynamic runs because if
+            # there is any registration it just happened. it is also important to
+            # skip for a technical reason. we have the live object data registered
+            # on the DataFileReader as the file path. that path may exist if we
+            # did a registration, but regardless, the actual file's data file
+            # reader (e.g. an S3 reader) is hidden behind the path being mapped to
+            # the dynamic JSON reader.
+            #
+            self.csvpaths.logger.info("Registering start for %s", mdata.method)
+            with DataFileReader(filepath) as reader:
+                mdata.named_file_fingerprint = reader.fingerprint()
+            mdata.named_file_fingerprint_on_file = self.DYNAMIC
+            # print(f"mdata.named_file_fingerprint: {mdata.named_file_fingerprint}")
+        else:
+            fingerprint = self.csvpaths.file_manager.get_fingerprint_for_name(filename)
+            if isinstance(filepath, list):
+                filepath = filepath[0]
+            ffingerprint = self._fingerprint_file(filepath)
+            mdata.named_file_fingerprint = ffingerprint
+            mdata.named_file_fingerprint_on_file = fingerprint
+        #
+        #
+        #
         if self.results and len(self.results) > 0:
             mdata.by_line = self.results[0].by_line
-        mdata.named_file_fingerprint_on_file = fingerprint
         mdata.named_file_path = filepath
         mdata.named_file_size = self._size(filepath)
         mdata.named_file_last_change = self._last_change(filepath)
-        mdata.named_paths_fingerprint = self.csvpaths.paths_manager.get_fingerprint_for_name(
-            self.pathsname
+        mdata.named_paths_fingerprint = (
+            self.csvpaths.paths_manager.get_fingerprint_for_name(self.pathsname)
         )
         self.distribute_update(mdata)
         # after we distribute the update
         # if we see a fingerprint mismatch we need to log it
         # and maybe blow up
         if mdata.named_file_fingerprint and mdata.named_file_fingerprint_on_file:
-            if mdata.named_file_fingerprint != mdata.named_file_fingerprint_on_file:
+            if (
+                mdata.named_file_fingerprint != mdata.named_file_fingerprint_on_file
+                and not self.DYNAMIC == mdata.named_file_fingerprint_on_file
+            ):
                 self.csvpaths.logger.warning(
                     "fingerprints of input file %s do not agree: orig:%s != current:%s",
                     mdata.named_file_path,
@@ -63,6 +89,7 @@ class ResultsRegistrar(Registrar, Listener):
             houf = self.csvpaths.config.halt_on_unmatched_file_fingerprints()
             if (
                 houf is True
+                and not self.DYNAMIC == mdata.named_file_fingerprint_on_file
                 and mdata.named_file_fingerprint != mdata.named_file_fingerprint_on_file
             ):
                 raise FileException(
@@ -162,6 +189,7 @@ class ResultsRegistrar(Registrar, Listener):
 
     def _fingerprint_file(self, path) -> str:
         with DataFileReader(path) as f:
+            print(f"resrefg: fff: {f}, path: {path}")
             h = f.fingerprint()
         return h
 

@@ -1,6 +1,7 @@
 from typing import Any
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.json.json_reader_helper import JsonReaderHelper
+from csvpath.util.hasher import Hasher
 
 
 class JsonDynamicLinesReader(DataFileReader):
@@ -33,6 +34,10 @@ class JsonDynamicLinesReader(DataFileReader):
             doc = [doc]
         self._doc = doc
         self._updates_headers = True
+
+    def fingerprint(self) -> str:
+        h = Hasher().hash_json(self._doc)
+        return h
 
     def load_if(self) -> None: ...
 

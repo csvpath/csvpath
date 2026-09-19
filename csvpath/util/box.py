@@ -32,7 +32,7 @@ class Box:
     def __str__(self) -> str:
         s = "Box: "
         for k, v in Box.STUFF.items():
-            s = f"{s}\n  {k}={v}"
+            s = f"{s}\n  {k}={v}\n"
         return s
 
     @property

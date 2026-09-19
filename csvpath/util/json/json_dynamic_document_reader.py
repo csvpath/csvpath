@@ -1,5 +1,6 @@
 from typing import Any
 from csvpath.util.file_readers import DataFileReader
+from csvpath.util.hasher import Hasher
 
 
 class JsonDynamicDocumentReader(DataFileReader):
@@ -29,6 +30,10 @@ class JsonDynamicDocumentReader(DataFileReader):
         if doc is None:
             raise ValueError("JSON data cannot be None")
         self._doc = doc
+
+    def fingerprint(self) -> str:
+        h = Hasher().hash_json(self._doc)
+        return h
 
     def close(self) -> None:
         #
