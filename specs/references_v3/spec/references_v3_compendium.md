@@ -4,12 +4,15 @@ This document defines the References v3 subsystem. It incorporates the
 following docs by reference:
 #### Specs
 - specs/references_v3/spec/requirements_for_functions.md
-- specs/references_v3/spec/references_expressions.md
+- specs/references_v3/spec/references_v3_requirements_for_functions.md
 #### Normative examples
 - specs/references_v3/spec/normative_reference_examples.txt
 - specs/references_v3/spec/normative_reference_expressions_examples.txt
 #### Required grammar
 - csvpath/references/reference_grammar_3.py
+
+
+
 
 No one doc controls. If there is a discrepancy, lack of clarity, or
 logical question mark, the resolution is to raise the issue to David's
@@ -284,7 +287,7 @@ references is legal, the third is not:
 #### 3.9c
 `name_one` supports functions, described below. It also supports a `*`
 wildcard that matches any name segment of a path (`files`, `results`) or
-any version (`csvpaths`). Wild cards are discussed below. A function
+any version (`csvpaths`). Wildcards are discussed below. A function
 starting `name_one` or following directly after a path separator implies
 a `*` wildcard, unless it falls in one of these categories of exceptions:
 
@@ -571,10 +574,15 @@ Note these limitations on grouping:
 - `:all()` cannot be combined with `:groups()`
 - `name_three` can have only one `:all()`
 - `name_three` does not accept `:groups()`
-- in `name_three`, `:all()` devolves to having the same function as `*`
+- Under the following three conditions `:all()` devolves to `*`'s
+  functionality:
+  1. In `results`, when used in the path segment of the run directory
+  (i.e. `:run_dir`)
+  2. In `csvpaths`, when used in `name_one`
+  3. When used in `name_three`
 
 #### 4.3a
-The latter point is due to the limited variability in `results`. Since
+The latter bullet's point #1 is due to the limited variability in `results`. Since
 `results` files are generated reliably, 0 or 1, by default, in the usual
 case there is nothing to group. There are two exceptional cases:
 `print-mode:separate`, where multiple printouts files with arbitrary names
@@ -1167,7 +1175,6 @@ The number line for each datatype is date ordered/date determined, but
 for the purpose of ordinals that are not time related, indexed by
 sequence.
 
-
 #### 6.27b
 When one of these datetime component functions is provided in a usage
 where a full datetime is needed for directionality, ranging, or
@@ -1175,7 +1182,6 @@ indexing the function is interpreted as the first moment of that time.
 
 For e.g., `:year()` would be interpreted as the first second of the first
 minute of the first day of January in the present year.
-
 
 #### 6.27c
 Uses of time functions as context dominate the behavior of other
@@ -1209,7 +1215,7 @@ point.
 
 #### 6.27f
 If interpreted on the date `2026-01-02`, the use of `:yesterday()`
-above is, respectively:
+above is, respective to the bullets above:
 - `2026-01-01_00:00:00` to `2026-01-01_23:59:59`
 - The last registration on or after `2026-01-01_00:00:00` and on or
   before `2026-01-01_23:59:59`
@@ -1402,8 +1408,9 @@ Every function self-reports one of three roles:
 
 - **Context setter** — narrows the current scope without resolving to a
   specific item (e.g. `:yesterday()`, `:quarter()`, `:before()`/`:after()`,
-  `:all()`, `:name(...)`). *(You could make a case for `:name(...)` being
-  a value, not a context).*
+  `:all()`, `:name(...)`). *(`:name(...)` can also be interpreted as a
+  value, not a context).* Refer to 6.27 for a more nuanced discussion of
+  time component functions.
 - **Pointer** — resolves the current scope down to exactly 0 or 1 item (e.g.
   `:last()`, `:first()`, `:index(5)`, `:uuid("...")`).
 - **Value** — produces a value that can be used as the input to a function

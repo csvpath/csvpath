@@ -34,6 +34,7 @@ class RunRegistrar(Registrar, Listener):
         m["run_uuid"] = mdata.run_uuid_string
         m["run_home"] = mdata.run_home
         m["identity"] = mdata.identity
+        m["uuid"] = mdata.uuid_string
         m["named_paths_name"] = mdata.named_paths_name
         m["named_file_name"] = mdata.named_file_name
         mp = self.manifest_path

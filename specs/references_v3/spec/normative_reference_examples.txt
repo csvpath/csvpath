@@ -97,16 +97,6 @@ multiple modes:
 The exception being `:date()` which can create a date from a string, but does
 not provide the current datetime.
 
-When a datetime component function is provided where a full datetime would be needed
-for ordering or indexing the function is interpreted as the first moment of that time.
-For e.g., `:year()` would be interpreted as the first second of the first minute of
-the first day of January in the present year.
-
-For that reason, a `:from(:year())`has meaning as a date range constraint, not as a
-four digit integer index constraint. I.e. `:from(:year())` and `:from(2026)` are not
-the same. The former is a date constraint based on `2026-01-01_00:00:00` and the
-latter says start at the 2026th index position.
-
 ### :year()
 $acme.files.orders/:name(:year())/:last()
 $acme.files.orders/:from(:year(@the_year)).*
@@ -148,7 +138,7 @@ $acme.files.orders/:name(:day_name(:yesterday()))/:last()
 Evaluated on a Tuesday yields a path of `orders/Monday/*`.
 
 ### :today()
-$acme.files.orders/:name(:day_name(:yesterday()))/:last()
+$acme.files.orders/:name(:day_name(:today()))/:last()
 Evaluated on a Tuesday yields a path of `orders/Tuesday/*`.
 
 ### :date()
@@ -189,7 +179,7 @@ $acme.results.*:completed(:none())
 ### :not_none()
 Select the name home paths+uuid of all named-files that have an arrival
 activation set.
-$*.files.:on_arrival(:not_none()))
+$*.files.:on_arrival(:not_none())
 
 ### :empty()
 Empty and none are for the most part synonymous. In a few cases there are distinctions. A field that defaulted to an empty list matches `:empty()` not `:none()`. A JSON file that serialized None as null does not match `:empty()`. A key that is not present matches `:none()`, but not `:empty()`.
@@ -325,7 +315,8 @@ $:choice("orders|invoices|shipments").files.:flatten()
 ## Definition files
 Named-paths and named-files have definition.json files to hold configuration
 information. There is one unversioned definition.json in each named-entity
-within those datatypes.
+within those datatypes. To get configuration for any group its own
+`definition.json` file must be read.
 
 #### Point to a named-file's definition file
 $acme.files.:definition()
@@ -340,7 +331,6 @@ of a single file at a time, querying across named-entities for path+uuid is
 possible, but then resolving the reference would raise an exception. This
 reference is not legal:
 $*.files.:definition()
-
 
 ---
 
@@ -435,14 +425,6 @@ $acme.results.:log()
 
 ---
 
-==================
-==================
-==================
-==================
-==================
-
-
-
 ## The Results Datatype
 Notes
 - A "1-level template" means a template like :1/:run_dir where the run is 1 path
@@ -453,7 +435,6 @@ For example `:from(:index(-3))` is identical to `:from(-3)`. In this case, both
 `:from()` and `:index()` need to exist for different requirements, and while we
 wouldn't suggest combining them together in this inefficient way, it wouldn't be
 technically prevented.
-
 
 ### Finding the "last" run or runs of a type of information:
 
@@ -523,8 +504,6 @@ where the first level is `test` and the third level is `one`, grouped by
 the values of the 2nd template level
 $alpha.results.test/:all()/one:last()
 
-
-
 #### All csvpaths for all runs having no template
 $alpha.results.:all().:all()
 
@@ -546,6 +525,7 @@ $alpha.results.:all():index(5).:all():error_count()
 ---
 
 ### Run directories must be represented in `name_one`
+
 #### Error: there is no run dir called `beta`. No exception, but never returns results.
 $acme.results.beta
 
@@ -627,7 +607,6 @@ $alpha.results.:from("2026-01-01").before("2026-01-02").:header_checks:errors()
 #### Get the path and/or contents of the default printouts file, `printouts.txt`
 $acme.results.:flatten():last().:printouts()
 
-
 ---
 
 ### Arbitrary files from printouts and Parquet
@@ -642,7 +621,10 @@ $acme.results.*/2025/:first().invoices:file("report.txt")
 $acme.results.customers/:from(:index(-3)).*:type("parquet")
 
 #### Get a printouts file named for its stream
-Given the csvpath `~ print-mode:separate ~$[*][ print("hello world", "greetings")]` get the resulting `greetings.txt` printouts. The following two references are equivalent.
+Given the csvpath
+`~ print-mode:separate ~$[*][ print("hello world", "greetings")]`, get
+the resulting `greetings.txt` printouts. The following two references
+are equivalent:
 $acme.results.:flatten():last().:printouts("greetings")
 $acme.results.:flatten():last().:file("greetings.txt")
 
@@ -658,8 +640,66 @@ $*.results.:manifest()
 $*.results.:last():manifest()
 $*.results.:manifest():last()
 
-Note that when we have information available without using a manifest we must get it that way. Practically all cases are covered by non-through-manifest means. Explicit uses of :manifest() should be used only to find the path to the file or retrieve the full contents of the manifest file or entry.
+Note that when we have information available without using a manifest we
+must get it that way. Practically all cases are covered by
+non-through-manifest means. Explicit uses of :manifest() should be used
+only to find the path to the file or retrieve the full contents of the
+manifest file or entry.
 
+#### Two ways to get the moment a csvpath statement within a named-paths group
+begins to run. The first by archive ledger manifest, the second by direct
+access. Note that these two references are not functionally identical. Due to
+variable run times, threading races, etc. the second reference time could be
+earlier than the time found by the first reference.
+$*.results.:manifest():last():time()
+$*.results.:flatten():last().:last():time()
+
+#### Two ways to get the UUID of the first known run. First by archive
+manifest, second by direct access. Unlike the above references focused on the
+last activity, these two references are functionally identical.
+$*.results.:manifest():first():run_uuid()
+$*.results.:flatten():first():uuid()
+
+#### Two ways to get the run dir of a run containing a csvpath instance
+with a certain UUID. First by archive ledger manifest, second by direct
+access.
+$*.results.:manifest():uuid("a381..."):run_home()
+$*.results.:flatten():having(:uuid("a381...")):run_home()
+
+#### Two ways to get the last instance run yesterday. Note that these may
+not return the same identity due to timing effects and the difference in
+what last tracks in `name_one` (i.e. run start time) vs. in the global
+manifest (i.e. instance start times within runs).
+$*.results.:manifest():yesterday():last():identity()
+$*.results.:yesterday():last().:last():identity()
+
+#### Two ways to find all the instances in runs with the named_paths group
+`orders` that happened yesterday. Note that the first finds the start times
+of instances within runs whereas the second finds the start times of runs.
+This difference means that the resulting lists of instances are not
+guaranteed to match.
+$*.results.:manifest():named_paths_name("orders"):yesterday()
+$orders.results.:flatten():yesterday().*
+
+#### Two ways to find all the instances in runs with the named_file
+`orders` that happened yesterday. As with other time based references of
+this type, the difference between the tracking the run time vs. the
+instance start time within the run makes this pair of reference return
+result that are not always going to be the same.
+$*.results.:manifest():named_file_name("orders"):yesterday()
+$*.results.:flatten():yesterday():named_file_name("orders").*
+
+#### Archives can provide a kind of multi-project namespacing, in that
+projects can use the same archive name with different internal paths or
+different archive names with the potential for identical internal paths.
+The archive name. archive path, `named_files_root`, and
+`named_paths_root` values will be entirely consistent for all references
+because references are context-bounded to an archive.
+$*.results.:manifest():archive_name()
+
+#### Two ways of finding the template used by a run
+$*.results.:manifest():run_uuid("789a..."):template()
+$*.results.:flatten():run_uuid("789a..."):template()
 
 ---
 
@@ -749,9 +789,7 @@ Note no exception on `resolve()` because the reference retrieves exactly 1 file.
 
 ---
 
-
 ## The Files Datatype
-
 
 ### File homes
 
@@ -849,8 +887,6 @@ $alpha.files.:name("orders.csv").:from(:date("2026-01-01"))
 #### Select versions from one moment up to and including another
 $alpha.files.:name("orders.csv").:from("2026-01-01"):to("2026-01-31")
 
-
-
 ---
 
 ### Templates
@@ -863,10 +899,6 @@ Note this returns:
 - named_files/alpha/three.csv
 But not:
 - named_files/alpha/updated/one.csv
-
-
-
----
 
 #### The last registration in any no-template `alpha` file home
 $alpha.files.*.:last()
@@ -899,7 +931,6 @@ $alpha.files.2025/:flatten()/:name("orders.csv").:first()
 #### find all the orders.csv file homes registered using any or no template
 $alpha.files.:flatten()/:name("orders.csv")
 
-
 #### The last registration for every file home
 $alpha.files.:groups().:last()
 
@@ -909,7 +940,6 @@ $alpha.files.:groups().:first()
 ### The version's own manifest entry, either order
 $alpha.files.:name("orders.csv").:last():manifest()
 $alpha.files.:name("orders.csv").:manifest():last()
-
 
 ---
 
@@ -922,8 +952,11 @@ Note that there is always 1 definition.json is per named-file
 #### Getting the on_arrival value
 $alpha.files.:on_arrival()
 
-#### Getting the sources values
+#### Getting the sftp sources object as a whole
 $alpha.files.:sources()
+
+#### Getting the source value component identifing an sftp server
+$alpha.files.:source_address("local_server")
 
 ---
 
@@ -1068,11 +1101,6 @@ $acme.csvpaths.:last().:from(:index(2))
 this reference effectively misses one day.
 $acme.csvpaths.:from(:date("2026-01-01")):to(:date("2026-01-31"))
 
-
-
-
-
-
 ---
 
 ### Identities
@@ -1165,5 +1193,39 @@ Note that `:readme()` is a file accessor that has no relationship to the
 group. Therefore, you cannot combine version selection with the `:readme()`
 function in `name_one`.
 
+---
+
+### Named-paths group `definition.json` files
+
+Definition.json files holding named-paths group configuration work as
+described above with the `files` data type, where they are also found.
+
+There are two caveats, also referenced above, but primarily implementation
+details of named-paths groups `definition.json` files that will change
+in due time but have meaning for functions today:
+
+1. Named-paths groups `definition.json` files may include configuration
+details for a point in time for groups other than the group that contains
+and owns the `definition.json` file. This is due to the ability to create
+multiple named-paths groups from a single file. The capability may go
+away and/or the persistence of the foreign group(s) may end. Regardless,
+named-paths groups only derrive their configuration from their own
+`definition.json` file and functions and other code may only apply the
+configuration of the specific named-paths group from the group's own
+file when acting. No other cross-group configuration access or usage is
+permitted, regardless of what legacy content may continue to exist in the
+group's `definition.json` file.
+
+2. In at least one case there is a structure in named-paths group
+`definition.json` files that is currently under-powered and on the roadmap
+for extension, in a way that changes how a specific set of its functions'
+arguments are handled as noted below.
+
+#### Case of a name parameter not being supported: `definition.json` may not
+support multiple sets (all, valid, invalid, error) of named webhooks. If only
+one unnamed set is supported, the functions accessing fields work without a
+string argument name. It is likely that named sets of webhooks will be
+supported in the foreseeable future, as it is a current roadmap item.
+$acme.csvpaths.:webhooks_on_complete_invalid()
 
 

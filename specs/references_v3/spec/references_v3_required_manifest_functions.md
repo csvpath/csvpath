@@ -179,6 +179,7 @@ dict inside each run's own directory.
 | ip_address |  | N/A | Do not use. |
 | username |  | :username() | If available, the user owning the process that performed the run. |
 | method |  | :method() | The run method is one of collect_paths, fast_forward_paths, next_paths, collect_by_line, fast_forward_by_line, next_by_line. Methods that include the suffix `_paths` run the csvpaths in the named-paths group serially one following the other, each starting from the top of the data. The methods with the suffix `_by_line` have each csvpath statement in the named-paths group consider each line before they all start again with the next line. The difference is usually not significant, but in some cases the difference in processing order allows for different desired outcomes. |
+| template |  | :template() | The run template, if any; otherwise, blank but present. |
 | manifest_path |  | :manifest_path() | The path to this manifest. |
 
 ---
@@ -232,6 +233,7 @@ named-paths group.
 | time |  | :time() | The moment a csvpath statement within a named-paths group begins to run. |
 | run_uuid |  | :run_uuid() | Uniquely identifies the run that the csvpath statement run this entry represents is a part of. |
 | run_home |  | :run_home() | The run dir of the run this csvpath statement's output is a part of |
+| uuid |  | :uuid() | Uniquely identifies this csvpath statement in the run. |
 | identity |  | :identity() | The ID or index of this csvpath statement in the named-paths group that is driving this run. |
 | named_paths_name |  | :named_paths_name() | The named-paths group driving the run. |
 | named_file_name |  | :named_file_name() | The named-file name of the version bytes this run is applying its named-paths group to |
@@ -250,6 +252,15 @@ named-paths group.
 Created by `csvpath/managers/files/file_descriptor.py`. A single dict,
 stored at the same home directory as the Named-File Manifest. Unlike
 manifest.json, this file is optional and is not versioned.
+
+The following functions operate on the file associated with the
+named-file in context. Each function's result is scoped to exactly one
+named-file entity, even when root_major is * and multiple named-files
+match, each result reflects only its own entity's `definition.json`,
+never another's. It is possible to, for example, retrieve a list of all
+default templates configured for a set of named-files; however, doing
+so requres inspecting each named-file's own `definition.json` file.
+
 
 | Field | Optional | References v3 Function | Description |
 |---|---|---|---|
@@ -271,18 +282,28 @@ Created by `csvpath/managers/paths/paths_descriptor.py` A single dict,
 stored in the same home directory as the Named-Paths Manifest. Not
 versioned.
 
+The following functions operate on the `definition.json` file
+associated with the named-paths group in context. Each function's result
+is scoped to exactly one named-paths group entity, even when root_major
+is * and multiple named-paths groups match, each result reflects only its
+own entity's `definition.json`, never another's. It is possible to, for
+example, retrieve a list of all default templates configured for a set of
+named-paths groups; however, doing so requres inspecting each named-paths
+group's own `definition.json` file.
+
+
 | Field | Optional | References v3 Function | Description |
 |---|---|---|---|
 | template | optional | :template() | The default run-dir template for this named-paths group. This is the actual source of truth read by `PathsManager.get_template_for_paths()` at load time — the Named-Paths Manifest's own `template` field (table 3) is a snapshot of whatever this held at that particular load, not an independently-set value. The two can only diverge if this is edited after a version was already loaded. |
 | scripts | optional | :scripts() | Object. Filenames of scripts to run for each of four completion states, stored alongside `group.csvpaths` in this named-paths group's home directory. |
 | scripts.on_complete_all | optional | :script_on_complete_all(str) | Script run regardless of outcome. |
 | scripts.on_complete_valid | optional | :script_on_complete_valid(str) | Script run only if the csvpath statement is valid. |
-| scripts.on_complete_invalid | optional | :script_on_complete_invalid() | Script run only if the csvpath statement is invalid. |
-| scripts.on_complete_error | optional | :script_on_complete_error() | Script run only if the csvpath statement has errors. |
+| scripts.on_complete_invalid | optional | :script_on_complete_invalid(str) | Script run only if the csvpath statement is invalid. |
+| scripts.on_complete_error | optional | :script_on_complete_error(str) | Script run only if the csvpath statement has errors. |
 | webhooks | optional | :webhooks() | Object. |
 | webhooks.on_complete_all | optional | :webhooks_on_complete_all(str) | An object containing URL, headers, params for a webhook. |
 | webhooks.on_complete_valid | optional | :webhooks_on_complete_valid(str) | An object containing URL, headers, params for a webhook. |
-| webhooks.on_complete_invalid | optional | :webhooks_on_complete_invalid:(str) | An object containing URL, headers, params for a webhook. |
+| webhooks.on_complete_invalid | optional | :webhooks_on_complete_invalid(str) | An object containing URL, headers, params for a webhook. |
 | webhooks.on_complete_errors | optional | :webhooks_on_complete_error(str) | An object containing URL, headers, params for a webhook. |
 | transfers.path_transfers | optional | :transfers() | Object, keyed by csvpath identity or index within the group. Each value declares transfers for the same four completion states as `scripts`/`webhooks`, but as a list of `{file, transfer_to}` per state rather than a single value. This is the descriptor-based transfer mechanism referenced in issues #224 and #226 — `on_complete_invalid` and `on_complete_error` here are accepted by the schema but, per #226, never actually triggered at runtime. |
 | transfers.\<name\>.on_complete_all | optional | :transfer_on_complete_all(str) | An object containing a file name or ID and a variable name containing a destination. Requires a transfer name argument. |
