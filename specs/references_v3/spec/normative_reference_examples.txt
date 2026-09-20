@@ -444,7 +444,6 @@ $acme.results.:log()
 
 
 ## The Results Datatype
-```
 Notes
 - A "1-level template" means a template like :1/:run_dir where the run is 1 path
 segment below a particular named-result home directory. A "non-template run dir"
@@ -453,11 +452,7 @@ means a run dir that is a direct child of the named-result home.
 For example `:from(:index(-3))` is identical to `:from(-3)`. In this case, both
 `:from()` and `:index()` need to exist for different requirements, and while we
 wouldn't suggest combining them together in this inefficient way, it wouldn't be
-technically prevented. Likewise, `:from(:yesterday())` is do able but not
-necessary -- a simple `:yesterday()` is enough. However,
-`:from(:date("2026-01-01"))` must be possible, so `:from(:yesterday())` is as
-well.
-```
+technically prevented.
 
 
 ### Finding the "last" run or runs of a type of information:
@@ -480,9 +475,10 @@ $alpha.results.:flatten():last()
 #### A run from all templates starting `beta`
 $alpha.results.beta/:flatten():last()
 
-#### Last runs of all runs w/1-level template starting `beta/`
+#### Last run of all runs w/1-level template starting `beta/`
 $alpha.results.beta/:all():last()
-Note that this groups by :run_dir and is better written as `$alpha.results.beta/*`
+Note that :all() does not group by :run_dir so this is better written
+as `$alpha.results.beta/*`
 
 #### A run of all 1-level templates starting `beta/`
 $alpha.results.beta/*:last()
@@ -500,17 +496,14 @@ $alpha.results.:groups():last()
 
 ### Find runs by relative time
 
-#### Four ways to find errors in any named-result run since close of business yesterday
+#### Find errors in any named-result run since close of business yesterday
 $*.results.:flatten():from(:yesterday(:hour(18))).*:errors()
-$*.results.:flatten():from(-10):to(-1)
-$*.results.:flatten():from(:index(-10)):to(:index(-1))
-$*.results.:flatten():from(:date("2026-01-01")):to(:date("2026-05-01"))
 
 ### Find errors from yesterday at a specific idchain of a csvpath with the `purchases` identity
-$acme.results.:flatten():from(:yesterday()).purchases:errors(:idchain("customer[0]id[0]"))
+$acme.results.:flatten():yesterday().purchases:errors(:idchain("customer[0]id[0]"))
 
 ### What errors yesterday from a csvpath with the `purchases` identity matched a customer
-$acme.results.:flatten():from(:yesterday()).purchases:errors(:message(/customer: 319/))
+$acme.results.:flatten():yesterday().purchases:errors(:message(/customer: 319/))
 
 ### Two equivalent ways to find csvpaths generating more than 10 errors yesterday
 $acme.results.:flatten():yesterday().*:errors(:count(:above(10)))
@@ -519,8 +512,18 @@ $acme.results.:flatten():yesterday().:errors(:count(:above(10)))
 ---
 
 ### use of :all()
-#### Runs for each 0-level template (a.k.a. no template)
+#### The single last run of those with 0-level templates (a.k.a. no template)
 $alpha.results.:all():last()
+
+#### The single last run of those with templates equivalent to or matching `test/one/:run_dir`
+$alpha.results.test/one/:all():last()
+
+#### The set of last runs for each group of runs with 3-level templates
+where the first level is `test` and the third level is `one`, grouped by
+the values of the 2nd template level
+$alpha.results.test/:all()/one:last()
+
+
 
 #### All csvpaths for all runs having no template
 $alpha.results.:all().:all()
@@ -664,12 +667,11 @@ Note that when we have information available without using a manifest we must ge
 
 #### All pull field values from the run manifest
 $widgets.results.:first():serial()
-$widgets.results.:first():valid()
-$widgets.results.:first():completed()
-$widgets.results.:first():files_complete()
+$widgets.results.:first():all_valid()
+$widgets.results.:first():all_completed()
 $widgets.results.:first():status()
 $widgets.results.:first():method()
-$widgets.results.:first():hostname()
+$widgets.results.:first():host()
 $widgets.results.:first():username()
 $widgets.results.:first():time_completed()
 $widgets.results.:first():manifest_path()
@@ -691,7 +693,7 @@ $widgets.results.:first().company_names:serial()
 $widgets.results.:first().company_names:identity()
 $widgets.results.:first().company_names:actual_data_file()
 $widgets.results.:first().company_names:origin_data_file()
-$widgets.results.:first().company_names:file_fingerprints()
+$widgets.results.:first().company_names:fingerprints()
 $widgets.results.:first().company_names:source_mode_preceding()
 $widgets.results.:first().company_names:preceding_instance_identity()
 $widgets.results.:first().company_names:manifest_path()
@@ -702,9 +704,6 @@ $widgets.results.:first().company_names:named_file_name()
 
 #### All in name_three. One result per statement in last run. If run has 3 statements, finds 3 results.
 $acme.results.:last().:all():uuid()
-
-#### All in name_one. Finds the last run per 0-level template
-$alpha.results.:all():last()
 
 ---
 
@@ -801,8 +800,7 @@ plus the name_two value
 $alpha.files.:name("orders.csv").*
 $alpha.files.:name("orders.csv").:all()
 
-#### Two ways to get the first version
-$alpha.files.:name("orders.csv"):first()
+#### Get the first version of `alpha` registered file `orders.csv`
 $alpha.files.:name("orders.csv").:first()
 
 Note that file homes do not have UUID but since both references point
@@ -955,8 +953,7 @@ $*.files.:groups().:last()
 $alpha.files.:name("orders.csv").:last():uuid()
 $alpha.files.:name("orders.csv").:last():time()
 $alpha.files.:name("orders.csv").:last():fingerprint()
-$alpha.files.:name("orders.csv").:last():origin()
-$alpha.files.:name("orders.csv").:last():mark()
+$alpha.files.:name("orders.csv").:last():source()
 
 ### Find a named-file registered version by fingerprint.
 $alpha.files.:fingerprint("a711df7d2846e8ba46125d3f7adb7aea0ede50eb20a6550fca2358628a05425b")
@@ -985,7 +982,9 @@ Therefore, you cannot combine a path with the `:readme()` function in
 
 
 ### Version pointers
-Note that these return path+uuid, where path is always the same `group.csvpaths`. Each can be used to resolve the full content of `group.csvpath` for that version.
+Note that these return path+uuid, where path is always the same `group.csvpaths`.
+Each can be used to resolve the full content of `group.csvpaths` for that
+version.
 
 #### The last version of `acme`
 $acme.csvpaths.:last()
@@ -1149,9 +1148,8 @@ $*.csvpaths.:all()
 $acme.csvpaths.:last():uuid()
 $acme.csvpaths.:last():time()
 $acme.csvpaths.:last():fingerprint()
-$acme.csvpaths.:last():origin()
+$acme.csvpaths.:last():source()
 $acme.csvpaths.:last():manifest_path()
-$acme.csvpaths.:last():time_completed()
 $acme.csvpaths.:last():named_paths_name()
 $acme.csvpaths.:last():named_paths_identities()
 $acme.csvpaths.:last():named_paths_count()

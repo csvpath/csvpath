@@ -555,7 +555,9 @@ each fully occupy their `name_one` or `name_three` segment:
 
 #### 4.2
 `:all()` anywhere in the `name_one` groups the remaining `name_one` search
-space by the names found at the grouping segment (`:all()`'s position).
+space by the names found at the grouping segment (`:all()`'s position). In
+this context a path segment can also be referred to as a template level.
+
 The reference processes each group independently of the other groups. That
 means that a `:last()` function that follows an `:all()` will give the last
 item found by looking solely at its group scope. At the same time the

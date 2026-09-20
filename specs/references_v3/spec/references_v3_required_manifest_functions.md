@@ -79,8 +79,8 @@ named-file.
 | uuid |  | :uuid() | A unique ID for the file registered. It is found in this manifest and in the named-file's own manifest. |
 | file_manifest |  | :file_manifest() | A fully qualified pointer to the named-file's manifest. |
 | username | optional | :username() | If we can know the username, it is captured here. In some cases, the username is not available. And for multi-project systems like FlightPath Server the user will always be the account that owns the long running process serving multiple projects, making the username less helpful. |
-| hostname | optional | :hostname() | The hostname of the registering process. In the case of a long-running process serving multiple projects, this field will be less useful in tracing than a process that is one of many interacting with the staging area. |
-| ip_address | optional | :host() | Currently always null. `Metadata.__init__` (`csvpath/managers/metadata.py`) sets `self.ip_address = None` and the actual `socket.gethostbyname()` lookup that would populate it is commented out, because it was found to block for multiple seconds in some environments. The field exists for a future fix, not a working lookup today. |
+| hostname | optional | :host() | The hostname of the registering process. In the case of a long-running process serving multiple projects, this field will be less useful in tracing than a process that is one of many interacting with the staging area. |
+| ip_address |  | N/A | Do not use. |
 | type |  | :type() | File extension. E.g. `csv`, `xlsx`, etc. |
 | named_file_name |  | :named_file_name() | This is the named-file. |
 | origin_path |  | :source() | The source path of the original data file that is registered and copied into the named-file. This is the path segments data that the named-file's default template, or a template provided by the user at registration-time, uses to construct the path within the named-file. |
@@ -92,7 +92,7 @@ named-file.
 | name_home |  | :named_file_home() | The named-file's root directory. It is named by the named-paths name and contains all the template-driven and non-template filesystem paths within the named-file. |
 | template | optional | :template() | This function returns the actual template used in a registration. A string with braces-bracketed replacement tokens that determines the path within the named-file of the file home, where a registered file is stored. The replacement tokens are of two kinds: 1. the indexes of the path segments found in the origin path. E.g. :0 for the first directory below the root, :1 for the next path segment, and so on, and 2. tokens for elements of the current datetime, e.g. :day, :month, :year, etc. |
 | mark | optional | N/A | The name of a worksheet in an Excel file. This is accessible via `name_two` |
-| manifest_path |  | :manifest()  | The path to the file holding this entry. |
+| manifest_path |  | :manifest_path()  | The path to the file holding this entry. |
 | status | optional | :status() | Contains a message if registration failed for some reason. E.g. if HTTP files are disallowed, an attempt to register an http://... URL will fail and a message will appear in this field. |
 
 ---
@@ -118,7 +118,7 @@ of the whole group.
 | time_started | optional | N/A | Technically, the beginning moment of the load. Use `:time()` |
 | time_completed | optional | N/A | Technically the end moment the load completes. A long running load is quite unlikely. |
 | uuid |  | :uuid() | The unique identifier for this version of the named-paths group. |
-| manifest_path |  | :manifest() | The path to this file. |
+| manifest_path |  | :manifest_path() | The path to this file. |
 | template | optional | :template() | The default run dir template. A string with braces-bracketed replacement tokens that determines the path within the named-results of the run directory (typically referred to as the run dir), where results are stored. The replacement tokens are of two kinds: 1. the indexes of the path segments found in the origin path. E.g. :0 for the first directory below the root, :1 for the next path segment, and so on, and 2. tokens for elements of the current datetime, e.g. :day, :month, :year, etc. |
 
 ---
@@ -140,10 +140,10 @@ finder.
 | time |  | :time() | The moment the named-paths group version this entry represents was loaded. |
 | uuid |  | :uuid() | The unique identifier for the version of the named-paths group this entry represents. |
 | username | optional | :username() | If available, the username owning the process that loaded the version of the named-paths group this entry represents. |
-| hostname | optional | :hostname() | If available, the host where the process that loaded the version of the named-paths group this entry represents was located. |
-| ip_address | optional | :host() | Currently always null. `Metadata.__init__` (`csvpath/managers/metadata.py`) sets `self.ip_address = None` and the actual `socket.gethostbyname()` lookup that would populate it is commented out, because it was found to block for multiple seconds in some environments. The field exists for a future fix, not a working lookup today. |
+| hostname | optional | :host() | If available, the host where the process that loaded the version of the named-paths group this entry represents was located. |
+| ip_address |  | N/A | Do not use. |
 | paths_manifest |  | :group_manifest() | The path to the `manifest.json` of the named-paths group, constructed using `[inputs] csvpaths` from `config.ini`. |
-| manifest_path |  | :manifest() | The path to this `manifest.json`, constructed using `[inputs] csvpaths` from `config.ini`. |
+| manifest_path |  | :manifest_path() | The path to this `manifest.json`, constructed using `[inputs] csvpaths` from `config.ini`. |
 
 ---
 
@@ -179,7 +179,7 @@ dict inside each run's own directory.
 | ip_address |  | N/A | Do not use. |
 | username |  | :username() | If available, the user owning the process that performed the run. |
 | method |  | :method() | The run method is one of collect_paths, fast_forward_paths, next_paths, collect_by_line, fast_forward_by_line, next_by_line. Methods that include the suffix `_paths` run the csvpaths in the named-paths group serially one following the other, each starting from the top of the data. The methods with the suffix `_by_line` have each csvpath statement in the named-paths group consider each line before they all start again with the next line. The difference is usually not significant, but in some cases the difference in processing order allows for different desired outcomes. |
-| manifest_path |  | :manifest() | The path to this manifest. |
+| manifest_path |  | :manifest_path() | The path to this manifest. |
 
 ---
 
@@ -235,7 +235,7 @@ named-paths group.
 | identity |  | :identity() | The ID or index of this csvpath statement in the named-paths group that is driving this run. |
 | named_paths_name |  | :named_paths_name() | The named-paths group driving the run. |
 | named_file_name |  | :named_file_name() | The named-file name of the version bytes this run is applying its named-paths group to |
-| manifest_path |  | :manifest() | The path to this manifest. |
+| manifest_path |  | :manifest_path() | The path to this manifest. |
 | archive_name |  | :archive_name() | The name of the archive dir at the time this run occurred. |
 | archive_path |  | :archive() | The path to the archive dir at the time this run occurred. |
 | base_path |  | N/A | Deprecated. Do not use. See issue #225. |
