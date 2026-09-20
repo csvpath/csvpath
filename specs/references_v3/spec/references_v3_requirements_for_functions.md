@@ -26,18 +26,16 @@
 ### Reference Language should support type-ahead, so functions must be
     prepared to contribute to that capability.
 
-### Functions must self-report whether they are a context setter, a pointer, or a value function
+### Functions must self-report whether they are acting as context setter,
+pointer, or a value function
     (see below for the third role).
 
     A context setter narrows the current scope without resolving to a
-    specific item (e.g. :before()/:after()/:from()/:to()). Note that
-    :yesterday() and :quarter() are NOT context setters themselves --
-    see the value function entry below; they are what a context setter
-    like :before() takes as its boundary argument.
-    A pointer resolves the current scope down to exactly 0 or 1 item
-    (e.g. :last(), :first(), :index(5), :uuid("...")). A bare name_one
-    made up only of functions is implicitly scoped by "*" -- name_one ==
-    :first() means the same as *:first().
+    specific item (e.g. :before()/:after()/:from()/:to()). A pointer
+    resolves the current scope down to exactly 0 or 1 item (e.g. :last(),
+    :first(), :index(5), :uuid("...")). A bare name_one made up only of
+    functions is implicitly scoped by "*" -- name_one == :first() means
+    the same as *:first().
 
     What a pointer resolves to depends on where it sits. In name_one a
     pointer resolves to a physical file, a named-paths group version, or
@@ -71,25 +69,25 @@
     :before(:yesterday()):index(3) and :index(3):before(:yesterday())
     are the same reference.
 
-### A third role exists alongside context setter and pointer: a value function.
 
-    Context setters and pointers both operate on the current scope,
-    narrowing it, or reducing it to one item. A value function does
-    neither. It computes a value (usually clock/calendar-derived, e.g.
-    :year(), :quarter(), :today(), :yesterday(), :hour(), :hours(-24),
-    or a bare :date("...")) and behaves like a computed literal
-    wherever it is used: as a path segment (matched/narrowed by
-    equality, exactly as a literal string would be), or as an argument
-    feeding a true context setter's boundary (e.g.
-    :before(:yesterday()) -- :yesterday() supplies the value,
-    :before() is the context setter that narrows scope with it).
+### A third role exists alongside context setter and pointer: acting
+as a value.
 
-    A value function never counts toward the "at most one pointer per
-    chain" rule, and needs no special handling for the bare-"*"-
-    must-be-qualified rule either -- once it resolves to a value it is
-    exactly as "complete" as a literal segment.
+    A function may also act as a value producer in some situations. When
+    so acting it computes a value usable as a path segment or as another
+    function's argument. A function offering this role must self-report
+    it, runtime-inspectably, alongside its context-setter/pointer
+    self-reporting above. See the compendium for which functions offer
+    this role and when.
 
-### String args support "{...}" interpolation, substitute for a multi-arg string :concat()
+    A function acting as a value never counts toward the "at most one
+    pointer per chain" rule, and needs no special handling for the
+    bare-*-must-be-qualified rule either — once it resolves to a value it
+    is exactly as "complete" as a literal segment.
+
+
+### String args support "{...}" interpolation, substitute for a multi-arg
+string :concat()
 
     Because a function takes at most 1 arg (see above), there is no way
     to write :concat(). Instead, a quoted string arg may contain one or

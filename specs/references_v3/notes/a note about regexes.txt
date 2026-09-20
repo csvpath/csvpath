@@ -1,0 +1,19 @@
+
+
+### The value of /regex/ vs. :regex(...)
+
+- /regex/ is terse and clearly part of the path, when used as a path segment. when used as an argument it is considerably more readable than a :regex(...) argument.
+
+- :regex(...) has the benefit of being parameterized. :regex(@aregex) nicely externalizes a reference, making it more general. In some ways, :regex(...) may be easier to read just by its being explicit.
+
+Do we need a regular expression capability in root_major? No, but it would be a natural way to allow for a crowded project. A named-files area could have `acme_orders`, `acme_invoices`, `acme_shipping`, and the same for other partners, for e.g. `abba_invoices`. In that case, the crowded information space would be a bit more manageable if our references could target /abba_.*/ vs. /acme_.*/.
+
+Should root_major have a bare regex capability, just `:regex(...)` or both? I think just function.
+
+We would like both forms and we can have them without undue muddiness. I think a bare /regex/ should only be allowed as an argument. In every other case, `:regex(...)` is required. That will help visually and in terms of understanding the grammar.
+
+
+
+
+
+

@@ -9,6 +9,52 @@ instead, so the completed reasoning trail isn't lost, it's just off this
 list (see that file's own header, and the "Process note" at the bottom of
 this one).
 
+## Archive Run Manifest `uuid` field — written to metadata but not persisted to the manifest; needs a read/write unit test
+
+Surfaced 2026-09-20 while adding archive-ledger examples to the normative
+references doc (`$*.results.:manifest():uuid("..."):run_home()` — "get the
+run dir of a run containing a csvpath instance with a certain UUID").
+Table 7 (Archive Run Manifest) didn't document a `uuid` field at all, only
+`run_uuid` (the parent run's UUID); the per-instance execution UUID that
+the example needed only existed in Table 6 (Result Instance Manifest).
+
+David: the UUID is already copied onto the metadata from the `Result`
+object at run start for that instance — it just wasn't making it through
+to the manifest file. Added the write in `RunRegistrar`, and added the
+corresponding `uuid` field row to Table 7
+(`references_v3_required_manifest_functions.md`) — `:uuid()`, "Uniquely
+identifies this csvpath statement in the run."
+
+**Still needed**: a unit test confirming the *correct* UUID is what
+actually gets read/written here. There are several UUIDs in play at the
+instance level (`run_uuid`, `named_paths_uuid`, `named_file_uuid`, and now
+this instance-execution `uuid`) — easy to wire up the write correctly but
+still pull the wrong one, so this needs explicit verification, not just
+confirmation that *a* UUID shows up in the field.
+
+## Results Run Manifest `template` field — written by `RunRegistrar` and read by `ResultsMetadata`, but not actually showing up on a real run
+
+Surfaced 2026-09-20, same session as the archive-ledger `uuid` gap above,
+while adding "two ways to find the template used by a run" examples to the
+normative references doc. Table 5 (Results Run Manifest) didn't document a
+`template` field — `template` was only present on Table 7 (Archive Run
+Manifest, recorded per-instance) and Table 3 (Named-Paths Manifest, the
+group's default at load time, a different thing).
+
+David: `RunRegistrar` appears to write it and `ResultsMetadata` captures/
+loads it, but it's not actually present on an actual run's manifest — a
+genuine bug, not a spec gap. Filed as a GitHub issue. Added the `template`
+field row to Table 5 (`references_v3_required_manifest_functions.md`) —
+`:template()` — documenting the intended end state ahead of the fix, same
+approach as the `uuid` entry above.
+
+**Still needed**: the actual bug fix (why the write isn't landing despite
+the code path appearing to exist), then a unit test confirming
+`$*.results.:first():template()`-style access actually returns the run's
+real template once fixed — don't assume the write path just needs
+"turning on"; confirm what's actually breaking between `RunRegistrar` and
+the file on disk.
+
 ## `'*'`-traversal content-accessor guards — candidates for the same query()/resolve() split, not yet re-audited
 
 Left over from retiring `:path()`/moving Rule 1 to `resolve()` (see
@@ -239,6 +285,22 @@ NOT part of that build:
 
 - `root_major` accepting a `:regex(...)` function — **BUILT 2026-08-27**,
   see `deferred_work_done_list.md`.
+- `:regex(...)` as a name_one selector for RESULTS (matching a run's own
+  directory name by pattern, at ANY template depth) — NOT built. Surfaced
+  2026-08-30 while working through worked examples for the `:home()`/
+  `:all()` investigation (see the content-accessor-guards entry above).
+  Confirmed live: `$alpha.results.:regex("2026-01-01_").header_checks
+  :errors()` raises `":regex() is not legal at name_one for results"`
+  today — a deliberate, explicit rejection, not an accidental gap.
+  Distinct from `:regex()` at root_major (matches named-results-GROUP
+  names) — this matches run NAMES instead, and is meant to be orthogonal
+  to `:home()`/`:all()`'s template-depth restriction (David, 2026-08-30):
+  filtering by the run's own name pattern regardless of how many
+  template segments precede it, not a replacement for the depth
+  selectors. Likely bundles naturally with whatever fix comes out of the
+  `:home()`/`:all()` work, since both touch the same name_one matching
+  code, but is its own distinct capability, not a symptom of the same
+  bug.
 - `@variable` (`Variable3`) registration and `{...}` interpolation
   evaluation are both **built 2026-08-26** — see `deferred_work_done_list.md`.
   `@variable` used as some OTHER function's *own direct argument* (e.g.

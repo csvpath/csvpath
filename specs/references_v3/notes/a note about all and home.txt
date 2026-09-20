@@ -1,0 +1,42 @@
+Given a named_files location of ./named_files and 7 registrations of 3 filenames (shone below in arrival order) under the `acme` named-file:
+- named_files/acme/one.csv/23a90b2eca....csv
+- named_files/acme/one.csv/7bcc89981a....csv
+- named_files/acme/one.csv/44012cdfac....csv
+- named_files/acme/two.csv/7bcc89981a....csv
+- named_files/acme/two.csv/53adac87b2....csv
+- named_files/acme/level/three.csv/33fa20a81a....csv
+- named_files/acme/level/three.csv/9a2b101eaa....csv
+
+
+The ref:
+    $acme.files.:home().:last()
+
+yields:
+    [
+        {...,"fingerprint"="44012cdfac..."},
+        {...,"fingerprint"="53adac87b2..."}
+    ]
+
+Whereas, the ref:
+    $acme.files.:all().:last()
+
+yields:
+    [
+        {...,"fingerprint"="9a2b101eaa..."}
+    ]
+
+The rule is:
+- `:home()` indicates that the file home is directly under the named-file home. I.e. `one.csv` is directly under `acme`.
+- `:all()` represents all the path segments at a given location. said another way, `:all()` is a template level. That means that `:all()` takes up space; whereas, `:home()` does not.
+
+For example a named-file template of `2026/:2/:filename` has 2 levels: `2026` and `:2`. Said another way, it has two path segments. Given a file: `orders/emea/q1/widget-orders.csv` a registration under `acme` would result in something like:
+- named_files/acme/2026/q1/widget-orders.csv/909ad8d971d....csv
+
+In this case, neither `$acme.files.:all().:last()` nor `$acme.files.:home().:last()` would select the registered version. However, `$acme.files.2026/:all().:last()` would pick it up. As would `$acme.files.:flatten().:last()`, along with the other 7 registrations.
+
+
+
+
+
+
+

@@ -1,0 +1,31 @@
+Diving into the RESULTS section first, since it has the heaviest concentration of the time-function constructs we just finished nailing down — and several examples there predate that work and now conflict with it.
+
+Real error — the "identical" claim in the file's own opening notes. Right at the top of the RESULTS section:
+
+▎ "Likewise, :from(:yesterday()) is do able but not necessary -- a simple :yesterday() is enough."
+
+This draws a direct parallel to the preceding sentence's claim that :from(:index(-3)) ≡ :from(-3). But per what we just settled: bare :yesterday() is a closed window (first moment to last moment of yesterday only — §6.27e/f). :from(:yesterday()) uses yesterday as an argument, collapsing to its first moment, then :from() means greater-than-or-equal with no upper bound — so it's "yesterday's start onward, forever," which includes today, tomorrow, everything after. These are not the same set at all; :from(:yesterday()) is a strict superset of :yesterday(). This note should either be corrected or removed.
+
+That's not an isolated slip — it recurs through "Find runs by relative time" (lines ~501–513):
+
+1. "Two equivalent ways to find csvpaths generating more than 10 errors yesterday" (line 515) correctly uses bare :yesterday() for both variants — this one's right, and matches §3.19b's implied-* mechanism nicely.
+2. But "Find errors from yesterday at a specific idchain..." (line 510) and "What errors yesterday...matched a customer" (line 513) both use $acme.results.:flatten():from(:yesterday())... — open-ended from yesterday onward — to mean "yesterday specifically." Per the settled rule, these should just be bare :yesterday() to actually scope to that one day.
+
+Real error — the "four ways" block doesn't hold up (lines 503–507):
+
+▎ "Four ways to find errors in any named-result run since close of business yesterday"
+▎ $*.results.:flatten():from(:yesterday(:hour(18))).*:errors()
+▎ $*.results.:flatten():from(-10):to(-1)
+▎ $*.results.:flatten():from(:index(-10)):to(:index(-1))
+▎ $*.results.:flatten():from(:date("2026-01-01")):to(:date("2026-05-01"))
+
+Only the first line plausibly matches the stated goal. The 2nd/3rd are position-based ("last 10 runs, excluding the very last") — equivalent to each other, but only coincidentally equivalent to "since 6pm yesterday" if exactly the right number of runs happened to occur in that window. The 4th is a fixed 2026-01-01 to 2026-05-01 calendar range that has no relationship to "yesterday" at all — reads like leftover content from a different example that never got adapted to this heading. This block needs a real second look, not just a wording tweak.
+
+Want me to keep going through the rest of RESULTS (templates/wildcards portions looked fine on a first pass) and then FILES/CSVPATHS, or would you rather fix these three first?
+
+✻ Crunched for 1m 36s · done 6:22 PM
+
+※ recap: We're reviewing the references-v3 spec docs line by line for consistency before implementation begins. Just flagged real errors in the RESULTS section's time-based examples (yesterday/from mix-ups, a bad "four equivalent ways" block); waiting on you to say whether to fix those first or keep scanning FILES/CSVPATHS.
+                                                             new task? /clear to save 234.6k tokens
+─────────────────────────────────
+
