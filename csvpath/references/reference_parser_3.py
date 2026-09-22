@@ -11,11 +11,12 @@ from .reference_transformer_3 import Reference3Transformer
 # ReferenceParser3 wraps a references-v3 query string: parses it (via
 # QueryParser3 + Reference3Transformer) into a Reference3 object graph
 # (reference_3.py) and holds the CsvPaths context a ReferenceFinder3
-# (not yet built) will need to actually run the query.
+# (reference_finder_3.py, one concrete subclass per datatype) needs to
+# actually run the query.
 #
-# workflow (see "creating references v3.txt"):
+# workflow (compendium 5.23's own "two-call workflow" example):
 #   ref = ReferenceParser3(string="$acme.files.*.:last()", csvpaths=paths)
-#   finder = FilesReferenceFinder3(ref)
+#   finder = FilesReferenceFinder3(csvpaths=paths, ref=ref)
 #   results = finder.query()
 #   data = finder.resolve()
 #

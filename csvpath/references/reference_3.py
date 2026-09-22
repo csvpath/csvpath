@@ -5,8 +5,8 @@ from .reference_exceptions_3 import ReferenceException3
 # from a references-v3 parse tree (see reference_grammar_3.py). these are
 # plain value objects -- no execution/query context, no filesystem access.
 # ReferenceParser3 (reference_parser_3.py) is the thing that pairs a
-# Reference3 with a CsvPaths context; a ReferenceFinder3 (not yet built)
-# is what actually runs a query against storage.
+# Reference3 with a CsvPaths context; a ReferenceFinder3
+# (reference_finder_3.py) is what actually runs a query against storage.
 #
 
 
