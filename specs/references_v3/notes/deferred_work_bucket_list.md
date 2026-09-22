@@ -28,36 +28,6 @@ question without a new registered name. No worked example anywhere in the
 docs uses `:file_name()`, so this is a genuine open design question, not
 something to guess at.
 
-## RESULTS: `:all()` at a middle (non-run_dir) name_one position — not built
-
-Surfaced 2026-09-21, alongside the RESULTS zero-level/degenerate-grouping
-fix (see `deferred_work_done_list.md` for that fix's own writeup once
-moved). The compendium's `test/:all()/one:last()`-style worked example —
-grouping by a genuine middle template segment, with a literal segment
-after it before the implied run_dir — has no supported code path today.
-Confirmed live: `$test.results.test/:all()/one:last()` raises
-`"Does not yet support :all() as a name_one path segment -- only
-:name(\"...\"), a clock value function (e.g. :year()), and literal/'*'
-segments are supported."` — a clean, deliberate rejection (from
-`ReferenceFinder3._compile_path_pattern()`), not a silent misbehavior.
-
-`results_reference_finder_3.py`'s `query()` only recognizes `:all()` in
-two shapes: bare (the sole name_one content) and as the *last* path
-segment after a fixed prefix — both of which, per the 2026-09-21 fix,
-correctly degenerate to zero-level, since in both shapes `:all()` sits at
-the run_dir slot. A middle-position `:all()` (something else follows it,
-e.g. a literal segment before the implied run_dir) is a genuinely
-different, non-degenerate case — real grouping by whatever value occupies
-that specific segment, per compendium 4.2. Needs its own dispatch branch,
-mirroring how `:groups()`'s existing `_group_key(prefix_len=...)` already
-handles an arbitrary-depth remainder correctly; unlike `:groups()`,
-`:all()` here needs to also constrain the pattern to have something
-*after* the wildcarded position before it stops (an exactly-one-segment
-grouping, not any-depth) which is currently not modeled in
-`_compile_path_pattern()`/`_matches_prefix()` at all. Not attempted here to
-keep the zero-level fix's own diff reviewable — this is additive new
-capability, not a correction to existing (wrong) behavior.
-
 ## Time component functions acting as context setters — not built at all; ROLE is currently static per function, never usage-dependent
 
 Surfaced 2026-09-21, first pass through `csvpath/references/functions/values/`

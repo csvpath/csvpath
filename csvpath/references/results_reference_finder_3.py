@@ -425,6 +425,63 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     rh: self._group_key(rh, home, prefix_len=len(prefix_pattern))
                     for rh in candidates
                 }
+        elif any(
+            isinstance(seg, FunctionCall3) and seg.name == "all"
+            for seg in name_one.path[:-1]
+        ):
+            # a MIDDLE-position ':all()' -- e.g. "test/:all()/one:last()"
+            # (added 2026-09-22, closing the deferred-work bucket list
+            # gap of the same name). Genuinely different from the
+            # "':all()' as the last segment" branch above: there, ':all()'
+            # sits at the run_dir slot itself, which never repeats, so it
+            # degenerates to '*' (compendium 4.2b). Here it groups by a
+            # real, fixed-position template segment, with more required
+            # structure (a literal/wildcard suffix) between it and the
+            # implied run_dir -- compendium 4.2's own rule: "groups the
+            # remaining name_one search space by the names found at the
+            # grouping segment." Only ':all()' gets this treatment, not
+            # ':groups()'/':flatten()' -- both are any-depth already
+            # (their own "last segment" branches above already match any
+            # remaining depth after their fixed prefix), so a MIDDLE
+            # position for either would be ambiguous about how much of
+            # the remainder is "the group" vs "required structure after
+            # it" in a way ':all()' is not (its own remainder is always
+            # exactly one segment, by construction).
+            all_index = next(
+                i
+                for i, seg in enumerate(name_one.path)
+                if isinstance(seg, FunctionCall3) and seg.name == "all"
+            )
+            if name_one.path[all_index].arg is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3's ':all()' does not take an "
+                    "argument."
+                )
+            prefix_pattern = self._compile_path_pattern(name_one.path[:all_index])
+            # _compile_path_pattern() itself rejects a second ':all()'/
+            # ':groups()'/':flatten()' in the suffix (none of them are
+            # SOURCE == "clock"), enforcing compendium 4.2b's "name_one
+            # can have only one :all() or :groups()" for free, no
+            # separate check needed here.
+            suffix_pattern = self._compile_path_pattern(
+                name_one.path[all_index + 1 :]
+            )
+            pattern = [*prefix_pattern, Star3(), *suffix_pattern]
+            candidates = [
+                rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
+            ]
+            if pointer is not None:
+                # _group_key()'s own "every segment after prefix_len, as
+                # a tuple" already does the right thing here even though
+                # the suffix segments are included in that tuple too
+                # (e.g. (X, "one") instead of just (X,)) -- the suffix is
+                # FIXED by the pattern match itself, identical across
+                # every candidate in this set, so grouping by the longer
+                # tuple partitions identically to grouping by X alone.
+                group_key_for = {
+                    rh: self._group_key(rh, home, prefix_len=len(prefix_pattern))
+                    for rh in candidates
+                }
         else:
             # plain literal/'*' path, no trailing ':flatten()'/':all()'/
             # ':groups()' marker, e.g. "customers/2025" or "beta/*" or

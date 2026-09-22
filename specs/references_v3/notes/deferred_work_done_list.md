@@ -9,6 +9,53 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## RESULTS: `:all()` at a middle (non-run_dir) name_one position — BUILT 2026-09-22
+
+The normative doc's own worked example, `$alpha.results.test/:all()/
+one:last()` ("the set of last runs for each group of runs with 3-level
+templates where the first level is `test` and the third level is `one`,
+grouped by the values of the 2nd template level"), used to raise a clean,
+deliberate rejection from `ReferenceFinder3._compile_path_pattern()` — that
+shared helper (used by FILES too) had no notion of `:all()` as a legal
+path-building segment at all, only literal/`'*'`/`:name(...)`/a clock
+value function. `results_reference_finder_3.py`'s `query()` only
+recognized `:all()` in two shapes (bare, or as the *last* path segment
+after a fixed prefix), both of which degenerate to zero-level per
+compendium 4.2b — a middle-position `:all()` is a genuinely different,
+non-degenerate case: real grouping by whatever value occupies that
+specific segment, per compendium 4.2.
+
+**What was built:** a new `elif` branch in `query()`'s existing `:all()`/
+`:flatten()`/`:groups()` dispatch chain, triggered when `:all()` appears
+anywhere in `name_one.path` except the last position (the existing
+branches already claim that case). Splits the path at the `:all()`
+segment into a `prefix` and `suffix`, compiles each independently via the
+UNCHANGED shared `_compile_path_pattern()` (deliberately not touched, to
+avoid affecting FILES), then builds one combined pattern
+`[*prefix_pattern, Star3(), *suffix_pattern]` — `_matches_prefix()` already
+treats `Star3` as a wildcard at any position, so no new matching primitive
+was needed, just the right pattern to feed the existing one. A second
+`:all()`/`:groups()`/`:flatten()` in the suffix is rejected for free, since
+`_compile_path_pattern()` already rejects any non-clock function segment —
+satisfies compendium 4.2b's "name_one can have only one `:all()` or
+`:groups()`" without a separate check.
+
+**One design question resolved by inspection, not guessed:** whether the
+existing `_group_key(prefix_len=...)` (built for `:groups()`'s any-depth
+case) would need changing to ignore the suffix segments when partitioning.
+It does not — `_group_key()` returns every segment after `prefix_len` as a
+tuple, which for this case includes the (fixed, identical-across-every-
+candidate) suffix alongside the real grouping value, e.g. `(X, "one")`
+instead of `(X,)`. Since the suffix is already guaranteed identical for
+every candidate in the matched set, grouping by the longer tuple produces
+identical partitions to grouping by the value alone — reused as-is.
+
+Four new tests added (`TestAllGroupingAtAMiddlePosition`): grouping by the
+middle segment with `:last()` reducing each group, non-matching runs
+(wrong prefix, or missing the required suffix) correctly excluded, the
+no-pointer case giving every matching run unreduced, and an argument on
+`:all()` still rejected the same as everywhere else.
+
 ## `:readme()` combined with a pointer — now rejected instead of silently ignored, CSVPATHS — BUILT 2026-09-22
 
 Compendium 6.12/6.19: "you cannot combine version selection with the
