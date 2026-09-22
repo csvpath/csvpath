@@ -9,6 +9,48 @@ instead, so the completed reasoning trail isn't lost, it's just off this
 list (see that file's own header, and the "Process note" at the bottom of
 this one).
 
+## CSVPATHS name_three `:from()`/`:to()` identity-string range mode — currently actively rejected, not just unbuilt
+
+Surfaced 2026-09-21, cross-checking `test_normative_examples_csvpaths.py` against the
+current `normative_reference_examples.txt` ("### ':from()' and ':to()' and
+':before()' and ':after()' as instance ranges" / "### Identities" sections).
+The doc's own worked example: `$acme.csvpaths.:last().:from("header
+checks"):to("validation summary")` — select every statement from the one
+identified `header checks` through the one identified `validation summary`,
+inclusive, in the last version of `acme`. Doc explicitly gives the "no
+match" behavior too: "if the names given do not match, the reference
+returns no results, no error is thrown."
+
+`CsvpathsReferenceFinder3.query()`'s own name_three handling
+(`csvpaths_reference_finder_3.py` ~line 206-212) does not just lack this —
+it actively raises: any `str` bound on a name_three `:from()`/`:to()` is
+assumed to be date-mode (`isinstance(self._range_bound(f), str)` →
+`ReferenceException3("...only supports index-mode bounds (int/:index(n))
+-- statements have no arrival date of their own.")`), since name_one's own
+`:from()`/`:to()` already legitimately uses `str` for date-mode. But
+name_three's own range is over an ordered **identities list**
+(`named_paths_identities`), not a date axis at all — a `str` bound there
+means "the position of the statement with this identity," a third mode
+distinct from both name_one's index-mode and date-mode. `_apply_range()`
+(`reference_finder_3.py`) is purely positional (`items[start:end+1]`) and
+has no notion of resolving a string to a position via `_find_by_identity()`
+first — confirmed via grep, no test anywhere exercises a name_three
+`:from("...")`/`:to("...")` pair, only int/`:index(n)` bounds
+(`test_csvpaths_reference_finder_3.py`'s only string `:from()`/`:to()`
+tests are the name_one date-mode ones).
+
+**Needed before this can be built**: name_three's own `query()` branch
+needs to detect "both bounds (or the one present) are plain `str`, not
+wrapped in `:date(...)`/`:index(...)`" and, in that case, resolve each
+bound via `_find_by_identity(bound, identities)` to a position first, then
+slice — distinct from the existing raise, which should stay for an actual
+`:date(...)`-wrapped bound (still meaningless for statements). Also needs
+the "wrap `:before()`/`:after()` a third exclusive-of-bound mode" question
+answered first if the identity-mode is meant to support those too (the
+doc's own section header lists `:before()`/`:after()` alongside `:from()`/
+`:to()` here) — see the "Direction/ordinal functions" entry above, which
+those two functions belong to regardless of datatype.
+
 ## `:readme()` built for the bare case; combined-with-a-pointer rejection not enforced for CSVPATHS
 
 Added 2026-09-21 (`Readme3`, wired into both `FilesReferenceFinder3` and
@@ -100,8 +142,12 @@ legal bare/chain-level position) or misinterpreted as a literal path segment.
 recognizes "this VALUE-role function is sitting bare in a chain, not nested
 as an argument" and turns that into an actual date-range filter on the
 candidate pool, distinct from `CONTEXT_SETTER`-role functions like
-`:before()`/`:after()`, which already narrow scope but do not compute a
-clock-derived value themselves. Likely needs its own worked examples per
+`:from()`/`:to()`, which already narrow scope but do not compute a
+clock-derived value themselves. (`:before()`/`:after()` would be the same
+kind of `CONTEXT_SETTER` in principle, but per the dedicated "Direction/
+ordinal functions" entry below, they are not built at all yet — this
+comparison is illustrative of the intended role split, not a claim that
+`:before()`/`:after()` are working code today.) Likely needs its own worked examples per
 datatype (files/csvpaths/results all have different "what does the anchor
 apply to" semantics per §6.27f's arrival/load/runtime split) before
 anything is buildable — same shape as the other still-open design items in
@@ -478,19 +524,73 @@ and a stale-entry correction, are both done — see
 ## Functions
 
 - Functions named in the spec/example-queries docs with no `Function3`
-  subclass yet: `:before()`/`:after()`, `:quarter()`, `:choice()`,
-  `:names()`, `:message()`, `:count()`, `:above()`, `:has_errors()`,
-  `:at()`. (Corrected 2026-08-26: `:type()` used to be listed here too,
-  but it was built as part of the Table 1 field-accessor batch —
-  confirmed live, `Type3` is registered, `NAME = "type"` — this list had
-  gone stale; removed. Corrected again 2026-08-27: `:yesterday()` was
-  also stale — confirmed live, `Yesterday3` is registered, built
-  alongside `:today()` in the "pure value" date/time functions batch —
-  removed.) None of the remaining names here have settled semantics
-  beyond their bare mention in the spec/example-queries docs — unlike
-  every other item in this file, there is no worked example or design
-  note to build from, so picking one to build means guessing its
-  intended behavior, not implementing an already-decided design.
+  subclass yet: `:quarter()`, `:choice()`, `:names()`, `:message()`,
+  `:count()`, `:has_errors()`, `:at()`. (Corrected 2026-08-26: `:type()`
+  used to be listed here too, but it was built as part of the Table 1
+  field-accessor batch — confirmed live, `Type3` is registered, `NAME =
+  "type"` — this list had gone stale; removed. Corrected again
+  2026-08-27: `:yesterday()` was also stale — confirmed live,
+  `Yesterday3` is registered, built alongside `:today()` in the "pure
+  value" date/time functions batch — removed. Corrected again
+  2026-09-21: `:before()`/`:after()`/`:above()` moved out — see the
+  dedicated "Direction/ordinal functions" entry below; the compendium's
+  §6.22-6.31 series now gives them a fully worked design, so "no design
+  note to build from" no longer applies to those three.) None of the
+  remaining names here have settled semantics beyond their bare mention
+  in the spec/example-queries docs — unlike every other item in this
+  file, there is no worked example or design note to build from, so
+  picking one to build means guessing its intended behavior, not
+  implementing an already-decided design.
+
+## Direction/ordinal functions (`:before()`/`:after()` and their word aliases) — fully specced (compendium §6.22-6.31), zero implementation
+
+Surfaced 2026-09-21, sweeping the selector functions in
+`csvpath/references/functions/selectors/` against the compendium. `:from()`/
+`:to()`/`:index()`/`:first()`/`:last()` all exist and are registered;
+`:before()` and `:after()` do not — confirmed via `grep -rln "before\|after"
+csvpath/references/functions/` (nothing) and via
+`ReferenceFunctionFactory._load()`'s import list (no `Before3`/`After3`, no
+`before`/`after` key in `_FUNCTIONS`). This is not a quiet gap: `:before()`/
+`:after()` appear throughout the compendium's own worked examples (6.27d,
+6.27e/f, 6.28d) and in three existing test files as parsed strings
+(`test_reference_transformer_3.py`, `test_reference_parser_3.py`,
+`test_references_3_grammar.py`'s `:before(:yesterday()):after(:date(...)):
+index(3)` case) — those tests all pass today only because they exercise the
+grammar/transformer layer (pure syntax), never
+`ReferenceFunctionFactory.build()`, so the missing registration is invisible
+to the existing suite.
+
+The compendium's design (§6.22-6.31, all present before this session) is
+complete enough to build from, unlike the placeholder entries in the
+"Functions" list above:
+- `:before(int|str|datetime)` / `:after(int|str|datetime)` — direction-only
+  siblings of `:from()`/`:to()`, same two index/date modes, but exclusive
+  (§6.29b: "less-than"/"greater-than", not "-or-equal") where `:from()`/
+  `:to()` are inclusive.
+- A full alias table (§6.28b): `before`≡`below`≡`lt`; `to`≡`lte`; `after`≡
+  `above`≡`gt`; `from`≡`gte`. All forms with the same meaning are declared
+  equivalent — i.e. potentially 9 registered names (or 9 aliases resolving
+  to 4 underlying behaviors), not just 2 new functions.
+- A combination rule distinct from `:from()`/`:to()`'s own (§6.28c): two
+  same-direction functions (e.g. `:before()` + `:to()`) is illegal (not
+  meaningful — both are upper bounds); a `:before()`/`:to()`-family function
+  may pair with an `:after()`/`:from()`-family one to form a range.
+- Explicit backward-counting edge case (§6.30/6.31): `:from(5):to(3)`
+  ("forced to count backwards") may raise in the first release ("we have no
+  demand for that functionality") but must stay grammatically legal —
+  design says don't preclude it later, doesn't say build it now.
+
+**Not attempted here** — this is a new function family (up to 9 names) plus
+a new validation rule (opposite-direction pairing) layered on top of
+`From3`/`To3`'s existing `POSITIONS`/`ARG_TYPES` shape, not a rename or a
+small consolidation like `Host3`. Building it needs a decision on scope
+first: real distinct `Before3`/`After3` classes vs. one class family with
+alias `NAME`s, whether all 9 aliases ship at once or just the two primary
+names initially, and how alias resolution should interact with
+`ReferenceFunctionFactory._FUNCTIONS`' single-name-keyed registry (an alias
+is either a second dict key pointing at the same class, or its own subclass
+— both work, but pick one convention before the first one is built, so
+later ones don't drift).
 
 ## Bigger, standing items
 
