@@ -410,6 +410,51 @@ class TestNameThreeRange:
                 "$ranger.csvpaths.:first().:from(-2):last()", RANGE_MANIFEST
             ).query()
 
+    def test_identity_mode_selects_the_inclusive_range_between_two_names(self):
+        # added 2026-09-22, per normative_reference_examples.txt's own
+        # "Select sequential statements" worked example -- a bare string
+        # bound resolves to ITS OWN position via _find_by_identity()
+        # first, then the range slices positionally, same as index-mode.
+        results = _finder(
+            '$ranger.csvpaths.:first().:from("two"):to("four")', RANGE_MANIFEST
+        ).query()
+        assert [r.identity for r in results.results] == ["two", "three", "four"]
+
+    def test_identity_mode_resolve_gives_each_windowed_statements_own_text(self):
+        results = _finder(
+            '$ranger.csvpaths.:first().:from("one"):to("two")', RANGE_MANIFEST
+        ).resolve()
+        assert [r.data for r in results.results] == [
+            "stmt one text",
+            "stmt two text",
+        ]
+
+    def test_identity_mode_one_sided_from_gives_an_open_ended_range(self):
+        results = _finder(
+            '$ranger.csvpaths.:first().:from("four")', RANGE_MANIFEST
+        ).query()
+        assert [r.identity for r in results.results] == ["four", "five"]
+
+    def test_identity_mode_no_match_gives_no_results_not_an_error(self):
+        # per the normative doc: "if the names given do not match, the
+        # reference returns no results, no error is thrown, and no
+        # partial results given."
+        results = _finder(
+            '$ranger.csvpaths.:first().:from("nonexistent"):to("four")',
+            RANGE_MANIFEST,
+        ).query()
+        assert results.results == []
+
+    def test_identity_mode_can_mix_with_an_index_mode_bound(self):
+        # not ambiguous the way name_one's index/date mixing is -- both
+        # identity and index bounds resolve to plain int positions
+        # before slicing, so a mixed pair like this has one clear
+        # meaning: "two" through position 3 (four).
+        results = _finder(
+            '$ranger.csvpaths.:first().:from("two"):to(3)', RANGE_MANIFEST
+        ).query()
+        assert [r.identity for r in results.results] == ["two", "three", "four"]
+
 
 class TestResolve:
     def test_resolving_a_named_identity_gives_its_statement_text(self):
@@ -1101,21 +1146,21 @@ class TestReadmeFunction:
         results = finder.resolve()
         assert results.results[0].data is None
 
-    def test_readme_combined_with_a_pointer_is_currently_silently_ignored(self):
-        # compendium 6.12/6.19 says combining version selection with
-        # ':readme()' should not be legal ("you cannot combine version
-        # selection with the ':readme()' function in name_one") --
-        # confirmed live this is NOT yet enforced: ':readme()' is simply
-        # ignored rather than raising or reading README.md, so this
-        # resolves as if ":readme()" were not there at all (the last
-        # version's own path+uuid). Locking in the current, imperfect
-        # behavior rather than asserting the not-yet-built rejection --
-        # see the deferred-work bucket list for the real fix (FILES
-        # rejects the equivalent shape naturally, via path-segment
-        # validation; CSVPATHS' combined-function-chain handling has no
-        # analogous guard yet).
-        results = _finder("$acme.csvpaths.:last():readme()").query()
-        assert results.uuids == ["v1-uuid"]
+    def test_readme_combined_with_a_pointer_is_rejected(self):
+        # compendium 6.12/6.19: "you cannot combine version selection
+        # with the ':readme()' function in name_one." Fixed 2026-09-22
+        # -- used to silently no-op (':readme()' simply ignored, this
+        # resolving as if it were not there at all); now raises via
+        # _name_one_contains_function()'s own explicit guard, the same
+        # rejection FILES gets for free through path-segment validation.
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.csvpaths.:last():readme()").query()
+
+    def test_readme_before_a_pointer_is_also_rejected(self):
+        # order-insensitive, same as the check itself (it scans the
+        # whole combined chain, not just the trailing functions).
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.csvpaths.:readme():last()").query()
 
 
 RICH_MANIFEST = [
@@ -1278,6 +1323,41 @@ class TestFieldAccessorFunctions:
             "$acme.csvpaths.:last():username()", RICH_MANIFEST, ledger=ledger
         ).resolve()
         assert results.results[0].data is None
+
+
+class TestNamedPathsHomeFunction:
+    # :named_paths_home() -- added 2026-09-22, the CSVPATHS counterpart
+    # to FILES' own :named_file_home(). SOURCE == "computed": never read
+    # from a manifest entry (unlike :group_home(), which reads Table 3's
+    # own stored "named_paths_home" field on an already-matched version
+    # -- see test_group_home above), always derived directly from
+    # root_major via paths_manager.named_paths_home(name).
+    def test_bare_gives_every_versions_home_unreduced(self):
+        results = _finder(
+            "$acme.csvpaths.:named_paths_home()", RICH_MANIFEST
+        ).resolve()
+        assert [r.data for r in results.results] == [GROUP_HOME, GROUP_HOME]
+
+    def test_combined_with_a_pointer_gives_the_one_matched_value(self):
+        results = _finder(
+            "$acme.csvpaths.:last():named_paths_home()", RICH_MANIFEST
+        ).resolve()
+        assert results.results[0].data == GROUP_HOME
+
+    def test_star_traversal_is_not_yet_supported(self):
+        by_name = {
+            "alpha": [
+                {
+                    "group_file_path": "named_paths/alpha/group.csvpath",
+                    "uuid": "a-v1",
+                    "time": "2026-01-01T00:00:00+00:00",
+                }
+            ],
+        }
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$*.csvpaths.:last():named_paths_home()", by_name=by_name
+            ).resolve()
 
 
 class TestDefinitionFieldAccessorFunctions:

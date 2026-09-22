@@ -139,11 +139,14 @@ read by any references-v3 finder at all; that went stale once
 `CsvpathsReferenceFinder3` gained its own Rule 1a/1b (`$*.csvpaths.:manifest()`
 and a pointer riding before it, reading `PathsManager.paths_root_manifest`
 directly) and once `:host()`/`:username()`/`:template()` gained a
-`LEDGER_KEY` fallback onto this same manifest for CSVPATHS. It is read; what
-is still missing is a `:named_paths_home()` accessor for this table's own
-`named_paths_home` field (see the deferred-work bucket list) — the CSVPATHS
-counterpart to `:named_file_home()`, which already exists for FILES' own
-equivalent field on table 2.
+`LEDGER_KEY` fallback onto this same manifest for CSVPATHS. It is read.
+`:named_paths_home()` (added 2026-09-22, the CSVPATHS counterpart to
+`:named_file_home()` on table 2) is `SOURCE == "computed"`, like its FILES
+sibling — never read from this manifest's own `named_paths_home` field,
+always derived directly from `root_major`. Only supported with a literal
+`root_major`; combined with `'*'`/`:regex()` traversal it raises clearly
+rather than guessing what "the home directory" means across several groups
+at once.
 
 | Field | Optional | References v3 Function | Description |
 |---|---|---|---|
