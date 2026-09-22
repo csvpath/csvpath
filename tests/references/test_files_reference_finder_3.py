@@ -389,10 +389,18 @@ class TestScopeLimits:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_literal_name_three_body_not_yet_supported(self):
+    def test_literal_name_three_body_now_matches_by_fingerprint(self):
+        # REVISED 2026-09-22 -- superseded by the literal-name_three-body
+        # fix (see TestLiteralNameThreeBody): a literal body is no
+        # longer an unconditional rejection, it is a fingerprint match
+        # against the name_one-matched candidates. ALPHA_MANIFEST's own
+        # entries have no "fingerprint" field at all, so "v1" (not a
+        # real fingerprint value here) correctly gives empty results,
+        # not an error -- the same "no match" convention every other
+        # literal-identity lookup in this codebase already uses.
         finder = _finder("$alpha.files.*.v1", ALPHA_HOME, ALPHA_MANIFEST)
-        with pytest.raises(ReferenceException3):
-            finder.query()
+        results = finder.query()
+        assert results.results == []
 
     def test_two_pointers_in_name_three_raises(self):
         finder = _finder(
@@ -1567,6 +1575,52 @@ class TestBareFingerprintLookup:
             "inputs/named_files/finn/backups/orders.csv/aaaa.csv",
         ]
         assert results.uuids == ["u-orders-1", "u-orders-backup-1"]
+
+
+class TestLiteralNameThreeBody:
+    # a literal name_three body -- e.g. "orders.aaaa" -- names the
+    # FINGERPRINT of the version, per compendium 3.19b/3.20. Added
+    # 2026-09-22, closing the deferred-work bucket list gap of the same
+    # name. Distinct from the bare ':fingerprint("...")' lookup above:
+    # this searches only within the already-name_one-matched candidates
+    # (here, just "orders.csv"'s own versions), not the whole named-
+    # file's manifest.
+    def test_matches_the_named_versions_own_fingerprint(self):
+        # ':name("orders.csv")' rather than a bare "orders" path segment
+        # -- the file_home's own last segment is "orders.csv", and a
+        # literal dot cannot appear in a bare PATH_SEGMENT (it is the
+        # name_one/name_three separator), same reason :name(...) exists
+        # at all -- see _compile_path_pattern()'s own docstring.
+        results = _finder(
+            '$finn.files.:name("orders.csv").aaaa', FINGERPRINT_HOME, FINGERPRINT_MANIFEST
+        ).query()
+        assert results.files == ["inputs/named_files/finn/orders.csv/aaaa.csv"]
+        assert results.uuids == ["u-orders-1"]
+
+    def test_no_match_gives_empty(self):
+        results = _finder(
+            '$finn.files.:name("orders.csv").zzzz', FINGERPRINT_HOME, FINGERPRINT_MANIFEST
+        ).query()
+        assert results.results == []
+
+    def test_scoped_to_the_matched_name_one_not_the_whole_named_file(self):
+        # "cccc" is a real fingerprint in FINGERPRINT_MANIFEST, but it
+        # belongs to "2025/returns.csv", not "orders.csv" -- unlike the
+        # bare ':fingerprint("cccc")' lookup (which searches every
+        # file_home), a literal name_three body only searches within
+        # name_one's own already-matched candidates.
+        results = _finder(
+            '$finn.files.:name("orders.csv").cccc', FINGERPRINT_HOME, FINGERPRINT_MANIFEST
+        ).query()
+        assert results.results == []
+
+    def test_combined_with_trailing_functions_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$finn.files.:name("orders.csv").aaaa:manifest()',
+                FINGERPRINT_HOME,
+                FINGERPRINT_MANIFEST,
+            ).query()
 
 
 class TestBareManifestFieldAccessor:

@@ -9,6 +9,51 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## A literal name_three body for FILES (bypassing a pointer function entirely) — BUILT 2026-09-22
+
+Per compendium 3.19b/3.20: "When `name_three` is a string or variable, the
+name is that of the entity: For `files`: the fingerprint of the bytes
+registered as a version of the named-file." `FilesReferenceFinder3` used
+to unconditionally reject any literal name_three body (`orders.a28b1105c
+...`), requiring a pointer function (`:first()`/`:last()`/`:index(n)`)
+instead — a clean, deliberate rejection, not a silent misbehavior, but a
+real documented gap: the spec's own literal-body rule for FILES had no
+code path at all.
+
+**What was built:** `query()`'s existing `if name_three.body is not None:`
+check was split — a plain `str` body now searches the already-name_one-
+matched `candidates` for the entry whose own `"fingerprint"` field equals
+the literal, returning that one version (empty results, not an error, on
+no match — the same convention every other literal-identity lookup in
+this codebase already uses). A `Star3` body (`*`) is untouched, still
+rejected the same as before — this fix is scoped to the STRING-body case
+3.19b actually describes, not a general "any literal body" change.
+
+**Deliberately NOT built, scoped out with a clear rejection instead of a
+guess:** a literal body combined with trailing functions (e.g. a
+hypothetical `orders.a28b1105c...:manifest()`) — no worked example
+anywhere demonstrates what that combination should mean, so it raises
+rather than assuming. Also scoped to the literal-root `query()` only,
+matching the same discipline as the `#name_two`-combined-with-`'*'`-
+traversal item elsewhere on the bucket list — `_query_star_traversal()`'s
+own equivalent rejection is untouched.
+
+**Distinct from the existing bare `:fingerprint("...")` lookup** (already
+built, FILES-only, NAME_ONE position): that one searches the WHOLE named-
+file's manifest, every `file_home`/path, since content identity does not
+care which slot a version is registered under. This new literal-body
+match is scoped to whichever `file_home`(s) name_one already narrowed to
+— proven by a dedicated test (`test_scoped_to_the_matched_name_one_not_
+the_whole_named_file`) using a fingerprint that is real in the fixture but
+belongs to a *different* file_home than the one name_one matched.
+
+One pre-existing test (`TestScopeLimits.test_literal_name_three_body_not_
+yet_supported`) asserted the old unconditional-rejection behavior and was
+rewritten (`test_literal_name_three_body_now_matches_by_fingerprint`) to
+assert the new one — its fixture (`ALPHA_MANIFEST`) has no `fingerprint`
+field on any entry at all, so the literal body it uses (`"v1"`) correctly
+gives empty results now, not an error.
+
 ## RESULTS: `:all()` at a middle (non-run_dir) name_one position — BUILT 2026-09-22
 
 The normative doc's own worked example, `$alpha.results.test/:all()/
