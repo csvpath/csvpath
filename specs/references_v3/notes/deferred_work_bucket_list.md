@@ -9,6 +9,59 @@ instead, so the completed reasoning trail isn't lost, it's just off this
 list (see that file's own header, and the "Process note" at the bottom of
 this one).
 
+## `:named_paths_home()` — CSVPATHS' missing FILES-parity field function
+
+Surfaced 2026-09-22, sweeping `csvpath/references/functions/fields/` (84
+files) against `references_v3_required_manifest_functions.md`'s 9 manifest
+tables. Table 4 (Named-Paths Loads Manifest, the global ledger at
+`[inputs] csvpaths` root) lists a `named_paths_home` field with `:named_
+paths_home()` as its function — no such class exists anywhere in
+`functions/fields/`, confirmed via `ReferenceFunctionFactory.registered_
+names()`. This is the CSVPATHS-side gap in a pattern FILES already fully
+has: `:named_file_home()` (`fields/named_file_home_3.py`) reads a named-
+file's own root directory when referenced from Table 2's global arrivals
+ledger context (`SOURCE = "computed"`, `KEY = {}`, calls `file_manager.
+named_file_home(name)` directly rather than reading a stored field —
+settled 2026-08-09, per that class's own comment, specifically so the
+function does not depend on finding a ledger entry at all). CSVPATHS has no
+equivalent: nothing lets a `$*.csvpaths...`-rooted reference (traversal
+across every group, or a ledger-fallback context) ask "what is this group's
+own home directory," the same question `:group_home()` already answers for
+an *already-selected* single group/version — see the file's own top-of-doc
+`:home()`-split note, which names `:named_file_home()` as FILES' "relationship
+to another entity" home reference but has no CSVPATHS row to point at.
+
+**Not built here** — two real design questions, not just a rename: (1)
+should it follow `NamedFileHome3`'s "computed" pattern (call `csvpaths.
+paths_manager.named_paths_home(name)` directly, matching the sibling
+function's own settled reasoning for robustness against a missing ledger
+entry) or instead read the literal `named_paths_home` field via `LEDGER_KEY`
+the same way `:host()`/`:username()`/`:template()` already do for CSVPATHS
+(Table 4 does store this field literally, unlike Table 2's FILES case,
+where "computed" was chosen specifically because the field was *not*
+stored) — the two existing precedents point in different directions and
+neither was decisively closer; (2) how `_extract_data()`'s field-accessor
+dispatch in `csvpaths_reference_finder_3.py` should route a `SOURCE ==
+"computed"` function when root_major is the `*`/`:regex()` traversal case,
+which was not audited closely enough in this pass to build against
+confidently — getting it wrong risks a subtly incorrect per-group result
+that a shallow test would not catch.
+
+## `:file_name()` — Named-File Arrivals Manifest field with no accessor
+
+Surfaced 2026-09-22, same sweep as the entry above. Table 2 (Named-File
+Arrivals Manifest, global) lists a `file_name` field ("The named of the
+original physical file that was registered. This is the same name as the
+file home directory") mapped to `:file_name()` — not registered anywhere.
+Unlike the `named_paths_home` gap above, there is no obvious sibling
+function to model this on directly: `:file_home()` returns the directory
+*path*, not the bare name, and it is not yet confirmed whether `file_name`
+is meant to be a trivial basename-of-`file_home` convenience or genuinely
+needs its own manifest/ledger read. Not built — needs a decision on which,
+and whether it is worth a dedicated function at all versus documenting that
+`Nos(...).basename` on `:file_home()`'s own result already answers the same
+question without a new registered name.
+
 ## CSVPATHS name_three `:from()`/`:to()` identity-string range mode — currently actively rejected, not just unbuilt
 
 Surfaced 2026-09-21, cross-checking `test_normative_examples_csvpaths.py` against the
