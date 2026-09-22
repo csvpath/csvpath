@@ -400,6 +400,31 @@ NOT part of that build:
   `:home()`/`:all()` work, since both touch the same name_one matching
   code, but is its own distinct capability, not a symptom of the same
   bug.
+
+  **Investigated 2026-09-22, not built -- a false start caught before
+  landing.** First instinct was to treat this like `:name(/pattern/)`'s
+  existing Regex3 arg support (already works, matches a TEMPLATE
+  segment) and just teach `_compile_path_pattern()` to recognize a bare
+  `:regex(...)` segment the same way -- wrong shape. `_compile_path_
+  pattern()`/`_matches_prefix()`'s whole machinery is built on `_prefix_
+  segments()`, which deliberately EXCLUDES the run's own trailing name
+  from comparison (it only ever compares TEMPLATE levels before it) --
+  that is structurally the opposite of what this item asks for
+  (matching the trailing name itself). A `:name(/pattern/)`-style fix
+  would be a real, small, independently useful addition (bare `:regex()`
+  as a template-segment matcher, falling out for FILES too via the
+  shared method) but does NOT resolve this item's own worked example --
+  landing it under this item's name would have been misleading. Also
+  confirmed along the way: `RegexSelector3.POSITIONS[RESULTS]` has no
+  `NAME_ONE` entry (root_major only today), and `_is_bare_function_only()`
+  would misclassify a bare `:regex(...)` as a version-selector/grouping
+  marker (same treatment as `:all()`/`:first()`), silently matching every
+  run regardless of name rather than raising or filtering -- both need
+  fixing regardless of which correct design is chosen. The actual fix
+  needs a new filtering axis (match against the run's own trailing name)
+  applied ALONGSIDE whatever depth/template selection is already
+  happening, not a new path-segment kind -- real design work, not
+  attempted here.
 - `@variable` (`Variable3`) registration and `{...}` interpolation
   evaluation are both **built 2026-08-26** — see `deferred_work_done_list.md`.
   `@variable` used as some OTHER function's *own direct argument* (e.g.
