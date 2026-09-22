@@ -765,6 +765,64 @@ class TestAllGrouping:
             ).query()
 
 
+class TestAllGroupingAtAMiddlePosition:
+    # added 2026-09-22, closing the deferred-work bucket list gap of the
+    # same name. Genuinely different from every TestAllGrouping case
+    # above: there, ':all()' always sits at the run_dir slot itself
+    # (degenerate, per compendium 4.2b); here it occupies a real MIDDLE
+    # template segment, grouping by whatever value is found there, with
+    # required literal/wildcard structure after it before the implied
+    # run_dir -- the normative doc's own worked example:
+    # "$alpha.results.test/:all()/one:last()" -- "the set of last runs
+    # for each group of runs with 3-level templates where the first
+    # level is 'test' and the third level is 'one', grouped by the
+    # values of the 2nd template level."
+    def test_groups_by_the_middle_segment_last_within_each_group(self, tmp_path):
+        base = tmp_path / "alpha" / "test"
+        x1 = _make_run(base / "x" / "one", "2026-01-01_00-00-00", "x-1", {})
+        x2 = _make_run(base / "x" / "one", "2026-01-02_00-00-00", "x-2", {})
+        y1 = _make_run(base / "y" / "one", "2026-01-03_00-00-00", "y-1", {})
+        _write_archive_manifest(tmp_path, "alpha", [x1, x2, y1])
+        results = _finder(
+            "$alpha.results.test/:all()/one:last()", str(tmp_path)
+        ).query()
+        assert set(results.uuids) == {"x-2", "y-1"}
+
+    def test_non_matching_runs_are_excluded(self, tmp_path):
+        # a run under a different first-level segment ("other", not
+        # "test") and a run missing the required "one" suffix entirely
+        # (2-level, "test/x") are both excluded -- only the exact
+        # "test/<anything>/one" shape matches.
+        base = tmp_path / "alpha"
+        matching = _make_run(base / "test" / "x" / "one", "2026-01-01_00-00-00", "match-1", {})
+        wrong_prefix = _make_run(base / "other" / "x" / "one", "2026-01-02_00-00-00", "wrong-1", {})
+        too_shallow = _make_run(base / "test" / "x", "2026-01-03_00-00-00", "shallow-1", {})
+        _write_archive_manifest(
+            tmp_path, "alpha", [matching, wrong_prefix, too_shallow]
+        )
+        results = _finder(
+            "$alpha.results.test/:all()/one:last()", str(tmp_path)
+        ).query()
+        assert results.uuids == ["match-1"]
+
+    def test_no_pointer_gives_every_matching_run_unreduced(self, tmp_path):
+        base = tmp_path / "alpha" / "test"
+        x1 = _make_run(base / "x" / "one", "2026-01-01_00-00-00", "x-1", {})
+        x2 = _make_run(base / "x" / "one", "2026-01-02_00-00-00", "x-2", {})
+        _write_archive_manifest(tmp_path, "alpha", [x1, x2])
+        results = _finder("$alpha.results.test/:all()/one", str(tmp_path)).query()
+        assert set(results.uuids) == {"x-1", "x-2"}
+
+    def test_all_with_an_argument_is_rejected(self, tmp_path):
+        base = tmp_path / "alpha" / "test"
+        x1 = _make_run(base / "x" / "one", "2026-01-01_00-00-00", "x-1", {})
+        _write_archive_manifest(tmp_path, "alpha", [x1])
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$alpha.results.test/:all("x")/one:last()', str(tmp_path)
+            ).query()
+
+
 class TestGroups:
     # ':groups()' -- added 2026-08-12, the any-depth GROUP peer of
     # ':all()' (one-level GROUP)/':flatten()' (any-depth POOL), built
