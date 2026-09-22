@@ -24,14 +24,15 @@ from lark import Lark, Tree, UnexpectedInput
 #
 # grammar-level design notes worth keeping in mind when reading this file:
 #
-# - name_three's required-ness differs by datatype -- see the compendium
-#   for which datatypes require it and what its absence means; not
-#   restated here since that's semantics, not grammar. Rather than
-#   tripling the reference rule per datatype, name_three is kept
-#   grammatically optional everywhere and its required-ness is enforced
-#   later as a semantic check (in the transformer/finder, not yet built)
-#   against the already-parsed datatype. this keeps the grammar itself flat
-#   and is the main way v3 avoids the combinatorial rule explosion of the
+# - name_three is optional for every datatype (settled, not just a grammar-
+#   level simplification -- see Reference3.__init__'s own docstring and
+#   the compendium's Structure Breakdown Table (3.21), which marks
+#   name_three "(optional)" with no per-datatype exception: name_one
+#   alone is always a legal, resolvable reference on its own). Kept
+#   grammatically optional here for that
+#   reason, not as a placeholder pending a later semantic check -- this
+#   keeps the grammar itself flat and is the main way v3 avoids the
+#   combinatorial rule explosion of the
 #   v1/v2 grammar (reference_grammar.py's files_names alone has ~25
 #   alternatives).
 #
@@ -192,10 +193,15 @@ REFERENCE_GRAMMAR_3 = r"""
 class QueryParser3:
     #
     # syntax-only parser for references v3. builds and validates the parse
-    # tree; does not (yet) transform it into a ReferenceParser3 object
-    # graph or enforce datatype-specific semantic rules (e.g. name_three
-    # being required for files/csvpaths) -- that is deferred to the
-    # transformer, not yet built. see module docstring.
+    # tree; it does not itself transform that tree into a Reference3
+    # object graph or enforce datatype-specific semantic rules (e.g.
+    # name_three being required for files/csvpaths, and even that turned
+    # out not to be a real rule -- see Reference3.__init__'s own
+    # docstring) -- that is Reference3Transformer's (reference_transformer_3.py)
+    # and ReferenceParser3's (reference_parser_3.py) job, both long since
+    # built and in active use by every concrete finder. This class stays
+    # deliberately narrow (syntax only) rather than being folded into
+    # either of those -- see module docstring.
     #
     # lalr, not earley: the grammar is unambiguous (see module docstring's
     # note on the removed bare-func_chain alternative), so lalr is
