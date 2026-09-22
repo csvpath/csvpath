@@ -9,6 +9,83 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `:readme()` combined with a pointer — now rejected instead of silently ignored, CSVPATHS — BUILT 2026-09-22
+
+Compendium 6.12/6.19: "you cannot combine version selection with the
+`:readme()` function in name_one." FILES already got this for free
+(`:readme()` is not a recognized `_compile_path_pattern()` path-segment
+shape); CSVPATHS did not — `$acme.csvpaths.:last():readme()` used to
+silently resolve as if `:readme()` were not there at all (the pointer's own
+path+uuid, `:readme()` simply ignored), confirmed live and locked in as a
+test of the imperfect behavior at the time.
+
+**What was built:** a new `CsvpathsReferenceFinder3._name_one_contains_
+function(name_one, fname)` static helper, checked in `query()` right after
+the existing bare-readme branch, before falling through to
+`_resolve_versions()` — order-insensitive (scans the whole combined chain,
+not just the trailing functions), so both `:last():readme()` and
+`:readme():last()` are rejected. The test that used to lock in the old
+silent-ignore behavior (`test_readme_combined_with_a_pointer_is_currently_
+silently_ignored`) was rewritten to assert the raise instead, and a second
+test (`test_readme_before_a_pointer_is_also_rejected`) added for the
+swapped-order case.
+
+## CSVPATHS `name_three` `:from()`/`:to()` identity-string range mode — BUILT 2026-09-22
+
+The normative doc's own worked example, `$acme.csvpaths.:last().:from(
+"header checks"):to("validation summary")`, used to actively raise (any
+`str` bound on a name_three `:from()`/`:to()` was assumed to be date-mode,
+the same convention name_one's own range legitimately uses) rather than
+select by statement identity. Statements have no arrival date of their
+own, so date-mode was never meaningful there — the `str` bound instead
+means "the position of the statement with this identity," a third mode
+distinct from name_one's own index/date modes.
+
+**What was built:** the rejection at name_three now checks specifically
+for a `Date3`-wrapped bound (still rejected, still meaningless for
+statements) rather than any `str` at all. A bare string bound is resolved
+via the existing `_find_by_identity()` helper to its own position first,
+for each of `:from()`/`:to()` independently, then the window slices the
+same way index-mode already does. Per the doc's own stated "no match"
+behavior ("if the names given do not match, the reference returns no
+results, no error is thrown"), a string bound that does not match any
+identity in a given version simply contributes no results for that
+version, rather than raising. `ReferenceFinder3._apply_range()` was
+refactored to extract its own positional-slicing rule (`:to()` inclusive,
+`-1` meaning "to the end") into a shared `_slice_by_position()` static
+method, reused here after string bounds are resolved to positions —
+`_apply_range()` itself is otherwise unchanged. Five new tests added to
+`TestNameThreeRange` (inclusive range, resolve-to-statement-text, one-
+sided range, no-match-gives-empty, and mixing an identity bound with an
+index bound in the same pair).
+
+## `:named_paths_home()` — CSVPATHS' missing FILES-parity field function — BUILT 2026-09-22
+
+CSVPATHS' counterpart to `:named_file_home()` (FILES, table 2) was fully
+missing — Table 4 (Named-Paths Loads Manifest) named `:named_paths_home()`
+as a function but no such class existed anywhere in `functions/fields/`.
+
+**Design decisions made, closing the two open questions the bucket-list
+entry left unresolved:** (1) followed `NamedFileHome3`'s own "computed"
+pattern (`SOURCE = "computed"`, `KEY = {}`, calls `paths_manager.
+named_paths_home(name)` directly) rather than reading Table 4's own stored
+field via `LEDGER_KEY` — matches the sibling function's settled reasoning
+(robust against a missing/stale ledger entry, and the value is trivially
+re-derivable) more closely than the alternative; (2) `'*'`/`:regex()`
+traversal is explicitly NOT supported — `_compute_field()` raises clearly
+rather than guessing what "the home directory" would mean across several
+matched groups at once, the same caution FILES' own star-traversal
+restrictions already apply elsewhere.
+
+**What was built:** `NamedPathsHome3` (`functions/fields/named_paths_
+home_3.py`), registered in the factory; a `SOURCE == "computed"` dispatch
+branch added to `CsvpathsReferenceFinder3._extract_data()`'s METADATA_FIELD
+handling (CSVPATHS had no such branch before this — FILES already did),
+and a new `_compute_field()` method mirroring `FilesReferenceFinder3`'s own.
+Tests: `test_named_paths_home_3.py` (metadata/arg-validation) plus a new
+`TestNamedPathsHomeFunction` class in `test_csvpaths_reference_finder_3.py`
+(bare-unreduced, combined-with-a-pointer, and the traversal rejection).
+
 ## FILES' `_query_star_traversal()` combined with a chained field accessor (POOL and GROUP alike) — BUILT 2026-08-29
 
 `$*.files.*.:last():uuid()` (POOL), `$*.files.:all().:last():uuid()`

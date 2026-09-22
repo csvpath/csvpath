@@ -2,6 +2,7 @@ from csvpath.util.nos import Nos
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
+from .functions.selectors.date_3 import Date3
 from .reference_3 import FunctionCall3, Reference3, Star3
 from .reference_exceptions_3 import ReferenceException3
 from .reference_finder_3 import ReferenceFinder3
@@ -162,6 +163,26 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             home = self.csvpaths.paths_manager.named_paths_home(root_major)
             return self._query_well_known_file(home, "README.md")
 
+        if self._name_one_contains_function(name_one, "readme"):
+            # per compendium 6.12/6.19: "you cannot combine version
+            # selection with the :readme() function in name_one." FILES
+            # gets this for free -- :readme() is not one of
+            # _compile_path_pattern()'s recognized path-segment shapes,
+            # so a literal prefix before it already raises naturally.
+            # CSVPATHS' own name_one is a plain function chain, so
+            # :readme() type-checks fine as just another chain member
+            # and would otherwise reach _resolve_versions() below and be
+            # silently ignored (confirmed live before this fix, added
+            # 2026-09-22 -- closing the deferred-work bucket list gap of
+            # the same name; the reference reached here is already known
+            # NOT to be the bare/sole-content shape, since that case
+            # returned just above).
+            raise ReferenceException3(
+                "CsvpathsReferenceFinder3 does not support combining "
+                "version selection with ':readme()' in name_one -- it "
+                "must be the entire, sole content of name_one."
+            )
+
         manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
         selected_versions = self._resolve_versions(name_one, manifest)
         # Resolving full manifest content for more than one version at
@@ -204,11 +225,21 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 from_call = next((f for f in built if f.name == "from"), None)
                 to_call = next((f for f in built if f.name == "to"), None)
                 for f in (from_call, to_call):
-                    if f is not None and isinstance(self._range_bound(f), str):
+                    # a :date(...)-wrapped bound is rejected -- statements
+                    # have no arrival date of their own. A bare string
+                    # bound is NOT rejected (added 2026-09-22, per
+                    # normative_reference_examples.txt's own "Identities"
+                    # section): it selects by statement IDENTITY, a third
+                    # mode distinct from name_one's own index/date modes
+                    # -- see the per-version windowing below, which
+                    # resolves it via _find_by_identity() before slicing.
+                    if f is not None and isinstance(f.arg, Date3):
                         raise ReferenceException3(
                             "CsvpathsReferenceFinder3's ':from()'/':to()' "
-                            "only supports index-mode bounds (int/:index(n)) "
-                            "-- statements have no arrival date of their own."
+                            "does not support date-mode bounds (:date(...)) "
+                            "in name_three -- statements have no arrival "
+                            "date of their own. A bare string bound selects "
+                            "by statement identity instead."
                         )
                 if name_three.body is not None and (from_call or to_call):
                     raise ReferenceException3(
@@ -248,7 +279,29 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # necessary: path/uuid are identical across every
                 # statement in ONE version, CSVPATHS has no per-
                 # statement uuid at all).
-                windowed = self._apply_range(identities, from_call, to_call)
+                #
+                # index-mode (int/:index(n)) bounds slice by position
+                # directly, same as always. identity-mode (a bare string
+                # bound, added 2026-09-22) resolves each bound to its own
+                # position via _find_by_identity() first -- "the position
+                # of the statement with this identity" -- then slices the
+                # same way. Per normative_reference_examples.txt's own
+                # "Select sequential statements" example: if a string
+                # bound does not match any identity in THIS version, this
+                # version contributes no results at all (not an error,
+                # not a partial match) -- skip straight to the next
+                # selected version.
+                from_bound = self._range_bound(from_call) if from_call is not None else None
+                to_bound = self._range_bound(to_call) if to_call is not None else None
+                if isinstance(from_bound, str):
+                    from_bound = self._find_by_identity(from_bound, identities)
+                    if from_bound is None:
+                        continue
+                if isinstance(to_bound, str):
+                    to_bound = self._find_by_identity(to_bound, identities)
+                    if to_bound is None:
+                        continue
+                windowed = self._slice_by_position(identities, from_bound, to_bound)
                 for identity in windowed:
                     results.append(
                         ReferenceResult3(
@@ -568,6 +621,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     field_call.name
                 )
+                if function_cls.SOURCE == "computed":
+                    # never stored -- comes straight from the already-
+                    # resolved reference, no manifest/definition read at
+                    # all. See function_3.py's SOURCE comment and
+                    # FilesReferenceFinder3._compute_field()'s own
+                    # precedent (:named_file_home()).
+                    return self._compute_field(field_call.name, reference)
                 key_path = function_cls.KEY.get(reference.datatype)
                 key_path = self._apply_key_arg(key_path, field_call.arg)
                 use_definition = function_cls.SOURCE == "definition" or (
@@ -645,6 +705,42 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             return None
         statements = selected.get("named_paths") or []
         return statements[index]
+
+    @staticmethod
+    def _name_one_contains_function(name_one, fname: str) -> bool:
+        """true when `fname` appears anywhere in name_one's own combined
+        chain (its sole path segment, or its trailing functions) --
+        used to reject ':readme()' riding alongside real version
+        selection, since it type-checks fine as just another chain
+        member and would otherwise be silently ignored rather than
+        rejected. Not shared on the ABC (yet) -- FILES does not need an
+        equivalent check, see query()'s own comment on why."""
+        calls = [name_one.path[0], *name_one.functions]
+        return any(
+            isinstance(c, FunctionCall3) and c.name == fname for c in calls
+        )
+
+    def _compute_field(self, name: str, reference: Reference3) -> object:
+        """values for SOURCE == "computed" field-accessor functions --
+        never read from a manifest/definition, always derived from the
+        already-resolved reference. See function_3.py's SOURCE comment
+        and named_paths_home_3.py."""
+        if name == "named_paths_home":
+            if self._is_traversal_root(reference.root_major):
+                # unlike _group_manifest_entry() (which can search every
+                # group for a matching uuid), "the home directory" has
+                # no single answer across several groups at once -- not
+                # attempted, see the function's own docstring.
+                raise ReferenceException3(
+                    "CsvpathsReferenceFinder3 does not yet support "
+                    ":named_paths_home() combined with '*'/:regex() "
+                    "traversal -- root_major must be a literal named-"
+                    "paths group name."
+                )
+            return self.csvpaths.paths_manager.named_paths_home(reference.root_major)
+        raise ReferenceException3(
+            f"CsvpathsReferenceFinder3 has no computed-field handling for :{name}()"
+        )
 
     def _group_manifest_entry(self, root_major, uuid: str) -> tuple:
         """returns (group_name, manifest_entry) for the version matching

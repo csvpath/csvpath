@@ -9,124 +9,24 @@ instead, so the completed reasoning trail isn't lost, it's just off this
 list (see that file's own header, and the "Process note" at the bottom of
 this one).
 
-## `:named_paths_home()` — CSVPATHS' missing FILES-parity field function
+## `:file_name()` — Named-File Arrivals Manifest field with no accessor
 
 Surfaced 2026-09-22, sweeping `csvpath/references/functions/fields/` (84
 files) against `references_v3_required_manifest_functions.md`'s 9 manifest
-tables. Table 4 (Named-Paths Loads Manifest, the global ledger at
-`[inputs] csvpaths` root) lists a `named_paths_home` field with `:named_
-paths_home()` as its function — no such class exists anywhere in
-`functions/fields/`, confirmed via `ReferenceFunctionFactory.registered_
-names()`. This is the CSVPATHS-side gap in a pattern FILES already fully
-has: `:named_file_home()` (`fields/named_file_home_3.py`) reads a named-
-file's own root directory when referenced from Table 2's global arrivals
-ledger context (`SOURCE = "computed"`, `KEY = {}`, calls `file_manager.
-named_file_home(name)` directly rather than reading a stored field —
-settled 2026-08-09, per that class's own comment, specifically so the
-function does not depend on finding a ledger entry at all). CSVPATHS has no
-equivalent: nothing lets a `$*.csvpaths...`-rooted reference (traversal
-across every group, or a ledger-fallback context) ask "what is this group's
-own home directory," the same question `:group_home()` already answers for
-an *already-selected* single group/version — see the file's own top-of-doc
-`:home()`-split note, which names `:named_file_home()` as FILES' "relationship
-to another entity" home reference but has no CSVPATHS row to point at.
-
-**Not built here** — two real design questions, not just a rename: (1)
-should it follow `NamedFileHome3`'s "computed" pattern (call `csvpaths.
-paths_manager.named_paths_home(name)` directly, matching the sibling
-function's own settled reasoning for robustness against a missing ledger
-entry) or instead read the literal `named_paths_home` field via `LEDGER_KEY`
-the same way `:host()`/`:username()`/`:template()` already do for CSVPATHS
-(Table 4 does store this field literally, unlike Table 2's FILES case,
-where "computed" was chosen specifically because the field was *not*
-stored) — the two existing precedents point in different directions and
-neither was decisively closer; (2) how `_extract_data()`'s field-accessor
-dispatch in `csvpaths_reference_finder_3.py` should route a `SOURCE ==
-"computed"` function when root_major is the `*`/`:regex()` traversal case,
-which was not audited closely enough in this pass to build against
-confidently — getting it wrong risks a subtly incorrect per-group result
-that a shallow test would not catch.
-
-## `:file_name()` — Named-File Arrivals Manifest field with no accessor
-
-Surfaced 2026-09-22, same sweep as the entry above. Table 2 (Named-File
-Arrivals Manifest, global) lists a `file_name` field ("The named of the
-original physical file that was registered. This is the same name as the
-file home directory") mapped to `:file_name()` — not registered anywhere.
-Unlike the `named_paths_home` gap above, there is no obvious sibling
-function to model this on directly: `:file_home()` returns the directory
-*path*, not the bare name, and it is not yet confirmed whether `file_name`
-is meant to be a trivial basename-of-`file_home` convenience or genuinely
-needs its own manifest/ledger read. Not built — needs a decision on which,
-and whether it is worth a dedicated function at all versus documenting that
+tables. Table 2 (Named-File Arrivals Manifest, global) lists a `file_name`
+field ("The named of the original physical file that was registered. This
+is the same name as the file home directory") mapped to `:file_name()` —
+not registered anywhere. Unlike `:named_paths_home()` (built 2026-09-22,
+see `deferred_work_done_list.md`), there is no obvious sibling function to
+model this on directly: `:file_home()` returns the directory *path*, not
+the bare name, and it is not yet confirmed whether `file_name` is meant to
+be a trivial basename-of-`file_home` convenience or genuinely needs its own
+manifest/ledger read. Not built — needs a decision on which, and whether it
+is worth a dedicated function at all versus documenting that
 `Nos(...).basename` on `:file_home()`'s own result already answers the same
-question without a new registered name.
-
-## CSVPATHS name_three `:from()`/`:to()` identity-string range mode — currently actively rejected, not just unbuilt
-
-Surfaced 2026-09-21, cross-checking `test_normative_examples_csvpaths.py` against the
-current `normative_reference_examples.txt` ("### ':from()' and ':to()' and
-':before()' and ':after()' as instance ranges" / "### Identities" sections).
-The doc's own worked example: `$acme.csvpaths.:last().:from("header
-checks"):to("validation summary")` — select every statement from the one
-identified `header checks` through the one identified `validation summary`,
-inclusive, in the last version of `acme`. Doc explicitly gives the "no
-match" behavior too: "if the names given do not match, the reference
-returns no results, no error is thrown."
-
-`CsvpathsReferenceFinder3.query()`'s own name_three handling
-(`csvpaths_reference_finder_3.py` ~line 206-212) does not just lack this —
-it actively raises: any `str` bound on a name_three `:from()`/`:to()` is
-assumed to be date-mode (`isinstance(self._range_bound(f), str)` →
-`ReferenceException3("...only supports index-mode bounds (int/:index(n))
--- statements have no arrival date of their own.")`), since name_one's own
-`:from()`/`:to()` already legitimately uses `str` for date-mode. But
-name_three's own range is over an ordered **identities list**
-(`named_paths_identities`), not a date axis at all — a `str` bound there
-means "the position of the statement with this identity," a third mode
-distinct from both name_one's index-mode and date-mode. `_apply_range()`
-(`reference_finder_3.py`) is purely positional (`items[start:end+1]`) and
-has no notion of resolving a string to a position via `_find_by_identity()`
-first — confirmed via grep, no test anywhere exercises a name_three
-`:from("...")`/`:to("...")` pair, only int/`:index(n)` bounds
-(`test_csvpaths_reference_finder_3.py`'s only string `:from()`/`:to()`
-tests are the name_one date-mode ones).
-
-**Needed before this can be built**: name_three's own `query()` branch
-needs to detect "both bounds (or the one present) are plain `str`, not
-wrapped in `:date(...)`/`:index(...)`" and, in that case, resolve each
-bound via `_find_by_identity(bound, identities)` to a position first, then
-slice — distinct from the existing raise, which should stay for an actual
-`:date(...)`-wrapped bound (still meaningless for statements). Also needs
-the "wrap `:before()`/`:after()` a third exclusive-of-bound mode" question
-answered first if the identity-mode is meant to support those too (the
-doc's own section header lists `:before()`/`:after()` alongside `:from()`/
-`:to()` here) — see the "Direction/ordinal functions" entry above, which
-those two functions belong to regardless of datatype.
-
-## `:readme()` built for the bare case; combined-with-a-pointer rejection not enforced for CSVPATHS
-
-Added 2026-09-21 (`Readme3`, wired into both `FilesReferenceFinder3` and
-`CsvpathsReferenceFinder3`'s bare/sole-content shape, mirroring `:manifest()`/
-`:definition()` exactly) — was previously fully missing (documented in the
-compendium and normative doc, zero implementation, not even a factory
-registration). The bare case works and is tested for both datatypes.
-
-Compendium 6.12/6.19 also says `:readme()` cannot combine with version
-selection ("you cannot combine version selection with the `:readme()`
-function in name_one") — FILES gets this for free, since `:readme()` isn't
-one of `_compile_path_pattern()`'s recognized path-segment shapes, so a
-literal prefix before it (`orders/:readme()`) already raises naturally
-(confirmed, tested). CSVPATHS does not: `$acme.csvpaths.:last():readme()`
-confirmed live to silently resolve as if `:readme()` were not there at all
-(the pointer's own path+uuid, `:readme()` simply ignored) rather than
-raising or reading README.md. Locked in as a test of current behavior
-(`test_readme_combined_with_a_pointer_is_currently_silently_ignored`), not
-fixed — needs an explicit guard in `CsvpathsReferenceFinder3`'s combined-
-function-chain handling (there is no existing "reject this specific
-function when anything else rides alongside it" mechanism to reuse; would
-need its own check, analogous to how `_is_bare_pointer_reference()` already
-detects the single-occupant case).
+question without a new registered name. No worked example anywhere in the
+docs uses `:file_name()`, so this is a genuine open design question, not
+something to guess at.
 
 ## RESULTS: `:all()` at a middle (non-run_dir) name_one position — not built
 

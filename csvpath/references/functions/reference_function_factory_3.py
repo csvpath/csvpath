@@ -93,6 +93,7 @@ class ReferenceFunctionFactory:
         from .fields.named_paths_count_3 import NamedPathsCount3
         from .fields.named_paths_fingerprint_3 import NamedPathsFingerprint3
         from .fields.named_paths_group_3 import NamedPathsGroup3
+        from .fields.named_paths_home_3 import NamedPathsHome3
         from .fields.named_paths_identities_3 import NamedPathsIdentities3
         from .fields.named_paths_name_3 import NamedPathsName3
         from .fields.named_paths_root_3 import NamedPathsRoot3
@@ -203,6 +204,7 @@ class ReferenceFunctionFactory:
             Host3.NAME: Host3,
             Origin3.NAME: Origin3,
             Mark3.NAME: Mark3,
+            NamedPathsHome3.NAME: NamedPathsHome3,
             NamedPathsIdentities3.NAME: NamedPathsIdentities3,
             NamedPathsCount3.NAME: NamedPathsCount3,
             OnArrival3.NAME: OnArrival3,

@@ -209,9 +209,22 @@ class ReferenceFinder3(ABC):
         in a slice, not "to the end" -- that one case needs an explicit
         fix, everything else falls out of ordinary slice semantics."""
         start = cls._range_bound(from_call) if from_call is not None else None
-        if to_call is None:
+        end = cls._range_bound(to_call) if to_call is not None else None
+        return cls._slice_by_position(items, start, end)
+
+    @staticmethod
+    def _slice_by_position(items: list, start: "int | None", end: "int | None") -> list:
+        """the positional half of _apply_range()'s own slicing rule
+        (':to()' inclusive of its own position, -1 meaning 'to the end'
+        rather than wrapping to nothing), extracted 2026-09-22 so
+        CsvpathsReferenceFinder3's own name_three identity-mode range
+        (see its own query() docstring) can share it -- there, `start`/
+        `end` are int positions already resolved from string identity
+        bounds via _find_by_identity(), not raw ':from()'/':to()'
+        function calls, so _range_bound()'s own str/int unwrapping does
+        not apply."""
+        if end is None:
             return items[start:]
-        end = cls._range_bound(to_call)
         if end == -1:
             return items[start:]
         return items[start : end + 1]
