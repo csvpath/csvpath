@@ -48,6 +48,7 @@ class ReferenceFunctionFactory:
         from .values.minute_3 import Minute3
         from .values.month_3 import Month3
         from .values.month_name_3 import MonthName3
+        from .values.now_3 import Now3
         from .values.second_3 import Second3
         from .values.today_3 import Today3
         from .values.year_3 import Year3
@@ -169,6 +170,7 @@ class ReferenceFunctionFactory:
             Hour243.NAME: Hour243,
             Minute3.NAME: Minute3,
             Second3.NAME: Second3,
+            Now3.NAME: Now3,
             Today3.NAME: Today3,
             Yesterday3.NAME: Yesterday3,
             Manifest3.NAME: Manifest3,
