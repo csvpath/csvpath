@@ -474,7 +474,7 @@ and a stale-entry correction, are both done — see
 - FILES' `:from()`/`:to()` combined with `:all()`/`:groups()` grouping in
   name_one — not yet supported.
 - A literal name_three body for FILES (bypassing a pointer function
-  entirely) — not yet supported.
+  entirely) — **BUILT 2026-09-22**, see `deferred_work_done_list.md`.
 
 ## Functions
 

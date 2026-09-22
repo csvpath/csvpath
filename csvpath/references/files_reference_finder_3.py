@@ -57,8 +57,24 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #  - name_three, if present, must resolve to exactly one pointer
     #    function (:first()/:last()/:index(n)) -- matching the
     #    STRUCTURE table: name_one picks *which file*, name_three picks
-    #    *which version*. A literal name_three body (bypassing a
-    #    pointer function entirely) is not yet supported. ":manifest()"
+    #    *which version*. A literal name_three body -- e.g.
+    #    "$acme.files.orders.a28b1105c..." -- is ALSO now supported
+    #    (added 2026-09-22, closing the deferred-work bucket list gap of
+    #    the same name), per compendium 3.19b/3.20's own rule: a literal
+    #    string in name_three names the FINGERPRINT of the version. Finds
+    #    the one already-name_one-matched candidate whose own
+    #    "fingerprint" field equals the literal (no match: empty
+    #    results, not an error, same "no match" convention every other
+    #    literal-identity lookup in this codebase already uses) -- this
+    #    is a MATCH, not an ordinal, so it is handled as its own case
+    #    rather than routed through _apply_pointer(). Scoped to the
+    #    literal-root query() only, matching the same scoping discipline
+    #    as the recent '#worksheet'-combined-with-'*'-traversal note
+    #    below -- '*' traversal's own literal-body rejection is
+    #    untouched. A literal body combined with trailing functions
+    #    (e.g. a hypothetical "orders.a28b1105c...:manifest()") is also
+    #    not yet supported -- no worked example demonstrates that shape,
+    #    so it stays a clear rejection rather than a guess. ":manifest()"
     #    may ride alongside the pointer (e.g. ":last():manifest()" --
     #    the matched version's own manifest entry) or appear alone with
     #    no pointer at all (e.g. ":manifest()" alone -- every matching
@@ -407,6 +423,41 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 ]
             )
 
+        if isinstance(name_three.body, str):
+            # a literal name_three body -- e.g. "orders.a28b1105c..." --
+            # names the FINGERPRINT of the version, per compendium
+            # 3.19b/3.20. Not a pointer (an ordinal position); a MATCH
+            # against the already-name_one-matched candidates' own
+            # "fingerprint" field. No match is empty results, not an
+            # error -- same convention CSVPATHS'/RESULTS' own literal-
+            # identity lookups already use.
+            if name_three.functions:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not yet support a literal "
+                    "name_three body combined with trailing functions "
+                    "(e.g. ':manifest()') -- no worked example establishes "
+                    "what that combination should mean yet."
+                )
+            # a literal fingerprint body reduces to exactly one version,
+            # same as a real pointer would -- the '#worksheet' marker
+            # (name_one.name_two, carried through unchanged below) is
+            # satisfied by this reduction just as well as by a real
+            # POINTER function; no separate check needed here.
+            matched = next(
+                (c for c in candidates if c.get("fingerprint") == name_three.body),
+                None,
+            )
+            if matched is None:
+                return ReferenceResults3(results=[])
+            return ReferenceResults3(
+                results=[
+                    ReferenceResult3(
+                        path=matched["file"],
+                        uuid=matched["uuid"],
+                        identity=name_one.name_two,
+                    )
+                ]
+            )
         if name_three.body is not None:
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support a literal name_three "
