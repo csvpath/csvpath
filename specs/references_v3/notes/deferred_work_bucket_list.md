@@ -229,6 +229,22 @@ this instance-execution `uuid`) — easy to wire up the write correctly but
 still pull the wrong one, so this needs explicit verification, not just
 confirmation that *a* UUID shows up in the field.
 
+**No-repro, 2026-09-22**: attempted to confirm and fix this on a dedicated
+branch (`fix/run-manifest-uuid-template-fields`), outside the references-v3
+lock. Live-traced a real `collect_paths` run (both with an explicit
+`template` argument and via the `template=None` fallback that reads the
+named-paths group's own stored default) and compared `result.uuid` against
+the actual written Table 7 entry at each step, bypassing any reference-
+resolution reconstruction (reading `paths.results_manager.named_results`
+directly, and the archive `manifest.json` directly). In both runs the
+written `uuid` matched `result.uuid` exactly. Could not reproduce the bug
+as described — likely already fixed by unrelated main-codebase work since
+2026-09-20 (the write line this entry describes adding is already present
+and correct), though it is also possible the original observation depended
+on a scenario (different backend, different run method) not exercised
+here. No code change made; no unit test added, since there is nothing
+currently broken to lock in. Re-open if a concrete repro turns up.
+
 ## Results Run Manifest `template` field — written by `RunRegistrar` and read by `ResultsMetadata`, but not actually showing up on a real run
 
 Surfaced 2026-09-20, same session as the archive-ledger `uuid` gap above,
@@ -251,6 +267,22 @@ the code path appearing to exist), then a unit test confirming
 real template once fixed — don't assume the write path just needs
 "turning on"; confirm what's actually breaking between `RunRegistrar` and
 the file on disk.
+
+**No-repro, 2026-09-22**: attempted to confirm and fix this alongside the
+Archive Run Manifest `uuid` entry above, on the same dedicated branch. Live-
+traced a real `collect_paths` run (both explicit-template and the
+`template=None` fallback path) and read the actual `manifest.json` written
+to the run's own directory (Table 5) directly off disk. `template` was
+present and held the correct string in both cases. Could not reproduce the
+bug as described, for the same reasons noted on the `uuid` entry above — no
+code change made, no unit test added. Re-open if a concrete repro turns up.
+Separately, while testing this, `$food.results.:last()` (a references-v3
+query, not a raw manifest read) returned zero results against the very
+same live run that had a real, correctly-written manifest on disk — a
+different, unexplained gap, in `csvpath/references/` scope rather than
+`run_registrar.py`/`results_registrar.py`. Not investigated further here
+(out of scope for this branch); worth a dedicated look before assuming
+`:last()` over a freshly-created run works correctly in general.
 
 ## `'*'`-traversal content-accessor guards — candidates for the same query()/resolve() split, not yet re-audited
 
