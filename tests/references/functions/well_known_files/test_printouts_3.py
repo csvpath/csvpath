@@ -17,6 +17,12 @@ def test_no_arg_is_valid():
     Printouts3().check_valid()  # should not raise
 
 
-def test_arg_is_rejected():
+def test_str_arg_is_valid():
+    # a named stream under print-mode:separate, added 2026-09-21 -- see
+    # the normative doc's own ":printouts('greetings')" example.
+    Printouts3(arg="greetings").check_valid()  # should not raise
+
+
+def test_int_arg_is_rejected():
     with pytest.raises(ReferenceException3):
-        Printouts3(arg="x").check_valid()
+        Printouts3(arg=1).check_valid()

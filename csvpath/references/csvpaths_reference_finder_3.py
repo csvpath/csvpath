@@ -154,6 +154,14 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             filename = f"{name_one.path[0].name}.json"
             return self._query_well_known_file(home, filename)
 
+        if self._is_bare_pointer_reference(reference, "readme"):
+            # ":readme()" -- added 2026-09-21, same bare-content shape
+            # as :manifest()/:definition() above, but README.md is not
+            # a ".json"-suffixed name, so it gets its own branch rather
+            # than joining the generic f"{name}.json" construction.
+            home = self.csvpaths.paths_manager.named_paths_home(root_major)
+            return self._query_well_known_file(home, "README.md")
+
         manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
         selected_versions = self._resolve_versions(name_one, manifest)
         # Resolving full manifest content for more than one version at
@@ -485,12 +493,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         ]
         kind = reference.resolve_kind
         if kind == Reference3.METADATA_FILE:
-            if self._is_bare_pointer_reference(
-                reference, "manifest"
-            ) or self._is_bare_pointer_reference(reference, "definition"):
-                # result.path is already the manifest.json/definition.json
-                # path itself (set by query()'s _query_well_known_file()
-                # branch above).
+            if (
+                self._is_bare_pointer_reference(reference, "manifest")
+                or self._is_bare_pointer_reference(reference, "definition")
+                or self._is_bare_pointer_reference(reference, "readme")
+            ):
+                # result.path is already the manifest.json/definition.json/
+                # README.md path itself (set by query()'s
+                # _query_well_known_file() branch above). ':readme()'
+                # added 2026-09-21 -- not wired into '*' traversal (no
+                # worked example demonstrates or requires it there; see
+                # the bucket list).
                 return self._read_well_known_file(result.path)
             if isinstance(reference.root_major, Star3):
                 # Rule 1a/1b vs. a genuine traversal-selected version

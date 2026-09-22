@@ -96,10 +96,6 @@ class TestFunctionCall3:
         f = FunctionCall3(name="index", arg=7)
         assert str(f) == ":index(7)"
 
-    def test_star_arg(self):
-        f = FunctionCall3(name="name", arg=Star3())
-        assert str(f) == ":name(*)"
-
     def test_variable_arg(self):
         f = FunctionCall3(name="index", arg=Variable3(name="which"))
         assert str(f) == ":index(@which)"

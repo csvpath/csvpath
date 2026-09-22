@@ -13,12 +13,21 @@ class Printouts3(Function3):
     # absent (nothing was ever printed). See Errors3 for the shared
     # name_three shape this rides alongside.
     #
+    # optional str argument added 2026-09-21 -- an "named stream" under
+    # print-mode:separate (e.g. `~ print-mode:separate ~$[*][
+    # print("hello world", "greetings")]` writes "greetings.txt"), per
+    # the normative doc's own worked example: ":printouts('greetings')"
+    # and ":file('greetings.txt')" are declared equivalent there. With
+    # no argument this still means the single combined-output default,
+    # printouts.txt -- see ResultsReferenceFinder3._read_accessor() for
+    # the ".txt"-suffix construction this argument drives.
+    #
     NAME = "printouts"
     SUMMARY = (
-        "The raw bytes of a run instance's printouts.txt -- the "
-        "standard printouts under print-mode's combined-output "
-        "default. None if nothing was printed (the file was never "
-        "written)."
+        "The raw bytes of a run instance's printouts.txt (or, given a "
+        "name, that named stream's own '<name>.txt' under print-mode: "
+        "separate). None if nothing was printed under that name (the "
+        "file was never written)."
     )
     ROLE = Function3.VALUE
     # metadata_kind() override -- a whole-resource read, not a
@@ -26,6 +35,6 @@ class Printouts3(Function3):
     # why this class needs one (added 2026-08-28).
     RESOLVES_AS = Reference3.METADATA_FILE
     DATATYPES = (Reference3.RESULTS,)
-    ARG_TYPES = ()
+    ARG_TYPES = (str,)
     ARG_REQUIRED = False
     POSITIONS = {Reference3.RESULTS: (Reference3.NAME_THREE,)}

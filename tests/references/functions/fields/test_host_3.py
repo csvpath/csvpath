@@ -10,12 +10,16 @@ def test_metadata():
     f = Host3()
     assert f.name == "host"
     assert f.ROLE == Function3.VALUE
-    assert f.DATATYPES == (Reference3.FILES, Reference3.CSVPATHS)
+    assert f.DATATYPES == (
+        Reference3.FILES,
+        Reference3.CSVPATHS,
+        Reference3.RESULTS,
+    )
     assert f.SOURCE == "manifest"
-    assert f.KEY == {}
+    assert f.KEY == {Reference3.RESULTS: "hostname"}
     assert f.LEDGER_KEY == {
-        Reference3.FILES: "ip_address",
-        Reference3.CSVPATHS: "ip_address",
+        Reference3.FILES: "hostname",
+        Reference3.CSVPATHS: "hostname",
     }
 
 

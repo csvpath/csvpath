@@ -9,6 +9,104 @@ instead, so the completed reasoning trail isn't lost, it's just off this
 list (see that file's own header, and the "Process note" at the bottom of
 this one).
 
+## `:readme()` built for the bare case; combined-with-a-pointer rejection not enforced for CSVPATHS
+
+Added 2026-09-21 (`Readme3`, wired into both `FilesReferenceFinder3` and
+`CsvpathsReferenceFinder3`'s bare/sole-content shape, mirroring `:manifest()`/
+`:definition()` exactly) — was previously fully missing (documented in the
+compendium and normative doc, zero implementation, not even a factory
+registration). The bare case works and is tested for both datatypes.
+
+Compendium 6.12/6.19 also says `:readme()` cannot combine with version
+selection ("you cannot combine version selection with the `:readme()`
+function in name_one") — FILES gets this for free, since `:readme()` isn't
+one of `_compile_path_pattern()`'s recognized path-segment shapes, so a
+literal prefix before it (`orders/:readme()`) already raises naturally
+(confirmed, tested). CSVPATHS does not: `$acme.csvpaths.:last():readme()`
+confirmed live to silently resolve as if `:readme()` were not there at all
+(the pointer's own path+uuid, `:readme()` simply ignored) rather than
+raising or reading README.md. Locked in as a test of current behavior
+(`test_readme_combined_with_a_pointer_is_currently_silently_ignored`), not
+fixed — needs an explicit guard in `CsvpathsReferenceFinder3`'s combined-
+function-chain handling (there is no existing "reject this specific
+function when anything else rides alongside it" mechanism to reuse; would
+need its own check, analogous to how `_is_bare_pointer_reference()` already
+detects the single-occupant case).
+
+## RESULTS: `:all()` at a middle (non-run_dir) name_one position — not built
+
+Surfaced 2026-09-21, alongside the RESULTS zero-level/degenerate-grouping
+fix (see `deferred_work_done_list.md` for that fix's own writeup once
+moved). The compendium's `test/:all()/one:last()`-style worked example —
+grouping by a genuine middle template segment, with a literal segment
+after it before the implied run_dir — has no supported code path today.
+Confirmed live: `$test.results.test/:all()/one:last()` raises
+`"Does not yet support :all() as a name_one path segment -- only
+:name(\"...\"), a clock value function (e.g. :year()), and literal/'*'
+segments are supported."` — a clean, deliberate rejection (from
+`ReferenceFinder3._compile_path_pattern()`), not a silent misbehavior.
+
+`results_reference_finder_3.py`'s `query()` only recognizes `:all()` in
+two shapes: bare (the sole name_one content) and as the *last* path
+segment after a fixed prefix — both of which, per the 2026-09-21 fix,
+correctly degenerate to zero-level, since in both shapes `:all()` sits at
+the run_dir slot. A middle-position `:all()` (something else follows it,
+e.g. a literal segment before the implied run_dir) is a genuinely
+different, non-degenerate case — real grouping by whatever value occupies
+that specific segment, per compendium 4.2. Needs its own dispatch branch,
+mirroring how `:groups()`'s existing `_group_key(prefix_len=...)` already
+handles an arbitrary-depth remainder correctly; unlike `:groups()`,
+`:all()` here needs to also constrain the pattern to have something
+*after* the wildcarded position before it stops (an exactly-one-segment
+grouping, not any-depth) which is currently not modeled in
+`_compile_path_pattern()`/`_matches_prefix()` at all. Not attempted here to
+keep the zero-level fix's own diff reviewable — this is additive new
+capability, not a correction to existing (wrong) behavior.
+
+## Time component functions acting as context setters — not built at all; ROLE is currently static per function, never usage-dependent
+
+Surfaced 2026-09-21, first pass through `csvpath/references/functions/values/`
+during the test-first alignment work. This is an architectural gap, not a
+rename/fix — flagging it here rather than attempting the design unsupervised.
+
+The compendium's §6.27 series (heavily revised this same review arc) settles
+a three-way split for `:yesterday()`/`:today()`/`:day()`/`:year()`/etc.:
+used bare/chain-level, the function acts as a **context setter** that
+dominates the rest of the chain (`$acme.files.:yesterday():last()` finds the
+last registration *within* yesterday's window, per §6.27f); nested as another
+function's argument, it collapses to a **point** (first moment of that
+period); interpolated into a string, it **stringifies** to its coarse-grained
+value. §6.43's function-role taxonomy reflects the same three roles at the
+type level: `CONTEXT_SETTER`, `POINTER`, `VALUE`.
+
+The current implementation only has the third case. Every function in
+`functions/values/` (`Year3`, `Yesterday3`, `Today3`, `Day3`, `DayName3`,
+`Hour3`, `Hour243`, `Minute3`, `Month3`, `MonthName3`, `Second3`) declares
+`ROLE = Function3.VALUE` unconditionally, `SOURCE = "clock"`, and no
+`POSITIONS` at all — confirmed against `function_3.py`'s own docstring,
+which describes `SOURCE == "clock"` functions as usable only "as a name_one
+path segment... or inside `{...}` string interpolation... not resolved as a
+bare, standalone reference on their own." `Function3.ROLE` itself is a
+single static class attribute, not something that can currently vary by
+where a function sits in a chain — there is no mechanism anywhere (grepped
+the finders and `function_3.py`; nothing matches "yesterday", "dominat", or
+"context setter dispatch") that would let `:yesterday()` used bare narrow a
+query's date range the way §6.27f describes. `$acme.files.:yesterday():last()`
+— the compendium's own flagship worked example for this behavior — is not
+executable today; it would either be rejected (no `POSITIONS` entry means no
+legal bare/chain-level position) or misinterpreted as a literal path segment.
+
+**Needed before this can be built**: a real design for how a finder
+recognizes "this VALUE-role function is sitting bare in a chain, not nested
+as an argument" and turns that into an actual date-range filter on the
+candidate pool, distinct from `CONTEXT_SETTER`-role functions like
+`:before()`/`:after()`, which already narrow scope but do not compute a
+clock-derived value themselves. Likely needs its own worked examples per
+datatype (files/csvpaths/results all have different "what does the anchor
+apply to" semantics per §6.27f's arrival/load/runtime split) before
+anything is buildable — same shape as the other still-open design items in
+this file, not a quick fix.
+
 ## Archive Run Manifest `uuid` field — written to metadata but not persisted to the manifest; needs a read/write unit test
 
 Surfaced 2026-09-20 while adding archive-ledger examples to the normative

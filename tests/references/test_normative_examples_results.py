@@ -27,15 +27,21 @@ Excluded doc lines and why (checked directly against the doc as of
     exist yet.
   - lines 96-111 (:from(), :date(), :year(), :type()) -- none built yet.
 
-Both discrepancies flagged in an earlier version of this docstring are now
-resolved directly in the doc itself (confirmed 2026-08-11, not assumed):
-line 54's description now correctly says "1-level template" (':all()' is
-a one-level operator, peer of '*', not zero-level/"no template"); the
-`.:all():data()` example (which raised, since Rule 1 forbids combining
-':all()' with any content accessor) has been removed from the doc
-entirely. No corresponding test lives here for either -- there is nothing
-left to encode for the removed example, and line 54 is covered by
-TestAllIsAOneLevelOperator below using the doc's own, now-correct wording.
+The `.:all():data()` example (which raised, since Rule 1 forbids combining
+':all()' with any content accessor) was removed from the doc entirely; no
+corresponding test lives here for it.
+
+REVISED 2026-09-21: an earlier version of this docstring (and this file's
+own fixtures) treated bare '*'/':all()' as one-level operators, peers of
+each other but distinct from a bare pointer's zero-level meaning -- settled
+2026-08-11, predating this review arc's compendium/normative-doc work. That
+is now superseded: per compendium 4.2b, ':all()' (and an explicit trailing
+'*') degenerate to the run_dir slot's own zero-level meaning whenever
+nothing else occupies that position, regardless of what literal prefix
+precedes them -- a bare pointer, a bare '*', and a bare ':all()' are all
+equivalent, and so are "beta/*" and "beta/:all()". See
+results_reference_finder_3.py's own 2026-09-21 revision notes for the
+implementation-side fix this test file was rewritten to match.
 """
 
 import json
@@ -105,47 +111,59 @@ def _finder(reference: str, archive: str) -> ResultsReferenceFinder3:
 
 class TestFindingTheLastRun:
     # doc lines 30-38: "Finding the 'last' run or runs of a type of
-    # information" -- one named-results group ("alpha") with runs at
-    # every depth the doc's examples need: no template, one 1-level
-    # template ("zero/"), and two 2-level templates both starting "beta"
-    # ("beta/x/", "beta/y/").
+    # information" -- REVISED 2026-09-21, alongside the finder's own
+    # zero-level/degenerate-grouping fix (compendium 4.2b: ':all()'/'*'
+    # degenerate to zero-level whenever they occupy the run_dir slot,
+    # regardless of what literal prefix precedes them). Two runs at
+    # each depth the doc's examples need -- no template ("flat"), one
+    # 1-level template ("zero/"), and one 1-level template under an
+    # explicit literal prefix ("beta/") -- so each test can prove
+    # pooling/degeneracy picks the true latest, not just the only one.
     @pytest.fixture
     def alpha_archive(self, tmp_path):
         base = tmp_path / "alpha"
-        flat = _make_run(base, "2026-01-01_00-00-00", "flat-uuid", {})
-        zero = _make_run(base / "zero", "2026-01-02_00-00-00", "zero-uuid", {})
-        beta_x = _make_run(base / "beta" / "x", "2026-01-03_00-00-00", "beta-x-uuid", {})
-        beta_y = _make_run(base / "beta" / "y", "2026-01-04_00-00-00", "beta-y-uuid", {})
-        _write_archive_manifest(tmp_path, "alpha", [flat, zero, beta_x, beta_y])
+        flat1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
+        flat2 = _make_run(base, "2026-01-02_00-00-00", "flat-2", {})
+        zero1 = _make_run(base / "zero", "2026-01-03_00-00-00", "zero-1", {})
+        zero2 = _make_run(base / "zero", "2026-01-04_00-00-00", "zero-2", {})
+        beta1 = _make_run(base / "beta", "2026-01-05_00-00-00", "beta-1", {})
+        beta2 = _make_run(base / "beta", "2026-01-06_00-00-00", "beta-2", {})
+        _write_archive_manifest(
+            tmp_path, "alpha", [flat1, flat2, zero1, zero2, beta1, beta2]
+        )
         return str(tmp_path)
 
     def test_line_30_bare_pointer_is_zero_level(self, alpha_archive):
         # $alpha.results.:last() >> run with no template
         results = _finder("$alpha.results.:last()", alpha_archive).query()
-        assert results.uuids == ["flat-uuid"]
+        assert results.uuids == ["flat-2"]
 
-    def test_line_31_star_is_one_level(self, alpha_archive):
-        # $alpha.results.*:last() >> run with a 1-level template
+    def test_line_31_star_is_zero_level_same_as_bare_pointer(self, alpha_archive):
+        # $alpha.results.*:last() >> run with no template, same as
+        # without the wildcard -- REVISED 2026-09-21 (was "one level"):
+        # a bare '*' represents the run_dir slot itself, same as a bare
+        # pointer alone.
         results = _finder("$alpha.results.*:last()", alpha_archive).query()
-        assert results.uuids == ["zero-uuid"]
+        assert results.uuids == ["flat-2"]
 
-    def test_line_32_all_groups_one_level_templates(self, tmp_path):
-        # $alpha.results.:all():last() >> runs for each 1-level template
-        # -- needs at least two distinct 1-level templates to prove
-        # grouping (not just pooling); alpha_archive only has one.
-        base = tmp_path / "alpha"
-        zero1 = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
-        zero2 = _make_run(base / "zero", "2026-01-02_00-00-00", "zero-2", {})
-        one1 = _make_run(base / "one", "2026-01-03_00-00-00", "one-1", {})
-        _write_archive_manifest(tmp_path, "alpha", [zero1, zero2, one1])
-        results = _finder("$alpha.results.:all():last()", str(tmp_path)).query()
-        assert set(results.uuids) == {"zero-2", "one-1"}
+    def test_line_32_all_is_zero_level_degenerate_same_as_bare_pointer(
+        self, alpha_archive
+    ):
+        # $alpha.results.:all():last() >> run with no template, same as
+        # with the wildcard -- REVISED 2026-09-21 (was: groups by
+        # whatever 1-level templates happen to exist). Per compendium
+        # 4.2b, ':all()' at the run_dir slot degenerates to '*' -- there
+        # is nothing to group by, since run_dir names never repeat --
+        # so this gives the single true latest zero-level run, same as
+        # lines 30/31, not one result per template.
+        results = _finder("$alpha.results.:all():last()", alpha_archive).query()
+        assert results.uuids == ["flat-2"]
 
     def test_line_33_flatten_pools_any_depth(self, alpha_archive):
         # $alpha.results.:flatten():last() >> run (single, any depth)
-        # beta/y is the true chronological latest across every depth.
+        # beta-2 is the true chronological latest across every depth.
         results = _finder("$alpha.results.:flatten():last()", alpha_archive).query()
-        assert results.uuids == ["beta-y-uuid"]
+        assert results.uuids == ["beta-2"]
 
     def test_line_34_prefixed_flatten_any_depth_beyond_prefix(self, alpha_archive):
         # $alpha.results.beta/:flatten():last() >> run of all templates
@@ -153,21 +171,30 @@ class TestFindingTheLastRun:
         results = _finder(
             "$alpha.results.beta/:flatten():last()", alpha_archive
         ).query()
-        assert results.uuids == ["beta-y-uuid"]
+        assert results.uuids == ["beta-2"]
 
-    def test_line_35_prefixed_all_groups_by_next_level(self, alpha_archive):
-        # $alpha.results.beta/:all():last() >> runs of all 2-level
-        # templates starting `beta` -- one per distinct 2nd-level value.
+    def test_line_35_prefixed_all_degenerates_same_as_prefixed_star(
+        self, alpha_archive
+    ):
+        # $alpha.results.beta/:all():last() >> last run of all 1-level
+        # templates starting `beta/` -- REVISED 2026-09-21 (was: groups
+        # by a 2nd template level beyond "beta"). ':all()' here still
+        # sits at the run_dir slot (the fixed "beta/" prefix does not
+        # change that), so this degenerates to the exact same candidate
+        # set "beta/*" gives -- a single pooled result, not one per run.
         results = _finder(
             "$alpha.results.beta/:all():last()", alpha_archive
         ).query()
-        assert set(results.uuids) == {"beta-x-uuid", "beta-y-uuid"}
+        assert results.uuids == ["beta-2"]
 
-    def test_line_36_prefixed_star_pools_next_level(self, alpha_archive):
-        # $alpha.results.beta/*:last() >> run of all 2-level templates
-        # starting `beta` -- single, pooled (contrast with line 35).
+    def test_line_36_prefixed_star_pools_same_level(self, alpha_archive):
+        # $alpha.results.beta/*:last() >> a run of all 1-level templates
+        # starting `beta/` -- single, pooled, identical result to line
+        # 35 (the doc's own point: these two are deliberately
+        # equivalent, per the "better written as" note next to
+        # ':all()').
         results = _finder("$alpha.results.beta/*:last()", alpha_archive).query()
-        assert results.uuids == ["beta-y-uuid"]
+        assert results.uuids == ["beta-2"]
 
     def test_line_37_manifest_at_literal_root_is_zero_level(self, alpha_archive):
         # $alpha.results.:manifest():last() >> manifest entry of the
@@ -175,7 +202,7 @@ class TestFindingTheLastRun:
         results = _finder(
             "$alpha.results.:manifest():last()", alpha_archive
         ).resolve()
-        assert results.results[0].data["run_uuid"] == "flat-uuid"
+        assert results.results[0].data["run_uuid"] == "flat-2"
 
     def test_line_38_global_manifest_is_unrestricted(self, tmp_path):
         # $*.results.:manifest():last() >> manifest entry of the most
@@ -198,34 +225,36 @@ class TestFindingTheLastRun:
         self, alpha_archive
     ):
         # $alpha.results.:groups():last() >> runs for every template and
-        # non-template run dir -- added 2026-08-12 (was excluded/not
-        # built as of this file's original writing). alpha_archive has
-        # four distinct groups (zero-level, "zero", "beta/x", "beta/y"),
-        # each with exactly one run here, so ':last()' of each group is
-        # just that one run.
+        # non-template run dir -- unaffected by the 2026-09-21 ':all()'
+        # fix (':groups()' already correctly excluded the run's own
+        # trailing name from its group key). alpha_archive has three
+        # distinct groups (zero-level, "zero", "beta"), two runs each,
+        # so ':last()' of each group is that group's own later run.
         results = _finder("$alpha.results.:groups():last()", alpha_archive).query()
-        assert set(results.uuids) == {
-            "flat-uuid",
-            "zero-uuid",
-            "beta-x-uuid",
-            "beta-y-uuid",
-        }
+        assert set(results.uuids) == {"flat-2", "zero-2", "beta-2"}
 
 
-class TestAllIsAOneLevelOperator:
-    # doc line 54: $acme.results.:all() >> every run having a 1-level
-    # template -- description fixed by David 2026-08-11 (was "no
-    # template", which is bare :last()'s job, not ':all()'s).
-    def test_line_54_all_with_no_pointer_is_still_one_level_only(self, tmp_path):
+class TestAllIsAZeroLevelDegenerateOperator:
+    # doc line 54: $acme.results.:all() >> every run having no template,
+    # same as bare '*' -- REVISED 2026-09-21 (was "one-level operator,
+    # peer of '*'", settled 2026-08-11; superseded now that '*'/':all()'
+    # both degenerate to the run_dir slot per compendium 4.2b). With no
+    # pointer, every zero-level run comes back unreduced -- the
+    # customers/customers-2025 runs (1- and 2-level) are excluded, same
+    # as they would be for a bare pointer or bare '*'.
+    def test_line_54_all_with_no_pointer_is_zero_level_unreduced(self, tmp_path):
         base = tmp_path / "acme"
-        flat = _make_run(base, "2026-01-01_00-00-00", "flat-uuid", {})
-        one_level = _make_run(base / "customers", "2026-01-02_00-00-00", "one-uuid", {})
+        flat1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
+        flat2 = _make_run(base, "2026-01-02_00-00-00", "flat-2", {})
+        one_level = _make_run(base / "customers", "2026-01-03_00-00-00", "one-uuid", {})
         two_level = _make_run(
-            base / "customers" / "2025", "2026-01-03_00-00-00", "two-uuid", {}
+            base / "customers" / "2025", "2026-01-04_00-00-00", "two-uuid", {}
         )
-        _write_archive_manifest(tmp_path, "acme", [flat, one_level, two_level])
+        _write_archive_manifest(
+            tmp_path, "acme", [flat1, flat2, one_level, two_level]
+        )
         results = _finder("$acme.results.:all()", str(tmp_path)).query()
-        assert results.uuids == ["one-uuid"]
+        assert set(results.uuids) == {"flat-1", "flat-2"}
 
 
 class TestPathNarrowingAndInstanceSelection:
