@@ -987,6 +987,10 @@ $alpha.files.:name("orders.csv").:last():uuid()
 $alpha.files.:name("orders.csv").:last():time()
 $alpha.files.:name("orders.csv").:last():fingerprint()
 $alpha.files.:name("orders.csv").:last():source()
+$alpha.files.:name("west coast.xlsx").:last():mark()
+Note that this retrieves the worksheet mark of an already-matched version.
+Selecting a specific worksheet to query in the first place still goes
+through `name_two` (`#worksheet`).
 
 ### Find a named-file registered version by fingerprint.
 $alpha.files.:fingerprint("a711df7d2846e8ba46125d3f7adb7aea0ede50eb20a6550fca2358628a05425b")

@@ -7,13 +7,14 @@ from csvpath.references.reference_exceptions_3 import ReferenceException3
 
 
 def test_metadata():
+    # CSVPATHS removed 2026-09-21 (David: "next to useless and shouldn't
+    # exist").
     f = TimeCompleted3()
     assert f.name == "time_completed"
     assert f.ROLE == Function3.VALUE
-    assert f.DATATYPES == (Reference3.CSVPATHS, Reference3.RESULTS)
+    assert f.DATATYPES == (Reference3.RESULTS,)
     assert f.SOURCE == "manifest"
     assert f.KEY == {
-        Reference3.CSVPATHS: "time_completed",
         Reference3.RESULTS: "time_completed",
     }
 

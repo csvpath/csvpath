@@ -266,17 +266,22 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     "depth/grouping choice, not to be combined with another."
                 )
             if is_grouped:
-                # bare ':all()' -- exactly one level, wildcarded, peer of
-                # a bare '*' (illegal on its own, but this is the same
-                # one-level restriction) -- settled 2026-08-11,
-                # regardless of whether a pointer follows. Corrected
-                # from an earlier version that let a pointer-less
-                # ':all()' fall through to ':flatten()'s any-depth
-                # candidate set by mistake, mirroring csvpaths' own
-                # depth-less ':all()' precedent -- which does not apply
-                # here, since csvpaths has no path dimension at all to
-                # be wrong about, but results does.
-                pattern = [Star3()]
+                # bare ':all()' occupies the sole name_one position, i.e.
+                # the run_dir slot itself -- REVISED 2026-09-21 (was:
+                # "exactly one level, wildcarded", settled 2026-08-11).
+                # Per compendium 4.2b, ':all()' degenerates to '*'
+                # whenever it sits at the run_dir position, regardless of
+                # template depth, because run_dir names never repeat --
+                # there is nothing for it to group by. Matching zero-
+                # level (pattern=[]), same as a bare pointer alone,
+                # rather than requiring one wildcarded level beyond it.
+                # The grouping machinery below is left in place rather
+                # than skipped: with prefix_len=0, every zero-level run's
+                # own _group_key() is the same empty tuple, so they
+                # naturally collapse into one group -- degenerate
+                # behavior falls out of the existing mechanism instead of
+                # needing a special case.
+                pattern = []
                 candidates = [
                     rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
                 ]
@@ -368,22 +373,30 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             -1
         ].name == "all":
             # a literal/wildcard prefix, then ':all()' as the last
-            # segment, e.g. "beta/:all():last()" -- matches exactly one
-            # level beyond the prefix (like "beta/*" would), grouped by
-            # the run's own actual value at that position instead of
-            # pooled.
+            # segment, e.g. "beta/:all():last()" -- REVISED 2026-09-21
+            # (was: "matches exactly one level beyond the prefix,
+            # grouped by the value there"). ':all()' here still sits at
+            # the run_dir slot -- the prefix before it is fixed/literal,
+            # but the position ':all()' itself occupies is still the
+            # run's own trailing name, which never repeats (compendium
+            # 4.2b). So this degenerates the same way the bare case
+            # above does: matches exactly the fixed prefix (same
+            # candidate set "beta/*" already gives), and prefix_len
+            # equals the prefix's own length (not one more) so every
+            # candidate's _group_key() comes back as the same empty
+            # tuple -- one group, not one per run.
             if name_one.path[-1].arg is not None:
                 raise ReferenceException3(
                     "ResultsReferenceFinder3's ':all()' does not take an "
                     "argument."
                 )
-            pattern = self._compile_path_pattern(name_one.path[:-1]) + [Star3()]
+            pattern = self._compile_path_pattern(name_one.path[:-1])
             candidates = [
                 rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
             ]
             if pointer is not None:
                 group_key_for = {
-                    rh: self._group_key(rh, home, prefix_len=len(pattern) - 1)
+                    rh: self._group_key(rh, home, prefix_len=len(pattern))
                     for rh in candidates
                 }
         elif isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -413,7 +426,24 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     for rh in candidates
                 }
         else:
-            pattern = self._compile_path_pattern(name_one.path)
+            # plain literal/'*' path, no trailing ':flatten()'/':all()'/
+            # ':groups()' marker, e.g. "customers/2025" or "beta/*" or
+            # bare "*". REVISED 2026-09-21: when the LAST written segment
+            # is itself a bare '*' (Star3), it represents the run_dir
+            # slot itself, same as the trailing wildcard-like markers
+            # above -- dropped before compiling the pattern, since
+            # _prefix_segments()/_matches_prefix() already exclude the
+            # run's own trailing name from the comparison. A literal
+            # last segment (e.g. "2025") is a real, distinct template
+            # value and is NOT dropped -- only an explicit trailing '*'
+            # gets this treatment. So "beta/*" now matches the same
+            # one-level-under-beta candidates "beta/:all():last()" does,
+            # and bare "*" alone now matches zero-level, same as a bare
+            # pointer.
+            path = name_one.path
+            if path and isinstance(path[-1], Star3):
+                path = path[:-1]
+            pattern = self._compile_path_pattern(path)
             candidates = [
                 rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
             ]
@@ -663,19 +693,19 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 calls
             )
             if all_call is not None:
-                # exactly one level, wildcarded -- the SAME [Star3()]
-                # restriction bare ':all()' already applies for one
-                # literal group, just computed per candidate's own
-                # group home. Partitions by the COMPOSITE (group,
-                # template-value) key -- see this method's own
-                # docstring and normative_reference_examples.txt's "THE
-                # ':all()' MEANING COLLISION AT STAR TRAVERSAL" section.
+                # zero-level, degenerate -- the SAME [] restriction bare
+                # ':all()' already applies for one literal group (see the
+                # literal-root query() branch's own 2026-09-21 revision),
+                # just computed per candidate's own group home. Every
+                # zero-level run's _group_key() comes back as the same
+                # empty tuple, so this naturally collapses to one group
+                # per named-results group rather than one per run.
                 partitioned = []
                 for rh, group in self._discover_run_homes(None, name_filter):
                     home = self.csvpaths.results_manager.get_named_results_home(
                         group
                     )
-                    if self._matches_prefix(rh, home, [Star3()]):
+                    if self._matches_prefix(rh, home, []):
                         partitioned.append(
                             (rh, (group, self._group_key(rh, home)))
                         )
@@ -759,17 +789,20 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             -1
         ].name == "all":
             # a literal/wildcard prefix, then ':all()' as the last path
-            # segment, e.g. "beta/:all():last()" -- matches exactly one
-            # level beyond the prefix (relative to each candidate's OWN
-            # group home), grouped by the COMPOSITE (group, observed-
-            # value-at-that-position) key, same as the bare case above.
+            # segment, e.g. "beta/:all():last()" -- REVISED 2026-09-21,
+            # same reasoning as the literal-root query() branch: ':all()'
+            # here still sits at the run_dir slot, so this degenerates to
+            # the fixed prefix's own candidate set (same as "beta/*"
+            # would give), with prefix_len equal to the prefix's own
+            # length so every candidate's _group_key() collapses to the
+            # same empty tuple -- one group per named-results group, not
+            # one per run.
             if name_one.path[-1].arg is not None:
                 raise ReferenceException3(
                     "ResultsReferenceFinder3's ':all()' does not take an "
                     "argument."
                 )
-            prefix = self._compile_path_pattern(name_one.path[:-1])
-            pattern = prefix + [Star3()]
+            pattern = self._compile_path_pattern(name_one.path[:-1])
             calls = list(name_one.functions)
             pointer, _, _, having_call = self._star_run_selector_chain(calls)
             partitioned = []
@@ -782,7 +815,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                             (
                                 group,
                                 self._group_key(
-                                    rh, home, prefix_len=len(pattern) - 1
+                                    rh, home, prefix_len=len(pattern)
                                 ),
                             ),
                         )
@@ -810,7 +843,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # plain literal/'*' path, no trailing ':flatten()'/':all()'/
         # ':groups()' marker -- POOL mode, exact-length match (relative
         # to each candidate's OWN group home), reduced by the pointer.
-        pattern = self._compile_path_pattern(name_one.path)
+        # REVISED 2026-09-21: an explicit trailing '*' represents the
+        # run_dir slot itself (same reasoning as the literal-root
+        # query()'s own else-branch revision) and is dropped before
+        # compiling, so e.g. "beta/*" matches one level under "beta" and
+        # bare "*" alone matches zero-level.
+        path = name_one.path
+        if path and isinstance(path[-1], Star3):
+            path = path[:-1]
+        pattern = self._compile_path_pattern(path)
         calls = list(name_one.functions)
         pointer, _, _, having_call = self._star_run_selector_chain(calls)
         run_homes = [
@@ -1341,6 +1382,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             ):
                 data = [e for e in data if accessor.arg.matches(e.get("source"))]
             return data
+        if accessor.name == "printouts" and accessor.arg:
+            # a named stream under print-mode:separate (added
+            # 2026-09-21) -- "<name>.txt", not the fixed combined-output
+            # default. See Printouts3's own docstring for the normative-
+            # doc example this matches ("...printouts('greetings')" and
+            # "...file('greetings.txt')" are declared equivalent there).
+            path = Nos(instance_dir).join(f"{accessor.arg}.txt")
+            return cls._read_well_known_file(path)
         if accessor.name in cls._BYTES_ACCESSOR_FILES:
             path = Nos(instance_dir).join(cls._BYTES_ACCESSOR_FILES[accessor.name])
             return cls._read_well_known_file(path)

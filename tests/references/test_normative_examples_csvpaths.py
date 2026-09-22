@@ -508,7 +508,6 @@ FIELD_ACCESSOR_MANIFEST = [
         "named_paths_name": "acme",
         "named_paths_home": GROUP_HOME,
         "time": "2026-01-01T00:00:00+00:00",
-        "time_completed": "2026-01-01T00:05:00+00:00",
         "fingerprint": "aaaa",
         "source_path": "/staging/acme",
         "manifest_path": f"{GROUP_HOME}/manifest.json",
@@ -555,12 +554,6 @@ class TestFieldAccessorsOnOneMatchedVersion:
             "$acme.csvpaths.:last():manifest_path()", FIELD_ACCESSOR_MANIFEST
         ).resolve()
         assert results.results[0].data == f"{GROUP_HOME}/manifest.json"
-
-    def test_time_completed(self):
-        results = _finder(
-            "$acme.csvpaths.:last():time_completed()", FIELD_ACCESSOR_MANIFEST
-        ).resolve()
-        assert results.results[0].data == "2026-01-01T00:05:00+00:00"
 
     def test_named_paths_name(self):
         results = _finder(

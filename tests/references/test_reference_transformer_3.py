@@ -159,10 +159,6 @@ class TestFunctionArgs:
         r = build(parser, "$acme.files.Q2/:name(@customer).v1")
         assert r.name_one.path[1].arg == Variable3(name="customer")
 
-    def test_star_arg(self, parser):
-        r = build(parser, "$acme.files.Q2/:name(*).v1")
-        assert r.name_one.path[1].arg == Star3()
-
     def test_regex_arg(self, parser):
         r = build(parser, "$acme.results.:name(/^[^M].*/)/2025:first().invoices")
         assert r.name_one.path[0].arg == Regex3(pattern="^[^M].*")

@@ -37,6 +37,7 @@ class ReferenceFunctionFactory:
         from .well_known_files.manifest_3 import Manifest3
         from .well_known_files.meta_3 import Meta3
         from .well_known_files.printouts_3 import Printouts3
+        from .well_known_files.readme_3 import Readme3
         from .well_known_files.unmatched_3 import Unmatched3
         from .well_known_files.vars_3 import Vars3
 
@@ -73,7 +74,6 @@ class ReferenceFunctionFactory:
         from .fields.group_manifest_3 import GroupManifest3
         from .fields.home_3 import Home3
         from .fields.host_3 import Host3
-        from .fields.hostname_3 import Hostname3
         from .fields.identity_3 import Identity3
         from .fields.instance_home_3 import InstanceHome3
         from .fields.instance_index_3 import InstanceIndex3
@@ -179,6 +179,7 @@ class ReferenceFunctionFactory:
             Data3.NAME: Data3,
             Unmatched3.NAME: Unmatched3,
             Printouts3.NAME: Printouts3,
+            Readme3.NAME: Readme3,
             Idchain3.NAME: Idchain3,
             True3.NAME: True3,
             False3.NAME: False3,
@@ -239,7 +240,6 @@ class ReferenceFunctionFactory:
             NamedPathsName3.NAME: NamedPathsName3,
             Status3.NAME: Status3,
             Method3.NAME: Method3,
-            Hostname3.NAME: Hostname3,
             Username3.NAME: Username3,
             TimeCompleted3.NAME: TimeCompleted3,
             ManifestPath3.NAME: ManifestPath3,

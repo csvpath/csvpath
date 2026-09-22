@@ -20,7 +20,7 @@ from csvpath.references.reference_grammar_3 import QueryParser3
 POSITIVE_CASES = [
     # files
     '$*.files.Q2/test-data.:last()',
-    '$acme.files.Q2/:name(*).:last()',
+    '$acme.files.Q2/*.:last()',
     '$acme.files.Q2/:name(@customer).:last()',
     '$acme.files.Q2/test-data.:last()',
     '$acme.files.:quarter()/:name("live data").:last()',
@@ -49,8 +49,8 @@ POSITIVE_CASES = [
     '$acme.results.*/2025:first().invoices',
     '$acme.results.*/*/2025:first().invoices',
     '$acme.results.:choice("acme|star|general")/2025:first().invoices',
-    '$acme.results.:names(*)/2025:first().invoices:type("csv")',
-    '$acme.results.:names(*)/2025:first().invoices:name("report.txt")',
+    '$acme.results.*/2025:first().invoices:type("csv")',
+    '$acme.results.*/2025:first().invoices:name("report.txt")',
     '$acme.results.customers/2025:first().invoices:data()',
     '$acme.results.customers/2025:first().invoices:vars()',
     '$acme.results.customers/2025:first().invoices:meta()',

@@ -337,10 +337,11 @@ class TestPathMatching:
 class TestBareFunctionOnlyNameOne:
     # mirrors csvpaths: no literal path at all -- the sole path
     # "segment" is itself a version-selecting function. A bare pointer
-    # alone (no ':all()') means zero-level only -- direct children of
-    # the group's own root -- settled 2026-08-10; see :flatten() for
-    # the any-depth case this used to cover. A bare ':all()' is
-    # unaffected: still every run for the group, any depth.
+    # alone means zero-level only -- direct children of the group's own
+    # root -- settled 2026-08-10; see :flatten() for the any-depth case
+    # this used to cover. A bare ':all()' degenerates to the same
+    # zero-level meaning (compendium 4.2b, settled 2026-09-21) -- it is
+    # NOT the any-depth tool; that is still ':flatten()''s job.
     @pytest.fixture
     def flat_archive(self, tmp_path):
         base = tmp_path / "flat"
@@ -358,17 +359,22 @@ class TestBareFunctionOnlyNameOne:
         assert results.uuids == ["run1-uuid"]
 
     def test_bare_flatten_returns_every_run(self, flat_archive):
-        # ':all()' now requires exactly one level (settled 2026-08-11,
-        # same restriction '*' has) -- ':flatten()' is the right tool
-        # for "every run regardless of depth", including flat ones.
+        # ':flatten()' -- every run regardless of depth, including flat
+        # ones (same set ':all()' now also reaches, per the test below --
+        # ':flatten()' remains the right tool once a deeper run is also
+        # in the mix, since ':all()' stays zero-level-only).
         results = _finder("$flat.results.:flatten()", flat_archive).query()
         assert set(results.uuids) == {"run1-uuid", "run2-uuid"}
 
-    def test_bare_all_excludes_flat_runs(self, flat_archive):
-        # both of flat_archive's runs are zero-level (direct children) --
-        # ':all()' requires exactly one level, so it finds neither.
+    def test_bare_all_includes_flat_runs_unreduced(self, flat_archive):
+        # REVISED 2026-09-21 (was: "':all()' requires exactly one level,
+        # so it finds neither" -- settled 2026-08-11, now superseded).
+        # Per compendium 4.2b, ':all()' degenerates to the run_dir slot's
+        # own zero-level meaning -- both of flat_archive's runs are
+        # zero-level, so with no pointer, both come back unreduced, same
+        # as a bare '*' or bare pointer-less query would give.
         results = _finder("$flat.results.:all()", flat_archive).query()
-        assert results.uuids == []
+        assert set(results.uuids) == {"run1-uuid", "run2-uuid"}
 
     def test_bare_pointer_does_not_find_a_run_under_a_deep_template(
         self, acme_archive
@@ -629,55 +635,27 @@ class TestFlatten:
                 str(tmp_path),
             ).resolve()
 
-    def test_all_grouping_partitions_by_composite_group_and_template_key(
-        self, tmp_path
-    ):
-        # closes the ':all()' meaning-collision (settled 2026-08-19 with
-        # David via a worked example -- see "THE ':all()' MEANING
-        # COLLISION AT STAR TRAVERSAL" in references_notes/notes/
-        # normative_reference_examples.txt) -- mirrors
-        # FilesReferenceFinder3's own already-built ':all()' star-
-        # traversal precedent: partition by the COMPOSITE (group,
-        # template-value) key, not group alone or template alone.
-        # acme has two "east" runs and one "west" run; widgets has one
-        # "east" run -- "east" is reused across BOTH groups on purpose,
-        # the crux of the ambiguity this fixture proves is resolved
-        # correctly (neither collapsed into the other).
-        acme_east_1 = _make_run(
-            tmp_path / "acme" / "east", "2026-01-01_00-00-00", "acme-east-1", {}
-        )
-        acme_east_2 = _make_run(
-            tmp_path / "acme" / "east", "2026-01-03_00-00-00", "acme-east-2", {}
-        )
-        acme_west_1 = _make_run(
-            tmp_path / "acme" / "west", "2026-01-02_00-00-00", "acme-west-1", {}
-        )
-        widgets_east_1 = _make_run(
-            tmp_path / "widgets" / "east",
-            "2026-01-04_00-00-00",
-            "widgets-east-1",
-            {},
+    def test_all_partitions_by_group_at_star_traversal(self, tmp_path):
+        # REVISED 2026-09-21 -- superseded a test that proved ':all()'
+        # partitioned by a composite (group, template-value) key across
+        # star traversal ("THE ':all()' MEANING COLLISION AT STAR
+        # TRAVERSAL"). That scenario no longer applies: per compendium
+        # 4.2b, bare ':all()' degenerates to the run_dir slot's own
+        # zero-level meaning, so it no longer groups by template value
+        # at all -- only by named-results group, which star traversal
+        # already partitions by inherently. acme has two zero-level
+        # runs, widgets has one -- one "last" per group is still the
+        # right thing to prove, just without a template-value dimension.
+        acme_1 = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "acme-1", {})
+        acme_2 = _make_run(tmp_path / "acme", "2026-01-03_00-00-00", "acme-2", {})
+        widgets_1 = _make_run(
+            tmp_path / "widgets", "2026-01-02_00-00-00", "widgets-1", {}
         )
         _write_archive_manifest_multi(
-            tmp_path,
-            {
-                "acme": [acme_east_1, acme_east_2, acme_west_1],
-                "widgets": [widgets_east_1],
-            },
+            tmp_path, {"acme": [acme_1, acme_2], "widgets": [widgets_1]}
         )
         results = _finder("$*.results.:all():last()", str(tmp_path)).query()
-        # 3 results, not 2 -- pooling by template value alone would have
-        # conflated acme's and widgets' "east" runs into one group
-        # (giving widgets-east-1, the true latest, and losing acme-
-        # east-2 entirely); grouping by named-results-group alone would
-        # have lost the east/west distinction within acme (giving
-        # acme-east-2 as acme's one "last", never surfacing acme-west-1
-        # at all).
-        assert sorted(results.uuids) == [
-            "acme-east-2",
-            "acme-west-1",
-            "widgets-east-1",
-        ]
+        assert sorted(results.uuids) == ["acme-2", "widgets-1"]
 
     def test_all_combined_with_flatten_is_rejected(self, two_group_archive):
         # each is its own depth/grouping choice -- same mutual-exclusion
@@ -688,91 +666,98 @@ class TestFlatten:
             ).query()
 
     def test_all_combined_with_a_field_accessor_also_works(self, tmp_path):
+        # REVISED 2026-09-21: ':all()' is zero-level now, not one-level
+        # -- the run moved to a direct child of "acme" to match.
         acme_run = _make_run(
-            tmp_path / "acme" / "east", "2026-01-01_00-00-00", "acme-east", {}
+            tmp_path / "acme", "2026-01-01_00-00-00", "acme-flat", {}
         )
         _write_json(
             Path(acme_run) / "manifest.json",
-            {"run_uuid": "acme-east", "named_paths_name": "acme"},
+            {"run_uuid": "acme-flat", "named_paths_name": "acme"},
         )
         _write_archive_manifest(tmp_path, "acme", [acme_run])
         results = _finder(
             "$*.results.:all():last():named_paths_name()", str(tmp_path)
         ).resolve()
         assert len(results.results) == 1
-        assert results.results[0].uuid == "acme-east"
+        assert results.results[0].uuid == "acme-flat"
         assert results.results[0].data == "acme"
 
 
 class TestAllGrouping:
-    # ':all()' and '*' stay depth peers (exactly one level) --
-    # ':all()' additionally groups by whatever value actually occupies
-    # that one wildcarded position, unlike '*' (which pools). Settled
-    # 2026-08-10, directly from David's own example: three different
-    # one-level templates, each nesting runs one level deep via a
-    # different substitution source, still group correctly by whatever
-    # directory each run actually landed in -- not by which template
-    # produced it.
-    def test_davids_three_templates_example(self, tmp_path):
-        base = tmp_path / "alpha"
-        zero_run1 = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
-        zero_run2 = _make_run(base / "zero", "2026-01-02_00-00-00", "zero-2", {})
-        one_run1 = _make_run(base / "one", "2026-01-03_00-00-00", "one-1", {})
-        one_run2 = _make_run(base / "one", "2026-01-04_00-00-00", "one-2", {})
-        two_run1 = _make_run(base / "two", "2026-01-05_00-00-00", "two-1", {})
-        two_run2 = _make_run(base / "two", "2026-01-06_00-00-00", "two-2", {})
-        _write_archive_manifest(
-            tmp_path,
-            "alpha",
-            [zero_run1, zero_run2, one_run1, one_run2, two_run1, two_run2],
-        )
-        results = _finder("$alpha.results.:all():last()", str(tmp_path)).query()
-        assert len(results.results) == 3
-        assert set(results.uuids) == {"zero-2", "one-2", "two-2"}
-
-    def test_all_with_first_gives_each_groups_earliest(self, tmp_path):
-        base = tmp_path / "alpha"
-        zero_run1 = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
-        zero_run2 = _make_run(base / "zero", "2026-01-02_00-00-00", "zero-2", {})
-        one_run1 = _make_run(base / "one", "2026-01-03_00-00-00", "one-1", {})
-        _write_archive_manifest(tmp_path, "alpha", [zero_run1, zero_run2, one_run1])
-        results = _finder("$alpha.results.:all():first()", str(tmp_path)).query()
-        assert set(results.uuids) == {"zero-1", "one-1"}
-
-    def test_all_with_no_pointer_still_requires_exactly_one_level(
+    # REVISED 2026-09-21 (was: "':all()' and '*' stay depth peers, exactly
+    # one level; ':all()' additionally groups by whatever value occupies
+    # that one wildcarded position" -- settled 2026-08-10, now superseded).
+    # Per compendium 4.2b, ':all()' degenerates to '*'s zero-level meaning
+    # whenever it occupies the run_dir slot -- which is every position the
+    # current implementation recognizes it in (bare, or as the trailing
+    # segment after a fixed literal/prefix). It never groups by a template
+    # value; that is ':groups()'s job (any depth, see TestGroups below),
+    # not ':all()'s.
+    def test_bare_all_with_pointer_degenerates_to_single_zero_level_result(
         self, tmp_path
     ):
-        # settled 2026-08-11: ':all()' stays '*'s one-level peer whether
-        # or not a pointer follows it -- the flat run is excluded here,
-        # same as it would be for "*" (illegal on its own, but this is
-        # the same restriction), unreduced since there is no pointer.
+        # REVISED 2026-09-21 -- supersedes "David's three templates
+        # example" (bare ':all()' used to group by whatever 1-level
+        # template a run landed under; now degenerates to zero-level per
+        # compendium 4.2b, so there is nothing left here to group by --
+        # three flat runs, one pooled "last" among them).
+        base = tmp_path / "alpha"
+        run1 = _make_run(base, "2026-01-01_00-00-00", "run-1", {})
+        run2 = _make_run(base, "2026-01-02_00-00-00", "run-2", {})
+        run3 = _make_run(base, "2026-01-03_00-00-00", "run-3", {})
+        _write_archive_manifest(tmp_path, "alpha", [run1, run2, run3])
+        results = _finder("$alpha.results.:all():last()", str(tmp_path)).query()
+        assert results.uuids == ["run-3"]
+
+    def test_all_with_first_gives_the_zero_level_earliest(self, tmp_path):
+        base = tmp_path / "alpha"
+        run1 = _make_run(base, "2026-01-01_00-00-00", "run-1", {})
+        run2 = _make_run(base, "2026-01-02_00-00-00", "run-2", {})
+        _write_archive_manifest(tmp_path, "alpha", [run1, run2])
+        results = _finder("$alpha.results.:all():first()", str(tmp_path)).query()
+        assert results.uuids == ["run-1"]
+
+    def test_all_with_no_pointer_includes_zero_level_only(self, tmp_path):
+        # REVISED 2026-09-21 (was: "still requires exactly one level" --
+        # superseded, see the 4.2b degenerate-grouping fix). The 1-level
+        # "zero/" run is now excluded, and the flat run is included,
+        # unreduced -- the opposite of the old expectation.
         base = tmp_path / "alpha"
         zero_run = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
         flat_run = _make_run(base, "2026-01-02_00-00-00", "flat-1", {})
         _write_archive_manifest(tmp_path, "alpha", [zero_run, flat_run])
         results = _finder("$alpha.results.:all()", str(tmp_path)).query()
-        assert results.uuids == ["zero-1"]
+        assert results.uuids == ["flat-1"]
 
-    def test_prefixed_all_groups_by_the_next_level(self, tmp_path):
+    def test_prefixed_all_degenerates_to_pooled_result(self, tmp_path):
+        # REVISED 2026-09-21 (was: "groups by the next level" --
+        # superseded). ':all()' still sits at the run_dir slot despite
+        # the fixed "beta/" prefix, so this pools every 1-level run
+        # under "beta/" into one flat set and gives the single overall
+        # latest, same as "beta/*" would -- not one result per distinct
+        # next-level value. Runs moved to be direct children of "beta"
+        # (previously "beta/x", "beta/y" -- a 2-level fixture that no
+        # longer matches this 1-level pattern at all).
         base = tmp_path / "acme"
-        x_run1 = _make_run(base / "beta" / "x", "2026-01-01_00-00-00", "x-1", {})
-        x_run2 = _make_run(base / "beta" / "x", "2026-01-02_00-00-00", "x-2", {})
-        y_run1 = _make_run(base / "beta" / "y", "2026-01-03_00-00-00", "y-1", {})
-        other_run = _make_run(base / "gamma" / "z", "2026-01-04_00-00-00", "z-1", {})
-        _write_archive_manifest(
-            tmp_path, "acme", [x_run1, x_run2, y_run1, other_run]
-        )
+        run1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
+        run2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
+        other_run = _make_run(base / "gamma", "2026-01-03_00-00-00", "gamma-1", {})
+        _write_archive_manifest(tmp_path, "acme", [run1, run2, other_run])
         results = _finder(
             "$acme.results.beta/:all():last()", str(tmp_path)
         ).query()
-        assert len(results.results) == 2
-        assert set(results.uuids) == {"x-2", "y-1"}
+        assert results.uuids == ["beta-2"]
 
     def test_all_grouping_combined_with_manifest_is_not_yet_supported(
         self, tmp_path
     ):
+        # REVISED 2026-09-21: the fixture run moved to zero-level (was
+        # 1-level "zero/", which ':all()' no longer matches at all --
+        # with no candidates, group_key_for would come back empty/falsy
+        # and this exception would never trigger).
         base = tmp_path / "alpha"
-        run1 = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
+        run1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
         _write_archive_manifest(tmp_path, "alpha", [run1])
         with pytest.raises(ReferenceException3):
             _finder(
@@ -967,10 +952,23 @@ class TestRunLevelRange:
             _finder("$acme.results.customers:from(:uuid())", five_runs).query()
 
     def test_from_combined_with_all_grouping_is_not_yet_supported(
-        self, five_runs
+        self, tmp_path
     ):
+        # REVISED 2026-09-21: uses its own zero-level fixture -- bare
+        # ':all()' no longer matches five_runs' 1-level "customers/"
+        # runs at all (per the 4.2b degenerate-grouping fix), which
+        # would leave group_key_for empty/falsy and never trigger this
+        # exception in the first place.
+        base = tmp_path / "acme"
+        runs = [
+            _make_run(base, f"2026-01-0{i}_00-00-00", f"run-{i}", {})
+            for i in range(1, 6)
+        ]
+        _write_archive_manifest(tmp_path, "acme", runs)
         with pytest.raises(ReferenceException3):
-            _finder("$acme.results.:all():from(1):last()", five_runs).query()
+            _finder(
+                "$acme.results.:all():from(1):last()", str(tmp_path)
+            ).query()
 
     def test_from_with_manifest_and_more_than_one_run_requires_a_pointer(
         self, five_runs
@@ -1603,7 +1601,7 @@ class TestFieldAccessorFunctions:
         assert instance_valid.results[0].data is True
 
     def test_run_only_field_accessors(self, tmp_path):
-        # status/method/hostname/username/time_completed/manifest_path/
+        # status/method/host/username/time_completed/manifest_path/
         # named_paths_name -- run scope only, confirmed real keys in
         # results_registrar.py.
         base = tmp_path / "widgets"  # direct child of the groups own home
@@ -1630,7 +1628,7 @@ class TestFieldAccessorFunctions:
 
         assert resolve("status") == "complete"
         assert resolve("method") == "collect"
-        assert resolve("hostname") == "box1"
+        assert resolve("host") == "box1"
         assert resolve("username") == "auser"
         assert resolve("time_completed") == "2026-08-09T00:00:00"
         assert resolve("manifest_path") == str(run_dir / "manifest.json")
@@ -2168,6 +2166,43 @@ class TestWellKnownFileAccessors:
         ).resolve()
         assert results.results[0].data is None
 
+    def test_printouts_with_a_name_reads_that_streams_own_file(
+        self, acme_archive, instance_dir
+    ):
+        # named stream under print-mode:separate, added 2026-09-21 --
+        # ":printouts('greetings')" reads "greetings.txt", not the fixed
+        # combined-output "printouts.txt".
+        content = b"---- PRINTOUT: greetings ----\nhello world\n"
+        with open(os.path.join(instance_dir, "greetings.txt"), "wb") as f:
+            f.write(content)
+        results = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':printouts("greetings")',
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == content
+
+    def test_printouts_with_a_name_is_equivalent_to_file(
+        self, acme_archive, instance_dir
+    ):
+        # the normative doc's own declared equivalence:
+        # ":printouts('greetings')" and ":file('greetings.txt')" resolve
+        # to the same content.
+        content = b"---- PRINTOUT: greetings ----\nhello world\n"
+        with open(os.path.join(instance_dir, "greetings.txt"), "wb") as f:
+            f.write(content)
+        via_printouts = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':printouts("greetings")',
+            acme_archive,
+        ).resolve()
+        via_file = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':file("greetings.txt")',
+            acme_archive,
+        ).resolve()
+        assert via_printouts.results[0].data == via_file.results[0].data == content
+
     def test_file_resolves_a_user_named_output(self, acme_archive, instance_dir):
         content = b"custom output"
         with open(os.path.join(instance_dir, "orders.parquet"), "wb") as f:
@@ -2362,22 +2397,28 @@ class TestStarTraversal:
         results = _finder("$*.results.:index(1)", two_group_archive).query()
         assert results.results[0].uuid == "acme-run2-uuid"
 
-    def test_bare_all_with_no_pointer_gives_empty_on_flat_runs(
+    def test_bare_all_with_no_pointer_lists_every_flat_run(
         self, two_group_archive
     ):
-        # a pointer is optional everywhere in star traversal now
-        # (settled 2026-08-19, matching RESULTS' own literal-root
-        # precedent and FilesReferenceFinder3, neither of which ever
-        # required one) -- absence means "every matched run, unreduced"
-        # rather than an error. two_group_archive's runs are all flat
-        # (zero-level), so ':all()' (which requires exactly one level)
-        # correctly matches nothing here -- empty, not a raise.
+        # REVISED 2026-09-21 (was: "gives empty on flat runs" -- ':all()'
+        # used to require exactly one level; now degenerates to zero-
+        # level per compendium 4.2b). A pointer is optional everywhere
+        # in star traversal (settled 2026-08-19) -- absence means "every
+        # matched run, unreduced." two_group_archive's runs are all flat
+        # (zero-level), so ':all()' now matches every one of them.
         results = _finder("$*.results.:all()", two_group_archive).query()
-        assert results.results == []
+        assert sorted(results.uuids) == [
+            "acme-run1-uuid",
+            "acme-run2-uuid",
+            "widgets-run1-uuid",
+        ]
 
-    def test_bare_all_with_no_pointer_lists_every_one_level_run(
+    def test_bare_all_with_no_pointer_gives_empty_on_one_level_runs(
         self, tmp_path
     ):
+        # REVISED 2026-09-21 (was: "lists every one-level run" -- the
+        # opposite is now true, since ':all()' no longer matches beyond
+        # zero-level at all).
         acme_x = _make_run(
             tmp_path / "acme" / "east", "2026-01-01_00-00-00", "acme-east", {}
         )
@@ -2394,10 +2435,7 @@ class TestStarTraversal:
             tmp_path, {"acme": [acme_x, acme_y], "widgets": [widgets_x]}
         )
         results = _finder("$*.results.:all()", str(tmp_path)).query()
-        # every one-level run across every group, unreduced -- NOT one
-        # per (group, template) partition, since grouping only matters
-        # once there is a pointer to reduce a partition to one.
-        assert sorted(results.uuids) == ["acme-east", "acme-west", "widgets-east"]
+        assert results.results == []
 
     def test_name_three_combined_with_traversal_now_works(self, tmp_path):
         # closes the name_three gap (2026-08-19) -- _results_for_run()
@@ -2581,18 +2619,19 @@ class TestStarTraversalHaving:
         assert results.uuids == ["acme-run-uuid"]
 
     def test_all_grouping_with_having_filters_before_partitioning(self, tmp_path):
-        # both groups have a one-level template, matching ':all()'s own
-        # exactly-one-level restriction -- widgets is filtered out by
-        # ':having()' entirely, so only acme's own (group, template)
-        # partition survives to be reduced.
+        # REVISED 2026-09-21: both runs moved to zero-level (were 1-level
+        # "acme/east"/"widgets/west", which ':all()' no longer matches
+        # at all per the 4.2b degenerate-grouping fix). widgets is still
+        # filtered out by ':having()' entirely, so only acme's own group
+        # survives to be reduced.
         acme_run = _make_run(
-            tmp_path / "acme" / "east",
+            tmp_path / "acme",
             "2026-01-01_00-00-00",
             "acme-run-uuid",
             {"orders": "acme-orders-uuid"},
         )
         widgets_run = _make_run(
-            tmp_path / "widgets" / "west",
+            tmp_path / "widgets",
             "2026-01-02_00-00-00",
             "widgets-run-uuid",
             {"other": "widgets-other-uuid"},
@@ -2653,31 +2692,36 @@ class TestStarTraversalPathNarrowingAndNameThree:
         ).query()
         assert results.results[0].uuid == "widgets-deep"
 
-    def test_prefixed_all_partitions_by_composite_key_beyond_prefix(
+    def test_prefixed_all_pools_within_each_group_beyond_prefix(
         self, tmp_path
     ):
-        acme_x = _make_run(
-            tmp_path / "acme" / "beta" / "x", "2026-01-01_00-00-00", "acme-x", {}
+        # REVISED 2026-09-21 -- supersedes a test proving the prefixed
+        # shape partitioned by a composite (group, value) key. That no
+        # longer applies: "beta/:all()" now degenerates to "beta/*"'s
+        # pooled meaning (compendium 4.2b), so there is no value
+        # dimension left to partition by -- only the group dimension
+        # star traversal already provides inherently. Runs moved to be
+        # direct children of "beta" (previously "beta/x"/"beta/y", a
+        # 2-level fixture this 1-level pattern no longer matches at all).
+        acme_1 = _make_run(
+            tmp_path / "acme" / "beta", "2026-01-01_00-00-00", "acme-1", {}
         )
-        acme_y = _make_run(
-            tmp_path / "acme" / "beta" / "y", "2026-01-02_00-00-00", "acme-y", {}
+        acme_2 = _make_run(
+            tmp_path / "acme" / "beta", "2026-01-02_00-00-00", "acme-2", {}
         )
-        widgets_x = _make_run(
-            tmp_path / "widgets" / "beta" / "x",
+        widgets_1 = _make_run(
+            tmp_path / "widgets" / "beta",
             "2026-01-03_00-00-00",
-            "widgets-x",
+            "widgets-1",
             {},
         )
         _write_archive_manifest_multi(
-            tmp_path, {"acme": [acme_x, acme_y], "widgets": [widgets_x]}
+            tmp_path, {"acme": [acme_1, acme_2], "widgets": [widgets_1]}
         )
-        # "x" is reused by both groups on purpose -- same crux as the
-        # bare ':all()' meaning-collision fixture, proving the prefixed
-        # shape ALSO partitions by (group, value), not value alone.
         results = _finder(
             "$*.results.beta/:all():last()", str(tmp_path)
         ).query()
-        assert sorted(results.uuids) == ["acme-x", "acme-y", "widgets-x"]
+        assert sorted(results.uuids) == ["acme-2", "widgets-1"]
 
     def test_all_grouping_with_name_three_content_accessor_is_rejected(
         self, tmp_path
@@ -2701,14 +2745,16 @@ class TestStarTraversalPathNarrowingAndNameThree:
         # .invoices:uuid()" can find multiple runs, each contributing
         # its own "invoices" statement's uuid -- a list of zero or more
         # UUIDs, one per matched run that actually has that identity.
+        # REVISED 2026-09-21: runs moved to zero-level (were 1-level
+        # "acme/east" etc., which bare ':all()' no longer matches).
         acme_run = _make_run(
-            tmp_path / "acme" / "east",
+            tmp_path / "acme",
             "2026-01-01_00-00-00",
             "acme-run",
             {"invoices": "acme-invoices"},
         )
         widgets_run = _make_run(
-            tmp_path / "widgets" / "east",
+            tmp_path / "widgets",
             "2026-01-02_00-00-00",
             "widgets-run",
             {"invoices": "widgets-invoices"},
@@ -2716,7 +2762,7 @@ class TestStarTraversalPathNarrowingAndNameThree:
         # gamma has no "invoices" statement at all -- contributes
         # nothing, not an error/None placeholder.
         gamma_run = _make_run(
-            tmp_path / "gamma" / "east",
+            tmp_path / "gamma",
             "2026-01-03_00-00-00",
             "gamma-run",
             {"other": "gamma-other"},
@@ -2737,17 +2783,20 @@ class TestStarTraversalPathNarrowingAndNameThree:
         self, tmp_path
     ):
         # "$*.results.:all():last().:all():uuid()" -- :all() at name_one
-        # selects one run per (group, template) partition, :all() at
-        # name_three then pools every instance WITHIN each of those --
-        # a real two-level fan-out, not a single flat list.
+        # selects one run per named-results group (degenerate/zero-level
+        # per the 2026-09-21 fix, since there is no template value left
+        # to partition by), :all() at name_three then pools every
+        # instance WITHIN each of those -- a real two-level fan-out, not
+        # a single flat list. Runs moved to zero-level (were 1-level
+        # "acme/east" etc., which bare ':all()' no longer matches).
         acme_run = _make_run(
-            tmp_path / "acme" / "east",
+            tmp_path / "acme",
             "2026-01-01_00-00-00",
             "acme-run",
             {"invoices": "acme-invoices", "receipts": "acme-receipts"},
         )
         widgets_run = _make_run(
-            tmp_path / "widgets" / "east",
+            tmp_path / "widgets",
             "2026-01-02_00-00-00",
             "widgets-run",
             {"invoices": "widgets-invoices"},
@@ -3001,15 +3050,17 @@ class TestScopeLimits:
         # fixed path (manifest.json directly under the archive root)
         # rather than checking uuid presence, so this correctly reads
         # each matched group's own run manifest.json, not the ledger.
-        # ':all()' needs exactly one level of nesting -- two_group_
-        # archive's runs are deliberately flat (zero-level), so this
-        # uses its own one-level fixture instead, mirroring
-        # test_all_combined_with_a_field_accessor_also_works above.
+        # REVISED 2026-09-21: ':all()' now degenerates to zero-level
+        # (compendium 4.2b) -- this fixture is zero-level accordingly
+        # (previously deliberately 1-level, back when ':all()' required
+        # exactly one level of nesting; two_group_archive would now work
+        # here too, but this stays self-contained to keep the uuids
+        # matching the assertions below unambiguous).
         acme_run = _make_run(
-            tmp_path / "acme" / "east", "2026-01-01_00-00-00", "acme-east", {}
+            tmp_path / "acme", "2026-01-01_00-00-00", "acme-east", {}
         )
         widgets_run = _make_run(
-            tmp_path / "widgets" / "east", "2026-01-02_00-00-00", "widgets-east", {}
+            tmp_path / "widgets", "2026-01-02_00-00-00", "widgets-east", {}
         )
         _write_archive_manifest_multi(
             tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}

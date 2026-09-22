@@ -186,6 +186,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
             filename = f"{name_one.path[0].name}.json"
             return self._query_well_known_file(home, filename)
 
+        if self._is_bare_pointer_reference(reference, "readme"):
+            # ":readme()" -- added 2026-09-21, same bare-content shape
+            # as :manifest()/:definition() above, but README.md is not
+            # a ".json"-suffixed name, so it gets its own branch rather
+            # than joining the generic f"{name}.json" construction.
+            home = self.csvpaths.file_manager.named_file_home(root_major)
+            return self._query_well_known_file(home, "README.md")
+
         bare_field_call = self._bare_definition_field_call(name_one)
         if bare_field_call is not None:
             # ":on_arrival()"/":sources()" bare -- settled 2026-08-12,
@@ -1221,16 +1229,21 @@ class FilesReferenceFinder3(ReferenceFinder3):
             with DataFileReader(path=result.path, mode="rb") as reader:
                 return reader.source.read()
         if kind == Reference3.METADATA_FILE:
-            if self._is_bare_pointer_reference(
-                reference, "manifest"
-            ) or self._is_bare_pointer_reference(reference, "definition"):
-                # result.path is already the manifest.json/definition.json
-                # path itself (set by query()'s _query_well_known_file()
-                # branch above). Also covers bare ':definition()' during
-                # '*' traversal -- _is_bare_pointer_reference does not
-                # look at root_major, and _query_star_traversal's own
-                # early METADATA_FILE branch sets result.path the same
-                # way for that shape (added 2026-08-27).
+            if (
+                self._is_bare_pointer_reference(reference, "manifest")
+                or self._is_bare_pointer_reference(reference, "definition")
+                or self._is_bare_pointer_reference(reference, "readme")
+            ):
+                # result.path is already the manifest.json/definition.json/
+                # README.md path itself (set by query()'s
+                # _query_well_known_file() branch above). Also covers bare
+                # ':definition()' during '*' traversal -- _is_bare_pointer_
+                # reference does not look at root_major, and
+                # _query_star_traversal's own early METADATA_FILE branch
+                # sets result.path the same way for that shape (added
+                # 2026-08-27). ':readme()' added 2026-09-21 -- not wired
+                # into '*' traversal (no worked example demonstrates or
+                # requires it there; see the bucket list).
                 return self._read_well_known_file(result.path)
             if (
                 reference.name_three is None
