@@ -604,6 +604,11 @@ $alpha.results.:all().header_checks:errors()
 $alpha.results.:regex("2026-01-01_").header_checks:errors()
 $alpha.results.:from("2026-01-01").before("2026-01-02").:header_checks:errors()
 
+#### Get an errors file using a regex in `name_one`. And a similar regex in `files` for comparison.
+$alpha.results.orders/:regex("202[6789]")/EMEA:last().header_checks:errors()
+$alpha.files.orders/:regex("202[6789]")/EMEA.:last()
+
+
 #### Get the path and/or contents of the default printouts file, `printouts.txt`
 $acme.results.:flatten():last().:printouts()
 

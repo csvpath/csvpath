@@ -532,6 +532,32 @@ class ReferenceFinder3(ABC):
                     built = self._build(segment)
                     pattern.append(built.arg)
                     continue
+                if segment.name == "regex":
+                    # a bare ":regex(...)" path segment -- added
+                    # 2026-09-23, closing the deferred-work bucket list
+                    # gap of the same name (normative_reference_
+                    # examples.txt's own worked example, corrected
+                    # 2026-09-23 to require '/' separators like every
+                    # other path segment: "orders/:regex(\"202[6789]\")/
+                    # EMEA/:last()" -- matches a TEMPLATE segment by
+                    # pattern, the same job :name(/pattern/) already
+                    # does, just spelled without the :name() wrapper.
+                    # Confirmed by direct parsing before this fix: the
+                    # grammar already accepts ":regex(...)" as an
+                    # ordinary '/'-separated path segment (it is a
+                    # FunctionCall3 like any other); only this shared
+                    # compiler did not yet recognize it as legal here.
+                    # RegexSelector3's own .pattern property already
+                    # normalizes both ":regex(/pattern/)" and
+                    # ":regex(\"pattern\")" to a raw string -- wrapped in
+                    # a Regex3 here so _segment_matches() takes its
+                    # existing regex-search branch, the same one
+                    # :name(/pattern/) already triggers. Applies to both
+                    # FILES and RESULTS, which share this method -- David
+                    # confirmed both should work the same way.
+                    built = self._build(segment)
+                    pattern.append(Regex3(pattern=built.pattern))
+                    continue
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     segment.name
                 )

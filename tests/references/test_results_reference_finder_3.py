@@ -823,6 +823,97 @@ class TestAllGroupingAtAMiddlePosition:
             ).query()
 
 
+class TestRegexPathSegment:
+    # ':regex(...)' as a name_one path segment -- added 2026-09-23,
+    # closing the deferred-work bucket list gap of the same name.
+    # normative_reference_examples.txt's own worked example (corrected
+    # 2026-09-23 twice: first to use '/' separators between path
+    # segments, matching every other path segment; second to attach
+    # ':last()' directly to "EMEA" with no separating '/', matching
+    # every other RESULTS worked example's own pointer convention --
+    # "$alpha.results.orders/:regex('202[6789]')/EMEA:last()". A '/'
+    # before ':last()' would instead put it INTO name_one.path as its
+    # own segment rather than the trailing pointer, per compendium
+    # 3.9c/3.9d's own "a function following directly after a path
+    # separator implies a '*' wildcard" rule -- confirmed unimplemented
+    # anywhere in this codebase (David, 2026-09-23) and deliberately
+    # NOT built here, see the dedicated bucket-list entry; this test
+    # class only covers ':regex()' attached the ordinary way, without
+    # relying on that still-open rule. Mechanically the same capability
+    # ':name(/pattern/)' already has (matches a TEMPLATE segment by
+    # pattern) -- confirmed by direct parsing that the grammar already
+    # accepted ':regex(...)' as an ordinary path segment; only the
+    # shared _compile_path_pattern() did not yet recognize it. NOT the
+    # same as matching a run's own trailing directory name (a separate,
+    # still-open question, see the bucket list) -- like ':name("x")', a
+    # bare/prefixed ':regex(...)' here matches a TEMPLATE LEVEL, excluded
+    # from the run's own trailing name the same way _prefix_segments()
+    # always excludes it.
+    def test_prefixed_regex_matches_the_template_segment(self, tmp_path):
+        base = tmp_path / "alpha" / "orders"
+        matching = _make_run(
+            base / "2027" / "EMEA", "2026-01-01_00-00-00", "match-1", {}
+        )
+        also_matching = _make_run(
+            base / "2028" / "EMEA", "2026-01-02_00-00-00", "match-2", {}
+        )
+        non_matching = _make_run(
+            base / "1999" / "EMEA", "2026-01-03_00-00-00", "no-match-1", {}
+        )
+        _write_archive_manifest(
+            tmp_path, "alpha", [matching, also_matching, non_matching]
+        )
+        results = _finder(
+            '$alpha.results.orders/:regex("202[6789]")/EMEA:last()', str(tmp_path)
+        ).query()
+        # both "2027" and "2028" match the pattern, but this is a plain
+        # literal/wildcard path (no ':all()'/':groups()' grouping), so
+        # every matching version pools together and ':last()' reduces
+        # to the single overall latest.
+        assert results.uuids == ["match-2"]
+
+    def test_prefixed_regex_with_no_pointer_gives_every_match_unreduced(
+        self, tmp_path
+    ):
+        base = tmp_path / "alpha" / "orders"
+        matching = _make_run(
+            base / "2027" / "EMEA", "2026-01-01_00-00-00", "match-1", {}
+        )
+        non_matching = _make_run(
+            base / "1999" / "EMEA", "2026-01-02_00-00-00", "no-match-1", {}
+        )
+        _write_archive_manifest(tmp_path, "alpha", [matching, non_matching])
+        results = _finder(
+            '$alpha.results.orders/:regex("202[6789]")/EMEA', str(tmp_path)
+        ).query()
+        assert results.uuids == ["match-1"]
+
+    def test_bare_regex_matches_a_one_level_template(self, tmp_path):
+        # consistent with ':name("x")'s own bare/sole-content precedent
+        # -- matches a 1-level template value, not a flat/0-level run's
+        # own trailing name.
+        base = tmp_path / "alpha"
+        matching = _make_run(
+            base / "2027", "2026-01-01_00-00-00", "match-1", {}
+        )
+        non_matching = _make_run(
+            base / "1999", "2026-01-02_00-00-00", "no-match-1", {}
+        )
+        _write_archive_manifest(tmp_path, "alpha", [matching, non_matching])
+        results = _finder(
+            '$alpha.results.:regex("202[6789]"):last()', str(tmp_path)
+        ).query()
+        assert results.uuids == ["match-1"]
+
+    def test_invalid_pattern_is_rejected_eagerly(self, tmp_path):
+        _write_archive_manifest(tmp_path, "alpha", [])
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$alpha.results.orders/:regex("[unclosed")/EMEA:last()',
+                str(tmp_path),
+            ).query()
+
+
 class TestGroups:
     # ':groups()' -- added 2026-08-12, the any-depth GROUP peer of
     # ':all()' (one-level GROUP)/':flatten()' (any-depth POOL), built

@@ -1575,14 +1575,19 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         """true for a name_one with no literal path at all -- its sole
         path "segment" is itself a version-selecting function (e.g.
         :all()/:first()/:last()/:index(n)), mirroring csvpaths' own
-        "path[0] is a FunctionCall3" shape. :name("...") is excluded --
-        that is path-*building* (a literal name), not a version
-        selector, so it stays in the ordinary literal-path shape even
-        as the sole segment."""
+        "path[0] is a FunctionCall3" shape. :name("...")/:regex(...) are
+        excluded -- both are path-*building* (matching a template
+        segment, literally or by pattern), not a version selector, so
+        they stay in the ordinary literal-path shape even as the sole
+        segment (added 2026-09-23 for ':regex()', matching ':name()'s'
+        own precedent -- e.g. "$alpha.results.:regex(\"2026-01-01_\").
+        header_checks:errors()" needs to reach _compile_path_pattern(),
+        not be misclassified as a version-selector/grouping marker the
+        way ':all()'/':first()' are)."""
         return (
             len(name_one.path) == 1
             and isinstance(name_one.path[0], FunctionCall3)
-            and name_one.path[0].name != "name"
+            and name_one.path[0].name not in ("name", "regex")
         )
 
     def _pointer_from_calls(self, calls: list):

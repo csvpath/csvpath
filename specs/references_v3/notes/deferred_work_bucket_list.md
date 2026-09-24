@@ -9,6 +9,46 @@ instead, so the completed reasoning trail isn't lost, it's just off this
 list (see that file's own header, and the "Process note" at the bottom of
 this one).
 
+## A function following a path separator implies a `*` wildcard (compendium 3.9c/3.9d) — confirmed unimplemented, real and foundational
+
+Surfaced 2026-09-23 while building `:regex()` as a name_one path segment
+(see the done-list entry). Compendium 3.9c: "A function starting `name_one`
+or following directly after a path separator implies a `*` wildcard,"
+except for three exception categories — wildcards themselves (`:all()`/
+`:flatten()`/`:groups()`), functions that fully occupy a path segment
+(`:name()`/`:regex()`/`:choice()`), and functions that do not operate in a
+path segment at all (`:manifest()`/`:definition()`/`:on_arrival()`/
+`:fingerprint()`/etc). 3.9d gives concrete equivalences: `$acme.files.
+orders/:type("csv")` ≡ `$acme.files.orders/*:type("csv")`, and the same
+bare-at-name_one-start case (`$acme.files.:type("csv")` ≡ `$acme.files.
+*:type("csv")`).
+
+**Confirmed unimplemented anywhere** — grepped every finder/transformer for
+"implie"/anything resembling this rule: nothing. Live-parsed the concrete
+consequence: `orders/:regex("202[6789]")/EMEA/:last()` (an EARLIER, since-
+corrected draft of the `:regex()` worked example, David's own typo) parses
+`:last()` as a literal element of `name_one.path` (a '/' before it puts it
+there, not into `name_one.functions`, the trailing-pointer position every
+other worked example in the doc uses) — `_compile_path_pattern()` then
+raises, since `:last()` is not `:name()`/a clock function. Per 3.9c/3.9d,
+this should instead be read as `orders/:regex(...)/EMEA/*:last()` — the
+bare pointer, run after a path separator with nothing else, implying a
+wildcard segment for it to reduce.
+
+**Not built here** — deliberately deferred (David, 2026-09-23: "do
+`:regex()` now" as the narrower, already-tested fix; this rule as its own
+follow-on). Real design/implementation work, not a quick fix: needs a
+normalizing step (most naturally in `ReferenceFinder3`, shared by FILES/
+RESULTS — CSVPATHS has no literal path to apply it to) that detects a
+non-exempt function sitting in `name_one.path` (whether trailing or,
+per 3.9c's literal wording, potentially at ANY position following a '/')
+and rewrites it into an implied `Star3()` path segment plus the function
+itself moved to `name_one.functions`/wherever the pointer position actually
+lives for that shape. Touches both finders' core path-dispatch logic
+broadly — needs its own careful pass and test coverage across the existing
+worked-example corpus (confirming nothing that currently WORKS starts
+silently behaving differently), not a rider on a narrower fix.
+
 ## `:file_name()` — Named-File Arrivals Manifest field with no accessor
 
 Surfaced 2026-09-22, sweeping `csvpath/references/functions/fields/` (84
@@ -384,47 +424,19 @@ NOT part of that build:
 
 - `root_major` accepting a `:regex(...)` function — **BUILT 2026-08-27**,
   see `deferred_work_done_list.md`.
-- `:regex(...)` as a name_one selector for RESULTS (matching a run's own
-  directory name by pattern, at ANY template depth) — NOT built. Surfaced
-  2026-08-30 while working through worked examples for the `:home()`/
-  `:all()` investigation (see the content-accessor-guards entry above).
-  Confirmed live: `$alpha.results.:regex("2026-01-01_").header_checks
-  :errors()` raises `":regex() is not legal at name_one for results"`
-  today — a deliberate, explicit rejection, not an accidental gap.
-  Distinct from `:regex()` at root_major (matches named-results-GROUP
-  names) — this matches run NAMES instead, and is meant to be orthogonal
-  to `:home()`/`:all()`'s template-depth restriction (David, 2026-08-30):
-  filtering by the run's own name pattern regardless of how many
-  template segments precede it, not a replacement for the depth
-  selectors. Likely bundles naturally with whatever fix comes out of the
-  `:home()`/`:all()` work, since both touch the same name_one matching
-  code, but is its own distinct capability, not a symptom of the same
-  bug.
-
-  **Investigated 2026-09-22, not built -- a false start caught before
-  landing.** First instinct was to treat this like `:name(/pattern/)`'s
-  existing Regex3 arg support (already works, matches a TEMPLATE
-  segment) and just teach `_compile_path_pattern()` to recognize a bare
-  `:regex(...)` segment the same way -- wrong shape. `_compile_path_
-  pattern()`/`_matches_prefix()`'s whole machinery is built on `_prefix_
-  segments()`, which deliberately EXCLUDES the run's own trailing name
-  from comparison (it only ever compares TEMPLATE levels before it) --
-  that is structurally the opposite of what this item asks for
-  (matching the trailing name itself). A `:name(/pattern/)`-style fix
-  would be a real, small, independently useful addition (bare `:regex()`
-  as a template-segment matcher, falling out for FILES too via the
-  shared method) but does NOT resolve this item's own worked example --
-  landing it under this item's name would have been misleading. Also
-  confirmed along the way: `RegexSelector3.POSITIONS[RESULTS]` has no
-  `NAME_ONE` entry (root_major only today), and `_is_bare_function_only()`
-  would misclassify a bare `:regex(...)` as a version-selector/grouping
-  marker (same treatment as `:all()`/`:first()`), silently matching every
-  run regardless of name rather than raising or filtering -- both need
-  fixing regardless of which correct design is chosen. The actual fix
-  needs a new filtering axis (match against the run's own trailing name)
-  applied ALONGSIDE whatever depth/template selection is already
-  happening, not a new path-segment kind -- real design work, not
-  attempted here.
+- `:regex(...)` as a name_one path segment for RESULTS/FILES — **BUILT
+  2026-09-23**, see `deferred_work_done_list.md`. Originally surfaced
+  2026-08-30 with a worked example described as "matching a run's own
+  directory name by pattern" — investigated 2026-09-22, and that framing
+  turned out to be imprecise, not a correct target to build against (see
+  the done-list entry for the full history: a first attempt built the
+  correct `:name(/pattern/)`-style fix, then got reverted because it
+  looked like it did not match the item's own English description).
+  David corrected the normative doc 2026-09-23 (`orders/:regex("202[6789]")
+  /EMEA:last()`, proper '/' separators) confirming the ACTUAL intent was
+  always the ordinary template-segment-matching shape — a genuine spec
+  coverage gap in the original wording, not a different, bigger
+  capability. Built as originally attempted.
 - `@variable` (`Variable3`) registration and `{...}` interpolation
   evaluation are both **built 2026-08-26** — see `deferred_work_done_list.md`.
   `@variable` used as some OTHER function's *own direct argument* (e.g.
