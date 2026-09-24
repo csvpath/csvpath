@@ -914,6 +914,79 @@ class TestRegexPathSegment:
             ).query()
 
 
+class TestImpliedStar:
+    # compendium 3.9c/3.9d -- added 2026-09-24, surfaced while building
+    # ':regex()' as a path segment. "A function starting name_one or
+    # following directly after a path separator implies a '*' wildcard,"
+    # unless it is itself a wildcard, fully occupies a path segment
+    # (':name()'/':regex()'/':choice()'/a clock function), or does not
+    # operate in a path segment at all (':manifest()'/':home()'/etc).
+    # ':last()' is a plain pointer -- none of those exemptions apply, so
+    # "beta/:last()" now means the same as "beta/*:last()" -- and, per
+    # the SAME degenerate-run_dir-slot reasoning TestAllGrouping's own
+    # "beta/:all():last()" already established (':all()'/'*' at the
+    # run_dir-adjacent trailing position means zero MORE levels beyond
+    # the prefix, not one extra wildcarded template level -- run_dir
+    # names never repeat, so there is nothing to group/wildcard by
+    # there), that means "the last run directly under beta," pooled
+    # across every run at that exact one-level prefix -- fixture mirrors
+    # TestAllGrouping.test_prefixed_all_degenerates_to_pooled_result's
+    # own shape exactly.
+    def test_prefixed_pointer_implies_a_wildcard_segment(self, tmp_path):
+        base = tmp_path / "acme"
+        run1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
+        run2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
+        other = _make_run(base / "gamma", "2026-01-03_00-00-00", "gamma-1", {})
+        _write_archive_manifest(tmp_path, "acme", [run1, run2, other])
+        implied = _finder("$acme.results.beta/:last()", str(tmp_path)).query()
+        explicit = _finder(
+            "$acme.results.beta/*:last()", str(tmp_path)
+        ).query()
+        assert implied.uuids == explicit.uuids == ["beta-2"]
+
+    def test_prefixed_field_accessor_implies_a_wildcard_segment(self, tmp_path):
+        base = tmp_path / "acme"
+        run1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
+        _write_archive_manifest(tmp_path, "acme", [run1])
+        results = _finder(
+            "$acme.results.beta/:uuid()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data == "beta-1"
+
+    def test_bare_pointer_is_unaffected_stays_zero_level(self, tmp_path):
+        # confirms the normalization does not change the already-settled
+        # bare-pointer-alone outcome (see the 2026-09-21 degenerate-
+        # grouping fix) -- just reaches the same zero-level result via a
+        # more uniform path (a normalized bare '*', not a special case).
+        base = tmp_path / "acme"
+        flat = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
+        one_level = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-1", {})
+        _write_archive_manifest(tmp_path, "acme", [flat, one_level])
+        results = _finder("$acme.results.:last()", str(tmp_path)).query()
+        assert results.uuids == ["flat-1"]
+
+    def test_home_is_exempt_prefixed_still_raises(self, tmp_path):
+        # ':home()' is a zero-level PLACEHOLDER marker, not an ordinary
+        # field accessor -- David deliberately rejected "beta/:home()"
+        # on UX grounds (see TestHomeAsAZeroLevelSelector), a decision
+        # this normalization must not silently resurrect.
+        base = tmp_path / "acme"
+        beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
+        _write_archive_manifest(tmp_path, "acme", [beta1])
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.results.beta/:home()", str(tmp_path)).query()
+
+    def test_all_flatten_groups_are_exempt_unaffected(self, tmp_path):
+        # sanity check -- these are wildcards themselves, already
+        # excluded by name, confirming the exemption list did not
+        # accidentally widen to catch them too.
+        base = tmp_path / "acme"
+        run1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
+        _write_archive_manifest(tmp_path, "acme", [run1])
+        results = _finder("$acme.results.beta/:all():last()", str(tmp_path)).query()
+        assert results.uuids == ["beta-1"]
+
+
 class TestGroups:
     # ':groups()' -- added 2026-08-12, the any-depth GROUP peer of
     # ':all()' (one-level GROUP)/':flatten()' (any-depth POOL), built
