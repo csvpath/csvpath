@@ -218,6 +218,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "ResultsReferenceFinder3 does not support the '#worksheet' "
                 "marker (name_two) -- it is files-only."
             )
+        # compendium 3.9c/3.9d -- added 2026-09-24. Run before anything
+        # else touches name_one.path/.functions, so every dispatch
+        # branch below sees the already-normalized shape (a literal '*'
+        # wherever a non-exempt function implied one) rather than
+        # needing its own awareness of this rule. See
+        # _apply_implied_star()'s own docstring.
+        self._apply_implied_star(name_one)
 
         home = self.csvpaths.results_manager.get_named_results_home(root_major)
         run_homes = [rh for rh, _ in self._discover_run_homes(root_major)]

@@ -35,19 +35,22 @@ this should instead be read as `orders/:regex(...)/EMEA/*:last()` — the
 bare pointer, run after a path separator with nothing else, implying a
 wildcard segment for it to reduce.
 
-**Not built here** — deliberately deferred (David, 2026-09-23: "do
-`:regex()` now" as the narrower, already-tested fix; this rule as its own
-follow-on). Real design/implementation work, not a quick fix: needs a
-normalizing step (most naturally in `ReferenceFinder3`, shared by FILES/
-RESULTS — CSVPATHS has no literal path to apply it to) that detects a
-non-exempt function sitting in `name_one.path` (whether trailing or,
-per 3.9c's literal wording, potentially at ANY position following a '/')
-and rewrites it into an implied `Star3()` path segment plus the function
-itself moved to `name_one.functions`/wherever the pointer position actually
-lives for that shape. Touches both finders' core path-dispatch logic
-broadly — needs its own careful pass and test coverage across the existing
-worked-example corpus (confirming nothing that currently WORKS starts
-silently behaving differently), not a rider on a narrower fix.
+**RESULTS half BUILT 2026-09-24** — see `deferred_work_done_list.md` for
+the full writeup (design reasoning, the exemption list's own subtleties,
+and a genuine clarification this surfaced: `*`/an implied `*` represents
+the entity's own TERMINAL slot, not a level above it — confirmed against
+David directly after an initial, wrong analysis).
+
+**FILES still not built** — same normalizing step
+(`ReferenceFinder3._apply_implied_star()`, already built and shared) needs
+wiring into `FilesReferenceFinder3.query()` too, plus its own careful pass
+against FILES' own dispatch chain (`_is_bare_all_reference`/`_is_bare_
+flatten_reference`/etc, the `#worksheet` marker interaction, and the
+various `_is_flatten_prefixed_reference`/`_is_prefixed_flatten_reference`
+branches) and its own full worked-example regression check — deliberately
+not bundled into the RESULTS PR to keep it reviewable, per the same
+one-finder-at-a-time discipline used throughout this session. Not
+attempted here.
 
 ## `:file_name()` — Named-File Arrivals Manifest field with no accessor
 

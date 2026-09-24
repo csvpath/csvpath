@@ -300,6 +300,79 @@ class ReferenceFinder3(ABC):
             )
 
     @staticmethod
+    def _apply_implied_star(name_one) -> None:
+        """compendium 3.9c/3.9d: "a function starting name_one or
+        following directly after a path separator implies a '*'
+        wildcard," unless it is itself a wildcard (:all()/:flatten()/
+        :groups()), fully occupies a path segment (:name()/:regex()/
+        :choice()/a clock value function like :year(), per
+        _compile_path_pattern()'s own equivalent exemption -- both
+        compute a VALUE that becomes part of the match itself, not a
+        pointer/reader of something the match produces), or does not
+        operate in a path segment at all (:manifest()/:definition()/
+        :on_arrival()/:fingerprint()/etc). Added 2026-09-24. Only the
+        first two exemption categories are checked explicitly below --
+        the third is already filtered out by each finder's own
+        dedicated bare-shape checks (e.g. _is_bare_pointer_reference(
+        reference, "manifest")), which run BEFORE this and intercept
+        those functions with their own early return; confirmed by
+        direct reading that every currently-registered "doesn't operate
+        in a path segment" function already has such a check, so none
+        of them ever reach this method at all in practice.
+
+        Mutates `name_one` in place: when its OWN LAST path segment is
+        a non-exempt function (this covers both "starting name_one" --
+        a bare, sole-content function -- and "following a path
+        separator" -- any position, since a function can only ever
+        legally be the LAST written path segment; an earlier position
+        would mean more path after a value-reducing/reading function,
+        which is not meaningful), it is popped off, a Star3() is
+        appended in its place, and the function itself is moved to the
+        FRONT of name_one.functions. This is deliberately a
+        NORMALIZATION, not new dispatch logic of its own: the result is
+        the exact same shape a literal '*' followed directly by that
+        same function already produces (e.g. "*:last()"), which every
+        existing call site already knows how to handle correctly --
+        confirmed this also correctly reroutes the bare-pointer-alone
+        case (e.g. "$acme.results.:last()") onto the SAME zero-level
+        candidate set the dedicated bare-function-only handling already
+        produces, since a bare/trailing Star3 is itself already
+        special-cased to degenerate to zero-level (the 2026-09-21 fix)
+        -- not a new or different outcome, just a more uniform path to
+        the identical one.
+
+        Not applied to '*' traversal (_query_star_traversal()) or to
+        CSVPATHS (which has no literal path at all in name_one) -- see
+        the bucket list for the traversal scoping note."""
+        path = name_one.path
+        if not path or not isinstance(path[-1], FunctionCall3):
+            return
+        if path[-1].name in (
+            "all",
+            "flatten",
+            "groups",
+            "name",
+            "regex",
+            "choice",
+            # ':home()' is a zero-level PLACEHOLDER marker (see
+            # home_3.py), not an ordinary field accessor -- David
+            # deliberately decided against a prefixed "beta/:home()"
+            # shape on UX grounds ("explicit felt more mysterious than
+            # the default"), a considered rejection this normalization
+            # must not silently resurrect. Belongs in the compendium's
+            # own "doesn't operate in a path segment at all" category,
+            # alongside :manifest()/:definition().
+            "home",
+        ):
+            return
+        function_cls = ReferenceFunctionFactory.get_registered_class(path[-1].name)
+        if function_cls is not None and function_cls.SOURCE == "clock":
+            return
+        implied = path.pop()
+        path.append(Star3())
+        name_one.functions.insert(0, implied)
+
+    @staticmethod
     def _is_bare_pointer_reference(reference: Reference3, name: str) -> bool:
         """true when name_one's entire content is a single, argument-
         less ":name()" call -- no other path segments, no trailing

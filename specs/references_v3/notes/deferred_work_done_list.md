@@ -9,6 +9,79 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## A function following a path separator implies a `*` wildcard, RESULTS half — BUILT 2026-09-24
+
+Compendium 3.9c/3.9d, surfaced while building `:regex()` as a name_one
+path segment (see that entry) — confirmed unimplemented anywhere. Before
+building, worked through a real misunderstanding with David worth
+recording: my first read of the rule assumed `*` meant "one wildcarded
+template level, sitting above the entity's own terminal slot" — under
+that reading, implying a `*` for a bare pointer (e.g. `$acme.results.
+:last()`) looked like it would deepen the already-settled zero-level
+bare-pointer behavior (the 2026-09-21 degenerate-grouping fix) into a
+one-level wildcard, a real conflict with a lot of already-shipped work.
+Traced it through with David and confirmed this was wrong: `*` in BOTH
+FILES (`_compile_path_pattern()`'s pattern includes the terminal filename
+segment itself) and RESULTS (a trailing bare `*` is already specially
+DROPPED before pattern compilation, per the 2026-09-21 fix) represents the
+entity's own TERMINAL slot — filename for FILES, run_dir for RESULTS — not
+a level above it. So "implies a `*`" does not deepen anything; it is
+exactly the already-built zero-level behavior, reached via a more uniform
+path. No actual conflict, just a wrong mental model corrected before any
+code was written.
+
+**What was built**: `ReferenceFinder3._apply_implied_star(name_one)`, a
+shared static method (used by RESULTS here; FILES still pending, see the
+bucket list). Mutates `name_one` in place: when its own LAST path segment
+is a non-exempt `FunctionCall3` — this covers both "starting name_one"
+(bare/sole content) and "following a path separator" (any later position,
+since a value-reducing/reading function can only ever legally be the last
+written path segment) — it is popped off, a `Star3()` is appended in its
+place, and the function itself is moved to the FRONT of `name_one.
+functions`. Deliberately a NORMALIZATION, not new dispatch logic: the
+result is the exact same shape a literal `*` followed directly by that
+function already produces, which every existing branch already knows how
+to handle correctly. Called once, at the very top of `ResultsReference
+Finder3.query()`, before anything else touches `name_one.path`/
+`.functions`.
+
+**The exemption list needed three iterations to get right, each caught by
+a real regression, not guessed**: the first cut only excluded `:all()`/
+`:flatten()`/`:groups()`/`:name()`/`:regex()`/`:choice()` (3.9c's own two
+explicit categories) and broke on the full suite twice more:
+- `:year()` and other `SOURCE == "clock"` functions (e.g.
+  `customers/:year():first()`) — these compute a VALUE that becomes PART
+  of the match itself, the same "fully occupies a path segment" category
+  `:name()`/`:regex()` are already in, just not named explicitly in 3.9c's
+  own bullet list. Added a `function_cls.SOURCE == "clock"` check,
+  mirroring `_compile_path_pattern()`'s own identical exemption.
+- `:home()` — a zero-level PLACEHOLDER marker (see `home_3.py`), not an
+  ordinary field accessor. David had already deliberately rejected a
+  prefixed `"beta/:home()"` shape on UX grounds ("explicit felt more
+  mysterious than the default" — see `TestHomeAsAZeroLevelSelector`) — a
+  considered decision, not an oversight, that this normalization would
+  otherwise have silently resurrected (`:home()` riding as a trailing
+  field accessor on an implied `*` reads a real value instead of
+  raising). Added `"home"` to the name-based exemption list explicitly,
+  with a comment explaining why it belongs in 3.9c's third ("doesn't
+  operate in a path segment at all") category alongside `:manifest()`/
+  `:definition()`, even though 3.9c's own bullet list does not name it.
+
+The third category (`:manifest()`/`:definition()`/`:on_arrival()`/
+`:fingerprint()`/etc) needed no explicit check beyond `:home()` — every
+other currently-registered function in it already has its own dedicated
+bare-shape early-return check that runs before this method, so none of
+them ever reach it in the first place (confirmed by reading, not assumed).
+
+Five new tests (`TestImpliedStar`): a prefixed pointer now matches a
+prefixed explicit `*` exactly (`beta/:last()` ≡ `beta/*:last()`), a
+prefixed field accessor likewise, the bare-pointer case confirmed
+unchanged (still zero-level, same outcome as before, just via the
+normalized path), `:home()` confirmed still exempt/still raises prefixed,
+and `:all()`/`:flatten()`/`:groups()` confirmed unaffected. Full suite:
+1606 passed (up from 1601) — zero regressions across the whole existing
+worked-example corpus on the first fully-correct exemption list.
+
 ## `:regex(...)` as a name_one path segment, FILES and RESULTS — BUILT 2026-09-23
 
 Originally filed 2026-08-30 as "`:regex(...)` as a name_one selector for
