@@ -173,17 +173,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if (
             name_one.name_two is not None
             and isinstance(name_one.path[0], FunctionCall3)
-            and name_one.path[0].name != "name"
+            and name_one.path[0].name not in ("name", "regex")
         ):
             # '#worksheet' only means anything against a literal named-
             # file path (there is one specific file to have worksheets
-            # in) -- ':name("...")' is path-BUILDING (a literal name),
-            # same as any other literal path segment, so it is exempt
-            # here same as it is from _is_bare_function_only's own
-            # "bare marker" test; a bare context-setter/pointer/marker
-            # function occupying name_one's entire content (':manifest()',
-            # ':all()', ':home()', etc.) has no file of its own to read
-            # a worksheet from.
+            # in) -- ':name("...")'/':regex(...)' are both path-BUILDING
+            # (a literal name, or a pattern match, added 2026-09-23 for
+            # ':regex()' -- same reasoning), same as any other literal
+            # path segment, so both are exempt here same as they are
+            # from _is_bare_function_only's own "bare marker" test; a
+            # bare context-setter/pointer/marker function occupying
+            # name_one's entire content (':manifest()', ':all()',
+            # ':home()', etc.) has no file of its own to read a
+            # worksheet from.
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not support the '#worksheet' "
                 "marker (name_two) combined with a bare context-setter/"

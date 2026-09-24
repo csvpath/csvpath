@@ -1492,6 +1492,66 @@ FINGERPRINT_MANIFEST = [
 ]
 
 
+REGEX_HOME = "inputs/named_files/alpha"
+REGEX_MANIFEST = [
+    {
+        "file": "inputs/named_files/alpha/orders/2027/EMEA/aaa.csv",
+        "file_home": "inputs/named_files/alpha/orders/2027/EMEA",
+        "uuid": "match-1",
+    },
+    {
+        "file": "inputs/named_files/alpha/orders/2028/EMEA/bbb.csv",
+        "file_home": "inputs/named_files/alpha/orders/2028/EMEA",
+        "uuid": "match-2",
+    },
+    {
+        "file": "inputs/named_files/alpha/orders/1999/EMEA/ccc.csv",
+        "file_home": "inputs/named_files/alpha/orders/1999/EMEA",
+        "uuid": "no-match-1",
+    },
+]
+
+
+class TestRegexPathSegment:
+    # ':regex(...)' as a name_one path segment -- added 2026-09-23,
+    # closing the deferred-work bucket list gap of the same name,
+    # confirmed 2026-09-23 to apply to FILES too (David). Mechanically
+    # the same capability ':name(/pattern/)' already has (matches a
+    # TEMPLATE segment by pattern), just spelled without the ':name()'
+    # wrapper -- shares _compile_path_pattern() with RESULTS (see
+    # test_results_reference_finder_3.py's own TestRegexPathSegment for
+    # the RESULTS-side tests and the fuller design writeup).
+    def test_prefixed_regex_matches_the_template_segment(self):
+        results = _finder(
+            '$alpha.files.orders/:regex("202[6789]")/EMEA.:last()',
+            REGEX_HOME,
+            REGEX_MANIFEST,
+        ).query()
+        # both "2027" and "2028" match the pattern -- every matching
+        # version pools together (no ':all()'/':groups()' grouping here)
+        # and ':last()' reduces to the single overall latest.
+        assert results.uuids == ["match-2"]
+
+    def test_prefixed_regex_with_no_name_three_gives_matching_file_homes(self):
+        # no name_three -- dedupes to directory-level results (uuid=None),
+        # same convention every other name_three-less FILES query uses.
+        results = _finder(
+            '$alpha.files.orders/:regex("202[6789]")/EMEA', REGEX_HOME, REGEX_MANIFEST
+        ).query()
+        assert set(results.files) == {
+            "inputs/named_files/alpha/orders/2027/EMEA",
+            "inputs/named_files/alpha/orders/2028/EMEA",
+        }
+
+    def test_invalid_pattern_is_rejected_eagerly(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$alpha.files.orders/:regex("[unclosed")/EMEA.:last()',
+                REGEX_HOME,
+                REGEX_MANIFEST,
+            ).query()
+
+
 class TestBareFingerprintLookup:
     # bare ':fingerprint("hash...")' -- added 2026-08-13, a content-hash
     # lookup across the WHOLE named-file's manifest, every file_home/

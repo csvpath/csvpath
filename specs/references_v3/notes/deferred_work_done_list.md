@@ -9,6 +9,71 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `:regex(...)` as a name_one path segment, FILES and RESULTS — BUILT 2026-09-23
+
+Originally filed 2026-08-30 as "`:regex(...)` as a name_one selector for
+RESULTS (matching a run's own directory name by pattern, at ANY template
+depth)," with the worked example `$alpha.results.:regex("2026-01-01_").
+header_checks:errors()`. Investigated 2026-09-22: that "matches the run's
+own trailing name" framing turned out to be a wrong target -- `_compile_
+path_pattern()`/`_matches_prefix()`'s whole machinery is built on `_prefix_
+segments()`, which deliberately EXCLUDES the run's own trailing name from
+comparison (it only ever compares TEMPLATE levels before it), the opposite
+of what "matches the run's own name" would need. A first attempt built the
+straightforward `:name(/pattern/)`-style fix (teaching `_compile_path_
+pattern()` to recognize a bare `:regex(...)` segment) but reverted it,
+since it looked like a different, smaller capability than the item's own
+stated goal, not a real fix for it.
+
+**Resolved 2026-09-23 (David)**: the "matches the run's own name" framing
+was itself the bug -- a real gap in the spec's own coverage, not a
+correctly-scoped requirement. David corrected `normative_reference_
+examples.txt` with a worked example using proper `/` separators
+(`$alpha.results.orders/:regex("202[6789]")/EMEA:last().header_checks
+:errors()`, plus a FILES analog) confirming the ORIGINAL, reverted fix
+was actually right all along: `:regex(...)` matching a TEMPLATE segment,
+exactly like `:name(/pattern/)` already does, just spelled without the
+`:name()` wrapper.
+
+**What was built** (the same shape as the reverted attempt, now confirmed
+correct): `ReferenceFinder3._compile_path_pattern()` (shared by FILES and
+RESULTS) gained a `segment.name == "regex"` branch, building the
+`RegexSelector3` and wrapping its own `.pattern` string in a `Regex3` so
+`_segment_matches()` takes its existing regex-search branch (the same one
+`:name(/pattern/)` already triggers) -- no new matching primitive needed.
+Two callers also needed a small classification fix so a BARE `:regex(...)`
+(sole name_one content, e.g. `$alpha.results.:regex("202[6789]"):last()`)
+reaches `_compile_path_pattern()` instead of being misclassified as a
+version-selector: `ResultsReferenceFinder3._is_bare_function_only()` now
+excludes `"regex"` the same way it already excludes `"name"`, and
+`FilesReferenceFinder3`'s own `'#worksheet'`-marker guard (which rejected a
+bare context-setter/pointer function combined with `#worksheet`) got the
+same `"regex"` exemption `"name"` already had, for the identical reason
+(path-building, not a marker/pointer).
+
+**A real, separate spec-coverage gap surfaced along the way, deliberately
+NOT built here**: compendium 3.9c/3.9d's "a function following a path
+separator implies a `*` wildcard" rule, confirmed unimplemented anywhere.
+David's own first draft of the corrected worked example
+(`orders/:regex(...)/EMEA/:last()`, with a `/` before `:last()`) exercised
+this directly -- with the `/`, `:last()` parses as a `name_one.path`
+element rather than the trailing pointer, and per 3.9c should be read as
+implying a preceding `*` for it to reduce. Confirmed by direct parsing,
+not built (David: land `:regex()` now on the corrected, slash-free-before-
+`:last()` example; treat the implied-`*` rule as its own follow-on, since
+it touches both finders' core path-dispatch logic broadly) -- see the
+dedicated bucket-list entry. The doc's own example was corrected a second
+time to remove the extra `/` before `:last()` (and, for the FILES analog,
+to use `.` before `:last()` instead of `/`, since FILES' own pointer lives
+in name_three, not name_one's own trailing chain the way RESULTS'/
+CSVPATHS' does).
+
+Tests: `TestRegexPathSegment` added to both `test_results_reference_
+finder_3.py` (prefixed match with `:last()` reducing to the overall
+latest, no-pointer pooling, a bare/1-level match, and eager invalid-
+pattern rejection) and `test_files_reference_finder_3.py` (prefixed match,
+no-name_three directory-level dedup, and eager invalid-pattern rejection).
+
 ## A literal name_three body for FILES (bypassing a pointer function entirely) — BUILT 2026-09-22
 
 Per compendium 3.19b/3.20: "When `name_three` is a string or variable, the
