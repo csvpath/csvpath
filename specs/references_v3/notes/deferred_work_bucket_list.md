@@ -566,7 +566,16 @@ and a stale-entry correction, are both done — see
 - A literal prefix *before* `:flatten()` for FILES — **BUILT 2026-08-27**,
   see `deferred_work_done_list.md`.
 - FILES' `:from()`/`:to()` combined with `:all()`/`:groups()` grouping in
-  name_one — not yet supported.
+  name_one — **error message fixed 2026-09-25**, see
+  `deferred_work_done_list.md`. Already correctly rejected (not a silent
+  misbehavior) but the raise was merged into the `:manifest()` check just
+  below it, giving a confusing "combining with `:manifest()`" message even
+  when no `:manifest()` was present — split into its own check with an
+  accurate message. The underlying rejection itself stays exactly as
+  intentional as it always was (genuinely ambiguous whether a range means
+  "last N overall" or "last N per group," same reasoning as RESULTS' own
+  identical rejection) — not attempting the actual per-group range logic,
+  only the error message was wrong.
 - A literal name_three body for FILES (bypassing a pointer function
   entirely) — **BUILT 2026-09-22**, see `deferred_work_done_list.md`.
 

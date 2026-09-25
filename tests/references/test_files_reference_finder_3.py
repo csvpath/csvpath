@@ -1143,6 +1143,21 @@ class TestAllForOneNamedFile:
                 "$alpha.files.:all().:last():manifest()", ALPHA_HOME, ALPHA_MANIFEST
             ).query()
 
+    def test_all_combined_with_a_range_is_not_yet_supported(self):
+        # split into its own check 2026-09-25 -- used to raise the SAME
+        # error as the :manifest() case above (a confusing "combining
+        # with :manifest()" message even though no :manifest() is
+        # present here at all, confirmed live before this fix -- see the
+        # bucket list). Still rejected, not built: the range would apply
+        # to the POOLED candidate list before partitioning, an
+        # ambiguous reading (last N overall vs. last N per group) with
+        # no driving use case to settle it, matching RESULTS' own
+        # identical rejection.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:all().:from(-1)", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
     def test_all_combined_with_a_field_accessor_gives_one_value_per_group(self):
         # narrowed 2026-08-29 -- unlike ':manifest()' (a whole-resource
         # read, still Rule 1 territory), a field accessor is poolable:

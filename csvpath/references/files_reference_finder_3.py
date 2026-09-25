@@ -572,7 +572,30 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # has_range cover the complete set of name_three-legal FILES
         # functions), so at least one of them is always true here.
 
-        if partitioned and (has_range or (pointers and has_manifest)):
+        if partitioned and has_range:
+            # ':from()'/':to()' combined with ':all()'/':groups()' grouping
+            # -- split into its own check 2026-09-25 (was previously
+            # merged into the :manifest() check just below, giving a
+            # confusing "combining with :manifest()" error even when no
+            # :manifest() was present at all, confirmed live -- see the
+            # bucket list). Still rejected, not built: the range-applying
+            # code just below (`if has_range: candidates = self._apply_
+            # range(...)`) operates on the POOLED candidate list, before
+            # partitioning by file_home -- "the last N versions" would
+            # mean the last N pooled across every group, not the last N
+            # WITHIN each group, the same AMBIGUOUS-reading concern
+            # RESULTS' own identical rejection cites (does "last 2" mean
+            # per-group or pooled-then-split -- nothing here picks one).
+            # No driving use case has asked for either reading, so this
+            # stays a clear rejection rather than a guess, matching
+            # RESULTS' own precedent exactly.
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not yet support combining "
+                "':all()'/':groups()' grouping with ':from()'/':to()' -- "
+                "resolve the grouped versions on their own first."
+            )
+
+        if partitioned and pointers and has_manifest:
             # narrowed 2026-08-29 -- this used to also reject
             # `has_field_function`, but that was stale relative to
             # ResultsReferenceFinder3's OWN, later-refined precedent:

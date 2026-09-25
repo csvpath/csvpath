@@ -9,6 +9,39 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## FILES `:all()`/`:groups()` combined with `:from()`/`:to()` — misleading error message fixed — BUILT 2026-09-25
+
+Surfaced while sweeping the bucket list's remaining `'*'`-traversal items
+for RESULTS/FILES parity with each other. RESULTS explicitly rejects
+`:all()`/`:groups()` grouping combined with `:from()`/`:to()` ranging, with
+its own clear message naming both functions. FILES had no equivalent
+message anywhere — suggesting either a silent-misbehavior bug (the worse
+case) or just an undocumented gap. Live-tested `$alpha.files.:all().
+:from(-1)` (an `:all()`-grouped reference with a range, no `:manifest()`
+anywhere in it) to find out which: it DID raise — so no silent-wrong-
+answer bug — but with `"FilesReferenceFinder3 does not yet support
+combining ':all()'/':groups()' grouping with :manifest()"`, blaming a
+function that was never written.
+
+**Root cause**: the guard was `if partitioned and (has_range or (pointers
+and has_manifest)):`, a single check covering two structurally unrelated
+conditions (a range applied to the pooled-then-partitioned candidate list;
+`:manifest()` riding alongside a reducing pointer during GROUP mode) with
+one shared error message written for only the second case.
+
+**What was built**: split into two separate `if` checks, each with its
+own accurate message. The `:from()`/`:to()` branch's own rejection is
+NOT lifted — still deliberately rejected, same underlying reasoning as
+RESULTS' own identical restriction (the range-applying code operates on
+the POOLED list before file_home partitioning happens, so "last N" is
+ambiguous between "last N overall" and "last N per group," and no worked
+example has settled which). Only the message was wrong; the behavior
+itself was already correct.
+
+One new test (`TestAllForOneNamedFile.test_all_combined_with_a_range_is_
+not_yet_supported`) — the existing `:manifest()` rejection test was
+already in place and untouched. Full suite: 1609 passed (up from 1608).
+
 ## FILES `'*'`-traversal field accessor with no pointer — BUILT 2026-09-25
 
 Surfaced 2026-09-24 while investigating FILES' own implied-`*` work (see
