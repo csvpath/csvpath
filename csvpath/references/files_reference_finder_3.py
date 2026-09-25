@@ -927,10 +927,33 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "accessor, is supported so far."
             )
         if not pointers:
-            raise ReferenceException3(
-                "FilesReferenceFinder3 requires name_three to resolve to "
-                "exactly one pointer function (:first()/:last()/:index(n)) "
-                "when traversing every named-file with '*'."
+            # a field accessor alone (no pointer) is legal here too --
+            # added 2026-09-25, matching the literal-root query()'s own
+            # "field accessors are exempt from Rule 1" precedent (a
+            # scalar field value is cheap to pool/read per-candidate, no
+            # reduction needed to make it meaningful). This method used
+            # to reject ANY missing pointer unconditionally, even though
+            # the identical literal-root shape already allowed it --
+            # confirmed live (David, 2026-09-24) that
+            # "$acme.files.:flatten().:uuid()" already worked while
+            # "$*.files.:flatten().:uuid()" raised, a real, narrower gap
+            # surfaced while investigating FILES' own implied-'*' work
+            # (see the bucket list). GROUP mode (`partitioned`) is not
+            # specially handled here either, matching literal-root's own
+            # uniform "no pointer means every candidate, unreduced"
+            # treatment regardless of grouping.
+            field_call = self._find_field_function_call(built)
+            if field_call is None:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 requires name_three to resolve to "
+                    "exactly one pointer function (:first()/:last()/:index(n)) "
+                    "when traversing every named-file with '*'."
+                )
+            return ReferenceResults3(
+                results=[
+                    ReferenceResult3(path=c["file"], uuid=c["uuid"])
+                    for c in candidates
+                ]
             )
         pointer = pointers[0]
 

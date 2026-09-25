@@ -76,14 +76,13 @@ structural question from `:type()`'s own missing `ARG_TYPES` support):
 | `$acme.files.*:uuid()` | explicit `*`, name_one (3.9d's claimed equivalent) | fails: "functions attached directly to name_one" |
 
 Two real findings from this table:
-1. **A genuine, separate, narrower gap**: `$*.files.:flatten().:uuid()`
-   (global, implicit, no real pointer) raises `"FilesReferenceFinder3
-   requires name_three to resolve to exactly one pointer function... when
-   traversing every named-file with '*'"` — `_query_star_traversal()` is
-   stricter about this than the literal-root path, which has no such
-   restriction for a bare field accessor riding alongside `:flatten()`'s own
-   pooling. Not investigated further; likely a small, real fix, unrelated to
-   implied-`*`.
+1. **A genuine, separate, narrower gap — BUILT 2026-09-25**, see
+   `deferred_work_done_list.md`. `$*.files.:flatten().:uuid()` (global,
+   implicit, no real pointer) used to raise `"FilesReferenceFinder3 requires
+   name_three to resolve to exactly one pointer function... when traversing
+   every named-file with '*'"` — `_query_star_traversal()` was stricter
+   about this than the literal-root path, which has no such restriction for
+   a bare field accessor riding alongside `:flatten()`'s own pooling.
 2. **Implied-`*` itself is not the blocker for the other two failing rows.**
    Both `$acme.files.:uuid()` (bare) and `$acme.files.*:uuid()` (explicit)
    fail today — 3.9d's own claimed-equivalent EXPLICIT form is *already*
