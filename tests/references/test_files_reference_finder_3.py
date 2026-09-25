@@ -799,6 +799,23 @@ class TestStarTraversalGroup:
             "u-two-2",
         }
 
+    def test_field_accessor_with_no_pointer_now_works(self):
+        # added 2026-09-25 -- a field accessor alone (no pointer) used to
+        # raise unconditionally here, even though the identical literal-
+        # root ':all()' shape already allowed it (field accessors are
+        # exempt from Rule 1's "reduce to one entity first" requirement).
+        # GROUP mode is not specially reduced without a pointer -- every
+        # candidate's own value comes back, same as POOL mode's own
+        # no-pointer case just below.
+        results = _star_finder("$*.files.:all().:uuid()").resolve()
+        assert {r.data for r in results.results} == {
+            "u-zero-1",
+            "u-one-1",
+            "u-one-2",
+            "u-two-1",
+            "u-two-2",
+        }
+
 
 #
 # adds one named-file ("gamma") with a TWO-level entry, chronologically
@@ -875,6 +892,25 @@ class TestStarTraversalFlattenAnyDepth:
         # own POOL-mode fix (TestStarTraversalFlatten above).
         results = _flatten_star_finder("$*.files.:flatten().:last():uuid()").resolve()
         assert results.results[0].data == "u-gamma-deep-1"
+
+    def test_field_accessor_with_no_pointer_now_works(self):
+        # added 2026-09-25 -- surfaced investigating why FILES'
+        # implied-'*' work stalled (see the bucket list): the literal-
+        # root shape ("$acme.files.:flatten().:uuid()") already allowed
+        # a field accessor with no pointer (field accessors are exempt
+        # from Rule 1), but this '*'-traversal twin unconditionally
+        # required a pointer -- a real, narrower gap, not a design
+        # difference. Every candidate's own value now comes back,
+        # unreduced, across every named-file and depth.
+        results = _flatten_star_finder("$*.files.:flatten().:uuid()").resolve()
+        assert {r.data for r in results.results} == {
+            "u-zero-1",
+            "u-one-1",
+            "u-one-2",
+            "u-two-1",
+            "u-two-2",
+            "u-gamma-deep-1",
+        }
 
 
 class TestStarTraversalGroupsAnyDepth:

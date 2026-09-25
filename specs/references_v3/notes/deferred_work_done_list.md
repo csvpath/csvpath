@@ -9,6 +9,41 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## FILES `'*'`-traversal field accessor with no pointer — BUILT 2026-09-25
+
+Surfaced 2026-09-24 while investigating FILES' own implied-`*` work (see
+that entry) — a genuinely separate, narrower gap it turned up along the
+way, unrelated to implied-`*` itself. `$*.files.:flatten().:uuid()`
+(global, implicit access, no real pointer riding alongside the field
+accessor) raised `"FilesReferenceFinder3 requires name_three to resolve to
+exactly one pointer function... when traversing every named-file with
+'*'"` — but the identical literal-root shape
+(`$acme.files.:flatten().:uuid()`) already worked, because literal-root
+`query()`'s own name_three handling treats a missing pointer as legal
+whenever a field accessor is present (field accessors are exempt from Rule
+1 — "a scalar field value is cheap to pool... across every matched
+candidate with no pointer at all"). `_query_star_traversal()` never got
+the same treatment; it required a pointer unconditionally, regardless of
+whether a field accessor was present.
+
+**What was built**: `_query_star_traversal()`'s own `if not pointers:
+raise` now checks for a field accessor first (via the shared
+`_find_field_function_call()`) before raising — if one is present, every
+candidate's path+uuid comes back unreduced (matching literal-root's own
+"no pointer means every candidate" outcome), with no special treatment for
+`partitioned` (GROUP) vs pooled mode, mirroring literal-root's own uniform
+handling there too. Only raises now when neither a pointer nor a
+recognized field accessor is present.
+
+Two new tests:
+`TestStarTraversalGroup.test_field_accessor_with_no_pointer_now_works`
+(GROUP mode, `:all()`, every candidate's own value across every named-
+file+path group) and
+`TestStarTraversalFlattenAnyDepth.test_field_accessor_with_no_pointer_now_works`
+(POOL mode, `:flatten()`, every candidate's own value across every named-
+file and depth, including the two-level `gamma` fixture entry star/`:all()`
+alone can never reach). Full suite: 1608 passed (up from 1606).
+
 ## A function following a path separator implies a `*` wildcard, RESULTS half — BUILT 2026-09-24
 
 Compendium 3.9c/3.9d, surfaced while building `:regex()` as a name_one
