@@ -41,16 +41,71 @@ and a genuine clarification this surfaced: `*`/an implied `*` represents
 the entity's own TERMINAL slot, not a level above it — confirmed against
 David directly after an initial, wrong analysis).
 
-**FILES still not built** — same normalizing step
-(`ReferenceFinder3._apply_implied_star()`, already built and shared) needs
-wiring into `FilesReferenceFinder3.query()` too, plus its own careful pass
-against FILES' own dispatch chain (`_is_bare_all_reference`/`_is_bare_
-flatten_reference`/etc, the `#worksheet` marker interaction, and the
-various `_is_flatten_prefixed_reference`/`_is_prefixed_flatten_reference`
-branches) and its own full worked-example regression check — deliberately
-not bundled into the RESULTS PR to keep it reviewable, per the same
-one-finder-at-a-time discipline used throughout this session. Not
-attempted here.
+**FILES investigated 2026-09-24, deliberately NOT built — implied-`*` turned
+out not to be the relevant fix.** First attempt wired `_apply_implied_star()`
+into `FilesReferenceFinder3.query()` the same way as RESULTS and broke 29
+tests — FILES has no early-return "bare X" checks for the literal-root case
+the way RESULTS lacks entirely; FILES has SEVERAL (`:manifest()`/
+`:definition()`/`:readme()`/`_bare_definition_field_call`/
+`_bare_manifest_field_call`), all running BEFORE the point RESULTS-style
+insertion was placed, so the normalization pre-empted every one of them.
+Moving the call later (right before `if name_one.functions: raise`) would
+have fixed that regression, but investigating further (David, 2026-09-24)
+found something more fundamental: FILES' own `name_one.functions` is
+*categorically rejected* today (`"does not yet support functions attached
+directly to name_one"`) — unlike RESULTS, where `.functions` is a pointer's
+NATURAL home. `_apply_implied_star()` moves the implied function into
+`name_one.functions`, so for FILES this just relocates the error, it does
+not fix anything.
+
+David worked out the real shape of the problem with a table crossing
+explicit-vs-implicit access against local-vs-global manifest scope (`:type()`
+used as the example field, standing in for the not-yet-built predicate/
+matching form — see the predicate-argument entry above). Empirically tested
+each row live (substituting `:uuid()` for `:type()` to isolate the
+structural question from `:type()`'s own missing `ARG_TYPES` support):
+
+| reference shape | source | status |
+|---|---|---|
+| `$acme.files.:manifest():uuid()` | explicit, local | **already works** |
+| `$acme.files.:flatten().:uuid()` | implicit, local | **already works** |
+| `$acme.files.:flatten().:manifest():uuid()` | explicit, local (via name_three chain) | **already works** |
+| `$*.files.:manifest():uuid()` | explicit, global | already built (confirmed via an earlier session PR; a scratch test of this specific row used a wrongly-shaped ad hoc fixture, not a real gap) |
+| `$*.files.:flatten().:uuid()` | implicit, global | **fails** — see below |
+| `$acme.files.:uuid()` | bare, name_one (3.9d's own shape) | fails: "not a legal name_one path segment" |
+| `$acme.files.*:uuid()` | explicit `*`, name_one (3.9d's claimed equivalent) | fails: "functions attached directly to name_one" |
+
+Two real findings from this table:
+1. **A genuine, separate, narrower gap**: `$*.files.:flatten().:uuid()`
+   (global, implicit, no real pointer) raises `"FilesReferenceFinder3
+   requires name_three to resolve to exactly one pointer function... when
+   traversing every named-file with '*'"` — `_query_star_traversal()` is
+   stricter about this than the literal-root path, which has no such
+   restriction for a bare field accessor riding alongside `:flatten()`'s own
+   pooling. Not investigated further; likely a small, real fix, unrelated to
+   implied-`*`.
+2. **Implied-`*` itself is not the blocker for the other two failing rows.**
+   Both `$acme.files.:uuid()` (bare) and `$acme.files.*:uuid()` (explicit)
+   fail today — 3.9d's own claimed-equivalent EXPLICIT form is *already*
+   broken, for the same reason the bare/implied form would be even after
+   normalization: FILES has no general "a wildcard/marker in name_one with a
+   chained field function" mechanism, only the two special-cased bare-chain
+   shapes (`:manifest()`-rooted, `:definition()`-rooted). Building
+   implied-`*` for FILES would only relabel `:uuid()`'s error message from
+   one rejection to a slightly different one — it would not make either row
+   work.
+
+**Conclusion, and what would actually need to be built** (not attempted
+here): the real prerequisite is generalizing FILES' `name_one.functions`
+handling to accept a wildcard/marker (`*`/`:all()`/`:flatten()`/`:groups()`)
+combined with a chained field-accessor function — separate, somewhat larger
+work than implied-`*`, and not obviously worth doing in isolation before the
+predicate-argument mechanism exists anyway, since a bare (non-matching)
+field read via this shape is not a case any worked example has asked for.
+Once (if) that lands, implied-`*` would then trivially normalize the bare
+form into it, with no further work. `ReferenceFinder3._apply_implied_star()`
+itself stays built and shared (RESULTS already uses it) — nothing about it
+needs to change when FILES support is eventually picked back up.
 
 ## `:file_name()` — Named-File Arrivals Manifest field with no accessor
 
