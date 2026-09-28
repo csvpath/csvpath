@@ -1106,21 +1106,40 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         -- same position/reasoning as _star_pool_and_reduce's own copy
         of this filter (not shared as one call, since the two methods
         filter different-shaped inputs -- a flat list here vs. pairs).
-        Unlike POOL mode, a pointer
-        here can still select MORE than one run overall (one per
-        partition) -- so a name_three CONTENT accessor (:errors()/
-        :vars()/etc, as opposed to a poolable field accessor like
-        :uuid()) is rejected outright here, mirroring the literal-root
-        query() case's own "':all()'/':groups()' grouping does not
-        combine with :manifest() or a run-level field accessor"
-        restriction, narrowed to the piece that actually applies here:
-        a name_three CONTENT accessor reading full file content is "one
-        entity" per the same rule content accessors are held to
-        everywhere else in this file, and grouping can produce several.
-        A name_three FIELD accessor (e.g. ".invoices:uuid()") is NOT
-        rejected -- confirmed live against the already-shipped literal-
-        root precedent (":all():last().invoices:uuid()" resolves fine,
-        poolable, one result per matched run) before writing this.
+        Unlike POOL mode, a pointer here can still select MORE than one
+        run overall (one per partition) -- so a name_three CONTENT
+        accessor (:errors()/:vars()/etc, as opposed to a poolable field
+        accessor like :uuid()) can still touch more than one entity's
+        content at once, Rule 1 territory.
+
+        Converted to the deferred `ambiguous_content_read` pattern
+        2026-09-28 (was: an unconditional raise here) -- re-audited
+        against the exact trap the literal-root ':path()'-retirement fix
+        already found and fixed once (CSVPATHS' own `:all():last():
+        manifest()`, several groups each already reduced to their OWN
+        one candidate by the pointer, is legitimate and must NOT raise
+        even though the final count is > 1): confirmed here too, each
+        partition's own `_apply_pointer()` call already guarantees AT
+        MOST one selected run per group, and `_results_for_run()`'s own
+        internal guards (checked below) already guarantee AT MOST one
+        `ReferenceResult3` per run whenever `accessor is not None` --
+        `match_all` combined with an accessor is intercepted earlier by
+        this class's own unconditional instance-level rejection (see
+        query()'s and this method's own sibling's `match_all and
+        accessor is not None` checks, deliberately left as-is, a
+        genuinely different, structural case, not a count-dependent one
+        -- see the bucket list), and a `range_bounds` match of more than
+        one statement is independently rejected inside
+        `_results_for_run()` itself. So `len(results) > 1` here can only
+        ever mean "more than one GROUP's own already-individually-
+        legitimate winner," the identical shape already proven safe to
+        defer rather than raise -- flagged via `ambiguous_content_read`
+        instead, same as every other Rule 1 call site in this file.
+        A name_three FIELD accessor (e.g. ".invoices:uuid()") was never
+        rejected here to begin with -- confirmed live against the
+        already-shipped literal-root precedent (":all():last().invoices
+        :uuid()" resolves fine, poolable, one result per matched run)
+        before this was first written.
 
         A missing pointer (added 2026-08-19) means every matched run
         comes back, unreduced -- mirroring CsvpathsReferenceFinder3's
@@ -1131,25 +1150,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         partition just comes back), so this degenerates to the same
         "list everything, unreduced" case _star_pool_and_reduce()
         already handles -- delegated there directly rather than
-        duplicating that logic."""
+        duplicating that logic (that method's own ambiguous_content_read
+        computation applies unchanged in this delegated case)."""
         if having_call is not None:
             partitioned = [
                 (rh, key)
                 for rh, key in partitioned
                 if having_call.arg in self._list_instance_identities(rh)
             ]
-        if accessor is not None and pointer is not None:
-            # the content-accessor rejection only applies when grouping
-            # can still yield more than one run (pointer present, one
-            # per partition) -- the no-pointer case below reuses
-            # _star_pool_and_reduce()'s own equivalent guard instead,
-            # since it is really the same "list everything, unreduced"
-            # case once there is no pointer.
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 does not yet support combining "
-                "':all()' grouping with a name_three content accessor -- "
-                "resolve the grouped runs on their own first."
-            )
         if pointer is None:
             return self._star_pool_and_reduce(
                 [rh for rh, _ in partitioned],
@@ -1172,7 +1180,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         selected, identity, match_all, range_bounds, accessor
                     )
                 )
-        return ReferenceResults3(results=results)
+        return ReferenceResults3(
+            results=results,
+            ambiguous_content_read=accessor is not None and len(results) > 1,
+        )
 
     _JSON_ACCESSOR_FILES = {
         "errors": "errors.json",
