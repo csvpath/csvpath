@@ -678,9 +678,17 @@ class TestStarTraversalFlatten:
     # dedupe path is exercised via ':all()' instead, see
     # TestStarTraversalGroup below.
 
-    def test_combining_with_manifest_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _star_finder("$*.files.*.:last():manifest()").query()
+    def test_combining_with_manifest_now_works(self):
+        # REVISED 2026-09-28 (was: "...is_not_yet_supported") -- POOL
+        # mode always reduces to exactly one overall candidate, so
+        # ':manifest()' riding alongside the pointer is never ambiguous
+        # here at all (unlike GROUP mode, see TestStarTraversalGroup's
+        # own equivalent test) -- converted from an unconditional raise
+        # to the deferred Rule 1 pattern, same as every other content-
+        # accessor guard this session; this specific shape happens to
+        # never actually trip it.
+        results = _star_finder("$*.files.*.:last():manifest()").resolve()
+        assert results.results[0].uuid == "u-two-2"
 
     def test_combining_with_a_field_accessor_now_works(self):
         # narrowed 2026-08-29 -- POOL mode always reduces to exactly one
@@ -785,9 +793,19 @@ class TestStarTraversalGroup:
             "inputs/named_files/beta/two.csv",
         }
 
-    def test_all_combined_with_manifest_is_not_yet_supported(self):
+    def test_all_combined_with_manifest_query_succeeds_resolve_raises(self):
+        # REVISED 2026-09-28 (was: "...is_not_yet_supported") -- GROUP
+        # mode reduces each of the three distinct (named-file, path)
+        # groups to its own single pointer-selected winner, but resolving
+        # all three winners' own WHOLE manifest entries at once is still
+        # Rule 1 territory -- query() now returns all three (flagged),
+        # resolve() still refuses, converted from an unconditional raise
+        # to the deferred pattern.
+        results = _star_finder("$*.files.:all().:last():manifest()").query()
+        assert len(results.results) == 3
+        assert results.ambiguous_content_read is True
         with pytest.raises(ReferenceException3):
-            _star_finder("$*.files.:all().:last():manifest()").query()
+            _star_finder("$*.files.:all().:last():manifest()").resolve()
 
     def test_all_combined_with_a_field_accessor_now_works(self):
         # narrowed 2026-08-29 -- one value per (named-file, path) group,
@@ -870,20 +888,18 @@ class TestStarTraversalFlattenAnyDepth:
             "inputs/named_files/gamma/nested/deep.csv",
         }
 
-    def test_combining_with_manifest_is_not_yet_supported(self):
-        # :manifest() (whole-resource) stays rejected here -- not a
-        # technical limit (_extract_data() can resolve it fine via the
-        # global ledger, same as Rule 1b's own :manifest()-with-pointer
-        # shape), but Rule 1: GROUP mode (see TestStarTraversalGroup/
-        # TestStarTraversalGroupsAnyDepth) can legitimately produce more
-        # than one reduced candidate, and this method's own return sets
-        # no ambiguous_content_read flag to catch that. ':flatten()' here
-        # is POOL mode though (always exactly one overall candidate) --
-        # kept consistent with :manifest()'s own blanket rejection in
-        # this method anyway, rather than carving out a POOL-only
-        # exception not asked for by any worked example.
-        with pytest.raises(ReferenceException3):
-            _flatten_star_finder("$*.files.:flatten().:last():manifest()").query()
+    def test_combining_with_manifest_now_works(self):
+        # REVISED 2026-09-28 (was: "...is_not_yet_supported") -- POOL
+        # mode (':flatten()' included -- any-depth, but still exactly
+        # one overall candidate) is never ambiguous, so this now
+        # resolves cleanly, converted from an unconditional raise to the
+        # deferred Rule 1 pattern (which, for this POOL shape, never
+        # actually trips) -- see TestStarTraversalFlatten's own
+        # equivalent one-level test.
+        results = _flatten_star_finder(
+            "$*.files.:flatten().:last():manifest()"
+        ).resolve()
+        assert results.results[0].uuid == "u-gamma-deep-1"
 
     def test_combining_with_a_field_accessor_now_works(self):
         # narrowed 2026-08-29 -- POOL mode always reduces to exactly one
@@ -931,9 +947,23 @@ class TestStarTraversalGroupsAnyDepth:
             "u-gamma-deep-1",
         }
 
-    def test_combining_with_manifest_is_not_yet_supported(self):
+    def test_combining_with_manifest_query_succeeds_resolve_raises(self):
+        # REVISED 2026-09-28 (was: "...is_not_yet_supported") -- ':groups()'
+        # (GROUP, any depth) reduces each of the four distinct (named-
+        # file, path) groups to its own single pointer-selected winner,
+        # but resolving all four winners' own WHOLE manifest entries at
+        # once is still Rule 1 territory -- query() now returns all
+        # four (flagged), resolve() still refuses, converted from an
+        # unconditional raise to the deferred pattern.
+        results = _flatten_star_finder(
+            "$*.files.:groups().:last():manifest()"
+        ).query()
+        assert len(results.results) == 4
+        assert results.ambiguous_content_read is True
         with pytest.raises(ReferenceException3):
-            _flatten_star_finder("$*.files.:groups().:last():manifest()").query()
+            _flatten_star_finder(
+                "$*.files.:groups().:last():manifest()"
+            ).resolve()
 
     def test_combining_with_a_field_accessor_now_works(self):
         # narrowed 2026-08-29 -- one value per (named-file, path) group,
@@ -2000,6 +2030,54 @@ class TestManifestCombinedWithNameThree:
         results = finder.resolve()
         assert results.uuids == ["u-one-2"]
         assert results.results[0].data == ALPHA_MANIFEST[2]
+
+    def test_manifest_with_a_chained_field_accessor_is_poolable_not_ambiguous(
+        self,
+    ):
+        # added 2026-09-28 -- a real, confirmed bug caught while
+        # re-auditing the '*'-traversal content-accessor guards (see the
+        # bucket list): "one.csv" has two matching versions, no pointer,
+        # so bare ':manifest()' alone would correctly be Rule 1
+        # territory (see test_manifest_alone_with_more_than_one_
+        # matching_version_raises above) -- but chaining a field
+        # accessor (':uuid()') onto ':manifest()' means resolve_kind
+        # resolves to METADATA_FIELD, not METADATA_FILE (see Reference3.
+        # resolve_kind's own priority), so :manifest() itself is never
+        # actually read as a whole resource here at all. This used to be
+        # incorrectly rejected identically to the bare case -- confirmed
+        # live before this fix. Field accessors are exempt from Rule 1
+        # (Rule 3) -- poolable, one value per matched version.
+        finder = _finder(
+            '$alpha.files.:name("one.csv").:manifest():uuid()',
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+        )
+        results = finder.query()
+        assert results.ambiguous_content_read is False
+        assert len(results) == 2
+        resolved = finder.resolve()
+        assert sorted(r.data for r in resolved.results) == ["u-one-1", "u-one-2"]
+
+    def test_all_grouping_with_manifest_and_a_chained_field_accessor_is_poolable(
+        self,
+    ):
+        # the GROUP-mode ('*'/':all()') twin of the fix just above -- the
+        # same "reject :manifest() combined with grouping" guard used to
+        # ALSO incorrectly catch ':manifest():uuid()' (field present),
+        # even though only the bare, no-field shape is genuine Rule 1
+        # territory. alpha's own two distinct one-level file_homes
+        # ("zero.csv", "one.csv") each contribute their own ':all()'-
+        # reduced winner's uuid -- same fixture shape as the already-
+        # working ':all():last():uuid()' precedent (no :manifest()),
+        # just proving :manifest() riding alongside it does not change
+        # the outcome.
+        finder = _finder(
+            "$alpha.files.:all().:last():manifest():uuid()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+        )
+        results = finder.resolve()
+        assert {r.data for r in results.results} == {"u-zero-1", "u-one-2"}
 
     def test_name_three_with_neither_pointer_nor_manifest_still_raises(self):
         # a context setter alone (:name(...) is not meaningful in

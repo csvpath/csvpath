@@ -595,7 +595,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "resolve the grouped versions on their own first."
             )
 
-        if partitioned and pointers and has_manifest:
+        if partitioned and pointers and has_manifest and not has_field_function:
             # narrowed 2026-08-29 -- this used to also reject
             # `has_field_function`, but that was stale relative to
             # ResultsReferenceFinder3's OWN, later-refined precedent:
@@ -603,22 +603,30 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # CONTENT accessor (:errors()/:vars()/etc.) here, explicitly
             # NOT a field accessor (e.g. ":all():last().invoices:uuid()"
             # resolves fine there, confirmed live before that code was
-            # written -- poolable, one result per matched group). This
-            # comment used to claim FILES "mirrors" that RESULTS
-            # restriction, but it mirrored RESULTS' ORIGINAL, blanket
-            # 2026-08-11 rejection, before RESULTS' own later split --
-            # FILES was never updated to match. :manifest() (a whole-
-            # resource read) stays rejected here for the same reason it
-            # always was: "the manifest entry of every group's own latest
-            # version, all at once" is still Rule 1 territory (each
-            # group's own single reduced candidate is fine on its own,
-            # but pooling several groups' own whole entries together
-            # is not obviously the same "resolve one entity" contract).
-            # A field accessor is exempt from Rule 1 everywhere else in
-            # this file (see the `selected_candidates`/`ambiguous_
-            # content_read` comments just below, already correctly
-            # written to only flag `has_manifest`) -- this early check
-            # was the one place still treating the two the same.
+            # written -- poolable, one result per matched group).
+            # :manifest() (a whole-resource read) stays rejected here for
+            # the same reason it always was: "the manifest entry of
+            # every group's own latest version, all at once" is still
+            # Rule 1 territory (each group's own single reduced
+            # candidate is fine on its own, but pooling several groups'
+            # own whole entries together is not obviously the same
+            # "resolve one entity" contract).
+            #
+            # `and not has_field_function` added 2026-09-28 -- the
+            # earlier version of this comment claimed the check below
+            # ("only flag has_manifest") was "already correctly written"
+            # to exempt a field accessor riding alongside :manifest()
+            # (e.g. ":all():last():manifest():uuid()") -- confirmed LIVE
+            # this was wrong, a real bug: `:manifest():uuid()` (field
+            # present) was incorrectly rejected here identically to bare
+            # `:manifest()` (no field), even though resolve_kind's own
+            # METADATA_FIELD-before-METADATA_FILE priority means the
+            # field wins and :manifest() itself is never actually read
+            # as a whole resource in that shape -- see the matching fix
+            # to `ambiguous_content_read`'s own computation just below,
+            # and the identical bug/fix in this method's own literal
+            # no-grouping branch above `has_manifest`/`has_field_function`
+            # are computed for.
             #
             # The reduction logic just below already does exactly the
             # right thing once this stops blocking it: `partitioned`
@@ -691,7 +699,21 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
                 for c in selected_candidates
             ],
-            ambiguous_content_read=has_manifest and len(selected_candidates) > 1,
+            # `and not has_field_function` added 2026-09-28 -- confirmed
+            # LIVE this was a real bug: ":manifest():uuid()" (a field
+            # accessor chained alongside :manifest()) incorrectly set
+            # this flag whenever more than one candidate matched, even
+            # though Rule 3 exempts field accessors entirely and
+            # resolve_kind's own METADATA_FIELD-before-METADATA_FILE
+            # priority means :manifest() itself is never actually read
+            # as a whole resource in that shape -- only a BARE
+            # :manifest() (no field riding with it) is genuine Rule 1
+            # territory.
+            ambiguous_content_read=(
+                has_manifest
+                and not has_field_function
+                and len(selected_candidates) > 1
+            ),
         )
 
     def _query_star_traversal(
@@ -750,17 +772,26 @@ class FilesReferenceFinder3(ReferenceFinder3):
         `field_call` generically, not off which grammar position found
         it).
 
-        :manifest() (a whole-resource read) STAYS rejected here,
-        deliberately -- not because _extract_data() cannot resolve it
-        (it can, via that same Star3-aware ledger branch, already used
-        by Rule 1b's own :manifest()-with-a-global-pointer shape), but
-        because this method's own return here sets no `ambiguous_
-        content_read` flag at all: GROUP mode (':all()'/':groups()') can
-        legitimately produce more than one reduced candidate (one per
-        file_home group), and resolving each one's own WHOLE manifest
-        entry at once is exactly the Rule 1 violation that flag exists
-        to catch elsewhere -- adding it here, correctly, is its own
-        separate piece of work, not bundled into this fix.
+        :manifest() (a whole-resource read, no field riding alongside
+        it) is now deferred to `ambiguous_content_read` too (converted
+        2026-09-28, was: an unconditional raise) -- `_extract_data()`
+        already resolves it correctly for a Star3 root_major via that
+        same Star3-aware ledger branch, already used by Rule 1b's own
+        ':manifest()'-with-a-global-pointer shape, and GROUP mode
+        (':all()'/':groups()') reducing each distinct file_home to AT
+        MOST one candidate via `_apply_pointer()` means the final count
+        being > 1 can only mean "more than one GROUP's own already-
+        individually-legitimate winner" -- the identical shape already
+        proven safe to defer rather than raise (see the RESULTS-side fix
+        the same day, `_star_group_and_reduce()`'s own docstring, for
+        the fuller writeup of this exact reasoning). A separate, real
+        bug was caught and fixed in the process, not just this
+        conversion: `:manifest()` combined with a CHAINED FIELD
+        ACCESSOR (e.g. ':manifest():uuid()') was ALSO being caught by
+        the old unconditional check, even though a field accessor is
+        exempt from Rule 1 entirely (Rule 3) and was never meant to
+        trigger it -- confirmed live before fixing, the identical bug
+        also existed in this method's own literal-root twin above.
 
         ':home()' and ':definition()' as name_one's own content -- added
         2026-08-27 (FILES '*' traversal generalization bucket-list
@@ -939,16 +970,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         built = self._build_chain(name_three.functions)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
-        if any(f.name == "manifest" for f in built):
-            # narrowed 2026-08-29 -- a field accessor is no longer
-            # caught by this check, see the method's own docstring for
-            # why :manifest() alone still is.
-            raise ReferenceException3(
-                "FilesReferenceFinder3 does not yet support combining '*' "
-                "traversal with :manifest() -- only a plain pointer "
-                "(:first()/:last()/:index(n)), optionally with a field "
-                "accessor, is supported so far."
-            )
+        has_manifest = any(f.name == "manifest" for f in built)
+        field_call = self._find_field_function_call(built)
         if not pointers:
             # a field accessor alone (no pointer) is legal here too --
             # added 2026-09-25, matching the literal-root query()'s own
@@ -964,9 +987,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # (see the bucket list). GROUP mode (`partitioned`) is not
             # specially handled here either, matching literal-root's own
             # uniform "no pointer means every candidate, unreduced"
-            # treatment regardless of grouping.
-            field_call = self._find_field_function_call(built)
-            if field_call is None:
+            # treatment regardless of grouping. A bare ':manifest()'
+            # (added 2026-09-28, see below) is ALSO now legal without a
+            # pointer, same as it always has been for the literal-root
+            # case -- only "neither a pointer, nor a field accessor, nor
+            # :manifest()" is still a genuine "nothing to resolve"
+            # rejection.
+            if field_call is None and not has_manifest:
                 raise ReferenceException3(
                     "FilesReferenceFinder3 requires name_three to resolve to "
                     "exactly one pointer function (:first()/:last()/:index(n)) "
@@ -976,7 +1003,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 results=[
                     ReferenceResult3(path=c["file"], uuid=c["uuid"])
                     for c in candidates
-                ]
+                ],
+                ambiguous_content_read=(
+                    has_manifest and field_call is None and len(candidates) > 1
+                ),
             )
         pointer = pointers[0]
 
@@ -998,7 +1028,28 @@ class FilesReferenceFinder3(ReferenceFinder3):
             results=[
                 ReferenceResult3(path=c["file"], uuid=c["uuid"])
                 for c in selected_candidates
-            ]
+            ],
+            # ':manifest()' (whole-resource, no field riding alongside
+            # it) converted 2026-09-28 from an unconditional raise to
+            # this deferred pattern -- re-audited against the exact trap
+            # the literal-root ':path()'-retirement fix already found
+            # once (see ResultsReferenceFinder3._star_group_and_reduce()'s
+            # own docstring for the identical reasoning applied there
+            # the same day): `partitioned` GROUP mode reduces each
+            # distinct file_home to AT MOST one candidate via
+            # `_apply_pointer()`, so `len(selected_candidates) > 1` here
+            # can only mean "more than one file_home's own already-
+            # individually-legitimate winner" -- the same shape already
+            # proven safe to defer rather than raise. `_extract_data()`
+            # already resolves this correctly for a Star3 root_major via
+            # the global arrivals ledger (the same branch Rule 1b's own
+            # ':manifest()'-with-a-global-pointer shape already uses),
+            # confirmed by reading before relying on it, not assumed.
+            ambiguous_content_read=(
+                has_manifest
+                and field_call is None
+                and len(selected_candidates) > 1
+            ),
         )
 
     def _candidates_for_name(self, name: str, pattern: list) -> list:

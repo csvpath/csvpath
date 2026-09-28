@@ -2945,20 +2945,68 @@ class TestStarTraversalPathNarrowingAndNameThree:
         ).query()
         assert sorted(results.uuids) == ["acme-2", "widgets-1"]
 
-    def test_all_grouping_with_name_three_content_accessor_is_rejected(
+    def test_all_grouping_with_name_three_content_accessor_query_succeeds_one_group(
         self, tmp_path
     ):
+        # REVISED 2026-09-28 (was: "...is_rejected", an unconditional
+        # query()-time raise) -- converted to the deferred Rule 1
+        # pattern, re-auditing against the exact trap the literal-root
+        # ':path()'-retirement fix already caught once (see
+        # _star_group_and_reduce()'s own docstring): each GROUP's own
+        # pointer already reduces it to at most one candidate, so a
+        # SINGLE matching group is not ambiguous at all -- query() (and
+        # resolve(), once the underlying file exists) both succeed.
+        # Zero-level fixture (run directly under the group's own home,
+        # not a nested prefix) -- bare ':all()' only matches zero-level
+        # runs, per the 2026-09-21 degenerate-grouping fix (see
+        # test_all_grouping_with_name_three_field_accessor_is_poolable
+        # just below, already using this same shape).
         acme_run = _make_run(
-            tmp_path / "acme" / "east",
+            tmp_path / "acme",
             "2026-01-01_00-00-00",
             "acme-run",
             {"invoices": "acme-invoices"},
         )
         _write_archive_manifest(tmp_path, "acme", [acme_run])
+        results = _finder(
+            "$*.results.:all():last().invoices:errors()", str(tmp_path)
+        ).query()
+        assert len(results.results) == 1
+        assert results.ambiguous_content_read is False
+
+    def test_all_grouping_with_name_three_content_accessor_resolve_raises_when_ambiguous(
+        self, tmp_path
+    ):
+        # two DIFFERENT named-results groups, each with their own
+        # "invoices" instance -- ':all():last()' reduces EACH group to
+        # its own single winner (never ambiguous per-group), but
+        # resolving ':errors()' content for both groups' winners AT ONCE
+        # is still Rule 1 territory -- query() returns both (flagged),
+        # resolve() refuses.
+        acme_run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {"invoices": "acme-invoices"},
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets",
+            "2026-01-02_00-00-00",
+            "widgets-run",
+            {"invoices": "widgets-invoices"},
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
+        )
+        results = _finder(
+            "$*.results.:all():last().invoices:errors()", str(tmp_path)
+        ).query()
+        assert len(results.results) == 2
+        assert results.ambiguous_content_read is True
         with pytest.raises(ReferenceException3):
             _finder(
                 "$*.results.:all():last().invoices:errors()", str(tmp_path)
-            ).query()
+            ).resolve()
 
     def test_all_grouping_with_name_three_field_accessor_is_poolable(
         self, tmp_path
