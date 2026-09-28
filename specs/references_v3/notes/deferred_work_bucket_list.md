@@ -243,13 +243,17 @@ to the run's own directory (Table 5) directly off disk. `template` was
 present and held the correct string in both cases. Could not reproduce the
 bug as described, for the same reasons noted on the `uuid` entry above — no
 code change made, no unit test added. Re-open if a concrete repro turns up.
-Separately, while testing this, `$food.results.:last()` (a references-v3
-query, not a raw manifest read) returned zero results against the very
-same live run that had a real, correctly-written manifest on disk — a
-different, unexplained gap, in `csvpath/references/` scope rather than
-`run_registrar.py`/`results_registrar.py`. Not investigated further here
-(out of scope for this branch); worth a dedicated look before assuming
-`:last()` over a freshly-created run works correctly in general.
+**Resolved, 2026-09-28 — false alarm, not a bug.** Separately, while
+testing the above, `$food.results.:last()` returned zero results against
+the very same live run that had a real, correctly-written manifest on
+disk, flagged at the time as an unexplained gap worth a dedicated look.
+Traced it fully this time: the run used a 3-level template
+(`test_resources/:day/:month/:run_dir`), and a bare `:last()` for RESULTS
+is *supposed* to match zero-level (flat) runs only — the deliberate
+degenerate-grouping semantics settled and built earlier this same session
+(4.2b). Confirmed live that both `:flatten():last()` and the exact literal
+3-segment prefix `:last()` correctly find the run. No code change needed
+— the original flag just hadn't accounted for the run's own depth.
 
 ## `'*'`-traversal content-accessor guards — candidates for the same query()/resolve() split, not yet re-audited
 
