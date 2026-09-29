@@ -32,7 +32,6 @@ from csvpath.runners.collect_dynamic import CollectDynamic
 
 # types for clarity
 Reference = NewType("Reference", str)
-
 UnitTestSupport = NewType("UnitTestSupport", list)
 
 

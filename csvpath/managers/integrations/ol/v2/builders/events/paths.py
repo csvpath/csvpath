@@ -12,6 +12,7 @@ from ..tokens import Tokens
 from ..job import JobBuilder
 from ..run import RunBuilder
 from ...util.protocol_utility import ProtocolUtility as prut
+from ...util.name_utility import NameUtility as naut
 
 from csvpath.util.nos import Nos
 
@@ -23,13 +24,11 @@ class PathsEventBuilder:
         self.listener = listener
 
     def build(self, mdata: Metadata, job) -> list[RunEvent]:
-
         ds = self._output_data(mdata)
         ms = self._output_metadata(mdata)
         outputs = [ds, ms]
 
         job = job or JobBuilder(listener=self.listener).build(mdata)
-
         run = RunBuilder(listener=self.listener).build(mdata)
 
         complete = RunEvent(
@@ -44,20 +43,15 @@ class PathsEventBuilder:
         return [complete]
 
     def _output_data(self, mdata: Metadata) -> OutputDataset:
-        ns = prut.update_protocol_if(
-            config=self.listener.config, mdata=mdata, root=mdata.named_paths_root
-        )
         fs = {}
         fs["symlink_identifiers"] = self._symlinks(mdata)
-
-        path = prut.update_protocol_if(
-            config=self.listener.config, mdata=mdata, root=mdata.group_file_path
+        ns, path = naut.namespace_and_name(
+            config=self.listener.config,
+            mdata=mdata,
+            namespace=mdata.named_paths_root,
+            path=mdata.group_file_path,
         )
-
-        if path.startswith(ns):
-            path = path[len(ns) + 1 :]
-
-        ds = OutputDataset(namespace=ns, name=f"{path}", facets=fs)
+        ds = OutputDataset(namespace=ns, name=path, facets=fs)
         return ds
 
     def _symlinks(self, mdata: Metadata) -> symlinks_dataset.SymlinksDatasetFacet:
@@ -97,16 +91,14 @@ class PathsEventBuilder:
         return symlinks_dataset.SymlinksDatasetFacet(identifiers=ids)
 
     def _output_metadata(self, mdata: Metadata) -> OutputDataset:
-        ns = prut.update_protocol_if(
-            config=self.listener.config, mdata=mdata, root=mdata.named_paths_root
-        )
         mani = mdata.named_paths_root
         mani = Nos(mani).join(mdata.named_paths_name)
         mani = Nos(mani).join("manifest.json")
-
-        if mani.startswith(ns):
-            mani = mani[len(ns) + 1 :]
-
-        fs = {}
-        ms = OutputDataset(namespace=ns, name=mani, facets=fs)
+        ns, path = naut.namespace_and_name(
+            config=self.listener.config,
+            mdata=mdata,
+            namespace=mdata.named_paths_root,
+            path=mani,
+        )
+        ms = OutputDataset(namespace=ns, name=path, facets={})
         return ms

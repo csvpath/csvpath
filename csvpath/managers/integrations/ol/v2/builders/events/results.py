@@ -31,22 +31,23 @@ class ResultsEventBuilder:
 
     def build(self, mdata: Metadata, job: Job, run: Run) -> list[RunEvent]:
         try:
-            ns = prut.update_protocol_if(
-                config=self.listener.config, mdata=mdata, root=mdata.named_files_root
+            ns, path = naut.namespace_and_name(
+                config=self.listener.config,
+                mdata=mdata,
+                namespace=mdata.named_files_root,
+                path=mdata.named_file_name,
             )
-            path = mdata.named_file_name
             path = naut.from_root_major_if(path)
-
             prov = self._file_provenance(mdata)
             file = InputDataset(namespace=ns, name=path, facets={"provenance": prov})
 
-            ns = prut.update_protocol_if(
-                config=self.listener.config, mdata=mdata, root=mdata.named_paths_root
-            )
-            path = mdata.named_paths_name
-            path = naut.from_root_major_if(path)
-
             prov = self._paths_provenance(mdata)
+            ns, path = naut.namespace_and_name(
+                config=self.listener.config,
+                mdata=mdata,
+                namespace=mdata.named_paths_root,
+                path=mdata.named_paths_name,
+            )
             paths = InputDataset(namespace=ns, name=path, facets={"provenance": prov})
 
             inputs = [file, paths]
@@ -79,22 +80,21 @@ class ResultsEventBuilder:
         return prov
 
     def _output_data(self, mdata: Metadata) -> OutputDataset:
-        ns = prut.update_protocol_if(
-            config=self.listener.config, mdata=mdata, root=mdata.named_files_root
-        )
         fs = {}
         fs["symlink_identifiers"] = self._symlinks(mdata)
-
         with DataFileReader(mdata.manifest_path) as reader:
             mani = json.load(reader.source)
             stats = RunStatistics(
                 errors=mani.get("error_count"), all_valid=mani.get("all_valid")
             )
             outputfs = {"runStatistics": stats}
-
-        ds = OutputDataset(
-            namespace=ns, name=mdata.manifest_path, facets=fs, outputFacets=outputfs
+        ns, path = naut.namespace_and_name(
+            config=self.listener.config,
+            mdata=mdata,
+            namespace=mdata.named_files_root,
+            path=mdata.manifest_path,
         )
+        ds = OutputDataset(namespace=ns, name=path, facets=fs, outputFacets=outputfs)
         return ds
 
     def _symlinks(self, mdata: Metadata) -> symlinks_dataset.SymlinksDatasetFacet:
@@ -116,14 +116,14 @@ class ResultsEventBuilder:
         )
 
     def _output_metadata(self, mdata: Metadata) -> OutputDataset:
-        ns = prut.update_protocol_if(
-            config=self.listener.config, mdata=mdata, root=mdata.archive_path
-        )
         mani = mdata.archive_path
         mani = Nos(mani).join(mdata.named_paths_name)
         mani = Nos(mani).join("manifest.json")
-        if mani.startswith(ns):
-            mani = mani[len(ns) + 1 :]
-        fs = {}
-        ms = OutputDataset(namespace=ns, name=mani, facets=fs)
+        ns, path = naut.namespace_and_name(
+            config=self.listener.config,
+            mdata=mdata,
+            namespace=mdata.archive_path,
+            path=mani,
+        )
+        ms = OutputDataset(namespace=ns, name=path, facets={})
         return ms

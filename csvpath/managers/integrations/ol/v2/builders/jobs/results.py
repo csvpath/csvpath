@@ -11,7 +11,6 @@ from csvpath.util.nos import Nos
 
 from ..tokens import Tokens
 from ...util.metadata_utility import MetadataUtility as meut
-from ...util.protocol_utility import ProtocolUtility as prut
 from ...util.name_utility import NameUtility as naut
 
 
@@ -24,9 +23,6 @@ class ResultsJobBuilder:
         self.listener = listener
 
     def build(self, mdata: Metadata) -> Job:
-        ns = prut.update_protocol_if(
-            config=self.listener.config, mdata=mdata, root=mdata.archive_path
-        )
         try:
             fs = {}
             fs["documentation"] = documentation_job.DocumentationJobFacet(
@@ -44,9 +40,13 @@ class ResultsJobBuilder:
             )
             fs["jobType"] = f
 
-            name = mdata.run_home
-            name = naut.trim_namespace_if(namespace=ns, path=name)
-            name = f"validate:{name}"
+            ns, path = naut.namespace_and_name(
+                config=self.listener.config,
+                mdata=mdata,
+                namespace=mdata.archive_path,
+                path=mdata.run_home,
+            )
+            name = f"validate:{path}"
             job = Job(namespace=ns, name=name, facets=fs)
             return job
         except Exception as e:

@@ -15,6 +15,7 @@ from csvpath.managers.listener import Listener
 from csvpath.util.nos import Nos
 
 from ...util.protocol_utility import ProtocolUtility as prut
+from ...util.name_utility import NameUtility as naut
 
 from ..tokens import Tokens
 from ..job import JobBuilder
@@ -65,30 +66,33 @@ class FileEventBuilder:
         return [start, complete]
 
     def _inputs(self, mdata: Metadata) -> list[InputDataset]:
+        fs = {}
+        #
+        # Note: we don't use a trimmed version of orgin_path because
+        # the origin path is physically outside the namespace. we could
+        # use naut.namespace_and_name just for consistency but prut is
+        # more clear
+        #
         ns = prut.update_protocol_if(
             config=self.listener.config, mdata=mdata, root=mdata.named_files_root
         )
-        fs = {}
-        #
-        # better name & namespace?
-        #
-        ds = InputDataset(namespace=ns, name=f"{mdata.origin_path}", facets=fs)
+        ds = InputDataset(namespace=ns, name=mdata.origin_path, facets=fs)
         return [ds]
 
     def _output_data(self, mdata: Metadata) -> OutputDataset:
-        ns = prut.update_protocol_if(
-            config=self.listener.config, mdata=mdata, root=mdata.named_files_root
-        )
         fs = {}
         fs["symlink_identifiers"] = self._symlinks(mdata)
         stats = output_statistics_output_dataset.OutputStatisticsOutputDatasetFacet(
             size=mdata.file_size, fileCount=1
         )
         outputfs = {"outputStatistics": stats}
-
-        ds = OutputDataset(
-            namespace=ns, name=f"{mdata.file_path}", facets=fs, outputFacets=outputfs
+        ns, path = naut.namespace_and_name(
+            config=self.listener.config,
+            mdata=mdata,
+            namespace=mdata.named_files_root,
+            path=mdata.file_path,
         )
+        ds = OutputDataset(namespace=ns, name=path, facets=fs, outputFacets=outputfs)
         return ds
 
     def _symlinks(self, mdata: Metadata) -> symlinks_dataset.SymlinksDatasetFacet:
@@ -110,12 +114,15 @@ class FileEventBuilder:
         )
 
     def _output_metadata(self, mdata: Metadata) -> OutputDataset:
-        ns = prut.update_protocol_if(
-            config=self.listener.config, mdata=mdata, root=mdata.named_files_root
-        )
         mani = mdata.named_files_root
         mani = Nos(mani).join(mdata.named_file_name)
         mani = Nos(mani).join("manifest.json")
         fs = {}
-        ms = OutputDataset(namespace=ns, name=mani, facets=fs)
+        ns, path = naut.namespace_and_name(
+            config=self.listener.config,
+            mdata=mdata,
+            namespace=mdata.named_files_root,
+            path=mani,
+        )
+        ms = OutputDataset(namespace=ns, name=path, facets=fs)
         return ms

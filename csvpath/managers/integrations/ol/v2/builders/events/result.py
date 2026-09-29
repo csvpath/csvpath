@@ -1,4 +1,5 @@
 import os
+import traceback
 from openlineage.client.event_v2 import Dataset, RunEvent
 from openlineage.client.event_v2 import Job, Run, RunState
 from openlineage.client.event_v2 import InputDataset, OutputDataset
@@ -14,7 +15,6 @@ from ..run_state import RunStateBuilder
 from ...facets.group_provenance import GroupProvenance
 from ...facets.data_provenance import DataProvenance
 from ...facets.actual_file import ActualFile
-from ...util.protocol_utility import ProtocolUtility as prut
 from ...util.name_utility import NameUtility as naut
 
 
@@ -42,18 +42,18 @@ class ResultEventBuilder:
         #  - 6 standard files: data.csv, vars.json, errors.json, etc.
         #  - manifest.json
         #  - 0 or more transfers
-        #
-        # NOTE: we need to add parquet
+        #  - txt and parquet files
         #
         outputs = [] if runstate == RunState.START else self._outputs(mdata)
-
         #
         # manifest
         #
-        ns = prut.update_protocol_if(
-            config=self.listener.config, mdata=mdata, root=mdata.archive_path
+        ns, path = naut.namespace_and_name(
+            config=self.listener.config,
+            mdata=mdata,
+            namespace=mdata.archive_path,
+            path=mdata.manifest_path,
         )
-        path = naut.trim_namespace_if(namespace=ns, path=mdata.manifest_path)
         outmani = Dataset(
             namespace=ns,
             name=path,
@@ -63,9 +63,20 @@ class ResultEventBuilder:
         tpaths = mdata.transfers
         if tpaths is not None:
             for t in tpaths:
-                o = Dataset(
+                ns, path = naut.namespace_and_name(
+                    config=self.listener.config,
+                    mdata=mdata,
                     namespace=mdata.archive_path,
-                    name=f"{t[3]}",
+                    path=t[3],
+                )
+                #
+                # we don't use the trimmed name. a transfer is to a location
+                # outside the namespace. should the namespace be something
+                # like `csvpaths://transfers`?
+                #
+                o = Dataset(
+                    namespace=ns,
+                    name=t[3],
                 )
                 outputs.append(o)
         job = job or JobBuilder(listener=self.listener).build(mdata)
@@ -89,34 +100,30 @@ class ResultEventBuilder:
         # loop on all the actual data files and just name them
         #
         try:
-            ns = prut.update_protocol_if(
-                config=self.listener.config, mdata=mdata, root=mdata.archive_path
-            )
             nos = Nos(mdata.instance_home)
             files = nos.listdir(files_only=True)
             for file in files:
                 if file == "manifest.json":
                     continue
                 path = nos.join(file)
-                path = naut.trim_namespace_if(namespace=ns, path=path)
+                ns, path = naut.namespace_and_name(
+                    config=self.listener.config,
+                    mdata=mdata,
+                    namespace=mdata.archive_path,
+                    path=path,
+                )
                 o = OutputDataset(
                     name=path,
                     namespace=ns,
-                    # facets=fs,
-                    # outputFacets=of,
                 )
                 outputs.append(o)
-        except Exception:
-            import traceback
-
+        except Exception as e:
             print(traceback.format_exc())
+            self.listener.config.logger.exception(e)
         return outputs
 
     def _file_inputs(self, mdata: Metadata) -> InputDataset:
         try:
-            ns = prut.update_protocol_if(
-                config=self.listener.config, mdata=mdata, root=mdata.named_files_root
-            )
             fs = {}
             fs["provenance"] = self._file_provenance(mdata)
             fs["actual_file"] = self._actual_file(mdata)
@@ -129,12 +136,14 @@ class ResultEventBuilder:
                 path = f"{mdata.preceding_instance_identity}{os.sep}data.csv"
             else:
                 path = mdata.actual_data_file
-            path = naut.from_root_major_if(path)
-            path = naut.trim_namespace_if(namespace=ns, path=path)
+            ns, path = naut.namespace_and_name(
+                config=self.listener.config,
+                mdata=mdata,
+                namespace=mdata.named_files_root,
+                path=path,
+            )
             return InputDataset(namespace=ns, name=path, facets=fs)
         except Exception as e:
-            import traceback
-
             print(traceback.format_exc())
             self.listener.config.logger.exception(e)
 
@@ -146,15 +155,13 @@ class ResultEventBuilder:
         return prov
 
     def _paths_inputs(self, mdata: Metadata) -> InputDataset:
-        ns = prut.update_protocol_if(
-            config=self.listener.config, mdata=mdata, root=mdata.named_paths_root
-        )
-        #
-        # named_results_name shouldn't be a reference, but the guard is cheap.
-        #
-        path = mdata.named_results_name
-        path = naut.from_root_major_if(path)
         prov = self._paths_provenance(mdata)
+        ns, path = naut.namespace_and_name(
+            config=self.listener.config,
+            mdata=mdata,
+            namespace=mdata.named_paths_root,
+            path=mdata.named_results_name,
+        )
         paths = InputDataset(namespace=ns, name=path, facets={"provenance": prov})
         return paths
 

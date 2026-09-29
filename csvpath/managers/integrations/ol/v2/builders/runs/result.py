@@ -8,7 +8,6 @@ from csvpath.managers.listener import Listener
 from csvpath.util.nos import Nos
 from csvpath.util.file_readers import DataFileReader
 
-from ...util.protocol_utility import ProtocolUtility as prut
 from ...util.name_utility import NameUtility as naut
 
 
@@ -21,18 +20,16 @@ class ResultRunBuilder:
     def build(self, mdata: Metadata):
         facets = {}
         if mdata.run_uuid is not None:
-            ns = prut.update_protocol_if(
-                config=self.listener.config, mdata=mdata, root=mdata.archive_path
+            ns, path = naut.namespace_and_name(
+                config=self.listener.config,
+                mdata=mdata,
+                namespace=mdata.archive_path,
+                path=mdata.run_home,
             )
-            name = mdata.run_home
-            name = naut.trim_namespace_if(namespace=ns, path=name)
-
+            job = parent_run.Job(namespace=ns, name=f"validate:{path}")
             parent_run_facet = parent_run.ParentRunFacet(
                 run=parent_run.Run(runId=mdata.run_uuid_string),
-                job=parent_run.Job(
-                    namespace=ns,
-                    name=f"validate:{name}",
-                ),
+                job=job,
             )
             facets["parent"] = parent_run_facet
         else:

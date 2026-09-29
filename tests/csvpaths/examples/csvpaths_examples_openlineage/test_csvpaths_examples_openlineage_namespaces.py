@@ -17,6 +17,7 @@ class TestCsvPathsExamplesOpenLineageProtocolUtility(unittest.TestCase):
         self.mock_mdata.project_context = None
         self.mock_mdata.project = None
 
+    # ---------------------------------------
     #
     # name tests
     #
@@ -25,6 +26,7 @@ class TestCsvPathsExamplesOpenLineageProtocolUtility(unittest.TestCase):
         root = "data/inputs"
         assert naut.trim_namespace_if(namespace=root, path=file) == "mydata/raw"
 
+    # ---------------------------------------
     #
     # protocol tests
     #
@@ -145,7 +147,7 @@ class TestCsvPathsExamplesOpenLineageProtocolUtility(unittest.TestCase):
         )
         self.assertEqual(result, "csvpath://my.storage.com/files")
 
-    def test_csvpaths_examples_openlineage_namespaces_strategy_project_without_metadata_falls_back_to_root_2(
+    def test_csvpaths_examples_openlineage_namespaces_strategy_project_with_metadata(
         self,
     ):
         self.mock_config.get.return_value = "project"

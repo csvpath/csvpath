@@ -193,6 +193,7 @@ class TestCsvPathsExamplesOpenLineage(unittest.TestCase):
 
         paths.config.set(section="listeners", name="groups", value="openlineage")
         paths.config.set(section="listeners", name="openlineage.version", value="2")
+        paths.config.set(section="openlineage", name="base_url", value="")
 
         ref, mdata = paths.file_manager.add_named_file(
             name="orders", path=FILE, return_metadata=True

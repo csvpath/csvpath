@@ -61,17 +61,14 @@ class ProtocolUtility:
             _ = mdata.project_context
         if mdata.project is not None:
             _ = f"{_}/{mdata.project}" if _ != "" else mdata.project
-        print(f"_retxi 1: {_}")
         ret = None
         if _ == "":
             ret = f"csvpath://{cls._strip_protocol_if(root)}"
         else:
             ret = f"csvpath://{cls._strip_protocol_if(_)}"
-        print(f"_retxi 2: {ret}")
         if _ != "":
             last = Path(root).name
             ret = f"{ret}/{last}"
-        print(f"_retxi 3: {ret}")
         return ret
 
     @classmethod
