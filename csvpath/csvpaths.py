@@ -24,6 +24,7 @@ from .managers.files.file_manager import FileManager
 from .managers.results.results_manager import ResultsManager
 from .managers.results.result import Result
 from .util.box import Box
+from .util.run_reference_maker import RunReferenceMaker
 
 from csvpath import CsvPath
 from csvpath.runners.runner import Runner
@@ -31,6 +32,8 @@ from csvpath.runners.collect_dynamic import CollectDynamic
 
 # types for clarity
 Reference = NewType("Reference", str)
+
+UnitTestSupport = NewType("UnitTestSupport", list)
 
 
 class CsvPathsCoordinator(ABC):
@@ -99,7 +102,6 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
     create multiple CsvPaths instances.
     """
 
-    # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         *,
@@ -844,6 +846,8 @@ Cache: {cache}
         filename: str,
         template: str = None,
         extra_data: Optional[dict[str, str]] = None,
+        metadatas: UnitTestSupport = None,  # only for testing to capture the start-metadata pairs
+        results: UnitTestSupport = None,  # only for testing to capture the completed results and metadata
     ) -> Reference:
         """
         Sequentially does a CsvPath.collect() on filename for every named-path in the
@@ -873,6 +877,8 @@ Cache: {cache}
                     template=template,
                     file=file,
                     extra_data=extra_data,
+                    metadatas=metadatas,
+                    results=results,
                 )
         else:
             ref = self._collect_paths(
@@ -881,6 +887,8 @@ Cache: {cache}
                 template=template,
                 file=files,
                 extra_data=extra_data,
+                metadatas=metadatas,
+                results=results,
             )
         #
         # absolute reference to the results
@@ -895,7 +903,19 @@ Cache: {cache}
         filename: str,
         template: str = None,
         extra_data: Optional[dict[str, str]] = None,
+        metadatas: UnitTestSupport = None,  # only for testing to capture the start-metadata pairs
+        results: UnitTestSupport = None,  # only for testing to capture the completed results and metadata
     ) -> Reference:
+        #
+        # there are three types of metadata that you can capture for testing in the
+        # metadatas and results params.
+        #  - the run start ResultsMetadata
+        #  - a tuple of a RunMetadata and start-ResultMetadata for each Result
+        #  - a complete-ResultMetadata for as the value of Result.result_metadata
+        #    at the end of the run
+        #
+        # all of these are available for testing but aren't intended for regular use and
+        # shouldn't be relied on because they might change.
         #
         # if template is None we need to go find any template that was given when
         # the named-paths were loaded.
@@ -924,8 +944,13 @@ Cache: {cache}
         # capture the last run dir for the benefit of the caller
         #
         self._last_run_dir = crt
-
-        results = []
+        results = [] if results is None else results
+        #
+        # we do run start with a metadata that is not related to
+        # any Result. it has its own uuid. here we create a run
+        # uuid that is overarching all start, Result, and end
+        # metadata
+        #
         run_uuid = uuid4()
         #
         # run starts here
@@ -983,7 +1008,13 @@ Cache: {cache}
                 # the add has to come after _load_csvpath because we need the identity or index
                 # to be stable and the identity is found in load, if it exists.
                 #
-                self.results_manager.add_named_result(result)
+                ms = self.results_manager.add_named_result(result)
+                #
+                # we let the caller pass in a list to capture the metadata (run and result)
+                # this is SOLELY for TESTING
+                #
+                if metadatas is not None:
+                    metadatas.append(ms)
                 lines = result.lines
                 self.logger.debug("Collecting lines using a %s", type(lines))
                 csvpath.collect(lines=lines)
@@ -1016,7 +1047,10 @@ Cache: {cache}
         )
         if self.wrap_up_automatically:
             self.wrap_up()
-        ret = self._make_run_reference(pathsname=pathsname, crt=crt)
+        ret = RunReferenceMaker.make_run_reference(
+            config=self.config, pathsname=pathsname, crt=crt
+        )
+        # ret = self._make_run_reference(pathsname=pathsname, crt=crt)
         return ret
 
     def fast_forward_paths(
@@ -1173,7 +1207,10 @@ Cache: {cache}
         )
         if self.wrap_up_automatically:
             self.wrap_up()
-        ret = self._make_run_reference(pathsname=pathsname, crt=crt)
+        # ret = self._make_run_reference(pathsname=pathsname, crt=crt)
+        ret = RunReferenceMaker.make_run_reference(
+            config=self.config, pathsname=pathsname, crt=crt
+        )
         return ret
 
     def next_paths(
@@ -1307,7 +1344,10 @@ Cache: {cache}
         self.clear_run_coordination()
         if self.wrap_up_automatically:
             self.wrap_up()
-        ret = self._make_run_reference(pathsname=pathsname, crt=crt)
+        # ret = self._make_run_reference(pathsname=pathsname, crt=crt)
+        ret = RunReferenceMaker.make_run_reference(
+            config=self.config, pathsname=pathsname, crt=crt
+        )
         return ret
 
     # =============== breadth first processing ================
@@ -1363,8 +1403,11 @@ Cache: {cache}
         # generated by the run.
         #
         # return f"${pathsname}.results.{self.run_metadata.run_home}"
-        ret = self._make_run_reference(
-            pathsname=pathsname, crt=self.run_metadata.run_home
+        # ret = self._make_run_reference(
+        #    pathsname=pathsname, crt=self.run_metadata.run_home
+        # )
+        ret = RunReferenceMaker.make_run_reference(
+            config=self.config, pathsname=pathsname, crt=self.run_metadata.run_home
         )
         self._logger = None
         return ret
@@ -1417,8 +1460,11 @@ Cache: {cache}
         # return a fully qualified reference to the results.
         #
         # return f"${pathsname}.results.{self.run_metadata.run_home}"
-        ret = self._make_run_reference(
-            pathsname=pathsname, crt=self.run_metadata.run_home
+        # ret = self._make_run_reference(
+        #    pathsname=pathsname, crt=self.run_metadata.run_home
+        # )
+        ret = RunReferenceMaker.make_run_reference(
+            config=self.config, pathsname=pathsname, crt=self.run_metadata.run_home
         )
         self._logger = None
         return ret

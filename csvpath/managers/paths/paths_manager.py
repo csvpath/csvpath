@@ -11,6 +11,7 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
 from .paths_registrar import PathsRegistrar
+from ..metadata import Metadata
 from .paths_metadata import PathsMetadata
 from .paths_describer import NamedPathsDescriber
 from .paths_asset_manager import PathsAssetManager
@@ -68,14 +69,20 @@ class PathsManager:
         #
         # BIG CAVEAT: this breaks the statelessness we're trying to trend towards.
         # admittedly the original PathsManager was stateful, but that was long ago.
-        # this should only be used if really needed.
+        # this should only be used for testing
         #
         # TODO: verify there are no good uses and remove
         #
+        print(
+            "WARNING: last add metadata is deprecated. Pass return_metadata param instead."
+        )
         return self._last_add_metadata
 
     @last_add_metadata.setter
     def last_add_metadata(self, mdata: PathsMetadata) -> None:
+        print(
+            "WARNING: last add metadata is deprecated. Pass return_metadata param instead."
+        )
         self._last_add_metadata = mdata
 
     def get_config_for_paths(self, name: NamedPathsName) -> dict:
@@ -293,6 +300,7 @@ class PathsManager:
         file_path: str,
         template=None,
         append: bool = False,
+        return_metadata: bool = False,
     ) -> str:
         if self.can_load(file_path) is not True:
             return None
@@ -308,6 +316,7 @@ class PathsManager:
                 source_path=file_path,
                 template=template,
                 append=append,
+                return_metadata=return_metadata,
             )
             #
             # absolute ref to the named-paths group in its present form.
@@ -423,8 +432,9 @@ class PathsManager:
         # exp. added for FP
         #
         assure_definition: bool = True,
-    ) -> str:
-        self.last_add_metadata = None
+        return_metadata: bool = False,
+    ) -> str | tuple[str, Metadata]:
+        self._last_add_metadata = None
         if template is not None and str(template).strip() != "":
             #
             # this will raise an error. if that's a problem use temu.validate
@@ -435,7 +445,11 @@ class PathsManager:
             # change for FP. added append as a pass-through
             #
             ref = self.add_named_paths_from_file(
-                name=name, file_path=from_file, template=template, append=append
+                name=name,
+                file_path=from_file,
+                template=template,
+                append=append,
+                return_metadata=return_metadata,
             )
             return ref
         elif from_dir is not None:
@@ -512,6 +526,9 @@ class PathsManager:
             # end exp
             #
             mdata = PathsMetadata(self.csvpaths.config)
+            ref = f"${name}.csvpaths.0:from"
+            mdata.reference = ref
+            mdata.append = append is True
             mdata.archive_name = self.csvpaths.config.archive_name
             mdata.named_paths_name = name
             # nos = self.nos
@@ -538,8 +555,9 @@ class PathsManager:
             # we don't include dates in references. the versions can be "easily"
             # compiled from metadata, fwiw.
             #
-            ref = f"${name}.csvpaths.0:from"
-            self.last_add_metadata = mdata
+            self._last_add_metadata = mdata
+            if return_metadata:
+                return (ref, mdata)
             return ref
         except Exception as ex:
             msg = f"Error adding named-paths list to named-paths group: {ex}"

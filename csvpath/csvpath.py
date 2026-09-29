@@ -1070,10 +1070,21 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
     @property
     def completed(self) -> bool:
         if not self.scanner or not self.line_monitor:
+            print("cvspath: not completed because no line monitor or no scanner")
             return False
+        #
+        # we're not asking if this is the last line. it may not be and yet
+        # we could be done. that said, ideally we catch the last line, do any
+        # last() and then stop iterating.
+        #
+        return self.scanner.to_line <= self.line_monitor.physical_line_number
+        """
         if self.scanner.is_last(self.line_monitor.physical_line_number):
+            print(f"cvspath: completed because line monitor ({self.line_monitor.physical_line_number}) == scanner's last {self.scanner._these_last}")
             return True
+        print(f"cvspath: noncompleted because line monitor ({self.line_monitor.physical_line_number}) != scanner's last {self.scanner._these_last}")
         return False
+        """
 
     @property
     def from_line(self):  # pragma: no cover pylint: disable=C0116
@@ -1210,6 +1221,11 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                 nexts -= 1
             else:
                 break
+        #
+        # completed should be dynamically available
+        # self.completed = True
+        #
+        #
         # we don't want to hold on to data more than needed. but
         # we do want to return data if we're not spooling. the
         # way we do that is to keep the local var available with the

@@ -121,7 +121,7 @@ class FileRegistrar(Registrar, Listener):
         manifest_path = mdata.manifest_path
         mani = {}
         mani["type"] = t
-        mani["reference"] = mdata.named_file_ref
+        mani["reference"] = mdata.reference
         mani["file"] = rpath
         mani["file_home"] = mdata.file_home
         mani["fingerprint"] = h

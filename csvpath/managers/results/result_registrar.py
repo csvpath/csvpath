@@ -15,7 +15,7 @@ from .result_metadata import ResultMetadata
 class ResultRegistrar(Registrar, Listener):
     """@private"""
 
-    def __init__(self, *, csvpaths, result, result_serializer=None):
+    def __init__(self, *, csvpaths, result, result_serializer=None, config=None):
         Registrar.__init__(self, csvpaths, result)
         Listener.__init__(self, csvpaths.config)
         self.result_serializer = result_serializer
@@ -56,7 +56,7 @@ class ResultRegistrar(Registrar, Listener):
         mdata.valid = None
         self.distribute_update(mdata)
 
-    def register_complete(self, mdata: Metadata = None) -> None:
+    def register_complete(self, mdata: Metadata = None) -> Metadata:
         #
         # results manager delegates the bits to the
         # serializer and the metadata assembly to this
@@ -68,6 +68,8 @@ class ResultRegistrar(Registrar, Listener):
             mdata = ResultMetadata(config=self.csvpaths.config)
         mdata.set_time_completed()
         mdata.from_manifest(m)
+        mdata.completed = self.completed
+        mdata.stopped = self.result.csvpath.stopped
         mdata.archive_name = self.archive_name
         #
         # if the paths_name has a $ we need to be more general
@@ -100,7 +102,10 @@ class ResultRegistrar(Registrar, Listener):
         mdata.file_fingerprints = self.file_fingerprints
         mdata.error_count = self.result.errors_count
         mdata.valid = self.result.csvpath.is_valid
-        mdata.completed = self.completed
+        #
+        # this self.completed property is not getting set correctly
+        #
+        # mdata.completed = self.completed
         mdata.files_expected = self.all_expected_files
         mdata.number_of_files_expected = len(self.result.csvpath.all_expected_files)
         mdata.number_of_files_generated = self.number_of_files_generated()
@@ -125,6 +130,7 @@ class ResultRegistrar(Registrar, Listener):
             )
             mdata.preceding_instance_identity = pid
         self.distribute_update(mdata)
+        return mdata
 
     def metadata_update(self, mdata: Metadata) -> None:
         m = {}

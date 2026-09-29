@@ -21,6 +21,21 @@ class Metadata(ABC):
         self.manifest_path: str = None
         self.archive_name: str = None
         self.archive_path: str = None
+        #
+        # TODO: check to make sure:
+        #  1) all manifests capture these two
+        #  2) we have a ref v3 function for both
+        #
+        self.project: str = None
+        self.project_context: str = None
+        #
+        # TODO: check to make sure ref is captured and
+        # a function available
+        #
+        self.reference: str = None
+        #
+        #
+        #
         self._base_path = None
         self._named_files_root: str = None
         self._named_paths_root: str = None
@@ -45,8 +60,15 @@ class Metadata(ABC):
             self.archive_name = config.archive_name
             self.archive_path = config.archive_path
 
+    def set_project_if(self, runner) -> None:
+        if hasattr(runner, "project"):
+            self.project = runner.project
+        if hasattr(runner, "project_context"):
+            self.project_context = runner.project_context
+
     #
-    # find base dir so we can add file:// refs, if needed
+    # get CWD so we can add file:// refs, if needed
+    # note, this is rarely going to be the right answer.
     #
     @property
     def base_path(self):
@@ -60,11 +82,19 @@ class Metadata(ABC):
             self._named_files_root = self.config.inputs_files_path
         return self._named_files_root
 
+    @named_files_root.setter
+    def named_files_root(self, r: str) -> None:
+        self._named_files_root = r
+
     @property
     def named_paths_root(self):
         if self._named_paths_root is None:
             self._named_paths_root = self.config.inputs_csvpaths_path
         return self._named_paths_root
+
+    @named_paths_root.setter
+    def named_paths_root(self, r: str) -> None:
+        self._named_paths_root = r
 
     def from_manifest(self, m) -> None:
         if m is None:
@@ -104,15 +134,19 @@ class Metadata(ABC):
 
     def set_time(self) -> None:
         self._time = daut.now()
-        # self._time = datetime.now(timezone.utc)
 
     def set_time_started(self) -> None:
         self._time_started = daut.now()
-        # self._time_started = datetime.now(timezone.utc)
 
     def set_time_completed(self) -> None:
         self._time_completed = daut.now()
-        # self._time_completed = datetime.now(timezone.utc)
+
+    def first_time(self) -> datetime:
+        t = self.time
+        c = self.time_completed or t
+        s = self.time_started or t
+        d = min(c, s, t)
+        return d
 
     @property
     def time(self) -> datetime:

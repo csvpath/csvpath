@@ -8,7 +8,7 @@ from ..metadata import Metadata
 
 
 class RunRegistrar(Registrar, Listener):
-    def __init__(self, csvpaths):
+    def __init__(self, *, config=None, csvpaths=None):
         Registrar.__init__(self, csvpaths)
         Listener.__init__(self, csvpaths.config)
         self.type_name = "run"
@@ -46,7 +46,7 @@ class RunRegistrar(Registrar, Listener):
         #
         m["archive_name"] = mdata.archive_name
         m["archive_path"] = mdata.archive_path
-        m["base_path"] = mdata.base_path
+        # m["base_path"] = mdata.base_path
         m["named_files_root"] = mdata.named_files_root
         m["named_paths_root"] = mdata.named_paths_root
         m["template"] = mdata.template or ""

@@ -5,8 +5,7 @@ import traceback
 from typing import Any
 
 
-class ClassLoadingError(RuntimeError):
-    ...
+class ClassLoadingError(RuntimeError): ...
 
 
 class ClassLoader:
@@ -36,6 +35,19 @@ class ClassLoader:
             else:
                 raise ClassLoadingError(f"Unclear class loading import statement: {s}")
         return None
+
+    #
+    # returns an instance or an exception obj
+    #
+    @classmethod
+    def try_load(cls, sig: str, args: list = None, kwargs: dict = None):
+        try:
+            instance = ClassLoader.load(sig, args=args, kwargs=kwargs)
+            return instance
+        except Exception as e:
+            return e
+
+    # ====================================
 
     #
     # this loads a custom function using a name that is distinct across projects so there

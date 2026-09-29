@@ -37,7 +37,11 @@ class SqlFileListener(SqlListener):
             "hostname": mdata.hostname,
             "username": mdata.username,
             "files_root": mdata.named_files_root,
-            "base_path": mdata.base_path,
+            #
+            # capturing cwd to db does not help. base_path is deprecated.
+            #
+            # "base_path": mdata.base_path,
+            "base_path": "",
             "manifest_path": mdata.manifest_path,
             "template": mdata.template,
         }

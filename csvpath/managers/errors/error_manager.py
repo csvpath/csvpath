@@ -2,11 +2,7 @@ import os
 import weakref
 
 from typing import Any
-from datetime import datetime, timezone
-from csvpath.util.config import OnError
 from csvpath.matching.productions import Matchable
-from csvpath.matching.util.exceptions import MatchException
-from csvpath.modes.error_mode import ErrorMode
 from ..registrar import Registrar
 from ..listener import Listener
 from ..metadata import Metadata
@@ -17,7 +13,9 @@ from csvpath.util.date_util import DateUtility as daut
 class ErrorManager(Registrar, Listener):
     """creates errors uses the csvpaths's or csvpath's error policy to handle them."""
 
-    def __init__(self, *, csvpaths=None, csvpath=None, error_collector=None):
+    def __init__(
+        self, *, csvpaths=None, csvpath=None, error_collector=None, config=None
+    ):
         self._csvpath = None if csvpath is None else weakref.ref(csvpath)
         self._csvpaths = None
         if csvpaths is not None:
@@ -26,7 +24,7 @@ class ErrorManager(Registrar, Listener):
             self.csvpaths = csvpath.csvpaths
         if self.csvpath is None and self.csvpaths is None:
             raise ValueError("CsvPaths and/or CsvPath must be provided")
-        #self._collector = csvpath if csvpath else csvpaths
+        # self._collector = csvpath if csvpath else csvpaths
         #
         #
         #

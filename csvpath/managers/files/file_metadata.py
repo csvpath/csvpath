@@ -29,4 +29,6 @@ class FileMetadata(Metadata):
         # named_file_ref is the most specific reference possible it is
         # in the form $name.files.fingerprint
         #
-        self.named_file_ref: str = None
+        # this field predates the Metadata.reference
+        # TODO: remove
+        #

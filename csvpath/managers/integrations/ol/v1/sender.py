@@ -1,4 +1,3 @@
-from abc import ABC
 from openlineage.client import OpenLineageClient
 from openlineage.client.transport.http import (
     ApiKeyTokenProvider,

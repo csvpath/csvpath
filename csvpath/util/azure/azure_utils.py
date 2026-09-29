@@ -68,6 +68,14 @@ class AzureUtility:
 
         return client
 
+    def my_protocol(cls) -> str:
+        account_info = cls.make_client().get_account_information()
+        enabled = account_info.get("is_hierarchical_namespace_enabled", False)
+        if enabled:
+            return "abfss"  # Azure Data Lake Storage Gen2
+        else:
+            return "wasbs"  # Standard Azure Blob Storage
+
     @classmethod
     def path_to_parts(cls, path) -> tuple[str, str]:
         """Splits an Azure blob path into container and blob parts."""

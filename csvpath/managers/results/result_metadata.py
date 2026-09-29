@@ -9,7 +9,15 @@ class ResultMetadata(Metadata):
         super().__init__(config)
         # these we know right away
         self.named_paths_uuid = None
-        # self.group_run_uuid = None
+        #
+        # TODO: populate this and add named_paths_name to the manifests.
+        # it isn't always the same as named_results_name because it may
+        # be a reference
+        #
+        self.named_paths_name: str = None
+        #
+        #
+        #
         self.named_results_name: str = None
         #
         # in a non-source-mode = preceding situation the
@@ -46,7 +54,17 @@ class ResultMetadata(Metadata):
         # self.file_count: int = -1
         self.file_fingerprints: dict[str, str] = None
         self.valid: bool = None
-        self.completed: bool = None
+        #
+        # a run completes when it is no longer running. the completed time
+        # gives the moment. completedness doesn't say anything about how
+        # run progressed. the run could be invalid, have errors, have stopped
+        # skipped/advanced, etc. all of those could be expected and/or
+        # acceptable. the profile of success is never as simple as yes/no.
+        #
+        # TODO: check populate and add stopped to the manifests
+        #
+        self.stopped: bool = False
+        self.completed: bool = False
         #
         # are all the files listed in files-mode present? if any are missing False; otherwise, True.
         # there can be more files present than listed.
@@ -134,6 +152,8 @@ ResultMetadata(
 
     @run_uuid_string.setter
     def run_uuid_string(self, u: str) -> None:
+        if u is None:
+            raise ValueError("Run UUID cannot be None")
         self._run_uuid = UUID(u)
 
     @property

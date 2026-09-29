@@ -21,7 +21,13 @@ class ResultsRegistrar(Registrar, Listener):
     DYNAMIC = "dynamic"
 
     def __init__(
-        self, *, csvpaths, run_dir: str, pathsname: str, results: list[Result] = None
+        self,
+        *,
+        csvpaths,
+        run_dir: str,
+        pathsname: str,
+        results: list[Result] = None,
+        config=None,
     ) -> None:
         Registrar.__init__(self, csvpaths)
         Listener.__init__(self, csvpaths.config)
@@ -189,7 +195,6 @@ class ResultsRegistrar(Registrar, Listener):
 
     def _fingerprint_file(self, path) -> str:
         with DataFileReader(path) as f:
-            print(f"resrefg: fff: {f}, path: {path}")
             h = f.fingerprint()
         return h
 

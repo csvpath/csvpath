@@ -1,5 +1,4 @@
 import unittest
-import pytest
 import os
 from csvpath import CsvPaths
 from csvpath.util.sqliter import Sqliter
@@ -7,7 +6,6 @@ from csvpath.managers.integrations.sqlite.sqlite_result_listener import (
     SqliteResultListener,
 )
 from csvpath.util.path_util import PathUtility as pathu
-from csvpath.util.box import Box
 
 FILE = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_autogen5{os.sep}assets{os.sep}Washington_State_Certified_Public_Accountants.csv"
 PATH = f"tests{os.sep}csvpaths{os.sep}examples{os.sep}csvpaths_examples_autogen5{os.sep}assets{os.sep}accountants.csvpath"
@@ -48,13 +46,7 @@ class TestCsvPathsExamplesAutogen(unittest.TestCase):
         paths.config.add_to_config("errors", "csvpath", "raise, collect, print")
         paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         groups = paths.config.get(section="listeners", name="groups")
-        #
-        # use config direct so no save happens
-        #
         paths.config.add_to_config("listeners", "groups", "sqlite")
-        #
-        #
-        # exp! <<< didn't help
         paths.paths_manager.remove_named_paths("autogen5")
         paths.file_manager.remove_named_file("accounts")
         #

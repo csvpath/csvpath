@@ -6,7 +6,7 @@ from csvpath.managers.listener import Listener
 
 
 class FileActivationListener(Listener, threading.Thread):
-    def __init__(self, *, config=None):
+    def __init__(self, *, config=None, csvpaths=None):
         Listener.__init__(self, config=config)
         threading.Thread.__init__(self)
         # self.csvpaths = None
@@ -38,7 +38,7 @@ class FileActivationListener(Listener, threading.Thread):
         # we have today.
         #
         activator = self.my_csvpaths.file_manager.activator
-        ref = mdata.named_file_ref
+        ref = mdata.reference
         self.my_csvpaths.logger.info(
             f"Activating for {ref} if any activation is configured"
         )

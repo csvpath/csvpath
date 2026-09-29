@@ -25,6 +25,7 @@ from .file_describer import NamedFileDescriber
 from .file_activator import NamedFileActivator
 from .file_names_rules import FileNamesRules as rules
 from .file_descriptor import Config
+from ..metadata import Metadata
 
 from csvpath.util.xlsx.xlsx_reader_helper import XlsxReaderHelper
 
@@ -65,24 +66,6 @@ class FileManager:
     @property
     def named_files_dir(self) -> str:
         return self._csvpaths.config.inputs_files_path
-
-    #
-    # the root manifest file tracking all name-file stagings. note that
-    # this is created by an optional listener. it is possible to run without
-    # creating the root manifest or capturing the data with another listener.
-    #
-    @property
-    def files_root_manifest(self) -> dict:
-        p = self.files_root_manifest_path
-        nos = Nos(p)
-        if nos.exists():
-            with DataFileReader(p) as reader:
-                return json.load(reader.source)
-        return None
-
-    @property
-    def files_root_manifest_path(self) -> dict:
-        return Nos(self.named_files_dir).join("manifest.json")
 
     def _named_file_ref_to_uuid(self, ref: ReferenceParser) -> str:
         if ref is None:
@@ -198,6 +181,26 @@ class FileManager:
             if uuid == _["uuid"]:
                 return _["reference"]
         return None
+
+    """
+    #
+    # the root manifest file tracking all name-file stagings. note that
+    # this is created by an optional listener. it is possible to run without
+    # creating the root manifest or capturing the data with another listener.
+    #
+    @property
+    def files_root_manifest(self) -> dict:
+        p = self.files_root_manifest_path
+        nos = Nos(p)
+        if nos.exists():
+            with DataFileReader(p) as reader:
+                return json.load(reader.source)
+        return None
+
+    @property
+    def files_root_manifest_path(self) -> dict:
+        return Nos(self.named_files_dir).join("manifest.json")
+    """
 
     @property
     def files_root_manifest_path(self) -> str:
@@ -651,7 +654,8 @@ class FileManager:
         template: str = None,
         config: Config = None,
         registration_uuid: str = None,
-    ) -> str | None:
+        return_metadata: bool = False,
+    ) -> str | None | tuple[str, Metadata]:
         #
         # note that we can pass in a Config with a template that is different
         # from the present template arg. the file registration will happen
@@ -902,6 +906,7 @@ class FileManager:
                 "[%s] Name home is %s", registration_uuid, name_home
             )
             mdata = FileMetadata(self.csvpaths.config)
+            mdata.set_project_if(self.csvpaths)
             #
             # add the ability to pass in a UUID. if received, use it here to
             # set the FileMetadata's UUID. this will allow the caller to give a
@@ -912,7 +917,7 @@ class FileManager:
             if registration_uuid is not None:
                 mdata.uuid_string = registration_uuid
             mdata.named_file_name = name
-            mdata.named_file_ref = ret
+            mdata.reference = ret
             #
             # we need the declared path, incl. any extra path info, in order
             # to know if we are being pointed at a sub-portion of the data, e.g.
@@ -939,6 +944,8 @@ class FileManager:
             # named-file version.
             #
             self.csvpaths.logger.debug("[%s] Registered %s", registration_uuid, ret)
+            if return_metadata:
+                return (ret, mdata)
             return ret
         except Exception as ex:
             _ = {
@@ -948,12 +955,6 @@ class FileManager:
                 "registration_uuid": registration_uuid,
             }
             self._registration_failed(_)
-            #
-            # remove me! tho, why you'd want quiet is not sure.
-            #
-            # print(traceback.format_exc())
-            #
-            #
             msg = f"[{registration_uuid}] Error in loading named-file: {ex}"
             self.csvpaths.logger.error(msg)
             self.csvpaths.error_manager.handle_error(
@@ -963,8 +964,10 @@ class FileManager:
                 raise
 
     def _registration_failed(self, data: dict[str, str]) -> None:
-        lst = FilesListener(self.csvpaths)
+        lst = FilesListener(csvpaths=self.csvpaths, config=self.csvpaths.config)
         mdata = FileMetadata(self.csvpaths.config)
+        mdata.set_project_if(self.csvpaths)
+
         mdata.named_file_name = data.get("name")
         mdata.origin_path = data.get("path")
         mdata.template = data.get("template") or ""

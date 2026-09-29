@@ -17,6 +17,7 @@ from .readers.readers import ResultReadersFacade
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
+from csvpath.util.references.reference_parser import ReferenceParser
 
 
 class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
@@ -108,6 +109,16 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
             run_uuid = UUID(run_uuid)
         self._run_uuid = run_uuid
         self._template = template or ""
+        #
+        # result_metadata is this Result's listener event, not the csvpath's
+        # metadata dictionary of runtime vars. this metadata object is created
+        # when the start metadata is fired. the intent is so that it can be
+        # again when the Result is saved after processing. nothing should
+        # assume this object exists. this property is not the way to access
+        # the manifest.json file.
+        # NOTE: removing because the immediate need is gone.
+        # self.result_metadata:Metadata = None
+        #
 
     @property
     def actual_data_file(self) -> str:
@@ -227,6 +238,17 @@ class Result(ErrorCollector, Printer, Listener):  # pylint: disable=R0902
     @property
     def paths_name(self) -> str:  # pylint: disable=C0116
         return self._paths_name
+
+    def dereferenced_paths_name(self) -> str:
+        name = self.paths_name
+        if name is None:
+            return name
+        name = name.strip()
+        if name == "":
+            return name
+        if name[0] == "$":
+            name = ReferenceParser(name).root_major
+        return name
 
     @paths_name.setter
     def paths_name(self, paths_name: str) -> None:

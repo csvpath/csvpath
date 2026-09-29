@@ -1,4 +1,3 @@
-from csvpath.managers.metadata import Metadata
 from .sender import Sender
 
 

@@ -17,8 +17,8 @@ class PathsListener(Listener):
     # be concurrent writes. if that is the situation it can be
     # turned off and/or replaced with a database-backed version.
     #
-    def __init__(self, csvpaths=None):
-        Listener.__init__(self, csvpaths.config if csvpaths else None)
+    def __init__(self, *, config=None, csvpaths=None):
+        Listener.__init__(self, csvpaths.config if csvpaths else config)
         self.csvpaths = csvpaths
         self._manager = None
         self.type_name = "paths"

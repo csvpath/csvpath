@@ -14,3 +14,7 @@ class PathsMetadata(Metadata):
         self.named_paths: list[str] = None
         self.source_path: str = None
         self.template: str = None
+        #
+        # TODO: make sure append is in manifests
+        #
+        self.append: bool = None

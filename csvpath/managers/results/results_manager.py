@@ -16,6 +16,7 @@ from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
 
 from csvpath.scanning.scanner2 import Scanner2 as Scanner
+from ..metadata import Metadata
 from ..run.run_metadata import RunMetadata
 from ..run.run_registrar import RunRegistrar
 from .results_metadata import ResultsMetadata
@@ -27,6 +28,7 @@ from .transfers_manager import TransfersManager
 from .result import Result
 from .result_file_reader import ResultFileReader
 from csvpath.util.template_util import TemplateUtility as temu
+from csvpath.util.run_reference_maker import RunReferenceMaker
 
 
 class ResultsManager:  # pylint: disable=C0115
@@ -108,6 +110,10 @@ class ResultsManager:  # pylint: disable=C0115
             mdata.set_time()
         else:
             mdata.time_string = m["time"]
+
+        mdata.reference = RunReferenceMaker.make_run_reference(
+            config=self.csvpaths.config, pathsname=pathsname, crt=run_dir
+        )
         mdata.uuid_string = m["uuid"]
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.named_file_fingerprint = m["named_file_fingerprint"]
@@ -120,6 +126,11 @@ class ResultsManager:  # pylint: disable=C0115
             mdata.named_results_name = ReferenceParser(pathsname).root_major
         else:
             mdata.named_results_name = pathsname
+
+        mdata.reference = RunReferenceMaker.make_run_reference(
+            config=self.csvpaths.config, pathsname=pathsname, crt=run_dir
+        )
+
         mdata.number_of_files_expected = -1
         mdata.number_of_files_generated = -1
 
@@ -172,6 +183,9 @@ class ResultsManager:  # pylint: disable=C0115
         #
         #
         mdata = ResultsMetadata(self.csvpaths.config)
+        mdata.reference = RunReferenceMaker.make_run_reference(
+            config=self.csvpaths.config, pathsname=pathsname, crt=run_dir
+        )
         #
         # extra data is a flat list of dict[str,str] determined by the user and saved by some
         # listener. we don't do anything with it, other than save it in the default listener
@@ -366,7 +380,7 @@ class ResultsManager:  # pylint: disable=C0115
         results = self._get_results_list(name)
         return len(results)
 
-    def add_named_result(self, result: Result) -> None:
+    def add_named_result(self, result: Result) -> tuple[Metadata, Metadata]:
         """@private"""
         if result.file_name is None:
             raise InputException("Results must have a named-file name")
@@ -378,6 +392,7 @@ class ResultsManager:  # pylint: disable=C0115
         else:
             self.named_results[name].append(result)
         self._variables = None
+        results = []
         #
         # this is the beginning of an identity run within a named-paths run.
         # run metadata goes to the central record of runs kicking off within
@@ -385,6 +400,15 @@ class ResultsManager:  # pylint: disable=C0115
         # separate event. this could change, but atm seems reasonable.
         #
         mdata = RunMetadata(self.csvpaths.config)
+        results.append(mdata)
+        ref = None
+        if result.run_dir is not None:
+            ref = RunReferenceMaker.make_run_reference(
+                config=self.csvpaths.config, pathsname=name, crt=result.run_dir
+            )
+        else:
+            ref = "Unavailable"
+        mdata.reference = ref
         mdata.uuid = result.uuid
         mdata.run_uuid = result.run_uuid
         mdata.archive_name = self.csvpaths.config.archive_name
@@ -396,7 +420,7 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.named_file_name = result.file_name
         mdata.method = result.method
         mdata.template = result.template or ""
-        rr = RunRegistrar(self.csvpaths)
+        rr = RunRegistrar(csvpaths=self.csvpaths, config=self.csvpaths.config)
         #
         # add any dynamic listeners to the registrar here
         #
@@ -414,11 +438,14 @@ class ResultsManager:  # pylint: disable=C0115
         # we make sure of that here.
         #
         mdata = ResultMetadata(self.csvpaths.config)
+        Result.result_metadata = mdata
+        mdata.reference = ref
         mdata.uuid = result.uuid
         mdata.run_uuid = result.run_uuid
         mdata.archive_name = self.csvpaths.config.archive_name
         mdata.time_started = result.run_time
-        mdata.named_results_name = result.paths_name
+        mdata.named_results_name = result.dereferenced_paths_name()
+        mdata.named_paths_name = result.paths_name
         sep = Nos(result.run_dir).sep
         mdata.run = result.run_dir[result.run_dir.rfind(sep) + 1 :]
         mdata.run_home = result.run_dir
@@ -447,6 +474,8 @@ class ResultsManager:  # pylint: disable=C0115
         for _ in self.dynamic_result_listeners:
             rr.add_internal_listener(_)
         rr.register_start(mdata)
+        results.append(mdata)
+        return tuple(results)
 
     def set_named_results(self, results: dict[str, list[Result]]) -> None:
         """@private"""
@@ -520,7 +549,12 @@ class ResultsManager:  # pylint: disable=C0115
         #
         for _ in self.dynamic_result_listeners:
             rr.add_internal_listener(_)
-        rr.register_complete()
+        mdata = rr.register_complete()
+        #
+        # pass back the metadata on the result so that we can use it
+        # in testing
+        #
+        result.result_metadata = mdata
 
     def remove_named_results(self, name: str) -> None:
         if name in self.named_results:

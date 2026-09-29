@@ -74,7 +74,7 @@ class Scanner2:
             these: {self.these}
         """
 
-    def is_last(  # pylint: disable=R0913
+    def is_last(
         self,
         line: int,
         *,

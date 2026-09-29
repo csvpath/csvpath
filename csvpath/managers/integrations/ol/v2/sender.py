@@ -1,0 +1,38 @@
+from openlineage.client import OpenLineageClient
+from openlineage.client.transport.http import (
+    ApiKeyTokenProvider,
+    HttpConfig,
+    HttpCompression,
+    HttpTransport,
+)
+from csvpath.managers.metadata import Metadata
+from csvpath.managers.listener import Listener
+from .builders.event import EventBuilder
+
+
+class Sender(Listener):
+    def __init__(self, *, config=None, client=None):
+        super().__init__(config)
+        self._client = client
+
+    @property
+    def client(self):
+        if self._client is None:
+            h = HttpConfig(
+                url=self.config._get("openlineage", "base_url", "https://backend:5000"),
+                endpoint=self.config._get("openlineage", "endpoint", "api/v1/lineage"),
+                timeout=int(self.config._get("openlineage", "timeout", 2)),
+                verify=bool(self.config._get("openlineage", "verify", False)) is True,
+                auth=ApiKeyTokenProvider(
+                    {"apiKey": self.config._get("openlineage", "api_key", "none")}
+                ),
+                compression=HttpCompression.GZIP,
+                retry={"total": 0},
+            )
+            self._client = OpenLineageClient(transport=HttpTransport(h))
+        return self._client
+
+    def metadata_update(self, mdata: Metadata) -> None:
+        es = EventBuilder(listener=self).build(mdata)
+        for e in es:
+            self.client.emit(e)
