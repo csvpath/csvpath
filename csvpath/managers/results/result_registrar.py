@@ -21,6 +21,7 @@ class ResultRegistrar(Registrar, Listener):
         self.result_serializer = result_serializer
         self.type_name = "result"
         self._nos = None
+        self.csvpaths = csvpaths
 
     @property
     def nos(self) -> Nos:

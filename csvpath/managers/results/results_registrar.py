@@ -35,6 +35,7 @@ class ResultsRegistrar(Registrar, Listener):
         self.run_dir = run_dir
         self.results = results
         self.type_name = "results"
+        self.csvpaths = csvpaths
 
     def register_start(self, mdata: ResultsMetadata) -> None:
         mdata.status = ResultsRegistrar.STARTED

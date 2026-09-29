@@ -8,6 +8,10 @@ from ..util.class_loader import ClassLoader
 
 class Registrar(ABC):
     def __init__(self, csvpaths, result=None) -> None:
+        #
+        # what was the thinking here? should we make this an
+        # always present noneable field?
+        #
         if csvpaths:
             self.csvpaths = csvpaths
         self.result = result

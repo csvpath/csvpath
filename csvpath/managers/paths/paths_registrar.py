@@ -1,5 +1,3 @@
-import os
-import json
 from csvpath.util.exceptions import InputException
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
@@ -19,6 +17,7 @@ class PathsRegistrar(Registrar, Listener):
         self._manager = None
         self.type_name = "paths"
         self.intermediary = Intermediary(csvpaths)
+        self.csvpaths = csvpaths
 
     @property
     def manager(self):

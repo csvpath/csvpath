@@ -1073,6 +1073,12 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             print("cvspath: not completed because no line monitor or no scanner")
             return False
         #
+        # adding this test due to a bug. it may not be the best overall logic --
+        # could it be better as True? not sure yet. seems to be a corner case.
+        #
+        if self.scanner.to_line is None or self.line_monitor is None:
+            return False
+        #
         # we're not asking if this is the last line. it may not be and yet
         # we could be done. that said, ideally we catch the last line, do any
         # last() and then stop iterating.

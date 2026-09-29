@@ -13,6 +13,7 @@ class RunRegistrar(Registrar, Listener):
         Listener.__init__(self, csvpaths.config)
         self.type_name = "run"
         self.archive = self.csvpaths.config.archive_path
+        self.csvpaths = csvpaths
 
     @property
     def manifest_path(self) -> str:
