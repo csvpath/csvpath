@@ -190,6 +190,10 @@ class TestCsvPathsExamplesOpenLineage(unittest.TestCase):
 
     def test_csvpaths_openlineage_result_1(self) -> None:
         paths = CsvPaths()
+
+        paths.config.set(section="listeners", name="groups", value="openlineage")
+        paths.config.set(section="listeners", name="openlineage.version", value="2")
+
         ref, mdata = paths.file_manager.add_named_file(
             name="orders", path=FILE, return_metadata=True
         )

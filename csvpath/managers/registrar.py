@@ -66,6 +66,19 @@ class Registrar(ABC):
                 self.csvpaths.logger.debug(
                     "Updating listener %s with metadata %s", lst, mdata
                 )
+                #
+                # this is important. is this the best place to do it?
+                #
+                lst.csvpaths = self.csvpaths
+            else:
+                if self.result and self.result.csvpath:
+                    self.result.csvpath.logger.warn("No csvpaths on Registrar")
+                else:
+                    #
+                    # no result and no csvpath likely just means we are in a
+                    # CsvPath only context.
+                    #
+                    ...
             try:
                 lst.metadata_update(mdata)
             except Exception as ex:

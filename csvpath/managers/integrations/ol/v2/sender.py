@@ -33,6 +33,11 @@ class Sender(Listener):
         return self._client
 
     def metadata_update(self, mdata: Metadata) -> None:
+        if not hasattr(self, "csvpaths"):
+            self.config.logger.warning(
+                "No CsvPaths available. OpenLineage only works with CsvPaths instances."
+            )
+            return
         es = EventBuilder(listener=self).build(mdata)
         for e in es:
             self.client.emit(e)
