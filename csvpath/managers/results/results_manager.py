@@ -91,7 +91,7 @@ class ResultsManager:  # pylint: disable=C0115
         with DataFileReader(self.results_root_manifest_path) as reader:
             return json.load(reader.source)
 
-    def complete_run(self, *, run_dir, pathsname, results) -> None:
+    def complete_run(self, *, run_dir, pathsname, results) -> ResultsMetadata:
         """@private"""
         rr = ResultsRegistrar(
             csvpaths=self.csvpaths,
@@ -135,6 +135,7 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.number_of_files_generated = -1
 
         rr.register_complete(mdata)
+        return mdata
 
     #
     # since the filename may be a reference that picks out multiple files
@@ -446,6 +447,7 @@ class ResultsManager:  # pylint: disable=C0115
         mdata.time_started = result.run_time
         mdata.named_results_name = result.dereferenced_paths_name()
         mdata.named_paths_name = result.paths_name
+        mdata.named_file_name = result.file_name
         sep = Nos(result.run_dir).sep
         mdata.run = result.run_dir[result.run_dir.rfind(sep) + 1 :]
         mdata.run_home = result.run_dir

@@ -1,12 +1,15 @@
 import os
 import traceback
+import json
 from openlineage.client.event_v2 import Dataset, RunEvent
 from openlineage.client.event_v2 import Job, Run, RunState
 from openlineage.client.event_v2 import InputDataset, OutputDataset
+from openlineage.client.facet_v2 import schema_dataset
 
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.listener import Listener
 from csvpath.util.nos import Nos
+from csvpath.util.file_readers import DataFileReader
 
 from ..tokens import Tokens
 from ..job import JobBuilder
@@ -112,15 +115,37 @@ class ResultEventBuilder:
                     namespace=mdata.archive_path,
                     path=path,
                 )
-                o = OutputDataset(
-                    name=path,
-                    namespace=ns,
-                )
+                fs = {}
+                if file == "data.csv":
+                    hs = self._output_headers_facet(mdata)
+                    if hs is not None:
+                        fs["schema"] = hs
+                o = OutputDataset(name=path, namespace=ns, facets=fs)
                 outputs.append(o)
         except Exception as e:
             print(traceback.format_exc())
             self.listener.config.logger.exception(e)
         return outputs
+
+    def _output_headers_facet(self, mdata):
+        try:
+            path = Nos(mdata.instance_home).join("meta.json")
+            if Nos(path).exists():
+                headers = None
+                with DataFileReader(path) as reader:
+                    js = json.load(reader.source)
+                    runtime = js["runtime_data"]
+                    headers = runtime["headers"]
+                fields = []
+                for _ in headers:
+                    field = schema_dataset.SchemaDatasetFacetFields(name=_)
+                    field.fields = None
+                    fields.append(field)
+                return schema_dataset.SchemaDatasetFacet(fields=fields)
+            else:
+                ...
+        except Exception:
+            print(traceback.format_exc())
 
     def _file_inputs(self, mdata: Metadata) -> InputDataset:
         try:

@@ -40,7 +40,9 @@ class PathsJobBuilder:
             facets["jobType"] = f
 
             return Job(
-                namespace=Tokens.JOB_NAMESPACE, name=self.JOB_NAME, facets=facets
+                namespace=Tokens.JOB_NAMESPACE,
+                name=f"{self.JOB_NAME}:{mdata.named_paths_name}",
+                facets=facets,
             )
         except Exception as e:
             import traceback

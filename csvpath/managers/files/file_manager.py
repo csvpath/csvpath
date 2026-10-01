@@ -229,7 +229,7 @@ class FileManager:
 
     def get_manifest(self, name: NamedFileName) -> json:
         if name is None:
-            raise ValueError("Paths name cannot be None")
+            raise ValueError("Name cannot be None")
         mani = None
         #
         # find a results manifest by results reference

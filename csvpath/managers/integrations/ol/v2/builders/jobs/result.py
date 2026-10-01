@@ -32,13 +32,14 @@ class ResultJobBuilder:
                 jobType="VALIDATION",
             )
             fs["jobType"] = f
-            name = Nos(mdata.run_home).join(mdata.instance_identity)
             ns, path = naut.namespace_and_name(
                 config=self.listener.config,
                 mdata=mdata,
                 namespace=mdata.archive_path,
-                path=name,
+                path=mdata.run_home,
             )
+            name = Nos(path).join(mdata.instance_identity)
+            name = f"execute:{name}"
             job = Job(namespace=ns, name=name, facets=fs)
             return job
         except Exception as e:

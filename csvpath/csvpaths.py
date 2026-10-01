@@ -1035,11 +1035,14 @@ Cache: {cache}
             self.results_manager.save(result)
             results.append(result)
         #
-        # run ends here
+        # run ends here. if we're capturing metadatas for the caller
+        # the last metadata will be the ResultsMetadata the completes.
         #
-        self.results_manager.complete_run(
+        mdata = self.results_manager.complete_run(
             run_dir=crt, pathsname=pathsname, results=results
         )
+        if metadatas is not None:
+            metadatas.append(mdata)
         self.clear_run_coordination()
         self.logger.info(
             "Completed collect_paths %s with %s paths", pathsname, len(paths)

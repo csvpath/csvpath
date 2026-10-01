@@ -26,6 +26,9 @@ class ResultMetadata(Metadata):
         # preceding data
         #
         self.named_file_name: str = None
+        #
+        # TODO: make sure named file uuid is set and gets into manifest
+        #
         self.named_file_uuid: str = None
         #
         # the real input file path. this may not match the named-file path
@@ -182,3 +185,27 @@ ResultMetadata(
         if u and not isinstance(u, str):
             raise ValueError("Must be a string")
         self._named_paths_uuid = UUID(u)
+
+    @property
+    def named_file_uuid(self) -> UUID:
+        return self._named_file_uuid
+
+    @named_file_uuid.setter
+    def named_file_uuid(self, u: UUID) -> None:
+        if u and not isinstance(u, UUID):
+            raise ValueError(f"{u} must be a UUID")
+        self._named_file_uuid = u
+
+    @property
+    def named_file_uuid_string(self) -> str:
+        if self._named_file_uuid is None:
+            return None
+        return str(self._named_file_uuid)
+
+    @named_file_uuid_string.setter
+    def named_file_uuid_string(self, u: str) -> None:
+        if u is None:
+            return
+        if u and not isinstance(u, str):
+            raise ValueError("Must be a string")
+        self._named_file_uuid = UUID(u)

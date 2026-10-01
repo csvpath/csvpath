@@ -46,7 +46,7 @@ class ResultsJobBuilder:
                 namespace=mdata.archive_path,
                 path=mdata.run_home,
             )
-            name = f"validate:{path}"
+            name = f"group-execute:{path}"
             job = Job(namespace=ns, name=name, facets=fs)
             return job
         except Exception as e:

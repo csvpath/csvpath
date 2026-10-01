@@ -24,15 +24,11 @@ class RunStateBuilder:
         if isinstance(mdata, ResultsMetadata):
             if (
                 mdata.time_completed is not None
+                and mdata.all_valid
                 and mdata.all_completed
-                and mdata.all_expected_files
             ):
                 runstate = RunState.COMPLETE
-            elif (
-                mdata.time_completed is not None
-                and not mdata.all_completed
-                or not mdata.all_expected_files
-            ):
+            elif mdata.time_completed is not None and not mdata.all_completed:
                 runstate = RunState.ABORT
             elif mdata.time_completed is not None:
                 runstate = RunState.FAIL

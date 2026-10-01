@@ -2,6 +2,12 @@
     id:output
     validation-mode:no-raise, print
 ~
-$[0][
+$[9][
+    reset_headers()
     print("hi")
+    #0
+    string(#1)
+    integer(#fish)
+    boolean(#reptile)
+    blank(#nothing)
 ]

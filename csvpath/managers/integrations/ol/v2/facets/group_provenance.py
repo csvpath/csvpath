@@ -16,7 +16,7 @@ class GroupProvenance(BaseFacet):
     statements: str
 
     @classmethod
-    def build(self, *, listener: Listener, mdata: Metadata) -> Self:
+    def build(cls, *, listener: Listener, mdata: Metadata) -> Self:
         uuid = mdata.named_paths_uuid_string
         name = mdata.named_paths_name
         name = naut.from_root_major_if(name)

@@ -1,12 +1,16 @@
 import json
+import traceback
 from openlineage.client.facet_v2 import symlinks_dataset
-
+from openlineage.client.facet_v2 import schema_dataset
 from openlineage.client.event_v2 import RunEvent
 from openlineage.client.event_v2 import Job, Run
 from openlineage.client.event_v2 import InputDataset, OutputDataset
 
+from csvpath import CsvPath
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.listener import Listener
+from csvpath.matching.util.expression_utility import ExpressionUtility as exut
+from csvpath.matching.productions.header import Header
 
 from ...facets.run_statistics import RunStatistics
 from ...facets.group_provenance import GroupProvenance
@@ -48,7 +52,17 @@ class ResultsEventBuilder:
                 namespace=mdata.named_paths_root,
                 path=mdata.named_paths_name,
             )
-            paths = InputDataset(namespace=ns, name=path, facets={"provenance": prov})
+            links = self._input_symlinks(mdata)
+            schema = self._input_schema(mdata)
+            paths = InputDataset(
+                namespace=ns,
+                name=path,
+                facets={
+                    "symlink_identifiers": links,
+                    "provenance": prov,
+                    "schema": schema,
+                },
+            )
 
             inputs = [file, paths]
             runstate = RunStateBuilder(listener=self.listener).build(mdata)
@@ -69,6 +83,7 @@ class ResultsEventBuilder:
             )
             return [e]
         except Exception as e:
+            print(traceback.format_exc())
             self.listener.config.logger.exception(e)
 
     def _file_provenance(self, mdata: Metadata) -> DataProvenance:
@@ -96,6 +111,76 @@ class ResultsEventBuilder:
         )
         ds = OutputDataset(namespace=ns, name=path, facets=fs, outputFacets=outputfs)
         return ds
+
+    def _input_schema(self, mdata: Metadata) -> schema_dataset.SchemaDatasetFacet:
+        fields = []
+        path = Nos(mdata.named_paths_root).join(mdata.named_paths_name)
+        path = Nos(path).join("manifest.json")
+        paths = []
+        with DataFileReader(path) as reader:
+            js = json.load(reader.source)
+            for _ in js:
+                a = str(_.get("uuid")).strip()
+                b = str(mdata.named_paths_uuid).strip()
+                if a == b:
+                    paths = _.get("named_paths")
+                    break
+            else:
+                ...
+        for _ in paths:
+            matcher = CsvPath().parse(_, disposably=True)
+            headers = []
+            lst = [e[0] for e in matcher.expressions]
+            for _ in lst:
+                headers += exut.get_my_descendents_of_class(thing=_, clazz=Header)
+            for h in headers:
+                name = h.name
+                ttype = "Unknown"
+                if h.parent and h.parent.name == "string":
+                    ttype = "STRING"
+                elif h.parent and h.parent.name == "integer":
+                    ttype = "INT"
+                elif h.parent and h.parent.name == "decimal":
+                    ttype = "FLOAT"
+                elif h.parent and h.parent.name == "date":
+                    ttype = "DATE"
+                elif h.parent and h.parent.name == "datetime":
+                    ttype = "DATETIME"
+                elif h.parent and h.parent.name == "boolean":
+                    ttype = "BOOLEAN"
+                elif h.parent and h.parent.name == "email":
+                    ttype = "EMAIL"
+                elif h.parent and h.parent.name == "url":
+                    ttype = "URL"
+                elif h.parent and h.parent.name in [
+                    "nonspecific",
+                    "unspecified",
+                    "blank",
+                ]:
+                    ttype = "BLANK"
+                elif h.parent and h.parent.name == "wildcard":
+                    ttype = "WILDCARD"
+                elif h.parent and h.parent.name == "uuid":
+                    ttype = "UUID"
+                field = schema_dataset.SchemaDatasetFacetFields(name=name, type=ttype)
+                field.fields = None
+                fields.append(field)
+        return schema_dataset.SchemaDatasetFacet(fields=fields)
+
+    def _input_symlinks(self, mdata: Metadata) -> symlinks_dataset.SymlinksDatasetFacet:
+        path = Nos(mdata.named_file_name).join("group.csvpaths")
+        ns, path = naut.namespace_and_name(
+            config=self.listener.config,
+            mdata=mdata,
+            namespace=mdata.named_files_root,
+            path=path,
+        )
+        group_file_symlink = symlinks_dataset.Identifier(
+            namespace=ns,
+            name=path,
+            type="FILE",
+        )
+        return symlinks_dataset.SymlinksDatasetFacet(identifiers=[group_file_symlink])
 
     def _symlinks(self, mdata: Metadata) -> symlinks_dataset.SymlinksDatasetFacet:
         ns = prut.update_protocol_if(

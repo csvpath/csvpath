@@ -6,7 +6,7 @@ import os
 import hashlib
 import traceback
 from datetime import datetime
-from typing import List, Dict, Any, Optional, Callable
+from typing import List, Dict, Any, Optional, Callable, Self
 from collections.abc import Iterator
 from .util.config import Config
 from .util.line_monitor import LineMonitor
@@ -720,7 +720,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         """
         self.modes.return_mode.collect_when_not_matched = yesno
 
-    def parse(self, csvpath, disposably=False):
+    def parse(self, csvpath, disposably=False) -> Self | Matcher:
         """@private
         displosably is True when a Matcher is needed for some purpose other than
         the run we were created to do. could be that a match component wanted a

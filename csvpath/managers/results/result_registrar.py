@@ -86,7 +86,7 @@ class ResultRegistrar(Registrar, Listener):
             self.csvpaths.run_metadata.named_paths_uuid_string
         )
         mdata.named_file_name = self.result.file_name
-        mdata.named_file_uuid = self.csvpaths.run_metadata.named_file_uuid_string
+        mdata.named_file_uuid_string = self.csvpaths.run_metadata.named_file_uuid_string
         #
         # exp. swapping for the original above. no negative impact. logically it's the better way.
         #

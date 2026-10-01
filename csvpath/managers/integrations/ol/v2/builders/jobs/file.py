@@ -31,7 +31,7 @@ class FileJobBuilder:
             facets["jobType"] = f
             return Job(
                 namespace=Tokens.JOB_NAMESPACE,
-                name=FileJobBuilder.JOB_NAME,
+                name=f"{FileJobBuilder.JOB_NAME}:{mdata.named_file_name}",
                 facets=facets,
             )
         except Exception as e:

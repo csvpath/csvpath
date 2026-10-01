@@ -159,6 +159,11 @@ class TestCsvPathsExamplesOpenLineage(unittest.TestCase):
 
     def test_csvpaths_openlineage_results_1(self) -> None:
         paths = CsvPaths()
+        paths.config.set(
+            section="listeners", name="groups", value="default, openlineage"
+        )
+        paths.config.set(section="listeners", name="openlineage.version", value="2")
+
         ref, mdata = paths.file_manager.add_named_file(
             name="orders", path=FILE, return_metadata=True
         )
@@ -166,8 +171,16 @@ class TestCsvPathsExamplesOpenLineage(unittest.TestCase):
             name="orders", from_file=PATHS, return_metadata=True
         )
 
-        paths.collect_paths(filename="orders", pathsname="orders")
-        mdata = paths.run_metadata
+        metadatas = []
+        paths.collect_paths(filename="orders", pathsname="orders", metadatas=metadatas)
+        #
+        # start metadata
+        #
+        # mdata = paths.run_metadata
+        #
+        # complete metadata
+        #
+        mdata = metadatas[-1]
 
         sender = Sender()
         sender.csvpaths = paths
@@ -177,7 +190,7 @@ class TestCsvPathsExamplesOpenLineage(unittest.TestCase):
         assert len(es) == 1
         start = es[0]
 
-        print("\nSTART: ")
+        print("\nEVENT: ")
         je = Serde.to_json(start)
         obj = json.loads(je)
         s = json.dumps(obj, indent=4)
@@ -190,8 +203,9 @@ class TestCsvPathsExamplesOpenLineage(unittest.TestCase):
 
     def test_csvpaths_openlineage_result_1(self) -> None:
         paths = CsvPaths()
-
-        paths.config.set(section="listeners", name="groups", value="openlineage")
+        paths.config.set(
+            section="listeners", name="groups", value="default, openlineage"
+        )
         paths.config.set(section="listeners", name="openlineage.version", value="2")
         paths.config.set(section="openlineage", name="base_url", value="")
 
@@ -220,7 +234,6 @@ class TestCsvPathsExamplesOpenLineage(unittest.TestCase):
 
         sender = Sender()
         sender.csvpaths = paths
-
         #
         # first statement's ResultMetadata
         #
