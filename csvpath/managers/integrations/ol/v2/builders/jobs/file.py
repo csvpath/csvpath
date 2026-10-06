@@ -5,6 +5,7 @@ from csvpath.managers.metadata import Metadata
 from csvpath.managers.listener import Listener
 
 from ...util.metadata_utility import MetadataUtility as meut
+from ...util.name_utility import NameUtility as naut
 from ..tokens import Tokens
 
 
@@ -29,9 +30,16 @@ class FileJobBuilder:
                 jobType=FileJobBuilder.FILE_JOB_TYPE,
             )
             facets["jobType"] = f
+            ns, name = naut.namespace_and_name_2(
+                config=self.listener.config,
+                eom="entity",
+                job_type="register",
+                entity=mdata.named_file_name,
+                mdata=mdata,
+            )
             return Job(
-                namespace=Tokens.JOB_NAMESPACE,
-                name=f"{FileJobBuilder.JOB_NAME}:{mdata.named_file_name}",
+                namespace=ns,
+                name=name,
                 facets=facets,
             )
         except Exception as e:

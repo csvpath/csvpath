@@ -5,4 +5,4 @@ import attr
 @attr.define
 class SourceFacet(BaseFacet):
     source: str
-    fingerprint: str
+    fingerprint: str = None

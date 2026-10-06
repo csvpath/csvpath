@@ -1,3 +1,5 @@
+import traceback
+
 from openlineage.client.facet_v2 import (
     job_type_job,
     source_code_location_job,
@@ -40,18 +42,16 @@ class ResultsJobBuilder:
             )
             fs["jobType"] = f
 
-            ns, path = naut.namespace_and_name(
+            ns, name = naut.namespace_and_name_2(
                 config=self.listener.config,
                 mdata=mdata,
-                namespace=mdata.archive_path,
-                path=mdata.run_home,
+                entity=mdata.named_results_name,
+                eom="entity",
+                job_type="run",
             )
-            name = f"group-execute:{path}"
             job = Job(namespace=ns, name=name, facets=fs)
             return job
         except Exception as e:
-            import traceback
-
             print(traceback.format_exc())
             self.listener.config.logger.error(e)
 
@@ -61,4 +61,12 @@ class ResultsJobBuilder:
         root = self.listener.config.get(section="inputs", name="csvpaths")
         path = Nos(root).join(paths)
         path = Nos(path).join("group.csvpaths")
+        #
+        # marquez doesn't like non-uris
+        #
+        from pathlib import Path
+
+        path = Path(path).resolve()
+        path = path.as_uri()
+
         return path

@@ -3,9 +3,10 @@ from openlineage.client.event_v2 import Run
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.listener import Listener
 
-from ...util.protocol_utility import ProtocolUtility as prut
 from ...facets.named_paths import NamedPathsFacet
 from ...facets.load_details import LoadDetailsFacet
+
+from ...util.engine_utility import EngineUtility as enut
 
 
 class PathsRunBuilder:
@@ -15,9 +16,10 @@ class PathsRunBuilder:
         self.listener = listener
 
     def build(self, mdata: Metadata) -> Run:
-        ns = prut.update_protocol_if(
-            config=self.listener.config, mdata=mdata, root=mdata.named_paths_root
-        )
+        # ns = prut.update_protocol_if_2(
+        #    config=self.listener.config, mdata=mdata, root=mdata.named_paths_root
+        # )
+
         fs = {}
         fs["groupName"] = NamedPathsFacet(mdata.named_paths_name)
         fs["loadDetails"] = LoadDetailsFacet(
@@ -26,8 +28,6 @@ class PathsRunBuilder:
             named_paths_name=mdata.named_paths_name,
             named_paths_count=mdata.named_paths_count,
         )
-        path = mdata.group_file_path
-        if path.startswith(ns):
-            path = path[len(ns) + 1 :]
+        fs["processing_engine"] = enut.engine_facet()
         run = Run(runId=mdata.uuid_string, facets=fs)
         return run

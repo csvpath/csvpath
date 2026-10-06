@@ -8,7 +8,6 @@ from openlineage.client.event_v2 import Job
 
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.listener import Listener
-from csvpath.util.nos import Nos
 
 from ...util.metadata_utility import MetadataUtility as meut
 from ...util.name_utility import NameUtility as naut
@@ -32,14 +31,14 @@ class ResultJobBuilder:
                 jobType="VALIDATION",
             )
             fs["jobType"] = f
-            ns, path = naut.namespace_and_name(
+            ns, name = naut.namespace_and_name_2(
                 config=self.listener.config,
                 mdata=mdata,
-                namespace=mdata.archive_path,
-                path=mdata.run_home,
+                instance=mdata.instance_identity,
+                entity=mdata.named_results_name,
+                eom="entity",
+                job_type="run_instance",
             )
-            name = Nos(path).join(mdata.instance_identity)
-            name = f"execute:{name}"
             job = Job(namespace=ns, name=name, facets=fs)
             return job
         except Exception as e:

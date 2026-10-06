@@ -636,3 +636,34 @@ class ExpressionUtility:
         lst = cls.get_my_descendents(thing, include_equality=True)
         _ = [i for i in lst if isinstance(i, clazz)]
         return _
+
+    @classmethod
+    def typed_headers(cls, matcher) -> list[tuple[str, str]]:
+        headers = []
+        fields = []
+        lst = [e[0] for e in matcher.expressions]
+        for _ in lst:
+            from csvpath.matching.productions.header import Header
+
+            headers += cls.get_my_descendents_of_class(thing=_, clazz=Header)
+        for h in headers:
+            name = h.name
+            ttype = "Unknown"
+            if h.parent and h.parent.name in [
+                "string",
+                "integer",
+                "decimal",
+                "date",
+                "datetime",
+                "boolean",
+                "email",
+                "url",
+                "nonspecific",
+                "unspecified",
+                "blank",
+                "wildcard",
+                "uuid",
+            ]:
+                ttype = h.parent.name
+            fields.append((name, ttype))
+        return fields

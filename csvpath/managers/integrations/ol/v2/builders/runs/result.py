@@ -9,6 +9,7 @@ from csvpath.util.nos import Nos
 from csvpath.util.file_readers import DataFileReader
 
 from ...util.name_utility import NameUtility as naut
+from ...util.engine_utility import EngineUtility as enut
 
 
 class ResultRunBuilder:
@@ -20,13 +21,16 @@ class ResultRunBuilder:
     def build(self, mdata: Metadata):
         facets = {}
         if mdata.run_uuid is not None:
-            ns, path = naut.namespace_and_name(
+            ns, path = naut.namespace_and_name_2(
                 config=self.listener.config,
                 mdata=mdata,
-                namespace=mdata.archive_path,
-                path=mdata.run_home,
+                instance=mdata.instance_identity,
+                entity=mdata.named_results_name,
+                eom="entity",
+                job_type="run",
             )
-            job = parent_run.Job(namespace=ns, name=f"validate:{path}")
+
+            job = parent_run.Job(namespace=ns, name=path)
             parent_run_facet = parent_run.ParentRunFacet(
                 run=parent_run.Run(runId=mdata.run_uuid_string),
                 job=job,
@@ -52,4 +56,5 @@ class ResultRunBuilder:
                 except Exception:
                     self.listener.csvpaths.logger.exception(e)
 
+        facets["processing_engine"] = enut.engine_facet()
         return Run(runId=mdata.uuid_string, facets=facets)

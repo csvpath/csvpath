@@ -166,8 +166,6 @@ openlineage.file = from csvpath.managers.integrations.ol.file_listener_ol import
 openlineage.paths = from csvpath.managers.integrations.ol.paths_listener_ol import OpenLineagePathsListener
 openlineage.result = from csvpath.managers.integrations.ol.result_listener_ol import OpenLineageResultListener
 openlineage.results = from csvpath.managers.integrations.ol.results_listener_ol import OpenLineageResultsListener
-openlineage.version = 1
-openlineage.namespace = default
 
 # add slack to the list of groups above for alerts to slack webhooks
 slack.file = from csvpath.managers.integrations.slack.sender import SlackSender
@@ -228,6 +226,11 @@ endpoint = api/v1/lineage
 api_key = "none"
 timeout = 5
 verify = False
+retries = 0
+gzip =
+version = 1
+namespace = default
+
 
 [slack]
 # add your main webhook here. to set webhooks on a csvpath-by-csvpath basis add

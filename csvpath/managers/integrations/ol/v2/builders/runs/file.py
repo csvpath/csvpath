@@ -6,6 +6,8 @@ from csvpath.managers.listener import Listener
 from ...facets.named_file import NamedFileFacet
 from ...facets.registration_details import RegistrationDetailsFacet
 
+from ...util.engine_utility import EngineUtility as enut
+
 
 class FileRunBuilder:
     def __init__(self, *, listener: Listener) -> None:
@@ -22,5 +24,6 @@ class FileRunBuilder:
             uuid=mdata.uuid_string,
             named_file_name=mdata.named_file_name,
         )
+        fs["processing_engine"] = enut.engine_facet()
         run = Run(runId=mdata.uuid_string, facets=fs)
         return run

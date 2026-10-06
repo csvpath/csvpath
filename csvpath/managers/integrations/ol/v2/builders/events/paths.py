@@ -11,7 +11,6 @@ from csvpath.managers.listener import Listener
 from ..tokens import Tokens
 from ..job import JobBuilder
 from ..run import RunBuilder
-from ...util.protocol_utility import ProtocolUtility as prut
 from ...util.name_utility import NameUtility as naut
 
 from csvpath.util.nos import Nos
@@ -45,20 +44,24 @@ class PathsEventBuilder:
     def _output_data(self, mdata: Metadata) -> OutputDataset:
         fs = {}
         fs["symlink_identifiers"] = self._symlinks(mdata)
-        ns, path = naut.namespace_and_name(
+        ns, path = naut.namespace_and_name_2(
             config=self.listener.config,
             mdata=mdata,
-            namespace=mdata.named_paths_root,
-            path=mdata.group_file_path,
+            eom="output",
+            job_type="load",
+            entity=mdata.named_paths_name,
         )
         ds = OutputDataset(namespace=ns, name=path, facets=fs)
         return ds
 
     def _symlinks(self, mdata: Metadata) -> symlinks_dataset.SymlinksDatasetFacet:
-        ns = prut.update_protocol_if(
-            config=self.listener.config, mdata=mdata, root=mdata.named_paths_root
+        ns, name = naut.namespace_and_name_2(
+            config=self.listener.config,
+            mdata=mdata,
+            eom="output",
+            job_type="load",
+            entity=mdata.named_paths_name,
         )
-
         reference_symlink = symlinks_dataset.Identifier(
             namespace=ns,
             name=mdata.reference,
@@ -69,36 +72,24 @@ class PathsEventBuilder:
             name=mdata.uuid_string,
             type="UUID",
         )
-        #
-        # if we updated a local path or azure URI we should put the orig
-        # as a symlink
-        #
-        path = prut.update_protocol_if(
-            config=self.listener.config, mdata=mdata, root=mdata.group_file_path
+        raw_symlink = symlinks_dataset.Identifier(
+            namespace=ns,
+            name=mdata.group_file_path,
+            type="FILE",
         )
-        ids = [reference_symlink, uuid_symlink]
-        if mdata.group_file_path != path:
-            path = mdata.group_file_path
-            if path.startswith(ns):
-                path = path[len(ns) + 1 :]
-            raw_symlink = symlinks_dataset.Identifier(
-                namespace=ns,
-                name=path,
-                type="FILE",
-            )
-            ids.append(raw_symlink)
-
+        ids = [reference_symlink, uuid_symlink, raw_symlink]
         return symlinks_dataset.SymlinksDatasetFacet(identifiers=ids)
 
     def _output_metadata(self, mdata: Metadata) -> OutputDataset:
         mani = mdata.named_paths_root
         mani = Nos(mani).join(mdata.named_paths_name)
         mani = Nos(mani).join("manifest.json")
-        ns, path = naut.namespace_and_name(
+        ns, path = naut.namespace_and_name_2(
             config=self.listener.config,
             mdata=mdata,
-            namespace=mdata.named_paths_root,
-            path=mani,
+            eom="manifest",
+            job_type="load",
+            entity=mdata.named_paths_name,
         )
         ms = OutputDataset(namespace=ns, name=path, facets={})
         return ms

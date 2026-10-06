@@ -11,7 +11,7 @@ class OpenLineageListenerProxy:
         if sig is None:
             raise ValueError("Sig cannot be None")
         groups = config.get(section="listeners", name="groups")
-        version = config.get(section="listeners", name="openlineage.version", default=1)
+        version = config.get(section="openlineage", name="version", default=1)
         version = int(version)
         while True:
             data = {"version": version}

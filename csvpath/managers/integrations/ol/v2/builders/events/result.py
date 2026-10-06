@@ -4,7 +4,7 @@ import json
 from openlineage.client.event_v2 import Dataset, RunEvent
 from openlineage.client.event_v2 import Job, Run, RunState
 from openlineage.client.event_v2 import InputDataset, OutputDataset
-from openlineage.client.facet_v2 import schema_dataset
+from openlineage.client.facet_v2 import schema_dataset, documentation_job
 
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.listener import Listener
@@ -19,6 +19,9 @@ from ...facets.group_provenance import GroupProvenance
 from ...facets.data_provenance import DataProvenance
 from ...facets.actual_file import ActualFile
 from ...util.name_utility import NameUtility as naut
+from ...util.protocol_utility import ProtocolUtility as prut
+
+from ...facets.source import SourceFacet
 
 
 class ResultEventBuilder:
@@ -51,11 +54,13 @@ class ResultEventBuilder:
         #
         # manifest
         #
-        ns, path = naut.namespace_and_name(
+        ns, path = naut.namespace_and_name_2(
             config=self.listener.config,
             mdata=mdata,
-            namespace=mdata.archive_path,
-            path=mdata.manifest_path,
+            instance=mdata.instance_identity,
+            entity=mdata.named_results_name,
+            eom="manifest",
+            job_type="run_instance",
         )
         outmani = Dataset(
             namespace=ns,
@@ -66,12 +71,7 @@ class ResultEventBuilder:
         tpaths = mdata.transfers
         if tpaths is not None:
             for t in tpaths:
-                ns, path = naut.namespace_and_name(
-                    config=self.listener.config,
-                    mdata=mdata,
-                    namespace=mdata.archive_path,
-                    path=t[3],
-                )
+                ns = prut.update_protocol_if_2(config=self.listener.config, mdata=mdata)
                 #
                 # we don't use the trimmed name. a transfer is to a location
                 # outside the namespace. should the namespace be something
@@ -108,24 +108,77 @@ class ResultEventBuilder:
             for file in files:
                 if file == "manifest.json":
                     continue
+                file_name = file[0 : file.rfind(".")]
                 path = nos.join(file)
-                ns, path = naut.namespace_and_name(
+                ns, path = naut.namespace_and_name_2(
                     config=self.listener.config,
                     mdata=mdata,
-                    namespace=mdata.archive_path,
-                    path=path,
+                    instance=mdata.instance_identity,
+                    entity=mdata.named_results_name,
+                    eom="output",
+                    job_type="run_instance",
+                    instance_file=file_name,
                 )
                 fs = {}
+                docs = self._documentation_facet_for(file)
+                if docs:
+                    fs["documentation"] = docs
                 if file == "data.csv":
                     hs = self._output_headers_facet(mdata)
                     if hs is not None:
                         fs["schema"] = hs
-                o = OutputDataset(name=path, namespace=ns, facets=fs)
+                ofs = {"source": SourceFacet(Nos(mdata.instance_home).join(file))}
+                o = OutputDataset(name=path, namespace=ns, facets=fs, outputFacets=ofs)
                 outputs.append(o)
         except Exception as e:
             print(traceback.format_exc())
             self.listener.config.logger.exception(e)
         return outputs
+
+    def _documentation_facet_for(
+        self, file: str
+    ) -> documentation_job.DocumentationJobFacet:
+        if file == "data.csv":
+            f = documentation_job.DocumentationJobFacet(
+                description="""The lines that matched the validation rules and/or schema."""
+            )
+        elif file == "unmatched.csv":
+            f = documentation_job.DocumentationJobFacet(
+                description="""The lines that did not match the validation rules and/or schema"""
+            )
+        elif file == "errors.json":
+            f = documentation_job.DocumentationJobFacet(
+                description="""Custom and built-in validation errors."""
+            )
+        elif file == "vars.json":
+            f = documentation_job.DocumentationJobFacet(
+                description="""Variables produced by running this instance."""
+            )
+        elif file == "meta.json":
+            f = documentation_job.DocumentationJobFacet(
+                description="""Runtime indicators and metrics, comments, and user-defined metadata fields."""
+            )
+        elif file == "manifest.json":
+            f = documentation_job.DocumentationJobFacet(
+                description="""The record of running this instance."""
+            )
+        elif file == "printouts.txt":
+            f = documentation_job.DocumentationJobFacet(
+                description="""One or more printout streams."""
+            )
+        elif file.endswith(".txt"):
+            f = documentation_job.DocumentationJobFacet(
+                description="""A printout stream produced by this run."""
+            )
+        elif file.endswith(".parquet"):
+            f = documentation_job.DocumentationJobFacet(
+                description="""The output of lines matching a Parquet schema."""
+            )
+        elif file.endswith(".xml"):
+            f = documentation_job.DocumentationJobFacet(
+                description="""The XML validated in this instance run."""
+            )
+        return f
 
     def _output_headers_facet(self, mdata):
         try:
@@ -161,11 +214,13 @@ class ResultEventBuilder:
                 path = f"{mdata.preceding_instance_identity}{os.sep}data.csv"
             else:
                 path = mdata.actual_data_file
-            ns, path = naut.namespace_and_name(
+            ns, path = naut.namespace_and_name_2(
                 config=self.listener.config,
                 mdata=mdata,
-                namespace=mdata.named_files_root,
-                path=path,
+                root=mdata.named_files_root,
+                entity=mdata.named_file_name,
+                eom="output",
+                job_type="register",
             )
             return InputDataset(namespace=ns, name=path, facets=fs)
         except Exception as e:
@@ -181,11 +236,13 @@ class ResultEventBuilder:
 
     def _paths_inputs(self, mdata: Metadata) -> InputDataset:
         prov = self._paths_provenance(mdata)
-        ns, path = naut.namespace_and_name(
+        ns, path = naut.namespace_and_name_2(
             config=self.listener.config,
             mdata=mdata,
-            namespace=mdata.named_paths_root,
-            path=mdata.named_results_name,
+            root=mdata.named_paths_root,
+            entity=mdata.named_paths_name,
+            eom="output",
+            job_type="load",
         )
         paths = InputDataset(namespace=ns, name=path, facets={"provenance": prov})
         return paths

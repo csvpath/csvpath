@@ -10,6 +10,7 @@ from csvpath.util.file_readers import DataFileReader
 
 from ..tokens import Tokens
 from ...util.metadata_utility import MetadataUtility as meut
+from ...util.name_utility import NameUtility as naut
 from ...facets.source import SourceFacet
 
 
@@ -39,9 +40,16 @@ class PathsJobBuilder:
             )
             facets["jobType"] = f
 
+            ns, name = naut.namespace_and_name_2(
+                config=self.listener.config,
+                mdata=mdata,
+                eom="entity",
+                job_type="load",
+                entity=mdata.named_paths_name,
+            )
             return Job(
-                namespace=Tokens.JOB_NAMESPACE,
-                name=f"{self.JOB_NAME}:{mdata.named_paths_name}",
+                namespace=ns,
+                name=name,
                 facets=facets,
             )
         except Exception as e:

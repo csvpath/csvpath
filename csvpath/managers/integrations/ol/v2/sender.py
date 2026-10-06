@@ -1,8 +1,8 @@
+import logging
 from openlineage.client import OpenLineageClient
 from openlineage.client.transport.http import (
     ApiKeyTokenProvider,
     HttpConfig,
-    HttpCompression,
     HttpTransport,
 )
 from csvpath.managers.metadata import Metadata
@@ -18,17 +18,42 @@ class Sender(Listener):
     @property
     def client(self):
         if self._client is None:
+            z = self.config._get(
+                "openlineage", "gzip", None
+            )  # null is default, otherwise `gzip`
+            if str(z).strip() == "":
+                z = None
+            r = self.config._get("openlineage", "retries", 0)
+            url = self.config._get("openlineage", "base_url", "https://backend:5000")
+            p = self.config._get("openlineage", "endpoint", "api/v1/lineage")
+            t = int(self.config._get("openlineage", "timeout", 2))
+            v = bool(self.config._get("openlineage", "verify", False)) is True
+            #
+            # better me vvvv
+            #
+            logger = None
+            if hasattr(self, "csvpaths"):
+                logger = self.csvpaths.logger
+            else:
+                logger = self.config.logger
+            if logger.getEffectiveLevel() == logging.DEBUG:
+                _ = f"OpenLineage.v2: config: {self.config.configpath}, z: {z}, r: {r}, url: {url}, p: {p}, t: {t}, v: {v}"
+                logger.debug(_)
+            #
+            #
+            #
             h = HttpConfig(
-                url=self.config._get("openlineage", "base_url", "https://backend:5000"),
-                endpoint=self.config._get("openlineage", "endpoint", "api/v1/lineage"),
-                timeout=int(self.config._get("openlineage", "timeout", 2)),
-                verify=bool(self.config._get("openlineage", "verify", False)) is True,
+                url=url,
+                endpoint=p,
+                timeout=t,
+                verify=v,
                 auth=ApiKeyTokenProvider(
                     {"apiKey": self.config._get("openlineage", "api_key", "none")}
                 ),
-                compression=HttpCompression.GZIP,
-                retry={"total": 0},
+                compression=z,
+                retry={"total": int(r)},
             )
+
             self._client = OpenLineageClient(transport=HttpTransport(h))
         return self._client
 

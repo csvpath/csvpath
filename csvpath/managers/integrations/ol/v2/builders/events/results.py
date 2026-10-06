@@ -10,7 +10,6 @@ from csvpath import CsvPath
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.listener import Listener
 from csvpath.matching.util.expression_utility import ExpressionUtility as exut
-from csvpath.matching.productions.header import Header
 
 from ...facets.run_statistics import RunStatistics
 from ...facets.group_provenance import GroupProvenance
@@ -35,23 +34,42 @@ class ResultsEventBuilder:
 
     def build(self, mdata: Metadata, job: Job, run: Run) -> list[RunEvent]:
         try:
-            ns, path = naut.namespace_and_name(
+            #
+            # named-file inputs
+            #
+            ns, path = naut.namespace_and_name_2(
                 config=self.listener.config,
                 mdata=mdata,
-                namespace=mdata.named_files_root,
-                path=mdata.named_file_name,
+                root=mdata.named_files_root,
+                entity=mdata.named_file_name,
+                eom="output",
+                job_type="register",
             )
-            path = naut.from_root_major_if(path)
             prov = self._file_provenance(mdata)
             file = InputDataset(namespace=ns, name=path, facets={"provenance": prov})
 
+            #
+            # named-paths inputs
+            #
             prov = self._paths_provenance(mdata)
-            ns, path = naut.namespace_and_name(
+            """
+            ns, path = naut.namespace_and_name_2(
                 config=self.listener.config,
                 mdata=mdata,
-                namespace=mdata.named_paths_root,
-                path=mdata.named_paths_name,
+                root=mdata.named_paths_root,
             )
+            """
+            sep = Nos(mdata.named_paths_root).sep
+            path = f"{mdata.named_paths_root}{sep}{mdata.named_paths_name}{sep}group.csvpaths"
+            ns, path = naut.namespace_and_name_2(
+                config=self.listener.config,
+                mdata=mdata,
+                root=mdata.named_paths_root,
+                entity=mdata.named_paths_name,
+                eom="output",
+                job_type="load",
+            )
+
             links = self._input_symlinks(mdata)
             schema = self._input_schema(mdata)
             paths = InputDataset(
@@ -69,7 +87,7 @@ class ResultsEventBuilder:
             job = job or JobBuilder(listener=self.listener).build(mdata)
             run = run or RunBuilder(listener=self.listener).build(mdata)
 
-            ds = self._output_data(mdata)
+            # ds = self._output_data(mdata)
             ms = self._output_metadata(mdata)
 
             e = RunEvent(
@@ -78,7 +96,7 @@ class ResultsEventBuilder:
                 run=run,
                 job=job,
                 inputs=inputs,
-                outputs=[ds, ms],
+                outputs=[ms],
                 producer=Tokens.PRODUCER,
             )
             return [e]
@@ -95,6 +113,7 @@ class ResultsEventBuilder:
         return prov
 
     def _output_data(self, mdata: Metadata) -> OutputDataset:
+        ofs = {}
         fs = {}
         fs["symlink_identifiers"] = self._symlinks(mdata)
         with DataFileReader(mdata.manifest_path) as reader:
@@ -102,14 +121,15 @@ class ResultsEventBuilder:
             stats = RunStatistics(
                 errors=mani.get("error_count"), all_valid=mani.get("all_valid")
             )
-            outputfs = {"runStatistics": stats}
-        ns, path = naut.namespace_and_name(
+            ofs["runStatistics"] = stats
+        ns, path = naut.namespace_and_name_2(
             config=self.listener.config,
             mdata=mdata,
-            namespace=mdata.named_files_root,
-            path=mdata.manifest_path,
+            entity=mdata.named_results_name,
+            eom="output",
+            job_type="run",
         )
-        ds = OutputDataset(namespace=ns, name=path, facets=fs, outputFacets=outputfs)
+        ds = OutputDataset(namespace=ns, name=path, facets=fs, outputFacets=ofs)
         return ds
 
     def _input_schema(self, mdata: Metadata) -> schema_dataset.SchemaDatasetFacet:
@@ -130,38 +150,10 @@ class ResultsEventBuilder:
         for _ in paths:
             matcher = CsvPath().parse(_, disposably=True)
             headers = []
-            lst = [e[0] for e in matcher.expressions]
-            for _ in lst:
-                headers += exut.get_my_descendents_of_class(thing=_, clazz=Header)
+            headers += exut.typed_headers(matcher)
             for h in headers:
-                name = h.name
-                ttype = "Unknown"
-                if h.parent and h.parent.name == "string":
-                    ttype = "STRING"
-                elif h.parent and h.parent.name == "integer":
-                    ttype = "INT"
-                elif h.parent and h.parent.name == "decimal":
-                    ttype = "FLOAT"
-                elif h.parent and h.parent.name == "date":
-                    ttype = "DATE"
-                elif h.parent and h.parent.name == "datetime":
-                    ttype = "DATETIME"
-                elif h.parent and h.parent.name == "boolean":
-                    ttype = "BOOLEAN"
-                elif h.parent and h.parent.name == "email":
-                    ttype = "EMAIL"
-                elif h.parent and h.parent.name == "url":
-                    ttype = "URL"
-                elif h.parent and h.parent.name in [
-                    "nonspecific",
-                    "unspecified",
-                    "blank",
-                ]:
-                    ttype = "BLANK"
-                elif h.parent and h.parent.name == "wildcard":
-                    ttype = "WILDCARD"
-                elif h.parent and h.parent.name == "uuid":
-                    ttype = "UUID"
+                name = h[0]
+                ttype = h[1]
                 field = schema_dataset.SchemaDatasetFacetFields(name=name, type=ttype)
                 field.fields = None
                 fields.append(field)
@@ -169,12 +161,18 @@ class ResultsEventBuilder:
 
     def _input_symlinks(self, mdata: Metadata) -> symlinks_dataset.SymlinksDatasetFacet:
         path = Nos(mdata.named_file_name).join("group.csvpaths")
-        ns, path = naut.namespace_and_name(
+        ns = prut.update_protocol_if_2(
+            config=self.listener.config, mdata=mdata, root=mdata.named_paths_root
+        )
+        """
+        ns, __path = naut.namespace_and_name_2(
             config=self.listener.config,
             mdata=mdata,
-            namespace=mdata.named_files_root,
-            path=path,
+            entity=mdata.named_paths_name,
+            eom="output",
+            job_type="load",
         )
+        """
         group_file_symlink = symlinks_dataset.Identifier(
             namespace=ns,
             name=path,
@@ -204,11 +202,12 @@ class ResultsEventBuilder:
         mani = mdata.archive_path
         mani = Nos(mani).join(mdata.named_paths_name)
         mani = Nos(mani).join("manifest.json")
-        ns, path = naut.namespace_and_name(
+        ns, path = naut.namespace_and_name_2(
             config=self.listener.config,
             mdata=mdata,
-            namespace=mdata.archive_path,
-            path=mani,
+            entity=mdata.named_results_name,
+            eom="manifest",
+            job_type="run",
         )
         ms = OutputDataset(namespace=ns, name=path, facets={})
         return ms
