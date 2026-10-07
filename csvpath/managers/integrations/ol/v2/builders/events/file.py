@@ -1,6 +1,7 @@
 from openlineage.client.facet_v2 import (
     output_statistics_output_dataset,
     symlinks_dataset,
+    documentation_dataset,
 )
 from openlineage.client.event_v2 import (
     RunEvent,
@@ -13,6 +14,7 @@ from openlineage.client.event_v2 import (
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.listener import Listener
 from csvpath.util.nos import Nos
+from csvpath.util.file_readers import DataFileReader
 
 from ...util.name_utility import NameUtility as naut
 
@@ -68,17 +70,28 @@ class FileEventBuilder:
 
     def _inputs(self, mdata: Metadata) -> list[InputDataset]:
         source = SourceFacet(mdata.origin_path)
-        fs = {"source": source}
+        fs = {}
+        ifs = {"source": source}
         #
         # Note: we don't use a trimmed version of orgin_path because
         # the origin path is physically outside the namespace. we could
         # use naut.namespace_and_name just for consistency but prut is
         # more clear
         #
+        path = Nos(mdata.named_files_root).join(mdata.named_file_name)
+        path = Nos(path).join("README.md")
+        if Nos(path).exists():
+            with DataFileReader(path) as reader:
+                readme = reader.source.read()
+                # readme = json.dumps(readme)
+                fs["documentation"] = documentation_dataset.DocumentationDatasetFacet(
+                    description=readme
+                )
+
         ns, name = naut.namespace_and_name(
             config=self.listener.config, mdata=mdata, path=mdata.origin_path
         )
-        ds = InputDataset(namespace=ns, name=name, inputFacets=fs)
+        ds = InputDataset(namespace=ns, name=name, facets=fs, inputFacets=ifs)
         return [ds]
 
     def _output_data(self, mdata: Metadata) -> OutputDataset:

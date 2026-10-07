@@ -168,11 +168,13 @@ class TestCsvPathsExamplesOpenLineage(unittest.TestCase):
             name="orders", path=FILE, return_metadata=True
         )
         ref, mdata = paths.paths_manager.add_named_paths(
-            name="orders", from_file=PATHS, return_metadata=True
+            name="order_validations", from_file=PATHS, return_metadata=True
         )
 
         metadatas = []
-        paths.collect_paths(filename="orders", pathsname="orders", metadatas=metadatas)
+        paths.collect_paths(
+            filename="orders", pathsname="order_validations", metadatas=metadatas
+        )
         #
         # start metadata
         #

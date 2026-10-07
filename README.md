@@ -232,8 +232,10 @@ And to learn about the backend API server, head over to <a href='https://www.fli
 <a href='https://www.atestaanalytics.com/' >
 <img width="25%" src="https://raw.githubusercontent.com/dk107dk/csvpath/main/docs/images/logo-wordmark-white-on-black-trimmed-padded.png" alt="Atesta Analytics"/></a>
     <a href='https://www.datakitchen.io/'>
-<img src="https://datakitchen.io/wp-content/uploads/2020/10/logo.svg"
-style='width:160px; position:relative;bottom:-5px;left:15px' alt="DataKitchen" id="logo" data-height-percentage="45"></a>
+<img
+src="https://www.flightpathdata.com/assets/logos/partners/datakitchen.png"
+style='width:160px; position:relative;bottom:-5px;left:15px'
+alt="DataKitchen" id="logo"></a>
 
 
 

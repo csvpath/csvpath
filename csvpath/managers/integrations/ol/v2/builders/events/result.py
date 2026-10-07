@@ -123,6 +123,10 @@ class ResultEventBuilder:
                 docs = self._documentation_facet_for(file)
                 if docs:
                     fs["documentation"] = docs
+                if file == "meta.json":
+                    m = self._metadata_fields(mdata)
+                    if m is not None:
+                        fs["csvpath_metadata"] = m
                 if file == "data.csv":
                     hs = self._output_headers_facet(mdata)
                     if hs is not None:
@@ -134,6 +138,18 @@ class ResultEventBuilder:
             print(traceback.format_exc())
             self.listener.config.logger.exception(e)
         return outputs
+
+    def _metadata_fields(self, mdata: Metadata) -> dict:
+        path = Nos(mdata.instance_home).join("meta.json")
+        with DataFileReader(path) as reader:
+            m = json.load(reader.source)
+            m = m.get("metadata")
+            if m is not None and m.get("original_comment"):
+                del m["original_comment"]
+            m["_producer"] = "https://www.csvpath.org/version/OLv2"
+            m["_schemaURL"] = "https://www.csvpath.com/meta.json"
+            return m
+        return None
 
     def _documentation_facet_for(
         self, file: str

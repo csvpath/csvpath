@@ -1,4 +1,4 @@
-from openlineage.client.facet_v2 import symlinks_dataset
+from openlineage.client.facet_v2 import symlinks_dataset, documentation_dataset
 
 from openlineage.client.event_v2 import RunEvent
 from openlineage.client.event_v2 import RunState
@@ -14,6 +14,7 @@ from ..run import RunBuilder
 from ...util.name_utility import NameUtility as naut
 
 from csvpath.util.nos import Nos
+from csvpath.util.file_readers import DataFileReader
 
 
 class PathsEventBuilder:
@@ -51,6 +52,17 @@ class PathsEventBuilder:
             job_type="load",
             entity=mdata.named_paths_name,
         )
+
+        p = Nos(mdata.named_paths_root).join(mdata.named_paths_name)
+        p = Nos(p).join("README.md")
+        if Nos(p).exists():
+            with DataFileReader(p) as reader:
+                readme = reader.source.read()
+                # readme = json.dumps(readme)
+                fs["documentation"] = documentation_dataset.DocumentationDatasetFacet(
+                    description=readme
+                )
+
         ds = OutputDataset(namespace=ns, name=path, facets=fs)
         return ds
 
