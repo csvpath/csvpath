@@ -1,0 +1,14 @@
+cust_id,name,tier,active,newsletter,signup_date
+1,Ada Lovelace,gold,true,true,2025-06-01
+2,Bo,,false,,
+3,Cy Young,bronze,1,false,2024-12-31
+4,D,silver,true,true,2025-01-01
+5,Eve Online With A Name That Is Much Too Long For Fifty Chars,silver,true,true,2025-01-01
+6,Finn,platinum,true,true,2025-01-01
+7,Gus,gold,,true,2025-01-01
+8,Hal,gold,maybe,true,2025-01-01
+9,Ivy,gold,true,perhaps,2025-01-01
+10,Jo,gold,true,true,01/01/2025
+1,Kit,gold,true,true,2025-01-01
+x,Lu,gold,true,true,2025-01-01
+,Mo,gold,true,true,2025-01-01

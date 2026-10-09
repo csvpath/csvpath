@@ -1,0 +1,50 @@
+#
+# See 01_orders_simple/expected.yaml for the format.
+#
+runs:
+  - csvpath: customers.csvpath
+    data: customers_mixed.csv
+    is_valid: true
+    valid_lines: [1, 2, 3]
+    # 2  optional tier, newsletter, signup_date all empty
+    # 3  active given as 1, which boolean() accepts
+    # why each other line is invalid:
+    #   4  name shorter than minLength
+    #   5  name longer than maxLength
+    #   6  tier not in validValues (mustBe: 0, so per line)
+    #   7  active required but empty
+    #   8  active not a boolean
+    #   9  newsletter (optional) not a boolean
+    #   10 signup_date not yyyy-MM-dd
+    #   11 cust_id duplicates line 1 (unique)
+    #   12 cust_id not an integer
+    #   13 cust_id required but empty
+  - csvpath: payments.csvpath
+    data: payments_mixed.csv
+    is_valid: true
+    valid_lines: [1, 2, 3]
+    # 2  amount equal to maximum (inclusive)
+    # 3  amount just above exclusiveMinimum
+    # why each other line is invalid:
+    #   4  payment_id not a uuid
+    #   5  amount equal to exclusiveMinimum
+    #   6  amount below exclusiveMinimum
+    #   7  amount above maximum
+    #   8  amount not a number
+    #   9  currency JPY not in validValues
+    #   10 currency CHF not in validValues
+    #   11 payment_id duplicates line 1 (unique)
+    #   12 customer_id required but empty
+    # 2 invalid currencies is under the mustBeLessThan: 3 threshold, so the
+    # file stays valid, while lines 9 and 10 still do not match
+  - csvpath: payments.csvpath
+    data: payments_too_many_invalid.csv
+    is_valid: false
+    valid_lines: [1, 5]
+    # 3 invalid currencies (JPY, CHF, AUD) breaks mustBeLessThan: 3; the run
+    # fails but continues to collect conforming lines
+  - csvpath: payments.csvpath
+    data: payments_empty.csv
+    is_valid: true
+    valid_lines: []
+    # no rowCount rule, and 0 invalid currencies is under the threshold

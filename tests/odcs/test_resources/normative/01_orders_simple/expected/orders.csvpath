@@ -6,7 +6,7 @@
   validation-mode: print, no-raise, no-fail, no-stop
 ~
 $[*][
-    and.nocontrib( last(), not( gt( subtract(total_lines(), 1), 0 ) ) ) -> fail()
+    and.nocontrib( last(), lte( subtract(total_lines(), 1), 0 ) ) -> fail()
     first_line.nocontrib() -> skip()
     line(
         string.notnone.distinct(#order_id),

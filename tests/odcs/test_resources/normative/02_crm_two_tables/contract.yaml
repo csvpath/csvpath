@@ -1,0 +1,83 @@
+#
+# Normative pair 02: two schema objects (two tables -> two csvpaths), v3.1.0.
+#
+# Covers:
+#   - two schema objects -> two csvpaths
+#   - physicalName overrides name as the header name
+#   - logicalType number, boolean (required and optional)
+#   - logicalTypeOptions minLength/maxLength -> string() max/min args
+#   - logicalTypeOptions format uuid -> uuid()
+#   - exclusiveMinimum -> gt() outside the line(); maximum -> decimal() max arg
+#   - v3.0/v3.1 allowed values: property quality metric invalidValues with
+#     arguments.validValues
+#       - mustBe: 0 -> per-line in() only; the csvpath stays $[1*]
+#       - mustBeLessThan: 3 -> per-line in() AND a counted, file-level
+#         fail() check; the csvpath uses the $[*] form
+#   - optional date and optional boolean -> blank() in the line() plus an
+#     or( empty(), ... ) check, working around issue #300
+#
+apiVersion: v3.1.0
+kind: DataContract
+id: crm-contract
+version: 2.1.0
+status: active
+name: CRM
+schema:
+  - name: customers
+    logicalType: object
+    properties:
+      - name: customer_id
+        physicalName: cust_id
+        logicalType: integer
+        primaryKey: true
+        required: true
+        unique: true
+      - name: name
+        logicalType: string
+        required: true
+        logicalTypeOptions:
+          minLength: 2
+          maxLength: 50
+      - name: tier
+        logicalType: string
+        quality:
+          - metric: invalidValues
+            arguments:
+              validValues: [gold, silver, bronze]
+            mustBe: 0
+      - name: active
+        logicalType: boolean
+        required: true
+      - name: newsletter
+        logicalType: boolean
+      - name: signup_date
+        logicalType: date
+        logicalTypeOptions:
+          format: yyyy-MM-dd
+  - name: payments
+    logicalType: object
+    properties:
+      - name: payment_id
+        logicalType: string
+        required: true
+        unique: true
+        logicalTypeOptions:
+          format: uuid
+      - name: customer_id
+        logicalType: integer
+        required: true
+      - name: amount
+        logicalType: number
+        required: true
+        logicalTypeOptions:
+          exclusiveMinimum: 0
+          maximum: 10000
+      - name: currency
+        logicalType: string
+        required: true
+        quality:
+          - metric: invalidValues
+            arguments:
+              validValues: [USD, EUR, GBP]
+            mustBeLessThan: 3
+            unit: rows

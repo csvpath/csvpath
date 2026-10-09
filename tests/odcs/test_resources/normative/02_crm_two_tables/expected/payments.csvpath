@@ -1,0 +1,20 @@
+~
+  id: payments
+  odcs-contract-id: crm-contract
+  odcs-contract-version: 2.1.0
+  odcs-schema-object: payments
+  validation-mode: print, no-raise, no-fail, no-stop
+~
+$[*][
+    first_line.nocontrib() -> skip()
+    line(
+        uuid.notnone.distinct(#payment_id),
+        integer.notnone(#customer_id),
+        decimal.notnone(#amount, 10000),
+        string.notnone(#currency)
+    )
+    gt(#amount, 0)
+    or( empty(#currency), in(#currency, "USD|EUR|GBP") )
+    not.nocontrib( or( empty(#currency), in(#currency, "USD|EUR|GBP") ) ) -> counter.currency_invalid(1)
+    and.nocontrib( last(), gte( @currency_invalid, 3 ) ) -> fail()
+]

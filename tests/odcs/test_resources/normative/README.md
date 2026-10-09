@@ -64,12 +64,42 @@ Allowed values
   `- value: open`), and the v3.0/v3.1 property quality rule
   `metric: invalidValues` with `arguments.validValues`.
 
-Known framework issue
+- The counter for a threshold rule counts non-empty values that break the
+  rule (empty values are `nullValues`/`missingValues`, not
+  `invalidValues`):
+
+      not.nocontrib( or( empty(#c), in(#c, "A|B") ) ) -> counter.c_invalid(1)
+
+- Threshold operators are emitted as a direct "fail when" condition, never
+  wrapped in `not()`, and never using `lt()` (see below):
+
+      mustBe X                  fail when neq(v, X)
+      mustNotBe X               fail when eq(v, X)
+      mustBeLessThan X          fail when gte(v, X)
+      mustBeLessOrEqualTo X     fail when gt(v, X)
+      mustBeGreaterThan X       fail when lte(v, X)
+      mustBeGreaterOrEqualTo X  fail when gt(X, v)
+      mustBeBetween [a, b]      fail when gt(a, v) or gt(v, b)
+      mustNotBeBetween [a, b]   fail when gte(v, a) and gte(b, v)
+
+Known framework issues and workarounds
 
 - `date()`/`datetime()` inside `line()` reject empty values even without
   `notnone` (issue #300). Until fixed, optional dates are emitted as
   `blank(#d)` in the `line()` plus `or( empty(#d), date(#d, "<fmt>") )`.
   Required dates use `date.notnone(#d, "<fmt>")` in the `line()` directly.
+- `boolean()` has the same empty-value behavior inside `line()` (noted on
+  #300). In addition, outside `line()`, `boolean()` matches invalid values
+  such as `perhaps`. So optional booleans are emitted as `blank(#b)` in the
+  `line()` plus
+  `or( empty(#b), in( lower( strip(#b) ), "true|false|1|0" ) )`, which
+  accepts exactly what `boolean()` accepts. Required booleans use
+  `boolean.notnone(#b)` in the `line()` directly.
+- `lt()`/`below()`/`before()` behave as `lte()` (a missing `return` in
+  `csvpath/matching/functions/math/above.py`). The converter never emits
+  them; `gt()`, `gte()`, and `lte()` are correct.
+- `print()` appears to drop messages containing `(` or `@`. The converter
+  does not emit `print()` for now.
 
 Regular expressions
 
