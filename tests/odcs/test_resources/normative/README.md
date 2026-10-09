@@ -51,8 +51,13 @@ Matching and validation semantics
 - Properties map to `line()` wherever practical, trusting ODCS property
   order as column order. `line()` reads like SQL DDL, which keeps the
   cognitive load low for people new to CsvPath.
-- `required` -> `.notnone`, `unique` -> `.distinct`. `primaryKey` alone
-  implies neither, because a primary key may be composite.
+- `required` -> `.notnone`. `primaryKey` alone implies neither required
+  nor unique, because a primary key may be composite.
+- `unique`: empty values are never duplicates (SQL semantics, agreed with
+  David 2026-10-09). `.distinct` treats two empty values as duplicates, so
+  it is only used on required columns, which reject empties anyway:
+  `string.notnone.distinct(#c)`. An optional unique column, of any type,
+  gets `or( empty(#c), not( has_dups(#c) ) )` after the `line()`.
 - Checks that cannot go in the `line()` follow it. On an optional column
   they are wrapped as `or( empty(#c), <check> )`; on a required column
   they stand alone, since the `line()` already rejects empty values.
@@ -74,6 +79,9 @@ Types
 - `integer` -> `integer()`, `number` -> `decimal()`, with
   `maximum`/`minimum` as the max/min arguments. `exclusiveMinimum X` ->
   `gt(#c, X)`; `exclusiveMaximum X` -> `gt(X, #c)`.
+- `multipleOf X` with an integer X -> `eq( mod(#c, X), 0 )`. A non-integer
+  X is reported: `mod()` rounds to 2 places, so a float remainder near the
+  divisor (`114.99999 % 5`) reads as `5.0`, not `0`.
 - `boolean`, `date`, `timestamp`, `time`: see below and the framework
   workarounds.
 - No `logicalType` -> `string`.
@@ -129,7 +137,10 @@ Quality rules with thresholds
       mustBeBetween [a, b]      fail when gt(a, v) or gt(v, b)
       mustNotBeBetween [a, b]   fail when gte(v, a) and gte(b, v)
 
-- Percent thresholds (`unit: percent`) are not yet supported; reported.
+- Percent thresholds (`unit: percent`) compare the count as a percentage
+  of data rows: `multiply( divide( @c, subtract(total_lines(), 1) ), 100 )`.
+  For a percent rule only `mustBe: 0` and `mustBeLessOrEqualTo: 0` are
+  zero tolerance; fewer than 1 percent is not the same as none.
 
 Library metrics
 
@@ -141,10 +152,18 @@ Library metrics
 - `nullValues` (property): any threshold makes the column `.notnone`, so
   lines with a null do not match; a non-zero threshold also counts
   `empty.nocontrib(#c)`.
-- `duplicateValues` (property): zero threshold -> `.distinct`. Non-zero
-  thresholds, and schema-level (multi-column) `duplicateValues`, are not
-  yet supported; reported.
-- `missingValues` is not yet supported; reported.
+- `missingValues` (property): `arguments.missingValues` lists what counts
+  as missing; with no arguments, null or empty. Null or `""` in the list
+  makes the column `.notnone`; other values become `not( in(#c, "...") )`.
+  A non-zero threshold counts both kinds.
+- `duplicateValues` (property): makes the column unique (see `unique`
+  above). A non-zero threshold also counts `has_dups(#c)`, ignoring
+  empties on an optional column.
+- `duplicateValues` (schema level, `arguments.properties`): the
+  combination of columns must be unique: `not( has_dups(#a, #b) )`. A row
+  with an empty value in an optional column of the combination is never a
+  duplicate. A non-zero threshold also counts. The check follows the
+  per-column checks; an unknown property name is reported.
 - v3.0's deprecated `rule` key is read the same as `metric`.
 
 Allowed values
@@ -184,6 +203,8 @@ Unsupported features and the conversion report (pair 04)
   object, `properties.<name>` selecting by name), `feature`, `reason`.
 - Report order: per schema object, schema-level quality, then properties
   in order, then schema-level relationships.
+- Still reported, not translated: percent `rowCount` (no meaning), and
+  non-integer `multipleOf`.
 - A skipped property still appears in the `line()` (as `blank()` for
   untyped values), so the header order is still checked.
 - Non-validation sections (team, servers, SLA, support, price, roles,
@@ -196,7 +217,7 @@ Known framework issues and workarounds
   `notnone` (issue #300). Until fixed, optional dates are emitted as
   `blank(#d)` in the `line()` plus `or( empty(#d), date(#d, "<fmt>") )`.
   Required dates use `date.notnone(#d, "<fmt>")` in the `line()` directly.
-  `unique` on an optional date cannot be checked; it is reported.
+  `unique` on an optional date is checked like any optional unique column.
 - `boolean()` has the same empty-value behavior inside `line()` (noted on
   #300). In addition, nested in `or()`/`not()`, `boolean()` treats invalid
   values such as `perhaps` as matches (issue #302). So optional booleans

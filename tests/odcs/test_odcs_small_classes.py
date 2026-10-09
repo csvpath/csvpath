@@ -98,3 +98,24 @@ def test_odcs_csvpath_parts_only_first_checks_need_full_scan() -> None:
 def test_odcs_csvpath_parts_render_needs_line_args() -> None:
     with pytest.raises(ValueError):
         CsvPathParts().render()
+
+
+def test_odcs_csvpath_parts_add_threshold() -> None:
+    parts = CsvPathParts()
+    rule = {"mustBeLessThan": 3}
+    assert parts.add_threshold(base="a_null", when="W1", rule=rule) == "a_null"
+    assert parts.add_threshold(base="a_null", when="W2", rule=rule) == "a_null_2"
+    assert parts.counters == ["W1 -> counter.a_null(1)", "W2 -> counter.a_null_2(1)"]
+    assert parts.last_checks == [
+        "and.nocontrib( last(), gte( @a_null, 3 ) ) -> fail()",
+        "and.nocontrib( last(), gte( @a_null_2, 3 ) ) -> fail()",
+    ]
+    assert not parts.needs_full_scan
+
+
+def test_odcs_csvpath_parts_add_threshold_bad_input() -> None:
+    parts = CsvPathParts()
+    with pytest.raises(ValueError):
+        parts.add_threshold(base="", when="W", rule={"mustBe": 0})
+    with pytest.raises(ValueError):
+        parts.add_threshold(base="a", when=" ", rule={"mustBe": 0})

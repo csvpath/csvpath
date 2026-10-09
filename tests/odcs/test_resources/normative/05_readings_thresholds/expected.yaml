@@ -1,0 +1,40 @@
+#
+# See 01_orders_simple/expected.yaml for the format.
+#
+runs:
+  - csvpath: readings.csvpath
+    data: readings_mixed.csv
+    is_valid: true
+    valid_lines: [1, 7, 8, 9, 10]
+    # 7, 8  batch empty twice: empty values are never duplicates
+    # 10 interval_s -15 is a multiple of 15
+    # why each other line is invalid:
+    #   2  temp_c empty (nullValues): 1 of 10 rows is 10%, under 30%
+    #   3  status N/A (missingValues): 1 row, within mustBeLessOrEqualTo 1
+    #   4  interval_s 20 is not a multiple of 15
+    #   5  (sensor_id, read_at) duplicates line 1 (schema-level
+    #      duplicateValues)
+    #   6  batch b1 duplicates line 1: 1 duplicate, under mustBeLessThan 2
+    #      (weight 0.7 is not a multiple of 0.5, but multipleOf 0.5 is
+    #      skipped)
+  - csvpath: readings.csvpath
+    data: readings_too_many_null_temp.csv
+    is_valid: false
+    valid_lines: [1, 3]
+    # 1 of 3 rows is 33.3%, not under 30%
+  - csvpath: readings.csvpath
+    data: readings_too_many_missing_status.csv
+    is_valid: false
+    valid_lines: [3]
+    # 2 missing statuses ('' and N/A), more than 1
+  - csvpath: readings.csvpath
+    data: readings_too_many_dup_batch.csv
+    is_valid: false
+    valid_lines: [1, 4]
+    # 2 duplicate b1 values, not under 2; the empty batch on line 4 is not
+    # a duplicate
+  - csvpath: readings.csvpath
+    data: readings_empty.csv
+    is_valid: true
+    valid_lines: []
+    # nothing to count; threshold checks do not run on a header-only file

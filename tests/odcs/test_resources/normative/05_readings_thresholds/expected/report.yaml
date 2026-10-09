@@ -1,0 +1,8 @@
+#
+# See 04_shipments_unsupported/expected/report.yaml for the format.
+#
+skipped:
+  - object: readings
+    location: properties.weight.logicalTypeOptions.multipleOf
+    feature: multipleOf
+    reason: mod() rounds to 2 places, so a non-integer multipleOf cannot be checked reliably.

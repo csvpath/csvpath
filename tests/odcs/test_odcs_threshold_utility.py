@@ -121,3 +121,29 @@ def test_odcs_thut_fail_when_runs_in_csvpath(
         ]"""
     )
     assert path.is_valid is (not broken)
+
+
+def test_odcs_thut_percent() -> None:
+    assert thut.is_percent(rule={"unit": "percent"}) is True
+    assert thut.is_percent(rule={"unit": "rows"}) is False
+    assert thut.is_percent(rule={}) is False
+    with pytest.raises(TypeError):
+        thut.is_percent(rule=None)
+
+
+def test_odcs_thut_zero_tolerance_percent() -> None:
+    # fewer than 1 row means none; fewer than 1 percent does not
+    assert thut.is_zero_tolerance(rule={"mustBeLessThan": 1}) is True
+    assert (
+        thut.is_zero_tolerance(rule={"mustBeLessThan": 1, "unit": "percent"}) is False
+    )
+    assert thut.is_zero_tolerance(rule={"mustBe": 0, "unit": "percent"}) is True
+
+
+def test_odcs_thut_count_value() -> None:
+    assert thut.count_value(var="a_null", rule={"mustBe": 0}) == "@a_null"
+    assert thut.count_value(var="a_null", rule={"mustBe": 0, "unit": "percent"}) == (
+        "multiply( divide( @a_null, subtract(total_lines(), 1) ), 100 )"
+    )
+    with pytest.raises(ValueError):
+        thut.count_value(var="", rule={"mustBe": 0})

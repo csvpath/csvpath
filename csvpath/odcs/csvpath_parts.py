@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 
+from .threshold_utility import ThresholdUtility as thut
+
 
 @dataclass
 class CsvPathParts:
@@ -36,6 +38,33 @@ class CsvPathParts:
         # is nothing to count, so they never run in either form.
         #
         return bool(self.first_checks)
+
+    def add_threshold(self, *, base: str, when: str, rule: dict) -> str:
+        """adds a counter and its last-line check for a threshold rule, and
+        returns the counter variable name.
+
+        base: the variable name to use, made unique if another counter has
+              it (two rules on one column, or column names that sanitize the
+              same)
+        when: the condition, with nocontrib, under which a line is counted
+
+        counter() creates its variable at 0 on first evaluation, so no
+        initialization is needed.
+        """
+        if not isinstance(base, str) or base.strip() == "":
+            raise ValueError("base must be a non-empty str")
+        if not isinstance(when, str) or when.strip() == "":
+            raise ValueError("when must be a non-empty str")
+        var = base
+        n = 2
+        while any(c.endswith(f"-> counter.{var}(1)") for c in self.counters):
+            var = f"{base}_{n}"
+            n += 1
+        self.counters.append(f"{when} -> counter.{var}(1)")
+        value = thut.count_value(var=var, rule=rule)
+        fail_when = thut.fail_when(value=value, rule=rule)
+        self.last_checks.append(f"and.nocontrib( last(), {fail_when} ) -> fail()")
+        return var
 
     def render(self) -> str:
         if len(self.line_args) == 0:
