@@ -110,7 +110,7 @@ class SchemaObjectConverter:
         # before the header skip, so a header-only file is checked too
         #
         self.parts.first_checks.append(
-            f"and.nocontrib( last(), {fail_when} ) -> fail()"
+            f"and.nocontrib( {thut.LAST_DATA_LINE}, {fail_when} ) -> fail()"
         )
 
     def _duplicate_values(self, *, rule: dict, location: str) -> None:

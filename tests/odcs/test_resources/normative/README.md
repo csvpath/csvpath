@@ -93,28 +93,39 @@ File-level checks
 
 - File-level rules (`rowCount`, and threshold counts) report through
   `fail()` and the csvpath's `is_valid`, not through matching.
+- They run on the last line with data, identified by
+  `eq( count_lines(), total_lines() )`: `count_lines()` counts non-blank
+  lines seen so far and `total_lines()` counts non-blank lines in the
+  file, the header included in both. `last()` is not used: a blank last
+  line is processed frozen, and `last()` composed in `and()` does not run
+  on a frozen line, so a file ending in a blank line would silently skip
+  every file-level check. Blank lines are not data rows either:
+  `subtract(total_lines(), 1)` counts only non-blank data lines.
 - `rowCount` must also fail a header-only file, and with `$[1*]` a
-  header-only file never reaches `last()`. So a csvpath with a `rowCount`
-  check uses the `$[*]` form, with the check before an explicit skip of
-  the header line:
+  header-only file has no scanned line at all (issue #306). So a csvpath
+  with a `rowCount` check uses the `$[*]` form, with the check before an
+  explicit skip of the header line:
 
       $[*][
-          and.nocontrib( last(), lte( subtract(total_lines(), 1), 0 ) ) -> fail()
+          and.nocontrib( eq( count_lines(), total_lines() ), lte( subtract(total_lines(), 1), 0 ) ) -> fail()
           first_line.nocontrib() -> skip()
           line( ... )
           ... per-line checks ...
       ]
 
 - Threshold counts work in either form, so they do not force `$[*]`.
-  Counters come after the per-line checks, then the last-line checks:
+  Counters come after the per-line checks, then the checks on the last
+  line with data:
 
       not.nocontrib( or( empty(#currency), in(#currency, "USD|EUR|GBP") ) ) -> counter.currency_invalid(1)
-      and.nocontrib( last(), gte( @currency_invalid, 3 ) ) -> fail()
+      and.nocontrib( eq( count_lines(), total_lines() ), gte( @currency_invalid, 3 ) ) -> fail()
 
   `counter()` creates its variable at 0 on first evaluation, so counters
   need no initialization and a check never sees an unset variable. On a
   header-only file there is nothing to count and the check does not run.
 - Everything else uses the simpler `$[1*]`.
+- Each pair with file-level checks has a data file ending in blank lines
+  to keep this covered.
 
 Quality rules with thresholds
 

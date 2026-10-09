@@ -48,3 +48,9 @@ runs:
     is_valid: true
     valid_lines: []
     # no rowCount rule, and 0 invalid currencies is under the threshold
+  - csvpath: payments.csvpath
+    data: payments_too_many_invalid_blank.csv
+    is_valid: false
+    valid_lines: [1, 5]
+    # payments_too_many_invalid.csv plus a trailing blank line: the
+    # threshold check still runs, on the last line with data

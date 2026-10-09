@@ -82,7 +82,7 @@ def test_odcs_schema_object_converter_row_count() -> None:
         contract=_contract(), obj=obj, report=ConversionReport()
     ).convert()
     assert (
-        "    and.nocontrib( last(), or( gt( 1, subtract(total_lines(), 1) ), "
+        "    and.nocontrib( eq( count_lines(), total_lines() ), or( gt( 1, subtract(total_lines(), 1) ), "
         "gt( subtract(total_lines(), 1), 2 ) ) ) -> fail()\n"
         "    first_line.nocontrib() -> skip()\n"
     ) in text
@@ -151,7 +151,10 @@ def test_odcs_schema_object_converter_duplicate_values_optional_threshold() -> N
         "    and.nocontrib( not( empty(#b) ), has_dups(#a, #b) ) "
         "-> counter.a_b_duplicate(1)\n"
     ) in text
-    assert "    and.nocontrib( last(), gte( @a_b_duplicate, 2 ) ) -> fail()\n" in text
+    assert (
+        "    and.nocontrib( eq( count_lines(), total_lines() ), gte( @a_b_duplicate, 2 ) ) -> fail()\n"
+        in text
+    )
 
 
 # ============================

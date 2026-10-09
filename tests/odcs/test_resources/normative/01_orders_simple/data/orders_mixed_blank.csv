@@ -1,0 +1,16 @@
+order_id,customer_email,quantity,status,order_date
+ORD-000001,a@example.com,5,open,2026-01-15
+ORD-000002,,1,shipped,2026-02-01
+ORD-000003,b@example.com,999,,2026-03-10
+ORD-00004,c@example.com,2,open,2026-01-15
+ORD-000005,not-an-email,2,open,2026-01-15
+ORD-000006,d@example.com,0,open,2026-01-15
+ORD-000007,e@example.com,1000,open,2026-01-15
+ORD-000008,f@example.com,,open,2026-01-15
+ORD-000009,g@example.com,abc,open,2026-01-15
+ORD-000010,h@example.com,3,lost,2026-01-15
+ORD-000011,i@example.com,3,open,15/01/2026
+ORD-000001,j@example.com,3,open,2026-01-15
+,k@example.com,3,open,2026-01-15
+ORD-000014,l@example.com,3,open,
+

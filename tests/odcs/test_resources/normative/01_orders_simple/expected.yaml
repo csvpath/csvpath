@@ -30,3 +30,15 @@ runs:
     is_valid: false
     valid_lines: []
     # rowCount mustBeGreaterThan 0 fails on a header-only file
+  - csvpath: orders.csvpath
+    data: orders_header_blank.csv
+    is_valid: false
+    valid_lines: []
+    # a header and a blank line is still 0 data rows. the rowCount check
+    # runs on the last line with data, so the trailing blank line does not
+    # hide it
+  - csvpath: orders.csvpath
+    data: orders_mixed_blank.csv
+    is_valid: true
+    valid_lines: [1, 2, 3]
+    # orders_mixed.csv plus a trailing blank line: same result

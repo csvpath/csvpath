@@ -22,7 +22,7 @@ $[1*][
     empty.nocontrib(#temp_c) -> counter.temp_c_null(1)
     or.nocontrib( empty(#status), in(#status, "N/A") ) -> counter.status_missing(1)
     and.nocontrib( not( empty(#batch) ), has_dups(#batch) ) -> counter.batch_duplicate(1)
-    and.nocontrib( last(), gte( multiply( divide( @temp_c_null, subtract(total_lines(), 1) ), 100 ), 30 ) ) -> fail()
-    and.nocontrib( last(), gt( @status_missing, 1 ) ) -> fail()
-    and.nocontrib( last(), gte( @batch_duplicate, 2 ) ) -> fail()
+    and.nocontrib( eq( count_lines(), total_lines() ), gte( multiply( divide( @temp_c_null, subtract(total_lines(), 1) ), 100 ), 30 ) ) -> fail()
+    and.nocontrib( eq( count_lines(), total_lines() ), gt( @status_missing, 1 ) ) -> fail()
+    and.nocontrib( eq( count_lines(), total_lines() ), gte( @batch_duplicate, 2 ) ) -> fail()
 ]

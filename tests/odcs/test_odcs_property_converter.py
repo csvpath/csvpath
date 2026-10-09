@@ -398,7 +398,7 @@ def test_odcs_property_invalid_values_threshold() -> None:
         'not.nocontrib( or( empty(#a), in(#a, "x") ) ) -> counter.a_invalid(1)'
     ]
     assert parts.last_checks == [
-        "and.nocontrib( last(), gte( @a_invalid, 5 ) ) -> fail()"
+        "and.nocontrib( eq( count_lines(), total_lines() ), gte( @a_invalid, 5 ) ) -> fail()"
     ]
 
 
@@ -437,7 +437,9 @@ def test_odcs_property_null_values_threshold() -> None:
     )
     assert parts.line_args == ["string.notnone(#a)"]
     assert parts.counters == ["empty.nocontrib(#a) -> counter.a_null(1)"]
-    assert parts.last_checks == ["and.nocontrib( last(), gt( @a_null, 2 ) ) -> fail()"]
+    assert parts.last_checks == [
+        "and.nocontrib( eq( count_lines(), total_lines() ), gt( @a_null, 2 ) ) -> fail()"
+    ]
 
 
 def test_odcs_property_duplicate_values_zero() -> None:
@@ -458,7 +460,7 @@ def test_odcs_property_duplicate_values_threshold() -> None:
         "and.nocontrib( not( empty(#a) ), has_dups(#a) ) -> counter.a_duplicate(1)"
     ]
     assert parts.last_checks == [
-        "and.nocontrib( last(), gte( @a_duplicate, 3 ) ) -> fail()"
+        "and.nocontrib( eq( count_lines(), total_lines() ), gte( @a_duplicate, 3 ) ) -> fail()"
     ]
     parts, _ = _convert({"name": "a", "required": True, "quality": [rule]})
     assert parts.line_args == ["string.notnone.distinct(#a)"]
@@ -476,7 +478,7 @@ def test_odcs_property_percent_threshold() -> None:
     )
     assert parts.line_args == ["string.notnone(#a)"]
     assert parts.last_checks == [
-        "and.nocontrib( last(), gte( multiply( divide( @a_null, "
+        "and.nocontrib( eq( count_lines(), total_lines() ), gte( multiply( divide( @a_null, "
         "subtract(total_lines(), 1) ), 100 ), 5 ) ) -> fail()"
     ]
 
@@ -590,5 +592,5 @@ def test_odcs_property_threshold_counters_do_not_collide() -> None:
         "empty.nocontrib(#order_id) -> counter.order_id_null_2(1)",
     ]
     assert parts.last_checks[1] == (
-        "and.nocontrib( last(), gte( @order_id_null_2, 3 ) ) -> fail()"
+        "and.nocontrib( eq( count_lines(), total_lines() ), gte( @order_id_null_2, 3 ) ) -> fail()"
     )
