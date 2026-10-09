@@ -1,0 +1,20 @@
+~
+  id: orders
+  odcs-contract-id: orders-contract
+  odcs-contract-version: 1.0.0
+  odcs-schema-object: orders
+  validation-mode: print, no-raise, no-fail, no-stop
+~
+$[*][
+    and.nocontrib( last(), not( gt( subtract(total_lines(), 1), 0 ) ) ) -> fail()
+    first_line.nocontrib() -> skip()
+    line(
+        string.notnone.distinct(#order_id),
+        email(#customer_email),
+        integer.notnone(#quantity, 999, 1),
+        string(#status),
+        date.notnone(#order_date, "%Y-%m-%d")
+    )
+    regex(/^ORD-[0-9]{6}$/, #order_id)
+    or( empty(#status), in(#status, "open|shipped|cancelled") )
+]

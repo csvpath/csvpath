@@ -1,0 +1,32 @@
+#
+# What the expected csvpath(s) must do against each data file.
+#
+#   csvpath:      file in expected/ to run
+#   valid_lines:  0-based physical line numbers (header is line 0) that must
+#                 match, i.e. the lines that conform to the contract. Every
+#                 other data line must not match.
+#   is_valid:     the csvpath's is_valid after the run. file-level quality
+#                 rules (e.g. rowCount) report through fail(), not matching.
+#
+runs:
+  - csvpath: orders.csvpath
+    data: orders_mixed.csv
+    is_valid: true
+    valid_lines: [1, 2, 3]
+    # why each other line is invalid:
+    #   4  order_id fails pattern
+    #   5  customer_email not an email
+    #   6  quantity below minimum
+    #   7  quantity above maximum
+    #   8  quantity required but empty
+    #   9  quantity not an integer
+    #   10 status not in enum
+    #   11 order_date not yyyy-MM-dd
+    #   12 order_id duplicates line 1 (unique)
+    #   13 order_id required but empty
+    #   14 order_date required but empty
+  - csvpath: orders.csvpath
+    data: orders_empty.csv
+    is_valid: false
+    valid_lines: []
+    # rowCount mustBeGreaterThan 0 fails on a header-only file
