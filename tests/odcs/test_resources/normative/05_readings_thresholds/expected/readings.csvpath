@@ -1,0 +1,28 @@
+~
+  id: readings
+  odcs-contract-id: readings-contract
+  odcs-contract-version: 1.0.0
+  odcs-schema-object: readings
+  validation-mode: print, no-raise, no-fail, no-stop
+~
+$[1*][
+    line(
+        string.notnone(#sensor_id),
+        datetime.notnone(#read_at, "%Y-%m-%d %H:%M"),
+        integer.notnone(#interval_s),
+        decimal.notnone(#temp_c),
+        string.notnone(#status),
+        string(#batch),
+        decimal(#weight)
+    )
+    eq( mod(#interval_s, 15), 0 )
+    not( in(#status, "N/A") )
+    or( empty(#batch), not( has_dups(#batch) ) )
+    not( has_dups(#sensor_id, #read_at) )
+    empty.nocontrib(#temp_c) -> counter.temp_c_null(1)
+    or.nocontrib( empty(#status), in(#status, "N/A") ) -> counter.status_missing(1)
+    and.nocontrib( not( empty(#batch) ), has_dups(#batch) ) -> counter.batch_duplicate(1)
+    and.nocontrib( last(), gte( multiply( divide( @temp_c_null, subtract(total_lines(), 1) ), 100 ), 30 ) ) -> fail()
+    and.nocontrib( last(), gt( @status_missing, 1 ) ) -> fail()
+    and.nocontrib( last(), gte( @batch_duplicate, 2 ) ) -> fail()
+]

@@ -26,8 +26,13 @@ class PropertyConverter:
     #
     HANDLED_OPTIONS = {
         "string": {"minLength", "maxLength", "pattern", "format"},
-        "integer": {"minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"},
-        "number": {"minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"},
+        "integer": {
+            "minimum",
+            "maximum",
+            "exclusiveMinimum",
+            "exclusiveMaximum",
+            "multipleOf",
+        },
         "date": {
             "format",
             "minimum",
@@ -36,6 +41,7 @@ class PropertyConverter:
             "exclusiveMaximum",
         },
     }
+    HANDLED_OPTIONS["number"] = HANDLED_OPTIONS["integer"]
     HANDLED_OPTIONS["timestamp"] = HANDLED_OPTIONS["date"] | {
         "timezone",
         "defaultTimezone",
@@ -87,6 +93,8 @@ class PropertyConverter:
             self._date()
         else:
             self._untyped()
+        if lt not in self.UNTYPED:
+            self._unique_check()
         self._unhandled_options()
         self._enum()
         self._quality()
@@ -102,8 +110,20 @@ class PropertyConverter:
         )
 
     def _qualifiers(self) -> str:
-        q = ".notnone" if self.required else ""
-        return q + (".distinct" if self.unique else "")
+        #
+        # .distinct treats two empty values as duplicates. empty values are
+        # never duplicates (SQL semantics), so .distinct is only used where
+        # empties are already rejected; see _unique_check().
+        #
+        if self.required:
+            return ".notnone" + (".distinct" if self.unique else "")
+        return ""
+
+    def _unique_check(self) -> None:
+        if self.unique and not self.required:
+            self.parts.line_checks.append(
+                f"or( empty({self.h}), not( has_dups({self.h}) ) )"
+            )
 
     def _per_line(self, *, condition: str) -> str:
         # an optional column may be empty; required is enforced in the line()
@@ -178,6 +198,30 @@ class PropertyConverter:
             self.parts.line_checks.append(
                 self._per_line(condition=f"gt({n}, {self.h})")
             )
+        multiple = self.options.get("multipleOf")
+        if multiple is not None:
+            self._multiple_of(multiple=multiple)
+
+    def _multiple_of(self, *, multiple) -> None:
+        #
+        # mod() rounds its result to 2 places, so a float remainder near the
+        # divisor (e.g. 114.99999 % 5) reads as 5.0, not 0. integer divisors
+        # are exact.
+        #
+        if isinstance(multiple, float) and not multiple.is_integer():
+            self._skip(
+                location=f"{self.location}.logicalTypeOptions.multipleOf",
+                feature="multipleOf",
+                reason=(
+                    "mod() rounds to 2 places, so a non-integer multipleOf "
+                    "cannot be checked reliably."
+                ),
+            )
+            return
+        n = csut.number(value=multiple)
+        self.parts.line_checks.append(
+            self._per_line(condition=f"eq( mod({self.h}, {n}), 0 )")
+        )
 
     def _boolean(self) -> None:
         if self.required:
@@ -191,15 +235,6 @@ class PropertyConverter:
         self.parts.line_checks.append(
             f"or( empty({self.h}), in( lower( strip({self.h}) ), {self.BOOLEAN_VALUES} ) )"
         )
-        self._unique_not_checked()
-
-    def _unique_not_checked(self) -> None:
-        if self.unique:
-            self._skip(
-                location=f"{self.location}.unique",
-                feature="unique",
-                reason="unique is not checked on an optional column of this type.",
-            )
 
     def _date_format(self) -> str | None:
         fmt = self.options.get("format")
@@ -235,7 +270,6 @@ class PropertyConverter:
             self.parts.line_checks.append(
                 f"or( empty({self.h}), {fn}({self.h}{farg}) )"
             )
-            self._unique_not_checked()
         self._date_bounds(fn=fn, fmt=fmt, farg=farg)
 
     def _date_bounds(self, *, fn: str, fmt: str | None, farg: str) -> None:
@@ -326,21 +360,32 @@ class PropertyConverter:
 
     def _quality_flags(self) -> None:
         #
-        # lines with a null do not match under any nullValues rule; a
-        # threshold adds a count on top. zero-tolerance duplicateValues is the
-        # same as unique.
+        # under decision 2, lines that break a nullValues, missingValues, or
+        # duplicateValues rule never match, whatever the threshold; a
+        # threshold only adds a count. so these rules set required/unique
+        # before the line() argument is built.
         #
         for q in self.prop.get("quality") or []:
-            if q.get("type", "library") != "library" or q.get("unit") == "percent":
+            if q.get("type", "library") != "library":
                 continue
             metric = quut.metric(rule=q)
             if metric == "nullValues":
                 self.required = True
-            if metric == "duplicateValues":
-                try:
-                    self.unique = self.unique or thut.is_zero_tolerance(rule=q)
-                except ValueError:
-                    continue
+            elif metric == "missingValues":
+                empties, _ = self._missing_values(rule=q)
+                self.required = self.required or empties
+            elif metric == "duplicateValues":
+                self.unique = True
+
+    def _missing_values(self, *, rule: dict) -> tuple[bool, list]:
+        """(whether null or empty string counts as missing, the other
+        values that count as missing). With no arguments, missing means
+        null or empty."""
+        args = rule.get("arguments") or {}
+        values = args.get("missingValues", [None, ""])
+        empties = any(v is None or v == "" for v in values)
+        others = [v for v in values if v is not None and v != ""]
+        return empties, others
 
     def _quality(self) -> None:
         for j, q in enumerate(self.prop.get("quality") or []):
@@ -357,13 +402,6 @@ class PropertyConverter:
 
     def _library(self, *, rule: dict, location: str) -> None:
         metric = quut.metric(rule=rule)
-        if rule.get("unit") == "percent":
-            self._skip(
-                location=location,
-                feature=f"quality.{metric}",
-                reason="Percent thresholds are not yet supported.",
-            )
-            return
         try:
             zero = thut.is_zero_tolerance(rule=rule)
         except ValueError as e:
@@ -372,22 +410,62 @@ class PropertyConverter:
         if metric == "invalidValues":
             self._invalid_values(rule=rule, location=location, zero=zero)
         elif metric == "nullValues":
+            # .notnone is set by _quality_flags()
             if not zero:
-                var = csut.variable(name=self.name, suffix="null")
-                self._threshold(var=var, rule=rule, when=f"empty.nocontrib({self.h})")
-        elif metric == "duplicateValues":
-            if not zero:
-                self._skip(
-                    location=location,
-                    feature="quality.duplicateValues",
-                    reason="Non-zero duplicateValues thresholds are not yet supported.",
+                self._threshold(
+                    suffix="null", rule=rule, when=f"empty.nocontrib({self.h})"
                 )
+        elif metric == "missingValues":
+            self._missing(rule=rule, location=location, zero=zero)
+        elif metric == "duplicateValues":
+            # uniqueness is set by _quality_flags()
+            if not zero:
+                when = f"has_dups.nocontrib({self.h})"
+                if not self.required:
+                    when = (
+                        f"and.nocontrib( not( empty({self.h}) ), has_dups({self.h}) )"
+                    )
+                self._threshold(suffix="duplicate", rule=rule, when=when)
         else:
             self._skip(
                 location=location,
                 feature=f"quality.{metric}",
                 reason=f"Library metric {metric} is not yet supported on a property.",
             )
+
+    def _missing(self, *, rule: dict, location: str, zero: bool) -> None:
+        empties, others = self._missing_values(rule=rule)
+        values = None
+        if others:
+            try:
+                values = csut.in_values(values=others)
+            except ValueError as e:
+                self._skip(
+                    location=f"{location}.arguments.missingValues",
+                    feature="missingValues",
+                    reason=f"{e}",
+                )
+                return
+            # empty values are handled by .notnone, set in _quality_flags()
+            self.parts.line_checks.append(
+                self._per_line(condition=f"not( in({self.h}, {values}) )")
+            )
+        if zero:
+            return
+        if empties and values:
+            when = f"or.nocontrib( empty({self.h}), in({self.h}, {values}) )"
+        elif empties:
+            when = f"empty.nocontrib({self.h})"
+        elif values:
+            when = f"in.nocontrib({self.h}, {values})"
+        else:
+            self._skip(
+                location=location,
+                feature="quality.missingValues",
+                reason="missingValues lists no values.",
+            )
+            return
+        self._threshold(suffix="missing", rule=rule, when=when)
 
     def _invalid_values(self, *, rule: dict, location: str, zero: bool) -> None:
         args = rule.get("arguments") or {}
@@ -427,25 +505,12 @@ class PropertyConverter:
             #
             # empty values are nullValues/missingValues, not invalidValues
             #
-            var = csut.variable(name=self.name, suffix="invalid")
             when = f"not.nocontrib( or( empty({self.h}), {condition} ) )"
-            self._threshold(var=var, rule=rule, when=when)
+            self._threshold(suffix="invalid", rule=rule, when=when)
 
-    def _threshold(self, *, var: str, rule: dict, when: str) -> None:
-        # when: the condition, with nocontrib, under which a line is counted
-        #
-        # two threshold rules on one property, or two column names that
-        # sanitize the same, must not share a counter
-        #
-        base = var
-        n = 2
-        while f"first_line.nocontrib() -> @{var} = 0" in self.parts.inits:
-            var = f"{base}_{n}"
-            n += 1
-        self.parts.inits.append(f"first_line.nocontrib() -> @{var} = 0")
-        self.parts.counters.append(f"{when} -> counter.{var}(1)")
-        fail_when = thut.fail_when(value=f"@{var}", rule=rule)
-        self.parts.last_checks.append(f"and.nocontrib( last(), {fail_when} ) -> fail()")
+    def _threshold(self, *, suffix: str, rule: dict, when: str) -> None:
+        base = csut.variable(name=self.name, suffix=suffix)
+        self.parts.add_threshold(base=base, when=when, rule=rule)
 
     # ============================
     # relationships

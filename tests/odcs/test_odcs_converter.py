@@ -93,10 +93,13 @@ def test_odcs_schema_object_converter_skips() -> None:
         quality=[
             {
                 "metric": "duplicateValues",
-                "arguments": {"properties": ["a"]},
+                "arguments": {"properties": ["x"]},
                 "mustBe": 0,
             },
+            {"metric": "duplicateValues", "mustBe": 0},
             {"type": "sql", "query": "SELECT 1", "mustBe": 1},
+            {"metric": "rowCount", "mustBeLessThan": 5, "unit": "percent"},
+            {"metric": "nullValues", "mustBe": 0},
         ],
         relationships=[{"from": "t.a", "to": "u.b"}],
     )
@@ -104,9 +107,51 @@ def test_odcs_schema_object_converter_skips() -> None:
     SchemaObjectConverter(contract=_contract(), obj=obj, report=report).convert()
     assert [(s.location, s.feature) for s in report.skipped] == [
         ("quality[0]", "quality.duplicateValues"),
-        ("quality[1]", "quality.sql"),
+        ("quality[1]", "quality.duplicateValues"),
+        ("quality[2]", "quality.sql"),
+        ("quality[3]", "quality.rowCount"),
+        ("quality[4]", "quality.nullValues"),
         ("relationships[0]", "relationship"),
     ]
+
+
+def _two_columns(*, required_b: bool) -> list[dict]:
+    return [
+        {"name": "a", "logicalType": "string", "required": True},
+        {"name": "b", "logicalType": "string", "required": required_b},
+    ]
+
+
+def test_odcs_schema_object_converter_duplicate_values() -> None:
+    rule = {"metric": "duplicateValues", "arguments": {"properties": ["a", "b"]}}
+    obj = {
+        "name": "t",
+        "properties": _two_columns(required_b=True),
+        "quality": [{**rule, "mustBe": 0}],
+    }
+    parts_text = SchemaObjectConverter(
+        contract=_contract(), obj=obj, report=ConversionReport()
+    ).convert()
+    assert "    not( has_dups(#a, #b) )\n" in parts_text
+    assert "counter" not in parts_text
+
+
+def test_odcs_schema_object_converter_duplicate_values_optional_threshold() -> None:
+    rule = {"metric": "duplicateValues", "arguments": {"properties": ["a", "b"]}}
+    obj = {
+        "name": "t",
+        "properties": _two_columns(required_b=False),
+        "quality": [{**rule, "mustBeLessThan": 2}],
+    }
+    text = SchemaObjectConverter(
+        contract=_contract(), obj=obj, report=ConversionReport()
+    ).convert()
+    assert "    or( empty(#b), not( has_dups(#a, #b) ) )\n" in text
+    assert (
+        "    and.nocontrib( not( empty(#b) ), has_dups(#a, #b) ) "
+        "-> counter.a_b_duplicate(1)\n"
+    ) in text
+    assert "    and.nocontrib( last(), gte( @a_b_duplicate, 2 ) ) -> fail()\n" in text
 
 
 # ============================
@@ -195,3 +240,21 @@ def test_odcs_converter_quoted_and_indexed_headers_run(tmp_path) -> None:
     text = "Order ID,price($)\n1,2.50\nx,2.50\n3,\n"
     lines, _ = _run(csvpath=csvpath, tmp_path=tmp_path, text=text)
     assert lines == [["1", "2.50"]]
+
+
+def test_odcs_converter_composite_duplicates_ignore_empties_runs(tmp_path) -> None:
+    obj = {
+        "name": "t",
+        "properties": _two_columns(required_b=False),
+        "quality": [
+            {
+                "metric": "duplicateValues",
+                "arguments": {"properties": ["a", "b"]},
+                "mustBe": 0,
+            }
+        ],
+    }
+    csvpath = OdcsConverter(contract=_contract(obj)).convert().csvpaths["t"]
+    text = "a,b\nx,1\nx,\nx,\nx,1\ny,1\n"
+    lines, _ = _run(csvpath=csvpath, tmp_path=tmp_path, text=text)
+    assert lines == [["x", "1"], ["x", ""], ["x", ""], ["y", "1"]]

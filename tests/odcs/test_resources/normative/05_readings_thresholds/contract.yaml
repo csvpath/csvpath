@@ -1,0 +1,71 @@
+#
+# Normative pair 05: thresholds and the remaining library metrics.
+#
+# Covers:
+#   - percent thresholds (unit: percent): the count is compared as a
+#     percentage of data rows, multiply( divide( @c, rows ), 100 )
+#   - nullValues with a percent threshold -> .notnone plus a count
+#   - missingValues with arguments.missingValues [null, '', 'N/A']:
+#     null/'' -> .notnone; other values -> not( in() ); plus a count of both
+#   - duplicateValues on an optional property, with a non-zero threshold
+#   - empty values are never duplicates (SQL semantics, agreed with David
+#     2026-10-09): optional unique columns use
+#     or( empty(#c), not( has_dups(#c) ) ) instead of .distinct
+#   - schema-level duplicateValues over two properties -> not( has_dups() )
+#     on the pair of columns
+#   - integer multipleOf -> eq( mod(), 0 )
+#   - non-integer multipleOf is reported, not translated: mod() rounds to 2
+#     places, which makes float remainders unreliable
+#
+apiVersion: v3.2.0
+kind: DataContract
+id: readings-contract
+version: 1.0.0
+status: active
+name: Readings
+schema:
+  - name: readings
+    logicalType: object
+    quality:
+      - metric: duplicateValues
+        arguments:
+          properties: [sensor_id, read_at]
+        mustBe: 0
+    properties:
+      - name: sensor_id
+        logicalType: string
+        required: true
+      - name: read_at
+        logicalType: timestamp
+        required: true
+        logicalTypeOptions:
+          format: "yyyy-MM-dd HH:mm"
+      - name: interval_s
+        logicalType: integer
+        required: true
+        logicalTypeOptions:
+          multipleOf: 15
+      - name: temp_c
+        logicalType: number
+        quality:
+          - metric: nullValues
+            mustBeLessThan: 30
+            unit: percent
+      - name: status
+        logicalType: string
+        quality:
+          - metric: missingValues
+            arguments:
+              missingValues: [null, "", "N/A"]
+            mustBeLessOrEqualTo: 1
+            unit: rows
+      - name: batch
+        logicalType: string
+        quality:
+          - metric: duplicateValues
+            mustBeLessThan: 2
+            unit: rows
+      - name: weight
+        logicalType: number
+        logicalTypeOptions:
+          multipleOf: 0.5

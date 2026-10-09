@@ -182,8 +182,35 @@ def test_odcs_property_number_exclusive_bounds() -> None:
 
 def test_odcs_property_number_unsupported_option() -> None:
     _, report = _convert(
-        {"name": "a", "logicalType": "integer", "logicalTypeOptions": {"multipleOf": 5}}
+        {"name": "a", "logicalType": "integer", "logicalTypeOptions": {"format": "i32"}}
     )
+    assert _features(report) == [("properties.a.logicalTypeOptions.format", "format")]
+
+
+def test_odcs_property_multiple_of() -> None:
+    prop = {
+        "name": "a",
+        "logicalType": "integer",
+        "logicalTypeOptions": {"multipleOf": 5},
+    }
+    parts, report = _convert(prop)
+    assert parts.line_checks == ["or( empty(#a), eq( mod(#a, 5), 0 ) )"]
+    parts, _ = _convert({**prop, "required": True})
+    assert parts.line_checks == ["eq( mod(#a, 5), 0 )"]
+    parts, _ = _convert({**prop, "logicalTypeOptions": {"multipleOf": 5.0}})
+    assert parts.line_checks == ["or( empty(#a), eq( mod(#a, 5), 0 ) )"]
+    assert report.skipped == []
+
+
+def test_odcs_property_multiple_of_non_integer_is_skipped() -> None:
+    parts, report = _convert(
+        {
+            "name": "a",
+            "logicalType": "number",
+            "logicalTypeOptions": {"multipleOf": 0.5},
+        }
+    )
+    assert parts.line_checks == []
     assert _features(report) == [
         ("properties.a.logicalTypeOptions.multipleOf", "multipleOf")
     ]
@@ -204,9 +231,29 @@ def test_odcs_property_boolean_optional_works_around_300_and_302() -> None:
     parts, report = _convert({"name": "a", "logicalType": "boolean", "unique": True})
     assert parts.line_args == ["blank(#a)"]
     assert parts.line_checks == [
-        'or( empty(#a), in( lower( strip(#a) ), "true|false|1|0" ) )'
+        'or( empty(#a), in( lower( strip(#a) ), "true|false|1|0" ) )',
+        "or( empty(#a), not( has_dups(#a) ) )",
     ]
-    assert _features(report) == [("properties.a.unique", "unique")]
+    assert report.skipped == []
+
+
+# ============================
+# unique: empty values are never duplicates
+# ============================
+
+
+def test_odcs_property_unique_required_uses_distinct() -> None:
+    parts, _ = _convert({"name": "a", "required": True, "unique": True})
+    assert parts.line_args == ["string.notnone.distinct(#a)"]
+    assert parts.line_checks == []
+
+
+@pytest.mark.parametrize("lt", ["string", "integer", "number", "date", "timestamp"])
+def test_odcs_property_unique_optional_ignores_empties(lt: str) -> None:
+    parts, report = _convert({"name": "a", "logicalType": lt, "unique": True})
+    assert ".distinct" not in parts.line_args[0]
+    assert "or( empty(#a), not( has_dups(#a) ) )" in parts.line_checks
+    assert report.skipped == []
 
 
 # ============================
@@ -334,7 +381,7 @@ def _invalid_values(args: dict, **threshold) -> dict:
 def test_odcs_property_invalid_values_zero_tolerance() -> None:
     parts, _ = _convert(_invalid_values({"validValues": ["x", "y"]}))
     assert parts.line_checks == ['or( empty(#a), in(#a, "x|y") )']
-    assert parts.counters == [] and parts.inits == [] and parts.last_checks == []
+    assert parts.counters == [] and parts.last_checks == []
 
 
 def test_odcs_property_invalid_values_pattern_and_values() -> None:
@@ -347,7 +394,6 @@ def test_odcs_property_invalid_values_pattern_and_values() -> None:
 def test_odcs_property_invalid_values_threshold() -> None:
     parts, _ = _convert(_invalid_values({"validValues": ["x"]}, mustBeLessThan=5))
     assert parts.line_checks == ['or( empty(#a), in(#a, "x") )']
-    assert parts.inits == ["first_line.nocontrib() -> @a_invalid = 0"]
     assert parts.counters == [
         'not.nocontrib( or( empty(#a), in(#a, "x") ) ) -> counter.a_invalid(1)'
     ]
@@ -390,22 +436,107 @@ def test_odcs_property_null_values_threshold() -> None:
         {"name": "a", "quality": [{"metric": "nullValues", "mustBeLessOrEqualTo": 2}]}
     )
     assert parts.line_args == ["string.notnone(#a)"]
-    assert parts.inits == ["first_line.nocontrib() -> @a_null = 0"]
     assert parts.counters == ["empty.nocontrib(#a) -> counter.a_null(1)"]
     assert parts.last_checks == ["and.nocontrib( last(), gt( @a_null, 2 ) ) -> fail()"]
 
 
-def test_odcs_property_duplicate_values() -> None:
+def test_odcs_property_duplicate_values_zero() -> None:
     parts, report = _convert(
         {"name": "a", "quality": [{"metric": "duplicateValues", "mustBe": 0}]}
     )
-    assert parts.line_args == ["string.distinct(#a)"]
-    assert report.skipped == []
-    parts, report = _convert(
-        {"name": "a", "quality": [{"metric": "duplicateValues", "mustBeLessThan": 3}]}
-    )
     assert parts.line_args == ["string(#a)"]
-    assert _features(report) == [("properties.a.quality[0]", "quality.duplicateValues")]
+    assert parts.line_checks == ["or( empty(#a), not( has_dups(#a) ) )"]
+    assert parts.counters == []
+    assert report.skipped == []
+
+
+def test_odcs_property_duplicate_values_threshold() -> None:
+    rule = {"metric": "duplicateValues", "mustBeLessThan": 3}
+    parts, _ = _convert({"name": "a", "quality": [rule]})
+    assert parts.line_checks == ["or( empty(#a), not( has_dups(#a) ) )"]
+    assert parts.counters == [
+        "and.nocontrib( not( empty(#a) ), has_dups(#a) ) -> counter.a_duplicate(1)"
+    ]
+    assert parts.last_checks == [
+        "and.nocontrib( last(), gte( @a_duplicate, 3 ) ) -> fail()"
+    ]
+    parts, _ = _convert({"name": "a", "required": True, "quality": [rule]})
+    assert parts.line_args == ["string.notnone.distinct(#a)"]
+    assert parts.counters == ["has_dups.nocontrib(#a) -> counter.a_duplicate(1)"]
+
+
+def test_odcs_property_percent_threshold() -> None:
+    parts, _ = _convert(
+        {
+            "name": "a",
+            "quality": [
+                {"metric": "nullValues", "mustBeLessThan": 5, "unit": "percent"}
+            ],
+        }
+    )
+    assert parts.line_args == ["string.notnone(#a)"]
+    assert parts.last_checks == [
+        "and.nocontrib( last(), gte( multiply( divide( @a_null, "
+        "subtract(total_lines(), 1) ), 100 ), 5 ) ) -> fail()"
+    ]
+
+
+def test_odcs_property_missing_values() -> None:
+    rule = {
+        "metric": "missingValues",
+        "arguments": {"missingValues": [None, "", "N/A", "-"]},
+        "mustBe": 0,
+    }
+    parts, report = _convert({"name": "a", "quality": [rule]})
+    assert parts.line_args == ["string.notnone(#a)"]
+    assert parts.line_checks == ['not( in(#a, "N/A|-") )']
+    assert parts.counters == []
+    assert report.skipped == []
+
+
+def test_odcs_property_missing_values_without_empties() -> None:
+    rule = {
+        "metric": "missingValues",
+        "arguments": {"missingValues": ["N/A"]},
+        "mustBeLessThan": 2,
+    }
+    parts, _ = _convert({"name": "a", "quality": [rule]})
+    assert parts.line_args == ["string(#a)"]
+    assert parts.line_checks == ['or( empty(#a), not( in(#a, "N/A") ) )']
+    assert parts.counters == ['in.nocontrib(#a, "N/A") -> counter.a_missing(1)']
+
+
+def test_odcs_property_missing_values_default_is_null_or_empty() -> None:
+    rule = {"metric": "missingValues", "mustBeLessThan": 2}
+    parts, _ = _convert({"name": "a", "quality": [rule]})
+    assert parts.line_args == ["string.notnone(#a)"]
+    assert parts.line_checks == []
+    assert parts.counters == ["empty.nocontrib(#a) -> counter.a_missing(1)"]
+
+
+def test_odcs_property_missing_values_both_kinds_counted() -> None:
+    rule = {
+        "metric": "missingValues",
+        "arguments": {"missingValues": [None, "N/A"]},
+        "mustBeLessThan": 2,
+    }
+    parts, _ = _convert({"name": "a", "quality": [rule]})
+    assert parts.counters == [
+        'or.nocontrib( empty(#a), in(#a, "N/A") ) -> counter.a_missing(1)'
+    ]
+
+
+def test_odcs_property_missing_values_inexpressible() -> None:
+    rule = {
+        "metric": "missingValues",
+        "arguments": {"missingValues": ["a|b"]},
+        "mustBe": 0,
+    }
+    parts, report = _convert({"name": "a", "quality": [rule]})
+    assert parts.line_checks == []
+    assert _features(report) == [
+        ("properties.a.quality[0].arguments.missingValues", "missingValues")
+    ]
 
 
 def test_odcs_property_v30_rule_name() -> None:
@@ -416,11 +547,6 @@ def test_odcs_property_v30_rule_name() -> None:
 @pytest.mark.parametrize(
     "rule,feature",
     [
-        (
-            {"metric": "nullValues", "mustBeLessThan": 5, "unit": "percent"},
-            "quality.nullValues",
-        ),
-        ({"metric": "missingValues", "mustBe": 0}, "quality.missingValues"),
         ({"metric": "rowCount", "mustBe": 0}, "quality.rowCount"),
         ({"metric": "nullValues"}, "quality.nullValues"),
         ({"type": "sql", "query": "SELECT 1", "mustBe": 1}, "quality.sql"),
@@ -459,13 +585,10 @@ def test_odcs_property_threshold_counters_do_not_collide() -> None:
             parts=parts,
             report=report,
         ).convert()
-    assert parts.inits == [
-        "first_line.nocontrib() -> @order_id_null = 0",
-        "first_line.nocontrib() -> @order_id_null_2 = 0",
+    assert parts.counters == [
+        'empty.nocontrib(#"Order ID") -> counter.order_id_null(1)',
+        "empty.nocontrib(#order_id) -> counter.order_id_null_2(1)",
     ]
-    assert (
-        parts.counters[1] == "empty.nocontrib(#order_id) -> counter.order_id_null_2(1)"
-    )
     assert parts.last_checks[1] == (
         "and.nocontrib( last(), gte( @order_id_null_2, 3 ) ) -> fail()"
     )

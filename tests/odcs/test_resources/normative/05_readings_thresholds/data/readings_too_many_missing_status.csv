@@ -1,0 +1,4 @@
+sensor_id,read_at,interval_s,temp_c,status,batch,weight
+s1,2026-01-01 00:00,15,20.5,,b1,
+s1,2026-01-01 00:15,15,20.5,N/A,b2,
+s1,2026-01-01 00:30,15,21.0,ok,b3,

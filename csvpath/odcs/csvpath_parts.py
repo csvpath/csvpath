@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 
+from .threshold_utility import ThresholdUtility as thut
+
 
 @dataclass
 class CsvPathParts:
@@ -7,11 +9,10 @@ class CsvPathParts:
     schema object, and rendered in a fixed order:
 
         metadata comment
-        $[1*][            or $[*][ when there are file-level checks
+        $[1*][            or $[*][ when there are first_checks
             first_checks  file-level checks that must also see a
                           header-only file (e.g. rowCount)
-            inits         threshold counter initializations
-            first_line.nocontrib() -> skip()
+            first_line.nocontrib() -> skip()    only in the $[*] form
             line( line_args )
             line_checks   per-line checks outside the line()
             counters      threshold counters
@@ -21,7 +22,6 @@ class CsvPathParts:
 
     metadata: dict[str, str] = field(default_factory=dict)
     first_checks: list[str] = field(default_factory=list)
-    inits: list[str] = field(default_factory=list)
     line_args: list[str] = field(default_factory=list)
     line_checks: list[str] = field(default_factory=list)
     counters: list[str] = field(default_factory=list)
@@ -32,10 +32,39 @@ class CsvPathParts:
     @property
     def needs_full_scan(self) -> bool:
         #
-        # with $[1*] a header-only file never reaches last(), so file-level
-        # checks need $[*] and an explicit skip of the header line
+        # with $[1*] a header-only file never reaches last(), so checks that
+        # must see a header-only file need $[*] and an explicit skip of the
+        # header line. threshold last_checks do not: with no data lines there
+        # is nothing to count, so they never run in either form.
         #
-        return bool(self.first_checks or self.inits or self.last_checks)
+        return bool(self.first_checks)
+
+    def add_threshold(self, *, base: str, when: str, rule: dict) -> str:
+        """adds a counter and its last-line check for a threshold rule, and
+        returns the counter variable name.
+
+        base: the variable name to use, made unique if another counter has
+              it (two rules on one column, or column names that sanitize the
+              same)
+        when: the condition, with nocontrib, under which a line is counted
+
+        counter() creates its variable at 0 on first evaluation, so no
+        initialization is needed.
+        """
+        if not isinstance(base, str) or base.strip() == "":
+            raise ValueError("base must be a non-empty str")
+        if not isinstance(when, str) or when.strip() == "":
+            raise ValueError("when must be a non-empty str")
+        var = base
+        n = 2
+        while any(c.endswith(f"-> counter.{var}(1)") for c in self.counters):
+            var = f"{base}_{n}"
+            n += 1
+        self.counters.append(f"{when} -> counter.{var}(1)")
+        value = thut.count_value(var=var, rule=rule)
+        fail_when = thut.fail_when(value=value, rule=rule)
+        self.last_checks.append(f"and.nocontrib( last(), {fail_when} ) -> fail()")
+        return var
 
     def render(self) -> str:
         if len(self.line_args) == 0:
@@ -48,7 +77,6 @@ class CsvPathParts:
         if self.needs_full_scan:
             out.append("$[*][")
             out.extend(f"{i}{c}" for c in self.first_checks)
-            out.extend(f"{i}{c}" for c in self.inits)
             out.append(f"{i}first_line.nocontrib() -> skip()")
         else:
             out.append("$[1*][")

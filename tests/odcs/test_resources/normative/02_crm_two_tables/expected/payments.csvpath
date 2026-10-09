@@ -5,9 +5,7 @@
   odcs-schema-object: payments
   validation-mode: print, no-raise, no-fail, no-stop
 ~
-$[*][
-    first_line.nocontrib() -> @currency_invalid = 0
-    first_line.nocontrib() -> skip()
+$[1*][
     line(
         uuid.notnone.distinct(#payment_id),
         integer.notnone(#customer_id),

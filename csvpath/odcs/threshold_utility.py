@@ -10,6 +10,11 @@ class ThresholdUtility:
     lte(), eq(), and neq() are correct.
     """
 
+    #
+    # data rows in the file being validated: every line but the header
+    #
+    ROWS = "subtract(total_lines(), 1)"
+
     OPERATORS = [
         "mustBe",
         "mustNotBe",
@@ -33,17 +38,36 @@ class ThresholdUtility:
         return found[0], rule[found[0]]
 
     @classmethod
+    def is_percent(cls, *, rule: dict) -> bool:
+        if not isinstance(rule, dict):
+            raise TypeError(f"rule must be a dict, not {type(rule)}")
+        return rule.get("unit") == "percent"
+
+    @classmethod
     def is_zero_tolerance(cls, *, rule: dict) -> bool:
         """True when a count-of-bad-values rule allows no bad values at all,
         which makes it a per-line constraint"""
         op, value = cls.operator(rule=rule)
         if op == "mustBe":
             return value == 0
-        if op == "mustBeLessThan":
-            return value == 1
         if op == "mustBeLessOrEqualTo":
             return value == 0
+        if op == "mustBeLessThan":
+            #
+            # fewer than 1 row means none; fewer than 1 percent does not
+            #
+            return value == 1 and not cls.is_percent(rule=rule)
         return False
+
+    @classmethod
+    def count_value(cls, *, var: str, rule: dict) -> str:
+        """the CsvPath value a counter is compared as: the count itself, or
+        for a percent rule, the count as a percentage of data rows"""
+        if not isinstance(var, str) or var.strip() == "":
+            raise ValueError("var must be a non-empty str")
+        if cls.is_percent(rule=rule):
+            return f"multiply( divide( @{var}, {cls.ROWS} ), 100 )"
+        return f"@{var}"
 
     @classmethod
     def fail_when(cls, *, value: str, rule: dict) -> str:
