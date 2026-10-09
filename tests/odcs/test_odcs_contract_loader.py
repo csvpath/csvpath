@@ -84,3 +84,8 @@ def test_odcs_loader_validate_schema_invalid() -> None:
 def test_odcs_loader_validate_not_a_dict() -> None:
     with pytest.raises(TypeError):
         OdcsContractLoader.validate(contract=[])
+
+
+def test_odcs_loader_schema_unknown_version() -> None:
+    with pytest.raises(ValueError):
+        OdcsContractLoader.schema(api_version="v9.9.9")

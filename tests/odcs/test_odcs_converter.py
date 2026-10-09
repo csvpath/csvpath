@@ -6,7 +6,7 @@ import copy
 import pytest
 
 from csvpath import CsvPath
-from csvpath.odcs import OdcsConverter, OdcsException
+from csvpath.odcs import OdcsContractLoader, OdcsConverter, OdcsException
 from csvpath.odcs.conversion_report import ConversionReport
 from csvpath.odcs.schema_object_converter import SchemaObjectConverter
 
@@ -70,10 +70,15 @@ def test_odcs_schema_object_converter_metadata() -> None:
 
 
 def test_odcs_schema_object_converter_no_properties() -> None:
-    with pytest.raises(OdcsException):
-        SchemaObjectConverter(
-            contract=_contract(), obj={"name": "t"}, report=ConversionReport()
-        ).convert()
+    # e.g. a Kafka topic whose schema is defined in a schema registry
+    report = ConversionReport()
+    text = SchemaObjectConverter(
+        contract=_contract(), obj={"name": "t"}, report=report
+    ).convert()
+    assert text is None
+    assert [(s.object, s.location, s.feature) for s in report.skipped] == [
+        ("t", "properties", "properties")
+    ]
 
 
 def test_odcs_schema_object_converter_row_count() -> None:
@@ -261,3 +266,78 @@ def test_odcs_converter_composite_duplicates_ignore_empties_runs(tmp_path) -> No
     text = "a,b\nx,1\nx,\nx,\nx,1\ny,1\n"
     lines, _ = _run(csvpath=csvpath, tmp_path=tmp_path, text=text)
     assert lines == [["x", "1"], ["x", ""], ["x", ""], ["y", "1"]]
+
+
+@pytest.mark.parametrize(
+    "rule,feature",
+    [
+        ({"metric": "rowCount"}, "quality.rowCount"),
+        (
+            {"metric": "duplicateValues", "arguments": {"properties": ["a"]}},
+            "quality.duplicateValues",
+        ),
+    ],
+)
+def test_odcs_schema_object_converter_rule_without_operator(
+    rule: dict, feature: str
+) -> None:
+    #
+    # schema validation rejects these; the converter must still not emit
+    # a broken check when called directly
+    #
+    report = ConversionReport()
+    text = SchemaObjectConverter(
+        contract=_contract(), obj=_obj(quality=[rule]), report=report
+    ).convert()
+    assert [(s.location, s.feature) for s in report.skipped] == [
+        ("quality[0]", feature)
+    ]
+    assert "fail()" not in text and "has_dups" not in text
+
+
+def test_odcs_schema_object_converter_duplicate_values_required_threshold() -> None:
+    rule = {"metric": "duplicateValues", "arguments": {"properties": ["a", "b"]}}
+    obj = {
+        "name": "t",
+        "properties": _two_columns(required_b=True),
+        "quality": [{**rule, "mustBeLessThan": 2}],
+    }
+    text = SchemaObjectConverter(
+        contract=_contract(), obj=obj, report=ConversionReport()
+    ).convert()
+    assert "    not( has_dups(#a, #b) )\n" in text
+    assert "    has_dups.nocontrib(#a, #b) -> counter.a_b_duplicate(1)\n" in text
+
+
+def test_odcs_converter_skips_objects_without_properties() -> None:
+    conversion = OdcsConverter(
+        contract=_contract({"name": "registry_topic"}, _obj("t"))
+    ).convert()
+    assert list(conversion.csvpaths) == ["t"]
+    assert [(s.object, s.feature) for s in conversion.report.skipped] == [
+        ("registry_topic", "properties")
+    ]
+
+
+def test_odcs_converter_no_object_with_properties() -> None:
+    with pytest.raises(OdcsException):
+        OdcsConverter(contract=_contract({"name": "a"}, {"name": "b"})).convert()
+
+
+def test_odcs_converter_duplicate_names_detected_even_when_skipped() -> None:
+    with pytest.raises(OdcsException):
+        OdcsConverter(contract=_contract({"name": "t"}, _obj("t"))).convert()
+
+
+def test_odcs_readme_example_matches_converter_output() -> None:
+    #
+    # keeps csvpath/odcs/README.md honest: its example output must be
+    # exactly what the converter produces for normative pair 01
+    #
+    with open("csvpath/odcs/README.md", encoding="utf-8") as f:
+        readme = f.read()
+    example = readme.split("becomes:\n\n```\n", 1)[1].split("```", 1)[0]
+    contract = OdcsContractLoader.from_path(
+        path="tests/odcs/test_resources/normative/01_orders_simple/contract.yaml"
+    )
+    assert OdcsConverter(contract=contract).convert().csvpaths["orders"] == example

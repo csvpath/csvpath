@@ -33,8 +33,12 @@ Scope and shape
 - ODCS -> CsvPath only, for now. CsvPath -> ODCS is later, if at all.
 - Supported apiVersions: v3.0.x, v3.1.0, v3.2.0. Anything else, and any
   contract that is not valid against its official JSON Schema, raises
-  `OdcsException`. So do a contract with no schema objects, a schema
-  object with no properties, and duplicate schema object names.
+  `OdcsException`. So do a contract with no schema objects, a contract
+  where no schema object has properties, and duplicate schema object
+  names.
+- A schema object with no properties (ODCS allows the schema to live
+  elsewhere, e.g. a Kafka schema registry) is reported and skipped; the
+  other schema objects still convert.
 - One schema object (one table) becomes one csvpath. Grouping csvpaths into
   named-paths groups is a later stage in the main codebase, not here.
 - The generated csvpath has no filename in its root (`$[...]`), as for any
@@ -184,6 +188,9 @@ Allowed values
   rule `metric: invalidValues` with `arguments.validValues`.
 - Values become `in()`'s pipe-delimited string. A value containing `|` or
   `"` cannot be expressed; the whole value list is reported.
+- `null` and `""` in an allowed-values list are dropped: empty values are
+  governed by required/optional, not by the list. A list of only empty
+  values is reported.
 
 Dates, timestamps, and times (pair 03)
 
