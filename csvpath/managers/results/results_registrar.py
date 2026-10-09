@@ -189,7 +189,6 @@ class ResultsRegistrar(Registrar, Listener):
 
     def _fingerprint_file(self, path) -> str:
         with DataFileReader(path) as f:
-            print(f"resrefg: fff: {f}, path: {path}")
             h = f.fingerprint()
         return h
 
