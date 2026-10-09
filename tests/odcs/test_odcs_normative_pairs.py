@@ -5,6 +5,8 @@ Each directory under tests/odcs/test_resources/normative/ is one pair:
     contract.yaml     an ODCS data contract (input to the converter)
     expected/*.csvpath  the csvpath(s) the converter must produce, one per
                       schema object
+    expected/report.yaml  (optional) what the converter must report as
+                      skipped, i.e. not translated
     data/*.csv        sample data with known conforming and non-conforming lines
     expected.yaml     which lines of which data file each expected csvpath
                       must match, and the expected is_valid
@@ -16,6 +18,7 @@ themselves, so we develop the converter against verified targets:
       apiVersion
     - every expected csvpath, run against its data, matches exactly the
       conforming lines and ends with the expected is_valid
+    - every skipped item in a report points at a real node in the contract
 
 Converter tests compare their output to these same pairs.
 """
@@ -76,6 +79,43 @@ def _data_lines(data_path: str) -> list[list[str]]:
         return list(csv.reader(f))
 
 
+def _resolve(*, node, location: str):
+    #
+    # resolves a report location, e.g. "properties.order_id.relationships[0]",
+    # within a schema object. "properties.<name>" selects a property by name.
+    #
+    parts = location.split(".")
+    i = 0
+    while i < len(parts):
+        part = parts[i]
+        m = re.fullmatch(r"([A-Za-z]+)(?:\[(\d+)\])?", part)
+        if m is None:
+            raise ValueError(f"Bad location part {part} in {location}")
+        key, index = m.group(1), m.group(2)
+        node = node[key]
+        if key == "properties" and index is None:
+            i += 1
+            name = parts[i]
+            matches = [p for p in node if p.get("name") == name]
+            if len(matches) != 1:
+                raise ValueError(f"No single property {name} in {location}")
+            node = matches[0]
+        elif index is not None:
+            node = node[int(index)]
+        i += 1
+    return node
+
+
+def _reports() -> list[tuple[str, str]]:
+    reports = []
+    for pair in _pair_dirs():
+        expected = os.path.join(pair, "expected")
+        for name in sorted(os.listdir(expected)):
+            if name.endswith("report.yaml"):
+                reports.append((pair, name))
+    return reports
+
+
 @pytest.mark.parametrize("pair", _pair_dirs(), ids=_run_id)
 def test_odcs_normative_contract_is_schema_valid(pair: str) -> None:
     with open(os.path.join(pair, "contract.yaml"), encoding="utf-8") as f:
@@ -103,3 +143,20 @@ def test_odcs_normative_expected_csvpath_behavior(pair: str, run: dict) -> None:
     expected = [lines[i] for i in run["valid_lines"]]
     assert matched == expected
     assert path.is_valid is run["is_valid"]
+
+
+@pytest.mark.parametrize("pair,report", _reports())
+def test_odcs_normative_report_locations_exist(pair: str, report: str) -> None:
+    #
+    # guards the report fixtures against typos: every skipped item must
+    # point at a real node in the contract
+    #
+    with open(os.path.join(pair, "contract.yaml"), encoding="utf-8") as f:
+        contract = yaml.safe_load(f)
+    with open(os.path.join(pair, "expected", report), encoding="utf-8") as f:
+        skipped = yaml.safe_load(f)["skipped"]
+    assert len(skipped) > 0
+    objects = {o["name"]: o for o in contract["schema"]}
+    for item in skipped:
+        assert set(item) == {"object", "location", "feature", "reason"}
+        assert _resolve(node=objects[item["object"]], location=item["location"])

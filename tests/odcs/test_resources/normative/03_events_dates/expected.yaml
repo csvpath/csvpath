@@ -1,0 +1,23 @@
+#
+# See 01_orders_simple/expected.yaml for the format.
+#
+runs:
+  - csvpath: events.csvpath
+    data: events_mixed.csv
+    is_valid: true
+    valid_lines: [1, 2, 3]
+    # 2  event_date equal to minimum (inclusive); optional fields empty
+    # 3  event_date the day before exclusiveMaximum; created_at with 1-digit
+    #    fraction; updated_at with +10:00 offset; birth_date equal to maximum
+    # why each other line is invalid:
+    #   4  event_date not dd/MM/yyyy
+    #   5  event_date before minimum
+    #   6  event_date equal to exclusiveMaximum
+    #   7  created_at missing the T and fraction
+    #   8  created_at required but empty
+    #   9  updated_at has no offset (timezone: true)
+    #   10 start_time not HH:mm
+    #   11 start_time hour out of range
+    #   12 birth_date after maximum
+    #   13 birth_date not ISO
+    #   14 event_date required but empty

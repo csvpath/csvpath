@@ -1,0 +1,21 @@
+~
+  id: shipments
+  odcs-contract-id: shipments-contract
+  odcs-contract-version: 1.4.0
+  odcs-schema-object: shipments
+  validation-mode: print, no-raise, no-fail, no-stop
+~
+$[1*][
+    line(
+        string.notnone.distinct(#shipment_id),
+        string.notnone(#order_id),
+        string(#route),
+        string.notnone(#carrier_code),
+        blank(#tags),
+        blank(#dimensions),
+        string(#origin_ip),
+        decimal.notnone(#weight_kg)
+    )
+    regex(/^SH-[0-9]+$/, #shipment_id)
+    or( empty(#route), regex(/^[A-Z]+\/[0-9]+$/, #route) )
+]

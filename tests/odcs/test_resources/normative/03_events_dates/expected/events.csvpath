@@ -1,0 +1,22 @@
+~
+  id: events
+  odcs-contract-id: events-contract
+  odcs-contract-version: 0.3.0
+  odcs-schema-object: events
+  validation-mode: print, no-raise, no-fail, no-stop
+~
+$[1*][
+    line(
+        integer.notnone.distinct(#event_id),
+        date.notnone(#event_date, "%d/%m/%Y"),
+        datetime.notnone(#created_at, "%Y-%m-%dT%H:%M:%S.%f"),
+        blank(#updated_at),
+        datetime.notnone(#start_time, "%H:%M"),
+        blank(#birth_date)
+    )
+    gte( date(#event_date, "%d/%m/%Y"), date("2020-01-01", "%Y-%m-%d") )
+    gt( date("01/01/2030", "%d/%m/%Y"), date(#event_date, "%d/%m/%Y") )
+    or( empty(#updated_at), datetime(#updated_at, "%Y-%m-%dT%H:%M:%S%z") )
+    or( empty(#birth_date), date(#birth_date, "%Y-%m-%d") )
+    or( empty(#birth_date), lte( date(#birth_date, "%Y-%m-%d"), date("2010-12-31", "%Y-%m-%d") ) )
+]

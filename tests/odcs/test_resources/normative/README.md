@@ -82,6 +82,36 @@ Allowed values
       mustBeBetween [a, b]      fail when gt(a, v) or gt(v, b)
       mustNotBeBetween [a, b]   fail when gte(v, a) and gte(b, v)
 
+Dates, timestamps, and times (pair 03)
+
+- `date` -> `date()`, `timestamp` -> `datetime()`, `time` -> `datetime()`
+  with a time-only format.
+- `format` is a JDK DateTimeFormatter pattern, translated to strftime.
+  Quoted literals (`'T'`) are honored. Unquoted letters with no JDK
+  meaning, such as the `T` in the ODCS docs' own `yyyy-MM-ddTHH:mm:ssZ`,
+  are treated as literals. `Z`/`X` offsets become `%z`. `SSS` becomes
+  `%f`, which is lenient (1-6 digits).
+- No `format` on a `date`: ISO `%Y-%m-%d`.
+- `minimum`/`maximum`/`exclusiveMinimum`/`exclusiveMaximum` become
+  `gte()`/`lte()`/`gt()` comparisons of `date()` values outside the
+  `line()`. ODCS does not say what format bounds are written in, so a
+  bound is parsed with the property's format first, then ISO, and emitted
+  with whichever format parsed it.
+
+Unsupported features and the conversion report (pair 04)
+
+- Validation-relevant features the converter cannot translate are skipped
+  and listed in a report: `object`, `location` (path within the schema
+  object, `properties.<name>` selecting by name), `feature`, `reason`.
+- Skipped today: relationships; `array`/`object`/`map`/`vector` types;
+  string formats with no CsvPath function (e.g. `ipv4`); patterns Python
+  `re` cannot compile; quality `sql`, `custom`, and `text`.
+- A skipped property still appears in the `line()` (as `blank()` for
+  untyped values), so the header order is still checked.
+- Non-validation sections (team, servers, SLA, support, price, roles,
+  tags, authoritative definitions, custom properties, descriptions) are
+  ignored silently and not reported.
+
 Known framework issues and workarounds
 
 - `date()`/`datetime()` inside `line()` reject empty values even without
@@ -89,14 +119,15 @@ Known framework issues and workarounds
   `blank(#d)` in the `line()` plus `or( empty(#d), date(#d, "<fmt>") )`.
   Required dates use `date.notnone(#d, "<fmt>")` in the `line()` directly.
 - `boolean()` has the same empty-value behavior inside `line()` (noted on
-  #300). In addition, outside `line()`, `boolean()` matches invalid values
-  such as `perhaps`. So optional booleans are emitted as `blank(#b)` in the
+  #300). In addition, nested in `or()`/`not()`, `boolean()` treats invalid
+  values such as `perhaps` as matches (issue #302). So optional booleans
+  are emitted as `blank(#b)` in the
   `line()` plus
   `or( empty(#b), in( lower( strip(#b) ), "true|false|1|0" ) )`, which
   accepts exactly what `boolean()` accepts. Required booleans use
   `boolean.notnone(#b)` in the `line()` directly.
 - `lt()`/`below()`/`before()` behave as `lte()` (a missing `return` in
-  `csvpath/matching/functions/math/above.py`). The converter never emits
+  `csvpath/matching/functions/math/above.py`, issue #301). The converter never emits
   them; `gt()`, `gte()`, and `lte()` are correct.
 - `print()` appears to drop messages containing `(` or `@`. The converter
   does not emit `print()` for now.
@@ -108,3 +139,6 @@ Regular expressions
   that cannot carry over are reported, not translated.
 - The regex goes in the first argument of `regex()`, so a data value that
   begins with `/` cannot be mistaken for the regex.
+- `regex()` strips every leading and trailing `/` from the literal, so a
+  pattern that ends in an escaped slash (`abc\/`) would lose it. The
+  converter wraps such a pattern in a non-capturing group: `(?:abc\/)`.

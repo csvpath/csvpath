@@ -1,0 +1,9 @@
+shipment_id,order_id,route,carrier_code,tags,dimensions,origin_ip,weight_kg
+SH-1,ORD-000001,LON/12,UPS,"[""fragile""]","{""length_cm"": 20}",10.0.0.1,2.5
+SH-2,ORD-999999,,DHLX,,,not-an-ip,5000
+SH-3,ORD-000003,LON-12,UPS,,,,1
+SH-4,,LON/12,UPS,,,,1
+SH-5,ORD-000005,LON/12,,,,,1
+SH-6,ORD-000006,LON/12,UPS,,,,heavy
+XX-7,ORD-000007,LON/12,UPS,,,,1
+SH-1,ORD-000008,LON/12,UPS,,,,1

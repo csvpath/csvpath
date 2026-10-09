@@ -1,0 +1,19 @@
+#
+# See 01_orders_simple/expected.yaml for the format.
+#
+runs:
+  - csvpath: shipments.csvpath
+    data: shipments_mixed.csv
+    is_valid: true
+    valid_lines: [1, 2]
+    # 2  conforms to everything the csvpath can check. It breaks rules that
+    #    were skipped: order_id has no match in orders (relationship),
+    #    carrier_code is 4 letters (pattern), origin_ip is not an ipv4
+    #    (format), weight_kg is over 1000 (sql rule)
+    # why each other line is invalid:
+    #   3  route fails pattern
+    #   4  order_id required but empty
+    #   5  carrier_code required but empty
+    #   6  weight_kg not a number
+    #   7  shipment_id fails pattern
+    #   8  shipment_id duplicates line 1 (unique)

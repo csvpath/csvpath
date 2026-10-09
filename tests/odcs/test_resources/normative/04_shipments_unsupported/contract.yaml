@@ -1,0 +1,95 @@
+#
+# Normative pair 04: features the converter cannot translate.
+#
+# Untranslatable, validation-relevant features are skipped and listed in
+# the conversion report (expected/report.yaml). The property's column
+# still appears in the line(), so header order is checked even when its
+# values cannot be:
+#   - property relationships (foreign keys across tables)
+#   - logicalType array and object properties -> blank() in the line()
+#   - string format with no CsvPath equivalent (ipv4)
+#   - a pattern Python re cannot compile (ECMA named group) -> the property
+#     keeps its type check; the pattern is skipped
+#   - quality type sql, custom, and text (property and schema level)
+#
+# Non-validation sections (team, servers, slaProperties, support, price,
+# roles, tags, authoritativeDefinitions, customProperties, description)
+# are ignored silently. They are not reported.
+#
+# Also covers one translatable edge case: a pattern containing "/" is
+# escaped in the regex literal.
+#
+apiVersion: v3.2.0
+kind: DataContract
+id: shipments-contract
+version: 1.4.0
+status: active
+name: Shipments
+team:
+  name: logistics
+  members:
+    - username: someone
+      role: owner
+servers:
+  - server: warehouse
+    type: postgresql
+    host: db.example.com
+    port: 5432
+    database: logistics
+    schema: public
+slaProperties:
+  - property: latency
+    value: 4
+    unit: d
+schema:
+  - name: shipments
+    logicalType: object
+    quality:
+      - type: custom
+        engine: great-expectations
+        implementation:
+          expectation_type: expect_table_columns_to_match_ordered_list
+    properties:
+      - name: shipment_id
+        logicalType: string
+        required: true
+        unique: true
+        logicalTypeOptions:
+          pattern: "^SH-[0-9]+$"
+      - name: order_id
+        logicalType: string
+        required: true
+        relationships:
+          - to: orders.order_id
+            type: foreignKey
+      - name: route
+        logicalType: string
+        logicalTypeOptions:
+          pattern: "^[A-Z]+/[0-9]+$"
+      - name: carrier_code
+        logicalType: string
+        required: true
+        logicalTypeOptions:
+          pattern: "^(?<code>[A-Z]{3})$"
+      - name: tags
+        logicalType: array
+        items:
+          logicalType: string
+      - name: dimensions
+        logicalType: object
+        properties:
+          - name: length_cm
+            logicalType: number
+      - name: origin_ip
+        logicalType: string
+        logicalTypeOptions:
+          format: ipv4
+      - name: weight_kg
+        logicalType: number
+        required: true
+        quality:
+          - type: sql
+            query: "SELECT COUNT(*) FROM ${table} WHERE ${column} > 1000"
+            mustBe: 0
+          - type: text
+            description: Weights are measured at the origin depot.
