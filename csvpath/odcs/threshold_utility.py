@@ -15,6 +15,16 @@ class ThresholdUtility:
     #
     ROWS = "subtract(total_lines(), 1)"
 
+    #
+    # true on the last line that has data. count_lines() counts non-blank
+    # lines seen so far and total_lines() counts non-blank lines in the
+    # file, the header included in both. this is used instead of last()
+    # because a blank last line is processed frozen, and last() composed in
+    # and() does not run on a frozen line, so a file ending in a blank line
+    # would silently skip every file-level check.
+    #
+    LAST_DATA_LINE = "eq( count_lines(), total_lines() )"
+
     OPERATORS = [
         "mustBe",
         "mustNotBe",

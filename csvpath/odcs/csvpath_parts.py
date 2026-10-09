@@ -32,10 +32,10 @@ class CsvPathParts:
     @property
     def needs_full_scan(self) -> bool:
         #
-        # with $[1*] a header-only file never reaches last(), so checks that
-        # must see a header-only file need $[*] and an explicit skip of the
-        # header line. threshold last_checks do not: with no data lines there
-        # is nothing to count, so they never run in either form.
+        # with $[1*] a header-only file has no scanned line at all (see
+        # issue #306), so checks that must see a header-only file need $[*]
+        # and an explicit skip of the header line. threshold last_checks do
+        # not: with no data lines there is nothing to count.
         #
         return bool(self.first_checks)
 
@@ -63,7 +63,9 @@ class CsvPathParts:
         self.counters.append(f"{when} -> counter.{var}(1)")
         value = thut.count_value(var=var, rule=rule)
         fail_when = thut.fail_when(value=value, rule=rule)
-        self.last_checks.append(f"and.nocontrib( last(), {fail_when} ) -> fail()")
+        self.last_checks.append(
+            f"and.nocontrib( {thut.LAST_DATA_LINE}, {fail_when} ) -> fail()"
+        )
         return var
 
     def render(self) -> str:

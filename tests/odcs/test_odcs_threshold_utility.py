@@ -117,7 +117,7 @@ def test_odcs_thut_fail_when_runs_in_csvpath(
         f"""~ validation-mode: print, no-raise, no-fail, no-stop ~
         ${DATA}[*][
             first_line.nocontrib() -> @v = {value}
-            and.nocontrib( last(), {condition} ) -> fail()
+            and.nocontrib( eq( count_lines(), total_lines() ), {condition} ) -> fail()
         ]"""
     )
     assert path.is_valid is (not broken)
@@ -147,3 +147,31 @@ def test_odcs_thut_count_value() -> None:
     )
     with pytest.raises(ValueError):
         thut.count_value(var="", rule={"mustBe": 0})
+
+
+@pytest.mark.parametrize(
+    "text,fires_at",
+    [
+        ("a\n", [0]),
+        ("a\nx\ny\n", [2]),
+        ("a\nx\ny\n\n", [2]),
+        ("a\nx\n\ny\n\n\n", [3]),
+        ("a\n\n", [0]),
+    ],
+)
+def test_odcs_thut_last_data_line(tmp_path, text: str, fires_at: list) -> None:
+    #
+    # true exactly once, on the last line with data, whatever blank lines
+    # follow or sit in between. last() composed in and() does not run on a
+    # frozen blank last line, which is why the converter uses this instead.
+    #
+    data = tmp_path / "data.csv"
+    data.write_text(text, encoding="utf-8")
+    path = CsvPath()
+    path.collect(
+        f"""~ validation-mode: print, no-raise, no-fail, no-stop ~
+        ${data}[*][
+            {thut.LAST_DATA_LINE} -> push("at", line_number())
+        ]"""
+    )
+    assert path.variables.get("at") == fires_at

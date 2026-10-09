@@ -38,3 +38,9 @@ runs:
     is_valid: true
     valid_lines: []
     # nothing to count; threshold checks do not run on a header-only file
+  - csvpath: readings.csvpath
+    data: readings_too_many_null_temp_blank.csv
+    is_valid: false
+    valid_lines: [1, 3]
+    # readings_too_many_null_temp.csv plus two trailing blank lines: blank
+    # lines are not data rows, so the percentage is still 1 of 3

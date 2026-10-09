@@ -15,5 +15,5 @@ $[1*][
     gt(#amount, 0)
     in(#currency, "USD|EUR|GBP")
     not.nocontrib( or( empty(#currency), in(#currency, "USD|EUR|GBP") ) ) -> counter.currency_invalid(1)
-    and.nocontrib( last(), gte( @currency_invalid, 3 ) ) -> fail()
+    and.nocontrib( eq( count_lines(), total_lines() ), gte( @currency_invalid, 3 ) ) -> fail()
 ]

@@ -107,8 +107,8 @@ def test_odcs_csvpath_parts_add_threshold() -> None:
     assert parts.add_threshold(base="a_null", when="W2", rule=rule) == "a_null_2"
     assert parts.counters == ["W1 -> counter.a_null(1)", "W2 -> counter.a_null_2(1)"]
     assert parts.last_checks == [
-        "and.nocontrib( last(), gte( @a_null, 3 ) ) -> fail()",
-        "and.nocontrib( last(), gte( @a_null_2, 3 ) ) -> fail()",
+        "and.nocontrib( eq( count_lines(), total_lines() ), gte( @a_null, 3 ) ) -> fail()",
+        "and.nocontrib( eq( count_lines(), total_lines() ), gte( @a_null_2, 3 ) ) -> fail()",
     ]
     assert not parts.needs_full_scan
 
