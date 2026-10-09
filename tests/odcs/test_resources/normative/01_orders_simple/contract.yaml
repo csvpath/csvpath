@@ -1,0 +1,54 @@
+#
+# Normative pair 01: a single schema object using only direct mappings,
+# plus one file-level library quality rule (rowCount).
+#
+# Covers:
+#   - logicalType string, integer, date
+#   - required -> .notnone, unique -> .distinct
+#   - logicalTypeOptions pattern -> regex(), format email -> email()
+#   - logicalTypeOptions minimum/maximum -> integer() max/min args
+#   - enum (v3.2 EnumValue object form) on an optional property -> or(empty(), in())
+#   - date format (JDK DateTimeFormatter) -> strftime
+#   - quality metric rowCount with mustBeGreaterThan -> last-line fail() check
+#
+apiVersion: v3.2.0
+kind: DataContract
+id: orders-contract
+version: 1.0.0
+status: active
+name: Orders
+schema:
+  - name: orders
+    logicalType: object
+    properties:
+      - name: order_id
+        logicalType: string
+        required: true
+        unique: true
+        logicalTypeOptions:
+          pattern: "^ORD-[0-9]{6}$"
+      - name: customer_email
+        logicalType: string
+        logicalTypeOptions:
+          format: email
+      - name: quantity
+        logicalType: integer
+        required: true
+        logicalTypeOptions:
+          minimum: 1
+          maximum: 999
+      - name: status
+        logicalType: string
+        enum:
+          - value: open
+          - value: shipped
+            label: Shipped
+          - value: cancelled
+      - name: order_date
+        logicalType: date
+        required: true
+        logicalTypeOptions:
+          format: yyyy-MM-dd
+    quality:
+      - metric: rowCount
+        mustBeGreaterThan: 0

@@ -1,0 +1,38 @@
+#
+# What the converter must report as not translated, in document order.
+# Converter tests compare object, location, and feature. reason is for
+# people; its wording is not tested.
+#
+skipped:
+  - object: shipments
+    location: quality[0]
+    feature: quality.custom
+    reason: Custom quality rules run on a vendor engine (great-expectations), not CsvPath.
+  - object: shipments
+    location: properties.order_id.relationships[0]
+    feature: relationship
+    reason: Relationships span tables; a csvpath validates one file.
+  - object: shipments
+    location: properties.carrier_code.logicalTypeOptions.pattern
+    feature: pattern
+    reason: "Pattern does not compile in Python re: unknown extension ?<c at position 2."
+  - object: shipments
+    location: properties.tags
+    feature: logicalType.array
+    reason: Array values have no CsvPath type; the column is checked for presence only.
+  - object: shipments
+    location: properties.dimensions
+    feature: logicalType.object
+    reason: Object values have no CsvPath type; the column is checked for presence only.
+  - object: shipments
+    location: properties.origin_ip.logicalTypeOptions.format
+    feature: format.ipv4
+    reason: No CsvPath equivalent for string format ipv4.
+  - object: shipments
+    location: properties.weight_kg.quality[0]
+    feature: quality.sql
+    reason: SQL quality rules need a database; CsvPath validates the file.
+  - object: shipments
+    location: properties.weight_kg.quality[1]
+    feature: quality.text
+    reason: Text quality rules are descriptions, not executable checks.

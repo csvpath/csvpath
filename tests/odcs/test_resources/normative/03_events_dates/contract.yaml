@@ -1,0 +1,61 @@
+#
+# Normative pair 03: dates, timestamps, and times.
+#
+# Covers:
+#   - JDK DateTimeFormatter -> strftime:
+#       dd/MM/yyyy                    -> %d/%m/%Y
+#       yyyy-MM-dd'T'HH:mm:ss.SSS     -> %Y-%m-%dT%H:%M:%S.%f  (quoted literal)
+#       yyyy-MM-ddTHH:mm:ssZ          -> %Y-%m-%dT%H:%M:%S%z   (unquoted T, as
+#                                        in the ODCS docs' own examples)
+#       HH:mm                         -> %H:%M
+#   - logicalType date -> date(), timestamp -> datetime(), time -> datetime()
+#     with a time-only format
+#   - no format on a date -> ISO %Y-%m-%d
+#   - date minimum / exclusiveMaximum / maximum -> gte() / gt() / lte()
+#     outside the line(), comparing date() values. Bounds are parsed with
+#     the property's format first, then ISO; this contract uses one of each
+#   - optional timestamp and optional date -> blank() in the line() plus
+#     or( empty(), ... ), working around issue #300
+#
+# Known leniency: %f accepts 1-6 digits where JDK SSS requires exactly 3.
+#
+apiVersion: v3.2.0
+kind: DataContract
+id: events-contract
+version: 0.3.0
+status: draft
+name: Events
+schema:
+  - name: events
+    logicalType: object
+    properties:
+      - name: event_id
+        logicalType: integer
+        required: true
+        unique: true
+      - name: event_date
+        logicalType: date
+        required: true
+        logicalTypeOptions:
+          format: dd/MM/yyyy
+          minimum: "2020-01-01"
+          exclusiveMaximum: "01/01/2030"
+      - name: created_at
+        logicalType: timestamp
+        required: true
+        logicalTypeOptions:
+          format: "yyyy-MM-dd'T'HH:mm:ss.SSS"
+      - name: updated_at
+        logicalType: timestamp
+        logicalTypeOptions:
+          format: "yyyy-MM-ddTHH:mm:ssZ"
+          timezone: true
+      - name: start_time
+        logicalType: time
+        required: true
+        logicalTypeOptions:
+          format: "HH:mm"
+      - name: birth_date
+        logicalType: date
+        logicalTypeOptions:
+          maximum: "2010-12-31"

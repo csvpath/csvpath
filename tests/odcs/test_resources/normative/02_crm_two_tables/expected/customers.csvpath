@@ -1,0 +1,20 @@
+~
+  id: customers
+  odcs-contract-id: crm-contract
+  odcs-contract-version: 2.1.0
+  odcs-schema-object: customers
+  validation-mode: print, no-raise, no-fail, no-stop
+~
+$[1*][
+    line(
+        integer.notnone.distinct(#cust_id),
+        string.notnone(#name, 50, 2),
+        string(#tier),
+        boolean.notnone(#active),
+        blank(#newsletter),
+        blank(#signup_date)
+    )
+    or( empty(#tier), in(#tier, "gold|silver|bronze") )
+    or( empty(#newsletter), in( lower( strip(#newsletter) ), "true|false|1|0" ) )
+    or( empty(#signup_date), date(#signup_date, "%Y-%m-%d") )
+]

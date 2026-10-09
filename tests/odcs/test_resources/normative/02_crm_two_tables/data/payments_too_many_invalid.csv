@@ -1,0 +1,6 @@
+payment_id,customer_id,amount,currency
+0b6f3c9e-6d2a-4c1e-9a3b-1f2e3d4c5b6a,1,12.50,USD
+1c7e4dae-7e3b-4d2f-8b4c-2a3f4e5d6c7b,2,3.00,JPY
+2d8f5ebf-8f4c-4e3a-9c5d-3b4a5f6e7d8c,3,4.00,CHF
+3e9a6fc0-9a5d-4f4b-8d6e-4c5b6a7f8e9d,4,5.00,AUD
+4fab7ad1-ab6e-4a5c-9e7f-5d6c7b8a9fae,5,6.00,EUR
