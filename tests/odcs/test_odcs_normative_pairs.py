@@ -11,8 +11,9 @@ Each directory under tests/odcs/test_resources/normative/ is one pair:
     expected.yaml     which lines of which data file each expected csvpath
                       must match, and the expected is_valid
 
-These tests do not exercise the converter. They pin down the pairs
-themselves, so we develop the converter against verified targets:
+The first group of tests does not exercise the converter. It pins down
+the pairs themselves, so the converter is developed against verified
+targets:
 
     - every contract is valid against the official ODCS JSON Schema for its
       apiVersion
@@ -20,7 +21,11 @@ themselves, so we develop the converter against verified targets:
       conforming lines and ends with the expected is_valid
     - every skipped item in a report points at a real node in the contract
 
-Converter tests compare their output to these same pairs.
+The second group runs the converter on each contract and requires:
+
+    - exactly the expected csvpath text for every schema object
+    - exactly the expected report (object, location, feature), in order
+    - the generated csvpath, run against the data, behaves as expected
 """
 
 import csv
@@ -33,10 +38,11 @@ import pytest
 import yaml
 
 from csvpath import CsvPath
+from csvpath.odcs import OdcsContractLoader, OdcsConverter
 
 RESOURCES = os.path.join("tests", "odcs", "test_resources")
 NORMATIVE = os.path.join(RESOURCES, "normative")
-SCHEMAS = os.path.join(RESOURCES, "schema")
+SCHEMAS = os.path.join("csvpath", "odcs", "schemas")
 
 
 def _pair_dirs() -> list[str]:
@@ -132,9 +138,7 @@ def test_odcs_normative_contract_is_schema_valid(pair: str) -> None:
 
 @pytest.mark.parametrize("pair,run", _runs(), ids=_run_id)
 def test_odcs_normative_expected_csvpath_behavior(pair: str, run: dict) -> None:
-    with open(
-        os.path.join(pair, "expected", run["csvpath"]), encoding="utf-8"
-    ) as f:
+    with open(os.path.join(pair, "expected", run["csvpath"]), encoding="utf-8") as f:
         csvpath = f.read()
     data_path = os.path.join(pair, "data", run["data"])
     path = CsvPath()
@@ -160,3 +164,61 @@ def test_odcs_normative_report_locations_exist(pair: str, report: str) -> None:
     for item in skipped:
         assert set(item) == {"object", "location", "feature", "reason"}
         assert _resolve(node=objects[item["object"]], location=item["location"])
+
+
+# ============================
+# converter against the pairs
+# ============================
+
+
+def _convert(pair: str):
+    contract = OdcsContractLoader.from_path(path=os.path.join(pair, "contract.yaml"))
+    return OdcsConverter(contract=contract).convert()
+
+
+@pytest.mark.parametrize("pair", _pair_dirs(), ids=_run_id)
+def test_odcs_converter_produces_expected_csvpaths(pair: str) -> None:
+    conversion = _convert(pair)
+    expected_dir = os.path.join(pair, "expected")
+    expected_names = sorted(
+        n[: -len(".csvpath")]
+        for n in os.listdir(expected_dir)
+        if n.endswith(".csvpath")
+    )
+    assert sorted(conversion.csvpaths) == expected_names
+    for name, text in conversion.csvpaths.items():
+        with open(os.path.join(expected_dir, f"{name}.csvpath"), encoding="utf-8") as f:
+            assert text == f.read(), f"{name} differs from expected"
+
+
+@pytest.mark.parametrize("pair", _pair_dirs(), ids=_run_id)
+def test_odcs_converter_produces_expected_report(pair: str) -> None:
+    conversion = _convert(pair)
+    path = os.path.join(pair, "expected", "report.yaml")
+    expected = []
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            expected = [
+                (s["object"], s["location"], s["feature"])
+                for s in yaml.safe_load(f)["skipped"]
+            ]
+    actual = [(s.object, s.location, s.feature) for s in conversion.report.skipped]
+    assert actual == expected
+
+
+@pytest.mark.parametrize("pair,run", _runs(), ids=_run_id)
+def test_odcs_converter_csvpath_behavior(pair: str, run: dict) -> None:
+    #
+    # redundant while the text matches exactly, but keeps the behavior
+    # contract if expected text is ever compared more loosely
+    #
+    conversion = _convert(pair)
+    name = run["csvpath"][: -len(".csvpath")]
+    data_path = os.path.join(pair, "data", run["data"])
+    path = CsvPath()
+    matched = path.collect(
+        _with_data_path(csvpath=conversion.csvpaths[name], data_path=data_path)
+    )
+    lines = _data_lines(data_path)
+    assert matched == [lines[i] for i in run["valid_lines"]]
+    assert path.is_valid is run["is_valid"]
