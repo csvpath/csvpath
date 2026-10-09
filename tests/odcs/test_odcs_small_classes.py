@@ -71,22 +71,27 @@ def test_odcs_csvpath_parts_render_simple() -> None:
 def test_odcs_csvpath_parts_render_full_scan_order() -> None:
     parts = CsvPathParts(metadata={"id": "t"})
     parts.first_checks.append("FIRST")
-    parts.inits.append("INIT")
     parts.line_args.append("string(#a)")
     parts.line_checks.append("CHECK")
     parts.counters.append("COUNTER")
     parts.last_checks.append("LAST")
     assert parts.needs_full_scan
     lines = [line.strip() for line in parts.render().splitlines()]
-    order = ["$[*][", "FIRST", "INIT", "first_line.nocontrib() -> skip()", "line("]
-    assert lines[3:8] == order
+    order = ["$[*][", "FIRST", "first_line.nocontrib() -> skip()", "line("]
+    assert lines[3:7] == order
     assert lines[-5:] == [")", "CHECK", "COUNTER", "LAST", "]"]
 
 
-@pytest.mark.parametrize("field", ["first_checks", "inits", "last_checks"])
-def test_odcs_csvpath_parts_any_file_level_part_needs_full_scan(field: str) -> None:
+def test_odcs_csvpath_parts_only_first_checks_need_full_scan() -> None:
+    #
+    # threshold counters and last-line checks work in $[1*]: with no data
+    # lines there is nothing to count, so they never need the header line
+    #
     parts = CsvPathParts()
-    getattr(parts, field).append("x")
+    parts.counters.append("x")
+    parts.last_checks.append("x")
+    assert not parts.needs_full_scan
+    parts.first_checks.append("x")
     assert parts.needs_full_scan
 
 

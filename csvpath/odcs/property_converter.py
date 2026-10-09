@@ -432,17 +432,18 @@ class PropertyConverter:
             self._threshold(var=var, rule=rule, when=when)
 
     def _threshold(self, *, var: str, rule: dict, when: str) -> None:
-        # when: the condition, with nocontrib, under which a line is counted
+        # when: the condition, with nocontrib, under which a line is counted.
+        # counter() creates its variable at 0 on first evaluation, so no
+        # initialization is needed.
         #
         # two threshold rules on one property, or two column names that
         # sanitize the same, must not share a counter
         #
         base = var
         n = 2
-        while f"first_line.nocontrib() -> @{var} = 0" in self.parts.inits:
+        while any(c.endswith(f"-> counter.{var}(1)") for c in self.parts.counters):
             var = f"{base}_{n}"
             n += 1
-        self.parts.inits.append(f"first_line.nocontrib() -> @{var} = 0")
         self.parts.counters.append(f"{when} -> counter.{var}(1)")
         fail_when = thut.fail_when(value=f"@{var}", rule=rule)
         self.parts.last_checks.append(f"and.nocontrib( last(), {fail_when} ) -> fail()")

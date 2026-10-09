@@ -334,7 +334,7 @@ def _invalid_values(args: dict, **threshold) -> dict:
 def test_odcs_property_invalid_values_zero_tolerance() -> None:
     parts, _ = _convert(_invalid_values({"validValues": ["x", "y"]}))
     assert parts.line_checks == ['or( empty(#a), in(#a, "x|y") )']
-    assert parts.counters == [] and parts.inits == [] and parts.last_checks == []
+    assert parts.counters == [] and parts.last_checks == []
 
 
 def test_odcs_property_invalid_values_pattern_and_values() -> None:
@@ -347,7 +347,6 @@ def test_odcs_property_invalid_values_pattern_and_values() -> None:
 def test_odcs_property_invalid_values_threshold() -> None:
     parts, _ = _convert(_invalid_values({"validValues": ["x"]}, mustBeLessThan=5))
     assert parts.line_checks == ['or( empty(#a), in(#a, "x") )']
-    assert parts.inits == ["first_line.nocontrib() -> @a_invalid = 0"]
     assert parts.counters == [
         'not.nocontrib( or( empty(#a), in(#a, "x") ) ) -> counter.a_invalid(1)'
     ]
@@ -390,7 +389,6 @@ def test_odcs_property_null_values_threshold() -> None:
         {"name": "a", "quality": [{"metric": "nullValues", "mustBeLessOrEqualTo": 2}]}
     )
     assert parts.line_args == ["string.notnone(#a)"]
-    assert parts.inits == ["first_line.nocontrib() -> @a_null = 0"]
     assert parts.counters == ["empty.nocontrib(#a) -> counter.a_null(1)"]
     assert parts.last_checks == ["and.nocontrib( last(), gt( @a_null, 2 ) ) -> fail()"]
 
@@ -459,13 +457,10 @@ def test_odcs_property_threshold_counters_do_not_collide() -> None:
             parts=parts,
             report=report,
         ).convert()
-    assert parts.inits == [
-        "first_line.nocontrib() -> @order_id_null = 0",
-        "first_line.nocontrib() -> @order_id_null_2 = 0",
+    assert parts.counters == [
+        'empty.nocontrib(#"Order ID") -> counter.order_id_null(1)',
+        "empty.nocontrib(#order_id) -> counter.order_id_null_2(1)",
     ]
-    assert (
-        parts.counters[1] == "empty.nocontrib(#order_id) -> counter.order_id_null_2(1)"
-    )
     assert parts.last_checks[1] == (
         "and.nocontrib( last(), gte( @order_id_null_2, 3 ) ) -> fail()"
     )
