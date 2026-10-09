@@ -337,6 +337,18 @@ class PropertyConverter:
     # ============================
 
     def _in_condition(self, *, values: list, location: str, feature: str) -> str | None:
+        #
+        # empty values are governed by required/optional, not by the list,
+        # so a null or "" in an allowed-values list is dropped
+        #
+        values = [v for v in values if v is not None and v != ""]
+        if len(values) == 0:
+            self._skip(
+                location=location,
+                feature=feature,
+                reason="The list has only empty values; empties follow required.",
+            )
+            return None
         try:
             return f"in({self.h}, {csut.in_values(values=values)})"
         except ValueError as e:
@@ -435,6 +447,13 @@ class PropertyConverter:
 
     def _missing(self, *, rule: dict, location: str, zero: bool) -> None:
         empties, others = self._missing_values(rule=rule)
+        if not empties and not others:
+            self._skip(
+                location=location,
+                feature="quality.missingValues",
+                reason="missingValues lists no values.",
+            )
+            return
         values = None
         if others:
             try:
@@ -456,15 +475,8 @@ class PropertyConverter:
             when = f"or.nocontrib( empty({self.h}), in({self.h}, {values}) )"
         elif empties:
             when = f"empty.nocontrib({self.h})"
-        elif values:
-            when = f"in.nocontrib({self.h}, {values})"
         else:
-            self._skip(
-                location=location,
-                feature="quality.missingValues",
-                reason="missingValues lists no values.",
-            )
-            return
+            when = f"in.nocontrib({self.h}, {values})"
         self._threshold(suffix="missing", rule=rule, when=when)
 
     def _invalid_values(self, *, rule: dict, location: str, zero: bool) -> None:

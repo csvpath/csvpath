@@ -594,3 +594,35 @@ def test_odcs_property_threshold_counters_do_not_collide() -> None:
     assert parts.last_checks[1] == (
         "and.nocontrib( eq( count_lines(), total_lines() ), gte( @order_id_null_2, 3 ) ) -> fail()"
     )
+
+
+@pytest.mark.parametrize("threshold", [{"mustBe": 0}, {"mustBeLessThan": 2}])
+def test_odcs_property_missing_values_empty_list(threshold: dict) -> None:
+    rule = {"metric": "missingValues", "arguments": {"missingValues": []}, **threshold}
+    parts, report = _convert({"name": "a", "quality": [rule]})
+    assert parts.line_args == ["string(#a)"]
+    assert parts.line_checks == [] and parts.counters == []
+    assert _features(report) == [("properties.a.quality[0]", "quality.missingValues")]
+
+
+def test_odcs_property_allowed_values_drop_empties() -> None:
+    #
+    # as in the official ODCS example quality/column-validity: empties in an
+    # allowed-values list are governed by required/optional, not by the list
+    #
+    rule = {
+        "metric": "invalidValues",
+        "arguments": {"validValues": ["", None, "n/a"]},
+        "mustBe": 0,
+    }
+    parts, report = _convert({"name": "a", "quality": [rule]})
+    assert parts.line_checks == ['or( empty(#a), in(#a, "n/a") )']
+    assert report.skipped == []
+    parts, _ = _convert({"name": "a", "enum": [{"value": None}, {"value": "x"}]})
+    assert parts.line_checks == ['or( empty(#a), in(#a, "x") )']
+
+
+def test_odcs_property_allowed_values_only_empties() -> None:
+    parts, report = _convert({"name": "a", "enum": ["", None]})
+    assert parts.line_checks == []
+    assert _features(report) == [("properties.a.enum", "enum")]

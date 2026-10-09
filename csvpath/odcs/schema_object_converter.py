@@ -1,9 +1,6 @@
-import logging
-
 from .conversion_report import ConversionReport
 from .csvpath_parts import CsvPathParts
 from .csvpath_text_utility import CsvPathTextUtility as csut
-from .odcs_exceptions import OdcsException
 from .property_converter import PropertyConverter
 from .quality_utility import QualityUtility as quut
 from .threshold_utility import ThresholdUtility as thut
@@ -35,16 +32,21 @@ class SchemaObjectConverter:
         #
         self._duplicates: list[tuple[list[tuple[str, bool]], dict, list[str]]] = []
 
-    @property
-    def logger(self) -> logging.Logger:
-        return logging.getLogger(self.__class__.__name__)
-
-    def convert(self) -> str:
+    def convert(self) -> str | None:
+        """the csvpath, or None if the schema object has no properties, which
+        is reported. ODCS allows a schema to be defined elsewhere, e.g. in a
+        Kafka schema registry."""
         properties = self.obj.get("properties") or []
         if len(properties) == 0:
-            msg = f"Schema object {self.name} has no properties to convert"
-            self.logger.error(msg)
-            raise OdcsException(msg)
+            self._skip(
+                location="properties",
+                feature="properties",
+                reason=(
+                    "The schema object has no properties to convert; its schema "
+                    "may be defined elsewhere, e.g. in a schema registry."
+                ),
+            )
+            return None
         self.parts.metadata = {
             "id": self.name,
             "odcs-contract-id": f"{self.contract['id']}",

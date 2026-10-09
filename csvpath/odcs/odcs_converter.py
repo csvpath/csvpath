@@ -50,13 +50,24 @@ class OdcsConverter:
             self.logger.error(msg)
             raise OdcsException(msg)
         conversion = OdcsConversion()
+        seen = set()
         for obj in objects:
             name = obj.get("name")
-            if name in conversion.csvpaths:
+            if name in seen:
                 msg = f"Duplicate schema object name {name}"
                 self.logger.error(msg)
                 raise OdcsException(msg)
-            conversion.csvpaths[name] = SchemaObjectConverter(
+            seen.add(name)
+            csvpath = SchemaObjectConverter(
                 contract=self.contract, obj=obj, report=conversion.report
             ).convert()
+            if csvpath is not None:
+                conversion.csvpaths[name] = csvpath
+        if len(conversion.csvpaths) == 0:
+            msg = (
+                f"ODCS contract {self.contract.get('id')} has no schema objects "
+                "with properties to convert"
+            )
+            self.logger.error(msg)
+            raise OdcsException(msg)
         return conversion
