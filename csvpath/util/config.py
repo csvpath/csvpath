@@ -170,16 +170,10 @@ openlineage.results = from csvpath.managers.integrations.ol.results_listener_ol 
 
 [openlineage]
 #
-# datahub
-#
-#base_url = http://localhost:8080
-#endpoint = openapi/openlineage/api/v1/lineage
-#api_key = eyJhbGciOiJIUzI1NiJ9.eyJhY3RvclR5cGUiOiJVU0VSIiwiYWN0b3JJZCI6ImRhdGFodWIiLCJ0eXBlIjoiUEVSU09OQUwiLCJ2ZXJzaW9uIjoiMiIsImp0aSI6ImIxMGJiZWZiLWQ5MzEtNDlkZi1hOWVjLTA4M2FiMzNiZWEwOCIsInN1YiI6ImRhdGFodWIiLCJleHAiOjE3OTQwMDYxMjQsImlzcyI6ImRhdGFodWItbWV0YWRhdGEtc2VydmljZSJ9._xmO0Oyu4MgDeGnYAXPDNXkyybteoJVisN2zXqWMaaw
-#
-# Marquez, DataHub, DataDog or other event consumer.
-# Namespaces and names should be configured specifically
-# for your consumer and data assets in order to map
-# lineage across systems.
+# base + endpoint is the host address for Marquez, DataHub, DataDog
+# or other event consumer. the default is for local Marquez.
+# Namespaces and names should be configured specifically for your
+# consumer and data assets in order to map lineage across systems.
 #
 base_url = http://localhost:5000
 endpoint = api/v1/lineage
@@ -304,17 +298,6 @@ port = SFTPPLUS_PORT
 [ckan]
 server = http://. . . :80
 api_token =
-
-[openlineage]
-base_url = http://. . . :5000
-endpoint = api/v1/lineage
-api_key = "none"
-timeout = 5
-verify = False
-retries = 0
-gzip =
-version = 1
-namespace = default
 
 
 [slack]
