@@ -6,6 +6,8 @@ import jsonschema
 import yaml
 
 from .odcs_exceptions import OdcsException
+from csvpath.util.nos import Nos
+from csvpath.util.file_readers import DataFileReader
 
 
 class OdcsContractLoader:
@@ -38,10 +40,10 @@ class OdcsContractLoader:
     def from_path(cls, *, path: str) -> dict:
         if not isinstance(path, str) or path.strip() == "":
             raise ValueError("path must be a non-empty str")
-        if not os.path.isfile(path):
+        if not Nos(path).exists():
             raise ValueError(f"No ODCS contract file at {path}")
-        with open(path, encoding="utf-8") as f:
-            return cls.from_string(text=f.read())
+        with DataFileReader(path) as f:
+            return cls.from_string(text=f.source.read())
 
     @classmethod
     def from_string(cls, *, text: str) -> dict:

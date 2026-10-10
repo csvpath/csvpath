@@ -26,7 +26,7 @@ Using the converter:
     conversion.csvpaths["orders"]    # csvpath text, one per schema object
     conversion.report.skipped        # what was not translated
 
-## Conversion decisions (agreed with David, 2026-10-09)
+## Conversion decisions (agreed 2026-10-09)
 
 Scope and shape
 
@@ -57,8 +57,8 @@ Matching and validation semantics
   cognitive load low for people new to CsvPath.
 - `required` -> `.notnone`. `primaryKey` alone implies neither required
   nor unique, because a primary key may be composite.
-- `unique`: empty values are never duplicates (SQL semantics, agreed with
-  David 2026-10-09). `.distinct` treats two empty values as duplicates, so
+- `unique`: empty values are never duplicates (SQL semantics, agreed
+  2026-10-09). `.distinct` treats two empty values as duplicates, so
   it is only used on required columns, which reject empties anyway:
   `string.notnone.distinct(#c)`. An optional unique column, of any type,
   gets `or( empty(#c), not( has_dups(#c) ) )` after the `line()`.
