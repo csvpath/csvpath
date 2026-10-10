@@ -48,17 +48,12 @@ class TestCsvPathFunctionsLast(unittest.TestCase):
         assert 1 == path.variables["y"]
         x = path.variables["x"]
         #
-        # WARNING: at this time the result in @x is False. ideally it should be
-        # True, and atm, last() does return True, and would assign True but for
-        # the inner function of last(). because of the inner function x is False.
-        # craziness, but after looking at it multiple times over months, not
-        # amenable to a fix without major refactor--or brain upgrade. in a perfect
-        # world we'd do it. but under the circumstances it is not practical to
-        # refactor for a relatively infrequent, if not rare, corner case. if we
-        # do refactor it will probably be in the context of a v2 language version
-        # after at least moderate success and deploy-learnings.
+        # last() returns True on the last scanned line, and @x is assigned
+        # True. this used to be False: after evaluating its inner function,
+        # last() froze the path unconditionally, so the assignment to @x was
+        # skipped (issue #324).
         #
-        assert x is False
+        assert x is True
 
     def test_function_last_blank_2b(self):
         path = CsvPath().parse(
@@ -108,12 +103,7 @@ class TestCsvPathFunctionsLast(unittest.TestCase):
             f"""
         ~ eval last() on last line and skip ~
             ${LAST}[0-2][
-                yes() -> last(
-                            and(
-                                put("y", "ha"),
-                                skip()
-                            )
-                        )
+                yes() -> last( skip() )
                 @x = line_number()
             ]
         """
@@ -121,6 +111,13 @@ class TestCsvPathFunctionsLast(unittest.TestCase):
         for i, _ in enumerate(path.next()):
             print(f"path.variables: [{i}]{path.variables}")
         x = path.variables["x"]
+        #
+        # skip() on the last scanned line, line 2, skips the assignment, so @x
+        # keeps line 1. this used to be written as
+        # last( and( put("y", "ha"), skip() ) ), but and() stops at put(),
+        # which does not match, so skip() never ran; the test passed only
+        # because last() froze the path (issue #324).
+        #
         assert x == 1
 
     def test_function_last_blank_5(self):
