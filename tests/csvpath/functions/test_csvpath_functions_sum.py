@@ -29,7 +29,12 @@ class TestCsvPathFunctionsSum(unittest.TestCase):
             ]"""
         )
         path.collect()
-        assert path.variables["l"] == 3
+        #
+        # count_lines() includes the header: it is 2 on line 1 and 3 on
+        # line 2, so lt(count_lines(),3) matches line 1 only. this expected
+        # 3 (lines 1 and 2) while lt() behaved as lte() -- issue #301.
+        #
+        assert path.variables["l"] == 1
 
     def test_function_sum3(self):
         path = CsvPath()
