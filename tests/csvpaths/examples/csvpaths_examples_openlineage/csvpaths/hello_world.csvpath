@@ -3,6 +3,11 @@
     validation-mode:no-raise, print
 ~
 $[9][
+    @var_one = "im_on_my_way.txt"
+    @var_two = "zoo.txt"
+    @dest_three = "/fast/zoo.txt"
+    @dest_four = "/going/nowhere.txt"
+    add.this_will_error("five", false())
     reset_headers()
     print("hi")
     #0

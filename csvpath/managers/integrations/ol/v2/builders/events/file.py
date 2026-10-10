@@ -83,11 +83,9 @@ class FileEventBuilder:
         if Nos(path).exists():
             with DataFileReader(path) as reader:
                 readme = reader.source.read()
-                # readme = json.dumps(readme)
                 fs["documentation"] = documentation_dataset.DocumentationDatasetFacet(
                     description=readme
                 )
-
         ns, name = naut.namespace_and_name(
             config=self.listener.config, mdata=mdata, path=mdata.origin_path
         )

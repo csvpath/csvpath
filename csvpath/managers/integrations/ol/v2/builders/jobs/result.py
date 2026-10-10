@@ -1,9 +1,6 @@
 import traceback
 
-from openlineage.client.facet_v2 import (
-    job_type_job,
-    documentation_job,
-)
+from openlineage.client.facet_v2 import job_type_job, documentation_job, source_code_job
 from openlineage.client.event_v2 import Job
 
 from csvpath.managers.metadata import Metadata
@@ -39,6 +36,14 @@ class ResultJobBuilder:
                 eom="entity",
                 job_type="run_instance",
             )
+            if hasattr(self.listener, "csvpaths") and self.listener.csvpaths:
+                src = None
+                for c in self.listener.csvpaths.csvpath_instances():
+                    if c.identity == mdata.instance_identity:
+                        src = f"{c.scan}{c.match}"
+                fs["sourceCode"] = source_code_job.SourceCodeJobFacet(
+                    language="CsvPath", sourceCode=src
+                )
             job = Job(namespace=ns, name=name, facets=fs)
             return job
         except Exception as e:

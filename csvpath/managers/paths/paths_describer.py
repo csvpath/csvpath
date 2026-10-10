@@ -123,6 +123,11 @@ class NamedPathsDescriber:
     def get_config(self, name: NamedPathsName) -> GroupConfig:
         if name is None:
             raise ValueError("Name cannot be None")
+        #
+        # we should test and adjust if starts with '$'
+        #
+        if name.strip().startswith("$"):
+            name = ReferenceParser(name).root_major
         name = self._name_for_name(name)
         _ = self.get_json(name)
         cfg = _.get(self.CONFIG)

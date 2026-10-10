@@ -136,6 +136,10 @@ class PathsManager:
 
     def named_paths_home(self, name: NamedPathsName) -> str:
         """@private"""
+        if name is None:
+            raise ValueError("Named-paths group name cannot be None")
+        if name.strip().startswith("$"):
+            name = ReferenceParser(name).root_major
         home = Nos(self.named_paths_dir).join(name)
         nos = Nos(home)
         b = nos.dir_exists()

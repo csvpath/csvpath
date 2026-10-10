@@ -27,20 +27,15 @@ class JobBuilder:
     def build(self, mdata: Metadata) -> Job:
         ret = None
         if isinstance(mdata, FileMetadata):
-            print("jobsbuid: file")
             ret = FileJobBuilder(listener=self.listener).build(mdata)
         elif isinstance(mdata, PathsMetadata):
-            print("jobsbuid: paths")
             ret = PathsJobBuilder(listener=self.listener).build(mdata)
         elif isinstance(mdata, ResultMetadata):
-            print("jobsbuid: result")
             ret = ResultJobBuilder(listener=self.listener).build(mdata)
         elif isinstance(mdata, ResultsMetadata):
-            print("jobsbuid: results")
             ret = ResultsJobBuilder(listener=self.listener).build(mdata)
         elif isinstance(mdata, RunMetadata):
             ret = None
         else:
             raise JobException(f"Unknown metadata: {mdata}")
-        print(f"Jobsbuid: ret: {ret}\n")
         return ret

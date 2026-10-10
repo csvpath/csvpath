@@ -52,13 +52,6 @@ class ResultsEventBuilder:
             # named-paths inputs
             #
             prov = self._paths_provenance(mdata)
-            """
-            ns, path = naut.namespace_and_name_2(
-                config=self.listener.config,
-                mdata=mdata,
-                root=mdata.named_paths_root,
-            )
-            """
             sep = Nos(mdata.named_paths_root).sep
             path = f"{mdata.named_paths_root}{sep}{mdata.named_paths_name}{sep}group.csvpaths"
             ns, path = naut.namespace_and_name_2(
@@ -164,15 +157,6 @@ class ResultsEventBuilder:
         ns = prut.update_protocol_if_2(
             config=self.listener.config, mdata=mdata, root=mdata.named_paths_root
         )
-        """
-        ns, __path = naut.namespace_and_name_2(
-            config=self.listener.config,
-            mdata=mdata,
-            entity=mdata.named_paths_name,
-            eom="output",
-            job_type="load",
-        )
-        """
         group_file_symlink = symlinks_dataset.Identifier(
             namespace=ns,
             name=path,
@@ -181,7 +165,7 @@ class ResultsEventBuilder:
         return symlinks_dataset.SymlinksDatasetFacet(identifiers=[group_file_symlink])
 
     def _symlinks(self, mdata: Metadata) -> symlinks_dataset.SymlinksDatasetFacet:
-        ns = prut.update_protocol_if(
+        ns = prut.update_protocol_if_2(
             config=self.listener.config, mdata=mdata, root=mdata.named_files_root
         )
         reference_symlink = symlinks_dataset.Identifier(

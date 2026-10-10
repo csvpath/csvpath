@@ -16,10 +16,6 @@ class PathsRunBuilder:
         self.listener = listener
 
     def build(self, mdata: Metadata) -> Run:
-        # ns = prut.update_protocol_if_2(
-        #    config=self.listener.config, mdata=mdata, root=mdata.named_paths_root
-        # )
-
         fs = {}
         fs["groupName"] = NamedPathsFacet(mdata.named_paths_name)
         fs["loadDetails"] = LoadDetailsFacet(

@@ -177,7 +177,7 @@ class NameUtility:
     ) -> tuple[Namespace, FilePath]:
         if root is None:
             root = cls._root(config=config, mdata=mdata)
-        ns = ProtocolUtility.update_protocol_if(config=config, mdata=mdata, root=root)
+        ns = ProtocolUtility.update_protocol_if_2(config=config, mdata=mdata, root=root)
         if name_string is None:
             name_string = cls._name_string(config=config, mdata=mdata, root=root)
         if name is None:

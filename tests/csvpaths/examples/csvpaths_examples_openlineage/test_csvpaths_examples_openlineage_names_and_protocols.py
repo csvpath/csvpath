@@ -5,7 +5,7 @@ from csvpath.managers.integrations.ol.v2.util.name_utility import NameUtility as
 
 
 class TestCsvPathsExamplesOpenLineageNamesAndProtocols(unittest.TestCase):
-    def test_create_name(self) -> None:
+    def test_csvpaths_examples_ol_create_name(self) -> None:
 
         t = {
             "csvpath:{name}": "csvpath:animals",

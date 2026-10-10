@@ -167,6 +167,91 @@ openlineage.paths = from csvpath.managers.integrations.ol.paths_listener_ol impo
 openlineage.result = from csvpath.managers.integrations.ol.result_listener_ol import OpenLineageResultListener
 openlineage.results = from csvpath.managers.integrations.ol.results_listener_ol import OpenLineageResultsListener
 
+
+[openlineage]
+#
+# datahub
+#
+#base_url = http://localhost:8080
+#endpoint = openapi/openlineage/api/v1/lineage
+#api_key = eyJhbGciOiJIUzI1NiJ9.eyJhY3RvclR5cGUiOiJVU0VSIiwiYWN0b3JJZCI6ImRhdGFodWIiLCJ0eXBlIjoiUEVSU09OQUwiLCJ2ZXJzaW9uIjoiMiIsImp0aSI6ImIxMGJiZWZiLWQ5MzEtNDlkZi1hOWVjLTA4M2FiMzNiZWEwOCIsInN1YiI6ImRhdGFodWIiLCJleHAiOjE3OTQwMDYxMjQsImlzcyI6ImRhdGFodWItbWV0YWRhdGEtc2VydmljZSJ9._xmO0Oyu4MgDeGnYAXPDNXkyybteoJVisN2zXqWMaaw
+#
+# Marquez, DataHub, DataDog or other event consumer.
+# Namespaces and names should be configured specifically
+# for your consumer and data assets in order to map
+# lineage across systems.
+#
+base_url = http://localhost:5000
+endpoint = api/v1/lineage
+api_key = "none"
+timeout = 3
+verify = False
+urlencode = False
+gzip =
+retries = 0
+#
+# Implementation version v2 config from here down
+#
+version = 2
+#
+# namespaces:
+#  - strip: remove the protocol
+#  - root: named-entity root
+#  - default (or empty): named-entity root, add file:// and convert azure:// to correct blob protocols
+#  - project: use the project context and project values on the CsvPaths instance, if any
+#
+namespace_prefix = csvpath
+#
+# {{prefix}}:{{root_path}}                                  # e.g. csvpath:data/acme_files
+# {{protocol_root_path}}/{{entity_name}}                    # e.g. file://data/acme_files/orders
+# {{context}}.{{project}}.{{root_name}}.{{entity_name}}         # e.g. 72f801b.acme.acme_files.orders
+# {{context}}.{{project}}.{{root_path_separated}}             # e.g. 72f801b.acme.data.acme_files
+# {{prefix}}.{{context}}.{{project}}.{{root_path_separated}}    # e.g. csvpath.72f801b.acme.data.acme_files
+#
+namespace_pattern = {{prefix}}.{{root_path_separated}}
+#
+# names are created below. the `entity` is the named-paths, named-file, or named-results name.
+#
+# the job types are what you would expect:
+#   - job_register == add_named_file (FileManager)
+#   - job_load == add_named_paths (PathsManager)
+#   - job_run == collect_paths, fast_forward_paths, collect_by_line, fast_forward_by_line (on CsvPaths)
+#   - job_run_instance == collect, fast_forward (on CsvPath)
+#
+# the suffixed keys represent:
+#   - _entity: the name of the job of the named-thing
+#   - _output: the name of the main data outputs (and inputs!) of the named-thing
+#   - _manifest: the name of the manifest.json file that is an output of the job
+#
+job_register_entity = {{verb}}{{sep}}{{entity}}
+job_register_output = {{entity}}
+job_register_manifest = {{entity}}{{sep}}manifest
+
+job_load_entity = {{verb}}{{sep}}{{entity}}
+job_load_output = {{entity}}
+job_load_manifest = {{entity}}{{sep}}manifest
+
+job_run_entity = {{verb}}{{sep}}{{entity}}
+job_run_manifest = {{entity}}{{sep}}manifest
+
+job_run_instance_entity = {{verb}}{{sep}}{{entity}}{{sep}}{{instance}}
+job_run_instance_output = {{entity}}{{sep}}{{instance}}{{sep}}{{file}}
+job_run_instance_manifest = {{entity}}{{sep}}{{instance}}{{sep}}manifest
+#
+# verbs are just descriptive. the `sep` separator is used in patterns and to
+# replace path separators. the default is `.`
+#
+path_separator = .
+job_register_verb = register
+job_load_verb = load
+job_run_verb = run
+job_run_instance_verb = run
+
+
+
+
+
+
 # add slack to the list of groups above for alerts to slack webhooks
 slack.file = from csvpath.managers.integrations.slack.sender import SlackSender
 slack.paths = from csvpath.managers.integrations.slack.sender import SlackSender

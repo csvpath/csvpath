@@ -29,7 +29,14 @@ class PathsJobBuilder:
             with DataFileReader(mdata.group_file_path) as reader:
                 q = reader.read()
             facets = {}
-            facets["source"] = SourceFacet(source=q, fingerprint=mdata.fingerprint)
+            #
+            # we give the original location. i feel like it doesn't need to be
+            # an input dataset because the actual file should be in git or somewhere
+            # more controlled. not the same as for a file registration where the
+            # original location is meaningful information and the bytes can't be
+            # assumed to be managed elsewhere.
+            #
+            facets["source"] = SourceFacet(source=q, fingerprint=mdata.source_path)
             facets["documentation"] = documentation_job.DocumentationJobFacet(
                 description="""Loads a validation and upgrading group. This job assembles the csvpaths into a group.csvpaths file and makes it ready to run."""
             )

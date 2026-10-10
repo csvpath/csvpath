@@ -10,6 +10,7 @@ from csvpath import CsvPaths
 from csvpath.managers.integrations.ol.v2.builders.event import EventBuilder
 from csvpath.managers.integrations.ol.v2.sender import Sender
 from csvpath.managers.files.file_metadata import FileMetadata
+from csvpath.managers.paths.paths_descriptor import GroupTransfers, Transfers, Transfer
 
 FILE = os.path.join(
     "tests",
@@ -28,6 +29,9 @@ PATHS = os.path.join(
 )
 
 
+#
+# TODO: these tests are valuable as drivers, but limited value as unit tests.
+#
 class TestCsvPathsExamplesOpenLineage(unittest.TestCase):
     def test_csvpaths_openlineage_files_1(self) -> None:
         paths = CsvPaths()
@@ -171,6 +175,27 @@ class TestCsvPathsExamplesOpenLineage(unittest.TestCase):
             name="order_validations", from_file=PATHS, return_metadata=True
         )
 
+        #
+        # add a tranfer so we see the output
+        #
+        gt = GroupTransfers(
+            path_transfers={
+                "my_output": Transfers(
+                    on_complete_all=[
+                        Transfer(file="data", transfer_to="var_one"),
+                        Transfer(file="printouts", transfer_to="var_two"),
+                    ],
+                    on_complete_invalid=[
+                        Transfer(file="unmatched", transfer_to="dest_three"),
+                    ],
+                    on_complete_valid=[
+                        Transfer(file="vars.json", transfer_to="dest_four"),
+                    ],
+                )
+            }
+        )
+        paths.paths_manager.describer.store_transfers("order_validations", gt)
+
         metadatas = []
         paths.collect_paths(
             filename="orders", pathsname="order_validations", metadatas=metadatas
@@ -190,13 +215,14 @@ class TestCsvPathsExamplesOpenLineage(unittest.TestCase):
         es = EventBuilder(listener=sender).build(mdata)
         assert es is not None
         assert len(es) == 1
-        start = es[0]
 
-        print("\nEVENT: ")
-        je = Serde.to_json(start)
-        obj = json.loads(je)
-        s = json.dumps(obj, indent=4)
-        print(s)
+        if False:
+            start = es[0]
+            print("\nEVENT: ")
+            je = Serde.to_json(start)
+            obj = json.loads(je)
+            s = json.dumps(obj, indent=4)
+            print(s)
 
     #
     #

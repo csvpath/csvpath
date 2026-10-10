@@ -5,6 +5,8 @@ from openlineage.client.transport.http import (
     HttpConfig,
     HttpTransport,
 )
+from openlineage.client.serde import Serde
+
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.listener import Listener
 from .builders.event import EventBuilder
@@ -65,4 +67,20 @@ class Sender(Listener):
             return
         es = EventBuilder(listener=self).build(mdata)
         for e in es:
+            if False:
+                #
+                # TODO: in some cases -- e.g. Syniti -- a system may want to collect OL events
+                # off the disk, rather than from an endpoint. we could save them out here in
+                # _extra_data
+                #
+                import json
+
+                print("OL EVENT: ")
+                je = Serde.to_json(e)
+                obj = json.loads(je)
+                s = json.dumps(obj, indent=4)
+                print(s)
+            #
+            #
+            #
             self.client.emit(e)
