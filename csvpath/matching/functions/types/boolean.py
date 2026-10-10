@@ -38,7 +38,12 @@ class Boolean(ValueProducer, Type):
         # boolean-iness. when we're producing a value we're checking
         # boolean-iness and casting and raising errors.
         v = self.to_value(skip=skip)
-        self.match = v in [True, False]  # pragma: no cover
+        #
+        # _produce_value() sets value to a validity status, not the boolean:
+        # True for a valid boolean, False for an invalid one, CheckedUnset
+        # for empty. only a valid boolean matches (issue #302).
+        #
+        self.match = v is True  # pragma: no cover
 
     def _produce_value(self, skip=None) -> None:
         c = self._child_one()
