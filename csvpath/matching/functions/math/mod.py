@@ -1,4 +1,6 @@
 # pylint: disable=C0114
+import math
+from decimal import Decimal, InvalidOperation
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Header, Variable, Reference
 from ..function import Function
@@ -37,8 +39,34 @@ class Mod(ValueProducer):
         ret = 0
         v = siblings[0].to_value(skip=skip)
         m = siblings[1].to_value(skip=skip)
-        ret = float(v) % float(m)
-        ret = round(ret, 2)
+        #
+        # the float modulo comes first so that bad input, zero divisors, and
+        # infinities behave and raise exactly as they always have
+        #
+        fv = float(v)
+        fm = float(m)
+        ret = fv % fm
+        #
+        # float noise makes e.g. 0.3 % 0.1 come out as 0.0999..., so for
+        # finite operands the remainder is recomputed exactly from each
+        # float's shortest decimal form (issue #305)
+        #
+        if math.isfinite(fv) and math.isfinite(fm):
+            try:
+                d = Decimal(repr(fv)) % Decimal(repr(fm))
+                #
+                # Decimal's remainder takes the dividend's sign; Python's float
+                # modulo takes the divisor's. keep Python's.
+                #
+                if d != 0 and (d < 0) != (fm < 0):
+                    d += Decimal(repr(fm))
+                ret = float(d)
+            except InvalidOperation:
+                #
+                # the quotient is too large for an exact Decimal remainder;
+                # keep the float result
+                #
+                pass
         self.value = ret
 
     def _decide_match(self, skip=None) -> None:
