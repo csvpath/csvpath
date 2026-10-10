@@ -17,7 +17,7 @@ class DateUtility:
             years=DateUtility.OFFSET_YEARS,
             days=DateUtility.OFFSET_DAYS,
         )
-        return now
+        return now.replace(tzinfo=timezone.utc)
 
     @classmethod
     def proper_dates(cls, dates: list) -> list:

@@ -3,12 +3,15 @@ from abc import ABC
 from csvpath.util.exceptions import InputException
 from .metadata import Metadata
 from .listener import Listener
-from .errors.error import Error
 from ..util.class_loader import ClassLoader
 
 
 class Registrar(ABC):
     def __init__(self, csvpaths, result=None) -> None:
+        #
+        # what was the thinking here? should we make this an
+        # always present noneable field?
+        #
         if csvpaths:
             self.csvpaths = csvpaths
         self.result = result
@@ -63,6 +66,19 @@ class Registrar(ABC):
                 self.csvpaths.logger.debug(
                     "Updating listener %s with metadata %s", lst, mdata
                 )
+                #
+                # this is important. is this the best place to do it?
+                #
+                lst.csvpaths = self.csvpaths
+            else:
+                if self.result and self.result.csvpath:
+                    self.result.csvpath.logger.warn("No csvpaths on Registrar")
+                else:
+                    #
+                    # no result and no csvpath likely just means we are in a
+                    # CsvPath only context.
+                    #
+                    ...
             try:
                 lst.metadata_update(mdata)
             except Exception as ex:
@@ -91,7 +107,10 @@ class Registrar(ABC):
         self.csvpaths.logger.info("Loading additional listener %s", load_cmd)
         try:
             loader = ClassLoader()
-            alistener = loader.load(load_cmd)
+            kwargs = {}
+            if self.csvpaths:
+                kwargs = {"config": self.csvpaths.config}
+            alistener = loader.load(load_cmd, [], kwargs)
             if alistener is not None:
                 if hasattr(alistener, "csvpaths"):
                     setattr(alistener, "csvpaths", self.csvpaths)
@@ -99,7 +118,14 @@ class Registrar(ABC):
                     setattr(alistener, "result", self.result)
                 if hasattr(self, "csvpath") and hasattr(alistener, "csvpath"):
                     alistener.csvpath = self.csvpath
-                alistener.config = self.csvpaths.config
+                #
+                # for ol v2, we need to use the config init param all listeners
+                # have. this is no longer needed. the switch is better for the
+                # long run because ol v2 won't be the last listener that needs
+                # to make immediate decisions based on config
+                #
+                # alistener.config = self.csvpaths.config
+                #
                 listeners.append(alistener)
         except Exception as e:
             print(traceback.format_exc())

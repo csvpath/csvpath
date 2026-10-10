@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, List
+from typing import List
 from .error import Error
 from ..listener import Listener
 from ..metadata import Metadata
@@ -39,7 +39,7 @@ class ErrorCollector(ABC):
 
 
 class Collector(ErrorCollector, Listener):
-    def __init__(self) -> None:
+    def __init__(self, *, config=None, csvpaths=None) -> None:
         ErrorCollector.__init__(self)
         Listener.__init__(self)
         self.errors = []

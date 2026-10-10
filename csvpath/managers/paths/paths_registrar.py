@@ -1,5 +1,3 @@
-import os
-import json
 from csvpath.util.exceptions import InputException
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
@@ -19,6 +17,7 @@ class PathsRegistrar(Registrar, Listener):
         self._manager = None
         self.type_name = "paths"
         self.intermediary = Intermediary(csvpaths)
+        self.csvpaths = csvpaths
 
     @property
     def manager(self):
@@ -68,7 +67,7 @@ class PathsRegistrar(Registrar, Listener):
             mdata.manifest_path = mpath
             mdata.fingerprint = f
             self.distribute_update(mdata)
-        else:
+        elif self.csvpaths:
             #
             # leave as info so nobody has to dig to see why no update
             #
@@ -76,6 +75,11 @@ class PathsRegistrar(Registrar, Listener):
                 "Fingerprints of named-paths %s match, as expected; no need to fire update event",
                 name,
             )
+        else:
+            #
+            # no logger is not helpful or expected
+            #
+            print("WARNING: PathsRegistrar has no CsvPaths instance")
 
     def metadata_update(self, mdata: Metadata) -> None:
         jdata = self.get_manifest(mdata.manifest_path)

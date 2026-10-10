@@ -78,7 +78,7 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
             )
         )
 
-        reg = PathsListener(paths)
+        reg = PathsListener(csvpaths=paths, config=paths.config)
         mdata = PathsMetadata(paths.config)
         mdata.named_paths_name = "aname"
         mdata.named_paths_home = os.path.join("root", "aname")

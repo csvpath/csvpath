@@ -14,13 +14,13 @@ class FilesListener(Listener):  # Registrar,
     """@private
     this listener tracks all named-file arrivals"""
 
-    def __init__(self, csvpaths=None):
+    def __init__(self, *, config=None, csvpaths=None):
         #
         # FileRegistrar is the primary listener. however,
         # we want another file listener that tracks all files
         # staged at the inputs/named_files level.
         #
-        Listener.__init__(self, csvpaths.config if csvpaths else None)
+        Listener.__init__(self, csvpaths.config if csvpaths else config)
         self.csvpaths = csvpaths
         self.config = None
         if self.csvpaths:
@@ -59,7 +59,7 @@ class FilesListener(Listener):  # Registrar,
         mani["named_file_name"] = mdata.named_file_name
         mani["origin_path"] = mdata.origin_path
         mani["fingerprint"] = mdata.fingerprint
-        mani["reference"] = mdata.named_file_ref
+        mani["reference"] = mdata.reference
         mani["file_path"] = mdata.file_path
         mani["file_home"] = mdata.file_home
         mani["file_name"] = mdata.file_name

@@ -10,7 +10,6 @@ class EmptyString(str):
 
 
 class ExpressionUtility:
-
     EMPTY_STRING = EmptyString()
     """ an empty string between two delimiters is essentially the same as NULL.
         in some cases we want an empty string to just be an empty string. see
@@ -100,23 +99,23 @@ class ExpressionUtility:
         if f"{obj}".strip() == "":
             return False
         for t in classes:
-            if t == int:
+            if t is int:
                 o = cls.to_int(obj)
                 if cls.safe_isinstance(o, int):
                     return True
-            if t == float:
+            if t is float:
                 o = cls.to_float(obj)
                 if cls.safe_isinstance(o, float):
                     return True
-            if t == datetime:
+            if t is datetime:
                 o = cls.to_datetime(obj)
                 if cls.safe_isinstance(o, datetime):
                     return True
-            elif t == datetime.date:
+            elif t is datetime.date:
                 o = cls.to_date(obj)
                 if cls.safe_isinstance(o, datetime.date):
                     return True
-            elif t == bool:
+            elif t is bool:
                 o = cls.to_bool(obj)
                 if cls.safe_isinstance(o, bool):
                     return True
@@ -412,38 +411,38 @@ class ExpressionUtility:
             if act is None:
                 if cls.is_none(a):
                     return True
-            elif act == int:
+            elif act is int:
                 try:
                     i = cls.to_int(a)
                     i = i + 0
                     return True
                 except Exception:
                     continue
-            elif act == float:
+            elif act is float:
                 try:
                     i = cls.to_float(a)
                     i = i + 0
                     return True
                 except Exception:
                     continue
-            elif act == datetime.date:
+            elif act is datetime.date:
                 _ = ExpressionUtility.to_date(a)
                 if isinstance(_, datetime.date):
                     return True
-            elif act == datetime.datetime:
+            elif act is datetime.datetime:
                 _ = ExpressionUtility.to_date(a)
                 if isinstance(_, datetime.datetime):
                     return True
-            elif act == list:
+            elif act is list:
                 if isinstance(a, list):
                     return True
-            elif act == tuple:
+            elif act is tuple:
                 if isinstance(a, tuple):
                     return True
-            elif act == dict:
+            elif act is dict:
                 if isinstance(a, dict):
                     return True
-            elif act == bool:
+            elif act is bool:
                 # to_bool returns a if a is not booleanizable
                 _ = ExpressionUtility.to_bool(a)
                 if _ in [True, False]:
@@ -629,3 +628,42 @@ class ExpressionUtility:
                 d, descendents=descendents, include_equality=include_equality
             )
         return descendents
+
+    @classmethod
+    def get_my_descendents_of_class(
+        cls, *, thing, clazz, descendents: list = None
+    ) -> list:
+        lst = cls.get_my_descendents(thing, include_equality=True)
+        _ = [i for i in lst if isinstance(i, clazz)]
+        return _
+
+    @classmethod
+    def typed_headers(cls, matcher) -> list[tuple[str, str]]:
+        headers = []
+        fields = []
+        lst = [e[0] for e in matcher.expressions]
+        for _ in lst:
+            from csvpath.matching.productions.header import Header
+
+            headers += cls.get_my_descendents_of_class(thing=_, clazz=Header)
+        for h in headers:
+            name = h.name
+            ttype = "Unknown"
+            if h.parent and h.parent.name in [
+                "string",
+                "integer",
+                "decimal",
+                "date",
+                "datetime",
+                "boolean",
+                "email",
+                "url",
+                "nonspecific",
+                "unspecified",
+                "blank",
+                "wildcard",
+                "uuid",
+            ]:
+                ttype = h.parent.name
+            fields.append((name, ttype))
+        return fields

@@ -1,5 +1,4 @@
 import unittest
-import os
 from csvpath import CsvPaths
 
 
@@ -10,7 +9,13 @@ class TestCsvPathsExamplesHttp(unittest.TestCase):
         paths.config.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.file_manager.add_named_file(
             name="orders",
-            path="https://drive.google.com/uc?id=1zO8ekHWx9U7mrbx_0Hoxxu6od7uxJqWw&export=download",
+            #
+            # used food.csv as shared to anyone by link in google drive
+            #
+            # create download link to google drive:
+            #   https://sites.google.com/site/gdocs2direct/?pli=1&authuser=0
+            #
+            path="https://drive.google.com/uc?export=download&id=1PVB1J3W-fpGwBcc8oMhbwK6CLsHZrBjH",
         )
         paths.file_manager.registrar.patch_named_file(
             name="orders", patch={"type": "csv", "file_name": "download.csv"}

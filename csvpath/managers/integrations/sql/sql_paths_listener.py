@@ -32,7 +32,11 @@ class SqlPathsListener(SqlListener):
             "ip_address": mdata.ip_address,
             "hostname": mdata.hostname,
             "username": mdata.username,
-            "base_path": mdata.base_path,
+            #
+            # base path is deprecated. it was a state leak.
+            #
+            # "base_path": mdata.base_path,
+            "base_path": "",
             "manifest_path": mdata.manifest_path,
             "template": mdata.template,
         }
@@ -53,7 +57,7 @@ class SqlPathsListener(SqlListener):
             if dialect in ["postgresql", "sqlite"]:
                 ist = pg_insert if dialect == "postgresql" else sqlite_insert
                 stmt = (
-ist(self.named_paths)
+                    ist(self.named_paths)
                     .values(named_paths_data)
                     .on_conflict_do_update(
                         index_elements=["uuid"], set_=self._set(named_paths_data)

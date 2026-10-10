@@ -1,22 +1,18 @@
-from datetime import datetime
 import os
 import json
 from pathlib import Path
 from openlineage.client.facet_v2 import (
-    JobFacet,
     schema_dataset,
     output_statistics_output_dataset,
 )
 from openlineage.client.event_v2 import Dataset, RunEvent
-from openlineage.client.event_v2 import Job, Run, RunState
-from openlineage.client.event_v2 import InputDataset, OutputDataset
+from openlineage.client.event_v2 import RunState
+from openlineage.client.event_v2 import OutputDataset
 
 from csvpath.managers.metadata import Metadata
-from csvpath.managers.results.result_metadata import ResultMetadata
 
 from .job import JobBuilder
 from .run import RunBuilder
-from .run_state import RunStateBuilder
 
 
 class ResultEventBuilder:
@@ -80,10 +76,10 @@ class ResultEventBuilder:
                     with open(fp, "r", encoding="utf-8") as file:
                         for line in file:
                             lines += 1
-                    of[
-                        "outputStatistics"
-                    ] = output_statistics_output_dataset.OutputStatisticsOutputDatasetFacet(
-                        rowCount=lines, size=size
+                    of["outputStatistics"] = (
+                        output_statistics_output_dataset.OutputStatisticsOutputDatasetFacet(
+                            rowCount=lines, size=size
+                        )
                     )
 
                 if exists and fingerprint == "vars.json":

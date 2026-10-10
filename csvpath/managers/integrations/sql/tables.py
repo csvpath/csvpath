@@ -65,6 +65,10 @@ class Tables:
             Column("ip_address", String(30)),
             Column("hostname", String(100)),
             Column("username", String(50)),
+            #
+            # note that base_path is deprecated. it leaked csvpath instance
+            # state that wasn't helping and shouldn't be available.
+            #
             Column("base_path", String(250)),
             Column("manifest_path", String(250), nullable=False),
             Column("template", String(250), nullable=True),

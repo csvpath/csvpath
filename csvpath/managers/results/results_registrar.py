@@ -21,7 +21,13 @@ class ResultsRegistrar(Registrar, Listener):
     DYNAMIC = "dynamic"
 
     def __init__(
-        self, *, csvpaths, run_dir: str, pathsname: str, results: list[Result] = None
+        self,
+        *,
+        csvpaths,
+        run_dir: str,
+        pathsname: str,
+        results: list[Result] = None,
+        config=None,
     ) -> None:
         Registrar.__init__(self, csvpaths)
         Listener.__init__(self, csvpaths.config)
@@ -29,6 +35,7 @@ class ResultsRegistrar(Registrar, Listener):
         self.run_dir = run_dir
         self.results = results
         self.type_name = "results"
+        self.csvpaths = csvpaths
 
     def register_start(self, mdata: ResultsMetadata) -> None:
         mdata.status = ResultsRegistrar.STARTED

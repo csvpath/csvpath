@@ -2,9 +2,7 @@ import os
 import json
 
 from openlineage.client.facet_v2 import (
-    JobFacet,
     job_type_job,
-    schema_dataset,
     source_code_location_job,
     documentation_job,
     sql_job,
@@ -54,10 +52,10 @@ class JobBuilder:
         try:
             facets = {}
             location = f"file:////{mdata.base_path}{os.sep}{mdata.file_path}"
-            facets[
-                "sourceCodeLocation"
-            ] = source_code_location_job.SourceCodeLocationJobFacet(
-                type="CsvPath", url=location, tag=f"{mdata.fingerprint}"
+            facets["sourceCodeLocation"] = (
+                source_code_location_job.SourceCodeLocationJobFacet(
+                    type="CsvPath", url=location, tag=f"{mdata.fingerprint}"
+                )
             )
             facets["documentation"] = documentation_job.DocumentationJobFacet(
                 description="""Stages a source file for validation.
@@ -73,10 +71,10 @@ class JobBuilder:
         try:
             facets = {}
             location = f"file:////{mdata.base_path}{os.sep}{mdata.group_file_path}"
-            facets[
-                "sourceCodeLocation"
-            ] = source_code_location_job.SourceCodeLocationJobFacet(
-                type="CsvPath", url=location, tag=f"{mdata.fingerprint}"
+            facets["sourceCodeLocation"] = (
+                source_code_location_job.SourceCodeLocationJobFacet(
+                    type="CsvPath", url=location, tag=f"{mdata.fingerprint}"
+                )
             )
             #
             #
@@ -143,10 +141,10 @@ class JobBuilder:
             fs["documentation"] = documentation_job.DocumentationJobFacet(
                 description="Kicks off the individual csvpath jobs within this named-paths group"
             )
-            fs[
-                "sourceCodeLocation"
-            ] = source_code_location_job.SourceCodeLocationJobFacet(
-                type="CsvPath", url=f"{mdata.named_paths_name}/group.csvpaths"
+            fs["sourceCodeLocation"] = (
+                source_code_location_job.SourceCodeLocationJobFacet(
+                    type="CsvPath", url=f"{mdata.named_paths_name}/group.csvpaths"
+                )
             )
             name = f"Group:{mdata.named_results_name}"
             job = Job(namespace=mdata.archive_name, name=name, facets=fs)

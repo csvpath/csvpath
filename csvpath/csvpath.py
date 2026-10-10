@@ -6,7 +6,7 @@ import os
 import hashlib
 import traceback
 from datetime import datetime
-from typing import List, Dict, Any, Optional, Callable
+from typing import List, Dict, Any, Optional, Callable, Self
 from collections.abc import Iterator
 from .util.config import Config
 from .util.line_monitor import LineMonitor
@@ -720,7 +720,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         """
         self.modes.return_mode.collect_when_not_matched = yesno
 
-    def parse(self, csvpath, disposably=False):
+    def parse(self, csvpath, disposably=False) -> Self | Matcher:
         """@private
         displosably is True when a Matcher is needed for some purpose other than
         the run we were created to do. could be that a match component wanted a
@@ -1070,10 +1070,27 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
     @property
     def completed(self) -> bool:
         if not self.scanner or not self.line_monitor:
+            print("cvspath: not completed because no line monitor or no scanner")
             return False
+        #
+        # adding this test due to a bug. it may not be the best overall logic --
+        # could it be better as True? not sure yet. seems to be a corner case.
+        #
+        if self.scanner.to_line is None or self.line_monitor is None:
+            return False
+        #
+        # we're not asking if this is the last line. it may not be and yet
+        # we could be done. that said, ideally we catch the last line, do any
+        # last() and then stop iterating.
+        #
+        return self.scanner.to_line <= self.line_monitor.physical_line_number
+        """
         if self.scanner.is_last(self.line_monitor.physical_line_number):
+            print(f"cvspath: completed because line monitor ({self.line_monitor.physical_line_number}) == scanner's last {self.scanner._these_last}")
             return True
+        print(f"cvspath: noncompleted because line monitor ({self.line_monitor.physical_line_number}) != scanner's last {self.scanner._these_last}")
         return False
+        """
 
     @property
     def from_line(self):  # pragma: no cover pylint: disable=C0116
@@ -1210,6 +1227,11 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                 nexts -= 1
             else:
                 break
+        #
+        # completed should be dynamically available
+        # self.completed = True
+        #
+        #
         # we don't want to hold on to data more than needed. but
         # we do want to return data if we're not spooling. the
         # way we do that is to keep the local var available with the

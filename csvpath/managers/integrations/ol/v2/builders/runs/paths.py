@@ -1,0 +1,29 @@
+from openlineage.client.event_v2 import Run
+
+from csvpath.managers.metadata import Metadata
+from csvpath.managers.listener import Listener
+
+from ...facets.named_paths import NamedPathsFacet
+from ...facets.load_details import LoadDetailsFacet
+
+from ...util.engine_utility import EngineUtility as enut
+
+
+class PathsRunBuilder:
+    def __init__(self, *, listener: Listener) -> None:
+        if listener is None:
+            raise ValueError("Listener cannot be None")
+        self.listener = listener
+
+    def build(self, mdata: Metadata) -> Run:
+        fs = {}
+        fs["groupName"] = NamedPathsFacet(mdata.named_paths_name)
+        fs["loadDetails"] = LoadDetailsFacet(
+            template=mdata.template,
+            append=mdata.append,
+            named_paths_name=mdata.named_paths_name,
+            named_paths_count=mdata.named_paths_count,
+        )
+        fs["processing_engine"] = enut.engine_facet()
+        run = Run(runId=mdata.uuid_string, facets=fs)
+        return run
