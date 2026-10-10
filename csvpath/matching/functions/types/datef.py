@@ -130,6 +130,14 @@ class Date(ValueProducer, Type):
         return ret
 
     def _decide_match(self, skip=None) -> None:
+        #
+        # an empty value matches unless notnone, as in string(), integer(),
+        # and the other type functions (issue #300)
+        #
+        h = self._value_one(skip=skip)
+        if h is None or (isinstance(h, str) and h.strip() == ""):
+            self.match = self.notnone is not True
+            return
         v = self.to_value(skip=skip) is not None
         v = (
             ExpressionUtility.to_date(v)

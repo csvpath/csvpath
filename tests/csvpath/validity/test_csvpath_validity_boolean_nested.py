@@ -14,7 +14,7 @@ Data, one row per kind of value in column b:
     3,1
     4,0
     5,perhaps     an invalid value
-    6,            empty
+    6,            empty: matches unless notnone (issue #300)
     7,TRUE
 """
 
@@ -36,19 +36,19 @@ def _matched_ids(*, tmp_path, expression: str, mode: str) -> list[str]:
 @pytest.mark.parametrize(
     "expression,expected",
     [
-        ("boolean(#b)", ["1", "2", "3", "4", "7"]),
-        ("or( no(), boolean(#b) )", ["1", "2", "3", "4", "7"]),
+        ("boolean(#b)", ["1", "2", "3", "4", "6", "7"]),
+        ("or( no(), boolean(#b) )", ["1", "2", "3", "4", "6", "7"]),
         ("or( empty(#b), boolean(#b) )", ["1", "2", "3", "4", "6", "7"]),
-        ("and( yes(), boolean(#b) )", ["1", "2", "3", "4", "7"]),
-        ("boolean.strict(#b)", ["1", "2", "7"]),
-        ("or( no(), boolean.strict(#b) )", ["1", "2", "7"]),
+        ("and( yes(), boolean(#b) )", ["1", "2", "3", "4", "6", "7"]),
+        ("boolean.strict(#b)", ["1", "2", "6", "7"]),
+        ("or( no(), boolean.strict(#b) )", ["1", "2", "6", "7"]),
         #
         # not() inverts boolean()'s match, so it matches the invalid row 5,
         # but boolean() also reports a validation error for row 5, and in
-        # this validation mode any error fails the line. only the empty row
-        # 6, which is not an error without notnone, matches.
+        # this validation mode any error fails the line. the empty row 6
+        # matches boolean() (issue #300), so not() rejects it.
         #
-        ("not( boolean(#b) )", ["6"]),
+        ("not( boolean(#b) )", []),
     ],
 )
 def test_validity_boolean_nested(tmp_path, expression: str, expected: list) -> None:
@@ -59,14 +59,15 @@ def test_validity_boolean_nested(tmp_path, expression: str, expected: list) -> N
 @pytest.mark.parametrize(
     "expression,expected",
     [
-        ("boolean(#b)", ["1", "2", "3", "4", "7"]),
-        ("or( no(), boolean(#b) )", ["1", "2", "3", "4", "7"]),
-        ("line( string(#id), boolean(#b) )", ["1", "2", "3", "4", "7"]),
+        ("boolean(#b)", ["1", "2", "3", "4", "6", "7"]),
+        ("or( no(), boolean(#b) )", ["1", "2", "3", "4", "6", "7"]),
+        ("line( string(#id), boolean(#b) )", ["1", "2", "3", "4", "6", "7"]),
         #
         # in match mode errors do not fail the line, so not() of a
-        # non-matching boolean() matches the invalid row 5
+        # non-matching boolean() matches the invalid row 5. the empty row 6
+        # matches boolean() (issue #300), so not() rejects it.
         #
-        ("not( boolean(#b) )", ["5", "6"]),
+        ("not( boolean(#b) )", ["5"]),
     ],
 )
 def test_validity_boolean_match_mode(tmp_path, expression: str, expected: list) -> None:

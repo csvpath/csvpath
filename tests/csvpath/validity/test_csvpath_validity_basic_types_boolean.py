@@ -29,14 +29,20 @@ class TestCsvPathValidityValidBasicTypesBoolean(unittest.TestCase):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
-            f""" ~ None is acceptable if not notnone but it is not
-                   a boolean value so we get nothing here ~
+            f""" ~ None is acceptable when not notnone, as for string(),
+                   integer(), and the other type functions (issue #300) ~
             ${PATH}[*][
                 boolean(none())
             ]"""
         )
         lines = path.collect()
-        assert len(lines) == 0
+        #
+        # this expected 0 while boolean() rejected empty values even without
+        # notnone. boolean() now matches None like the other type functions:
+        # string(none()), integer(none()), decimal(none()), email(none()),
+        # and uuid(none()) all match every line too (issue #300).
+        #
+        assert len(lines) == 9
 
     def test_validity_boolean3(self):
         path = CsvPath()

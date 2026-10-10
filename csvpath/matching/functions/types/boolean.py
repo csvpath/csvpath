@@ -41,8 +41,12 @@ class Boolean(ValueProducer, Type):
         #
         # _produce_value() sets value to a validity status, not the boolean:
         # True for a valid boolean, False for an invalid one, CheckedUnset
-        # for empty. only a valid boolean matches (issue #302).
+        # for empty. only a valid boolean matches (issue #302). an empty value
+        # matches unless notnone, as in the other type functions (issue #300).
         #
+        if isinstance(v, CheckedUnset):
+            self.match = self.notnone is not True
+            return
         self.match = v is True  # pragma: no cover
 
     def _produce_value(self, skip=None) -> None:
