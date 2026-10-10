@@ -37,4 +37,8 @@ class TestCsvPathsExamplesPrint(unittest.TestCase):
         printouts = results[0].get_printouts("once")
         assert len(printouts) == 1
         printouts = results[0].get_printouts("default")
-        assert len(printouts) == 5
+        #
+        # lt(@times, 4) prints for @times 0 through 3. this expected 5 while
+        # lt() behaved as lte() -- issue #301.
+        #
+        assert len(printouts) == 4
