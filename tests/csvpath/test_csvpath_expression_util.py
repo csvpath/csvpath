@@ -312,6 +312,21 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.isa(datetime.datetime.now(), (datetime.date,))
         assert not ExpressionUtility.isa("not a number", (int,))
 
+    def test_exp_util_isa_datetime(self):
+        #
+        # issue #312: isa() compared against the datetime module instead of
+        # the datetime class, so nothing ever matched datetime
+        #
+        dt = datetime.datetime
+        assert ExpressionUtility.isa(datetime.datetime(2024, 1, 1, 10), (dt,))
+        assert ExpressionUtility.isa("2024-01-01 10:00:00", (dt,))
+        assert ExpressionUtility.isa(datetime.date(2024, 1, 1), (dt,))
+        assert not ExpressionUtility.isa("not a date", (dt,))
+        assert ExpressionUtility.all(
+            [datetime.datetime(2024, 1, 1, 10), datetime.datetime(2024, 1, 1, 11)],
+            [dt],
+        )
+
     def test_exp_util_isa_classlist_with_instances_not_types(self):
         # non-type entries in classes are converted to their own type()
         assert ExpressionUtility.isa(1, (1,))

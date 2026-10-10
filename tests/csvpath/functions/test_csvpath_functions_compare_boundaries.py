@@ -7,9 +7,8 @@ each value kind AboveBelow compares: numbers (int and float), strings,
 dates, and datetimes. The equal case is the one issue #301 found broken:
 lt(), below(), and before() behaved as lte().
 
-Datetime cases that issue #312 breaks (time of day ignored) are marked as
-strict expected failures. When #312 is fixed they will fail as unexpected
-passes; remove the markers then.
+The datetime cases also guard issue #312: datetime comparisons ignored the
+time of day, so two datetimes on the same day compared as equal.
 """
 
 import os
@@ -61,41 +60,13 @@ ORDERINGS = {
 }
 
 
-def _broken_by_312(*, name: str, kind: str, ordering: str) -> bool:
-    #
-    # issue #312: two datetimes are compared by date only, so they always
-    # compare as equal on the same day. a case is broken exactly when its
-    # correct answer differs from the answer for equal operands.
-    #
-    if kind != "datetime":
-        return False
-    i, j = ORDERINGS[ordering]
-    left = VALUES[kind][i][1]
-    right = VALUES[kind][j][1]
-    return EXPECTED[name](left, right) != EXPECTED[name](left, left)
-
-
 def _cases() -> list:
     cases = []
     for name in EXPECTED:
         for kind in VALUES:
             for ordering in ORDERINGS:
-                marks = []
-                if _broken_by_312(name=name, kind=kind, ordering=ordering):
-                    marks.append(
-                        pytest.mark.xfail(
-                            strict=True,
-                            reason="#312: datetime comparisons ignore time of day",
-                        )
-                    )
                 cases.append(
-                    pytest.param(
-                        name,
-                        kind,
-                        ordering,
-                        marks=marks,
-                        id=f"{name}-{kind}-{ordering}",
-                    )
+                    pytest.param(name, kind, ordering, id=f"{name}-{kind}-{ordering}")
                 )
     return cases
 
@@ -110,3 +81,45 @@ def test_function_compare_boundaries(name: str, kind: str, ordering: str) -> Non
     path.parse(f"${DATES}[1][ @r = {name}( {left_text}, {right_text} ) ]")
     path.fast_forward()
     assert path.variables["r"] is EXPECTED[name](left, right)
+
+
+@pytest.mark.parametrize(
+    "expression,expected",
+    [
+        #
+        # a date compares as midnight against a datetime on the same day.
+        # while #312 was open these were all compared by date only, so
+        # every one of them read as equal.
+        #
+        (
+            'gt( datetime("2024-01-01 10:00:00", "%Y-%m-%d %H:%M:%S"), date("2024-01-01", "%Y-%m-%d") )',
+            True,
+        ),
+        (
+            'lt( date("2024-01-01", "%Y-%m-%d"), datetime("2024-01-01 10:00:00", "%Y-%m-%d %H:%M:%S") )',
+            True,
+        ),
+        (
+            'gte( date("2024-01-01", "%Y-%m-%d"), datetime("2024-01-01 10:00:00", "%Y-%m-%d %H:%M:%S") )',
+            False,
+        ),
+        (
+            'lte( datetime("2024-01-01 10:00:00", "%Y-%m-%d %H:%M:%S"), date("2024-01-01", "%Y-%m-%d") )',
+            False,
+        ),
+        (
+            'gte( datetime("2024-01-01 00:00:00", "%Y-%m-%d %H:%M:%S"), date("2024-01-01", "%Y-%m-%d") )',
+            True,
+        ),
+        (
+            'lt( datetime("2024-01-01 00:00:00", "%Y-%m-%d %H:%M:%S"), date("2024-01-01", "%Y-%m-%d") )',
+            False,
+        ),
+    ],
+)
+def test_function_compare_date_and_datetime(expression: str, expected: bool) -> None:
+    path = CsvPath()
+    path.config.add_to_config("errors", "csvpath", "raise")
+    path.parse(f"${DATES}[1][ @r = {expression} ]")
+    path.fast_forward()
+    assert path.variables["r"] is expected

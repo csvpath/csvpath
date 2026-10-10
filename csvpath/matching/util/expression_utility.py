@@ -107,9 +107,9 @@ class ExpressionUtility:
                 o = cls.to_float(obj)
                 if cls.safe_isinstance(o, float):
                     return True
-            if t is datetime:
+            if t is datetime.datetime:
                 o = cls.to_datetime(obj)
-                if cls.safe_isinstance(o, datetime):
+                if cls.safe_isinstance(o, datetime.datetime):
                     return True
             elif t is datetime.date:
                 o = cls.to_date(obj)
