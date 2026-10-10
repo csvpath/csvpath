@@ -97,7 +97,13 @@ class TestCsvPathFunctionsMissing(unittest.TestCase):
             ]"""
         )
         lines = path.collect()
-        assert len(lines) == 11
+        #
+        # on the last line @noway is None, so missing() is True and not() is
+        # False: that line does not match. this expected 11 while the last()
+        # when/do froze the path and the not(missing()) check was skipped on
+        # the last line (issue #324).
+        #
+        assert len(lines) == 10
 
     def test_function_missing7(self):
         path = CsvPath()

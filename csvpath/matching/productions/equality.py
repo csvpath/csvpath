@@ -417,6 +417,12 @@ class Equality(Matchable):
             #
             override = isinstance(self.left, Function) and self.left.override_frozen()
             if override:
+                #
+                # remember the frozen state so it can be restored afterwards.
+                # on an ordinary last line the path is not frozen, and must
+                # not be frozen for the match components after us (#324).
+                #
+                was_frozen = self.matcher.csvpath.is_frozen
                 self.matcher.csvpath.is_frozen = False
                 self.matcher.csvpath.logger.debug(
                     "Overriding frozen in when/do: %s", self
@@ -429,7 +435,7 @@ class Equality(Matchable):
                 self.matcher.csvpath.logger.debug(
                     "Resetting frozen after when/do: %s", self
                 )
-                self.matcher.csvpath.is_frozen = True
+                self.matcher.csvpath.is_frozen = was_frozen
         else:
             self.DO_WHEN = False
             if not self.matcher._AND and self._left_nocontrib(self.left):

@@ -73,10 +73,12 @@ class Last(MatchDecider):
                 self.matcher.csvpath.logger.debug(
                     "Overriding frozen in last(): %s", self
                 )
-                # disable frozen so we can eval
+                # disable frozen so we can eval, remembering the state so it
+                # can be restored rather than forced on (#324)
+                was_frozen = self.matcher.csvpath.is_frozen
                 self.matcher.csvpath.is_frozen = False
                 # we do not take any match value returned
                 self.children[0].matches(skip=[self])
-                # reset frozen
-                self.matcher.csvpath.is_frozen = True
+                # restore frozen
+                self.matcher.csvpath.is_frozen = was_frozen
                 self.matcher.csvpath.logger.debug("Reset frozen after last(): %s", self)
