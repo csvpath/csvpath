@@ -1,6 +1,9 @@
 # pylint: disable=C0114
 import json
 import traceback
+import tempfile
+import os
+
 from typing import NewType
 from json import JSONDecodeError
 from csvpath import CsvPath
@@ -10,6 +13,10 @@ from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
+
+from csvpath.odcs.odcs_contract_loader import OdcsContractLoader
+from csvpath.odcs.odcs_converter import OdcsConverter
+
 from .paths_registrar import PathsRegistrar
 from ..metadata import Metadata
 from .paths_metadata import PathsMetadata
@@ -313,10 +320,37 @@ class PathsManager:
             # change for FP: added append as a pass-through
             #
             self.csvpaths.logger.debug("Reading csvpaths file at %s", file_path)
-            _ = self._get_csvpaths_from_file(file_path)
+            #
+            # TODO: ifwe have an odcs file we convert to csvpaths write to a temp file,
+            # get the paths, and continue the load. We pass source_path with the
+            # original file. and put the original in the named-file home in the
+            # in the paths registrar just by checking for if a .yaml file and copying
+            # it. we don't really even need to check if the .yaml is odcs, because
+            # if it weren't in some way a yaml that equalled csvpaths we'd break here.
+            #
+            paths = None
+            if file_path.endswith(".yml") or file_path.endswith(".yaml"):
+                #
+                # odcs path
+                #
+                tmp = tempfile.NamedTemporaryFile(suffix=".csvpaths", delete=False)
+                contract = OdcsContractLoader.from_path(path=file_path)
+                conversion = OdcsConverter(contract=contract).convert()
+                csvpath_text = ""
+                for k, v in conversion.csvpaths.items():
+                    csvpath_text = f"{csvpath_text}\n{v}\n\n{self.MARKER}\n"
+                tmp.write(csvpath_text, encoding="utf-8")
+                paths = self._get_csvpaths_from_file(tmp.name)
+                tmp.close()
+                os.unlink(tmp.name)
+            else:
+                #
+                # regular path
+                #
+                paths = self._get_csvpaths_from_file(file_path)
             ref = self.add_named_paths(
                 name=name,
-                paths=_,
+                paths=paths,
                 source_path=file_path,
                 template=template,
                 append=append,

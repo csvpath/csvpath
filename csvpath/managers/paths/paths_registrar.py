@@ -1,7 +1,11 @@
+from pathlib import Path
+
 from csvpath.util.exceptions import InputException
 from csvpath.util.file_readers import DataFileReader
+from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
 from csvpath.util.intermediary import Intermediary
+
 from .paths_metadata import PathsMetadata
 from ..listener import Listener
 from ..metadata import Metadata
@@ -81,6 +85,22 @@ class PathsRegistrar(Registrar, Listener):
             #
             print("WARNING: PathsRegistrar has no CsvPaths instance")
 
+    def _copy_in_yaml_if(self, mdata: Metadata) -> None:
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
+        if mdata.source_path is None:
+            return
+        if mdata.named_paths_home is None:
+            raise ValueError("Metadata must have a named-paths group home")
+        path = mdata.source_path
+        if path.endswith(".yml") or path.endswith(".yaml"):
+            if not Nos(path).exists():
+                raise ValueError(f"There is no file at {path}")
+            dest = Nos(mdata.named_paths_home).join(Path(path).name)
+            with DataFileReader(path) as reader:
+                with DataFileWriter(path=dest, mode="w") as writer:
+                    writer.source.write(reader.source.read())
+
     def metadata_update(self, mdata: Metadata) -> None:
         jdata = self.get_manifest(mdata.manifest_path)
         if len(jdata) == 0 or jdata[len(jdata) - 1]["fingerprint"] != mdata.fingerprint:
@@ -97,6 +117,7 @@ class PathsRegistrar(Registrar, Listener):
             m["group_file_path"] = mdata.group_file_path
             if mdata.source_path is not None:
                 m["source_path"] = mdata.source_path
+                self._copy_in_yaml_if(mdata)
             m["named_paths"] = mdata.named_paths
             m["named_paths_identities"] = mdata.named_paths_identities
             m["named_paths_count"] = mdata.named_paths_count
