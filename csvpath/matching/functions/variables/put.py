@@ -83,7 +83,14 @@ class Put(SideEffect):
                 value = key
                 key = None
             self.matcher.set_variable(varname, value=value, tracking=key)
-        self.value = self._apply_default_value()
+        self._apply_default_value()
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self.to_value(skip=skip) is not None  # pragma: no cover
+        #
+        # put() is a side effect: it sets a variable and matches by default,
+        # like print() and push(). it used to match on value is not None,
+        # but its value is always the default, None, so it never matched
+        # (issue #328).
+        #
+        self.to_value(skip=skip)
+        self.match = self.default_match()
