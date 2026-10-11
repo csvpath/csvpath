@@ -812,7 +812,11 @@ class PathsManager:
             with DataFileReader(grp) as reader:
                 s = reader.read()
         cs = s.split("---- CSVPATH ----")
-        cs = [s for s in cs if s.strip() != ""]
+        #
+        # strip the group file's padding, as _get_csvpaths_from_file() does.
+        # unstripped, every append re-wrapped it and the newlines grew.
+        #
+        cs = [s.strip() for s in cs if s.strip() != ""]
         #
         # this update may not result in broadcasting an update event to listeners.
         # that all depends on if group.csvpaths was changed outside the manager.
