@@ -10,6 +10,14 @@ from csvpath.matching.productions.equality import Equality
 class Last(MatchDecider):
     """matches on the last line that will be scanned. last() will always run."""
 
+    #
+    # last()'s argument must only run on the last line. validating its
+    # actual value would compute it on every line, and for e.g. and() or
+    # or() computing the value runs their children, side effects and all.
+    # the actual is declared Any, so there is nothing to validate (#326).
+    #
+    VALIDATES_ARG_ACTUALS = False
+
     def check_valid(self) -> None:
         self.description = [
             self.wrap(
