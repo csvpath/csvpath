@@ -99,7 +99,7 @@ class PathsRegistrar(Registrar, Listener):
             dest = Nos(mdata.named_paths_home).join(Path(path).name)
             with DataFileReader(path) as reader:
                 with DataFileWriter(path=dest, mode="w") as writer:
-                    writer.source.write(reader.source.read())
+                    writer.write(reader.source.read())
 
     def metadata_update(self, mdata: Metadata) -> None:
         jdata = self.get_manifest(mdata.manifest_path)
@@ -117,7 +117,6 @@ class PathsRegistrar(Registrar, Listener):
             m["group_file_path"] = mdata.group_file_path
             if mdata.source_path is not None:
                 m["source_path"] = mdata.source_path
-                self._copy_in_yaml_if(mdata)
             m["named_paths"] = mdata.named_paths
             m["named_paths_identities"] = mdata.named_paths_identities
             m["named_paths_count"] = mdata.named_paths_count
@@ -133,6 +132,13 @@ class PathsRegistrar(Registrar, Listener):
                 m["template"] = mdata.template
             jdata.append(m)
             self.intermediary.put_json(mdata.manifest_path, jdata)
+            #
+            # copy an ODCS contract into the group home only after the
+            # manifest is written, so a failed copy cannot cost the group
+            # its manifest entry
+            #
+            if mdata.source_path is not None:
+                self._copy_in_yaml_if(mdata)
         else:
             #
             # leave as info so nobody has to dig to see why no update

@@ -1,8 +1,8 @@
 # pylint: disable=C0114
 import json
 import traceback
-import tempfile
-import os
+
+from pathlib import Path
 
 from typing import NewType
 from json import JSONDecodeError
@@ -13,9 +13,6 @@ from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
-
-from csvpath.odcs.odcs_contract_loader import OdcsContractLoader
-from csvpath.odcs.odcs_converter import OdcsConverter
 
 from .paths_registrar import PathsRegistrar
 from ..metadata import Metadata
@@ -260,7 +257,12 @@ class PathsManager:
                     csvpathexts = self.csvpaths.config.get(
                         section="extensions", name="csvpath_files"
                     )
-                    if ext not in csvpathexts:
+                    #
+                    # ODCS contracts load along with csvpath files, one
+                    # named-paths group per contract
+                    #
+                    odcs = self._is_odcs_path(p)
+                    if ext not in csvpathexts and not odcs:
                         continue
                     path = Nos(base).join(p)
                     # path = os.path.join(base, p)
@@ -277,6 +279,12 @@ class PathsManager:
                         #
                         # if a name, aggregate all the files
                         #
+                        if odcs:
+                            raise InputException(
+                                f"Cannot aggregate ODCS contract {path} into named-paths "
+                                f"group {name}. Each ODCS contract loads as its own "
+                                "named-paths group: load the directory without a name"
+                            )
                         _ = self._get_csvpaths_from_file(path)
                         #
                         # try to find a run-index: N metadata and use it
@@ -321,28 +329,18 @@ class PathsManager:
             #
             self.csvpaths.logger.debug("Reading csvpaths file at %s", file_path)
             #
-            # TODO: ifwe have an odcs file we convert to csvpaths write to a temp file,
-            # get the paths, and continue the load. We pass source_path with the
-            # original file. and put the original in the named-file home in the
-            # in the paths registrar just by checking for if a .yaml file and copying
-            # it. we don't really even need to check if the .yaml is odcs, because
-            # if it weren't in some way a yaml that equalled csvpaths we'd break here.
+            # an ODCS data contract (.yml or .yaml) is converted to csvpaths.
+            # we pass source_path with the original file; the paths registrar
+            # copies the original into the named-paths group home, and we
+            # write the conversion report next to it.
             #
             paths = None
-            if file_path.endswith(".yml") or file_path.endswith(".yaml"):
+            report = None
+            if self._is_odcs_path(file_path):
                 #
                 # odcs path
                 #
-                tmp = tempfile.NamedTemporaryFile(suffix=".csvpaths", delete=False)
-                contract = OdcsContractLoader.from_path(path=file_path)
-                conversion = OdcsConverter(contract=contract).convert()
-                csvpath_text = ""
-                for k, v in conversion.csvpaths.items():
-                    csvpath_text = f"{csvpath_text}\n{v}\n\n{self.MARKER}\n"
-                tmp.write(csvpath_text, encoding="utf-8")
-                paths = self._get_csvpaths_from_file(tmp.name)
-                tmp.close()
-                os.unlink(tmp.name)
+                paths, report = self._get_csvpaths_from_odcs(file_path)
             else:
                 #
                 # regular path
@@ -356,6 +354,8 @@ class PathsManager:
                 append=append,
                 return_metadata=return_metadata,
             )
+            if report is not None and ref is not None:
+                self._write_odcs_report(name=name, file_path=file_path, report=report)
             #
             # absolute ref to the named-paths group in its present form.
             #
@@ -895,6 +895,81 @@ class PathsManager:
             ]
             self.csvpaths.logger.debug("Found %s csvpaths in file", len(_))
             return _
+
+    @staticmethod
+    def _is_odcs_path(path: str) -> bool:
+        if path is None:
+            raise ValueError("Path cannot be None")
+        return path.endswith(".yml") or path.endswith(".yaml")
+
+    def _get_csvpaths_from_odcs(self, file_path: str) -> tuple[list[Csvpath], dict]:
+        #
+        # returns the csvpath and the conversion report. one ODCS contract is
+        # one table: multiple tables in one contract would mean multiple
+        # line() checks against the same file, which is not what a contract
+        # with multiple tables describes.
+        #
+        if file_path is None or str(file_path).strip() == "":
+            raise ValueError("ODCS file path cannot be None or empty")
+        #
+        # imported here so that loading CsvPaths does not load the ODCS
+        # package, its JSON schemas, or its dependencies, unless needed.
+        #
+        from csvpath.odcs.odcs_contract_loader import OdcsContractLoader
+        from csvpath.odcs.odcs_converter import OdcsConverter
+
+        contract = OdcsContractLoader.from_path(path=file_path)
+        conversion = OdcsConverter(contract=contract).convert()
+        if len(conversion.csvpaths) != 1:
+            names = ", ".join(conversion.csvpaths.keys())
+            raise InputException(
+                f"ODCS contract {file_path} converts to {len(conversion.csvpaths)} "
+                f"csvpaths ({names}); a named-paths group can be loaded from an "
+                "ODCS contract with exactly one table"
+            )
+        paths = [v.strip() for v in conversion.csvpaths.values()]
+        report = {
+            "source_path": file_path,
+            "contract_id": contract.get("id"),
+            "contract_version": contract.get("version"),
+            "api_version": contract.get("apiVersion"),
+            "tables": list(conversion.csvpaths.keys()),
+            "skipped": [
+                {
+                    "object": s.object,
+                    "location": s.location,
+                    "feature": s.feature,
+                    "reason": s.reason,
+                }
+                for s in conversion.report.skipped
+            ],
+        }
+        self.csvpaths.logger.debug(
+            "Converted ODCS contract at %s, skipping %s items",
+            file_path,
+            len(report["skipped"]),
+        )
+        return (paths, report)
+
+    def _write_odcs_report(
+        self, *, name: NamedPathsName, file_path: str, report: dict
+    ) -> str:
+        #
+        # the report goes in the named-paths group home, named for the
+        # contract file, next to the copy of the contract the paths
+        # registrar makes. returns the report path.
+        #
+        if name is None or str(name).strip() == "":
+            raise ValueError("Named-paths group name cannot be None or empty")
+        if file_path is None or str(file_path).strip() == "":
+            raise ValueError("ODCS file path cannot be None or empty")
+        if not isinstance(report, dict):
+            raise TypeError("ODCS conversion report must be a dict")
+        home = self.named_paths_home(name)
+        path = Nos(home).join(f"{Path(file_path).name}.report.json")
+        with DataFileWriter(path=path, mode="w") as writer:
+            writer.write(json.dumps(report, indent=2))
+        return path
 
     def _paths_name_path(self, pathsname) -> tuple[NamedPathsName, Identity]:
         specificpath = None
