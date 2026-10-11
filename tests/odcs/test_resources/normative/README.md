@@ -62,6 +62,8 @@ Matching and validation semantics
   it is only used on required columns, which reject empties anyway:
   `string.notnone.distinct(#c)`. An optional unique column, of any type,
   gets `or( empty(#c), not( has_dups(#c) ) )` after the `line()`.
+  Required unique dates, timestamps, and times also use `has_dups()`
+  (`not( has_dups(#c) )`) instead of `.distinct`; see issue #318 below.
 - Checks that cannot go in the `line()` follow it. On an optional column
   they are wrapped as `or( empty(#c), <check> )`; on a required column
   they stand alone, since the `line()` already rejects empty values.
@@ -230,6 +232,14 @@ Unsupported features and the conversion report (pair 04)
   ignored silently and not reported.
 
 Known framework issues and workarounds
+
+- `date.distinct`/`datetime.distinct` reject every date after the first
+  (issue #318). Required unique `date`, `timestamp`, and `time` columns
+  are emitted as `date.notnone(#c, "<fmt>")` in the `line()` plus
+  `not( has_dups(#c) )` after it, instead of `date.notnone.distinct(...)`.
+  `has_dups()` compares the values as written, so the same day in two
+  formats is not a duplicate; the format check rejects mixed formats
+  anyway.
 
 - `date()`/`datetime()` inside `line()` reject empty values even without
   `notnone` (issue #300). Until fixed, optional dates are emitted as
