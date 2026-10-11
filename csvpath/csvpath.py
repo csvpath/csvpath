@@ -1415,6 +1415,22 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
             self._run_started_at = daut.now()
             # self._run_started_at = datetime.now(timezone.utc)
 
+    def is_lasts_only_line(self, line) -> bool:
+        """@private
+        True for a last line that is only given to the matcher so that
+        last() can run: the path is frozen, only last() and last() -> ...
+        are evaluated, and the line is not collected. That is a blank
+        last line, or a last line outside the scan range, e.g. a
+        header-only file scanned with $[1*], or a scan whose last index
+        is beyond the end of the file (#306). Used by _consider_line()
+        and Matcher.matches(), which must agree.
+        """
+        if self.line_monitor.is_last_line_and_blank(line):
+            return True
+        return self.line_monitor.is_last_line() and not self.scanner.includes(
+            self.line_monitor.physical_line_number
+        )
+
     def _consider_line(self, line):  # pylint: disable=R0912, R0911
         """@private"""
         # re: R0912: this method has already been refactored but maybe
@@ -1425,10 +1441,14 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         # if we're empty, but last, we need to make sure the
         # matcher runs a final time so that any last() can run.
+        # the same goes for a last line that is outside the scan
+        # range (#306). see is_lasts_only_line().
         #
-        if self.line_monitor.is_last_line_and_blank(line):
+        if self.is_lasts_only_line(line):
             # if self.line_monitor.is_last_line_and_empty(line):
-            self.logger.info("last line is empty. freezing, matching, returning false")
+            self.logger.info(
+                "last line is empty or outside the scan range. freezing, matching, returning false"
+            )
             self._freeze_path = True
             self.matches(line)
             return False
