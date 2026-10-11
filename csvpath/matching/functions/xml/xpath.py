@@ -1,6 +1,6 @@
 # pylint: disable=C0114
+import math
 from lxml import etree
-from csvpath.matching.util.exceptions import DataException
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Variable, Header, Reference
 from ..function import Function
@@ -33,22 +33,64 @@ class XPath(ValueProducer):
         self.args.validate(self.siblings())
         super().check_valid()
 
+    #
+    # True when the XPath selected something on this line. the match comes
+    # from the selection, not the value: an element with no text is still
+    # selected.
+    #
+    _selected: bool = False
+
+    def reset(self) -> None:
+        super().reset()
+        self._selected = False
+
     def _produce_value(self, skip=None) -> None:
+        self._selected = False
         xml = self._value_one(skip=skip)
         if xml is None or xml.strip() == "":
             self.value = None
             return
-        root = etree.fromstring(xml)
+        #
+        # bytes, because lxml refuses a str that has an encoding declaration
+        #
+        root = etree.fromstring(xml.encode("utf-8"))
         xpath = self._value_two(skip=skip)
         results = root.xpath(xpath)
-        if results and len(results) > 0:
-            n = results[0]
-            if hasattr(n, "text"):
-                n = n.text
-            if hasattr(n, "text_content"):
-                n = n.text_content()
-            else:
-                self.value = n
+        if isinstance(results, list):
+            #
+            # a node-set. the value is the first node's text.
+            #
+            self._selected = len(results) > 0
+            if self._selected:
+                n = results[0]
+                if hasattr(n, "tag") and isinstance(n.tag, str):
+                    #
+                    # an element: all its text, including its children's
+                    #
+                    self.value = "".join(n.itertext())
+                elif hasattr(n, "tag"):
+                    #
+                    # a comment or processing instruction
+                    #
+                    self.value = n.text
+                else:
+                    #
+                    # attribute values and text() results are str subclasses
+                    #
+                    self.value = str(n)
+        elif isinstance(results, bool):
+            self.value = results
+            self._selected = results
+        elif isinstance(results, float):
+            self.value = results
+            self._selected = not math.isnan(results)
+        else:
+            #
+            # string() and other string results. lxml gives a str subclass
+            #
+            self.value = str(results)
+            self._selected = self.value != ""
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self.default_match()
+        self.to_value(skip=skip)
+        self.match = self._selected
