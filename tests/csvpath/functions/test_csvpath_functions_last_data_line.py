@@ -1,6 +1,9 @@
 """last() is true on the last line that is both scanned and has data (#308).
 
-Trailing blank lines no longer move last(). Before, last() was true on a
+Trailing blank lines no longer move last(), when blank lines are skipped
+(CsvPath.skip_blank_lines, the default). When they are not skipped they are
+rows, and last() is true on the last physical line as before. Before, with
+blank lines skipped, last() was true on a
 trailing blank line, which is processed frozen, so a composed last() such
 as and( last(), ... ) -> fail() never ran there: one trailing blank line
 silently disabled an end-of-file check.
@@ -136,3 +139,41 @@ def test_function_last_does_not_change_run_completion(
     assert path.line_monitor.physical_end_line_number == end
     assert path.completed is completed
     assert path.stopped is stopped
+
+
+@pytest.mark.parametrize(
+    "skip_blank_lines,fired,counted_at_last",
+    [
+        #
+        # blank lines are skipped, so they are not rows: last() fires on
+        # line 2, the last line with data, after both rows are counted
+        #
+        (True, [2], 2),
+        #
+        # blank lines are not skipped, so they are rows: last() fires on the
+        # last physical line, after every scanned row is counted. the blank
+        # last line itself is frozen and not counted, as before #308
+        #
+        (False, [4], 3),
+    ],
+)
+def test_function_last_follows_skip_blank_lines(
+    tmp_path, skip_blank_lines: bool, fired: list, counted_at_last: int
+) -> None:
+    data = tmp_path / "data.csv"
+    data.write_text("id,v\n1,a\n2,b\n\n\n", encoding="utf-8")
+    path = CsvPath(skip_blank_lines=skip_blank_lines)
+    path.collect(
+        f"""~ validation-mode: print, no-raise ~ ${data}[1*][
+            counter.seen(1)
+            last.nocontrib() -> @at_last = @seen
+            last.nocontrib() -> push("fired", line_number())
+        ]"""
+    )
+    assert path.variables["fired"] == fired
+    assert path.variables["at_last"] == counted_at_last
+    #
+    # end-of-run values computed at last() are the final values
+    #
+    assert path.variables["seen"] == counted_at_last
+    assert path.completed is True

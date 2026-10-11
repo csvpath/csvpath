@@ -98,6 +98,11 @@ class Scanner2:
         where last() fires (#308). Trailing blank lines are not data, and
         indexes beyond the end of the file are not scanned.
 
+        Whether a blank line counts follows CsvPath.skip_blank_lines. When
+        blank lines are skipped (the default) they are not rows, so the data
+        ends at the last non-blank line. When they are not skipped they are
+        rows, so the data ends at the last physical line, blank or not.
+
         is_last() is unchanged and still decides when a scan can stop early;
         stopping and completion are based on the scan instruction, not on
         where the data ends.
@@ -105,7 +110,7 @@ class Scanner2:
         if line is None:
             raise ValueError("line cannot be None")
         lm = self.csvpath.line_monitor
-        end = lm.data_end_line_number
+        end = lm.data_end_line_number if self.csvpath.skip_blank_lines else None
         if end is None:
             end = lm.physical_end_line_number
         if self.wild_from_last:
