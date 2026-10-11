@@ -1,0 +1,4 @@
+<orders>
+  <order id='1'><sku>A-1</sku></order>
+  <order id='2'><sku>B-2</sku></order>
+</orders>

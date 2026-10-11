@@ -16,7 +16,7 @@ from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Variable, Header, Reference
 from ..function import Function
 from ..args import Args
-from csvpath.matching.util.exceptions import DataException, MatchException
+from csvpath.matching.util.exceptions import MatchException
 
 
 class JsonPath(ValueProducer):
@@ -43,7 +43,19 @@ class JsonPath(ValueProducer):
         self.args.validate(self.siblings())
         super().check_valid()
 
+    #
+    # True when the JSONPath selected something on this line. the match
+    # comes from the selection, not the value: a selected null or false
+    # still matches.
+    #
+    _selected: bool = False
+
+    def reset(self) -> None:
+        super().reset()
+        self._selected = False
+
     def _produce_value(self, skip=None) -> None:
+        self._selected = False
         j = self._value_one(skip=skip)
         if j is None or str(j).strip() == "":
             self.value = None
@@ -53,12 +65,15 @@ class JsonPath(ValueProducer):
         v = self._value_two(skip=skip)
         jpath = parse(v)
         r = jpath.find(j)
-        if r is not None and len(r) == 1:
+        #
+        # find() always returns a list: one value, a list of values, or []
+        #
+        self._selected = len(r) > 0
+        if len(r) == 1:
             self.value = r[0].value
-        elif r is not None:
-            self.value = [_.value for _ in r]
         else:
-            raise DataException("No value for jsonpath")
+            self.value = [_.value for _ in r]
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self.default_match()
+        self.to_value(skip=skip)
+        self.match = self._selected

@@ -1,6 +1,7 @@
 import unittest
 import pytest
 import os
+import pyjson5
 from csvpath import CsvPath
 from csvpath.matching.util.exceptions import MatchException
 
@@ -128,3 +129,94 @@ class TestCsvPathFunctionsJSONPath(unittest.TestCase):
         assert len(stmts) == 5
         for i, _ in enumerate(stmts):
             print(f"_[{i}]: {_}")
+
+
+#
+# #323: jsonpath() matches only when the JSONPath selects something. before,
+# as a match component it matched every line without parsing anything.
+# values are unchanged: one result is the value, more are a list, none is [].
+#
+
+HEADERS = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}jsonpath_headers.csv"
+CSV = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
+J = "{a: {b: 1, n: null, f: false, l: [1, 2]}}"
+NO_RAISE = "print, no-raise, no-fail, no-stop"
+
+
+def _collect(*, body: str, file: str = CSV, scan: str = "[1]", mode: str = NO_RAISE):
+    path = CsvPath()
+    path.parse(f"~ validation-mode: {mode} ~ ${file}{scan}[ {body} ]")
+    lines = path.collect()
+    return path, lines
+
+
+@pytest.mark.parametrize(
+    "jpath,expected",
+    [
+        ("$.a.b", 1),
+        ("$.a.zzz", 0),
+        ("$.a.n", 1),  # a selected null still matches
+        ("$.a.f", 1),  # a selected false still matches
+        ("$.a.l[*]", 1),
+        ("$.a.l[5]", 0),
+    ],
+)
+def test_function_jsonpath_match_component_literal(jpath: str, expected: int) -> None:
+    _, lines = _collect(body=f'jsonpath("{J}", "{jpath}")')
+    assert len(lines) == expected
+
+
+@pytest.mark.parametrize(
+    "jpath,expected",
+    [
+        ("$.a.b", 1),
+        ("$.a.zzz", []),
+        ("$.a.n", None),
+        ("$.a.f", False),
+        ("$.a.l[*]", [1, 2]),
+    ],
+)
+def test_function_jsonpath_values_unchanged(jpath: str, expected) -> None:
+    path, _ = _collect(body=f'@v = jsonpath("{J}", "{jpath}")', mode="raise, print")
+    assert path.variables["v"] == expected
+
+
+def test_function_jsonpath_header_match_by_line() -> None:
+    _, lines = _collect(body='jsonpath(#doc, "$.sku")', file=HEADERS, scan="[1*]")
+    assert [line[0] for line in lines] == ["1", "3"]
+    _, lines = _collect(
+        body='not( jsonpath(#doc, "$.sku") )', file=HEADERS, scan="[1*]"
+    )
+    assert [line[0] for line in lines] == ["2"]
+
+
+def test_function_jsonpath_header_selection_does_not_carry_to_next_line() -> None:
+    path, lines = _collect(
+        body='jsonpath(#doc, "$.sku") -> push("v", jsonpath(#doc, "$.sku"))',
+        file=HEADERS,
+        scan="[1*]",
+    )
+    assert [line[0] for line in lines] == ["1", "3"]
+    assert path.variables["v"] == ["A-1", None]
+
+
+def test_function_jsonpath_malformed_match_component() -> None:
+    _, lines = _collect(body='jsonpath("{ nope", "$.a")')
+    assert lines == []
+    path, lines = _collect(
+        body='jsonpath("{ nope", "$.a")', mode="print, no-raise, fail"
+    )
+    assert lines == []
+    assert path.is_valid is False
+
+
+def test_function_jsonpath_malformed_raises_in_raise_mode() -> None:
+    with pytest.raises(pyjson5.Json5Exception):
+        _collect(body='jsonpath("{ nope", "$.a")', mode="raise, print")
+
+
+def test_function_jsonpath_empty_value_does_not_match() -> None:
+    _, lines = _collect(body='jsonpath("", "$.a")')
+    assert lines == []
+    _, lines = _collect(body='jsonpath(none(), "$.a")')
+    assert lines == []
