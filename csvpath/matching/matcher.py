@@ -289,12 +289,13 @@ class Matcher:  # pylint: disable=R0902
         # re: R0912 this method has been refactoring resistant and since it is
         # working stably there isn't a pressing reason to try again.
         #
-        # is this a blank last line? if so, we just want to activate any/all
-        # last() in the csvpath.
+        # is this a blank last line, or a last line outside the scan range
+        # (#306)? if so, we just want to activate any/all last() in the
+        # csvpath. see CsvPath.is_lasts_only_line().
         #
-        if self.csvpath.line_monitor.is_last_line_and_blank(self.line):
+        if self.csvpath.is_lasts_only_line(self.line):
             self.csvpath.logger.debug(
-                "Is last line and blank. Doing lasts and then returning True"
+                "Is last line and blank or outside the scan range. Doing lasts and then returning True"
             )
             self._do_lasts()
             # self.clear_errors()
