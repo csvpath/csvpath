@@ -19,6 +19,14 @@ class CheckedUnset:  # pylint: disable=R0903
 class Function(Matchable):
     """base class for all functions"""
 
+    #
+    # validating the actual values of a function's arguments at match time
+    # computes each argument's value on every line. a function that must
+    # only evaluate its argument conditionally, like last(), turns this off
+    # (#326). its arguments are still checked structurally in check_valid().
+    #
+    VALIDATES_ARG_ACTUALS = True
+
     def __init__(self, matcher: Any, name: str, child: Matchable = None) -> None:
         super().__init__(matcher, name=name)
         self.matcher = matcher
@@ -97,7 +105,7 @@ class Function(Matchable):
             #
             # count() doesn't yet use args. it is grandfathered, for now.
             #
-            if self.args and not self.args.matched:
+            if self.args and not self.args.matched and self.VALIDATES_ARG_ACTUALS:
                 self.matcher.csvpath.logger.debug(
                     "Validating arg actuals for %s in to_value", self.name
                 )
@@ -190,7 +198,7 @@ class Function(Matchable):
                 # probably consider a "post" qualifier to be more intentional about it.
                 #
                 # count() doesn't yet use args. it is grandfathered, for now.
-                if self.args and not self.args.matched:
+                if self.args and not self.args.matched and self.VALIDATES_ARG_ACTUALS:
                     self.matcher.csvpath.logger.debug(
                         "Validating arg actuals for %s in matches", self.name
                     )
