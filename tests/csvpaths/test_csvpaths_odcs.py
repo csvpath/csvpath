@@ -260,7 +260,12 @@ def test_odcs_load_from_dir_one_group_per_file(paths, contract_dir) -> None:
 def test_odcs_load_from_dir_rejects_contract_in_named_group(
     paths, contract_dir
 ) -> None:
-    with pytest.raises(InputException, match="ODCS contract"):
+    #
+    # aggregating contracts would work, but is not supported yet: see #338
+    #
+    with pytest.raises(
+        InputException, match="aggregating ODCS contracts is not yet supported"
+    ):
         paths.paths_manager.add_named_paths_from_dir(
             directory=contract_dir, name="odcs_test_dir"
         )

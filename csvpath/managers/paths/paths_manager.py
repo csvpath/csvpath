@@ -282,8 +282,9 @@ class PathsManager:
                         if odcs:
                             raise InputException(
                                 f"Cannot aggregate ODCS contract {path} into named-paths "
-                                f"group {name}. Each ODCS contract loads as its own "
-                                "named-paths group: load the directory without a name"
+                                f"group {name}: aggregating ODCS contracts is not yet "
+                                "supported. Load the directory without a name to load "
+                                "each contract as its own named-paths group"
                             )
                         _ = self._get_csvpaths_from_file(path)
                         #
