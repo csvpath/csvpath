@@ -93,6 +93,26 @@ class Scanner2:
             return True
         return False
 
+    def is_last_scanned_data_line(self, line: int) -> bool:
+        """True on the last line that is both scanned and has data. This is
+        where last() fires (#308). Trailing blank lines are not data, and
+        indexes beyond the end of the file are not scanned.
+
+        is_last() is unchanged and still decides when a scan can stop early;
+        stopping and completion are based on the scan instruction, not on
+        where the data ends.
+        """
+        if line is None:
+            raise ValueError("line cannot be None")
+        lm = self.csvpath.line_monitor
+        end = lm.data_end_line_number
+        if end is None:
+            end = lm.physical_end_line_number
+        if self.wild_from_last:
+            return line == end and self.includes(line)
+        existing = [i for i in self.these if end is None or i <= end]
+        return len(existing) > 0 and existing[-1] == line
+
     def includes(
         self,
         line: int,

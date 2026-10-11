@@ -8,7 +8,7 @@ from csvpath.matching.productions.equality import Equality
 
 
 class Last(MatchDecider):
-    """matches on the last line that will be scanned. last() will always run."""
+    """matches on the last scanned line with data. last() will always run."""
 
     #
     # last()'s argument must only run on the last line. validating its
@@ -22,7 +22,8 @@ class Last(MatchDecider):
         self.description = [
             self.wrap(
                 """\
-                    Evaluates True on the last line to be scanned.
+                    Evaluates True on the last line to be scanned that has data.
+                    Trailing blank lines do not count.
 
                     last() used by itself will always run, even if its line turns out to be
                     blank and would otherwise be skipped. When last() is composed within other
@@ -65,15 +66,24 @@ class Last(MatchDecider):
         self.value = self.matches(skip=skip)
 
     def _decide_match(self, skip=None) -> None:
-        last = self.matcher.csvpath.line_monitor.is_last_line()
-        last_scan = (
-            self.matcher.csvpath.scanner
-            and self.matcher.csvpath.scanner.is_last(
-                self.matcher.csvpath.line_monitor.physical_line_number
-            )
+        #
+        # last() is true on the last line that is both scanned and has data,
+        # so trailing blank lines do not move it (#308). if no line with data
+        # is scanned at all, e.g. a header-only file scanned with $[1*], it is
+        # true on the frozen last line instead (#306). either way it is true
+        # on one line only.
+        #
+        csvpath = self.matcher.csvpath
+        line_number = csvpath.line_monitor.physical_line_number
+        last_data = csvpath.scanner is not None and (
+            csvpath.scanner.is_last_scanned_data_line(line_number)
         )
-        if last or last_scan:
+        fallback = csvpath.is_lasts_only_line(self.matcher.line) and (
+            csvpath._last_fired_on in (None, line_number)
+        )
+        if last_data or fallback:
             self.match = True
+            csvpath._last_fired_on = line_number
         else:
             self.match = False
         if self.match:

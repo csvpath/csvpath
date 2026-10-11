@@ -1,10 +1,13 @@
 """last() fires when no line of the file is in the scan range, and when the
 scan's last index is beyond the end of the file (issue #306).
 
-The file's last line is then outside the scan range. Like a blank last
-line, it is now given to the matcher frozen, and only last() and
-last() -> ... run on it; nothing else runs and the line is not collected
-(CsvPath.is_lasts_only_line()).
+When no line with data is scanned, the file's last line is outside the
+scan range. Like a blank last line, it is given to the matcher frozen, and
+only last() and last() -> ... run on it; nothing else runs and the line is
+not collected (CsvPath.is_lasts_only_line()).
+
+When the scan's last index is beyond the end of the file but lines were
+scanned, last() fires on the last line actually scanned (#308).
 """
 
 import pytest
@@ -40,7 +43,7 @@ FIRED = 'last.nocontrib() -> push("fired", line_number())'
         #
         # the scan's last index is beyond the end of the file
         #
-        (THREE, "1+3", [2]),
+        (THREE, "1+3", [1]),
         #
         # regressions: these already fired once, and still fire exactly once
         #
@@ -68,9 +71,9 @@ def test_function_last_fail_fails_with_nothing_scanned(
 
 def test_function_last_frozen_line_not_collected_or_counted(tmp_path) -> None:
     #
-    # [1+3] scans only line 1 of this file. line 2 is the last line and is
-    # outside the scan range: last() fires there, but the line is not
-    # collected and the counter does not count it.
+    # [1+3] scans only line 1 of this file. line 2, the last line, is
+    # outside the scan range: it is not collected and the counter does not
+    # count it. last() fires on line 1, the last line scanned (#308).
     #
     lines, path = _run(
         tmp_path=tmp_path,
@@ -79,7 +82,7 @@ def test_function_last_frozen_line_not_collected_or_counted(tmp_path) -> None:
         match=f"{FIRED}  counter.n(1)",
     )
     assert lines == ["x"]
-    assert path.variables["fired"] == [2]
+    assert path.variables["fired"] == [1]
     assert path.variables["n"] == 1
 
 
