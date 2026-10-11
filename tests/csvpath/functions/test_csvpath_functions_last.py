@@ -26,12 +26,13 @@ class TestCsvPathFunctionsLast(unittest.TestCase):
         x = path.variables["x"]
         y = path.variables["y"]
         #
-        # we scan all lines. we would skip the last for being
-        # blank, but we don't skip because last(). however,
-        # y finds None, as you would expect.
+        # last() is true on the last line with data, line 2, not on the
+        # blank last line, so y is "sally". the blank line is frozen, so the
+        # assignment to @x is not made there either and x is also "sally".
+        # this used to expect y is None, from the blank line (#308).
         #
-        assert y is None
-        assert x != y
+        assert y == "sally"
+        assert x == y
 
     def test_function_last_blank_2a(self):
         path = CsvPath().parse(
@@ -135,7 +136,13 @@ class TestCsvPathFunctionsLast(unittest.TestCase):
         for i, _ in enumerate(path.next()):
             print(f"path.variables: [{i}]{path.variables}")
         x = path.variables["x"]
-        assert x is True
+        #
+        # last() is true on line 2, the last line with data, where headers
+        # are not empty; @x is then assigned line 2's number. this used to
+        # expect True from empty(headers()) on the blank last line, where the
+        # frozen path skipped the assignment (#308).
+        #
+        assert x == 2
 
     def test_function_last1(self):
         csvpath = f"""${MAR}[*][

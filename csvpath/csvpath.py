@@ -174,6 +174,12 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         self._freeze_path = False
         #
+        # the physical line last() fired on, so that it fires on one line only:
+        # the last line with data, or, if no line with data is scanned, the
+        # frozen last line (#308)
+        #
+        self._last_fired_on = None
+        #
         # counts are 1-based
         #
         self.scan_count = 0
@@ -305,6 +311,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         self.variables: Dict[str, Any] = {}
         self._flushes: list[Callable[[None], None]] = []
         self._freeze_path = False
+        self._last_fired_on = None
         #
         # reset matcher and line monitor
         #

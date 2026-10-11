@@ -87,9 +87,10 @@ def test_function_last_composed_after_when_do_fires(tmp_path) -> None:
 
 def test_function_last_blank_last_line_stays_frozen(tmp_path) -> None:
     #
-    # a blank last line is frozen: only last() and fail() run on it. the
-    # when/do unfreezes for its action and must restore frozen afterwards,
-    # so the counter after it does not count the blank line.
+    # a blank last line is frozen: only last() and fail() run on it, so the
+    # counter does not count it. last() fires on line 2, the last line with
+    # data (#308), not again on the blank line; the counter after the
+    # when/do counts line 2 because the when/do restores the unfrozen state.
     #
     path = _run(
         tmp_path=tmp_path,
@@ -97,5 +98,5 @@ def test_function_last_blank_last_line_stays_frozen(tmp_path) -> None:
         match='last.nocontrib() -> push("fired", line_number())  counter.n(1)',
         text=BLANK_END,
     )
-    assert path.variables["fired"] == [3]
+    assert path.variables["fired"] == [2]
     assert path.variables["n"] == 3
