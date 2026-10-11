@@ -116,13 +116,23 @@ class PropertyConverter:
         # empties are already rejected; see _unique_check().
         #
         if self.required:
-            return ".notnone" + (".distinct" if self.unique else "")
+            return ".notnone" + (".distinct" if self._uses_distinct() else "")
         return ""
 
+    def _uses_distinct(self) -> bool:
+        #
+        # date.distinct and datetime.distinct reject every date after the
+        # first (issue #318), so unique dates, timestamps, and times are
+        # checked with has_dups() instead, like optional unique columns
+        #
+        return (
+            self.unique and self.required and self.logical_type not in self.DATE_TYPES
+        )
+
     def _unique_check(self) -> None:
-        if self.unique and not self.required:
+        if self.unique and not self._uses_distinct():
             self.parts.line_checks.append(
-                f"or( empty({self.h}), not( has_dups({self.h}) ) )"
+                self._per_line(condition=f"not( has_dups({self.h}) )")
             )
 
     def _per_line(self, *, condition: str) -> str:

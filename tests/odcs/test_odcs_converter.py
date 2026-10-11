@@ -341,3 +341,28 @@ def test_odcs_readme_example_matches_converter_output() -> None:
         path="tests/odcs/test_resources/normative/01_orders_simple/contract.yaml"
     )
     assert OdcsConverter(contract=contract).convert().csvpaths["orders"] == example
+
+
+def test_odcs_converter_required_unique_date_runs(tmp_path) -> None:
+    #
+    # a required unique date column must accept distinct dates and reject a
+    # repeated one. with date.notnone.distinct only the first row was
+    # accepted (issue #318)
+    #
+    obj = {
+        "name": "t",
+        "properties": [
+            {"name": "id", "logicalType": "integer", "required": True},
+            {
+                "name": "day",
+                "logicalType": "date",
+                "required": True,
+                "unique": True,
+                "logicalTypeOptions": {"format": "yyyy-MM-dd"},
+            },
+        ],
+    }
+    csvpath = OdcsConverter(contract=_contract(obj)).convert().csvpaths["t"]
+    text = "id,day\n1,2024-01-01\n2,2024-02-01\n3,2024-03-01\n4,2024-02-01\n"
+    lines, _ = _run(csvpath=csvpath, tmp_path=tmp_path, text=text)
+    assert [line[0] for line in lines] == ["1", "2", "3"]

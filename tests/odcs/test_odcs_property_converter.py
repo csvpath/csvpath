@@ -626,3 +626,27 @@ def test_odcs_property_allowed_values_only_empties() -> None:
     parts, report = _convert({"name": "a", "enum": ["", None]})
     assert parts.line_checks == []
     assert _features(report) == [("properties.a.enum", "enum")]
+
+
+@pytest.mark.parametrize("lt", ["date", "timestamp", "time"])
+def test_odcs_property_unique_required_dates_avoid_distinct(lt: str) -> None:
+    #
+    # date.distinct and datetime.distinct reject every date after the first
+    # (issue #318), so required unique dates use has_dups() instead
+    #
+    parts, report = _convert(
+        {"name": "a", "logicalType": lt, "required": True, "unique": True}
+    )
+    assert ".distinct" not in parts.line_args[0]
+    assert parts.line_args[0].startswith(("date.notnone(#a", "datetime.notnone(#a"))
+    assert "not( has_dups(#a) )" in parts.line_checks
+    assert report.skipped == []
+
+
+def test_odcs_property_unique_required_non_dates_keep_distinct() -> None:
+    for lt in ["string", "integer", "number", "boolean"]:
+        parts, _ = _convert(
+            {"name": "a", "logicalType": lt, "required": True, "unique": True}
+        )
+        assert ".notnone.distinct(#a" in parts.line_args[0], lt
+        assert parts.line_checks == [], lt
