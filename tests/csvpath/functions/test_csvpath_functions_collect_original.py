@@ -84,10 +84,12 @@ def _registered(paths) -> bytes:
     #
     # the bytes collect_original() promises to copy are the registered
     # file, not the file we registered from. they are not always the same:
-    # on Windows, with a git checkout that has CRLF line endings,
-    # registration can land the file with LF line endings.
+    # registration can turn CRLF into LF (#364), which on Windows happens to
+    # any test resource git checks out with CRLF line endings. the
+    # registered file may be on a remote backend (e.g. GCS), so read it
+    # through orut, not open().
     #
-    return _bytes(paths.file_manager.get_named_file(NAME))
+    return orut.read_bytes(paths.file_manager.get_named_file(NAME))
 
 
 def _instance_file(result, name: str) -> str:
@@ -113,9 +115,7 @@ def _manifest(result) -> dict:
 
 
 def test_collect_original_csv(run_group) -> None:
-    paths, results = run_group(
-        file=TEST_CSV, csvpaths=["$[1-2][ collect_original() ]"]
-    )
+    paths, results = run_group(file=TEST_CSV, csvpaths=["$[1-2][ collect_original() ]"])
     result = results[0]
     copy = _instance_file(result, "original.csv")
     assert _bytes(copy) == _registered(paths)
@@ -126,9 +126,7 @@ def test_collect_original_csv(run_group) -> None:
 
 
 def test_collect_original_json(run_group) -> None:
-    paths, results = run_group(
-        file=GOOD_JSON, csvpaths=["$[*][ collect_original() ]"]
-    )
+    paths, results = run_group(file=GOOD_JSON, csvpaths=["$[*][ collect_original() ]"])
     assert _bytes(_instance_file(results[0], "original.json")) == _registered(paths)
 
 
