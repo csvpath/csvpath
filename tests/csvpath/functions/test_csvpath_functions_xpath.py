@@ -126,15 +126,19 @@ def test_function_xpath_match_component_literal(xpath: str, expected: int) -> No
 @pytest.mark.parametrize(
     "xpath,expected",
     [
-        ("/a/b", "xyz"),
-        ("/a/b/text()", "xyz"),
+        #
+        # DOC has two <b>s: a node-set of several gives a list, as jsonpath()
+        #
+        ("/a/b", ["xyz", "q"]),
+        ("/a/b/text()", ["xyz", "q"]),
+        ("/a/b[1]", "xyz"),
         ("string(/a/b)", "xyz"),
         ("/a/c", "deep"),
         ("/a/m", "hi you"),
         ("count(/a/b)", 2.0),
         ("boolean(/a/b)", True),
         ("boolean(/a/z)", False),
-        ("/a/z", None),
+        ("/a/z", []),
         ("/a/e", ""),
         ("/a/comment()", "note"),
     ],
@@ -226,4 +230,49 @@ def test_function_xpath_empty_value_does_not_match() -> None:
     _, lines = _collect(body='xpath("", "/a")')
     assert lines == []
     _, lines = _collect(body='xpath(none(), "/a")')
+    assert lines == []
+
+
+#
+# a node-set returns all its values: one node gives its value, several give
+# a list in document order, none gives [], as jsonpath() does
+#
+
+
+def test_function_xpath_node_set_list_header_form() -> None:
+    assert _value("/r/i", xml="<r><i>one</i><i>two</i><i>three</i></r>") == [
+        "one",
+        "two",
+        "three",
+    ]
+    assert _value("/r/i", xml="<r><i>one</i></r>") == "one"
+
+
+def test_function_xpath_node_set_list_items_are_stripped() -> None:
+    assert _value("/r/i", xml="<r><i>  one </i><i> two</i></r>") == ["one", "two"]
+
+
+def test_function_xpath_node_set_list_mixed_node_kinds() -> None:
+    assert _value("/r/i | /r/@k", xml="<r k='w'><i>one</i></r>") == ["w", "one"]
+
+
+def test_function_xpath_node_set_list_is_a_stack() -> None:
+    xml = "<r><i>one</i><i>two</i><i>three</i></r>"
+    path, _ = _collect(
+        body=f'@s = xpath("{xml}", "/r/i") @top = pop("s") @bottom = peek("s", 0)',
+        mode="raise, print",
+    )
+    assert path.variables["top"] == "three"
+    assert path.variables["bottom"] == "one"
+    #
+    # not asserting what remains after pop(): pop() removes two items, a
+    # separate bug, #357
+    #
+
+
+def test_function_xpath_node_set_list_match_unchanged() -> None:
+    xml = "<r><i>one</i><i>two</i></r>"
+    _, lines = _collect(body=f'xpath("{xml}", "/r/i")')
+    assert len(lines) == 1
+    _, lines = _collect(body=f'xpath("{xml}", "/r/z")')
     assert lines == []

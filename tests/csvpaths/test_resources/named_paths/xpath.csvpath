@@ -1,0 +1,6 @@
+~
+   id: hello world
+   test-data: xpath and jsonpath/test.xml
+~
+
+$[0][ @animals = xpath("//animal[@unknown='true']") ]
