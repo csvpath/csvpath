@@ -173,3 +173,78 @@ class TestCsvPathFunctionsPop(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 2
         assert path.variables["r"] == ["Bat", "Bat"]
+
+
+#
+# #357: pop() removed the top two items while returning the top one. The
+# tests above only pop from a one-item stack, where that happens to be
+# right. These pop from stacks of every size and check what remains.
+#
+
+
+def _run(body: str, *, scan: str = "[1]") -> CsvPath:
+    path = CsvPath()
+    path.parse(f"~ validation-mode: raise, no-print ~ ${PATH}{scan}[ {body} ]")
+    path.fast_forward()
+    return path
+
+
+@pytest.mark.parametrize(
+    "items,popped,remaining",
+    [
+        (["one"], "one", []),
+        (["one", "two"], "two", ["one"]),
+        (["one", "two", "three"], "three", ["one", "two"]),
+        (["a", "b", "c", "d", "e"], "e", ["a", "b", "c", "d"]),
+    ],
+)
+def test_function_pop_removes_one_item(items, popped, remaining) -> None:
+    pushes = " ".join(f'push("s", "{i}")' for i in items)
+    path = _run(f'{pushes} @top = pop("s")')
+    assert path.variables["top"] == popped
+    assert path.variables["s"] == remaining
+
+
+def test_function_pop_until_empty() -> None:
+    path = _run(
+        'push("s", "one") push("s", "two") push("s", "three") '
+        '@a = pop("s") @b = pop("s") @c = pop("s") @d = pop("s")'
+    )
+    assert path.variables["a"] == "three"
+    assert path.variables["b"] == "two"
+    assert path.variables["c"] == "one"
+    #
+    # popping an empty stack gives None and leaves it empty
+    #
+    assert path.variables["d"] is None
+    assert path.variables["s"] == []
+
+
+def test_function_pop_across_lines() -> None:
+    #
+    # two pushes and one pop per line: the stack grows by one each line
+    #
+    path = _run('push("s", line_number()) push("s", "x") @top = pop("s")', scan="[1-4]")
+    assert path.variables["s"] == [1, 2, 3, 4]
+    assert path.variables["top"] == "x"
+
+
+def test_function_pop_then_peek() -> None:
+    path = _run(
+        'push("s", "one") push("s", "two") push("s", "three") '
+        '@top = pop("s") @bottom = peek("s", 0) @size = peek_size("s")'
+    )
+    assert path.variables["top"] == "three"
+    assert path.variables["bottom"] == "one"
+    assert path.variables["size"] == 2
+
+
+@pytest.mark.parametrize("value,matches", [("true", True), ("false", False)])
+def test_function_pop_asbool(value: str, matches: bool) -> None:
+    path = CsvPath()
+    path.parse(
+        f'~ validation-mode: raise, no-print ~ ${PATH}[1][ push("s", "keep") push("s", "{value}") pop.asbool("s") ]'
+    )
+    lines = path.collect()
+    assert (len(lines) == 1) is matches
+    assert path.variables["s"] == ["keep"]

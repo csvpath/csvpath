@@ -264,10 +264,7 @@ def test_function_xpath_node_set_list_is_a_stack() -> None:
     )
     assert path.variables["top"] == "three"
     assert path.variables["bottom"] == "one"
-    #
-    # not asserting what remains after pop(): pop() removes two items, a
-    # separate bug, #357
-    #
+    assert path.variables["s"] == ["one", "two"]
 
 
 def test_function_xpath_node_set_list_match_unchanged() -> None:
