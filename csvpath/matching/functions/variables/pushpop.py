@@ -140,7 +140,7 @@ class Pop(ValueProducer):
         stack = self.matcher.get_variable(k, set_if_none=[])
         if len(stack) > 0:
             self.value = None if stack == [] else stack[len(stack) - 1]
-            stack = [] if stack == [] else stack[0 : len(stack) - 2]
+            stack = [] if stack == [] else stack[0 : len(stack) - 1]
             self.matcher.set_variable(k, value=stack)
 
     def _decide_match(self, skip=None) -> None:
