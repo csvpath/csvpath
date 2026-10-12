@@ -109,13 +109,13 @@ class JsonSchema(MatchDecider):
         except ValidationError as e:
             self.value = False
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=f"{e}")
-            if self.matcher.csvpath.do_i_raise:
+            if self.matcher.csvpath.do_i_raise():
                 raise MatchException(f"{e}")
         except Exception as e:
             print(traceback.format_exc())
             self.value = False
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=f"{e}")
-            if self.matcher.csvpath.do_i_raise:
+            if self.matcher.csvpath.do_i_raise():
                 raise MatchException(f"{e}")
 
     def _decide_match(self, skip=None) -> None:

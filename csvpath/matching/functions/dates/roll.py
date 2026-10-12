@@ -54,7 +54,7 @@ class Roll(ValueProducer):
         ] and units not in ["years", "months", "days", "hours", "minutes", "seconds"]:
             msg = "Units must be one of years, months, days, hours, minutes, or seconds"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
-            if self.matcher.csvpath.do_i_raise:
+            if self.matcher.csvpath.do_i_raise():
                 raise ChildrenException(msg)
         super().check_valid()
 

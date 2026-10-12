@@ -13,7 +13,7 @@ class DatePart(ValueProducer):
         if self.name not in ["year", "month", "day"]:
             msg = "Function name must be one of year, month, or day"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
-            if self.matcher.csvpath.do_i_raise:
+            if self.matcher.csvpath.do_i_raise():
                 raise ChildrenException(msg)
         self.description = [
             self.wrap(
