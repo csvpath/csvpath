@@ -29,7 +29,8 @@ class OriginalFileUtility:
 
     @staticmethod
     def copy_original(*, source: str, instance_dir: str) -> str:
-        """returns the path of the copy"""
+        """returns the path of the copy. the source is read completely
+        before anything is written, so a failed read leaves no file."""
         if instance_dir is None or str(instance_dir).strip() == "":
             raise ValueError("Instance dir cannot be None or empty")
         source = OriginalFileUtility.source_path(source)
@@ -37,13 +38,54 @@ class OriginalFileUtility:
         nos = Nos(source)
         if nos.is_local and Nos(dest).is_local:
             nos.copy(dest)
-        else:
-            #
-            # as FileManager._copy_down(): stream raw bytes, which works for
-            # xlsx and the remote backends
-            #
-            with DataFileReader(source) as reader:
-                with DataFileWriter(path=dest, mode="wb") as writer:
-                    for line in reader.next_raw():
-                        writer.append(line)
+            return dest
+        data = OriginalFileUtility.read_bytes(source)
+        with DataFileWriter(path=dest, mode="wb") as writer:
+            writer.write(data)
         return dest
+
+    @staticmethod
+    def read_bytes(source: str) -> bytes:
+        """the source's bytes, from the local filesystem or a remote
+        backend. remote readers are opened binary; xlsx readers always
+        are. a reader that cannot open binary falls back to its raw
+        lines, which may not be byte-exact: verify() reports that."""
+        source = OriginalFileUtility.source_path(source)
+        if Nos(source).is_local:
+            with open(source, "rb") as f:
+                return f.read()
+        is_xlsx = OriginalFileUtility.file_name(source).endswith((".xlsx", ".xls"))
+        reader = DataFileReader(source)
+        try:
+            reader.mode = "rb"
+            reader.load_if()
+            data = reader.source.read()
+        except Exception:
+            #
+            # xlsx readers are always binary and have no line-by-line read,
+            # so a failure here is the real error
+            #
+            if is_xlsx:
+                raise
+            reader.close()
+            reader = DataFileReader(source)
+            data = b"".join(
+                line if isinstance(line, bytes) else line.encode("utf-8")
+                for line in reader.next_raw()
+            )
+        finally:
+            reader.close()
+        if isinstance(data, str):
+            data = data.encode("utf-8")
+        return data
+
+    @staticmethod
+    def verify(*, source: str, copy: str) -> tuple[bool, str, str]:
+        """compares the fingerprints of the source and the copy. returns
+        (matches, source fingerprint, copy fingerprint)."""
+        if copy is None or str(copy).strip() == "":
+            raise ValueError("Copy path cannot be None or empty")
+        source = OriginalFileUtility.source_path(source)
+        expected = DataFileReader(source).fingerprint()
+        actual = DataFileReader(copy).fingerprint()
+        return (expected == actual, expected, actual)
