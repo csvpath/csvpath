@@ -18,6 +18,10 @@ class XPath(ValueProducer):
             self.wrap(
                 """\
                    Finds the value of an XPath expression given a match component containing XML.
+                   A path that selects one node gives that node's value, several
+                   nodes give a list of their values, and no nodes give an empty
+                   list, as with jsonpath(). XPath functions like count(),
+                   boolean(), and string() give their result.
                 """
             ),
             self.wrap(
@@ -123,26 +127,12 @@ class XPath(ValueProducer):
     def _set_from_results(self, results) -> None:
         if isinstance(results, list):
             #
-            # a node-set. the value is the first node's text.
+            # a node-set. as with jsonpath(): one node gives its value,
+            # several give a list of values in document order, none gives [].
             #
             self._selected = len(results) > 0
-            if self._selected:
-                n = results[0]
-                if hasattr(n, "tag") and isinstance(n.tag, str):
-                    #
-                    # an element: all its text, including its children's
-                    #
-                    self.value = "".join(n.itertext())
-                elif hasattr(n, "tag"):
-                    #
-                    # a comment or processing instruction
-                    #
-                    self.value = n.text
-                else:
-                    #
-                    # attribute values and text() results are str subclasses
-                    #
-                    self.value = str(n)
+            values = [self._node_value(n) for n in results]
+            self.value = values[0] if len(values) == 1 else values
         elif isinstance(results, bool):
             self.value = results
             self._selected = results
@@ -155,6 +145,27 @@ class XPath(ValueProducer):
             #
             self.value = str(results)
             self._selected = self.value != ""
+
+    def _node_value(self, n):
+        if hasattr(n, "tag") and isinstance(n.tag, str):
+            #
+            # an element: all its text, including its children's
+            #
+            v = "".join(n.itertext())
+        elif hasattr(n, "tag"):
+            #
+            # a comment or processing instruction
+            #
+            v = n.text
+        else:
+            #
+            # attribute values and text() results are str subclasses
+            #
+            v = str(n)
+        #
+        # strip, as to_value() strips a single string value
+        #
+        return v.strip() if isinstance(v, str) else v
 
     def _decide_match(self, skip=None) -> None:
         self.to_value(skip=skip)

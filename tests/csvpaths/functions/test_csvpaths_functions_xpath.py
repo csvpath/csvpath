@@ -29,3 +29,7 @@ class TestCsvPathsFunctionsXPath(unittest.TestCase):
         print(f"v: {v}")
         assert v
         assert "animals" in v
+        #
+        # both unknown animals, as a list: a node-set of several gives a list
+        #
+        assert v["animals"] == ["Some kind of spotted cat", "A bear-like critter"]

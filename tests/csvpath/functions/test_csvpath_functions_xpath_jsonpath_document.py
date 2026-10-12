@@ -371,3 +371,30 @@ def test_document_jsonpath_run_data_is_the_document() -> None:
     finally:
         paths.paths_manager.remove_named_paths(name)
         paths.file_manager.remove_named_file(name)
+
+
+#
+# a whole-document node-set returns all its values
+#
+
+
+def test_document_xpath_node_set_list() -> None:
+    path, _ = _run(file="orders_good.xml", body='@skus = xpath("//order/sku") stop()')
+    assert path.variables["skus"] == ["A-1", "B-2", "C-3"]
+
+
+def test_document_xpath_node_set_list_as_a_stack() -> None:
+    path, _ = _run(
+        file="orders_good.xml",
+        body='@skus = xpath("//order/sku") @last = pop("skus") @first = peek("skus", 0) stop()',
+    )
+    assert path.variables["last"] == "C-3"
+    assert path.variables["first"] == "A-1"
+
+
+def test_document_xpath_multi_node_rule_fires_once(capsys) -> None:
+    path, _ = _run(
+        file="orders_good.xml",
+        body='xpath.nocontrib("//order/sku") -> print("found skus") stop()',
+    )
+    assert capsys.readouterr().out.count("found skus") == 1
