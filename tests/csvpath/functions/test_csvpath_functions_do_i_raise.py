@@ -24,7 +24,7 @@ from csvpath.matching.util.exceptions import ChildrenException, MatchException
 TEST_CSV = os.path.join("tests", "csvpath", "test_resources", "test.csv")
 XSD_DIR = os.path.join("tests", "csvpath", "examples", "csvpath_examples_xsd")
 JSON_DIR = os.path.join("tests", "csvpath", "examples", "csvpath_examples_jsonschema")
-NO_RAISE = "print, no-raise, fail"
+NO_RAISE = "print, no-raise, fail, collect"
 
 
 def _parsed(*, file: str, scan: str, body: str, mode: str = NO_RAISE) -> CsvPath:
