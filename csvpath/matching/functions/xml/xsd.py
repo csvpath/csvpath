@@ -1,4 +1,5 @@
 import io
+import traceback
 import xmlschema
 import lxml.etree as etree
 
@@ -100,7 +101,22 @@ class Xsd(MatchDecider):
                 npn
             )
             xsd = Nos(path).join(xsd)
-        res = self._validate(xsd_path=xsd, xml_path=xml)
+        try:
+            res = self._validate(xsd_path=xsd, xml_path=xml)
+        except Exception as e:
+            #
+            # unexpected: e.g. a missing XSD or a document that is not XML.
+            # the trace goes into the error, as with jsonschema().
+            #
+            trace = traceback.format_exc()
+            self.matcher.csvpath.logger.error(trace)
+            self.value = False
+            self.matcher.csvpath.error_manager.handle_error(
+                source=self, msg=f"{e}", trace=trace
+            )
+            if self.matcher.csvpath.do_i_raise():
+                raise MatchException(f"{e}")
+            return
         """
         schema = xmlschema.XMLSchema(xsd)
         is_valid = schema.is_valid(xml)

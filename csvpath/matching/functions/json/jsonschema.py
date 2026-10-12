@@ -112,9 +112,16 @@ class JsonSchema(MatchDecider):
             if self.matcher.csvpath.do_i_raise():
                 raise MatchException(f"{e}")
         except Exception as e:
-            print(traceback.format_exc())
+            #
+            # unexpected: e.g. a missing schema or a schema that is not JSON.
+            # the trace goes into the error, not the console.
+            #
+            trace = traceback.format_exc()
+            self.matcher.csvpath.logger.error(trace)
             self.value = False
-            self.matcher.csvpath.error_manager.handle_error(source=self, msg=f"{e}")
+            self.matcher.csvpath.error_manager.handle_error(
+                source=self, msg=f"{e}", trace=trace
+            )
             if self.matcher.csvpath.do_i_raise():
                 raise MatchException(f"{e}")
 

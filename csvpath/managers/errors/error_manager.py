@@ -83,11 +83,15 @@ class ErrorManager(Registrar, Listener):
     # other keyword args TBD. we don't expect exception objects. exceptions
     # are a long jump that is a different signaling channel from errors.
     #
-    def handle_error(self, *, source: Any, msg: str, **kwargs) -> None:
+    def handle_error(
+        self, *, source: Any, msg: str, trace: str = None, **kwargs
+    ) -> None:
         if source is None:
             raise ValueError("Source cannot be None")
         if msg is None:
             raise ValueError("Error message cannot be None")
+        if trace is not None and not isinstance(trace, str):
+            raise TypeError("Error trace must be a str or None")
         #
         # delegate if requested for this source. we'll delegate as
         # many times as requested.
@@ -122,6 +126,7 @@ class ErrorManager(Registrar, Listener):
             error.match = self.csvpath.match
         error.message = msg
         error.expanded_message = self.decorate_error(source=source, msg=msg)
+        error.trace = trace
         #
         # source should never be ''
         #

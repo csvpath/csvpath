@@ -42,6 +42,11 @@ class Error(Metadata):
         self.scan_count: int = -1
         self.message: str = msg
         self.expanded_message: str = None
+        #
+        # the stack trace of an unexpected exception, if any. serialized to
+        # errors.json when set, never printed, and not part of equality.
+        #
+        self.trace: str = None
         self.filename: str = None
         self.run_dir = None
         if error_manager and error_manager.csvpaths:
@@ -131,6 +136,10 @@ class Error(Metadata):
         }
         if self.run_dir is not None:
             ret["run_dir"] = self.run_dir
+        if self.expanded_message is not None:
+            ret["expanded_message"] = self.expanded_message
+        if self.trace is not None:
+            ret["trace"] = self.trace
         return ret
 
     def from_json(self, j: dict) -> None:
@@ -154,6 +163,10 @@ class Error(Metadata):
             self.filename = j["filename"]
         if "run_dir" in j:
             self.run_dir = j["run_dir"]
+        if "expanded_message" in j:
+            self.expanded_message = j["expanded_message"]
+        if "trace" in j:
+            self.trace = j["trace"]
         if "time" in j:
             time = dateutil.parser.parse(j["time"])
             self.time = time
