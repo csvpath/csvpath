@@ -82,7 +82,7 @@ class Line(MatchDecider):
             et = et.replace("'", "")
             msg = f"Incorrect types in line definition: {et}"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
-            if self.matcher.csvpath.do_i_raise:
+            if self.matcher.csvpath.do_i_raise():
                 raise ChildrenException(msg)
         self.args.validate(sibs)
         super().check_valid()

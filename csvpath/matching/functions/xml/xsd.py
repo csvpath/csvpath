@@ -109,12 +109,12 @@ class Xsd(MatchDecider):
         except xmlschema.XMLSchemaValidationError as e:
             self.value = False
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=f"{e}")
-            if self.matcher.csvpath.do_i_raise:
+            if self.matcher.csvpath.do_i_raise():
                 raise MatchException(f"{e}")
         """
         if isinstance(res, Exception):
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=f"{res}")
-            if self.matcher.csvpath.do_i_raise:
+            if self.matcher.csvpath.do_i_raise():
                 raise MatchException(f"{res}")
 
         self.value = res is True
