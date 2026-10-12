@@ -105,6 +105,7 @@ from .misc.random import Random, Shuffle
 from .misc.importf import Import
 from .misc.fingerprint import LineFingerprint, StoreFingerprint, FileFingerprint
 from .misc.parquet import Parquet
+from .misc.collect_original import CollectOriginal
 from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack, Log
 from .validity.line import Line
 from .validity.failed import Failed
@@ -530,6 +531,7 @@ class FunctionFactory:
         fs["advance"] = Advance
         fs["advance_all"] = AdvanceAll
         fs["collect"] = Collect
+        fs["collect_original"] = CollectOriginal
         fs["remove"] = Remove
         fs["replace"] = Replace
         fs["rename"] = Rename

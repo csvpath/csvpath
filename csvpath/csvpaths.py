@@ -650,6 +650,12 @@ Cache: {cache}
         csvpath.named_file_name = filename
         self.named_file_name = filename
         #
+        # file is still the registered file here; source-mode: preceding may
+        # swap it below. record it so collect_original() copies the same file
+        # in every source mode.
+        #
+        csvpath.origin_data_file = file
+        #
         # by_line==True means we are starting a run that is breadth-first ultimately using
         # next_by_line(). by_line runs cannot be source-mode preceding and have different
         # semantics around csvpaths influencing one another.

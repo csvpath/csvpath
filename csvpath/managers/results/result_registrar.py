@@ -10,6 +10,7 @@ from ..listener import Listener
 from ..metadata import Metadata
 from ..registrar import Registrar
 from .result_metadata import ResultMetadata
+from csvpath.util.original_file_utility import OriginalFileUtility as orut
 
 
 class ResultRegistrar(Registrar, Listener):
@@ -284,8 +285,21 @@ class ResultRegistrar(Registrar, Listener):
                 return False
         return True
 
+    def _original_file(self) -> str | None:
+        #
+        # original.<ext>, written by collect_original(), if any
+        #
+        nos = Nos(self.result_path)
+        if not nos.dir_exists():
+            return None
+        for name in nos.listdir(files_only=True):
+            if name.startswith(f"{orut.NAME}.") or name == orut.NAME:
+                return name
+        return None
+
     def number_of_files_generated(self) -> int:
         n = 0
+        n += 1 if self._original_file() is not None else 0
         n += 1 if self.has_file("meta.json") else 0
         n += 1 if self.has_file("errors.json") else 0
         n += 1 if self.has_file("vars.json") else 0
@@ -317,6 +331,11 @@ class ResultRegistrar(Registrar, Listener):
             if f is None:
                 continue
             fps[t] = f
+        original = self._original_file()
+        if original is not None:
+            f = self._fingerprint(Nos(r).join(original))
+            if f is not None:
+                fps[original] = f
         return fps
 
     def _fingerprint(self, path) -> str:

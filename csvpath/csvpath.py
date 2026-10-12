@@ -109,6 +109,13 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         self.named_file_name = None
         """ @private """
         #
+        # the registered file the CsvPaths run resolved for this csvpath, set
+        # before source-mode: preceding swaps in the preceding data.csv. the
+        # same in every source mode. used by collect_original().
+        #
+        self.origin_data_file = None
+        """ @private """
+        #
         # all errors come to our manager if they occur during matching. we use
         # the CsvPaths manager if possible. Otherwise, we just make our own that
         # only knows how to collect errors, not distribute them.

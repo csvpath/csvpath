@@ -672,6 +672,24 @@ later ones don't drift).
   (`csvpath/util/references/`). Everything built so far has been
   self-contained and tested independent of this integration question.
 
+## `original` well-known file for `collect_original()` output (#350)
+
+Surfaced 2026-10-12 while building `collect_original()` (#341) for the
+release. A run instance can now hold `original.<ext>`: a byte copy of the
+registered data file the run started from (`original.csv`, `.xml`,
+`.json`, `.xlsx`, ...), the same file in every source mode, including
+`source-mode: preceding`. It is fingerprinted in the run manifest's
+`file_fingerprints` and counted in `number_of_files_generated`.
+
+References v3 has no `original` yet: `results_reference_finder_3.py`'s
+well-known files and `references/functions/well_known_files/` stop at
+`data`/`unmatched`/`errors`/`printouts`/etc. Open questions (in #350): the
+name; locating a file whose extension varies (by the `original.` prefix,
+as `ResultRegistrar._original_file()` does); what a reference returns when
+the instance has no original (it is opt-in); and cross-datatype
+consistency with the FILES view of the same registered bytes (fingerprints
+already match; a test pins it).
+
 ## Process note
 
 `references_v3_compendium.md` §6 ("Known gaps")/§7 ("Not yet built at all")
