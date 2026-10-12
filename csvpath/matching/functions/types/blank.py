@@ -36,7 +36,10 @@ class Blank(Type):
             or not self.parent.parent
             or not str(type(self.parent.parent)).find(".Line'") > -1
         ):
-            raise ChildrenException("Blank can only be used within a line schema")
+            msg = "Blank can only be used within a line schema"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise ChildrenException(msg)
         #
         #
         #

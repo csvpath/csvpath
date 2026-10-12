@@ -39,7 +39,10 @@ class HeaderNamesMismatch(ValueProducer):
         ]
         self.aliases = ["header_names_mismatch", "header_names_match"]
         if self.name not in self.aliases:
-            raise ValueError(f"Unknown name {self.name}")
+            msg = f"Unknown name {self.name}"
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+            if self.matcher.csvpath.do_i_raise():
+                raise ValueError(msg)
         self.name_qualifier = True
         self.args = Args(matchable=self)
         a = self.args.argset(1)
