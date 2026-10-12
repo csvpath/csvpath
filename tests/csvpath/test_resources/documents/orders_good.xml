@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orders region="north, east">
+  <order id="1" note="say, hello"><sku>A-1</sku></order>
+  <order id="2"><sku>B-2</sku></order>
+  <order id="3"><sku>C-3</sku></order>
+</orders>

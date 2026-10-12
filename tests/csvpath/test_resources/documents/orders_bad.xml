@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<orders>
+  <order id="1"><sku>A-1</sku></order>
+  <order id="2"/>
+  <order id="1"><sku>C-3</sku></order>
+</orders>
