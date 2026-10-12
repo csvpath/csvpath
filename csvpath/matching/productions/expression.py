@@ -122,9 +122,13 @@ class Expression(Matchable, Listener):
             super().check_valid()
         except Exception as e:  # pylint: disable=W0718
             #
-            # we always stop a csvpath that is malformed
+            # language errors are reported where they are found and, in
+            # no-raise mode, the run continues. an exception that reaches
+            # here means validation itself failed, so the expression may be
+            # half-built: we stop the run. (#343: this used to set
+            # matcher.stopped, which nothing reads.)
             #
-            self.matcher.stopped = True
+            self.matcher.csvpath.stop()
             if not isinstance(e, (ChildrenException, MatchException)):
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=f"{e}")
                 self.matcher.csvpath.logger.error(e)
