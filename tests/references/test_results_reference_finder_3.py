@@ -8,6 +8,7 @@ from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.results_reference_finder_3 import ResultsReferenceFinder3
 from csvpath.util.date_util import DateUtility as daut
+from csvpath.util.path_util import PathUtility as pathu
 
 #
 # unlike files/csvpaths (which read a fake in-memory manifest list), results
@@ -207,7 +208,7 @@ class TestVersionPointer:
             "$acme.results.customers/2025:first()", acme_archive
         ).query()
         assert results.files == [
-            f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00"
+            pathu.resep(f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00")
         ]
 
 
@@ -1555,7 +1556,9 @@ class TestIdentityLookupOnNameThree:
             "$acme.results.customers/2025:first().company_names", acme_archive
         ).query()
         assert results.files == [
-            f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00/company_names"
+            pathu.resep(
+                f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00/company_names"
+            )
         ]
 
 
@@ -2486,7 +2489,7 @@ class TestGlobalArchiveLedger:
     # archive root already used internally to discover runs.
     def test_query_returns_the_global_ledger_path_with_no_uuid(self, acme_archive):
         results = _finder("$*.results.:manifest()", acme_archive).query()
-        assert results.files == [f"{acme_archive}/manifest.json"]
+        assert results.files == [pathu.resep(f"{acme_archive}/manifest.json")]
         assert results.results[0].uuid is None
 
     def test_resolve_reads_the_global_ledger_as_parsed_json(self, acme_archive):
@@ -2581,7 +2584,7 @@ class TestGlobalArchiveLedgerOrdinalIndexing:
     ):
         archive = self._archive(tmp_path)
         results = _finder("$*.results.:last():manifest()", archive).query()
-        assert results.files == [f"{archive}/manifest.json"]
+        assert results.files == [pathu.resep(f"{archive}/manifest.json")]
         assert results.results[0].uuid == "run-3"
 
     def test_manifest_then_pointer_order_also_works(self, tmp_path):
