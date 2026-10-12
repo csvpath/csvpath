@@ -1,0 +1,7 @@
+<test>
+    <zoo>
+        <animal unknown='false'>Generic Bird</animal>
+        <animal unknown='true'>Some kind of spotted cat</animal>
+        <animal unknown='true'>A bear-like critter</animal>
+    </zoo>
+</test>
