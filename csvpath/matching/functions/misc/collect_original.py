@@ -1,6 +1,7 @@
 # pylint: disable=C0114
 from csvpath.util.original_file_utility import OriginalFileUtility as orut
 from csvpath.util.nos import Nos
+from csvpath.matching.util.exceptions import MatchException
 from ..function_focus import SideEffect
 from ..args import Args
 
@@ -31,7 +32,9 @@ class CollectOriginal(SideEffect):
                     collect_original() needs a CsvPaths run. With a CsvPath alone
                     there is no results directory and it does nothing. Each
                     csvpath in a named-paths group that calls it gets its own
-                    copy.
+                    copy. The copy's fingerprint is checked against the
+                    registered file's; a mismatch is reported as an error and
+                    the copy is kept as evidence.
             """
             ),
         ]
@@ -72,6 +75,20 @@ class CollectOriginal(SideEffect):
             return
         self.value = orut.copy_original(source=source, instance_dir=result.instance_dir)
         csvpath.logger.info("collect_original() copied %s to %s", source, self.value)
+        #
+        # the copy must be the registered file's bytes. a mismatch is
+        # reported; the copy is left in place as evidence.
+        #
+        matches, expected, actual = orut.verify(source=source, copy=self.value)
+        if not matches:
+            msg = (
+                f"collect_original() copy {self.value} does not match {source}: "
+                f"fingerprint {actual} is not {expected}"
+            )
+            csvpath.logger.error(msg)
+            csvpath.error_manager.handle_error(source=self, msg=msg)
+            if csvpath.do_i_raise():
+                raise MatchException(msg)
 
     def _decide_match(self, skip=None) -> None:
         self.to_value(skip=skip)

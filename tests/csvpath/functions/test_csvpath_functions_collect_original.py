@@ -46,7 +46,13 @@ def _bytes(path: str) -> bytes:
 def run_group():
     made = []
 
-    def run(*, file: str, csvpaths: list[str], method: str = "collect_paths"):
+    def run(
+        *,
+        file: str,
+        csvpaths: list[str],
+        method: str = "collect_paths",
+        expect_errors: bool = False,
+    ):
         paths = Builder().build()
         paths.config.set(
             section="errors", name="csvpaths", value="print, no-raise, fail, collect"
@@ -58,7 +64,15 @@ def run_group():
         made.append(paths)
         with contextlib.redirect_stdout(io.StringIO()):
             ref = getattr(paths, method)(pathsname=NAME, filename=NAME)
-        return paths, paths.results_manager.get_named_results(ref)
+        results = paths.results_manager.get_named_results(ref)
+        #
+        # the run's own errors.json: the results' CsvPath objects are not the
+        # live run's, so their errors lists can be empty when errors happened
+        #
+        if not expect_errors:
+            for result in results:
+                assert _errors(result) == [], _errors(result)
+        return paths, results
 
     yield run
     for paths in made:
@@ -78,6 +92,14 @@ def _registered(paths) -> bytes:
 
 def _instance_file(result, name: str) -> str:
     return Nos(result.instance_dir).join(name)
+
+
+def _errors(result) -> list[str]:
+    path = _instance_file(result, "errors.json")
+    if not Nos(path).exists():
+        return []
+    with open(path, encoding="utf-8") as f:
+        return [e.get("message") for e in json.load(f)]
 
 
 def _manifest(result) -> dict:
@@ -298,3 +320,114 @@ def test_orut_copy_original(tmp_path) -> None:
     dest = orut.copy_original(source=TEST_CSV, instance_dir=str(tmp_path))
     assert dest.endswith("original.csv")
     assert _bytes(dest) == _bytes(TEST_CSV)
+
+
+#
+# remote sources (#xlsx on GCS): read bytes, never line by line; a failed
+# read leaves no file; a copy that does not match is reported and kept
+#
+
+
+class _FakeNos:
+    def __init__(self, path):
+        self.path = path
+
+    @property
+    def is_local(self) -> bool:
+        return not str(self.path).startswith("remote://")
+
+    def join(self, name):
+        return os.path.join(self.path, name)
+
+    def copy(self, dest):
+        raise AssertionError("a remote source must not be copied with Nos.copy")
+
+
+def _fake_reader(*, data: bytes = None, fail: Exception = None):
+    class FakeReader:
+        def __init__(self, path, **kwargs):
+            self.path = path
+            self.mode = "r"
+            self.source = None
+
+        def load_if(self):
+            if fail is not None:
+                raise fail
+            self.source = io.BytesIO(data) if "b" in self.mode else None
+
+        def next_raw(self):
+            raise NotImplementedError("Xlsx files cannot be read line by line")
+
+        def close(self):
+            self.source = None
+
+    return FakeReader
+
+
+@pytest.fixture
+def remote(monkeypatch):
+    import csvpath.util.original_file_utility as module
+
+    def install(**kwargs):
+        monkeypatch.setattr(module, "Nos", _FakeNos)
+        monkeypatch.setattr(module, "DataFileReader", _fake_reader(**kwargs))
+
+    return install
+
+
+def test_orut_remote_xlsx_reads_bytes(remote, tmp_path) -> None:
+    data = _bytes(XLSX)
+    remote(data=data)
+    dest = orut.copy_original(
+        source="remote://bucket/named_files/x/abc.xlsx", instance_dir=str(tmp_path)
+    )
+    assert dest.endswith("original.xlsx")
+    assert _bytes(dest) == data
+
+
+def test_orut_remote_read_failure_leaves_no_file(remote, tmp_path) -> None:
+    remote(fail=PermissionError("no access"))
+    with pytest.raises(PermissionError, match="no access"):
+        orut.copy_original(
+            source="remote://bucket/named_files/x/abc.xlsx", instance_dir=str(tmp_path)
+        )
+    assert not os.path.exists(os.path.join(tmp_path, "original.xlsx"))
+
+
+def test_orut_verify(tmp_path) -> None:
+    dest = orut.copy_original(source=TEST_CSV, instance_dir=str(tmp_path))
+    ok, expected, actual = orut.verify(source=TEST_CSV, copy=dest)
+    assert ok is True and expected == actual
+    with open(dest, "ab") as f:
+        f.write(b"tampered")
+    ok, expected, actual = orut.verify(source=TEST_CSV, copy=dest)
+    assert ok is False and expected != actual
+
+
+def test_orut_verify_bad_args() -> None:
+    with pytest.raises(ValueError):
+        orut.verify(source=TEST_CSV, copy="")
+
+
+def test_collect_original_mismatch_is_reported_and_copy_kept(
+    run_group, monkeypatch
+) -> None:
+    monkeypatch.setattr(
+        orut, "verify", staticmethod(lambda *, source, copy: (False, "aaa", "bbb"))
+    )
+    _, results = run_group(
+        file=TEST_CSV,
+        csvpaths=[
+            "~ validation-mode: print, no-raise, fail, collect ~ $[*][ collect_original() ]"
+        ],
+        expect_errors=True,
+    )
+    result = results[0]
+    errors = _errors(result)
+    assert len(errors) == 1
+    assert "does not match" in errors[0] and "bbb is not aaa" in errors[0]
+    #
+    # the copy is kept as evidence
+    #
+    assert Nos(_instance_file(result, "original.csv")).exists()
+    assert _manifest(result)["valid"] is False
