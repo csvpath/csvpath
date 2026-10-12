@@ -25,6 +25,7 @@ import pytest
 from csvpath.references.csvpaths_reference_finder_3 import CsvpathsReferenceFinder3
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
+from csvpath.util.path_util import PathUtility as pathu
 
 
 class _FakePathsDescriber:
@@ -361,7 +362,7 @@ class TestDefinitionAndSubObjects:
         results = _finder(
             "$acme.csvpaths.:definition()", ACME_MANIFEST, definition=DEFINITION
         ).query()
-        assert results.files == [f"{GROUP_HOME}/definition.json"]
+        assert results.files == [pathu.resep(f"{GROUP_HOME}/definition.json")]
         assert results.results[0].uuid is None
 
     def test_scripts(self):
@@ -411,7 +412,7 @@ class TestGlobalLoadsLedger:
             ACME_MANIFEST,
             inputs_csvpaths_path="inputs/named_paths",
         ).query()
-        assert results.files == ["inputs/named_paths/manifest.json"]
+        assert results.files == [pathu.resep("inputs/named_paths/manifest.json")]
         assert results.results[0].uuid is None
 
 

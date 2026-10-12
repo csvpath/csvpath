@@ -7,6 +7,7 @@ from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.reference_results_3 import ReferenceResult3
 from csvpath.util.date_util import DateUtility as daut
+from csvpath.util.path_util import PathUtility as pathu
 
 
 #
@@ -419,7 +420,7 @@ class TestManifestFunction:
     def test_query_returns_the_manifest_path_with_no_uuid(self):
         finder = _finder("$alpha.files.:manifest()", ALPHA_HOME, ALPHA_MANIFEST)
         results = finder.query()
-        assert results.files == [f"{ALPHA_HOME}/manifest.json"]
+        assert results.files == [pathu.resep(f"{ALPHA_HOME}/manifest.json")]
         assert results.results[0].uuid is None
 
     def test_resolve_reads_the_manifest_files_raw_bytes(self, tmp_path):
@@ -454,7 +455,7 @@ class TestGlobalArrivalsLedger:
             inputs_files_path="inputs/named_files",
         )
         results = finder.query()
-        assert results.files == ["inputs/named_files/manifest.json"]
+        assert results.files == [pathu.resep("inputs/named_files/manifest.json")]
         assert results.results[0].uuid is None
 
     def test_resolve_reads_the_global_ledgers_raw_bytes(self, tmp_path):
@@ -558,7 +559,7 @@ class TestGlobalArrivalsLedgerOrdinalIndexing:
             ledger=LEDGER,
         )
         results = finder.query()
-        assert results.files == ["inputs/named_files/manifest.json"]
+        assert results.files == [pathu.resep("inputs/named_files/manifest.json")]
         assert results.results[0].uuid == "u-ledger-3"
 
     def test_manifest_then_pointer_order_also_works(self):
@@ -1036,8 +1037,8 @@ class TestStarTraversalDefinition:
     def test_bare_definition_gives_one_result_per_named_file(self):
         results = _home_star_finder("$*.files.:definition()").query()
         assert set(results.files) == {
-            f"{HOME_STAR_ALPHA_HOME}/definition.json",
-            f"{HOME_STAR_BETA_HOME}/definition.json",
+            pathu.resep(f"{HOME_STAR_ALPHA_HOME}/definition.json"),
+            pathu.resep(f"{HOME_STAR_BETA_HOME}/definition.json"),
         }
         assert all(r.uuid is None for r in results.results)
 
@@ -1053,7 +1054,7 @@ class TestStarTraversalDefinition:
         # beta has no zero-level registration -- must be excluded, even
         # though it has its own definition.json like any named-file would.
         results = _home_star_finder("$*.files.:home():definition()").query()
-        assert results.files == [f"{HOME_STAR_ALPHA_HOME}/definition.json"]
+        assert results.files == [pathu.resep(f"{HOME_STAR_ALPHA_HOME}/definition.json")]
         assert results.ambiguous_content_read is False
 
     def test_bare_definition_combined_with_name_three_is_not_yet_supported(self):
@@ -2020,7 +2021,7 @@ class TestDefinitionFunction:
     def test_query_returns_the_definition_path_with_no_uuid(self):
         finder = _finder("$alpha.files.:definition()", ALPHA_HOME, ALPHA_MANIFEST)
         results = finder.query()
-        assert results.files == [f"{ALPHA_HOME}/definition.json"]
+        assert results.files == [pathu.resep(f"{ALPHA_HOME}/definition.json")]
         assert results.results[0].uuid is None
 
     def test_resolve_reads_the_definition_files_raw_bytes(self, tmp_path):
@@ -2053,7 +2054,7 @@ class TestReadmeFunction:
     def test_query_returns_the_readme_path_with_no_uuid(self):
         finder = _finder("$alpha.files.:readme()", ALPHA_HOME, ALPHA_MANIFEST)
         results = finder.query()
-        assert results.files == [f"{ALPHA_HOME}/README.md"]
+        assert results.files == [pathu.resep(f"{ALPHA_HOME}/README.md")]
         assert results.results[0].uuid is None
 
     def test_resolve_reads_the_readmes_raw_bytes(self, tmp_path):
@@ -2435,7 +2436,7 @@ class TestDefinitionFieldAccessorFunctions:
             "$rich.files.:on_arrival()", RICH_HOME, RICH_MANIFEST, self.DEFINITION
         )
         results = finder.query()
-        assert results.files == [f"{RICH_HOME}/definition.json"]
+        assert results.files == [pathu.resep(f"{RICH_HOME}/definition.json")]
         assert results.results[0].uuid is None
 
     def test_bare_manifest_sourced_field_accessor_still_requires_a_match(self):

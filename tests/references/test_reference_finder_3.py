@@ -13,6 +13,7 @@ from csvpath.references.reference_exceptions_3 import ReferenceRuntimeException3
 from csvpath.references.reference_finder_3 import ReferenceFinder3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.reference_results_3 import ReferenceResult3, ReferenceResults3
+from csvpath.util.path_util import PathUtility as pathu
 
 CSVPATHS = object()
 
@@ -317,7 +318,7 @@ class TestQueryWellKnownFile:
     # csvpaths route :manifest()/:definition() through this.
     def test_returns_one_result_with_no_uuid(self):
         results = ReferenceFinder3._query_well_known_file("some/home", "manifest.json")
-        assert results.files == ["some/home/manifest.json"]
+        assert results.files == [pathu.resep("some/home/manifest.json")]
         assert results.results[0].uuid is None
 
 

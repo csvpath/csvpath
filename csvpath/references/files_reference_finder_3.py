@@ -2,6 +2,7 @@ import re
 
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
+from csvpath.util.path_util import PathUtility as pathu
 from csvpath.util.xlsx.xlsx_reader_helper import XlsxReaderHelper
 
 from .functions.function_3 import Function3
@@ -1062,10 +1063,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
         which candidates are gathered."""
         manifest = self.csvpaths.file_manager.get_manifest(name)
         home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
+        home_parts = pathu.parts(home)
         return [
             entry
             for entry in manifest
-            if entry["file_home"].rstrip("/").startswith(home)
+            if pathu.parts(entry["file_home"])[: len(home_parts)] == home_parts
         ]
 
     @staticmethod
@@ -1476,11 +1478,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
     @staticmethod
     def _matches(entry: dict, home: str, pattern: list) -> bool:
-        file_home = entry["file_home"].rstrip("/")
-        if not file_home.startswith(home):
+        home_parts = pathu.parts(home)
+        file_parts = pathu.parts(entry["file_home"])
+        if file_parts[: len(home_parts)] != home_parts:
             return False
-        rel = file_home[len(home) :].lstrip("/")
-        segments = rel.split("/") if rel else []
+        segments = file_parts[len(home_parts) :]
         if len(segments) != len(pattern):
             return False
         for actual, expected in zip(segments, pattern):
@@ -1498,11 +1500,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
         :name(...) anchor at the end. `pattern` is never empty here (the
         caller only reaches this with at least one segment after the
         leading ':flatten()')."""
-        file_home = entry["file_home"].rstrip("/")
-        if not file_home.startswith(home):
+        home_parts = pathu.parts(home)
+        file_parts = pathu.parts(entry["file_home"])
+        if file_parts[: len(home_parts)] != home_parts:
             return False
-        rel = file_home[len(home) :].lstrip("/")
-        segments = rel.split("/") if rel else []
+        segments = file_parts[len(home_parts) :]
         if len(segments) < len(pattern):
             return False
         trailing = segments[len(segments) - len(pattern) :]
@@ -1523,11 +1525,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
         missing suffix, e.g. "2025/:flatten()" alone) -- in that case
         only the prefix is checked, "any depth after it" with no further
         constraint."""
-        file_home = entry["file_home"].rstrip("/")
-        if not file_home.startswith(home):
+        home_parts = pathu.parts(home)
+        file_parts = pathu.parts(entry["file_home"])
+        if file_parts[: len(home_parts)] != home_parts:
             return False
-        rel = file_home[len(home) :].lstrip("/")
-        segments = rel.split("/") if rel else []
+        segments = file_parts[len(home_parts) :]
         if len(segments) < len(prefix_pattern) + len(suffix_pattern):
             return False
         leading = segments[: len(prefix_pattern)]

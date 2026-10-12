@@ -3,6 +3,7 @@ import re
 
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
+from csvpath.util.path_util import PathUtility as pathu
 
 from .functions.function_3 import Function3
 from .functions.filters.idchain_3 import Idchain3
@@ -153,7 +154,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         disambiguation suffix is involved. A run with no suffix at all
         sorts before any suffixed collision for the same timestamp
         (suffixes start at "_0", so -1 correctly sorts before 0)."""
-        seg = run_home.rstrip("/").rsplit("/", 1)[-1]
+        seg = pathu.parts(run_home)[-1]
         m = cls._RUN_SUFFIX_RE.match(seg)
         if m:
             return (m.group(1), int(m.group(2)))
@@ -1662,7 +1663,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         lexicographically in true chronological order, so plain string
         comparison (see _apply_date_range) is correct, not just
         convenient."""
-        seg = run_home.rstrip("/").rsplit("/", 1)[-1]
+        seg = pathu.parts(run_home)[-1]
         return seg[:10]
 
     _ACCESSOR_NAMES = (
@@ -1792,11 +1793,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         query()'s ':all()' grouping (extracting the actual value at a
         wildcarded position, once a candidate is already known to
         match)."""
-        home = home.rstrip("/")
-        if not run_home.startswith(home):
+        home_parts = pathu.parts(home)
+        run_parts = pathu.parts(run_home)
+        if run_parts[: len(home_parts)] != home_parts:
             return None
-        rel = run_home[len(home) :].lstrip("/")
-        segments = rel.split("/") if rel else []
+        segments = run_parts[len(home_parts) :]
         return segments[:-1]
 
     @classmethod

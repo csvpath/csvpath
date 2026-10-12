@@ -5,6 +5,7 @@ from csvpath.references.reference_3 import Star3
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.reference_results_3 import ReferenceResult3
+from csvpath.util.path_util import PathUtility as pathu
 
 
 #
@@ -478,7 +479,7 @@ class TestManifestFunction:
     # instead (one fixed resource per group, covering every version).
     def test_query_returns_the_manifest_path_with_no_uuid(self):
         results = _finder("$acme.csvpaths.:manifest()").query()
-        assert results.files == [f"{GROUP_HOME}/manifest.json"]
+        assert results.files == [pathu.resep(f"{GROUP_HOME}/manifest.json")]
         assert results.results[0].uuid is None
 
     def test_resolve_reads_the_manifest_files_raw_bytes(self, tmp_path):
@@ -534,7 +535,7 @@ class TestGlobalLoadsLedger:
             "$*.csvpaths.:manifest()",
             inputs_csvpaths_path="inputs/named_paths",
         ).query()
-        assert results.files == ["inputs/named_paths/manifest.json"]
+        assert results.files == [pathu.resep("inputs/named_paths/manifest.json")]
         assert results.results[0].uuid is None
 
     def test_resolve_reads_the_global_ledgers_raw_bytes(self, tmp_path):
@@ -611,7 +612,7 @@ class TestGlobalLoadsLedgerOrdinalIndexing:
             ledger=LOADS_LEDGER,
         )
         results = finder.query()
-        assert results.files == ["inputs/named_paths/manifest.json"]
+        assert results.files == [pathu.resep("inputs/named_paths/manifest.json")]
         assert results.results[0].uuid == "u-loads-3"
 
     def test_manifest_then_pointer_order_also_works(self):
@@ -1087,7 +1088,7 @@ class TestDefinitionFunction:
     # never written gives None rather than raising.
     def test_query_returns_the_definition_path_with_no_uuid(self):
         results = _finder("$acme.csvpaths.:definition()").query()
-        assert results.files == [f"{GROUP_HOME}/definition.json"]
+        assert results.files == [pathu.resep(f"{GROUP_HOME}/definition.json")]
         assert results.results[0].uuid is None
 
     def test_resolve_reads_the_definition_files_raw_bytes(self, tmp_path):
@@ -1123,7 +1124,7 @@ class TestReadmeFunction:
     # treatment as every other genuinely-missing well-known file.
     def test_query_returns_the_readme_path_with_no_uuid(self):
         results = _finder("$acme.csvpaths.:readme()").query()
-        assert results.files == [f"{GROUP_HOME}/README.md"]
+        assert results.files == [pathu.resep(f"{GROUP_HOME}/README.md")]
         assert results.results[0].uuid is None
 
     def test_resolve_reads_the_readmes_raw_bytes(self, tmp_path):
