@@ -127,8 +127,14 @@ class TestUtilFileReaders(unittest.TestCase):
         assert reader._quotechar == '"'
 
     def test_csv_data_reader_path_setter_normalizes_separators(self):
-        reader = CsvDataReader("tests\\util\\test_resources\\test.csv")
-        assert reader.path == "tests/util/test_resources/test.csv"
+        #
+        # the setter normalizes to the native separator: \ on Windows,
+        # / elsewhere. give it the other one.
+        #
+        parts = ["tests", "util", "test_resources", "test.csv"]
+        notsep = "/" if os.sep == "\\" else "\\"
+        reader = CsvDataReader(notsep.join(parts))
+        assert reader.path == os.sep.join(parts)
 
     #
     # reading
