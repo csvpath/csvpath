@@ -97,8 +97,8 @@ class PathsRegistrar(Registrar, Listener):
             if not Nos(path).exists():
                 raise ValueError(f"There is no file at {path}")
             dest = Nos(mdata.named_paths_home).join(Path(path).name)
-            with DataFileReader(path) as reader:
-                with DataFileWriter(path=dest, mode="w") as writer:
+            with DataFileReader(path, mode="rb") as reader:
+                with DataFileWriter(path=dest, mode="wb") as writer:
                     writer.write(reader.source.read())
 
     def metadata_update(self, mdata: Metadata) -> None:
