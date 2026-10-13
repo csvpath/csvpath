@@ -1,5 +1,7 @@
 import re
 
+from csvpath.util.nos import Nos
+
 
 class CsvPathTextUtility:
     """builds small pieces of CsvPath Validation Language text: header
@@ -112,3 +114,28 @@ class CsvPathTextUtility:
             raise ValueError("suffix must be a non-empty str")
         base = re.sub(r"[^a-z0-9_]", "_", name.lower())
         return f"{base}_{suffix}"
+
+    @classmethod
+    def data_path(cls, *, path: str | None) -> str:
+        """the data file path for a csvpath's root, as in $orders.csv[*][...].
+        None means no path, giving $[*][...], as named-paths groups need."""
+        if path is None:
+            return ""
+        if not isinstance(path, str):
+            raise TypeError(f"Data file path must be a str, not {type(path)}")
+        if path.strip() == "":
+            raise ValueError("Data file path cannot be empty; pass None for no path")
+        for c in ["[", "]", "\n", "\r"]:
+            if c in path:
+                raise ValueError(
+                    f"Data file path cannot contain {c!r}, which would break the csvpath root: {path}"
+                )
+        return path
+
+    @classmethod
+    def existing_data_path(cls, *, path: str | None) -> str:
+        """data_path(), plus a check that the file exists"""
+        path = cls.data_path(path=path)
+        if path != "" and not Nos(path).exists():
+            raise ValueError(f"No data file at {path}")
+        return path
