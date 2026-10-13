@@ -7,7 +7,9 @@ the registered file, not the preceding csvpath's data.csv. data.csv is
 unchanged. original.<ext> is fingerprinted and counted in the manifest.
 """
 
+import base64
 import contextlib
+import hashlib
 import io
 import json
 import os
@@ -236,11 +238,14 @@ def test_collect_original_fingerprinted_and_counted(run_group) -> None:
     manifest = _manifest(results[0])
     assert "original.csv" in manifest["file_fingerprints"]
     #
-    # the copy has the registered file's fingerprint
+    # the copy has the registered file's fingerprint. compared as digests:
+    # the archive and the named files may be on different backends, which
+    # write the same SHA-256 differently (hex, or base64 on S3)
     #
-    assert manifest["file_fingerprints"]["original.csv"] == (
-        paths.file_manager.get_fingerprint_for_name(NAME)
-    )
+    copy_fp = manifest["file_fingerprints"]["original.csv"]
+    registered_fp = paths.file_manager.get_fingerprint_for_name(NAME)
+    assert orut.canonical_digest(copy_fp) is not None
+    assert orut.canonical_digest(copy_fp) == orut.canonical_digest(registered_fp)
 
 
 def test_collect_original_counted_in_files_generated(run_group) -> None:
@@ -429,3 +434,98 @@ def test_collect_original_mismatch_is_reported_and_copy_kept(
     #
     assert Nos(_instance_file(result, "original.csv")).exists()
     assert _manifest(result)["valid"] is False
+
+
+#
+# fingerprints are compared as digests: backends write the same SHA-256 as
+# hex (local, GCS, Azure), base64 with / percent-encoded (S3), or raw bytes
+# (SFTP's server-side hash)
+#
+
+_DIGEST = hashlib.sha256(b"0").digest()  # its base64 contains a /
+_HEX = _DIGEST.hex()
+_B64 = base64.b64encode(_DIGEST).decode()
+
+
+def test_orut_canonical_digest_forms() -> None:
+    assert "/" in _B64
+    for form in [
+        _HEX,
+        _HEX.upper(),
+        f" {_HEX} ",
+        _B64,
+        _B64.replace("/", "%2F"),
+        _DIGEST,
+        bytearray(_DIGEST),
+    ]:
+        assert orut.canonical_digest(form) == _DIGEST, form
+
+
+@pytest.mark.parametrize(
+    "unreadable",
+    [
+        f"{_B64}-3",  # an S3 multipart composite checksum
+        _HEX[:-2],
+        "not a fingerprint",
+        b"short",
+        base64.b64encode(b"x" * 16).decode(),  # an MD5-sized digest
+    ],
+)
+def test_orut_canonical_digest_unreadable(unreadable) -> None:
+    assert orut.canonical_digest(unreadable) is None
+
+
+def test_orut_canonical_digest_bad_args() -> None:
+    with pytest.raises(ValueError):
+        orut.canonical_digest(None)
+    with pytest.raises(TypeError):
+        orut.canonical_digest(1)
+
+
+def _fingerprints(monkeypatch, mapping: dict) -> None:
+    import csvpath.util.original_file_utility as module
+
+    class Reader:
+        def __init__(self, path, **kwargs):
+            self.path = path
+
+        def fingerprint(self):
+            return mapping[self.path]
+
+    monkeypatch.setattr(module, "DataFileReader", Reader)
+
+
+def test_orut_verify_hex_matches_base64(monkeypatch) -> None:
+    _fingerprints(
+        monkeypatch, {"s3src.csv": _B64.replace("/", "%2F"), "copy.csv": _HEX}
+    )
+    ok, expected, actual = orut.verify(source="s3src.csv", copy="copy.csv")
+    assert ok is True
+    assert (expected, actual) == (_B64.replace("/", "%2F"), _HEX)
+
+
+def test_orut_verify_real_mismatch_still_detected(monkeypatch) -> None:
+    other = hashlib.sha256(b"1").hexdigest()
+    _fingerprints(monkeypatch, {"s3src.csv": _B64, "copy.csv": other})
+    ok, _, _ = orut.verify(source="s3src.csv", copy="copy.csv")
+    assert ok is False
+
+
+def test_orut_verify_falls_back_to_hashing_bytes(monkeypatch, tmp_path) -> None:
+    #
+    # an unreadable source fingerprint (an S3 multipart composite): the
+    # bytes of both are hashed instead
+    #
+    src = os.path.join(tmp_path, "src.csv")
+    dst = os.path.join(tmp_path, "copy.csv")
+    for p in (src, dst):
+        with open(p, "wb") as f:
+            f.write(b"a,b\n1,2\n")
+    _fingerprints(monkeypatch, {src: f"{_B64}-3", dst: _HEX})
+    ok, expected, actual = orut.verify(source=src, copy=dst)
+    assert ok is True
+    assert expected == actual == "sha256:" + hashlib.sha256(b"a,b\n1,2\n").hexdigest()
+    with open(dst, "ab") as f:
+        f.write(b"tampered")
+    ok, _, _ = orut.verify(source=src, copy=dst)
+    assert ok is False
