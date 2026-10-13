@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+from .csvpath_text_utility import CsvPathTextUtility as csut
 from .threshold_utility import ThresholdUtility as thut
 
 
@@ -68,9 +69,14 @@ class CsvPathParts:
         )
         return var
 
-    def render(self, path: str = "") -> str:
+    def render(self, *, path: str = None) -> str:
         if len(self.line_args) == 0:
             raise ValueError("A csvpath needs at least one line() argument")
+        #
+        # with a path the csvpath runs stand-alone: $orders.csv[*][...]. with
+        # none it has no filename in its root, as named-paths groups need
+        #
+        path = csut.data_path(path=path)
         i = self.INDENT
         out = ["~"]
         for k, v in self.metadata.items():

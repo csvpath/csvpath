@@ -37,6 +37,23 @@ for result in paths.results_manager.get_named_results("orders"):
     print(result.is_valid, result.lines.to_list())
 ```
 
+To run a csvpath on its own, with a `CsvPath` rather than a named-paths
+group, pass the data file to `convert()`. The csvpath's root then names
+the file, `$orders.csv[*][...]`, so no string manipulation is needed:
+
+```python
+from csvpath import CsvPath
+
+conversion = OdcsConverter(contract=contract).convert(path="orders.csv")
+path = CsvPath()
+lines = path.collect(conversion.csvpaths["orders"])
+print(path.is_valid, lines)
+```
+
+The file must exist, and a path is for a contract with one table, since
+each table is a different file. Without a path the output is exactly as
+above.
+
 `OdcsContractLoader` also has `from_string(text=...)` for YAML or JSON
 text, and `validate(contract=...)` for an already-parsed dict.
 

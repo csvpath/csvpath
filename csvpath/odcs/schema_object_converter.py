@@ -35,7 +35,10 @@ class SchemaObjectConverter:
     def convert(self, *, path: str = None) -> str | None:
         """the csvpath, or None if the schema object has no properties, which
         is reported. ODCS allows a schema to be defined elsewhere, e.g. in a
-        Kafka schema registry."""
+        Kafka schema registry. with a path, the csvpath's root names that data
+        file so it can run stand-alone; the file must exist."""
+        path = csut.existing_data_path(path=path)
+        path = None if path == "" else path
         properties = self.obj.get("properties") or []
         if len(properties) == 0:
             self._skip(
