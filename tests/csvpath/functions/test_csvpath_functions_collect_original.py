@@ -80,6 +80,18 @@ def run_group():
         paths.file_manager.remove_named_file(NAME)
 
 
+def _registered(paths) -> bytes:
+    #
+    # the bytes collect_original() promises to copy are the registered
+    # file, not the file we registered from. they are not always the same:
+    # registration can turn CRLF into LF (#364), which on Windows happens to
+    # any test resource git checks out with CRLF line endings. the
+    # registered file may be on a remote backend (e.g. GCS), so read it
+    # through orut, not open().
+    #
+    return orut.read_bytes(paths.file_manager.get_named_file(NAME))
+
+
 def _instance_file(result, name: str) -> str:
     return Nos(result.instance_dir).join(name)
 
@@ -103,10 +115,10 @@ def _manifest(result) -> dict:
 
 
 def test_collect_original_csv(run_group) -> None:
-    _, results = run_group(file=TEST_CSV, csvpaths=["$[1-2][ collect_original() ]"])
+    paths, results = run_group(file=TEST_CSV, csvpaths=["$[1-2][ collect_original() ]"])
     result = results[0]
     copy = _instance_file(result, "original.csv")
-    assert _bytes(copy) == _bytes(TEST_CSV)
+    assert _bytes(copy) == _registered(paths)
     #
     # data.csv is unchanged: the two matched lines
     #
@@ -114,8 +126,8 @@ def test_collect_original_csv(run_group) -> None:
 
 
 def test_collect_original_json(run_group) -> None:
-    _, results = run_group(file=GOOD_JSON, csvpaths=["$[*][ collect_original() ]"])
-    assert _bytes(_instance_file(results[0], "original.json")) == _bytes(GOOD_JSON)
+    paths, results = run_group(file=GOOD_JSON, csvpaths=["$[*][ collect_original() ]"])
+    assert _bytes(_instance_file(results[0], "original.json")) == _registered(paths)
 
 
 def test_collect_original_xlsx(run_group) -> None:
@@ -129,7 +141,7 @@ def test_collect_original_xlsx(run_group) -> None:
 
 
 def test_collect_original_xml_rules_conforming(run_group) -> None:
-    _, results = run_group(
+    paths, results = run_group(
         file=GOOD_XML, csvpaths=[f"$[*][ {XML_RULES_NO_NOCONTRIB} ]"]
     )
     result = results[0]
@@ -139,14 +151,16 @@ def test_collect_original_xml_rules_conforming(run_group) -> None:
     # original is in the results anyway
     #
     assert result.csvpath.match_count == 0
-    assert _bytes(_instance_file(result, "original.xml")) == _bytes(GOOD_XML)
+    assert _bytes(_instance_file(result, "original.xml")) == _registered(paths)
 
 
 def test_collect_original_xml_rules_violating(run_group) -> None:
-    _, results = run_group(file=BAD_XML, csvpaths=[f"$[*][ {XML_RULES_NO_NOCONTRIB} ]"])
+    paths, results = run_group(
+        file=BAD_XML, csvpaths=[f"$[*][ {XML_RULES_NO_NOCONTRIB} ]"]
+    )
     result = results[0]
     assert result.csvpath.is_valid is False
-    assert _bytes(_instance_file(result, "original.xml")) == _bytes(BAD_XML)
+    assert _bytes(_instance_file(result, "original.xml")) == _registered(paths)
 
 
 #
@@ -157,7 +171,7 @@ def test_collect_original_xml_rules_violating(run_group) -> None:
 def test_collect_original_is_the_registered_file_in_preceding_mode(run_group) -> None:
     first = "~ id: first ~ $[1-2][ yes() ]"
     last = "~ id: last source-mode: preceding ~ $[*][ collect_original() ]"
-    _, results = run_group(file=TEST_CSV, csvpaths=[first, last])
+    paths, results = run_group(file=TEST_CSV, csvpaths=[first, last])
     by_id = {r.csvpath.identity: r for r in results}
     preceding_data = _instance_file(by_id["first"], "data.csv")
     last_original = _instance_file(by_id["last"], "original.csv")
@@ -166,7 +180,7 @@ def test_collect_original_is_the_registered_file_in_preceding_mode(run_group) ->
     #
     assert by_id["last"].csvpath.scanner.filename.endswith("data.csv")
     # ... but its original is the registered file
-    assert _bytes(last_original) == _bytes(TEST_CSV)
+    assert _bytes(last_original) == _registered(paths)
     assert _bytes(last_original) != _bytes(preceding_data)
 
 
