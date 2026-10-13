@@ -74,7 +74,7 @@ def _with_data_path(*, csvpath: str, data_path: str) -> str:
     # expected csvpaths have no filename in their root, as the converter's
     # output will not. add one so the csvpath can run stand-alone.
     #
-    with_path, n = re.subn(r"\$\[", f"${data_path}[", csvpath, count=1)
+    with_path, n = re.subn(r"\$\[", lambda m: f"${data_path}[", csvpath, count=1)
     if n != 1:
         raise ValueError(f"No root found in csvpath: {csvpath}")
     return with_path
