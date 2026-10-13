@@ -32,7 +32,7 @@ class SchemaObjectConverter:
         #
         self._duplicates: list[tuple[list[tuple[str, bool]], dict, list[str]]] = []
 
-    def convert(self) -> str | None:
+    def convert(self, *, path: str = None) -> str | None:
         """the csvpath, or None if the schema object has no properties, which
         is reported. ODCS allows a schema to be defined elsewhere, e.g. in a
         Kafka schema registry."""
@@ -65,7 +65,7 @@ class SchemaObjectConverter:
             ).convert()
         self._emit_duplicates()
         self._relationships()
-        return self.parts.render()
+        return self.parts.render(path=path)
 
     def _skip(self, *, location: str, feature: str, reason: str) -> None:
         self.report.skip(

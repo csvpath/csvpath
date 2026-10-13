@@ -68,7 +68,7 @@ class CsvPathParts:
         )
         return var
 
-    def render(self) -> str:
+    def render(self, path: str = "") -> str:
         if len(self.line_args) == 0:
             raise ValueError("A csvpath needs at least one line() argument")
         i = self.INDENT
@@ -77,11 +77,11 @@ class CsvPathParts:
             out.append(f"  {k}: {v}")
         out.append("~")
         if self.needs_full_scan:
-            out.append("$[*][")
+            out.append(f"${path}[*][")
             out.extend(f"{i}{c}" for c in self.first_checks)
             out.append(f"{i}first_line.nocontrib() -> skip()")
         else:
-            out.append("$[1*][")
+            out.append(f"${path}[1*][")
         out.append(f"{i}line(")
         out.append(",\n".join(f"{i}{i}{a}" for a in self.line_args))
         out.append(f"{i})")
