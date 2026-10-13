@@ -68,6 +68,7 @@ class AzureUtility:
 
         return client
 
+    @classmethod
     def my_protocol(cls) -> str:
         account_info = cls.make_client().get_account_information()
         enabled = account_info.get("is_hierarchical_namespace_enabled", False)
