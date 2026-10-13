@@ -79,10 +79,14 @@ class TestUtilFileWriters(unittest.TestCase):
         assert writer.encoding == "utf-8"
 
     def test_general_data_writer_path_setter_normalizes_separators(self):
-        writer = GeneralDataWriter(
-            path="tests\\util\\test_resources\\tmp\\file_writers\\out.csv"
-        )
-        assert writer.path == "tests/util/test_resources/tmp/file_writers/out.csv"
+        #
+        # the setter normalizes to the native separator: \ on Windows,
+        # / elsewhere. give it the other one.
+        #
+        parts = ["tests", "util", "test_resources", "tmp", "file_writers", "out.csv"]
+        notsep = "/" if os.sep == "\\" else "\\"
+        writer = GeneralDataWriter(path=notsep.join(parts))
+        assert writer.path == os.sep.join(parts)
 
     #
     # writing

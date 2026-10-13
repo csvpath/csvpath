@@ -115,9 +115,15 @@ class TestUtilCsvLineSpooler(unittest.TestCase):
         assert spooler.logger.name == "CsvLineSpooler"
 
     def test_path_setter_normalizes_separators(self):
+        #
+        # the setter normalizes to the native separator: \ on Windows,
+        # / elsewhere. give it the other one.
+        #
+        parts = ["tests", "util", "test_resources", "tmp", "line_spooler", "out.csv"]
+        notsep = "/" if os.sep == "\\" else "\\"
         spooler = CsvLineSpooler(None, path=self._path())
-        spooler.path = "tests\\util\\test_resources\\tmp\\line_spooler\\out.csv"
-        assert spooler.path == "tests/util/test_resources/tmp/line_spooler/out.csv"
+        spooler.path = notsep.join(parts)
+        assert spooler.path == os.sep.join(parts)
 
     #
     # _instance_data_file_path / path resolution when no explicit path given
