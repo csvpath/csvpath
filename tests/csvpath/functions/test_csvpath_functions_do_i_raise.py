@@ -98,10 +98,17 @@ def test_do_i_raise_roll_no_raise_run_continues() -> None:
         scan="[1-3]",
         body='@r = roll(now(), 2, "fish") push("seen", line_number())',
     )
+    messages = [e.message for e in path.errors]
     assert path.is_valid is False
-    assert any(
-        m.startswith("Units must be one of") for m in [e.message for e in path.errors]
-    )
+    assert any(m.startswith("Units must be one of") for m in messages)
+    #
+    # this has failed intermittently on Windows + GCS in full GoCD runs:
+    # the run stopped before any line, so seen was never set. any other
+    # exception in Expression.check_valid() stops the run, and its
+    # message lands in path.errors, so show the errors when this fails.
+    # see #373.
+    #
+    assert "seen" in path.variables, f"stopped: {path.stopped}, errors: {messages}"
     assert path.variables["seen"] == [1, 2, 3]
 
 
