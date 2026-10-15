@@ -9,6 +9,104 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `'*'`-traversal content-accessor guards — re-audited, converted where safe — BUILT 2026-09-28
+
+Re-audit of the four candidates the `:path()`-retirement fix deliberately
+left untouched (see that entry's own scoping note). Worked one at a time,
+verifying safety by the same method proven there: check whether a pointer,
+when present, actually reduces EACH partition to at most one candidate
+before trusting a count-based deferral (the trap that fix already caught
+once — CSVPATHS' `:all():last():manifest()`, several groups each already
+reduced to their own one candidate, must NOT raise even though the final
+count is > 1).
+
+**1. `ResultsReferenceFinder3._query_star_traversal()`'s `match_all and
+accessor is not None` check — confirmed settled, not a candidate at all.**
+Read both this check and its literal-root twin (`query()`'s own identical
+check) side by side: both are STRUCTURAL rejections, not count-dependent
+ones. Instance-level `:all()` pools every statement instance in a run, each
+with its own separate well-known file on disk — there is no pointer
+concept at the instance level to reduce that to one (`_name_three_
+selector()` recognizes a literal identity, `:all()`, or a range, never a
+pointer function). Both stay exactly as they were, permanently.
+
+**2. `ResultsReferenceFinder3._star_group_and_reduce()`'s `accessor is not
+None and pointer is not None` check — converted.** Traced the guarantee
+precisely before removing the check: each partition's own `_apply_
+pointer()` call returns a single value (or `None`), never a list, so AT
+MOST one run per partition; `_results_for_run()`'s own internal guards
+(the `match_all` case is already intercepted earlier by check #1 above,
+and a `range_bounds` match of more than one statement independently raises
+inside that method) guarantee AT MOST one `ReferenceResult3` per run
+whenever `accessor is not None`. So `len(results) > 1` here can only mean
+"more than one GROUP's own already-individually-legitimate winner" — the
+identical shape already proven safe to defer. Removed the unconditional
+raise; added `ambiguous_content_read=accessor is not None and
+len(results) > 1` to the method's own return. Two tests rewritten (one
+group: query()/resolve() both succeed; two groups: query() returns both,
+flagged, resolve() raises) — the original single-group test had used a raw
+`pytest.raises`, which never exercised the actual multi-group ambiguity
+this check exists for at all.
+
+**3. `FilesReferenceFinder3._query_star_traversal()`'s unconditional
+`:manifest()` rejection, and the literal-root `':all()'/':groups()'
+grouping + :manifest()` rejection in `query()` — converted/narrowed,
+plus two real, previously-undetected bugs caught along the way.**
+
+The method's own docstring already correctly explained WHY this stayed
+unconditional (`_extract_data()` already resolves `:manifest()` fine
+during traversal, via the same Star3-aware global-ledger branch Rule 1b's
+own `:manifest()`-with-a-global-pointer shape uses — the only missing
+piece was wiring up `ambiguous_content_read` on this method's own return)
+— confirmed that reasoning is correct, same "each partition's own pointer
+reduces to at most one candidate" guarantee as #2 above, and made the
+conversion.
+
+While verifying this by testing live (not assumed), found that BOTH this
+check and its literal-root twin (`query()`'s own `partitioned and pointers
+and has_manifest` GROUP-mode rejection, and the final `ambiguous_content_
+read=has_manifest and len(...)>1` computation) had a real bug, unrelated
+to the traversal-vs-literal-root question: `:manifest()` combined with a
+CHAINED FIELD ACCESSOR (e.g. `":manifest():uuid()"`) was being rejected
+identically to bare `:manifest()` (no field) — even though field
+accessors are exempt from Rule 1 entirely (Rule 3), and `Reference3.
+resolve_kind`'s own METADATA_FIELD-before-METADATA_FILE priority means
+`:manifest()` is never actually read as a whole resource when a field
+rides alongside it. Confirmed live with a real probe script before fixing
+(not assumed) — this affected the literal-root no-pointer path, the
+literal-root GROUP-mode-with-pointer path, and the `'*'`-traversal path
+identically, all three sharing the same `has_manifest` computation that
+never checked `has_field_function`.
+
+**What was built, across all of #3**:
+- `files_reference_finder_3.py`'s `query()`: `has_manifest` no longer
+  gates `ambiguous_content_read`/the GROUP-mode raise on its own — both
+  now also require `not has_field_function` (renamed inline, not a new
+  variable — `has_field_function` already existed, computed but
+  previously unused for this purpose).
+- `_query_star_traversal()`: the unconditional `if any(f.name ==
+  "manifest" for f in built): raise` removed entirely. The "no pointer"
+  branch's own gate widened from "requires a field accessor" to "requires
+  a field accessor OR `:manifest()`" (bare `:manifest()`, no pointer, is
+  legal the same way it always was for the literal-root case — a single
+  matching candidate is not ambiguous at all). Both this branch's return
+  and the pointer-reduced return at the end of the method now compute
+  `ambiguous_content_read=has_manifest and field_call is None and
+  len(...) > 1`.
+- Method's own docstring rewritten to describe the new behavior instead of
+  the old deliberate-rejection rationale.
+
+Six tests updated/added: two new regression tests for the field-accessor
+bug (literal-root no-grouping, and GROUP-mode with grouping, both proving
+`:manifest():uuid()` is poolable where bare `:manifest()` is not); four
+existing `'*'`-traversal tests rewritten from `pytest.raises` locks to
+either "now works" (POOL mode — `'*'`/`:flatten()`, always exactly one
+overall candidate, never actually ambiguous) or "query succeeds/resolve
+raises" pairs (GROUP mode — `:all()`/`:groups()`, can produce several
+partitions' own winners at once).
+
+Full suite: 1612 passed (up from 1609 across this whole re-audit).
+
 ## FILES `:all()`/`:groups()` combined with `:from()`/`:to()` — misleading error message fixed — BUILT 2026-09-25
 
 Surfaced while sweeping the bucket list's remaining `'*'`-traversal items

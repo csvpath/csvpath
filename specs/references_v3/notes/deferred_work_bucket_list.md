@@ -255,44 +255,44 @@ degenerate-grouping semantics settled and built earlier this same session
 3-segment prefix `:last()` correctly find the run. No code change needed
 — the original flag just hadn't accounted for the run's own depth.
 
-## `'*'`-traversal content-accessor guards — candidates for the same query()/resolve() split, not yet re-audited
+## `'*'`-traversal content-accessor guards — RE-AUDITED, converted or confirmed settled — BUILT 2026-09-28
 
 Left over from retiring `:path()`/moving Rule 1 to `resolve()` (see
 `deferred_work_done_list.md`) — that pass deliberately touched only each
 finder's own LITERAL-root `query()` method, per its own explicit scoping
 note ("re-audit case by case once this lands, rather than assuming it
-dissolves everything at once"). These are the concrete, now-identified
-candidates for that re-audit, all still unconditional/immediate raises in
-`query()` today, none yet converted to the
-`ReferenceResults3.ambiguous_content_read` deferred-to-`resolve()` pattern:
+dissolves everything at once"). All four identified candidates now
+resolved — see `deferred_work_done_list.md` for the full writeup,
+including two genuine, previously-undetected bugs caught while doing this
+(not just missing conversions):
 
 - `ResultsReferenceFinder3._query_star_traversal()`'s own `match_all and
-  accessor is not None` check (instance-level `:all()` + a well-known-file
-  accessor, during `'*'` traversal) — the literal-root twin of this was
-  deliberately left as an unconditional raise too (see the done-list entry
-  below), not converted, so this one should be decided together with that
-  one, not in isolation.
-- `ResultsReferenceFinder3._star_pool_and_reduce()`'s `len(run_homes) > 1
-  and accessor is not None` check — **converted 2026-08-27**, see
-  `deferred_work_done_list.md`. Confirmed safe before converting: this
-  branch only runs when `pointer is None`, so there is no per-partition
-  reduction anywhere nearby to conflate with, unlike the GROUP-mode cases
-  below.
+  accessor is not None` check — CONFIRMED SETTLED, not converted, and not
+  actually a candidate: this is a structural rejection (instance-level
+  `:all()` pools MULTIPLE statement instances, each with its own separate
+  file — there is no pointer concept at this level to reduce it), not a
+  count-dependent one. Its literal-root twin is the identical, deliberate,
+  permanent rejection.
+- `ResultsReferenceFinder3._star_pool_and_reduce()`'s equivalent check —
+  already converted 2026-08-27, see `deferred_work_done_list.md`.
 - `ResultsReferenceFinder3._star_group_and_reduce()`'s `accessor is not
-  None and pointer is not None` check (`'*'`-traversal GROUP mode + a
-  content accessor) — mirrors FILES'/CSVPATHS' own GROUP-mode restrictions
-  below, not obviously safe to convert (see next item).
+  None and pointer is not None` check — **converted**. Verified each
+  partition's own `_apply_pointer()` guarantees at most one selected run,
+  and `_results_for_run()`'s own internal guards guarantee at most one
+  `ReferenceResult3` per run whenever an accessor is present — the same
+  shape already proven safe by the `:path()`-retirement fix.
 - `FilesReferenceFinder3._query_star_traversal()`'s unconditional
-  `:manifest()`/field-accessor-during-traversal rejection, and the literal-
-  root `':all()'/':groups()' grouping + content accessor` rejection in
-  `query()` (both files and results) — these are NOT simple count checks;
-  they reject the combination outright regardless of how many entities
-  would actually match. Converting them naively to a count-based deferred
-  check already proved unsafe once (a CSVPATHS `:all():last():manifest()`
-  test, spanning several groups each already reduced to one match via the
-  pointer, is legitimate and must NOT raise) — any change here needs the
-  same "was a pointer actually applied within each partition" reasoning
-  the literal-root fix used, not a blind port.
+  `:manifest()` rejection — **converted**, plus the literal-root
+  `':all()'/':groups()' grouping + :manifest()` rejection in `query()` —
+  **narrowed**. Same verification as above (GROUP mode reduces each
+  distinct file_home to at most one candidate via the pointer).
+- **Two real bugs caught in the process, not just missing conversions**:
+  both the literal-root and `'*'`-traversal FILES checks were also
+  incorrectly rejecting `:manifest()` combined with a CHAINED FIELD
+  ACCESSOR (e.g. `:manifest():uuid()`), even though field accessors are
+  exempt from Rule 1 entirely (Rule 3) and resolve_kind's own priority
+  means `:manifest()` is never actually read as a whole resource in that
+  shape. Confirmed live before fixing — not assumed.
 
 ## Predicate-argument field accessors (`:on_arrival(:not_none())`) — filter half built for `:idchain()`, generic mechanism still not built
 
