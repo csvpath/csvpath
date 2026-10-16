@@ -22,15 +22,29 @@ from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 #
 class Function3Describer:
     @classmethod
-    def describe(cls, function_cls: type) -> str:
+    def describe(cls, function_cls: type, name: "str | None" = None) -> str:
         """one function's own markdown documentation block. Heading is
         a plain "## {name}" (no backticks/colon/parens) specifically so
         describe_all()'s own index links resolve to a predictable
         "#{name}" anchor -- GitHub-flavored-markdown's own heading-to-
         anchor slugify rules are not consistent across renderers once
         punctuation is involved, so this sidesteps that entirely rather
-        than trying to replicate one specific renderer's algorithm."""
-        lines = [f"## {function_cls.NAME}", "", f"`:{function_cls.NAME}()`", ""]
+        than trying to replicate one specific renderer's algorithm.
+
+        `name` (added 2026-10-16, for the :before()/:after() alias
+        rollout, compendium 6.28b) overrides the heading/inline-code
+        text used throughout this block -- defaults to `function_cls.
+        NAME`, unchanged for every direct caller that does not pass it.
+        `describe_all()` passes each alias's own registered name
+        explicitly, so an alias like ":below()" gets its own complete,
+        correctly-anchored block rather than silently reusing/renaming
+        ":before()"'s -- aliases are registered as extra dict keys
+        pointing at the SAME class (see Before3's own docstring), so
+        without this override every alias would describe itself as its
+        canonical name, breaking describe_all()'s own "index and blocks
+        agree on function count" invariant."""
+        display_name = name if name is not None else function_cls.NAME
+        lines = [f"## {display_name}", "", f"`:{display_name}()`", ""]
         if function_cls.SUMMARY:
             lines.append(function_cls.SUMMARY)
             lines.append("")
@@ -99,6 +113,6 @@ class Function3Describer:
         lines.append("")
         for name in names:
             function_cls = ReferenceFunctionFactory.get_registered_class(name)
-            lines.append(cls.describe(function_cls))
+            lines.append(cls.describe(function_cls, name=name))
             lines.append("")
         return "\n".join(lines)

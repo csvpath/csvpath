@@ -2024,6 +2024,100 @@ class TestNameThreeRange:
             ).query()
 
 
+class TestDirectionFunctions:
+    # ':before()'/':after()' -- compendium 6.28/6.28b/6.28c, built
+    # 2026-10-16, the EXCLUSIVE siblings of ':to()'/':from()'. RANGE_
+    # MANIFEST is v0..v4, positions 0-4, dates 2026-01-01..2026-01-05.
+    def test_after_excludes_its_own_position(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:after(1)', RANGE_HOME, RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v2", "v3", "v4"]
+
+    def test_before_excludes_its_own_position(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:before(3)', RANGE_HOME, RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v0", "v1", "v2"]
+
+    def test_after_and_before_together_is_an_exclusive_range(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:after(1):before(4)',
+            RANGE_HOME,
+            RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v2", "v3"]
+
+    def test_after_with_a_negative_index_counts_one_later(self):
+        # position -3 is v2; "after" position -3 is v3 onward.
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:after(-3)', RANGE_HOME, RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v3", "v4"]
+
+    def test_before_with_a_negative_index_excludes_the_last_item(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:before(-1)', RANGE_HOME, RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v0", "v1", "v2", "v3"]
+
+    def test_after_and_to_can_combine_dissimilar_directions(self):
+        # 6.28's own point: dissimilar functions (one exclusive lower,
+        # one inclusive upper) may pair freely.
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:after(1):to(3)',
+            RANGE_HOME,
+            RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v2", "v3"]
+
+    def test_date_mode_after_excludes_its_own_date(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:after("2026-01-02")',
+            RANGE_HOME,
+            RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v2", "v3", "v4"]
+
+    def test_date_mode_before_excludes_its_own_date(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:before("2026-01-04")',
+            RANGE_HOME,
+            RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v0", "v1", "v2"]
+
+    def test_combining_two_lower_bounds_is_illegal(self):
+        # 6.28c: ':from()'/':after()' both indicate the same direction.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$ranger.files.:name("orders.csv").:from(1):after(2)',
+                RANGE_HOME,
+                RANGE_MANIFEST,
+            ).query()
+
+    def test_combining_two_upper_bounds_is_illegal(self):
+        # 6.28c's own named example: ':to()' + ':before()'.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$ranger.files.:name("orders.csv").:to(3):before(1)',
+                RANGE_HOME,
+                RANGE_MANIFEST,
+            ).query()
+
+    def test_below_alias_behaves_exactly_like_before(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:below(3)', RANGE_HOME, RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v0", "v1", "v2"]
+
+    def test_above_alias_behaves_exactly_like_after(self):
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:above(1)', RANGE_HOME, RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v2", "v3", "v4"]
+
+
 class TestGroupsForOneNamedFile:
     # bare ':groups()' as name_one's entire content, for a LITERAL
     # (non-'*') root_major -- added 2026-08-12, the any-depth GROUP peer

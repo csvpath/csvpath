@@ -1286,7 +1286,14 @@ create a range; however, combining `:before()` and `:to()` or
 #### 6.28d Example
 Find versions registered as `acme` from the beginning of 2026 through
 yesterday:
-`$acme.files.:flatten().:after(:date("2026-01-01")):to(:yesterday())`
+`$acme.files.:flatten().:from(:date("2026-01-01")):to(:yesterday())`
+
+(Corrected 2026-10-16 -- this example originally used `:after(...)`,
+which 6.28b's own alias table defines as strictly exclusive
+(greater-than). "From the beginning of 2026" means INCLUSIVE of
+2026-01-01 itself, which is `:from()`'s meaning, not `:after()`'s --
+confirmed with David before building `:before()`/`:after()`, rather than
+silently picking a side of the contradiction.)
 
 
 ### Indexes

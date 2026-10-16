@@ -3063,3 +3063,14 @@ own — see that entry for `:groups()`/RESULTS `:having()`.)
   test_combining_with_manifest_now_resolves_each_groups_own_entry`. Full
   `tests/references/` suite: 1631 passed. Full local-backend suite: 4092
   passed, 11 failed (the known SFTP/S3 credential baseline, unrelated).
+- `:before()`/`:after()` and their full 9-name alias table (compendium
+  §6.22-6.31/6.28b) -- **built 2026-10-16**, branch `feature/references-
+  v3-direction-functions`. Caught and fixed a real spec inconsistency in
+  6.28d's own worked example before building (alias table vs. example
+  disagreed on `:after()`'s inclusivity); generalized `ReferenceFinder3`'s
+  shared range mechanism (`_range_calls_from_built()`/`_apply_range()`/
+  `_apply_manifest_date_range()`) to support exclusive bounds and rewired
+  all ~7 call sites across FILES/CSVPATHS/RESULTS. See the bucket list's
+  own "Direction/ordinal functions" entry for the full writeup (the
+  alias-rollout/mechanism decisions, the `Function3Describer` alias-
+  rendering fix it also needed, and the test tally).

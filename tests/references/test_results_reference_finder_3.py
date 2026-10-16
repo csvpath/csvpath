@@ -1312,6 +1312,73 @@ class TestRunLevelDateRange:
             ).query()
 
 
+class TestRunLevelDirectionFunctions:
+    # ':before()'/':after()' as a run-level range -- compendium 6.28/
+    # 6.28b/6.28c, built 2026-10-16, the EXCLUSIVE siblings of ':to()'/
+    # ':from()'. Reuses TestRunLevelRange's own five_runs fixture
+    # (run-1..run-5, positions 0-4) and TestRunLevelDateRange's own
+    # dated_runs fixture.
+    @pytest.fixture
+    def five_runs(self, tmp_path):
+        base = tmp_path / "acme" / "customers"
+        runs = [
+            _make_run(base, f"2026-01-0{i}_00-00-00", f"run-{i}", {})
+            for i in range(1, 6)
+        ]
+        _write_archive_manifest(tmp_path, "acme", runs)
+        return str(tmp_path)
+
+    @pytest.fixture
+    def dated_runs(self, tmp_path):
+        base = tmp_path / "acme" / "customers"
+        runs = {
+            "run-before": _make_run(base, "2024-12-31_00-00-00", "run-before", {}),
+            "run-jan1": _make_run(base, "2025-01-01_00-00-00", "run-jan1", {}),
+            "run-jan15": _make_run(base, "2025-01-15_00-00-00", "run-jan15", {}),
+            "run-feb1": _make_run(base, "2025-02-01_00-00-00", "run-feb1", {}),
+        }
+        _write_archive_manifest(tmp_path, "acme", list(runs.values()))
+        return str(tmp_path)
+
+    def test_after_excludes_its_own_position(self, five_runs):
+        results = _finder("$acme.results.customers:after(1)", five_runs).query()
+        assert results.uuids == ["run-3", "run-4", "run-5"]
+
+    def test_before_excludes_its_own_position(self, five_runs):
+        results = _finder("$acme.results.customers:before(3)", five_runs).query()
+        assert results.uuids == ["run-1", "run-2", "run-3"]
+
+    def test_after_and_before_together_is_an_exclusive_range(self, five_runs):
+        results = _finder(
+            "$acme.results.customers:after(1):before(4)", five_runs
+        ).query()
+        assert results.uuids == ["run-3", "run-4"]
+
+    def test_after_date_excludes_its_own_date(self, dated_runs):
+        results = _finder(
+            '$acme.results.customers:after(:date("2025-01-01"))', dated_runs
+        ).query()
+        assert set(results.uuids) == {"run-jan15", "run-feb1"}
+
+    def test_before_date_excludes_its_own_date(self, dated_runs):
+        results = _finder(
+            '$acme.results.customers:before(:date("2025-01-15"))', dated_runs
+        ).query()
+        assert set(results.uuids) == {"run-before", "run-jan1"}
+
+    def test_combining_two_lower_bounds_is_illegal(self, five_runs):
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.results.customers:from(1):after(2)", five_runs).query()
+
+    def test_combining_two_upper_bounds_is_illegal(self, five_runs):
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.results.customers:to(3):before(1)", five_runs).query()
+
+    def test_gt_and_lt_aliases_work(self, five_runs):
+        results = _finder("$acme.results.customers:gt(1):lt(4)", five_runs).query()
+        assert results.uuids == ["run-3", "run-4"]
+
+
 class TestStatementLevelRange:
     # ':from()'/':to()' as a name_three statement-level range -- added
     # 2026-08-13. David: ":from(:index(2)):unmatched() should definitely
@@ -1432,6 +1499,23 @@ class TestStatementLevelRange:
                 "$acme.results.customers/2025:first().:all():from(2)",
                 one_run_five_statements,
             ).query()
+
+    def test_after_excludes_its_own_position(self, one_run_five_statements):
+        # ':after()' as a name_three statement-level range -- compendium
+        # 6.28, built 2026-10-16. identities zero..four, instance_index
+        # 0-4 (see this class's own scrambled fixture comment).
+        results = _finder(
+            "$acme.results.customers/2025:first().:after(1)",
+            one_run_five_statements,
+        ).query()
+        assert results.uuids == ["t-uuid", "th-uuid", "f-uuid"]
+
+    def test_before_excludes_its_own_position(self, one_run_five_statements):
+        results = _finder(
+            "$acme.results.customers/2025:first().:before(3)",
+            one_run_five_statements,
+        ).query()
+        assert results.uuids == ["z-uuid", "o-uuid", "t-uuid"]
 
 
 class TestHomeAsAZeroLevelSelector:

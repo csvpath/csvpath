@@ -541,13 +541,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
         has_manifest = any(f.name == "manifest" for f in built)
         has_field_function = self._find_field_function_call(built) is not None
         has_all = any(f.name == "all" for f in built)
-        from_call = next((f for f in built if f.name == "from"), None)
-        to_call = next((f for f in built if f.name == "to"), None)
-        has_range = from_call is not None or to_call is not None
+        lower_call, upper_call = self._range_calls_from_built(built)
+        has_range = lower_call is not None or upper_call is not None
         from_is_date = to_is_date = False
         from_bound = to_bound = None
         if has_range:
-            # ':from()'/':to()' as a name_three version range -- added
+            # ':from()'/':to()' (inclusive) or their exclusive siblings
+            # ':after()'/':before()' (compendium 6.28, generalized
+            # 2026-10-16 -- see _range_calls_from_built()'s own
+            # docstring) as a name_three version range -- added
             # 2026-08-13, David: rewind/replay and version comparison
             # need "the last N versions of orders.csv" the same way
             # RESULTS' own run-level range does, plus "version M through
@@ -567,7 +569,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # RESULTS already filters run-level ranges by) FILTERS by
             # each version's own "time" manifest field instead, via the
             # shared _apply_manifest_date_range(). Mixing the two modes
-            # in one ':from()'/':to()' pair is rejected -- not because
+            # in one lower/upper pair is rejected -- not because
             # it is meaningless (e.g.
             # ":from(:date('2025-01-01')):to(:index(10))" is a
             # reasonable ask: "10 versions starting from this date"),
@@ -578,8 +580,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # picks one, so mixing is rejected until that anchor
             # semantics question is deliberately settled, not attempted
             # here for lack of a driving use case.
-            from_bound = self._range_bound(from_call) if from_call is not None else None
-            to_bound = self._range_bound(to_call) if to_call is not None else None
+            from_bound = self._range_bound(lower_call) if lower_call is not None else None
+            to_bound = self._range_bound(upper_call) if upper_call is not None else None
             from_is_date = isinstance(from_bound, str)
             to_is_date = isinstance(to_bound, str)
             if (from_bound is not None and to_bound is not None) and (
@@ -587,8 +589,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             ):
                 raise ReferenceException3(
                     "FilesReferenceFinder3 does not support mixing index-"
-                    "mode and date-mode ':from()'/':to()' bounds in the "
-                    "same range."
+                    "mode and date-mode range bounds in the same range."
                 )
             if from_is_date:
                 self._validate_date_format(from_bound)
@@ -655,10 +656,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # branch below.
             if from_is_date or to_is_date:
                 candidates = self._apply_manifest_date_range(
-                    candidates, from_bound, to_bound
+                    candidates, lower_call, upper_call
                 )
             else:
-                candidates = self._apply_range(candidates, from_call, to_call)
+                candidates = self._apply_range(candidates, lower_call, upper_call)
 
         if pointers:
             if partitioned:
