@@ -628,12 +628,15 @@ and a stale-entry correction, are both done — see
 - `FilesReferenceFinder3`'s own `_query_star_traversal()` combining `'*'`
   traversal with a field accessor riding beside the pointer in
   `name_three` (POOL and GROUP modes alike) — **BUILT 2026-08-29**, see
-  `deferred_work_done_list.md`. `:manifest()` (whole-resource) still
-  stays rejected here, deliberately — GROUP mode can legitimately
-  produce more than one reduced candidate, and this method sets no
+  `deferred_work_done_list.md`. `:manifest()` (whole-resource) used to
+  stay rejected here deliberately (GROUP mode can legitimately produce
+  more than one reduced candidate, and this method set no
   `ambiguous_content_read` flag to catch resolving several whole entries
-  at once (Rule 1); adding that flag correctly is its own separate,
-  still-open piece of work, not bundled into this fix.
+  at once) — **that flag is now partition-aware, BUILT 2026-10-16**, see
+  this list's own "'*'-traversal content-accessor guards" entry above
+  and the done-list's matching writeup. `:manifest()` combined with
+  GROUP modes during `'*'` traversal now resolves correctly instead of
+  being flagged ambiguous.
 
 - **Concrete worked example that drove this (David, 2026-08-21)**: "which
   named-files have `on_arrival` set" needs `$*.files.:home():definition
@@ -664,10 +667,9 @@ and a stale-entry correction, are both done — see
 - FILES' `:all()`/`:groups()` (GROUP modes) combined with a chained field
   accessor (e.g. `:all().:last():uuid()`) — **BUILT 2026-08-29**, see
   `deferred_work_done_list.md`. `:manifest()` (whole-resource) combined
-  with GROUP modes stays rejected, unchanged — only the field-accessor
-  half of this item was ever under-specified; RESULTS had already
-  settled the field-accessor case, FILES just hadn't been updated to
-  match.
+  with GROUP modes used to stay rejected, unchanged by this fix — **now
+  also BUILT, 2026-10-16**, same partition-aware fix referenced above
+  (this was the literal-root twin of that same gap).
 - A literal prefix *before* `:flatten()` for FILES — **BUILT 2026-08-27**,
   see `deferred_work_done_list.md`.
 - FILES' `:from()`/`:to()` combined with `:all()`/`:groups()` grouping in
