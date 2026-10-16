@@ -234,7 +234,7 @@ entity, depending on if the datatype of the reference is `files`, `csvpaths`,
 or `results`, respectively. `root_major` can take:
 - A string
 - A `*`
-- A `:regex(...)`, `:choice(...)`, or `:name(...)` function
+- A `:regex(...)` or `:name(...)` function
 
 `*` means any existent named entity
 

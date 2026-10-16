@@ -689,20 +689,39 @@ and a stale-entry correction, are both done — see
 ## Functions
 
 - Functions named in the spec/example-queries docs with no `Function3`
-  subclass yet: `:choice()`, `:names()`, `:message()`, `:count()`,
-  `:has_errors()`, `:at()`. (Corrected 2026-08-26: `:type()` used to be
-  listed here too, but it was built as part of the Table 1 field-accessor
-  batch — confirmed live, `Type3` is registered, `NAME = "type"` — this
-  list had gone stale; removed. Corrected again 2026-08-27: `:yesterday()`
-  was also stale — confirmed live, `Yesterday3` is registered, built
-  alongside `:today()` in the "pure value" date/time functions batch —
-  removed. Corrected again 2026-09-21: `:before()`/`:after()`/`:above()`
-  moved out — see the "Direction/ordinal functions" entry, now BUILT.)
-  None of the remaining names here have settled semantics beyond their
-  bare mention in the spec/example-queries docs — unlike every other item
-  in this file, there is no worked example or design note to build from,
-  so picking one to build means guessing its intended behavior, not
-  implementing an already-decided design.
+  subclass yet: `:message()`, `:count()`, `:has_errors()`. (Corrected
+  2026-08-26: `:type()` used to be listed here too, but it was built as
+  part of the Table 1 field-accessor batch — confirmed live, `Type3` is
+  registered, `NAME = "type"` — this list had gone stale; removed.
+  Corrected again 2026-08-27: `:yesterday()` was also stale — confirmed
+  live, `Yesterday3` is registered, built alongside `:today()` in the
+  "pure value" date/time functions batch — removed. Corrected again
+  2026-09-21: `:before()`/`:after()`/`:above()` moved out — see the
+  "Direction/ordinal functions" entry, now BUILT. Corrected again
+  2026-10-16: `:quarter()`, `:choice()`, `:names()`, `:at()` all moved
+  out — see the four dedicated entries below, each a considered
+  rejection, not an oversight.)
+
+  **Re-audited 2026-10-16 — the "none of these have settled semantics"
+  claim above is no longer accurate for all three remaining names,
+  checked live rather than assumed:**
+  - `:message()` — DOES have real backing: `normative_reference_
+    examples.txt` uses it as `:errors(:message(/customer: 319/))`,
+    structurally identical to the already-built `:idchain()` precedent
+    (a predicate filtering `:errors()`'s own entries by one of their own
+    fields — here "message" instead of "source"). Likely buildable by
+    mirroring that precedent directly, not a guess — not yet actioned,
+    awaiting a build decision.
+  - `:has_errors()` — DOES have real backing: used in the real spec
+    test fixture (`normative_reference_expressions_examples.txt`) and
+    the expressions design doc (`references_v3_expressions.md`), not
+    just scratch notes. Reads as a plain boolean field accessor ("does
+    this entity have any errors") — likely low-risk — not yet actioned,
+    awaiting a build decision.
+  - `:count()` — tied to the predicate-argument GATE mechanism (its only
+    real appearance is nested as `:errors(:count(:above(10)))`), the
+    same unbuilt, design-blocked prerequisite as `:on_arrival(:not_
+    none())` above. Correctly still blocked, not newly questionable.
 
 - **`:quarter()` — deliberately NOT building, decided 2026-10-16, removed
   from the list above.** David: it is "both easy and suspect" — trivial to
@@ -721,6 +740,60 @@ and a stale-entry correction, are both done — see
   alone now). If a real demand signal and a settled representation
   (not necessarily "Q2") ever show up, re-add it as its own entry with a
   worked example, same as every other function here.
+
+- **`:choice()` — deliberately NOT building, decided 2026-10-16, removed
+  from the list above.** Confirmed live: `:choice()`'s own intent (a
+  pipe-delimited list of exact matching names, e.g. `:choice("orders|
+  invoices|shipments")`) is fully expressible via the already-built
+  `:regex()`, with one caveat David wanted confirmed, not assumed:
+  `:regex()`'s own matching is UNANCHORED `re.search()` everywhere in
+  this codebase (deliberate, established convention, shared by
+  `:idchain()`/`_segment_matches()`/`_matching_names()`), so a bare
+  `:regex("orders|invoices|shipments")` would ALSO match a substring
+  like "sub_orders_2024" — not quite equivalent on its own. Anchoring it
+  (`:regex("^(orders|invoices|shipments)$")`) closes that gap and is
+  confirmed live to behave exactly like `:choice()` would have
+  (verified with a real `re.search()` comparison: the anchored form
+  matches "orders"/"invoices"/"shipments" but not "sub_orders_2024"/
+  "invoices_old", the unanchored form matches all five). `:choice()`'s
+  own compendium mentions (§3.8's `root_major` function list, §3.9c's
+  "fully occupies a path segment" exemption category and its "pattern-
+  matching analogs of `:name(...)`" note) are corrected to drop it,
+  leaving `:regex()`/`:name()` to cover the same ground. The dead
+  `"choice"` entry in `ReferenceFinder3._apply_implied_star()`'s own
+  exemption tuple (never reachable — nothing was ever registered under
+  that name) is also removed. If a real demand signal shows up later
+  (anchored `:regex()` is more cumbersome to write/read than a bare
+  pipe list for this one common case), reconsider as a UX-sugar
+  function, not a capability gap.
+
+- **`:at()` — deliberately NOT building, decided 2026-10-16, removed
+  from the list above.** David: "certainly redundant" — its only
+  appearance (`creating references v3.txt`'s `*#my_worksheet.:at(-1)`)
+  is exactly what the already-built `:index()` already does. No
+  compendium mentions to correct (it was never written up there).
+
+- **`:names()` — deliberately NOT building, decided 2026-10-16, removed
+  from the list above.** David's own framing: wanted it as a `**`-style
+  analog ("match any number of intermediate segments, then anchor on a
+  literal/`*` suffix"), but only if the already-built `:flatten()`
+  prefix/suffix mechanism could not already do the same thing. Confirmed
+  LIVE it already can, including a MULTI-segment suffix (not just a
+  single trailing segment) — `_candidates_for_name_by_prefix_and_suffix()`
+  compiles both the prefix and suffix through the same general
+  `_compile_path_pattern()` used everywhere else, with no length limit on
+  either side. Live repro: a fixture with `vault/b/c/one.csv` (zero-
+  segment gap) and `vault/b/mid/c/two.csv` (one-segment gap), queried as
+  `$vault.files.b/:flatten()/c/*.:last()` (the pointer has to sit in
+  name_three via a dot, not bare `*:last()` in name_one — FILES still
+  does not support functions attached directly to name_one, see the
+  implied-`*` entry above) — correctly matched both and `:last()`
+  correctly picked the array-order-last one; a mismatched prefix, a
+  mismatched suffix shape, and a too-long non-matching suffix were all
+  correctly excluded. `:names()` was never written up in the compendium
+  (only two raw lines in `creating references v3.txt`, left untouched),
+  so no spec correction was needed there, just the "Functions" list
+  above.
 
 ## Direction/ordinal functions (`:before()`/`:after()` and their word aliases) — BUILT 2026-10-16
 
