@@ -689,23 +689,38 @@ and a stale-entry correction, are both done — see
 ## Functions
 
 - Functions named in the spec/example-queries docs with no `Function3`
-  subclass yet: `:quarter()`, `:choice()`, `:names()`, `:message()`,
-  `:count()`, `:has_errors()`, `:at()`. (Corrected 2026-08-26: `:type()`
-  used to be listed here too, but it was built as part of the Table 1
-  field-accessor batch — confirmed live, `Type3` is registered, `NAME =
-  "type"` — this list had gone stale; removed. Corrected again
-  2026-08-27: `:yesterday()` was also stale — confirmed live,
-  `Yesterday3` is registered, built alongside `:today()` in the "pure
-  value" date/time functions batch — removed. Corrected again
-  2026-09-21: `:before()`/`:after()`/`:above()` moved out — see the
-  dedicated "Direction/ordinal functions" entry below; the compendium's
-  §6.22-6.31 series now gives them a fully worked design, so "no design
-  note to build from" no longer applies to those three.) None of the
-  remaining names here have settled semantics beyond their bare mention
-  in the spec/example-queries docs — unlike every other item in this
-  file, there is no worked example or design note to build from, so
-  picking one to build means guessing its intended behavior, not
+  subclass yet: `:choice()`, `:names()`, `:message()`, `:count()`,
+  `:has_errors()`, `:at()`. (Corrected 2026-08-26: `:type()` used to be
+  listed here too, but it was built as part of the Table 1 field-accessor
+  batch — confirmed live, `Type3` is registered, `NAME = "type"` — this
+  list had gone stale; removed. Corrected again 2026-08-27: `:yesterday()`
+  was also stale — confirmed live, `Yesterday3` is registered, built
+  alongside `:today()` in the "pure value" date/time functions batch —
+  removed. Corrected again 2026-09-21: `:before()`/`:after()`/`:above()`
+  moved out — see the "Direction/ordinal functions" entry, now BUILT.)
+  None of the remaining names here have settled semantics beyond their
+  bare mention in the spec/example-queries docs — unlike every other item
+  in this file, there is no worked example or design note to build from,
+  so picking one to build means guessing its intended behavior, not
   implementing an already-decided design.
+
+- **`:quarter()` — deliberately NOT building, decided 2026-10-16, removed
+  from the list above.** David: it is "both easy and suspect" — trivial to
+  implement, but we do not actually know that "Q2"-style quarter labeling
+  is how everyone would want to indicate a quarter, there is no other
+  slam-dunk representation to fall back on either, and there is no
+  current demand signal driving it. This is a considered rejection, not
+  an oversight — do not resurrect it just because it would be easy.
+  `:quarter()` appeared in two places purely as an ILLUSTRATION of "a
+  time-component function used as a context setter / dynamic path
+  segment," a point `:yesterday()` (already built) makes equally well on
+  its own: `creating references v3.txt`'s own raw example list (left
+  untouched — historical scratch notes, not revised) and the compendium's
+  §6.43 context-setter role-taxonomy example list (`:quarter()` removed
+  from that list 2026-10-16, `:yesterday()` carries the illustration
+  alone now). If a real demand signal and a settled representation
+  (not necessarily "Q2") ever show up, re-add it as its own entry with a
+  worked example, same as every other function here.
 
 ## Direction/ordinal functions (`:before()`/`:after()` and their word aliases) — BUILT 2026-10-16
 

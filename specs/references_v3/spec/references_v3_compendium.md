@@ -1414,10 +1414,14 @@ literal brace, matching the convention already used by
 Every function self-reports one of three roles:
 
 - **Context setter** — narrows the current scope without resolving to a
-  specific item (e.g. `:yesterday()`, `:quarter()`, `:before()`/`:after()`,
-  `:all()`, `:name(...)`). *(`:name(...)` can also be interpreted as a
-  value, not a context).* Refer to 6.27 for a more nuanced discussion of
-  time component functions.
+  specific item (e.g. `:yesterday()`, `:before()`/`:after()`, `:all()`,
+  `:name(...)`). *(`:name(...)` can also be interpreted as a value, not
+  a context).* Refer to 6.27 for a more nuanced discussion of time
+  component functions. (`:quarter()` removed from this example list
+  2026-10-16 -- deliberately not building it, see the deferred-work
+  bucket list's own "Functions" entry; `:yesterday()` already fully
+  illustrates the point this list is making, a time-component function
+  used as a context setter.)
 - **Pointer** — resolves the current scope down to exactly 0 or 1 item (e.g.
   `:last()`, `:first()`, `:index(5)`, `:uuid("...")`).
 - **Value** — produces a value that can be used as the input to a function
