@@ -987,6 +987,33 @@ class TestImpliedStar:
         results = _finder("$acme.results.beta/:all():last()", str(tmp_path)).query()
         assert results.uuids == ["beta-1"]
 
+    def test_manifest_is_exempt_prefixed_selects_directly_not_via_a_pool(
+        self, tmp_path
+    ):
+        # ':manifest()' -- added 2026-10-15, David caught this live: per
+        # 3.9c's own "doesn't operate in a path segment at all" category,
+        # ':manifest()' riding alongside a pointer in a bare/prefixed
+        # chain must never be re-routed through the pooled/grouped
+        # path-matching implied-'*' exists for -- it always means
+        # "whichever run the REST of the chain already selected, give
+        # its manifest," not a second thing to match against a
+        # wildcarded path. Was previously exempt only by accident (never
+        # actually tested against a case where it would matter): two
+        # DIFFERENT prefixes ("beta", "gamma") each with their own run,
+        # "gamma" chronologically LATEST overall -- if ':manifest()'
+        # ever got pooled across both prefixes by a wildcard the way a
+        # genuine implied-'*' candidate would, ':last()' would wrongly
+        # pick gamma's run instead of staying scoped to "beta" alone.
+        base = tmp_path / "acme"
+        beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
+        gamma1 = _make_run(base / "gamma", "2026-01-02_00-00-00", "gamma-1", {})
+        _write_archive_manifest(tmp_path, "acme", [beta1, gamma1])
+        results = _finder(
+            "$acme.results.beta/:last():manifest()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].uuid == "beta-1"
+        assert results.results[0].data["run_uuid"] == "beta-1"
+
 
 class TestGroups:
     # ':groups()' -- added 2026-08-12, the any-depth GROUP peer of

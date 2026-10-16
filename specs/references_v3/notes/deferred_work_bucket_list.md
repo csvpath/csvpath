@@ -463,6 +463,45 @@ narrower thing), or just a symmetry nicety worth having anyway? Worth
 resolving before building, not just building because Rule 1b's shape
 suggests it.
 
+**A real design trap caught 2026-10-15, before building, not after**: David
+spotted that this fix would collide with compendium 3.9c's own implied-`*`
+rule if built carelessly. `:manifest()` is explicitly listed in 3.9c's
+"doesn't operate in a path segment at all" exemption category — it must
+NEVER trigger implied-`*`. If it did, `$acme.files.:manifest():last()`
+would get silently read as `$acme.files.*:manifest():last()` — a POOLED
+match across every `file_home` under `acme`, time-sorted, reduced by
+`:last()` — a genuinely different operation from "ordinal-index acme's own
+manifest.json array directly" (Rule 1b's actual intent). David's own
+worked-out proof: that pooled reading would make `$acme.files.:manifest()
+:last()` compositionally a member of the set `{$acme.files.<X>:manifest()
+:last() : X ranges over every distinct file_home}` — reintroducing exactly
+the "which file" ambiguity Rule 1b exists to bypass.
+
+Live-verified the live blast radius before concluding anything: FILES has
+NO implied-`*` wiring at all today (`_apply_implied_star()` is RESULTS-
+only, see the done-list entry), so this exact collision cannot happen in
+current code. But checking RESULTS' own, already-shipped implementation
+surfaced a real, if currently harmless, gap: `$acme.results.:manifest()
+:last()` DOES get normalized through `_apply_implied_star()` today
+(confirmed live), and `"manifest"` was never actually in that method's own
+exemption list — it only avoided breaking anything by accident, because
+RESULTS' `:manifest()` always means "whichever run the rest of the chain
+already selected, give its manifest" (one run, one manifest.json file, no
+shared-array-across-candidates concept the way FILES' Table 1 has).
+**Fixed 2026-10-15**, see `deferred_work_done_list.md` — `"manifest"`
+added explicitly to `_apply_implied_star()`'s exemption list, with a test
+proving a prefixed `:manifest()`+pointer selects directly rather than
+pooling across prefixes.
+
+**Still not built**: the actual Rule 1b extension itself (the symmetry
+David originally asked about). Whichever shape it takes, it must be its
+own narrow, early-intercepting special case — exactly like Rule 1a/1b's
+own dedicated `Star3` check already is, which runs before any general
+path-matching/implied-`*` logic — never something implied-`*` could ever
+re-route through. Still awaiting David's call on whether it is wanted at
+all (the original open question), now with the implementation trap already
+identified and fenced off.
+
 ## `#name_two` combined with `'*'` traversal — still not supported
 
 Left over from building `#name_two` support for `FilesReferenceFinder3`

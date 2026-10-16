@@ -363,6 +363,35 @@ class ReferenceFinder3(ABC):
             # own "doesn't operate in a path segment at all" category,
             # alongside :manifest()/:definition().
             "home",
+            # ':manifest()' -- added 2026-10-15, closing a real gap: it
+            # was previously ONLY exempt by accident, never by name.
+            # David caught this live (not a code bug yet, since FILES
+            # has no implied-'*' wiring at all -- but a real design
+            # trap for whichever future fix touches it): per 3.9c's own
+            # "doesn't operate in a path segment at all" category,
+            # :manifest() must NEVER trigger implied-'*', because unlike
+            # a pointer/field accessor (which this normalization exists
+            # to route through the ordinary path-matching machinery),
+            # :manifest() riding alongside a pointer in a bare chain
+            # means "whichever entity the REST of the chain already
+            # selects, give its manifest" -- not a second, independent
+            # thing to match against a wildcarded path. Confirmed live
+            # before this fix: RESULTS' own bare ":manifest():last()"
+            # already got silently normalized into "*:manifest():last()"
+            # by this method, and happened to still give the right
+            # answer ONLY because RESULTS' own :manifest() always means
+            # "this one already-selected run's own file" (one run, one
+            # manifest.json -- no shared-array-across-candidates
+            # concept the way FILES' Table 1 has). That coincidence is
+            # not something to keep relying on -- see the dedicated
+            # "$name.files.:manifest():last()" bucket-list entry for
+            # why this matters far more once FILES gets its own
+            # implied-'*' wiring: there, :manifest() genuinely IS an
+            # ordinal index into one shared array across every matched
+            # file_home, and letting implied-'*' re-route it through
+            # pooled/grouped path-matching would silently change its
+            # meaning.
+            "manifest",
         ):
             return
         function_cls = ReferenceFunctionFactory.get_registered_class(path[-1].name)
