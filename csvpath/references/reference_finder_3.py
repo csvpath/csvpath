@@ -192,39 +192,104 @@ class ReferenceFinder3(ABC):
             return arg
         return arg.arg
 
+    @staticmethod
+    def _range_calls_from_built(built: list) -> tuple:
+        """(lower_call, upper_call) -- the built range-bound function(s)
+        in `built`, if present. Added 2026-10-16 (compendium 6.28/6.28b/
+        6.28c) generalizing the old plain "from_call = next(f for f in
+        built if f.name == 'from')" lookup every finder used to write by
+        hand: ':after()' is also a LOWER bound (exclusive, where
+        ':from()' is inclusive) and ':before()' is also an UPPER bound
+        (exclusive, where ':to()' is inclusive) -- a built instance's
+        own `.name` always reads back as one of these four canonical
+        values regardless of which alias (':below()'/':lt()'/etc, see
+        Before3/After3's own docstrings) was actually typed, so no alias
+        handling is needed here at all.
+
+        Raises if two LOWER bounds or two UPPER bounds are both present
+        (6.28c: "using multiple directional functions indicating the
+        same direction is not meaningful so not legal" -- e.g.
+        ':from()'+':after()', or ':to()'+':before()'). A LOWER and an
+        UPPER together are always legal even when they are dissimilar
+        functions (':after()'+':to()', ':from()'+':before()') -- 6.28's
+        own explicit example, ':from(:index(5)):to(:yesterday())', pairs
+        two different-mode functions without issue; mixing INDEX-mode
+        and DATE-mode bounds in one pair is a separate, pre-existing
+        check each finder already makes after calling this."""
+        lowers = [f for f in built if f.name in ("from", "after")]
+        uppers = [f for f in built if f.name in ("to", "before")]
+        if len(lowers) > 1:
+            raise ReferenceException3(
+                "Combining two lower-bound range functions (':from()'/"
+                "':after()', or their aliases) is not legal -- both "
+                "indicate the same direction."
+            )
+        if len(uppers) > 1:
+            raise ReferenceException3(
+                "Combining two upper-bound range functions (':to()'/"
+                "':before()', or their aliases) is not legal -- both "
+                "indicate the same direction."
+            )
+        return (lowers[0] if lowers else None, uppers[0] if uppers else None)
+
     @classmethod
-    def _apply_range(cls, items: list, from_call, to_call) -> list:
+    def _apply_range(cls, items: list, lower_call, upper_call) -> list:
         """slices `items` (already in the scope's own natural order)
-        using ':from()'/':to()' -- added 2026-08-13, RESULTS' index-mode
-        range selector, David's own framing: "our version of BETWEEN in
-        SQL or range() in Python." ':to()' is INCLUSIVE of its own
-        position (matches SQL BETWEEN and :index(n) itself pointing AT a
-        position -- ':from(2):to(5)' is positions 2 through 5, both
-        ends included). Either bound may be absent (an open range on
-        that side); negative bounds count from the end, same convention
-        :index(n) already has -- Python slicing already does the right
-        thing there natively, no special-casing needed except when
-        :to()'s own bound is exactly -1 (the last item): "+1" for
-        inclusivity would otherwise wrap -1 to 0, which means "nothing"
-        in a slice, not "to the end" -- that one case needs an explicit
-        fix, everything else falls out of ordinary slice semantics."""
-        start = cls._range_bound(from_call) if from_call is not None else None
-        end = cls._range_bound(to_call) if to_call is not None else None
-        return cls._slice_by_position(items, start, end)
+        using ':from()'/':to()' (inclusive) or their exclusive siblings
+        ':after()'/':before()' (compendium 6.28, added 2026-10-16,
+        generalizing this method's own original :from()/:to()-only
+        shape) -- added 2026-08-13, RESULTS' index-mode range selector,
+        David's own framing: "our version of BETWEEN in SQL or range()
+        in Python." ':to()' is INCLUSIVE of its own position (matches
+        SQL BETWEEN and :index(n) itself pointing AT a position --
+        ':from(2):to(5)' is positions 2 through 5, both ends included);
+        ':before()' EXCLUDES its own position (':before(5)' is
+        positions 0 through 4). Either bound may be absent (an open
+        range on that side); negative bounds count from the end, same
+        convention :index(n) already has.
+
+        `lower_call`/`upper_call` are whichever of the four functions is
+        actually present (see _range_calls_from_built() above) -- an
+        exclusive LOWER bound (':after()') simply moves one position
+        later (`start + 1`, correct for negative bounds too: "after
+        position -3" is one position closer to the end, i.e. -2);
+        Python slicing already handles everything else (including a
+        negative, exclusive UPPER bound -- ':before(-1)' is exactly
+        `items[:-1]`, no special-casing needed) except an INCLUSIVE
+        UPPER bound of exactly -1 (the last item): "+1" for inclusivity
+        would otherwise wrap -1 to 0, which means "nothing" in a slice,
+        not "to the end" -- that one case still needs the explicit fix
+        _slice_by_position() already had."""
+        start = cls._range_bound(lower_call) if lower_call is not None else None
+        if lower_call is not None and lower_call.name == "after" and start is not None:
+            start = start + 1
+        end = cls._range_bound(upper_call) if upper_call is not None else None
+        end_inclusive = upper_call is None or upper_call.name == "to"
+        return cls._slice_by_position(items, start, end, end_inclusive=end_inclusive)
 
     @staticmethod
-    def _slice_by_position(items: list, start: "int | None", end: "int | None") -> list:
+    def _slice_by_position(
+        items: list,
+        start: "int | None",
+        end: "int | None",
+        end_inclusive: bool = True,
+    ) -> list:
         """the positional half of _apply_range()'s own slicing rule
         (':to()' inclusive of its own position, -1 meaning 'to the end'
-        rather than wrapping to nothing), extracted 2026-09-22 so
+        rather than wrapping to nothing; ':before()' -- `end_inclusive=
+        False`, added 2026-10-16 -- plain exclusive Python slicing, no
+        -1 special case needed), extracted 2026-09-22 so
         CsvpathsReferenceFinder3's own name_three identity-mode range
         (see its own query() docstring) can share it -- there, `start`/
         `end` are int positions already resolved from string identity
         bounds via _find_by_identity(), not raw ':from()'/':to()'
         function calls, so _range_bound()'s own str/int unwrapping does
-        not apply."""
+        not apply, and `end_inclusive` is always left at its default
+        (that range has no ':before()' concept of its own)."""
         if end is None:
             return items[start:]
+        if not end_inclusive:
+            return items[start:end]
         if end == -1:
             return items[start:]
         return items[start : end + 1]
@@ -243,37 +308,58 @@ class ReferenceFinder3(ABC):
             datetime.strptime(value, "%Y-%m-%d")
         except ValueError:
             raise ReferenceException3(
-                "date-mode ':from()'/':to()' requires a real calendar "
+                "date-mode ':from()'/':to()'/':after()'/':before()' "
+                "requires a real calendar "
                 f"date in 'YYYY-MM-DD' form, got {value!r}."
             ) from None
 
-    @staticmethod
+    @classmethod
     def _apply_manifest_date_range(
-        entries: list, from_date: str | None, to_date: str | None, key: str = "time"
+        cls, entries: list, lower_call, upper_call, key: str = "time"
     ) -> list:
         """filters `entries` (manifest-entry dicts) to those whose own
         `entries[i][key]` (an ISO datetime string, e.g. FILES/CSVPATHS'
         own "time" field -- registration/load time, see functions/
-        fields/time_3.py's own SUMMARY) falls within [from_date, to_date],
-        both INCLUSIVE -- date-mode ':from()'/':to()' for FILES/CSVPATHS,
-        added 2026-08-13. Unlike index-mode (_apply_range, a POSITIONAL
-        slice), this is a FILTER, not a slice -- comparing positions
-        would be meaningless for a date bound. Compares only the first
-        10 characters (the "YYYY-MM-DD" date portion) of the stored
-        timestamp -- ISO date strings sort/compare lexicographically in
-        true chronological order, so plain string comparison is correct,
-        not just convenient (same convention ResultsReferenceFinder3's
-        own _run_dir_date/_apply_date_range already use for run
-        directories -- here the date comes straight from a stored field
-        instead of being parsed from a path, since FILES/CSVPATHS
-        manifest entries already carry it directly)."""
+        fields/time_3.py's own SUMMARY) falls within the date range
+        `lower_call`/`upper_call` describe -- date-mode ':from()'/
+        ':to()' (both INCLUSIVE) for FILES/CSVPATHS, added 2026-08-13;
+        generalized 2026-10-16 (compendium 6.28) to also accept their
+        exclusive siblings ':after()'/':before()', mirroring
+        _apply_range()'s own generalization -- now takes the raw built
+        calls (not pre-resolved date strings) so inclusivity can be
+        read off each one's own `.name`. Unlike index-mode (_apply_range,
+        a POSITIONAL slice), this is a FILTER, not a slice -- comparing
+        positions would be meaningless for a date bound. Compares only
+        the first 10 characters (the "YYYY-MM-DD" date portion) of the
+        stored timestamp -- ISO date strings sort/compare
+        lexicographically in true chronological order, so plain string
+        comparison is correct, not just convenient (same convention
+        ResultsReferenceFinder3's own _run_dir_date/_apply_date_range
+        already use for run directories -- here the date comes straight
+        from a stored field instead of being parsed from a path, since
+        FILES/CSVPATHS manifest entries already carry it directly). At
+        day-level granularity, an exclusive bound excludes the WHOLE day
+        it names, not just one instant within it -- coarser than a
+        strict less-than/greater-than on a full timestamp would be, but
+        consistent with ':from()'/':to()' already only ever comparing
+        at day resolution."""
+        from_date = cls._range_bound(lower_call) if lower_call is not None else None
+        from_inclusive = lower_call is None or lower_call.name == "from"
+        to_date = cls._range_bound(upper_call) if upper_call is not None else None
+        to_inclusive = upper_call is None or upper_call.name == "to"
         result = []
         for entry in entries:
             d = str(entry.get(key, ""))[:10]
-            if from_date is not None and d < from_date:
-                continue
-            if to_date is not None and d > to_date:
-                continue
+            if from_date is not None:
+                if from_inclusive and d < from_date:
+                    continue
+                if not from_inclusive and d <= from_date:
+                    continue
+            if to_date is not None:
+                if to_inclusive and d > to_date:
+                    continue
+                if not to_inclusive and d >= to_date:
+                    continue
             result.append(entry)
         return result
 

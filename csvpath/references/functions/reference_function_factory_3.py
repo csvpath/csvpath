@@ -16,7 +16,9 @@ class ReferenceFunctionFactory:
 
     @classmethod
     def _load(cls) -> None:
+        from .selectors.after_3 import After3
         from .selectors.all_3 import All3
+        from .selectors.before_3 import Before3
         from .selectors.date_3 import Date3
         from .selectors.first_3 import First3
         from .selectors.flatten_3 import Flatten3
@@ -162,6 +164,21 @@ class ReferenceFunctionFactory:
             Groups3.NAME: Groups3,
             From3.NAME: From3,
             To3.NAME: To3,
+            Before3.NAME: Before3,
+            After3.NAME: After3,
+            # aliases, compendium 6.28b's own table -- "all forms with
+            # the same meaning are equivalent," registered 2026-10-16 as
+            # additional dict keys pointing at the SAME class, not
+            # separate classes (see Before3's own docstring for why this
+            # needs no new registry mechanism: a built instance's `.name`
+            # always reads back as the canonical NAME regardless of
+            # which alias key reached it here).
+            "below": Before3,
+            "lt": Before3,
+            "above": After3,
+            "gt": After3,
+            "lte": To3,
+            "gte": From3,
             Having3.NAME: Having3,
             Date3.NAME: Date3,
             Year3.NAME: Year3,

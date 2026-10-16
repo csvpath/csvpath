@@ -705,7 +705,7 @@ and a stale-entry correction, are both done — see
   picking one to build means guessing its intended behavior, not
   implementing an already-decided design.
 
-## Direction/ordinal functions (`:before()`/`:after()` and their word aliases) — fully specced (compendium §6.22-6.31), zero implementation
+## Direction/ordinal functions (`:before()`/`:after()` and their word aliases) — BUILT 2026-10-16
 
 Surfaced 2026-09-21, sweeping the selector functions in
 `csvpath/references/functions/selectors/` against the compendium. `:from()`/
@@ -743,17 +743,62 @@ complete enough to build from, unlike the placeholder entries in the
   demand for that functionality") but must stay grammatically legal —
   design says don't preclude it later, doesn't say build it now.
 
-**Not attempted here** — this is a new function family (up to 9 names) plus
-a new validation rule (opposite-direction pairing) layered on top of
-`From3`/`To3`'s existing `POSITIONS`/`ARG_TYPES` shape, not a rename or a
-small consolidation like `Host3`. Building it needs a decision on scope
-first: real distinct `Before3`/`After3` classes vs. one class family with
-alias `NAME`s, whether all 9 aliases ship at once or just the two primary
-names initially, and how alias resolution should interact with
-`ReferenceFunctionFactory._FUNCTIONS`' single-name-keyed registry (an alias
-is either a second dict key pointing at the same class, or its own subclass
-— both work, but pick one convention before the first one is built, so
-later ones don't drift).
+**Built 2026-10-16**, branch `feature/references-v3-direction-functions`.
+Two decisions settled with David first (see `deferred_work_done_list.md`
+for the full back-and-forth):
+
+1. **A real spec inconsistency caught before building, not after**: 6.28d's
+   own worked example ("find versions... from the beginning of 2026
+   through yesterday") used `:after(:date("2026-01-01"))`, but 6.28b's
+   alias table defines `:after()` as strictly EXCLUSIVE (greater-than) --
+   "from the beginning of 2026" is an INCLUSIVE claim, which is `:from()`'s
+   meaning, not `:after()`'s. Resolved: the alias table is authoritative,
+   the example was wrong -- fixed to `:from(:date("2026-01-01"))`
+   (`references_v3_compendium.md` 6.28d).
+2. **Alias rollout scope**: ship the full 9-name table now (`before`/
+   `below`/`lt`; `after`/`above`/`gt`; plus `lte`→`:to()`, `gte`→`:from()`
+   as new aliases on the EXISTING classes), not just the 2 primary names --
+   cheap once `Before3`/`After3` exist (each alias is a one-line registry
+   entry).
+3. **Alias mechanism**: a second `ReferenceFunctionFactory._FUNCTIONS`
+   dict key pointing at the SAME class, not a separate class or a new
+   registry mechanism -- `Function3.name` already returns `self.NAME` (a
+   class constant), so a built instance's `.name` always reads back as
+   the canonical form regardless of which alias key reached it, with zero
+   extra plumbing needed anywhere that already branches on `.name`.
+
+Implementation: `Before3`/`After3` (new, `csvpath/references/functions/
+selectors/before_3.py`/`after_3.py`), same `POSITIONS`/`DATATYPES`/
+`ARG_TYPES` shape as `From3`/`To3`. The real work was generalizing the
+shared range mechanism on `ReferenceFinder3` (`_range_calls_from_built()`
+-- new, finds the lower/upper bound call and enforces 6.28c's "same
+direction twice is illegal" rule; `_apply_range()`/`_slice_by_position()`
+-- now take an `end_inclusive` flag; `_apply_manifest_date_range()` -- now
+takes raw calls instead of pre-resolved date strings, reads inclusivity
+off each one's own `.name`) and rewiring all ~7 call sites across the
+three finders (FILES' name_three range; CSVPATHS' name_one version range
+and name_three identity-mode range, including the exclusive-bound
+adjustment applying AFTER identity-to-position resolution; RESULTS' run-
+level range, run-level date range via its own separate `_apply_date_range`,
+and statement-level range) to use the shared lookup instead of a hand-
+written `from_call = next(f for f in built if f.name == "from")`.
+
+A secondary fix needed along the way: `Function3Describer.describe()`
+gained an optional `name` override parameter so `describe_all()` can give
+each alias its own correctly-headed/anchored markdown block (aliases are
+registered as extra dict keys pointing at the same class, so without the
+override every alias would silently describe itself as its canonical
+name, breaking `describe_all()`'s own "index and blocks agree on function
+count" test invariant).
+
+Tests: new `test_before_3.py`/`test_after_3.py` (metadata, arg validation,
+alias resolution, canonical-name-on-build), plus new direction-function
+test classes in all three finder test files exercising index-mode,
+date-mode, exclusive-bound edge cases (negative indices, identity-mode
+resolution order), dissimilar-direction pairing, same-direction rejection,
+and alias equivalence. Full `tests/references/` suite: 1693 passed (up
+from 1631). Full local-backend suite: 4154 passed, 11 failed (the known
+SFTP/S3 credential baseline, unrelated).
 
 ## Bigger, standing items
 

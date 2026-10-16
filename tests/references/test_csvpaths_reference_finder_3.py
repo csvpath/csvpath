@@ -308,6 +308,56 @@ class TestVersionRange:
             ).query()
 
 
+class TestVersionDirectionFunctions:
+    # ':before()'/':after()' as a name_one VERSION range -- compendium
+    # 6.28/6.28b/6.28c, built 2026-10-16, the EXCLUSIVE siblings of
+    # ':to()'/':from()'. VERSION_RANGE_MANIFEST is v0..v4, positions
+    # 0-4, dates 2026-01-01..2026-01-05.
+    def test_after_excludes_its_own_position(self):
+        results = _finder("$dater.csvpaths.:after(1)", VERSION_RANGE_MANIFEST).query()
+        assert results.uuids == ["v2-uuid", "v3-uuid", "v4-uuid"]
+
+    def test_before_excludes_its_own_position(self):
+        results = _finder("$dater.csvpaths.:before(3)", VERSION_RANGE_MANIFEST).query()
+        assert results.uuids == ["v0-uuid", "v1-uuid", "v2-uuid"]
+
+    def test_after_and_before_together_is_an_exclusive_range(self):
+        results = _finder(
+            "$dater.csvpaths.:after(1):before(4)", VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v2-uuid", "v3-uuid"]
+
+    def test_date_mode_after_excludes_its_own_date(self):
+        results = _finder(
+            '$dater.csvpaths.:after("2026-01-02")', VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v2-uuid", "v3-uuid", "v4-uuid"]
+
+    def test_date_mode_before_excludes_its_own_date(self):
+        results = _finder(
+            '$dater.csvpaths.:before("2026-01-04")', VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v0-uuid", "v1-uuid", "v2-uuid"]
+
+    def test_combining_two_lower_bounds_is_illegal(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$dater.csvpaths.:from(1):after(2)", VERSION_RANGE_MANIFEST
+            ).query()
+
+    def test_combining_two_upper_bounds_is_illegal(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$dater.csvpaths.:to(3):before(1)", VERSION_RANGE_MANIFEST
+            ).query()
+
+    def test_below_and_above_aliases_work(self):
+        results = _finder(
+            "$dater.csvpaths.:above(1):below(4)", VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v2-uuid", "v3-uuid"]
+
+
 class TestIdentityLookupOnNameThree:
     def test_matches_named_identity(self):
         results = _finder("$acme.csvpaths.:first().company_names").query()
@@ -455,6 +505,46 @@ class TestNameThreeRange:
             '$ranger.csvpaths.:first().:from("two"):to(3)', RANGE_MANIFEST
         ).query()
         assert [r.identity for r in results.results] == ["two", "three", "four"]
+
+    def test_after_excludes_its_own_index_position(self):
+        # identities: ["one","two","three","four","five"], positions 0-4.
+        results = _finder(
+            "$ranger.csvpaths.:first().:after(1)", RANGE_MANIFEST
+        ).query()
+        assert [r.identity for r in results.results] == ["three", "four", "five"]
+
+    def test_before_excludes_its_own_index_position(self):
+        results = _finder(
+            "$ranger.csvpaths.:first().:before(3)", RANGE_MANIFEST
+        ).query()
+        assert [r.identity for r in results.results] == ["one", "two", "three"]
+
+    def test_after_excludes_its_own_named_identity(self):
+        # the exclusive adjustment applies AFTER identity-to-position
+        # resolution -- "after 'two'" (position 1) means position 2
+        # onward, i.e. "three" is INCLUDED, not excluded.
+        results = _finder(
+            '$ranger.csvpaths.:first().:after("two")', RANGE_MANIFEST
+        ).query()
+        assert [r.identity for r in results.results] == ["three", "four", "five"]
+
+    def test_before_excludes_its_own_named_identity(self):
+        results = _finder(
+            '$ranger.csvpaths.:first().:before("four")', RANGE_MANIFEST
+        ).query()
+        assert [r.identity for r in results.results] == ["one", "two", "three"]
+
+    def test_after_and_before_together_is_an_exclusive_range(self):
+        results = _finder(
+            "$ranger.csvpaths.:first().:after(0):before(4)", RANGE_MANIFEST
+        ).query()
+        assert [r.identity for r in results.results] == ["two", "three", "four"]
+
+    def test_combining_two_upper_bounds_is_illegal(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$ranger.csvpaths.:first().:to(3):before(1)", RANGE_MANIFEST
+            ).query()
 
 
 class TestResolve:

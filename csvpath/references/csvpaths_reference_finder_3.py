@@ -222,8 +222,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # local tuple.
                 for f in built:
                     self._check_position(f, Reference3.NAME_THREE, Reference3.CSVPATHS)
-                from_call = next((f for f in built if f.name == "from"), None)
-                to_call = next((f for f in built if f.name == "to"), None)
+                # from_call/to_call here mean LOWER/UPPER bound, not
+                # literally ":from()'/':to()' -- generalized 2026-10-16
+                # (compendium 6.28) via the shared _range_calls_from_
+                # built(), which also recognizes ':after()'/':before()'
+                # and enforces 6.28c's "same direction twice is illegal"
+                # rule.
+                from_call, to_call = self._range_calls_from_built(built)
                 for f in (from_call, to_call):
                     # a :date(...)-wrapped bound is rejected -- statements
                     # have no arrival date of their own. A bare string
@@ -301,7 +306,23 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     to_bound = self._find_by_identity(to_bound, identities)
                     if to_bound is None:
                         continue
-                windowed = self._slice_by_position(identities, from_bound, to_bound)
+                # exclusive-bound adjustment (':after()'/':before()',
+                # compendium 6.28, added 2026-10-16) applies AFTER
+                # identity-mode resolution above -- "after this
+                # identity" means one position later than wherever that
+                # identity resolved to, same adjustment regardless of
+                # whether the bound started as a literal int or a
+                # resolved identity position.
+                if (
+                    from_call is not None
+                    and from_call.name == "after"
+                    and from_bound is not None
+                ):
+                    from_bound = from_bound + 1
+                end_inclusive = to_call is None or to_call.name == "to"
+                windowed = self._slice_by_position(
+                    identities, from_bound, to_bound, end_inclusive=end_inclusive
+                )
                 for identity in windowed:
                     results.append(
                         ReferenceResult3(
@@ -819,8 +840,12 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 for entry in manifest
                 if having_call.arg in (entry.get("named_paths_identities") or [])
             ]
-        from_call = next((f for f in built if f.name == "from"), None)
-        to_call = next((f for f in built if f.name == "to"), None)
+        # from_call/to_call here mean LOWER/UPPER bound -- generalized
+        # 2026-10-16 (compendium 6.28) via the shared
+        # _range_calls_from_built(), which also recognizes ':after()'/
+        # ':before()' and enforces 6.28c's "same direction twice is
+        # illegal" rule.
+        from_call, to_call = self._range_calls_from_built(built)
         if from_call is not None or to_call is not None:
             from_bound = self._range_bound(from_call) if from_call is not None else None
             to_bound = self._range_bound(to_call) if to_call is not None else None
@@ -843,8 +868,8 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # own version-level ranges).
                 raise ReferenceException3(
                     "CsvpathsReferenceFinder3 does not support mixing "
-                    "index-mode and date-mode ':from()'/':to()' bounds in "
-                    "the same range."
+                    "index-mode and date-mode range bounds in the same "
+                    "range."
                 )
             if from_is_date or to_is_date:
                 if from_is_date:
@@ -852,7 +877,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 if to_is_date:
                     self._validate_date_format(to_bound)
                 manifest = self._apply_manifest_date_range(
-                    manifest, from_bound, to_bound
+                    manifest, from_call, to_call
                 )
             else:
                 manifest = self._apply_range(manifest, from_call, to_call)

@@ -579,15 +579,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             ):
                 raise ReferenceException3(
                     "ResultsReferenceFinder3 does not support mixing index-"
-                    "mode and date-mode ':from()'/':to()' bounds in the "
-                    "same range."
+                    "mode and date-mode range bounds in the same range."
                 )
             if from_is_date or to_is_date:
                 if from_is_date:
                     self._validate_date_format(from_bound)
                 if to_is_date:
                     self._validate_date_format(to_bound)
-                candidates = self._apply_date_range(candidates, from_bound, to_bound)
+                candidates = self._apply_date_range(candidates, from_call, to_call)
             else:
                 candidates = self._apply_range(candidates, from_call, to_call)
 
@@ -1643,42 +1642,58 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         return pointers[0] if pointers else None
 
     def _range_calls_from_calls(self, calls: list) -> tuple:
-        """(from_call, to_call) -- the built ':from()'/':to()' Function3
-        instances among the combined chain, or None for whichever is
-        absent. Neither is a POINTER (both ROLE == CONTEXT_SETTER), so
-        they never compete with a real pointer for build_chain()'s "at
-        most one pointer" rule -- a pointer riding alongside either one
-        reduces the SLICE ':from()'/':to()' already narrowed to, same as
-        it already does for ':all()'/':groups()'. Instance method (not
-        a staticmethod, since 2026-08-27), same reason as
+        """(lower_call, upper_call) -- the built range-bound Function3
+        instances among the combined chain (':from()'/':after()' for
+        lower, ':to()'/':before()' for upper, compendium 6.28, see
+        ReferenceFinder3._range_calls_from_built()'s own docstring for
+        the full generalization reasoning, added 2026-10-16 -- was
+        ':from()'/':to()' only before that), or None for whichever is
+        absent. None of the four is a POINTER (all ROLE ==
+        CONTEXT_SETTER), so they never compete with a real pointer for
+        build_chain()'s "at most one pointer" rule -- a pointer riding
+        alongside either one reduces the SLICE already narrowed to,
+        same as it already does for ':all()'/':groups()'. Instance
+        method (not a staticmethod, since 2026-08-27), same reason as
         _pointer_from_calls() above."""
         if not calls:
             return None, None
         built = self._build_chain(calls)
-        from_call = next((f for f in built if f.name == "from"), None)
-        to_call = next((f for f in built if f.name == "to"), None)
-        return from_call, to_call
+        return self._range_calls_from_built(built)
 
     @classmethod
-    def _apply_date_range(
-        cls, run_homes: list, from_date: str | None, to_date: str | None
-    ) -> list:
+    def _apply_date_range(cls, run_homes: list, lower_call, upper_call) -> list:
         """filters `run_homes` to those whose own arrival date (parsed
         from each directory's own fixed-width timestamp prefix, see
-        _run_dir_date) falls within [from_date, to_date], both
-        INCLUSIVE -- date-mode ':from()'/':to()', added 2026-08-13.
-        Unlike index-mode (_apply_range, a POSITIONAL slice), this is a
-        FILTER, not a slice -- comparing run positions would be
-        meaningless for a date bound. run_homes is not assumed to
-        already be date-sorted (though in practice it always is, via
-        _run_dir_sort_key, since this runs after that sort in query())."""
+        _run_dir_date) falls within the date range `lower_call`/
+        `upper_call` describe -- date-mode ':from()'/':to()' (both
+        INCLUSIVE), added 2026-08-13; generalized 2026-10-16 (compendium
+        6.28) to also accept their exclusive siblings ':after()'/
+        ':before()', mirroring ReferenceFinder3._apply_manifest_date_
+        range()'s own generalization -- now takes the raw built calls
+        (not pre-resolved date strings) so inclusivity can be read off
+        each one's own `.name`. Unlike index-mode (_apply_range, a
+        POSITIONAL slice), this is a FILTER, not a slice -- comparing
+        run positions would be meaningless for a date bound. run_homes
+        is not assumed to already be date-sorted (though in practice it
+        always is, via _run_dir_sort_key, since this runs after that
+        sort in query())."""
+        from_date = cls._range_bound(lower_call) if lower_call is not None else None
+        from_inclusive = lower_call is None or lower_call.name == "from"
+        to_date = cls._range_bound(upper_call) if upper_call is not None else None
+        to_inclusive = upper_call is None or upper_call.name == "to"
         result = []
         for rh in run_homes:
             d = cls._run_dir_date(rh)
-            if from_date is not None and d < from_date:
-                continue
-            if to_date is not None and d > to_date:
-                continue
+            if from_date is not None:
+                if from_inclusive and d < from_date:
+                    continue
+                if not from_inclusive and d <= from_date:
+                    continue
+            if to_date is not None:
+                if to_inclusive and d > to_date:
+                    continue
+                if not to_inclusive and d >= to_date:
+                    continue
             result.append(rh)
         return result
 
@@ -1754,13 +1769,21 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if name_three.functions:
             built = self._build_chain(name_three.functions)
             field_call = ResultsReferenceFinder3._find_field_function_call(built)
+            # from_call/to_call here mean LOWER/UPPER bound, not
+            # literally ":from()'/':to()' -- generalized 2026-10-16
+            # (compendium 6.28) to also recognize their exclusive
+            # siblings ':after()'/':before()' via the shared
+            # _range_calls_from_built(), which also enforces 6.28c's
+            # "same direction twice is illegal" rule. Identified by `is`
+            # (not `.name`) in the loop below so either alias is
+            # transparently skipped past the generic "unrecognized
+            # name_three function" rejection, same as before.
+            from_call, to_call = self._range_calls_from_built(built)
             for f in built:
                 if f.name == "all":
                     match_all = True
-                elif f.name == "from":
-                    from_call = f
-                elif f.name == "to":
-                    to_call = f
+                elif f is from_call or f is to_call:
+                    continue
                 elif f.name in ResultsReferenceFinder3._ACCESSOR_NAMES:
                     accessor = f
                 elif f is field_call:
