@@ -433,7 +433,7 @@ Still to design/build:
   behavior, not a replacement for it, and still needs building from
   scratch; nothing dispatches this today.
 
-## `$name.files.:manifest():last()` (ordinal pointer into a single named-file's own manifest) — not built
+## `$name.files.:manifest():last()` (ordinal pointer into a single named-file's own manifest) — BUILT 2026-10-16
 
 David, 2026-08-21: raised while reviewing the compendium's `path`-per-
 producer table. `$*.files.:manifest():last()` (Rule 1b) works today —
@@ -456,12 +456,16 @@ true 2026-08-26 (`_pointer_before_manifest` is still only called from the
 correction (which examples were wrong, not whether this code gap exists)
 was fixed separately, see `deferred_work_done_list.md`.
 
-Open question David flagged, not yet settled: is this actually a good/
-wanted alternative to a full `:name(...)` + name_three reference (which
-already gets you "the matched version's own manifest entry," a different,
-narrower thing), or just a symmetry nicety worth having anyway? Worth
-resolving before building, not just building because Rule 1b's shape
-suggests it.
+Open question David flagged, settled 2026-10-15/16 after two rounds of
+careful pushback (see `deferred_work_done_list.md` for the full back-and-
+forth): David's own corrected reasoning won out over my initial "leave it
+unsupported, `*` + `:flatten()` already covers it" recommendation — (a)
+`*` is a one-segment wildcard, so the real workaround would be the much
+clumsier `$a.files.:flatten():last().:manifest()`, not a one-segment `*`;
+(b) `:manifest()`/`:definition()` are already-established non-path special
+cases for FILES, and CSVPATHS/RESULTS already support this exact bare
+`:manifest()`+pointer shape natively — so building it closes a genuine
+consistency gap, not a new design risk. David: "Yes, please do."
 
 **A real design trap caught 2026-10-15, before building, not after**: David
 spotted that this fix would collide with compendium 3.9c's own implied-`*`
@@ -493,14 +497,21 @@ added explicitly to `_apply_implied_star()`'s exemption list, with a test
 proving a prefixed `:manifest()`+pointer selects directly rather than
 pooling across prefixes.
 
-**Still not built**: the actual Rule 1b extension itself (the symmetry
-David originally asked about). Whichever shape it takes, it must be its
-own narrow, early-intercepting special case — exactly like Rule 1a/1b's
-own dedicated `Star3` check already is, which runs before any general
-path-matching/implied-`*` logic — never something implied-`*` could ever
-re-route through. Still awaiting David's call on whether it is wanted at
-all (the original open question), now with the implementation trap already
-identified and fenced off.
+**Built 2026-10-16**: the actual Rule 1b extension (the symmetry David
+originally asked about), on branch `feature/references-v3-manifest-last-
+symmetry`. It is its own narrow, early-intercepting special case in
+`query()` — a new `_pointer_before_manifest(reference, "manifest")` check
+placed right after the existing bare `:manifest():<field>()` branch and
+before the generic "functions attached directly to name_one" rejection —
+exactly like Rule 1a/1b's own dedicated `Star3` check already is, and
+never something implied-`*` could re-route through (FILES still has no
+implied-`*` wiring at all, and `:manifest()` is its own named exemption
+regardless, see above). Selects one entry out of
+`file_manager.get_manifest(root_major)` (this named-file's own manifest,
+not the global ledger) via the same shared `_apply_pointer()` Rule 1b
+already uses; `_extract_data()` mirrors Rule 1b's own re-derive-by-uuid
+pattern, scoped to the same per-named-file manifest. See
+`deferred_work_done_list.md` for the full implementation note and tests.
 
 ## `#name_two` combined with `'*'` traversal — still not supported
 
