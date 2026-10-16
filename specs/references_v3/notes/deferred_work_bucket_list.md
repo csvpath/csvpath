@@ -106,25 +106,6 @@ form into it, with no further work. `ReferenceFinder3._apply_implied_star()`
 itself stays built and shared (RESULTS already uses it) — nothing about it
 needs to change when FILES support is eventually picked back up.
 
-## `:file_name()` — Named-File Arrivals Manifest field with no accessor
-
-Surfaced 2026-09-22, sweeping `csvpath/references/functions/fields/` (84
-files) against `references_v3_required_manifest_functions.md`'s 9 manifest
-tables. Table 2 (Named-File Arrivals Manifest, global) lists a `file_name`
-field ("The named of the original physical file that was registered. This
-is the same name as the file home directory") mapped to `:file_name()` —
-not registered anywhere. Unlike `:named_paths_home()` (built 2026-09-22,
-see `deferred_work_done_list.md`), there is no obvious sibling function to
-model this on directly: `:file_home()` returns the directory *path*, not
-the bare name, and it is not yet confirmed whether `file_name` is meant to
-be a trivial basename-of-`file_home` convenience or genuinely needs its own
-manifest/ledger read. Not built — needs a decision on which, and whether it
-is worth a dedicated function at all versus documenting that
-`Nos(...).basename` on `:file_home()`'s own result already answers the same
-question without a new registered name. No worked example anywhere in the
-docs uses `:file_name()`, so this is a genuine open design question, not
-something to guess at.
-
 ## Time component functions acting as context setters — not built at all; ROLE is currently static per function, never usage-dependent
 
 Surfaced 2026-09-21, first pass through `csvpath/references/functions/values/`
@@ -718,24 +699,6 @@ later ones don't drift).
   `file_manager.py` still dispatch through the older v2 reference system
   (`csvpath/util/references/`). Everything built so far has been
   self-contained and tested independent of this integration question.
-
-## `original` well-known file for `collect_original()` output (#350)
-
-Surfaced 2026-10-12 while building `collect_original()` (#341) for the
-release. A run instance can now hold `original.<ext>`: a byte copy of the
-registered data file the run started from (`original.csv`, `.xml`,
-`.json`, `.xlsx`, ...), the same file in every source mode, including
-`source-mode: preceding`. It is fingerprinted in the run manifest's
-`file_fingerprints` and counted in `number_of_files_generated`.
-
-References v3 has no `original` yet: `results_reference_finder_3.py`'s
-well-known files and `references/functions/well_known_files/` stop at
-`data`/`unmatched`/`errors`/`printouts`/etc. Open questions (in #350): the
-name; locating a file whose extension varies (by the `original.` prefix,
-as `ResultRegistrar._original_file()` does); what a reference returns when
-the instance has no original (it is opt-in); and cross-datatype
-consistency with the FILES view of the same registered bytes (fingerprints
-already match; a test pins it).
 
 ## Process note
 

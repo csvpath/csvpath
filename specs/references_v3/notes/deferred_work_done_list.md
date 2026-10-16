@@ -9,6 +9,63 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `:file_name()` — Named-File Arrivals Manifest field with no accessor — BUILT 2026-10-15
+
+The open design question (was it a trivial basename-of-`:file_home()`
+convenience, or a genuine manifest/ledger-read field?) was settled by
+reading the real write path, not guessed: `FileManager` already computes
+`mdata.file_name = file_home[file_home.rfind(nos.sep) + 1 :]` (the
+basename of `file_home`), and BOTH `FileRegistrar.metadata_update()`
+(Table 1, the per-named-file manifest) and `FilesListener`'s own global-
+ledger write (Table 2) persist it as a literal `file_name` field. So it is
+a real, already-written field on both tables — same shape as `:type()`
+(FILES-only, `SOURCE = "manifest"`, `NAME_THREE` position), not the
+`SOURCE = "computed"` shape `:named_file_home()` needed.
+
+**What was built**: `FileName3` (`functions/fields/file_name_3.py`),
+registered in the factory. One finder-level test added confirming it
+reads the field correctly alongside a matched version (`RICH_MANIFEST`
+fixture gained a `"file_name": "orders.csv"` entry). Full suite: 1622
+passed.
+
+## `original` well-known file for `collect_original()` output (#350) — BUILT 2026-10-15
+
+`collect_original()` (#341, shipped in the Oct 2026 release) writes
+`original.<ext>` into a run instance directory — a byte copy of the
+registered data file the run started from, in every source mode. The
+three open questions from #350 were all resolved by reading the real
+framework convention already established for this file, not guessed:
+
+- **The name**: `original`, matching `OriginalFileUtility.NAME` exactly
+  (no reason to diverge).
+- **Locating a file whose extension varies**: confirmed against
+  `ResultRegistrar._original_file()` — it lists the instance directory
+  and matches the `"original."`-prefixed (or bare `"original"`,
+  extension-less) entry, rather than assuming a fixed name. Mirrored
+  exactly in `ResultsReferenceFinder3._read_accessor()`'s new branch,
+  reusing `Nos.listdir(files_only=True)` the same way.
+- **No original present**: `collect_original()` is opt-in, so `None` --
+  the same "genuinely optional" treatment every other well-known RESULTS
+  file already gets (`data`/`unmatched`/`printouts`).
+- **Cross-datatype fingerprint consistency**: already proven true by
+  `collect_original()`'s own build (#341/#355) — not re-verified here,
+  out of scope for a references-v3-only change.
+
+**What was built**: `Original3` (`functions/well_known_files/
+original_3.py`), `RESOLVES_AS = METADATA_FILE`, `DATATYPES = (RESULTS,)`,
+`NAME_THREE` position, no argument (unlike `:printouts()`, there is only
+ever at most one `original.*` per instance, no named-stream concept).
+Registered in the factory; added `"original"` to `ResultsReferenceFinder3.
+_ACCESSOR_NAMES` (the name_three dispatch allowlist — confirmed this was
+the one gating point that would otherwise reject it with "does not yet
+support :original() as a name_three function," by reading `_name_three_
+selector()` before assuming). New `_read_accessor()` branch, importing
+`OriginalFileUtility as orut` (matching the project's own utility-alias
+convention). Three new finder-level tests (two different extensions, to
+prove the lookup is not hard-coded to `.csv`; the opt-in-absent case).
+Full suite: 1622 passed (up from 1612 before this item and `:file_name()`
+together).
+
 ## `'*'`-traversal content-accessor guards — re-audited, converted where safe — BUILT 2026-09-28
 
 Re-audit of the four candidates the `:path()`-retirement fix deliberately

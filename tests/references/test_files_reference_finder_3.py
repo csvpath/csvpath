@@ -2175,6 +2175,7 @@ RICH_MANIFEST = [
         "fingerprint": "aaaa",
         "from": "/staging/orders.csv",
         "mark": "Sheet1",
+        "file_name": "orders.csv",
     },
     {
         "file": "inputs/named_files/rich/orders.csv/bbbb.csv",
@@ -2246,6 +2247,20 @@ class TestFieldAccessorFunctions:
         )
         results = finder.resolve()
         assert results.results[0].data == "/staging/orders.csv"
+
+    def test_file_name(self):
+        # added 2026-10-15, closing the deferred-work bucket list gap --
+        # confirmed against FileRegistrar/FilesListener's real write
+        # path before building: a real, already-written field on both
+        # the per-named-file manifest (table 1, read here) and the
+        # global arrivals ledger (table 2), the basename of file_home.
+        finder = _finder(
+            '$rich.files.:name("orders.csv").:first():file_name()',
+            RICH_HOME,
+            RICH_MANIFEST,
+        )
+        results = finder.resolve()
+        assert results.results[0].data == "orders.csv"
 
     def test_mark_present(self):
         finder = _finder(

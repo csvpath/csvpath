@@ -3,6 +3,7 @@ import re
 
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
+from csvpath.util.original_file_utility import OriginalFileUtility as orut
 from csvpath.util.path_util import PathUtility as pathu
 
 from .functions.function_3 import Function3
@@ -1466,6 +1467,23 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # "...file('greetings.txt')" are declared equivalent there).
             path = Nos(instance_dir).join(f"{accessor.arg}.txt")
             return cls._read_well_known_file(path)
+        if accessor.name == "original":
+            # added 2026-10-15 -- unlike every other well-known file
+            # here, original.<ext>'s own extension varies by source
+            # type, so it cannot be looked up by a fixed name. Mirrors
+            # ResultRegistrar._original_file()'s own convention exactly
+            # (confirmed against that method before building): list the
+            # instance dir, match the "original."-prefixed (or bare
+            # "original", extension-less) entry. None if
+            # collect_original() was never used here -- same "genuinely
+            # optional" treatment as data/unmatched.
+            nos = Nos(instance_dir)
+            if not nos.dir_exists():
+                return None
+            for name in nos.listdir(files_only=True):
+                if name.startswith(f"{orut.NAME}.") or name == orut.NAME:
+                    return cls._read_well_known_file(Nos(instance_dir).join(name))
+            return None
         if accessor.name in cls._BYTES_ACCESSOR_FILES:
             path = Nos(instance_dir).join(cls._BYTES_ACCESSOR_FILES[accessor.name])
             return cls._read_well_known_file(path)
@@ -1685,6 +1703,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         "unmatched",
         "printouts",
         "file",
+        "original",
     )
 
     def _name_three_selector(

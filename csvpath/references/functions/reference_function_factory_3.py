@@ -36,6 +36,7 @@ class ReferenceFunctionFactory:
         from .well_known_files.log_3 import Log3
         from .well_known_files.manifest_3 import Manifest3
         from .well_known_files.meta_3 import Meta3
+        from .well_known_files.original_3 import Original3
         from .well_known_files.printouts_3 import Printouts3
         from .well_known_files.readme_3 import Readme3
         from .well_known_files.unmatched_3 import Unmatched3
@@ -67,6 +68,7 @@ class ReferenceFunctionFactory:
         from .fields.file_fingerprints_3 import FileFingerprints3
         from .fields.file_home_3 import FileHome3
         from .fields.file_manifest_3 import FileManifest3
+        from .fields.file_name_3 import FileName3
         from .fields.file_path_3 import FilePath3
         from .fields.files_complete_3 import FilesComplete3
         from .fields.fingerprint_3 import Fingerprint3
@@ -182,6 +184,7 @@ class ReferenceFunctionFactory:
             Data3.NAME: Data3,
             Unmatched3.NAME: Unmatched3,
             Printouts3.NAME: Printouts3,
+            Original3.NAME: Original3,
             Readme3.NAME: Readme3,
             Idchain3.NAME: Idchain3,
             True3.NAME: True3,
@@ -255,6 +258,7 @@ class ReferenceFunctionFactory:
             PrecedingInstanceIdentity3.NAME: PrecedingInstanceIdentity3,
             Type3.NAME: Type3,
             ReferenceField3.NAME: ReferenceField3,
+            FileName3.NAME: FileName3,
             FilePath3.NAME: FilePath3,
             Archive3.NAME: Archive3,
             ArchivePath3.NAME: ArchivePath3,
