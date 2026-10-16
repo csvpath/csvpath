@@ -2955,3 +2955,57 @@ own — see that entry for `:groups()`/RESULTS `:having()`.)
   datatypes cleanly." Lesson: even a same-day-dated snapshot doc can be
   stale relative to the actual final code state — verify live, not just
   against the most recent-looking doc.
+- `$name.files.:manifest():last()` (and `:first()`/`:index(n)`, either
+  order with `:manifest()`) now ordinal-selects one entry out of a
+  literal named-file's OWN `manifest.json` array, closing the symmetry
+  gap with Rule 1b's own `$*.files.:manifest():last()` (global ledger) —
+  **built 2026-10-16**, `csvpath/references/files_reference_finder_3.py`,
+  branch `feature/references-v3-manifest-last-symmetry`. David raised the
+  symmetry question 2026-08-21 but deliberately left it unsettled pending
+  design review (see `deferred_work_bucket_list.md`'s own long history on
+  this entry); revisited and built after a careful two-round back-and-
+  forth 2026-10-15/16:
+  - Round 1 (David): building this naively would collide with compendium
+    3.9c's implied-`*` rule if `:manifest()` were ever treated as an
+    ordinary path segment — caught and fixed as its own, separate PR
+    (#376, `:manifest()` made an explicit named exemption) before this
+    one was touched at all.
+  - Round 2 (David, after I recommended leaving this unsupported on the
+    claim that `$a.files.*.:last():manifest()` was already a full,
+    redundant substitute): corrected two specific claims. (a) FILES' `*`
+    is a ONE-segment wildcard (confirmed live against `MIXED_MANIFEST` --
+    a 2-segment file_home is invisible to `*` but caught by `:flatten()`),
+    so the real workaround is the clumsier `$a.files.:flatten():last().
+    :manifest()`, not a clean one-segment substitute. (b) `:manifest()`/
+    `:definition()` are already-established non-path special cases for
+    FILES (`_is_bare_pointer_reference`), and CSVPATHS/RESULTS already
+    support this exact bare `:manifest()`+pointer shape NATIVELY --
+    confirmed live via a working `$acme.csvpaths.:manifest():last()` /
+    `$acme.csvpaths.:last():manifest()` repro -- because `name_one` is
+    ALWAYS a function chain for those two datatypes, never a literal
+    path. Both corrections verified live before reversing the
+    recommendation; David: "Yes, please do."
+  - Implementation: reuses the existing shared, datatype-agnostic
+    `_pointer_before_manifest()` / `_apply_pointer()` helpers (already on
+    the `ReferenceFinder3` ABC, built for Rule 1b) — no new mechanism, just
+    a new call site. `query()` gets a new branch, placed after the
+    existing bare `:manifest():<field>()` mapping-over-every-entry branch
+    and before the generic "functions attached directly to name_one"
+    rejection, using `file_manager.get_manifest(root_major)` (this named-
+    file's own manifest) instead of `files_root_manifest` (the global
+    ledger) as the candidate array; returns one `ReferenceResult3` with
+    the selected entry's own `file`/`uuid` (the real version file, not a
+    well-known-file path -- different from Rule 1b, which points at
+    manifest.json itself since the global ledger has no other home).
+    `_extract_data()` gets a matching new branch mirroring Rule 1b's own
+    re-derive-by-`uuid` pattern, scoped to the same per-named-file
+    manifest instead of the ledger. Tests: new `TestManifestPointerSymmetry`
+    class in `tests/references/test_files_reference_finder_3.py` (first/
+    last/index/negative-index/out-of-range/order-insensitivity/query-path-
+    and-uuid/templated-single-entry); one pre-existing test in
+    `TestBareManifestFieldAccessor` (`test_chaining_a_non_field_accessor_
+    is_not_recognized_here`, renamed `test_chaining_a_pointer_is_not_
+    recognized_here`) updated from "raises" to "now resolves correctly,"
+    since that was this exact gap being exercised before the fix. Full
+    `tests/references/` suite: 1631 passed (up from the 1623 baseline,
+    matching the 8 new tests added).

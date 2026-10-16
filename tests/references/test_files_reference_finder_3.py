@@ -1830,13 +1830,18 @@ class TestBareManifestFieldAccessor:
                 "$alpha.files.:manifest():uuid():time()", ALPHA_HOME, ALPHA_MANIFEST
             ).query()
 
-    def test_chaining_a_non_field_accessor_is_not_recognized_here(self):
+    def test_chaining_a_pointer_is_not_recognized_here(self):
         # ':last()' is a POINTER, not a registered field accessor
-        # (SOURCE is None) -- falls through the same way.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$alpha.files.:manifest():last()", ALPHA_HOME, ALPHA_MANIFEST
-            ).query()
+        # (SOURCE is None), so this bare-manifest-FIELD mechanism does
+        # not match it -- it falls through to the dedicated pointer-
+        # before-manifest branch instead (TestManifestPointerSymmetry,
+        # below), which resolves it correctly rather than raising.
+        # Previously (before the 2026-10-16 symmetry fix) that branch
+        # did not exist, so this same reference used to raise here.
+        results = _finder(
+            "$alpha.files.:manifest():last()", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert results.results[0].data == ALPHA_MANIFEST[-1]
 
     def test_the_ordinary_name_three_field_accessor_position_still_works(self):
         # David: narrowing to one version via :name(...)+pointer, then
@@ -1847,6 +1852,73 @@ class TestBareManifestFieldAccessor:
             '$alpha.files.:name("one.csv").:first():uuid()', ALPHA_HOME, ALPHA_MANIFEST
         ).resolve()
         assert results.results[0].data == "u-one-1"
+
+
+class TestManifestPointerSymmetry:
+    # the literal-root_major counterpart to TestGlobalArrivalsLedger
+    # OrdinalIndexing's Rule 1b -- a pointer (:first()/:last()/:index(n))
+    # riding alongside a bare ':manifest()' in name_one (either order)
+    # ordinal-selects one entry out of THIS named-file's own manifest.json,
+    # instead of either dumping the whole thing (TestBareManifestField
+    # Accessor's own ":manifest():<field>()" shape maps over every entry,
+    # a genuinely different mechanism) or raising. Added 2026-10-16,
+    # closing a consistency gap with CSVPATHS/RESULTS, which already
+    # support this exact bare-chain shape natively.
+    def test_last_gives_the_most_recently_registered_version(self):
+        results = _finder(
+            "$alpha.files.:manifest():last()", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert results.results[0].data == ALPHA_MANIFEST[-1]
+
+    def test_first_gives_the_earliest_registered_version(self):
+        results = _finder(
+            "$alpha.files.:manifest():first()", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert results.results[0].data == ALPHA_MANIFEST[0]
+
+    def test_index_gives_the_nth_version(self):
+        results = _finder(
+            "$alpha.files.:manifest():index(1)", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert results.results[0].data == ALPHA_MANIFEST[1]
+
+    def test_negative_index_counts_from_the_end(self):
+        results = _finder(
+            "$alpha.files.:manifest():index(-1)", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert results.results[0].data == ALPHA_MANIFEST[-1]
+
+    def test_out_of_range_index_gives_no_results(self):
+        results = _finder(
+            "$alpha.files.:manifest():index(99)", ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert len(results.results) == 0
+
+    def test_pointer_then_manifest_order_also_works(self):
+        # ":manifest():last()" means the same as ":last():manifest()" --
+        # same order-insensitivity _pointer_before_manifest() already
+        # guarantees for the global ledger case.
+        results = _finder(
+            "$alpha.files.:last():manifest()", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert results.results[0].data == ALPHA_MANIFEST[-1]
+
+    def test_query_gives_the_selected_versions_own_path_and_uuid(self):
+        # unlike the global ledger case (Rule 1b, which points at
+        # manifest.json itself since the ledger has no other home), this
+        # points at the selected VERSION's own file, since that is what
+        # this named-file's own manifest entries describe.
+        results = _finder(
+            "$alpha.files.:manifest():last()", ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert results.results[0].uuid == "u-one-2"
+        assert results.results[0].path == ALPHA_MANIFEST[-1]["file"]
+
+    def test_templated_single_entry_manifest_works_the_same_way(self):
+        results = _finder(
+            "$acme.files.:manifest():last()", TEMPLATED_HOME, TEMPLATED_MANIFEST
+        ).resolve()
+        assert results.results[0].data == TEMPLATED_MANIFEST[-1]
 
 
 RANGE_HOME = "inputs/named_files/ranger"

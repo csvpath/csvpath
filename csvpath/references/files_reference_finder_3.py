@@ -259,6 +259,36 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 ]
             )
 
+        pointer_call = self._pointer_before_manifest(reference, "manifest")
+        if pointer_call is not None:
+            # symmetry fix, added 2026-10-16: the literal-root_major
+            # counterpart to Rule 1b above (a pointer riding alongside a
+            # bare ':manifest()' call, in either order, ordinal-selects
+            # one entry) -- here against THIS named-file's own
+            # manifest.json instead of the global ledger. Closes a real
+            # consistency gap: CSVPATHS/RESULTS already support this
+            # exact bare-chain shape natively (name_one there is always
+            # a function chain, never a literal path), confirmed live
+            # before building this (David, 2026-10-15/16) via a working
+            # "$acme.csvpaths.:manifest():last()" repro; FILES alone
+            # lacked it because name_one is NORMALLY a path there, with
+            # :manifest()/:definition() carved out as the only non-path
+            # exceptions (_is_bare_pointer_reference, just above). Not a
+            # wildcard/pooling concern -- FILES has no implied-'*' wiring
+            # at all (see _apply_implied_star's own docstring), and even
+            # once it did, :manifest() is an explicit, named exemption
+            # from that mechanism (fixed 2026-10-15, #376) precisely
+            # because a pointer alongside it means "ordinal-index into
+            # the one array the REST of the chain already identifies,"
+            # not "match a wildcarded path."
+            manifest = self.csvpaths.file_manager.get_manifest(root_major)
+            selected = self._apply_pointer(pointer_call, manifest)
+            if selected is None:
+                return ReferenceResults3(results=[])
+            return ReferenceResults3(
+                results=[ReferenceResult3(path=selected["file"], uuid=selected["uuid"])]
+            )
+
         if name_one.functions:
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support functions attached "
@@ -1413,6 +1443,21 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # instead of a named-file's own manifest.
                 ledger = self.csvpaths.file_manager.files_root_manifest
                 return self._find_manifest_entry_by_uuid(ledger, result.uuid)
+            if (
+                not isinstance(reference.root_major, Star3)
+                and self._pointer_before_manifest(reference, "manifest") is not None
+                and result.uuid is not None
+            ):
+                # symmetry fix, added 2026-10-16 -- the literal-root_major
+                # counterpart to Rule 1b just above: query()'s own new
+                # branch already ordinal-selected one entry out of THIS
+                # named-file's own manifest.json; re-derive it here by
+                # uuid, same pattern as every other METADATA_FILE branch
+                # in this method.
+                manifest = self.csvpaths.file_manager.get_manifest(
+                    reference.root_major
+                )
+                return self._find_manifest_entry_by_uuid(manifest, result.uuid)
             if reference.name_three is not None and any(
                 f.contains_function_named("manifest")
                 for f in reference.name_three.functions
