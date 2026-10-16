@@ -9,6 +9,50 @@ the way it was is often exactly what the next person touching it needs.
 
 ---
 
+## `:manifest()` made an explicit, named exemption from implied-`*` — BUILT 2026-10-15
+
+Surfaced while David reviewed the `$name.files.:manifest():last()`
+symmetry question (see that bucket-list entry's own "design trap" update)
+— spotted that building the Rule 1b extension naively could collide with
+`ReferenceFinder3._apply_implied_star()` (compendium 3.9c/3.9d), since
+`:manifest()` is explicitly listed in 3.9c's "doesn't operate in a path
+segment at all" exemption category and must never trigger that
+normalization.
+
+**Live-verified, not just reasoned about, before concluding anything.**
+FILES has no implied-`*` wiring at all (`_apply_implied_star()` is
+RESULTS-only) — confirmed no current code path can actually hit this
+collision for FILES yet. But testing RESULTS' own already-shipped
+implementation directly found `$acme.results.:manifest():last()` IS
+silently normalized into `*:manifest():last()` by this method today, and
+`"manifest"` was never in its exemption list — it only happened to still
+give the right answer because RESULTS' own `:manifest()` always means
+"whichever run the rest of the chain already selected, give its manifest"
+(one run, one manifest.json file — no shared-array-across-candidates
+concept the way FILES' Table 1 has). Confirmed with a live repro
+(`ResultsReferenceFinder3` against real fixture data) that `$acme.results.
+:manifest():last()`, `$acme.results.:last():manifest()`, and the already-
+normalized-equivalent `$acme.results.*:manifest():last()` all three
+currently resolve identically and correctly — so this was a real,
+previously-untested gap in the exemption list's own correctness, not a
+live bug, but exactly the kind of accidental safety that stops being safe
+the moment FILES gets its own implied-`*` wiring (where `:manifest()`
+genuinely IS an ordinal index into one shared array across every matched
+`file_home`, and silently re-routing it through pooled/grouped path-
+matching WOULD change its meaning).
+
+**What was built**: `"manifest"` added explicitly to `_apply_implied_star(
+)`'s own exemption tuple in `reference_finder_3.py`, with a comment laying
+out the full reasoning (why it belongs in 3.9c's third category, and why
+the previous omission was accidentally harmless for RESULTS specifically,
+not a safe pattern to rely on generally). One new regression test
+(`TestImpliedStar.test_manifest_is_exempt_prefixed_selects_directly_not_
+via_a_pool`) — two different prefixes, each with their own run, the later
+one chronologically outside the prefix being queried — proving a prefixed
+`:manifest()`+pointer selects directly within its own prefix rather than
+getting pooled across prefixes the way a genuine implied-`*` candidate
+would. Full suite: 1623 passed (up from 1622).
+
 ## `:file_name()` — Named-File Arrivals Manifest field with no accessor — BUILT 2026-10-15
 
 The open design question (was it a trivial basename-of-`:file_home()`
