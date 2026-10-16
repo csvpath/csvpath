@@ -626,50 +626,25 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "resolve the grouped versions on their own first."
             )
 
-        if partitioned and pointers and has_manifest and not has_field_function:
-            # narrowed 2026-08-29 -- this used to also reject
-            # `has_field_function`, but that was stale relative to
-            # ResultsReferenceFinder3's OWN, later-refined precedent:
-            # RESULTS' _star_group_and_reduce() only rejects a name_three
-            # CONTENT accessor (:errors()/:vars()/etc.) here, explicitly
-            # NOT a field accessor (e.g. ":all():last().invoices:uuid()"
-            # resolves fine there, confirmed live before that code was
-            # written -- poolable, one result per matched group).
-            # :manifest() (a whole-resource read) stays rejected here for
-            # the same reason it always was: "the manifest entry of
-            # every group's own latest version, all at once" is still
-            # Rule 1 territory (each group's own single reduced
-            # candidate is fine on its own, but pooling several groups'
-            # own whole entries together is not obviously the same
-            # "resolve one entity" contract).
-            #
-            # `and not has_field_function` added 2026-09-28 -- the
-            # earlier version of this comment claimed the check below
-            # ("only flag has_manifest") was "already correctly written"
-            # to exempt a field accessor riding alongside :manifest()
-            # (e.g. ":all():last():manifest():uuid()") -- confirmed LIVE
-            # this was wrong, a real bug: `:manifest():uuid()` (field
-            # present) was incorrectly rejected here identically to bare
-            # `:manifest()` (no field), even though resolve_kind's own
-            # METADATA_FIELD-before-METADATA_FILE priority means the
-            # field wins and :manifest() itself is never actually read
-            # as a whole resource in that shape -- see the matching fix
-            # to `ambiguous_content_read`'s own computation just below,
-            # and the identical bug/fix in this method's own literal
-            # no-grouping branch above `has_manifest`/`has_field_function`
-            # are computed for.
-            #
-            # The reduction logic just below already does exactly the
-            # right thing once this stops blocking it: `partitioned`
-            # already reduces each distinct file_home's own candidates
-            # independently via the pointer, before a field accessor (or
-            # :manifest()'s own entry) is ever read -- no new machinery
-            # needed here, only removing the premature rejection.
-            raise ReferenceException3(
-                "FilesReferenceFinder3 does not yet support combining "
-                "':all()'/':groups()' grouping with :manifest() -- "
-                "resolve the grouped versions on their own first."
-            )
+        # `partitioned and pointers and has_manifest` used to be an
+        # unconditional rejection here ("does not yet support combining
+        # ':all()'/':groups()' grouping with :manifest()") -- removed
+        # 2026-10-16, partition-aware fix (see the bucket list's "'*'-
+        # traversal content-accessor guards" entry, done-list writeup
+        # for the full reasoning). The reduction logic just below already
+        # does exactly the right thing: `partitioned` reduces each
+        # distinct file_home's own candidates independently via the
+        # pointer BEFORE :manifest()'s own entry (or a field accessor) is
+        # ever read, so "several groups, each already reduced to exactly
+        # one via its own pointer" is not the same Rule 1 violation as
+        # pooling several raw, unreduced candidates sharing one
+        # :manifest() read -- it is the identical shape CSVPATHS already
+        # ships (`_star_group_and_reduce`'s own `accessor is not None and
+        # pointer is not None` handling). `ambiguous_content_read`'s own
+        # computation just below is now partition-aware instead of a
+        # naive count check, so it correctly distinguishes the two cases
+        # rather than this method raising to avoid the ambiguity
+        # entirely.
 
         if has_range:
             # narrow to the RANGE first -- a pointer riding alongside it
@@ -740,10 +715,27 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # as a whole resource in that shape -- only a BARE
             # :manifest() (no field riding with it) is genuine Rule 1
             # territory.
+            #
+            # `and not (partitioned and pointers)` added 2026-10-16 --
+            # partition-aware fix (bucket list's "'*'-traversal content-
+            # accessor guards" entry). When `partitioned and pointers`,
+            # `selected_candidates` came from the by-file_home reduction
+            # above -- each entry is already the SOLE pointer-selected
+            # candidate for its own distinct file_home, not several raw
+            # candidates sharing one read. Pooling several already-
+            # reduced, independently-identified entities' own single
+            # manifest entries is not the same ambiguity Rule 1 guards
+            # against (that is exactly what the removed rejection just
+            # above used to conflate). `partitioned` with no pointer
+            # (bare ':all():manifest()'/':groups():manifest()') still
+            # pools genuinely unreduced candidates per group, so the
+            # naive count check still correctly flags that case --
+            # `pointers` being falsy there makes this new term a no-op.
             ambiguous_content_read=(
                 has_manifest
                 and not has_field_function
                 and len(selected_candidates) > 1
+                and not (partitioned and pointers)
             ),
         )
 
@@ -1076,10 +1068,24 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # the global arrivals ledger (the same branch Rule 1b's own
             # ':manifest()'-with-a-global-pointer shape already uses),
             # confirmed by reading before relying on it, not assumed.
+            #
+            # `and not partitioned` added 2026-10-16 -- the comment just
+            # above already explains WHY `partitioned` + a pointer is
+            # safe (each entry is its own group's already-reduced single
+            # winner), but the flag itself did not actually act on that
+            # yet -- it still flagged ambiguous whenever more than one
+            # named-file's own winner came back, which is every real
+            # GROUP-mode `:all():manifest()`/`:groups():manifest()` '*'
+            # query with more than one matching named-file. `pointer` is
+            # guaranteed present in this branch (the `if not pointers`
+            # case above already returned), so no extra truthiness check
+            # is needed the way the literal-root fix needed `and pointers`
+            # alongside `partitioned`.
             ambiguous_content_read=(
                 has_manifest
                 and field_call is None
                 and len(selected_candidates) > 1
+                and not partitioned
             ),
         )
 

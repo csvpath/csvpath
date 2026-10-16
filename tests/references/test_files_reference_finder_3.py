@@ -794,19 +794,26 @@ class TestStarTraversalGroup:
             "inputs/named_files/beta/two.csv",
         }
 
-    def test_all_combined_with_manifest_query_succeeds_resolve_raises(self):
-        # REVISED 2026-09-28 (was: "...is_not_yet_supported") -- GROUP
-        # mode reduces each of the three distinct (named-file, path)
-        # groups to its own single pointer-selected winner, but resolving
-        # all three winners' own WHOLE manifest entries at once is still
-        # Rule 1 territory -- query() now returns all three (flagged),
-        # resolve() still refuses, converted from an unconditional raise
-        # to the deferred pattern.
-        results = _star_finder("$*.files.:all().:last():manifest()").query()
+    def test_all_combined_with_manifest_now_resolves_each_groups_own_entry(self):
+        # REVISED 2026-10-16 (was: "...query_succeeds_resolve_raises") --
+        # see the "'*'-traversal content-accessor guards" bucket-list
+        # entry. GROUP mode reduces each of the three distinct (named-
+        # file, path) groups to its own single pointer-selected winner
+        # BEFORE :manifest() ever reads it -- "three groups, each already
+        # reduced to exactly one" is not the same Rule 1 violation as
+        # pooling several raw, unreduced candidates sharing one
+        # :manifest() read (the identical shape CSVPATHS already ships
+        # for its own ':all():last():manifest()'). No longer flagged as
+        # an ambiguous content read, and resolve() now succeeds, giving
+        # each group's own manifest entry.
+        results = _star_finder("$*.files.:all().:last():manifest()").resolve()
         assert len(results.results) == 3
-        assert results.ambiguous_content_read is True
-        with pytest.raises(ReferenceException3):
-            _star_finder("$*.files.:all().:last():manifest()").resolve()
+        assert results.ambiguous_content_read is False
+        assert {r.data["uuid"] for r in results.results} == {
+            "u-zero-1",
+            "u-one-2",
+            "u-two-2",
+        }
 
     def test_all_combined_with_a_field_accessor_now_works(self):
         # narrowed 2026-08-29 -- one value per (named-file, path) group,
@@ -948,23 +955,25 @@ class TestStarTraversalGroupsAnyDepth:
             "u-gamma-deep-1",
         }
 
-    def test_combining_with_manifest_query_succeeds_resolve_raises(self):
-        # REVISED 2026-09-28 (was: "...is_not_yet_supported") -- ':groups()'
-        # (GROUP, any depth) reduces each of the four distinct (named-
-        # file, path) groups to its own single pointer-selected winner,
-        # but resolving all four winners' own WHOLE manifest entries at
-        # once is still Rule 1 territory -- query() now returns all
-        # four (flagged), resolve() still refuses, converted from an
-        # unconditional raise to the deferred pattern.
+    def test_combining_with_manifest_now_resolves_each_groups_own_entry(self):
+        # REVISED 2026-10-16 (was: "...query_succeeds_resolve_raises") --
+        # same partition-aware fix as ':all()''s own equivalent test,
+        # applied to ':groups()' (GROUP, any depth): each of the four
+        # distinct (named-file, path) groups is already reduced to its
+        # own single pointer-selected winner before :manifest() reads
+        # it, so pooling the four winners' own entries is not a Rule 1
+        # violation -- no longer flagged, resolve() now succeeds.
         results = _flatten_star_finder(
             "$*.files.:groups().:last():manifest()"
-        ).query()
+        ).resolve()
         assert len(results.results) == 4
-        assert results.ambiguous_content_read is True
-        with pytest.raises(ReferenceException3):
-            _flatten_star_finder(
-                "$*.files.:groups().:last():manifest()"
-            ).resolve()
+        assert results.ambiguous_content_read is False
+        assert {r.data["uuid"] for r in results.results} == {
+            "u-zero-1",
+            "u-one-2",
+            "u-two-2",
+            "u-gamma-deep-1",
+        }
 
     def test_combining_with_a_field_accessor_now_works(self):
         # narrowed 2026-08-29 -- one value per (named-file, path) group,
@@ -1168,11 +1177,20 @@ class TestAllForOneNamedFile:
         r = results.query()
         assert set(r.uuids) == {"u-zero-2"}
 
-    def test_all_combined_with_manifest_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$alpha.files.:all().:last():manifest()", ALPHA_HOME, ALPHA_MANIFEST
-            ).query()
+    def test_all_combined_with_manifest_now_resolves_each_groups_own_entry(self):
+        # used to raise ("does not yet support combining ':all()'/
+        # ':groups()' grouping with :manifest()") -- fixed 2026-10-16,
+        # see the "'*'-traversal content-accessor guards" bucket-list
+        # entry. Each file_home group is already independently reduced
+        # to exactly one candidate by its own ':last()' before
+        # :manifest() ever reads it, the same "several groups, each
+        # already pointer-reduced" shape CSVPATHS already supports --
+        # not a Rule 1 violation, so this is no longer flagged as an
+        # ambiguous content read either.
+        results = _finder(
+            "$alpha.files.:all().:last():manifest()", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert {r.data["uuid"] for r in results.results} == {"u-zero-1", "u-one-2"}
 
     def test_all_combined_with_a_range_is_not_yet_supported(self):
         # split into its own check 2026-09-25 -- used to raise the SAME
@@ -2046,11 +2064,13 @@ class TestGroupsForOneNamedFile:
         ).query()
         assert set(groups_results.uuids) == {"u-zero-2", "u-deep-2"}
 
-    def test_groups_combined_with_manifest_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$mixed.files.:groups().:last():manifest()", MIXED_HOME, MIXED_MANIFEST
-            ).query()
+    def test_groups_combined_with_manifest_now_resolves_each_groups_own_entry(self):
+        # same fix as ':all()''s own equivalent test above, 2026-10-16 --
+        # ':groups()' shares the identical `partitioned` reduction path.
+        results = _finder(
+            "$mixed.files.:groups().:last():manifest()", MIXED_HOME, MIXED_MANIFEST
+        ).resolve()
+        assert {r.data["uuid"] for r in results.results} == {"u-zero-2", "u-deep-2"}
 
     def test_groups_combined_with_a_field_accessor_gives_one_value_per_group(self):
         # narrowed 2026-08-29, same fix as ':all()' above -- ':groups()'

@@ -236,7 +236,7 @@ degenerate-grouping semantics settled and built earlier this same session
 3-segment prefix `:last()` correctly find the run. No code change needed
 — the original flag just hadn't accounted for the run's own depth.
 
-## `'*'`-traversal content-accessor guards — RE-AUDITED, converted or confirmed settled — BUILT 2026-09-28
+## `'*'`-traversal content-accessor guards — RE-AUDITED, converted or confirmed settled — BUILT 2026-09-28, partition-aware fix completed 2026-10-16
 
 Left over from retiring `:path()`/moving Rule 1 to `resolve()` (see
 `deferred_work_done_list.md`) — that pass deliberately touched only each
@@ -311,16 +311,39 @@ including two genuine, previously-undetected bugs caught while doing this
   session's other two PRs) is the SAME question at one more remove
   (GROUP mode there also produces one candidate per file_home group).
 
-  **What would unblock building this**: confirm the fix direction above
-  is right (a partition-aware flag, not a blind removal of the
-  `has_manifest` guard), then decide scope — FILES only (continuing this
-  session's own thread) vs. also RESULTS/CSVPATHS in the same pass
-  (bigger, but closes the whole cross-datatype question the "should be
-  decided together" note above already flags). Once scoped, this is
-  concrete, mechanical work with a clear correctness bar (the CSVPATHS
-  "several groups, each pointer-reduced" test case already describes the
-  must-not-regress behavior) — not open design the way the predicate-
-  argument mechanism or RESULTS' `:groups()` semantics still are.
+  **Built 2026-10-16, scope: FILES + RESULTS/CSVPATHS audited together**
+  (David's call — "closes the whole cross-datatype question in one
+  pass" over a FILES-only fix). The audit found RESULTS/CSVPATHS were
+  *already* fixed (`ResultsReferenceFinder3._star_group_and_reduce()`
+  was converted to the exact partition-aware shape on 2026-09-28,
+  confirmed live by reading its own current docstring/code — this
+  bucket-list entry's "still an unconditional raise" text above was
+  stale, not a live gap) — only FILES itself still had the naive count
+  check. Two sites fixed on branch `fix/star-traversal-partition-aware-
+  content-read`:
+  - `query()`'s literal-root GROUP-mode branch: removed the
+    `partitioned and pointers and has_manifest and not has_field_function`
+    unconditional raise entirely (the reduction logic right below it
+    already does the correct thing once nothing blocks it from running);
+    `ambiguous_content_read`'s own computation gained `and not
+    (partitioned and pointers)`.
+  - `_query_star_traversal()`'s GROUP-mode branch (`:all()`/`:groups()`
+    across every named-file): its `ambiguous_content_read` computation
+    gained `and not partitioned` (pointer presence already guaranteed by
+    this point in the method, unlike the literal-root case above).
+  Tests updated: `TestAllForOneNamedFile::test_all_combined_with_
+  manifest_now_resolves_each_groups_own_entry` (was `..._is_not_yet_
+  supported`), `TestGroupsForOneNamedFile::test_groups_combined_with_
+  manifest_now_resolves_each_groups_own_entry` (same), `TestStarTraversal
+  Group::test_all_combined_with_manifest_now_resolves_each_groups_own_
+  entry` (was `..._query_succeeds_resolve_raises`), `TestStarTraversal
+  GroupsAnyDepth::test_combining_with_manifest_now_resolves_each_groups_
+  own_entry` (same) — all four now assert a successful `.resolve()`
+  giving each group's own manifest entry, `ambiguous_content_read is
+  False`, instead of a raise. Full `tests/references/` suite: 1631
+  passed (no net test-count change — four tests converted in place, not
+  added). Full local-backend suite: 4092 passed, 11 failed (the same
+  known SFTP/S3 baseline, unrelated).
 
 ## Predicate-argument field accessors (`:on_arrival(:not_none())`) — filter half built for `:idchain()`, generic mechanism still not built
 
