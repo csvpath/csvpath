@@ -2428,6 +2428,49 @@ class TestWellKnownFileAccessors:
         ).resolve()
         assert via_printouts.results[0].data == via_file.results[0].data == content
 
+    def test_original_resolves_raw_bytes_regardless_of_extension(
+        self, acme_archive, instance_dir
+    ):
+        # added 2026-10-15, closing the deferred-work bucket list gap
+        # for #350. Unlike every other well-known file here, original.
+        # <ext>'s own extension varies by source type -- confirmed
+        # against ResultRegistrar._original_file()'s real lookup
+        # convention before building (list the instance dir, match the
+        # "original."-prefix) rather than assuming a fixed name.
+        content = b"a,b\n1,2\n"
+        with open(os.path.join(instance_dir, "original.csv"), "wb") as f:
+            f.write(content)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:original()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == content
+
+    def test_original_resolves_raw_bytes_for_a_different_extension(
+        self, acme_archive, instance_dir
+    ):
+        # same lookup, a different source type -- proves this is not
+        # hard-coded to ".csv".
+        content = b"<root><row/></root>"
+        with open(os.path.join(instance_dir, "original.xml"), "wb") as f:
+            f.write(content)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:original()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == content
+
+    def test_original_resolves_none_when_never_collected(
+        self, acme_archive, instance_dir
+    ):
+        # collect_original() is opt-in -- genuinely optional, same
+        # treatment as data.csv/unmatched.csv/printouts.txt.
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names:original()",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data is None
+
     def test_file_resolves_a_user_named_output(self, acme_archive, instance_dir):
         content = b"custom output"
         with open(os.path.join(instance_dir, "orders.parquet"), "wb") as f:
