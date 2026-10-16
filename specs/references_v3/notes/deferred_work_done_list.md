@@ -3009,3 +3009,57 @@ own — see that entry for `:groups()`/RESULTS `:having()`.)
     since that was this exact gap being exercised before the fix. Full
     `tests/references/` suite: 1631 passed (up from the 1623 baseline,
     matching the 8 new tests added).
+- FILES' `'*'`-traversal content-accessor guards made partition-aware,
+  closing the naive-count-check gap flagged in the bucket list's own
+  "'*'-traversal content-accessor guards" entry — **built 2026-10-16**,
+  branch `fix/star-traversal-partition-aware-content-read`. Scope was
+  "FILES + RESULTS/CSVPATHS together," David's own call, specifically to
+  close the cross-datatype question in one pass rather than leave a known
+  twin gap on the list. Auditing all three turned up a real surprise:
+  RESULTS/CSVPATHS were **already fixed** --
+  `ResultsReferenceFinder3._star_group_and_reduce()`'s own docstring and
+  code (confirmed by reading the live file, not trusting the bucket
+  list's own "still an unconditional raise" text) show it was converted
+  to the identical partition-aware `ambiguous_content_read` pattern on
+  2026-09-28, structurally guaranteed safe because `_results_for_run()`'s
+  own internal guards already cap at most one `ReferenceResult3` per run
+  whenever an accessor is present. `CsvpathsReferenceFinder3`'s own
+  equivalent (`_resolve_versions()`) was similarly already safe by
+  construction. The bucket list entry had simply gone stale after that
+  2026-09-28 fix landed without the entry being updated -- a second
+  instance of the same "verify live, don't trust the written claim"
+  lesson from the `:manifest():last()` symmetry work immediately prior
+  (see this same file's own entry above, and
+  `feedback_verify_redundancy_claims_live` in memory).
+
+  Only FILES itself still had the gap, in two places:
+  - `query()`'s literal-root GROUP-mode branch (`':all()'/':groups()'`
+    partitioned by `file_home`, each reduced by its own pointer): removed
+    the unconditional `partitioned and pointers and has_manifest and not
+    has_field_function` raise entirely -- the reduction logic
+    immediately below it already does the right thing once nothing
+    blocks it from running (each distinct `file_home` is independently
+    reduced to at most one candidate via `_apply_pointer()` BEFORE
+    `:manifest()`'s own entry is ever read, so "several groups, each
+    already individually reduced" is not the Rule 1 violation the old
+    check conflated it with). `ambiguous_content_read`'s own computation
+    gained `and not (partitioned and pointers)`.
+  - `_query_star_traversal()`'s GROUP-mode branch (the `'*'` peer of the
+    above, across every named-file): its `ambiguous_content_read`
+    computation gained `and not partitioned` (pointer presence is
+    already guaranteed at this point in the method, so no extra
+    truthiness check was needed the way the literal-root fix needed
+    `and pointers` alongside `partitioned`).
+
+  Both fixes reuse the exact pattern CSVPATHS/RESULTS already shipped --
+  no new mechanism, just closing FILES' own lagging copy of it. Tests
+  converted from "raises" to "now resolves correctly" (four total, no
+  net test-count change): `TestAllForOneNamedFile::test_all_combined_
+  with_manifest_now_resolves_each_groups_own_entry`,
+  `TestGroupsForOneNamedFile::test_groups_combined_with_manifest_now_
+  resolves_each_groups_own_entry`, `TestStarTraversalGroup::
+  test_all_combined_with_manifest_now_resolves_each_groups_own_entry`,
+  `TestStarTraversalGroupsAnyDepth::
+  test_combining_with_manifest_now_resolves_each_groups_own_entry`. Full
+  `tests/references/` suite: 1631 passed. Full local-backend suite: 4092
+  passed, 11 failed (the known SFTP/S3 credential baseline, unrelated).
