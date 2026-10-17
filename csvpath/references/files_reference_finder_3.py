@@ -896,9 +896,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         is_home = self._is_home_prefixed_reference(name_one)
         is_bare_definition = self._is_bare_definition_reference(name_one)
-        if is_bare_definition or (
-            is_home and self._chained_definition_call(name_one) is not None
-        ):
+        definition_call = self._chained_definition_call(name_one)
+        if is_bare_definition or (is_home and definition_call is not None):
             if reference.name_three is not None:
                 raise ReferenceException3(
                     "FilesReferenceFinder3 does not yet support combining "
@@ -913,6 +912,26 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 names = [
                     name for name in names if self._candidates_for_name(name, [])
                 ]
+                if definition_call.arg is not None:
+                    # generic predicate-argument filtering -- added
+                    # 2026-10-17, closing the predicate-argument bucket-
+                    # list entry's own worked example ("which named-files
+                    # have on_arrival set"). self._build(definition_call)
+                    # recursively builds the nested ':on_arrival(...)'
+                    # chain AND runs Definition3.check_valid() (which
+                    # cross-validates that the nested call is SOURCE ==
+                    # "definition" with a PredicateFunction3 arg -- see
+                    # its own docstring) before this ever filters
+                    # anything, so field_call here is already a real,
+                    # validated Function3 instance.
+                    field_call = self._build(definition_call).arg
+                    names = [
+                        name
+                        for name in names
+                        if self._matches_definition_field_predicate(
+                            name, field_call
+                        )
+                    ]
             results = []
             for name in names:
                 home = self.csvpaths.file_manager.named_file_home(name)
@@ -1300,13 +1319,47 @@ class FilesReferenceFinder3(ReferenceFinder3):
         recognize the filtered-definition-lookup shape specifically,
         rather than any other function someone might try to chain onto
         ':home()' during '*' traversal (still rejected, see the is_home
-        branch's own functions check)."""
+        branch's own functions check).
+
+        No longer requires `call.arg is None` -- widened 2026-10-17 so
+        this also recognizes ':home():definition(:on_arrival(:not_none()))'
+        (the predicate-argument filtering shape, see query()'s own
+        handling of a non-None arg here and Definition3.check_valid()
+        for the real argument-shape validation, which this method does
+        not attempt -- it only identifies the call, same as every other
+        _is_X/._chained_X sibling in this file leaves argument-shape
+        checks to the caller or to build()/check_valid()."""
         if len(name_one.functions) != 1:
             return None
         call = name_one.functions[0]
-        if isinstance(call, FunctionCall3) and call.name == "definition" and call.arg is None:
+        if isinstance(call, FunctionCall3) and call.name == "definition":
             return call
         return None
+
+    def _matches_definition_field_predicate(self, name: str, field_call) -> bool:
+        """true if `name`'s own definition.json has `field_call`'s own
+        field, and that value satisfies `field_call.arg`'s own predicate
+        (e.g. ':not_none()') -- the generic predicate-argument filtering
+        mechanism, added 2026-10-17 (deferred-work bucket list's own
+        "Predicate-argument field accessors" entry). `field_call` is
+        already a real, validated Function3 instance by the time this
+        is called (Definition3.check_valid() already confirmed it is
+        SOURCE == "definition" with a PredicateFunction3 arg, see
+        query()'s own call site) -- this just reads the value and tests
+        it, the exact same KEY-driven extraction the ordinary bare-
+        field-accessor read already uses (see _extract_data()'s own
+        "use_definition" branch), reused here rather than duplicated.
+        Deliberately NOT bespoke to ':on_arrival()' -- any current or
+        future SOURCE == "definition" field accessor works here for
+        free, since nothing about this method's own logic names one."""
+        function_cls = ReferenceFunctionFactory.get_registered_class(
+            field_call.name
+        )
+        key_path = function_cls.KEY.get(Reference3.FILES)
+        config = self.csvpaths.file_manager.describer.get_config(name)
+        entry = config.model_dump(exclude_none=True)
+        value = self._extract_field_value(entry, key_path)
+        return field_call.arg.matches(value)
 
     @staticmethod
     def _is_flatten_prefixed_reference(name_one) -> bool:
@@ -1426,6 +1479,39 @@ class FilesReferenceFinder3(ReferenceFinder3):
         log_call = self._bare_log_call(reference)
         if log_call is not None:
             return self._read_log_file(result.path, log_call.arg)
+        if (
+            reference.name_three is None
+            and self._chained_definition_call(reference.name_one) is not None
+        ):
+            # ':home():definition()' chained during '*' traversal --
+            # added 2026-08-27, covers both bare and (widened 2026-10-17)
+            # predicate-argued (':home():definition(:on_arrival(
+            # :not_none()))') forms. Checked here, BEFORE resolve_kind is
+            # even read, rather than as a branch inside the `kind ==
+            # METADATA_FILE` block below (where it used to live, and
+            # still would work for the BARE form) -- a predicate-argued
+            # nested field accessor makes resolve_kind's own generic
+            # nested-arg walk classify the WHOLE reference as
+            # METADATA_FIELD (a nested SOURCE == "definition" call
+            # triggers the same default rule an ordinary bare field read
+            # does), not METADATA_FILE. Widening the `kind ==
+            # METADATA_FILE` guard below to also admit METADATA_FIELD was
+            # tried first and confirmed LIVE to be unsafe for FILES
+            # (unlike the analogous, safe widening already shipped for
+            # RESULTS' :errors():idchain(...) GATE) -- it let ORDINARY
+            # field reads during '*' traversal (e.g. ":all():last()
+            # :uuid()", already METADATA_FIELD by resolve_kind) also
+            # reach this block, where Rule 1b's own unconditional
+            # "Star3 root_major + result.uuid is not None" re-derive-by-
+            # uuid branch incorrectly intercepted them, returning the
+            # whole manifest entry instead of the uuid field value (9
+            # tests caught this immediately). Checking this specific
+            # shape FIRST, before `kind` is even computed, sidesteps the
+            # whole question -- result.path is already the matched
+            # named-file's own definition.json path, set by
+            # _query_star_traversal's own early METADATA_FILE branch,
+            # regardless of which form matched there.
+            return self._read_well_known_file(result.path)
         kind = reference.resolve_kind
         if kind == Reference3.FIRST_PARTY:
             if reference.name_three is None:
@@ -1476,15 +1562,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # 2026-08-27). ':readme()' added 2026-09-21 -- not wired
                 # into '*' traversal (no worked example demonstrates or
                 # requires it there; see the bucket list).
-                return self._read_well_known_file(result.path)
-            if (
-                reference.name_three is None
-                and self._chained_definition_call(reference.name_one) is not None
-            ):
-                # ':home():definition()' chained during '*' traversal --
-                # added 2026-08-27. result.path is already the matched
-                # named-file's own definition.json path, set by
-                # _query_star_traversal's own early METADATA_FILE branch.
                 return self._read_well_known_file(result.path)
             if isinstance(reference.root_major, Star3) and result.uuid is not None:
                 # Rule 1b -- a pointer already reduced the global ledger

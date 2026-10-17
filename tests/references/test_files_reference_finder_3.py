@@ -87,6 +87,23 @@ class _FakeFileDescriber:
         return Config(**self._definition)
 
 
+class _PerNameFakeFileDescriber:
+    # added 2026-10-17 for the predicate-argument filtering tests
+    # (':home():definition(:on_arrival(:not_none()))') -- those need a
+    # DIFFERENT on_arrival config per named-file to prove filtering
+    # actually filters, which the single-global-dict _FakeFileDescriber
+    # above cannot express. Falls back to {} (an empty/unconfigured
+    # Config, same as the bare-dict describer's own default) for any
+    # name not given its own entry.
+    def __init__(self, definitions: dict):
+        self._definitions = definitions
+
+    def get_config(self, name):
+        from csvpath.managers.files.file_descriptor import Config
+
+        return Config(**self._definitions.get(name, {}))
+
+
 class _FakeFileManager:
     def __init__(
         self,
@@ -95,6 +112,7 @@ class _FakeFileManager:
         definition: dict | None = None,
         ledger=None,
         by_name: dict | None = None,
+        definitions: dict | None = None,
     ):
         self._home = home
         self._manifest = manifest
@@ -104,6 +122,13 @@ class _FakeFileManager:
         # tests, which need more than one distinct named-file. Every
         # other test uses the single (home, manifest) pair above.
         self._by_name = by_name
+        # definitions: {name: definition_dict} -- per-named-file
+        # describer configs, added 2026-10-17 alongside by_name, for
+        # tests that need DIFFERENT definition.json content per name
+        # (see _PerNameFakeFileDescriber above). None (the default)
+        # preserves the single-global-definition describer exactly as
+        # it always worked.
+        self._definitions = definitions
 
     def named_file_home(self, name):
         if self._by_name is not None:
@@ -127,6 +152,8 @@ class _FakeFileManager:
 
     @property
     def describer(self):
+        if self._definitions is not None:
+            return _PerNameFakeFileDescriber(self._definitions)
         return _FakeFileDescriber(self._definition)
 
 
@@ -157,9 +184,17 @@ def _finder(
     by_name: dict | None = None,
     log_file: str | None = None,
     variables: dict | None = None,
+    definitions: dict | None = None,
 ) -> FilesReferenceFinder3:
     csvpaths = _FakeCsvPaths(
-        _FakeFileManager(home, manifest, definition, ledger=ledger, by_name=by_name),
+        _FakeFileManager(
+            home,
+            manifest,
+            definition,
+            ledger=ledger,
+            by_name=by_name,
+            definitions=definitions,
+        ),
         inputs_files_path=inputs_files_path,
         log_file=log_file,
     )
@@ -1141,6 +1176,118 @@ class TestStarTraversalDefinition:
         results = finder.resolve()
         assert len(results.results) == 1
         assert results.results[0].data == b'{"on_arrival": "go"}'
+
+    def test_on_arrival_predicate_filters_to_named_files_that_have_it_set(self):
+        # the generic predicate-argument filtering mechanism (added
+        # 2026-10-17, closing the deferred-work bucket list's own
+        # "Predicate-argument field accessors" entry) -- its own
+        # motivating worked example:
+        # "$*.files.:home():definition(:on_arrival(:not_none()))" --
+        # "which named-files have on_arrival set." Both alpha and beta
+        # are zero-level-eligible (isolating the predicate's own effect
+        # from the pre-existing ':home()' filter, already covered by
+        # test_home_prefixed_definition_filters_to_zero_level_named_
+        # files_only above) -- only alpha has on_arrival configured.
+        results = _finder(
+            "$*.files.:home():definition(:on_arrival(:not_none()))",
+            HOME_STAR_ALPHA_HOME,
+            HOME_STAR_ALPHA_MANIFEST,
+            by_name=HOME_STAR_BY_NAME,
+            definitions={
+                "alpha": {
+                    "on_arrival": {
+                        "named_paths_name": "validations",
+                        "run_method": "fast_forward",
+                    }
+                },
+                "beta": {"on_arrival": None},
+            },
+        ).query()
+        # content resolution itself (reading the real definition.json
+        # bytes for a survivor) is already proven by the pre-existing
+        # test_resolve_reads_each_named_files_own_definition_bytes above
+        # -- this test is only about WHICH named-files survive the new
+        # predicate filter.
+        assert results.files == [pathu.resep(f"{HOME_STAR_ALPHA_HOME}/definition.json")]
+        assert results.ambiguous_content_read is False
+
+    def test_on_arrival_predicate_with_no_survivors_gives_empty_results(self):
+        results = _finder(
+            "$*.files.:home():definition(:on_arrival(:not_none()))",
+            HOME_STAR_ALPHA_HOME,
+            HOME_STAR_ALPHA_MANIFEST,
+            by_name=HOME_STAR_BY_NAME,
+            definitions={"alpha": {"on_arrival": None}, "beta": {"on_arrival": None}},
+        ).query()
+        assert results.results == []
+
+    def test_on_arrival_predicate_combined_with_name_three_is_not_yet_supported(
+        self,
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$*.files.:home():definition(:on_arrival(:not_none())).:last()",
+                HOME_STAR_ALPHA_HOME,
+                HOME_STAR_ALPHA_MANIFEST,
+                by_name=HOME_STAR_BY_NAME,
+                definitions={"alpha": {"on_arrival": {"a": 1}}},
+            ).query()
+
+    def test_on_arrival_predicate_survivor_resolves_its_real_definition_bytes(
+        self, tmp_path
+    ):
+        # end-to-end: the fake describer drives the FILTER decision
+        # (which named-files survive), a real on-disk definition.json
+        # drives the actual RESOLVED content for the survivor -- two
+        # independent fakes, same as production (describer.get_config()
+        # for the check, a real file read for the content).
+        alpha_home = tmp_path / "alpha"
+        alpha_home.mkdir()
+        (alpha_home / "definition.json").write_bytes(
+            b'{"on_arrival": {"named_paths_name": "validations", '
+            b'"run_method": "fast_forward"}}'
+        )
+        alpha_manifest = [
+            {
+                "file": str(alpha_home / "aaa.csv"),
+                "file_home": str(alpha_home),
+                "uuid": "u-alpha-zero-1",
+            }
+        ]
+        beta_home = tmp_path / "beta"
+        beta_home.mkdir()
+        (beta_home / "definition.json").write_bytes(b'{"on_arrival": null}')
+        beta_manifest = [
+            {
+                "file": str(beta_home / "bbb.csv"),
+                "file_home": str(beta_home),
+                "uuid": "u-beta-zero-1",
+            }
+        ]
+        by_name = {
+            "alpha": (str(alpha_home), alpha_manifest),
+            "beta": (str(beta_home), beta_manifest),
+        }
+        results = _finder(
+            "$*.files.:home():definition(:on_arrival(:not_none()))",
+            str(alpha_home),
+            [],
+            by_name=by_name,
+            definitions={
+                "alpha": {
+                    "on_arrival": {
+                        "named_paths_name": "validations",
+                        "run_method": "fast_forward",
+                    }
+                },
+                "beta": {"on_arrival": None},
+            },
+        ).resolve()
+        assert len(results.results) == 1
+        assert results.results[0].data == (
+            b'{"on_arrival": {"named_paths_name": "validations", '
+            b'"run_method": "fast_forward"}}'
+        )
 
 
 class TestAllForOneNamedFile:

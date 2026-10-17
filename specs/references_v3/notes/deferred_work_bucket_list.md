@@ -392,7 +392,7 @@ including two genuine, previously-undetected bugs caught while doing this
   added). Full local-backend suite: 4092 passed, 11 failed (the same
   known SFTP/S3 baseline, unrelated).
 
-## Predicate-argument field accessors (`:on_arrival(:not_none())`) — filter half + `:errors():idchain(...)` GATE half both BUILT, generic mechanism still not built
+## Predicate-argument field accessors (`:on_arrival(:not_none())`) — ALL THREE PIECES NOW BUILT 2026-10-17
 
 David, 2026-08-21, drafting the compendium's replacement `:manifest()`/
 `:definition()` section: an AI needs to answer "which named-files trigger a
@@ -488,17 +488,78 @@ and `Idchain3.ARG_TYPES` widened to accept one). `:regex()` as a
 already accepted) is still unbuilt — separately tracked under the
 grammar/argument-type-gaps entry, not double-counted here.
 
-Still to design/build:
 - **The generic "any field accessor takes a predicate argument"
-  mechanism** (`:on_arrival(:not_none())`, the FILES definition-field
-  example that originally motivated this whole entry) — NOT built.
-  `Idchain3` accepting a predicate is a narrow, specific fix for one
-  function; nothing generic exists yet for arbitrary field accessors to
-  do the same. Still needs the design work described above (how a
-  predicate argument is recognized/dispatched generically) before
-  building. This remains the ONE genuinely design-blocked piece of this
-  entry — the GATE mechanism below turned out not to need that generic
-  design at all, see its own note.
+  mechanism — BUILT 2026-10-17**, closing this entry's own original
+  motivating worked example: `$*.files.:home():definition(:on_arrival
+  (:not_none()))` — "which named-files have on_arrival set." David,
+  2026-10-17, confirming the open interpretive question: a surviving
+  named-file's own FULL `definition.json` content is what the reference
+  resolves to (not just the `on_arrival` value, and not just a bare list
+  of names) — "I'm not going to try to recreate my state of mind when we
+  did that example, but in the moment I agree with you."
+
+  No new declarative class attribute needed (deliberately NOT a
+  `SELECTOR_WHEN_ARGUED`-style flag) -- the mechanism is a plain
+  `isinstance(arg, PredicateFunction3)` type check, which is already
+  generic by construction: any current or future field accessor that
+  widens its own `ARG_TYPES` to include `PredicateFunction3` works here
+  for free, no finder-side change needed per function. Implementation:
+  - `OnArrival3.ARG_TYPES` widened from `()` to `(PredicateFunction3,)`.
+  - `Definition3.ARG_TYPES` widened from `()` to `(Function3,)` (any
+    nested field accessor, syntactically) -- `Definition3.check_valid()`
+    overridden to cross-validate it: must be `SOURCE == "definition"`
+    AND its own arg must be a `PredicateFunction3`, else a clear raise
+    (not a confusing downstream failure).
+  - `FilesReferenceFinder3._chained_definition_call()` widened to no
+    longer require `call.arg is None` (it used to only recognize the
+    BARE `:home():definition()` shape).
+  - `_query_star_traversal()`'s own `is_home and definition_call is not
+    None` branch, once the candidates are already narrowed to zero-level
+    registrations, additionally drops any candidate whose own
+    `describer.get_config(name)` field (read via the SAME `KEY`-driven
+    extraction the ordinary bare-field-accessor read already uses, see
+    new `_matches_definition_field_predicate()`) fails the nested
+    predicate -- before building results, so everything downstream
+    (resolving `definition.json`'s content for survivors) is unchanged.
+  - **A real regression caught and fixed before shipping, not after**:
+    `resolve_kind` classifies this whole reference as `METADATA_FIELD`
+    (a nested `SOURCE == "definition"` call triggers the same default
+    rule an ordinary bare field read does), not `METADATA_FILE`. First
+    attempt widened `_extract_data()`'s own `kind == METADATA_FILE`
+    guard to also admit `METADATA_FIELD` (mirroring the analogous,
+    already-shipped widening for RESULTS' `:errors():idchain(...)` GATE)
+    -- confirmed LIVE this was unsafe for FILES specifically: it let
+    ORDINARY field reads during `'*'` traversal (e.g.
+    `:all():last():uuid()`, already `METADATA_FIELD` by `resolve_kind`)
+    also reach that block, where Rule 1b's own unconditional "`Star3`
+    root_major + `result.uuid is not None`" re-derive-by-uuid branch
+    incorrectly intercepted them, returning the whole manifest entry
+    instead of the `uuid` field value -- 9 tests caught this
+    immediately. Fixed by checking `_chained_definition_call()`
+    directly, BEFORE `resolve_kind` is even read (alongside the existing
+    `_bare_log_call` check), rather than touching the `kind ==
+    METADATA_FILE` guard at all. Lesson: the RESULTS widening being safe
+    does not mean the identical-looking FILES widening is safe too --
+    each finder's own `_extract_data()` has different branches with
+    different implicit assumptions; verify live per finder, not by
+    analogy.
+
+  Tests: new `TestPredicateArgumentFiltering` in
+  `tests/references/functions/well_known_files/test_definition_3.py`
+  (`Definition3.check_valid()`'s own cross-validation); new tests in
+  `tests/references/functions/fields/test_on_arrival_3.py`; new tests in
+  `TestStarTraversalDefinition`
+  (`tests/references/test_files_reference_finder_3.py`), including an
+  end-to-end one resolving a real on-disk `definition.json` for the
+  surviving candidate -- required widening that test file's own
+  `_FakeFileManager`/`_finder()` test harness with a new, optional
+  `definitions: dict[name, dict]` parameter (a new
+  `_PerNameFakeFileDescriber`), since the existing `_FakeFileDescriber`
+  only ever supported one single, global definition dict, not a
+  different one per named-file (needed here to prove the filter
+  actually filters). Full `tests/references/` suite: 1728 passed (up
+  from 1713). Full local-backend suite: 4189 passed, 11 failed (known
+  SFTP/S3 credential baseline, unrelated).
 
 - **The GATE dispatch mechanism — BUILT 2026-10-17**, scoped exactly to
   the compendium's own settled acceptance criteria (§4.13/4.14, five
