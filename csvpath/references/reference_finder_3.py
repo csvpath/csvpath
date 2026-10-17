@@ -439,7 +439,6 @@ class ReferenceFinder3(ABC):
             "groups",
             "name",
             "regex",
-            "choice",
             # ':home()' is a zero-level PLACEHOLDER marker (see
             # home_3.py), not an ordinary field accessor -- David
             # deliberately decided against a prefixed "beta/:home()"
