@@ -2118,6 +2118,71 @@ class TestDirectionFunctions:
         assert results.uuids == ["v2", "v3", "v4"]
 
 
+class TestImpliedStarForNameOneFunctions:
+    # compendium 3.9c/3.9d: a function starting name_one, or following
+    # directly after a path separator, implies a '*' wildcard unless it
+    # is itself a wildcard, fully occupies a path segment, or does not
+    # operate in a path segment at all. ':after()'/':before()'/':from()'/
+    # ':to()' fit none of those three exemption categories, so by spec
+    # they default into the implied-'*' rule -- added 2026-10-16, closing
+    # the gap where the bare form used to raise a DIFFERENT, misleading
+    # message ("not a legal name_one path segment") than the already-
+    # normalized explicit-'*' form ("functions attached directly to
+    # name_one"). The fix does NOT make ':after()' legal at name_one for
+    # FILES -- it is still name_three-only there by design (From3's own
+    # POSITIONS, "FILES' version selector never lives in name_one") --
+    # it only makes both forms fail for the SAME, accurate reason.
+    _MESSAGE = (
+        "FilesReferenceFinder3 does not yet support functions attached "
+        "directly to name_one -- put the version-selecting function in "
+        "name_three instead."
+    )
+
+    def test_bare_and_explicit_star_raise_the_identical_message(self):
+        with pytest.raises(ReferenceException3) as bare_exc:
+            _finder(
+                "$ranger.files.:after(:index(3))", RANGE_HOME, RANGE_MANIFEST
+            ).query()
+        with pytest.raises(ReferenceException3) as star_exc:
+            _finder(
+                "$ranger.files.*:after(:index(3))", RANGE_HOME, RANGE_MANIFEST
+            ).query()
+        assert str(bare_exc.value) == str(star_exc.value) == self._MESSAGE
+
+    def test_following_a_path_separator_also_implies_star(self):
+        # 3.9c's OTHER clause -- not just "starting name_one," also "a
+        # function following directly after a path separator" (a
+        # literal/'*'-prefixed path ending in a not-otherwise-recognized
+        # function, not just a bare sole-content one).
+        with pytest.raises(ReferenceException3) as exc:
+            _finder(
+                "$mixed.files.nested/:after(:index(0))",
+                MIXED_HOME,
+                MIXED_MANIFEST,
+            ).query()
+        assert str(exc.value) == self._MESSAGE
+
+    def test_name_three_position_is_unaffected_and_still_works(self):
+        # the one currently-legal form for FILES -- ':after()' riding in
+        # name_three, after a real path separator -- must keep working
+        # exactly as before; this fix only touches name_one.
+        results = _finder(
+            "$ranger.files.*.:after(:index(3))", RANGE_HOME, RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v4"]
+
+    def test_name_regex_and_clock_functions_remain_exempt_and_unaffected(self):
+        # ':name()' is in _apply_implied_star()'s own exemption list
+        # ("fully occupies a path segment") -- confirms the fix did not
+        # start wrongly normalizing it too (it would raise the "functions
+        # attached directly to name_one" message instead of resolving,
+        # if it had).
+        results = _finder(
+            '$ranger.files.:name("orders.csv").:last()', RANGE_HOME, RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v4"]
+
+
 class TestGroupsForOneNamedFile:
     # bare ':groups()' as name_one's entire content, for a LITERAL
     # (non-'*') root_major -- added 2026-08-12, the any-depth GROUP peer
