@@ -1,5 +1,6 @@
 from ...reference_3 import Reference3
 from ..function_3 import Function3
+from ..filters.count_3 import Count3
 from ..filters.idchain_3 import Idchain3
 from ..filters.message_3 import Message3
 
@@ -33,25 +34,36 @@ class Errors3(Function3):
     # WITHIN errors.json's own array entries) narrows which entries of
     # errors.json's content come back -- the content itself is always
     # returned, just possibly narrowed. This is settled, shipped
-    # behavior and must not change to an all-or-nothing gate.
+    # behavior for :idchain()/:message() and must not change to an
+    # all-or-nothing gate for THEM.
     #
-    # The GATE half (NOT YET BUILT -- see deferred_work_bucket_list.md)
-    # is a *separate* function CHAINED AFTER :errors() in the same
-    # func_chain, not nested inside it -- e.g. a hypothetical
-    # ":errors():error_count(:above(5))". There, :error_count() reads a
-    # field that has nothing to do with errors.json's own array (it is
-    # a sibling field on the run instance's manifest.json), and its own
-    # nested predicate (:above(5)) decides whether :errors()'s WHOLE
-    # result is returned AT ALL -- not which entries survive. Chained
-    # position, not nesting, is what signals "gate the function before
-    # me" instead of "filter my own content."
+    # The GATE half, shipped 2026-10-17, is a *separate* :idchain(...)
+    # (currently only :idchain(), see _apply_errors_gate's own docstring)
+    # CHAINED AFTER :errors() in the same func_chain, not nested inside
+    # it -- e.g. ":errors():idchain(:not_none())". There, the gate's own
+    # predicate decides whether :errors()'s WHOLE, unfiltered result is
+    # returned at all -- not which entries survive. Chained position,
+    # not nesting, is what signals "gate the function before me" instead
+    # of "filter my own content."
+    #
+    # A third, EXPLICIT exception, also shipped 2026-10-17 -- a nested
+    # :count(...) argument (e.g. ":errors(:count(:above(10)))",
+    # normative examples 489-491). Despite being NESTED (normally the
+    # FILTER position), :count() cannot filter entries at all -- it is
+    # an aggregate over the WHOLE array, with no per-entry meaning -- so
+    # it acts as a GATE instead, same all-or-nothing treatment as the
+    # chained case above, just reached from the nested position. See
+    # Count3's own docstring. Not a loophole in the FILTER/GATE rule --
+    # an aggregate function nested here was never a case the rule's
+    # original two positions anticipated either way.
     #
     NAME = "errors"
     SUMMARY = (
         "The parsed contents of a run instance's errors.json -- the list "
         "of errors that csvpath statement's execution recorded. Optionally "
         "filtered to entries matching a nested :idchain(...) or "
-        ":message(...) argument."
+        ":message(...) argument, or gated all-or-nothing by a nested "
+        ":count(...) argument."
     )
     ROLE = Function3.VALUE
     # metadata_kind() override -- a whole-resource read, not a
@@ -59,6 +71,6 @@ class Errors3(Function3):
     # why this class needs one (added 2026-08-28).
     RESOLVES_AS = Reference3.METADATA_FILE
     DATATYPES = (Reference3.RESULTS,)
-    ARG_TYPES = (Idchain3, Message3)
+    ARG_TYPES = (Idchain3, Message3, Count3)
     ARG_REQUIRED = False
     POSITIONS = {Reference3.RESULTS: (Reference3.NAME_THREE,)}
