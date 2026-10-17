@@ -9,7 +9,7 @@ instead, so the completed reasoning trail isn't lost, it's just off this
 list (see that file's own header, and the "Process note" at the bottom of
 this one).
 
-## A function following a path separator implies a `*` wildcard (compendium 3.9c/3.9d) — confirmed unimplemented, real and foundational
+## A function following a path separator implies a `*` wildcard (compendium 3.9c/3.9d) — RESULTS BUILT, FILES' direction-function error-message gap BUILT 2026-10-16, broader FILES support still deferred
 
 Surfaced 2026-09-23 while building `:regex()` as a name_one path segment
 (see the done-list entry). Compendium 3.9c: "A function starting `name_one`
@@ -94,17 +94,72 @@ Two real findings from this table:
    one rejection to a slightly different one — it would not make either row
    work.
 
-**Conclusion, and what would actually need to be built** (not attempted
-here): the real prerequisite is generalizing FILES' `name_one.functions`
-handling to accept a wildcard/marker (`*`/`:all()`/`:flatten()`/`:groups()`)
-combined with a chained field-accessor function — separate, somewhat larger
-work than implied-`*`, and not obviously worth doing in isolation before the
-predicate-argument mechanism exists anyway, since a bare (non-matching)
+**Conclusion, 2026-09-24** (that pass's own scope — making NEW things work,
+e.g. a field accessor riding a wildcard — was not attempted): the real
+prerequisite for THAT is generalizing FILES' `name_one.functions` handling
+to accept a wildcard/marker (`*`/`:all()`/`:flatten()`/`:groups()`) combined
+with a chained field-accessor function — separate, somewhat larger work
+than implied-`*` itself, and not obviously worth doing in isolation before
+the predicate-argument mechanism exists anyway, since a bare (non-matching)
 field read via this shape is not a case any worked example has asked for.
-Once (if) that lands, implied-`*` would then trivially normalize the bare
-form into it, with no further work. `ReferenceFinder3._apply_implied_star()`
-itself stays built and shared (RESULTS already uses it) — nothing about it
-needs to change when FILES support is eventually picked back up.
+That piece is still deferred, unchanged by the fix below.
+
+**A second, narrower instance of the same gap, found and BUILT 2026-10-16
+— the direction/ordinal functions' error message was wrong, not just
+imprecise.** David asked whether `$a.files.:after(:index(3))` (bare) and
+`$a.files.*:after(:index(3))` (explicit `*`) should be "the same" per
+3.9c/3.9d. Checked `:after()` against the three exemption categories
+textually: not a wildcard itself, does not fully occupy a path segment
+the way `:name()`/`:regex()` do, and does not fit category 3 either
+(`:manifest()`/`:definition()`/`:on_arrival()`/`:fingerprint()` are fixed
+whole-entity resources; `:after()` is an ordinal/list-reducing function,
+a different character). **By the letter of the spec, `:after()`/
+`:before()`/`:from()`/`:to()` default into the implied-`*` rule** — the
+two forms should parse to the identical normalized shape.
+
+But implied-`*` is purely a READING rule, not a legality one — those four
+functions are separately declared (`Before3`/`After3`/`From3`/`To3`'s own
+`POSITIONS`) legal ONLY at `name_three` for FILES, a pre-existing,
+deliberate architectural fact (`From3`'s own comment: "FILES' version
+selector never lives in `name_one`"), unrelated to 3.9c/d. So even with
+implied-`*` wired, the normalized shape is still illegal for FILES — just
+illegal for the right reason now, instead of the wrong one. Confirmed
+live both forms used to fail with two DIFFERENT and both subtly wrong
+messages (the bare form via `_compile_path_pattern()` complaining about
+an unrecognized PATH-SEGMENT type, which was never the real reason; the
+explicit form via the pre-existing, correct "functions attached directly
+to name_one" rejection).
+
+**Fix** (branch `fix/files-implied-star-name-one-functions`): one call to
+the already-shared, unchanged `ReferenceFinder3._apply_implied_star()`,
+inserted at exactly one new point in `FilesReferenceFinder3.query()` —
+the FINAL `else` branch (right before `pattern = self._compile_path_
+pattern(name_one.path)`), reached only once every dedicated bare-shape/
+field-chain check above it has already failed to match. Confirmed safe
+(not a repeat of the 2026-09-24 29-test regression, which came from
+inserting too EARLY, before those dedicated checks got their turn):
+every branch above this point already requires `name_one.functions` to
+be empty to even be considered, and the pre-existing blanket raise
+higher up already intercepts anything reaching this point with
+`name_one.functions` already non-empty from the grammar directly — so by
+construction `name_one.functions` is guaranteed empty on entry to this
+`else`, and the only way `_apply_implied_star()` can populate it here is
+its own documented, already-exempted-correctly mutation. Does NOT make
+`:after()`/etc. legal at `name_one` (it should not be, per FILES' own
+architecture) — only makes both forms fail with the identical, accurate
+message. Tests: new `TestImpliedStarForNameOneFunctions` (bare vs.
+explicit-`*` raise the identical message; the "following a path
+separator" clause, not just "starting name_one"; the one currently-legal
+`name_three` form still works; `:name()`/clock functions remain
+correctly exempt and unaffected). Full `tests/references/` suite: 1697
+passed (up from 1693). Full local-backend suite: 4158 passed, 11 failed
+(the known SFTP/S3 credential baseline, unrelated).
+
+The 2026-09-24 conclusion's own larger prerequisite (generalizing
+`name_one.functions` to accept a wildcard/marker combined with a chained
+field accessor) remains deferred and unaffected by this fix —
+`ReferenceFinder3._apply_implied_star()` needed no change at all; this
+was purely about FILES' own call-site placement.
 
 ## Time component functions acting as context setters — not built at all; ROLE is currently static per function, never usage-dependent
 

@@ -433,6 +433,49 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 root_major, prefix_pattern, suffix_pattern
             )
         else:
+            # compendium 3.9c/3.9d: a function starting name_one or
+            # following directly after a path separator implies a '*'
+            # wildcard, unless it is itself a wildcard, fully occupies a
+            # path segment (:name()/:regex()/a clock function), or does
+            # not operate in a path segment at all -- all already
+            # excluded by the branches above (bare/prefixed :all()/
+            # :flatten()/:groups()/:home()/selector-when-argued) or by
+            # _apply_implied_star()'s own exemption list (:name()/
+            # :regex()/a clock function, checked again here since this
+            # branch is also reached by a literal-PREFIXED path ending in
+            # one of those, e.g. "orders/:name(...)", not just a bare
+            # one). Added 2026-10-16, closing the gap the "implied-'*'
+            # wildcard" bucket-list entry's own direction-functions
+            # follow-up flagged: a not-otherwise-recognized function
+            # landing here (e.g. ":after()", declared name_three-only for
+            # FILES) used to reach _compile_path_pattern() directly and
+            # raise a misleading "not a legal name_one path segment"
+            # error, DIFFERENT from the "functions attached directly to
+            # name_one" error the identical, already-normalized explicit-
+            # '*' form raises just above (line 292) -- the spec says both
+            # forms should parse to the SAME shape, so they must fail
+            # with the SAME reason too. Safe to call unconditionally
+            # here, not a regression risk the way an EARLIER insertion
+            # point was (David, 2026-09-24, broke 29 tests by running
+            # this before the dedicated bare-shape checks had their own
+            # turn): every branch above this one already required
+            # `name_one.functions` to be empty to even be considered (see
+            # each one's own docstring), and the blanket raise at line 292
+            # already intercepts anything that reached here with
+            # `name_one.functions` non-empty from the grammar directly --
+            # so by construction, `name_one.functions` is guaranteed
+            # empty on entry to this `else`, and the only way
+            # `_apply_implied_star()` can populate it is its own
+            # documented mutation, which no earlier branch's own
+            # recognized shape is exposed to (none of them reach this
+            # `else` at all once matched).
+            self._apply_implied_star(name_one)
+            if name_one.functions:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not yet support functions "
+                    "attached directly to name_one -- put the version-"
+                    "selecting function in name_three instead."
+                )
             pattern = self._compile_path_pattern(name_one.path)
             candidates = self._candidates_for_name(root_major, pattern)
 
