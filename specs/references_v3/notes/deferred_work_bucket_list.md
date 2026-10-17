@@ -106,6 +106,88 @@ form into it, with no further work. `ReferenceFinder3._apply_implied_star()`
 itself stays built and shared (RESULTS already uses it) — nothing about it
 needs to change when FILES support is eventually picked back up.
 
+**A second, narrower instance of the same gap found 2026-10-16 — the
+direction/ordinal functions' error message is wrong, not just imprecise.**
+David asked whether `$a.files.:after(:index(3))` (bare) and `$a.files.
+*:after(:index(3))` (explicit `*`) should be "the same" per 3.9c/3.9d.
+Checked `:after()` against the three exemption categories textually: it is
+not a wildcard itself, does not fully occupy a path segment the way
+`:name()`/`:regex()` do (it does not match a segment's identity), and does
+not fit category 3 either (`:manifest()`/`:definition()`/`:on_arrival()`/
+`:fingerprint()` are all fixed, whole-entity resources; `:after()` is an
+ordinal/list-reducing function, a different character entirely). **By the
+letter of the spec, `:after()`/`:before()`/`:from()`/`:to()` default into
+the implied-`*` rule** — the two forms should parse to the identical
+normalized shape.
+
+But implied-`*` is purely a READING rule (how a bare function gets
+reinterpreted) — it says nothing about whether a function is LEGAL at the
+position it gets reinterpreted into. `:before()`/`:after()`/`:from()`/
+`:to()` are separately declared (`Before3`/`After3`/`From3`/`To3`'s own
+`POSITIONS`) legal ONLY at `name_three` for FILES, never `name_one` — a
+pre-existing, deliberate architectural fact (`From3`'s own comment:
+"FILES' version selector never lives in `name_one`"), unrelated to 3.9c/d.
+So even with implied-`*` fully wired, the normalized shape would STILL be
+illegal for FILES — just illegal for a different, more precise reason than
+today's actual error.
+
+**Confirmed live, both forms currently fail, but with two DIFFERENT and
+both subtly wrong messages**:
+```
+$a.files.:after(:index(3))    -> "Does not yet support :after() as a
+                                   name_one path segment -- only :name(...),
+                                   a clock value function (e.g. :year()),
+                                   and literal/'*' segments are supported."
+$a.files.*:after(:index(3))   -> "FilesReferenceFinder3 does not yet
+                                   support functions attached directly to
+                                   name_one -- put the version-selecting
+                                   function in name_three instead."
+$a.files.*.:after(:index(3))  -> works (the only currently-legal form,
+                                   :after() correctly living in name_three)
+```
+The bare form's message is simply WRONG, not just differently-worded —
+`_compile_path_pattern()` is rejecting `:after()` as an unrecognized
+PATH-SEGMENT-MATCHING function (the same slot `:name()`/`:regex()`/clock
+functions occupy), which is not actually why it is illegal; it is illegal
+because, once correctly read as `*:after(...)` per 3.9c/d, `:after()` is
+still not a `name_one`-legal function for FILES. Both forms SHOULD raise
+the identical message once implied-`*` is correctly wired — the fix is not
+"make `:after()` work at `name_one`" (it legitimately should not — that
+would contradict FILES' own version-selector architecture), only "make
+both forms fail for the SAME, ACCURATE reason."
+
+**Scope of actually fixing this, assessed 2026-10-16, deliberately not
+attempted in this pass pending a go-ahead:** narrower than the 2026-09-24
+investigation's own conclusion above (that conclusion was about making
+NEW things WORK — a field accessor riding a wildcard; this is only about
+making an ALREADY-and-CORRECTLY-rejected shape fail for the right reason).
+`ReferenceFinder3._apply_implied_star()` itself needs no change — its own
+exemption tuple already correctly excludes every function that should NOT
+get this treatment. The real work is in
+`FilesReferenceFinder3.query()`'s own dispatch order: the "if name_one.
+functions: raise" check currently only ever sees a non-empty `name_one.
+functions` for the EXPLICIT-`*` form (populated directly by the grammar,
+`path_prefix func_chain?` with no dot) — for the BARE form, the function
+occupies `name_one.path[0]` itself (the grammar's single-function-segment
+case) and `name_one.functions` is empty, so execution falls all the way
+through every `_is_bare_X_reference` check (none match, since none of
+those names match "after") into the final `else: pattern = self.
+_compile_path_pattern(name_one.path)` branch, which gives today's wrong
+message. The fix needs `_apply_implied_star(name_one)` called at exactly
+one new point — after every dedicated bare-shape/field-chain check has
+had its turn (so none of THEM get pre-empted, the exact 29-test
+regression the 2026-09-24 attempt hit by inserting too early) but before
+the final `else` fallback — and then the SAME "functions attached
+directly to name_one" raise needs to fire for the now-mutated shape too,
+which likely means restructuring so that check runs once, after
+normalization, rather than only at its current early position. This
+touches `FilesReferenceFinder3.query()`'s core dispatch order, a heavily-
+tested method (regression risk is real, not hypothetical — see the
+2026-09-24 29-test break) — needs careful re-sequencing and a full
+`tests/references/` run, not a one-line fix, but it is a bounded,
+error-message-consistency fix, not a capability expansion (nothing new
+becomes legal at `name_one` as a result).
+
 ## Time component functions acting as context setters — not built at all; ROLE is currently static per function, never usage-dependent
 
 Surfaced 2026-09-21, first pass through `csvpath/references/functions/values/`
