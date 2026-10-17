@@ -9,6 +9,12 @@ from csvpath.util.date_util import DateUtility as daut
 def test_metadata():
     f = Minute3()
     assert f.name == "minute"
+    # ROLE stays VALUE -- a first attempt changed this to
+    # CONTEXT_SETTER and broke this function's own, pre-existing,
+    # compendium-explicit VALUE usage in {...} interpolation (6.42).
+    # The new bare-context-setter/anchor capability (compendium 6.27,
+    # TimeWindowFunction3, added 2026-10-17) is detected structurally
+    # instead -- see year_3.py's own comment for the full story.
     assert f.ROLE == Function3.VALUE
     assert f.SOURCE == "clock"
 
@@ -24,3 +30,33 @@ def test_arg_is_rejected():
 
 def test_compute_matches_the_current_minute():
     assert Minute3().compute() == daut.now().minute
+
+
+class TestStartEndDatetime:
+    def test_start_is_top_of_the_current_minute(self):
+        f = Minute3()
+        start = f.start_datetime()
+        now = daut.now()
+        assert start == start.replace(
+            year=now.year,
+            month=now.month,
+            day=now.day,
+            hour=now.hour,
+            minute=now.minute,
+            second=0,
+            microsecond=0,
+        )
+
+    def test_end_is_bottom_of_the_current_minute(self):
+        f = Minute3()
+        end = f.end_datetime()
+        now = daut.now()
+        assert end == end.replace(
+            year=now.year,
+            month=now.month,
+            day=now.day,
+            hour=now.hour,
+            minute=now.minute,
+            second=59,
+            microsecond=999999,
+        )

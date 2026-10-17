@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import datetime
 
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
@@ -10,6 +11,7 @@ from .functions.function_3 import Function3
 from .functions.filters.count_3 import Count3
 from .functions.filters.idchain_3 import Idchain3
 from .functions.filters.message_3 import Message3
+from .functions.values.time_window_function_3 import TimeWindowFunction3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_3 import FunctionCall3, Reference3, Star3
 from .reference_exceptions_3 import ReferenceException3
@@ -541,7 +543,38 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             ]
 
         from_call, to_call = self._range_calls_from_calls(calls)
-        if from_call is not None or to_call is not None:
+        # Gap 1 of compendium 6.27/TimeWindowFunction3 (added 2026-10-17)
+        # -- a BARE time-component function riding in the chain, with
+        # no explicit ':from()'/':to()'/':before()'/':after()' of its
+        # own (6.27e's first bullet, "use as a range" -- the compendium's
+        # own flagship example, "$acme.files.:yesterday()"). Detected as
+        # its own, separate entry in `built` -- a TimeWindowFunction3
+        # nested as from_call's/to_call's own .arg (Gap 2, already
+        # handled below) never shows up here, it is that call's .arg,
+        # not a sibling entry in the chain.
+        bare_time_windows = [
+            f for f in self._build_chain(calls) if isinstance(f, TimeWindowFunction3)
+        ]
+        if len(bare_time_windows) > 1:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not support combining more "
+                "than one bare time-component function (e.g. "
+                "':yesterday()') in the same name_one chain."
+            )
+        bare_time_window = bare_time_windows[0] if bare_time_windows else None
+        if bare_time_window is not None and (
+            from_call is not None or to_call is not None
+        ):
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not support combining a "
+                "bare time-component function (e.g. ':yesterday()') with "
+                "an explicit ':from()'/':to()'/':before()'/':after()' "
+                "bound in the same name_one chain -- the bare function "
+                "already means its own whole period, both ends included."
+            )
+        if bare_time_window is not None:
+            candidates = self._apply_bare_time_window(candidates, bare_time_window)
+        elif from_call is not None or to_call is not None:
             # ':from()'/':to()' as a run-level range -- added 2026-08-13,
             # e.g. "customers:from(:index(-3))" -- "the last three runs
             # with template customers." Stays a LIST (not reduced to
@@ -574,8 +607,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             from_bound = self._range_bound(from_call) if from_call is not None else None
             to_bound = self._range_bound(to_call) if to_call is not None else None
-            from_is_date = isinstance(from_bound, str)
-            to_is_date = isinstance(to_bound, str)
+            # TimeWindowFunction3 (":year()"/":date(...)"/etc, compendium
+            # 6.27, added 2026-10-17) is date-mode too, same as a plain
+            # string -- _range_bound() returns it as-is now, not
+            # unwrapped to a raw value (see its own docstring).
+            from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
+            to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
             if (from_bound is not None and to_bound is not None) and (
                 from_is_date != to_is_date
             ):
@@ -584,9 +621,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     "mode and date-mode range bounds in the same range."
                 )
             if from_is_date or to_is_date:
-                if from_is_date:
+                # a TimeWindowFunction3 bound has nothing to validate
+                # this way -- it is never a raw user-supplied string
+                # (Date3 already validates its own format at
+                # construction, in check_valid()); only a bare string
+                # bound (":from(\"2025-01-01\")") needs this check.
+                if isinstance(from_bound, str):
                     self._validate_date_format(from_bound)
-                if to_is_date:
+                if isinstance(to_bound, str):
                     self._validate_date_format(to_bound)
                 candidates = self._apply_date_range(candidates, from_call, to_call)
             else:
@@ -1738,55 +1780,90 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         built = self._build_chain(calls)
         return self._range_calls_from_built(built)
 
+    @staticmethod
+    def _apply_bare_time_window(run_homes: list, call: TimeWindowFunction3) -> list:
+        """filters `run_homes` to those whose own arrival datetime
+        falls within `call`'s own [start_datetime(), end_datetime()]
+        window -- Gap 1 of compendium 6.27/TimeWindowFunction3, added
+        2026-10-17: a bare time-component function riding in the chain
+        (e.g. ":yesterday()"), with no explicit ':from()'/':to()' of
+        its own. Always INCLUSIVE on both ends, unlike the general
+        four-way rule _apply_date_range() implements for the explicit,
+        directional case -- there is no separate :from()/:to()/
+        :before()/:after() here to pick inclusive vs exclusive; the
+        bare function always means its own whole period, both ends
+        included (compendium 6.27f's own worked example, ":yesterday()"
+        used bare: "the first moment of the prior day to the last
+        moment of the prior day")."""
+        start = call.start_datetime()
+        end = call.end_datetime()
+        return [
+            rh
+            for rh in run_homes
+            if start <= ResultsReferenceFinder3._run_dir_datetime(rh) <= end
+        ]
+
     @classmethod
     def _apply_date_range(cls, run_homes: list, lower_call, upper_call) -> list:
-        """filters `run_homes` to those whose own arrival date (parsed
-        from each directory's own fixed-width timestamp prefix, see
-        _run_dir_date) falls within the date range `lower_call`/
+        """filters `run_homes` to those whose own arrival datetime
+        (parsed from each directory's own fixed-width timestamp prefix,
+        see _run_dir_datetime) falls within the date range `lower_call`/
         `upper_call` describe -- date-mode ':from()'/':to()' (both
         INCLUSIVE), added 2026-08-13; generalized 2026-10-16 (compendium
         6.28) to also accept their exclusive siblings ':after()'/
         ':before()', mirroring ReferenceFinder3._apply_manifest_date_
-        range()'s own generalization -- now takes the raw built calls
-        (not pre-resolved date strings) so inclusivity can be read off
-        each one's own `.name`. Unlike index-mode (_apply_range, a
+        range()'s own generalization. Unlike index-mode (_apply_range, a
         POSITIONAL slice), this is a FILTER, not a slice -- comparing
         run positions would be meaningless for a date bound. run_homes
         is not assumed to already be date-sorted (though in practice it
         always is, via _run_dir_sort_key, since this runs after that
-        sort in query())."""
-        from_date = cls._range_bound(lower_call) if lower_call is not None else None
-        from_inclusive = lower_call is None or lower_call.name == "from"
-        to_date = cls._range_bound(upper_call) if upper_call is not None else None
-        to_inclusive = upper_call is None or upper_call.name == "to"
+        sort in query()).
+
+        Rewritten 2026-10-17 (compendium 6.27, TimeWindowFunction3) from
+        a fixed day-only string-prefix comparison to real datetime
+        comparison -- see ReferenceFinder3._apply_manifest_date_range()'s
+        own docstring for the full reasoning (identical rewrite, same
+        four-way rule, just applied to run directories instead of
+        manifest entries); reproduces the exact prior behavior for
+        day-granular bounds."""
+        lower_start = lower_end = upper_start = upper_end = None
+        if lower_call is not None:
+            lower_start, lower_end = cls._bound_window(lower_call)
+        lower_inclusive = lower_call is None or lower_call.name == "from"
+        if upper_call is not None:
+            upper_start, upper_end = cls._bound_window(upper_call)
+        upper_inclusive = upper_call is None or upper_call.name == "to"
         result = []
         for rh in run_homes:
-            d = cls._run_dir_date(rh)
-            if from_date is not None:
-                if from_inclusive and d < from_date:
+            d = cls._run_dir_datetime(rh)
+            if lower_start is not None:
+                if lower_inclusive and d < lower_start:
                     continue
-                if not from_inclusive and d <= from_date:
+                if not lower_inclusive and d <= lower_end:
                     continue
-            if to_date is not None:
-                if to_inclusive and d > to_date:
+            if upper_end is not None:
+                if upper_inclusive and d > upper_end:
                     continue
-                if not to_inclusive and d >= to_date:
+                if not upper_inclusive and d >= upper_start:
                     continue
             result.append(rh)
         return result
 
     @staticmethod
-    def _run_dir_date(run_home: str) -> str:
-        """the run's own arrival date ("YYYY-MM-DD"), parsed from its
-        directory name's own fixed-width timestamp prefix -- RunHomeMaker
-        always writes "%Y-%m-%d_%H-%M-%S[_N]", so the first 10
-        characters are always the date, regardless of any "_N"
-        disambiguation suffix. ISO date strings sort/compare
-        lexicographically in true chronological order, so plain string
-        comparison (see _apply_date_range) is correct, not just
-        convenient."""
+    def _run_dir_datetime(run_home: str) -> datetime:
+        """the run's own arrival datetime, parsed from its directory
+        name's own fixed-width timestamp prefix -- RunHomeMaker always
+        writes "%Y-%m-%d_%H-%M-%S[_N]", so the first 19 characters are
+        always a real, parseable datetime, regardless of any "_N"
+        disambiguation suffix. Renamed from _run_dir_date() 2026-10-17
+        (compendium 6.27, TimeWindowFunction3) -- now parses the full
+        datetime (previously only the first 10 characters, the
+        "YYYY-MM-DD" date portion) so hour/minute/second-granular
+        bounds can compare meaningfully; day-granular bounds still
+        compare identically, since truncating a datetime's own date
+        portion is exactly what the old string slice did."""
         seg = pathu.parts(run_home)[-1]
-        return seg[:10]
+        return datetime.strptime(seg[:19], "%Y-%m-%d_%H-%M-%S")
 
     _ACCESSOR_NAMES = (
         "errors",

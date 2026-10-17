@@ -8,6 +8,7 @@ from csvpath.util.nos import Nos
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
+from .functions.values.time_window_function_3 import TimeWindowFunction3
 from .reference_3 import (
     FunctionCall3,
     InterpolatedString3,
@@ -178,17 +179,23 @@ class ReferenceFinder3(ABC):
         raise ReferenceException3(f"Unsupported pointer function: {pointer.name}")
 
     @staticmethod
-    def _range_bound(function) -> "int | str":
+    def _range_bound(function) -> "int | str | TimeWindowFunction3":
         """the plain int/str value a built ':from()'/':to()' function's
         arg represents -- handles bare leaf values (int for index-mode,
-        str for date-mode, added 2026-08-13) and nested wrapper
-        functions (":index(n)"/":date(...)"), which
-        ReferenceFunctionFactory.build() already recursively compiled
-        into a real Index3/Date3 instance (not a plain int/str) by the
-        time this function exists -- see From3/To3's own comments for
-        why every shape must be accepted."""
+        str for date-mode, added 2026-08-13), nested ":index(n)"
+        (unwrapped via its own `.arg`), and a TimeWindowFunction3
+        instance (":year()"/":date(...)"/etc, compendium 6.27, widened
+        2026-10-17) -- returned AS-IS, not further unwrapped, since
+        _bound_window() below needs the instance itself (to call its
+        own start_datetime()/end_datetime()), not a raw value. Date3 is
+        a TimeWindowFunction3 like its siblings now (previously
+        special-cased to unwrap to its own plain date string here --
+        that unwrap moved to TimeWindowFunction3.start_datetime()/
+        end_datetime() instead, consistent treatment for all ten)."""
         arg = function.arg
         if isinstance(arg, (int, str)):
+            return arg
+        if isinstance(arg, TimeWindowFunction3):
             return arg
         return arg.arg
 
@@ -314,6 +321,49 @@ class ReferenceFinder3(ABC):
             ) from None
 
     @classmethod
+    def _bound_window(cls, call) -> tuple:
+        """(start_datetime, end_datetime) for a built ':from()'/':to()'/
+        ':before()'/':after()' call's own date-mode bound -- added
+        2026-10-17 (compendium 6.27) alongside TimeWindowFunction3.
+        `call.arg` is either a plain "YYYY-MM-DD" string (the original,
+        day-granular shape -- both ends fall on the same day) or a
+        TimeWindowFunction3 instance (":year()"/":date(...)"/etc), each
+        of which already knows its own [start, end] window at whatever
+        granularity it represents. See TimeWindowFunction3's own
+        docstring for the four-way directional rule
+        (_apply_manifest_date_range()/ResultsReferenceFinder3._apply_
+        date_range()) that consumes this pair -- which side a given
+        directional function actually uses depends on its own
+        inclusive/exclusive, lower/upper role, not on this method."""
+        bound = cls._range_bound(call)
+        if isinstance(bound, TimeWindowFunction3):
+            return bound.start_datetime(), bound.end_datetime()
+        start = datetime.strptime(bound, "%Y-%m-%d")
+        end = start.replace(hour=23, minute=59, second=59, microsecond=999999)
+        return start, end
+
+    @staticmethod
+    def _parse_manifest_time(value) -> datetime:
+        """the real datetime a manifest entry's own stored timestamp
+        (`Metadata.time_string`'s `isoformat()` output, always UTC via
+        DateUtility -- see metadata.py's own `set_time()`) represents,
+        with tzinfo stripped so it compares cleanly against
+        TimeWindowFunction3's own naive UTC wall-clock values. A
+        missing/malformed value resolves to `datetime.min` -- the exact
+        same "sorts before every real date" behavior the previous
+        day-only string comparison gave a missing/empty field for free
+        (an empty string sorts first lexicographically too), preserved
+        here deliberately rather than silently dropping such an entry
+        from a range filter that only has an UPPER bound (where it
+        would previously have still been kept)."""
+        if not value:
+            return datetime.min
+        try:
+            return datetime.fromisoformat(str(value)).replace(tzinfo=None)
+        except ValueError:
+            return datetime.min
+
+    @classmethod
     def _apply_manifest_date_range(
         cls, entries: list, lower_call, upper_call, key: str = "time"
     ) -> list:
@@ -325,43 +375,78 @@ class ReferenceFinder3(ABC):
         ':to()' (both INCLUSIVE) for FILES/CSVPATHS, added 2026-08-13;
         generalized 2026-10-16 (compendium 6.28) to also accept their
         exclusive siblings ':after()'/':before()', mirroring
-        _apply_range()'s own generalization -- now takes the raw built
-        calls (not pre-resolved date strings) so inclusivity can be
-        read off each one's own `.name`. Unlike index-mode (_apply_range,
-        a POSITIONAL slice), this is a FILTER, not a slice -- comparing
-        positions would be meaningless for a date bound. Compares only
-        the first 10 characters (the "YYYY-MM-DD" date portion) of the
-        stored timestamp -- ISO date strings sort/compare
-        lexicographically in true chronological order, so plain string
-        comparison is correct, not just convenient (same convention
-        ResultsReferenceFinder3's own _run_dir_date/_apply_date_range
-        already use for run directories -- here the date comes straight
-        from a stored field instead of being parsed from a path, since
-        FILES/CSVPATHS manifest entries already carry it directly). At
-        day-level granularity, an exclusive bound excludes the WHOLE day
-        it names, not just one instant within it -- coarser than a
-        strict less-than/greater-than on a full timestamp would be, but
-        consistent with ':from()'/':to()' already only ever comparing
-        at day resolution."""
-        from_date = cls._range_bound(lower_call) if lower_call is not None else None
-        from_inclusive = lower_call is None or lower_call.name == "from"
-        to_date = cls._range_bound(upper_call) if upper_call is not None else None
-        to_inclusive = upper_call is None or upper_call.name == "to"
+        _apply_range()'s own generalization. Unlike index-mode
+        (_apply_range, a POSITIONAL slice), this is a FILTER, not a
+        slice -- comparing positions would be meaningless for a date
+        bound.
+
+        Rewritten 2026-10-17 (compendium 6.27, TimeWindowFunction3) from
+        a fixed day-only ("YYYY-MM-DD"[:10]) string-prefix comparison to
+        real datetime comparison, confirmed against David directly --
+        the old day-only truncation was never a property of the DATA
+        (the stored "time" field is always a full, real-precision
+        isoformat() string), only of the bounds that happened to exist
+        so far (:date()/:yesterday()/:today(), all day-granular); once
+        :hour()/:minute()/:second() exist as real bounds, a fixed day-
+        level truncation would silently flatten them to mean the same
+        thing as :today(), which has no principled basis. The four-way
+        rule below (reconciling compendium 6.27b's literal "first
+        moment" text against 6.27f's own worked example and this
+        method's OWN already-shipped day-granular ":before()"/":after()"
+        "excludes the whole day it names" behavior) generalizes cleanly
+        to any granularity and reproduces the exact prior behavior for
+        day-granular bounds (both ends of a single calendar day), so no
+        existing passing reference should resolve any differently:
+            ':from(X)'   keeps candidates >= X.start
+            ':to(X)'     keeps candidates <= X.end
+            ':before(X)' keeps candidates <  X.start
+            ':after(X)'  keeps candidates >  X.end
+        See TimeWindowFunction3's own docstring for the full reasoning."""
+        lower_start = lower_end = upper_start = upper_end = None
+        if lower_call is not None:
+            lower_start, lower_end = cls._bound_window(lower_call)
+        lower_inclusive = lower_call is None or lower_call.name == "from"
+        if upper_call is not None:
+            upper_start, upper_end = cls._bound_window(upper_call)
+        upper_inclusive = upper_call is None or upper_call.name == "to"
         result = []
         for entry in entries:
-            d = str(entry.get(key, ""))[:10]
-            if from_date is not None:
-                if from_inclusive and d < from_date:
+            d = cls._parse_manifest_time(entry.get(key))
+            if lower_start is not None:
+                if lower_inclusive and d < lower_start:
                     continue
-                if not from_inclusive and d <= from_date:
+                if not lower_inclusive and d <= lower_end:
                     continue
-            if to_date is not None:
-                if to_inclusive and d > to_date:
+            if upper_end is not None:
+                if upper_inclusive and d > upper_end:
                     continue
-                if not to_inclusive and d >= to_date:
+                if not upper_inclusive and d >= upper_start:
                     continue
             result.append(entry)
         return result
+
+    @classmethod
+    def _apply_bare_time_window_to_manifest(
+        cls, entries: list, call: "TimeWindowFunction3", key: str = "time"
+    ) -> list:
+        """filters `entries` (manifest-entry dicts) to those whose own
+        `entries[i][key]` falls within `call`'s own [start_datetime(),
+        end_datetime()] window -- Gap 1 of compendium 6.27/
+        TimeWindowFunction3, added 2026-10-17: a bare time-component
+        function riding in the chain (e.g. ":year()"), with no explicit
+        ':from()'/':to()' of its own. FILES'/CSVPATHS' own manifest-
+        entry counterpart to ResultsReferenceFinder3._apply_bare_time_
+        window() (run directories there, manifest dicts here) -- always
+        INCLUSIVE on both ends, same reasoning: the bare function always
+        means its own whole period, both ends included, with no
+        separate directional function to pick otherwise."""
+        start = call.start_datetime()
+        end = call.end_datetime()
+        return [
+            entry
+            for entry in entries
+            if start <= cls._parse_manifest_time(entry.get(key)) <= end
+        ]
 
     @staticmethod
     def _check_position(function, position: str, datatype: str) -> None:

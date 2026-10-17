@@ -2170,6 +2170,78 @@ class TestNameThreeRange:
                 "$ranger.files.:all().:from(-1)", RANGE_HOME, RANGE_MANIFEST
             ).query()
 
+    def test_bare_time_window_function_is_gap_1s_flagship_files_example(
+        self,
+    ):
+        # Gap 1 of compendium 6.27/TimeWindowFunction3, added 2026-10-17
+        # -- a BARE time-component function riding in the chain, no
+        # explicit :from()/:to(). The compendium's own FLAGSHIP worked
+        # example for this entire mechanism is literally
+        # "$acme.files.:yesterday()" (6.27d/6.27e/6.27f) -- confirmed
+        # here with a real version pinned to "yesterday" via
+        # DateUtility.OFFSET_DAYS.
+        from datetime import date
+
+        from csvpath.util.date_util import DateUtility as daut
+
+        real_now = daut.now()
+        daut.OFFSET_DAYS = (date(2026, 1, 4) - real_now.date()).days
+        try:
+            results = _finder(
+                '$ranger.files.:name("orders.csv").:yesterday()',
+                RANGE_HOME,
+                RANGE_MANIFEST,
+            ).query()
+            # v2's own time is "2026-01-03T00:00:00+00:00" -- yesterday
+            # relative to the pinned "now" of 2026-01-04.
+            assert results.uuids == ["v2"]
+        finally:
+            daut.OFFSET_DAYS = 0
+
+    def test_bare_time_window_combined_with_explicit_range_is_rejected(
+        self,
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$ranger.files.:name("orders.csv").:yesterday():from(1)',
+                RANGE_HOME,
+                RANGE_MANIFEST,
+            ).query()
+
+    def test_time_window_function_nested_anchor_also_works_for_files(self):
+        # Gap 2 of compendium 6.27/TimeWindowFunction3 (added 2026-10-17)
+        # -- confirmed live, not just assumed from the shared mechanism,
+        # that it actually reaches FILES (the shared _apply_manifest_
+        # date_range()/_range_bound() widening lives in the common
+        # ReferenceFinder3 base, but FILES' own dispatch sites needed
+        # their own from_is_date/to_is_date widening too). Pins "now" to
+        # 2026-01-04 (v3's own arrival time) via DateUtility.OFFSET_DAYS.
+        from datetime import date
+
+        from csvpath.util.date_util import DateUtility as daut
+
+        real_now = daut.now()
+        daut.OFFSET_DAYS = (date(2026, 1, 4) - real_now.date()).days
+        try:
+            # :year() -> [2026-01-01, 2026-12-31] -- every version in
+            # RANGE_MANIFEST is in January 2026, all kept.
+            results = _finder(
+                '$ranger.files.:name("orders.csv").:from(:year())',
+                RANGE_HOME,
+                RANGE_MANIFEST,
+            ).query()
+            assert results.uuids == ["v0", "v1", "v2", "v3", "v4"]
+            # :before(:today()) -- excludes the WHOLE of "today"
+            # (2026-01-04, v3's own day) and everything after it.
+            results = _finder(
+                '$ranger.files.:name("orders.csv").:before(:today())',
+                RANGE_HOME,
+                RANGE_MANIFEST,
+            ).query()
+            assert results.uuids == ["v0", "v1", "v2"]
+        finally:
+            daut.OFFSET_DAYS = 0
+
 
 class TestDirectionFunctions:
     # ':before()'/':after()' -- compendium 6.28/6.28b/6.28c, built

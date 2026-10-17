@@ -1,6 +1,6 @@
 from ...reference_3 import Reference3
 from ..function_3 import Function3
-from .date_3 import Date3
+from ..values.time_window_function_3 import TimeWindowFunction3
 from .index_3 import Index3
 
 
@@ -8,12 +8,21 @@ class To3(Function3):
     #
     # the closing bound of :from()'s range -- see From3's own comment
     # for why the two are packaged together, the two independent index/
-    # date modes, and why ARG_TYPES includes Index3/Date3. INCLUSIVE of
-    # its own position/date (matches :index(n) pointing AT a position,
-    # and SQL's BETWEEN, which David explicitly named as the model):
-    # ":from(2):to(5)" is positions 2 through 5, both ends included,
-    # five items total; ":to(:date('2025-01-31'))" includes runs that
-    # arrived ON 2025-01-31 itself, not just before it.
+    # date modes, and why ARG_TYPES includes Index3/TimeWindowFunction3.
+    # INCLUSIVE of its own position/date (matches :index(n) pointing AT
+    # a position, and SQL's BETWEEN, which David explicitly named as
+    # the model): ":from(2):to(5)" is positions 2 through 5, both ends
+    # included, five items total; ":to(:date('2025-01-31'))" includes
+    # runs that arrived ON 2025-01-31 itself, not just before it.
+    #
+    # ARG_TYPES widened 2026-10-17 from Date3 specifically to
+    # TimeWindowFunction3 generically (compendium 6.27) -- ":to(:year())"/
+    # ":to(:month())"/etc are now equally legal, using that function's
+    # own end_datetime() as the inclusive upper cutoff (see
+    # TimeWindowFunction3's own docstring for the four-way directional
+    # rule). Date3 is itself a TimeWindowFunction3 now, so this is
+    # strictly a widening, not a change for the already-shipped
+    # ":to(:date(...))" shape.
     #
     NAME = "to"
     SUMMARY = (
@@ -21,12 +30,13 @@ class To3(Function3):
         "index-mode: up to and including this 0-based position "
         "(negative counts from the end), from the start or from "
         ":from()'s position if present. date-mode: up to and including "
-        "this calendar date, compared against each run's own arrival "
-        "date."
+        "this calendar date (or the end of a coarser time-component "
+        "function's own period, e.g. :year()/:month()), compared "
+        "against each run's own arrival date."
     )
     ROLE = Function3.CONTEXT_SETTER
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    ARG_TYPES = (int, Index3, str, Date3)
+    ARG_TYPES = (int, Index3, str, TimeWindowFunction3)
     ARG_REQUIRED = True
     #
     # see From3's own POSITIONS comment -- always paired, same positions.

@@ -289,6 +289,64 @@ class TestVersionRange:
                 '$dater.csvpaths.:from("not-a-date")', VERSION_RANGE_MANIFEST
             ).query()
 
+    def test_bare_time_window_function_is_a_range_matching_6_27e(self):
+        # Gap 1 of compendium 6.27/TimeWindowFunction3, added 2026-10-17
+        # -- a BARE time-component function riding in the chain, no
+        # explicit :from()/:to() -- 6.27e's first bullet, "use as a
+        # range." Pinned to 2026-01-04 (v3's own load time).
+        from datetime import date
+
+        from csvpath.util.date_util import DateUtility as daut
+
+        real_now = daut.now()
+        daut.OFFSET_DAYS = (date(2026, 1, 4) - real_now.date()).days
+        try:
+            results = _finder(
+                "$dater.csvpaths.:yesterday()", VERSION_RANGE_MANIFEST
+            ).query()
+            assert results.uuids == ["v2-uuid"]
+        finally:
+            daut.OFFSET_DAYS = 0
+
+    def test_bare_time_window_combined_with_explicit_range_is_rejected(
+        self,
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$dater.csvpaths.:yesterday():from(1)", VERSION_RANGE_MANIFEST
+            ).query()
+
+    def test_time_window_function_nested_anchor_also_works_for_csvpaths(
+        self,
+    ):
+        # Gap 2 of compendium 6.27/TimeWindowFunction3 (added 2026-10-17)
+        # -- confirmed live for CSVPATHS too, not just assumed from the
+        # shared mechanism. Pins "now" to 2026-01-04 (v3's own load
+        # time) via DateUtility.OFFSET_DAYS.
+        from datetime import date
+
+        from csvpath.util.date_util import DateUtility as daut
+
+        real_now = daut.now()
+        daut.OFFSET_DAYS = (date(2026, 1, 4) - real_now.date()).days
+        try:
+            results = _finder(
+                "$dater.csvpaths.:from(:year())", VERSION_RANGE_MANIFEST
+            ).query()
+            assert results.uuids == [
+                "v0-uuid",
+                "v1-uuid",
+                "v2-uuid",
+                "v3-uuid",
+                "v4-uuid",
+            ]
+            results = _finder(
+                "$dater.csvpaths.:before(:today())", VERSION_RANGE_MANIFEST
+            ).query()
+            assert results.uuids == ["v0-uuid", "v1-uuid", "v2-uuid"]
+        finally:
+            daut.OFFSET_DAYS = 0
+
     def test_having_filters_before_the_range_windows(self):
         # ':having("4")' only matches v4, so the range (last 3) has just
         # that one entry to window -- confirms the two compose in the
@@ -444,6 +502,15 @@ class TestNameThreeRange:
             _finder(
                 '$ranger.csvpaths.:first().:from(:date("2025-01-01"))',
                 RANGE_MANIFEST,
+            ).query()
+
+    def test_time_window_function_bound_is_also_not_supported(self):
+        # widened 2026-10-17 (compendium 6.27, TimeWindowFunction3) from
+        # Date3-only -- every sibling time-component function is
+        # rejected here for the same reason.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$ranger.csvpaths.:first().:from(:year())", RANGE_MANIFEST
             ).query()
 
     def test_combining_a_literal_identity_with_a_range_is_rejected(self):
