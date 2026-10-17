@@ -2636,6 +2636,129 @@ class TestWellKnownFileAccessors:
         assert results.results[0].data == {"which": "company_names"}
 
 
+class TestErrorsIdchainGate:
+    # the GATE half of "position decides meaning" (David, 2026-08-21;
+    # settled compendium 4.13/4.14, built 2026-10-17) -- an :idchain(...)
+    # CHAINED after :errors() in the same func_chain (NOT nested as its
+    # own argument -- that is the pre-existing FILTER shape, untouched)
+    # does not narrow errors.json's own entries; it decides whether the
+    # WHOLE, unfiltered content is returned at all. The five settled
+    # acceptance-criteria references from the compendium itself:
+    #   :errors()                        -- full content
+    #   :errors(:idchain(:not_none()))   -- filter: entries that HAVE an idchain
+    #   :errors(:idchain("add[0]"))      -- filter: entries matching that idchain
+    #   :errors():idchain(:not_none())   -- gate: full content, iff some idchain exists
+    #   :errors():idchain("add[0]")      -- gate: full content, iff a matching idchain exists
+    @pytest.fixture
+    def instance_dir(self, acme_archive):
+        path = (
+            f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00"
+            "/company_names"
+        )
+        os.makedirs(path, exist_ok=True)
+        return path
+
+    def test_gate_not_none_passes_when_any_entry_has_a_source(
+        self, acme_archive, instance_dir
+    ):
+        errors = [
+            {"source": "add[0]string[2]", "message": "bad add"},
+            {"message": "no source recorded for this one"},
+        ]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names"
+            ":errors():idchain(:not_none())",
+            acme_archive,
+        ).resolve()
+        # the WHOLE, UNFILTERED list -- not narrowed to just the
+        # matching entry, unlike the filter shape.
+        assert results.results[0].data == errors
+
+    def test_gate_not_none_fails_when_no_entry_has_a_source(
+        self, acme_archive, instance_dir
+    ):
+        errors = [{"message": "no source recorded for this one"}]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names"
+            ":errors():idchain(:not_none())",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_gate_exact_string_passes_when_a_matching_entry_exists(
+        self, acme_archive, instance_dir
+    ):
+        errors = [
+            {"source": "add[0]string[2]", "message": "bad add"},
+            {"source": "name[1]", "message": "bad name"},
+        ]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':errors():idchain("add[0]string[2]")',
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == errors
+
+    def test_gate_exact_string_fails_when_no_entry_matches(
+        self, acme_archive, instance_dir
+    ):
+        errors = [{"source": "name[1]", "message": "bad name"}]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':errors():idchain("add[0]string[2]")',
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_gate_with_no_errors_file_resolves_to_none(
+        self, acme_archive, instance_dir
+    ):
+        # errors.json genuinely never written -- same "optional" miss
+        # every other well-known file gets, not an error.
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names"
+            ":errors():idchain(:not_none())",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_idchain_alone_in_name_three_without_errors_is_rejected(
+        self, acme_archive, instance_dir
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.results.customers/2025:first().company_names"
+                ":idchain(:not_none())",
+                acme_archive,
+            ).query()
+
+    def test_filter_shape_is_unaffected_still_narrows_the_entries(
+        self, acme_archive, instance_dir
+    ):
+        # the pre-existing, nested FILTER shape -- confirms the new GATE
+        # dispatch did not disturb it.
+        errors = [
+            {"source": "add[0]string[2]", "message": "bad add"},
+            {"source": "name[1]", "message": "bad name"},
+        ]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':errors(:idchain("add[0]string[2]"))',
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == [errors[0]]
+
+
 class TestGlobalArchiveLedger:
     # Rule 1a: "*" at root_major combined with a bare :manifest() is the
     # one exception to root_major=="*" being unsupported -- it resolves

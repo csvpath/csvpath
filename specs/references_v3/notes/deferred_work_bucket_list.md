@@ -400,7 +400,7 @@ including two genuine, previously-undetected bugs caught while doing this
   added). Full local-backend suite: 4092 passed, 11 failed (the same
   known SFTP/S3 baseline, unrelated).
 
-## Predicate-argument field accessors (`:on_arrival(:not_none())`) — filter half built for `:idchain()`, generic mechanism still not built
+## Predicate-argument field accessors (`:on_arrival(:not_none())`) — filter half + `:errors():idchain(...)` GATE half both BUILT, generic mechanism still not built
 
 David, 2026-08-21, drafting the compendium's replacement `:manifest()`/
 `:definition()` section: an AI needs to answer "which named-files trigger a
@@ -504,12 +504,49 @@ Still to design/build:
   function; nothing generic exists yet for arbitrary field accessors to
   do the same. Still needs the design work described above (how a
   predicate argument is recognized/dispatched generically) before
-  building.
-- The actual GATE dispatch mechanism — a chained sibling function whose
-  own predicate argument controls whether the *preceding* function's
-  result is emitted at all — is additive to `:idchain()`'s existing filter
-  behavior, not a replacement for it, and still needs building from
-  scratch; nothing dispatches this today.
+  building. This remains the ONE genuinely design-blocked piece of this
+  entry — the GATE mechanism below turned out not to need that generic
+  design at all, see its own note.
+
+- **The GATE dispatch mechanism — BUILT 2026-10-17**, scoped exactly to
+  the compendium's own settled acceptance criteria (§4.13/4.14, five
+  references using `:idchain()` for both positions) rather than the
+  fully-generic mechanism above — turned out NOT to need the generic
+  "any field accessor takes a predicate" design at all, since it is a
+  single, narrow, already-settled shape (`:errors():idchain(...)`,
+  chained, not nested), not an open question. Implementation:
+  `ResultsReferenceFinder3._name_three_selector()` gained a 6th return
+  value, `gate_call` — recognizes a SEPARATE `Idchain3` sibling in the
+  same `name_three` func_chain (distinct from the pre-existing, nested
+  FILTER shape, which never reaches this dispatch loop at all — it is
+  `accessor.arg`, not its own chain entry), and raises if `:idchain()`
+  appears without a preceding content accessor (e.g. `:errors()`) to
+  gate. `_extract_data()` reads the (already-existing) `_read_accessor()`
+  content UNFILTERED (since the gate's own `:idchain()` call rides as a
+  bare sibling, `accessor.arg` stays `None`, so the pre-existing filter
+  logic never triggers) and passes it to a new `_apply_errors_gate()`:
+  returns the whole, unfiltered content if ANY entry's own "source"
+  field matches the gate's predicate, else `None` (not an empty list —
+  a failed gate means nothing to resolve at all, same "genuinely
+  optional" treatment every other well-known-file miss gets). No change
+  needed to `Reference3.resolve_kind()` — it classifies this shape as
+  METADATA_FIELD (since the sibling `Idchain3`'s own `RESOLVES_AS`
+  override matches regardless of chain position), but `_extract_data()`
+  already treats METADATA_FILE/METADATA_FIELD identically at this
+  branch and defers the real distinction to `accessor`/`field_call`/
+  `gate_call`, so the mischaracterization is harmless. Scoped to
+  `:idchain()` only, matching the compendium's own examples exactly, not
+  `:message()` (built 2026-10-17, PR #385, not yet merged as of this
+  writing) — extending the gate position to `:message()` too is a
+  natural, low-risk follow-up once that PR lands (same `matches()`
+  interface, same shape, just keyed on "message" instead of "source").
+  Tests: new `TestErrorsIdchainGate` in
+  `tests/references/test_results_reference_finder_3.py`, covering all
+  five compendium examples plus the "no errors.json at all" and
+  "`:idchain()` alone, no accessor" rejection cases. Full
+  `tests/references/` suite: 1704 passed. Full local-backend suite:
+  4165 passed, 11 failed (known SFTP/S3 credential baseline,
+  unrelated).
 
 ## `$name.files.:manifest():last()` (ordinal pointer into a single named-file's own manifest) — BUILT 2026-10-16
 
