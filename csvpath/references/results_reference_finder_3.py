@@ -590,7 +590,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             else:
                 candidates = self._apply_range(candidates, from_call, to_call)
 
-        identity, match_all, accessor, _, range_bounds = self._name_three_selector(
+        identity, match_all, accessor, _, range_bounds, _ = self._name_three_selector(
             reference.name_three
         )
         has_manifest = any(
@@ -736,7 +736,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "ResultsReferenceFinder3 does not support the '#worksheet' "
                 "marker (name_two) -- it is files-only."
             )
-        identity, match_all, accessor, _, range_bounds = self._name_three_selector(
+        identity, match_all, accessor, _, range_bounds, _ = self._name_three_selector(
             reference.name_three
         )
         if match_all and accessor is not None:
@@ -1361,16 +1361,36 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         kind = reference.resolve_kind
         if kind in (Reference3.METADATA_FILE, Reference3.METADATA_FIELD):
             # both land here: :errors() alone classifies as METADATA_FILE,
-            # :errors(:idchain(...)) classifies as METADATA_FIELD (a
+            # :errors(:idchain(...)) (nested -- the FILTER position,
+            # compendium 4.13/4.14) classifies as METADATA_FIELD (a
             # nested pointer-like arg -- see Reference3.resolve_kind) --
             # _read_accessor already handles the idchain-filtering
             # internally based on accessor.arg, so both kinds resolve
-            # identically from here.
-            _, _, accessor, field_call, _ = self._name_three_selector(
+            # identically from here. :errors():idchain(...) (CHAINED,
+            # not nested -- the GATE position, added 2026-10-17) ALSO
+            # classifies as METADATA_FIELD here (idchain_call is itself
+            # a terminal function in the same list, matching
+            # resolve_kind's own first-loop check even though it is a
+            # sibling rather than a nested arg) -- harmless, since this
+            # branch already treats METADATA_FILE/METADATA_FIELD
+            # identically and defers the real distinction to accessor/
+            # field_call/gate_call below, not to `kind` itself.
+            _, _, accessor, field_call, _, gate_call = self._name_three_selector(
                 reference.name_three
             )
             if accessor is not None:
-                return self._read_accessor(result.path, accessor)
+                data = self._read_accessor(result.path, accessor)
+                if gate_call is not None:
+                    # GATE half of "position decides meaning" (David,
+                    # 2026-08-21; settled compendium 4.13/4.14) -- a
+                    # SEPARATE :idchain(...) chained AFTER :errors() (not
+                    # nested as its own argument -- that is the FILTER
+                    # half above, pre-existing, untouched) does not
+                    # narrow errors.json's own entries; it decides
+                    # whether the WHOLE, already-read, UNFILTERED content
+                    # is returned at all.
+                    return self._apply_errors_gate(data, gate_call)
+                return data
             if field_call is not None:
                 # a registered field-accessor (e.g. :uuid()) riding
                 # alongside the identity/:all() selector, the same slot
@@ -1488,6 +1508,35 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             return cls._read_well_known_file(path)
         path = Nos(instance_dir).join(accessor.arg)
         return cls._read_well_known_file(path)
+
+    @staticmethod
+    def _apply_errors_gate(data, gate_call):
+        """GATE half of the position-decides-meaning rule (David,
+        2026-08-21; settled compendium 4.13/4.14) -- `gate_call`
+        (:idchain(...), chained AFTER :errors() in the same func_chain,
+        NOT nested as its own argument -- that is the FILTER half,
+        `_read_accessor`'s own `accessor.arg` handling, pre-existing,
+        untouched) does not narrow which of `data`'s own entries come
+        back; it decides whether `data` -- already read, UNFILTERED --
+        is returned AT ALL. Scoped to `:idchain()` only for now (the
+        compendium's own settled examples use only `:idchain()` for
+        both filter and gate positions, never `:message()`) -- extending
+        to `:message()` is a natural follow-up once it exists.
+        `data` may be None (errors.json was never written, same
+        genuinely-optional treatment every well-known file gets) -- a
+        gate has nothing to check in that case, same as a missing file
+        for any other accessor. Returns `data` unchanged (the whole,
+        unfiltered list) if ANY entry's own "source" field matches the
+        gate's predicate, else None -- None, not an empty list, since
+        unlike the FILTER's own legitimate "found the file, no entry
+        matched" case, a failed gate means there is nothing to resolve
+        at all, the same "genuinely optional/absent" treatment every
+        other well-known-file miss gets."""
+        if data is None:
+            return None
+        if any(gate_call.matches(e.get("source")) for e in data):
+            return data
+        return None
 
     def _discover_run_homes(
         self, root_major: str | None, name_filter: str | None = None
@@ -1724,9 +1773,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     def _name_three_selector(
         self,
         name_three,
-    ) -> tuple[str | None, bool, object, object, tuple]:
+    ) -> tuple[str | None, bool, object, object, tuple, object]:
         """returns (identity, match_all, accessor, field_call,
-        range_bounds) for name_three -- identity is a literal statement-
+        range_bounds, gate_call) for name_three -- identity is a literal statement-
         identity string to look up (None if match_all/range_bounds, or
         if no selector is present at all); match_all is True for :all()
         (every instance in the run); range_bounds is (from_call, to_call)
@@ -1748,7 +1797,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         exempt from the single-entity pooling rule (see query()) and
         content accessors are not; conflating them would risk the same
         "field accessor accidentally restricted like a content
-        accessor" bug already hit twice during the #228 merge.
+        accessor" bug already hit twice during the #228 merge. gate_call
+        is the GATE half of "position decides meaning" (David,
+        2026-08-21; settled compendium 4.13/4.14, added 2026-10-17) -- an
+        :idchain(...) CHAINED after :errors() in the same func_chain (a
+        separate sibling, not nested as :errors()'s own argument -- that
+        is the pre-existing FILTER half, untouched) -- requires
+        `accessor` to also be present (raises otherwise, below); see
+        ResultsReferenceFinder3._apply_errors_gate() for what it does
+        with it.
         Resolving with none of identity/match_all/range_bounds present
         gives None -- "no default". An unrecognized function raises via
         build_chain() itself ("Unknown reference function") if it is
@@ -1759,11 +1816,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         docstring: self._build_chain() needs this finder's own
         registered variables."""
         if name_three is None:
-            return None, False, None, None, None
+            return None, False, None, None, None, None
 
         match_all = False
         accessor = None
         field_call = None
+        gate_call = None
         from_call = None
         to_call = None
         if name_three.functions:
@@ -1788,11 +1846,27 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     accessor = f
                 elif f is field_call:
                     continue
+                elif isinstance(f, Idchain3):
+                    # the GATE shape (e.g. ":errors():idchain(...)") --
+                    # added 2026-10-17. Only recognized as a SEPARATE
+                    # chain member here, never nested inside another
+                    # function's own argument -- a nested
+                    # ":errors(:idchain(...))" is the pre-existing
+                    # FILTER shape, which never reaches this loop at all
+                    # (it is accessor.arg, not its own entry in `built`).
+                    gate_call = f
                 else:
                     raise ReferenceException3(
                         f"ResultsReferenceFinder3 does not yet support "
                         f":{f.name}() as a name_three function."
                     )
+        if gate_call is not None and accessor is None:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3's ':idchain()' only means "
+                "something as a GATE when chained after a content "
+                "accessor (e.g. ':errors():idchain(...)') -- it cannot "
+                "stand alone in name_three."
+            )
         range_bounds = (from_call, to_call) if (from_call or to_call) else None
 
         body = name_three.body
@@ -1814,7 +1888,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "to select which instance(s) a well-known-file function "
                 "applies to."
             )
-        return body, match_all, accessor, field_call, range_bounds
+        return body, match_all, accessor, field_call, range_bounds, gate_call
 
     @classmethod
     def _group_key(cls, run_home: str, home: str, prefix_len: int = 0) -> tuple:
