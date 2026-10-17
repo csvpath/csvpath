@@ -2430,6 +2430,71 @@ class TestWellKnownFileAccessors:
         ).resolve()
         assert results.results[0].data == [errors[0]]
 
+    def test_errors_with_message_filters_to_matching_message(
+        self, acme_archive, instance_dir
+    ):
+        # :message() -- added 2026-10-17, the direct sibling of
+        # :idchain() (normative_reference_examples.txt places them right
+        # next to each other) -- filters errors.json entries by their
+        # own "message" field instead of "source".
+        errors = [
+            {"source": "add[0]string[2]", "message": "customer: 319 not found"},
+            {"source": "name[1]", "message": "bad name"},
+        ]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':errors(:message(/customer: 319/))',
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == [errors[0]]
+
+    def test_errors_with_message_no_match_returns_empty_list(
+        self, acme_archive, instance_dir
+    ):
+        errors = [{"source": "name[1]", "message": "bad name"}]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':errors(:message(/customer: 319/))',
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == []
+
+    def test_errors_with_message_exact_string_match(
+        self, acme_archive, instance_dir
+    ):
+        errors = [
+            {"source": "add[0]", "message": "bad add"},
+            {"source": "name[1]", "message": "bad name"},
+        ]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':errors(:message("bad name"))',
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == [errors[1]]
+
+    def test_errors_with_message_not_none_filters_to_entries_that_have_any_message(
+        self, acme_archive, instance_dir
+    ):
+        errors = [
+            {"source": "add[0]", "message": "bad add"},
+            {"source": "name[1]"},
+        ]
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names"
+            ":errors(:message(:not_none()))",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == [errors[0]]
+
     def test_vars_resolves_parsed_json(self, acme_archive, instance_dir):
         variables = {"count": 5, "label": "totals"}
         with open(os.path.join(instance_dir, "vars.json"), "w") as f:
