@@ -209,7 +209,7 @@ apply to" semantics per §6.27f's arrival/load/runtime split) before
 anything is buildable — same shape as the other still-open design items in
 this file, not a quick fix.
 
-## Archive Run Manifest `uuid` field — written to metadata but not persisted to the manifest; needs a read/write unit test
+## Archive Run Manifest `uuid` field — RESOLVED, 2026-09-22 (no-repro, false alarm)
 
 Surfaced 2026-09-20 while adding archive-ledger examples to the normative
 references doc (`$*.results.:manifest():uuid("..."):run_home()` — "get the
@@ -225,14 +225,13 @@ corresponding `uuid` field row to Table 7
 (`references_v3_required_manifest_functions.md`) — `:uuid()`, "Uniquely
 identifies this csvpath statement in the run."
 
-**Still needed**: a unit test confirming the *correct* UUID is what
-actually gets read/written here. There are several UUIDs in play at the
-instance level (`run_uuid`, `named_paths_uuid`, `named_file_uuid`, and now
-this instance-execution `uuid`) — easy to wire up the write correctly but
-still pull the wrong one, so this needs explicit verification, not just
-confirmation that *a* UUID shows up in the field.
+There are several UUIDs in play at the instance level (`run_uuid`,
+`named_paths_uuid`, `named_file_uuid`, and this instance-execution
+`uuid`) — easy to wire up the write correctly but still pull the wrong
+one, so verification (below) checked which one actually lands here, not
+just that *a* UUID shows up in the field.
 
-**No-repro, 2026-09-22**: attempted to confirm and fix this on a dedicated
+**No-repro, 2026-09-22 — resolved, nothing left to do**: attempted to confirm and fix this on a dedicated
 branch (`fix/run-manifest-uuid-template-fields`), outside the references-v3
 lock. Live-traced a real `collect_paths` run (both with an explicit
 `template` argument and via the `template=None` fallback that reads the
@@ -248,7 +247,7 @@ on a scenario (different backend, different run method) not exercised
 here. No code change made; no unit test added, since there is nothing
 currently broken to lock in. Re-open if a concrete repro turns up.
 
-## Results Run Manifest `template` field — written by `RunRegistrar` and read by `ResultsMetadata`, but not actually showing up on a real run
+## Results Run Manifest `template` field — RESOLVED, 2026-09-22/28 (no-repro, false alarm)
 
 Surfaced 2026-09-20, same session as the archive-ledger `uuid` gap above,
 while adding "two ways to find the template used by a run" examples to the
@@ -264,14 +263,7 @@ field row to Table 5 (`references_v3_required_manifest_functions.md`) —
 `:template()` — documenting the intended end state ahead of the fix, same
 approach as the `uuid` entry above.
 
-**Still needed**: the actual bug fix (why the write isn't landing despite
-the code path appearing to exist), then a unit test confirming
-`$*.results.:first():template()`-style access actually returns the run's
-real template once fixed — don't assume the write path just needs
-"turning on"; confirm what's actually breaking between `RunRegistrar` and
-the file on disk.
-
-**No-repro, 2026-09-22**: attempted to confirm and fix this alongside the
+**No-repro, 2026-09-22 — resolved, nothing left to do**: attempted to confirm and fix this alongside the
 Archive Run Manifest `uuid` entry above, on the same dedicated branch. Live-
 traced a real `collect_paths` run (both explicit-template and the
 `template=None` fallback path) and read the actual `manifest.json` written
@@ -637,7 +629,7 @@ NOT part of that build:
   currently `Uuid3.ARG_TYPES = ()`, any argument at all is rejected
   outright, so nothing here parses yet.
 
-## Grammar / argument-type gaps (spec says it should work, code doesn't yet)
+## Grammar / argument-type gaps — ALL BUILT, kept as a historical record
 
 - `root_major` accepting a `:regex(...)` function — **BUILT 2026-08-27**,
   see `deferred_work_done_list.md`.
@@ -660,7 +652,7 @@ NOT part of that build:
   `:having(@id)`, `:regex(@aregex)` once that function exists) — **BUILT
   2026-08-27**, see `deferred_work_done_list.md`.
 
-## `'*'` traversal — RESULTS/CSVPATHS remaining gap
+## `'*'` traversal — RESULTS/CSVPATHS remaining gap — all but one item BUILT, `:groups()`+`'*'` semantics still design-blocked
 
 The `:manifest()`-combined-with-narrowing gap this section used to track,
 and a stale-entry correction, are both done — see
@@ -678,7 +670,7 @@ and a stale-entry correction, are both done — see
   `_extract_data()` bug, not `'*'`-traversal-specific — literal root had
   the identical gap, just never exercised by a test.
 
-## `'*'` traversal — FILES, essentially untouched by the recent RESULTS/CSVPATHS work
+## `'*'` traversal — FILES — all items BUILT except the predicate itself (`:on_arrival(:not_none())`, design-blocked on the generic predicate-argument mechanism above)
 
 - `FilesReferenceFinder3`'s own `_query_star_traversal()` combining `'*'`
   traversal with a field accessor riding beside the pointer in
@@ -945,7 +937,14 @@ and alias equivalence. Full `tests/references/` suite: 1693 passed (up
 from 1631). Full local-backend suite: 4154 passed, 11 failed (the known
 SFTP/S3 credential baseline, unrelated).
 
-## Bigger, standing items
+## Bigger, standing items — NEXT UP after the GATE dispatch mechanism (2026-10-17)
+
+Neither of the two remaining items below is design-blocked — both are
+pure integration/wiring effort, just large enough to warrant their own
+dedicated pass rather than a quick knockout. Tackle in this order once
+the GATE dispatch mechanism (`:errors():idchain(...)`, see the
+predicate-argument entry above) is done: Type-ahead, then wiring v3 into
+production.
 
 - **Type-ahead.** A prototype exists (`specs/references_v3/notes/
   autocomplete_prototype.py`) demonstrating the intended mechanism (Lark
