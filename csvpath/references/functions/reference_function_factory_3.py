@@ -148,6 +148,7 @@ class ReferenceFunctionFactory:
         from .filters.empty_3 import Empty3
         from .filters.false_3 import False3
         from .filters.idchain_3 import Idchain3
+        from .filters.message_3 import Message3
         from .filters.none_3 import None3
         from .filters.not_empty_3 import NotEmpty3
         from .filters.not_none_3 import NotNone3
@@ -204,6 +205,7 @@ class ReferenceFunctionFactory:
             Original3.NAME: Original3,
             Readme3.NAME: Readme3,
             Idchain3.NAME: Idchain3,
+            Message3.NAME: Message3,
             True3.NAME: True3,
             False3.NAME: False3,
             None3.NAME: None3,

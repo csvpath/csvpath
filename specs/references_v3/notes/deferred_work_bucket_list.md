@@ -773,35 +773,55 @@ and a stale-entry correction, are both done — see
 ## Functions
 
 - Functions named in the spec/example-queries docs with no `Function3`
-  subclass yet: `:message()`, `:count()`, `:has_errors()`. (Corrected
-  2026-08-26: `:type()` used to be listed here too, but it was built as
-  part of the Table 1 field-accessor batch — confirmed live, `Type3` is
-  registered, `NAME = "type"` — this list had gone stale; removed.
-  Corrected again 2026-08-27: `:yesterday()` was also stale — confirmed
-  live, `Yesterday3` is registered, built alongside `:today()` in the
-  "pure value" date/time functions batch — removed. Corrected again
+  subclass yet: `:count()`, `:has_errors()`. (Corrected 2026-08-26:
+  `:type()` used to be listed here too, but it was built as part of the
+  Table 1 field-accessor batch — confirmed live, `Type3` is registered,
+  `NAME = "type"` — this list had gone stale; removed. Corrected again
+  2026-08-27: `:yesterday()` was also stale — confirmed live,
+  `Yesterday3` is registered, built alongside `:today()` in the "pure
+  value" date/time functions batch — removed. Corrected again
   2026-09-21: `:before()`/`:after()`/`:above()` moved out — see the
   "Direction/ordinal functions" entry, now BUILT. Corrected again
   2026-10-16: `:quarter()`, `:choice()`, `:names()`, `:at()` all moved
   out — see the four dedicated entries below, each a considered
-  rejection, not an oversight.)
+  rejection, not an oversight. Corrected again 2026-10-17: `:message()`
+  moved out — **BUILT**, see below.)
 
-  **Re-audited 2026-10-16 — the "none of these have settled semantics"
-  claim above is no longer accurate for all three remaining names,
-  checked live rather than assumed:**
-  - `:message()` — DOES have real backing: `normative_reference_
+  - `:message()` — **BUILT 2026-10-17.** `normative_reference_
     examples.txt` uses it as `:errors(:message(/customer: 319/))`,
-    structurally identical to the already-built `:idchain()` precedent
-    (a predicate filtering `:errors()`'s own entries by one of their own
-    fields — here "message" instead of "source"). Likely buildable by
-    mirroring that precedent directly, not a guess — not yet actioned,
-    awaiting a build decision.
-  - `:has_errors()` — DOES have real backing: used in the real spec
-    test fixture (`normative_reference_expressions_examples.txt`) and
-    the expressions design doc (`references_v3_expressions.md`), not
-    just scratch notes. Reads as a plain boolean field accessor ("does
-    this entity have any errors") — likely low-risk — not yet actioned,
-    awaiting a build decision.
+    directly beside the already-built `:idchain()`'s own
+    `:errors(:idchain("..."))` — same shape, same mechanism, just
+    keyed on the error entry's own "message" field (confirmed real
+    against `Error.to_json()`) instead of "source". Built as a near-
+    exact copy of `Idchain3` (`csvpath/references/functions/filters/
+    message_3.py`) — same `ARG_TYPES`/`RESOLVES_AS`/`matches()` shape —
+    plus `Message3` added alongside `Idchain3` in `Errors3.ARG_TYPES`
+    and in `ResultsReferenceFinder3._read_accessor()`'s own filtering
+    branch. Tests: `tests/references/functions/filters/test_message_3.py`
+    (unit, mirroring `test_idchain_3.py`) and four new integration
+    tests in `TestWellKnownFileAccessors` (exact-string, regex,
+    `:not_none()`, no-match-is-a-legitimate-empty-list). Full
+    `tests/references/` suite: 1713 passed (up from 1697).
+  - **`:has_errors()` — re-audit CORRECTED 2026-10-17, this entry's own
+    earlier "DOES have real backing" claim (2026-10-16) was wrong, not
+    re-verified carefully enough before writing it.** Checked each
+    source file's own header this time: `normative_reference_
+    expressions_examples.txt` (where it appears) opens with "DO NOT USE
+    THIS AS A NORMATIVE REFERENCES TEST SET UNTIL DAVID REMOVES THIS
+    NOTE... this is just a draft/WIP"; `references_v3_expressions.md`
+    (where it also appears) says explicitly "The pseudocode below is
+    for directional illustration only. It is not settled in form." Its
+    only other appearance is `more_reference_queries.txt`, the same
+    informal-scratch-notes category as `creating references v3.txt`.
+    None of these is `normative_reference_examples.txt` (the doc whose
+    own header says "must be tested against and work before v3 is
+    deemed ready for release"). So `:has_errors()` is actually in the
+    SAME "no settled semantics" bucket as `:choice()`/`:names()`/
+    `:at()` — unclear whether it is run-level or instance-level, and
+    what "has errors" precisely means — not built, correctly deferred
+    this time. Lesson repeated: check a source's own header/status
+    before citing it as backing, not just that the string appears
+    somewhere that sounds official.
   - `:count()` — tied to the predicate-argument GATE mechanism (its only
     real appearance is nested as `:errors(:count(:above(10)))`), the
     same unbuilt, design-blocked prerequisite as `:on_arrival(:not_

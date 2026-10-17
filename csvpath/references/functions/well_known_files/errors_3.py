@@ -1,6 +1,7 @@
 from ...reference_3 import Reference3
 from ..function_3 import Function3
 from ..filters.idchain_3 import Idchain3
+from ..filters.message_3 import Message3
 
 
 class Errors3(Function3):
@@ -20,7 +21,11 @@ class Errors3(Function3):
     # Idchain3 and ResultsReferenceFinder3._read_accessor. Zero matches
     # is a legitimate, non-error result (an empty list), not None --
     # the file itself was found and read, it just has no entry for that
-    # idchain.
+    # idchain. Added 2026-10-17: a nested :message(...) argument is the
+    # direct sibling of :idchain(...) -- normative_reference_examples.txt
+    # places them right next to each other, filtering by the entry's
+    # own "message" field instead of "source" -- same mechanism, same
+    # zero-matches-is-legitimate treatment, see Message3.
     #
     # POSITION DECIDES MEANING (David, 2026-08-21) -- this is the FILTER
     # half of a two-part rule, not the whole rule. A predicate NESTED as
@@ -45,7 +50,8 @@ class Errors3(Function3):
     SUMMARY = (
         "The parsed contents of a run instance's errors.json -- the list "
         "of errors that csvpath statement's execution recorded. Optionally "
-        "filtered to entries matching a nested :idchain(...) argument."
+        "filtered to entries matching a nested :idchain(...) or "
+        ":message(...) argument."
     )
     ROLE = Function3.VALUE
     # metadata_kind() override -- a whole-resource read, not a
@@ -53,6 +59,6 @@ class Errors3(Function3):
     # why this class needs one (added 2026-08-28).
     RESOLVES_AS = Reference3.METADATA_FILE
     DATATYPES = (Reference3.RESULTS,)
-    ARG_TYPES = (Idchain3,)
+    ARG_TYPES = (Idchain3, Message3)
     ARG_REQUIRED = False
     POSITIONS = {Reference3.RESULTS: (Reference3.NAME_THREE,)}
