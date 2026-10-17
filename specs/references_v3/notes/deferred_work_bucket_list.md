@@ -994,20 +994,25 @@ and alias equivalence. Full `tests/references/` suite: 1693 passed (up
 from 1631). Full local-backend suite: 4154 passed, 11 failed (the known
 SFTP/S3 credential baseline, unrelated).
 
-## Bigger, standing items — NEXT UP after the GATE dispatch mechanism (2026-10-17)
+## Bigger, standing items — type-ahead and production-wiring PERMANENTLY SET ASIDE for CsvPath Framework's own v3 release, 2026-10-17
 
-Neither of the two remaining items below is design-blocked — both are
-pure integration/wiring effort, just large enough to warrant their own
-dedicated pass rather than a quick knockout. Tackle in this order once
-the GATE dispatch mechanism (`:errors():idchain(...)`, see the
-predicate-argument entry above) is done: Type-ahead, then wiring v3 into
-production.
+David, 2026-10-17: wiring references-v3 into the main CsvPath Framework
+codebase, and type-ahead, are both out of scope for CsvPath Framework's
+own v3 release -- not abandoned, just not v3's first use case. The actual
+first use case is agents querying the environment *without* the
+environment itself using v3 internally. Both belong to the FlightPath
+products instead (production-wiring to FlightPath Generator/Server/Data
+generally; type-ahead specifically to FlightPath Data), picked up
+individually once those products are worked on. CsvPath Framework ships
+its v3 MVP before any FlightPath product uses it. Do not treat either
+item below as a blocker to calling v3 done/released.
 
 - **Type-ahead.** A prototype exists (`specs/references_v3/notes/
   autocomplete_prototype.py`) demonstrating the intended mechanism (Lark
   `parse_interactive()`/`InteractiveParser.choices()` plus a datatype/slot-
   filtered function registry), but it predates the merged grammar and
   isn't wired into `REFERENCE_GRAMMAR_3`/`Function3`/`describe()` at all.
+  Deferred to FlightPath Data.
 - **`{...}` interpolation evaluation — BUILT 2026-08-26**, both halves
   (function-call and `@variable`) — see `deferred_work_done_list.md`.
   `_resolve_value()`'s function-call handling is still narrow (only
@@ -1018,6 +1023,35 @@ production.
   `file_manager.py` still dispatch through the older v2 reference system
   (`csvpath/util/references/`). Everything built so far has been
   self-contained and tested independent of this integration question.
+  Deferred to FlightPath Generator/Server/Data, per-product.
+
+## The remaining 7 deliberate deferrals — dependency structure settled 2026-10-17
+
+With the two items above set aside, 7 items remain on this list, each a
+deliberate (not forgotten) deferral. 3 are blocked on David writing/
+settling more spec (no worked example exists yet); 4 just need a branch
+and design exploration (spec intent already given, only the code
+mechanism is undesigned) -- but those 4 are not flat/independent: 2 are
+roots, 2 ride along behind one of them. Full detail lives with each
+item's own entry elsewhere in this file; this is the cross-reference so
+the shape doesn't need re-deriving:
+
+- **Spec-blocked** (independent of each other and of everything else):
+  `:groups()`+`'*'` traversal for RESULTS; the cross-datatype "select by
+  uuid"+set-operations item (Function self-documentation section); and
+  `:has_errors()` (Functions section).
+- **Design-needed, INDEPENDENT roots**: the generic predicate-argument
+  mechanism (`:on_arrival(:not_none())`, this file's own dedicated entry
+  above) and time-component context setters (this file's own dedicated
+  entry) -- these two are NOT tied to each other; different mechanisms
+  entirely.
+- **Design-needed, DEPENDENT on the predicate-argument mechanism**:
+  FILES' broader `name_one.functions` generalization (its only-ever-
+  cited worked example itself needs the predicate mechanism) and
+  `:count()` (explicitly the same gate prerequisite).
+
+David's own call, 2026-10-17: start with the generic predicate-argument
+mechanism, since it unlocks the two dependent items as a side effect.
 
 ## Process note
 
