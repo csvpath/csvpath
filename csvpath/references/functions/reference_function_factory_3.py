@@ -145,6 +145,7 @@ class ReferenceFunctionFactory:
         from .fields.webhooks_on_complete_invalid_3 import WebhooksOnCompleteInvalid3
         from .fields.webhooks_on_complete_valid_3 import WebhooksOnCompleteValid3
 
+        from .filters.count_3 import Count3
         from .filters.empty_3 import Empty3
         from .filters.false_3 import False3
         from .filters.idchain_3 import Idchain3
@@ -206,6 +207,7 @@ class ReferenceFunctionFactory:
             Readme3.NAME: Readme3,
             Idchain3.NAME: Idchain3,
             Message3.NAME: Message3,
+            Count3.NAME: Count3,
             True3.NAME: True3,
             False3.NAME: False3,
             None3.NAME: None3,

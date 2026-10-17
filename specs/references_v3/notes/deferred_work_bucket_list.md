@@ -601,6 +601,122 @@ grammar/argument-type-gaps entry, not double-counted here.
   4165 passed, 11 failed (known SFTP/S3 credential baseline,
   unrelated).
 
+## `:count()` as a whole-array aggregate GATE, and `:above()`'s dual role as range-bound/predicate — BUILT 2026-10-17
+
+The last of the 7 deliberately-deferred items (compendium normative
+examples 489-491): `:errors(:count(:above(10)))`, "find csvpaths
+generating more than 10 errors." Previously described as "tied to the
+predicate-argument GATE mechanism, same prerequisite as `:on_arrival(
+:not_none())`" — turned out NOT true once actually traced through the
+code: `:count()` tests an AGGREGATE (array length), not a per-candidate
+field value, and needed its own design, its own new function, AND
+surfaced three more existing-behavior gaps that had nothing to do with
+`:count()` specifically. Four pieces, in the order they were found:
+
+**1. A corrected "naming collision" claim.** First pass flagged
+`:above()` (needed here as a numeric PREDICATE, "count > 10") as
+colliding with `:above()` already registered as an alias of `:after()`
+(a RANGE/direction `CONTEXT_SETTER`, PR #379) — David pushed back
+("they were intended to just be aliases for the same functionality, is
+that not possible?") and was right. There was no collision:
+`reference_function_factory_3.py`'s `"above": After3` is a plain dict
+alias to the one class, not a competing registration. `After3`'s own
+comparison logic (previously only exposed via `_apply_date_range()`'s
+internal list-filtering) already encoded "greater than" as its one
+semantic — it just needed a `matches(self, value)` method generalizing
+that comparison to any orderable value (ints included), and `After3`
+now extends `PredicateFunction3` directly (not `Function3`) instead of
+multiple-inheriting, since `PredicateFunction3` already IS a `Function3`
+subclass — one class, two roles, "position decides meaning" again: as a
+range bound it still goes through `_apply_range()`/`_apply_date_range()`
+unchanged; nested inside `:count()` it goes through `matches()` instead.
+Lesson folded into `feedback_verify_redundancy_claims_live.md` — a third
+instance of the same "asserting a conflict without checking the code
+first" mistake in two sessions.
+
+**2. `:count()` itself, a new, EXPLICIT exception to nested=FILTER.**
+`Count3` (`csvpath/references/functions/filters/count_3.py`) — nested
+inside `:errors()`'s own argument, the SAME position `:idchain()`/
+`:message()` already occupy as FILTERS, but `:count()` cannot filter
+entries at all (an aggregate has no per-entry meaning), so it acts as a
+GATE instead, reached from the nested position rather than the chained
+one. `ARG_TYPES = (PredicateFunction3,)` (so `:above()`/`:gt()` qualify
+for free, same declarative pattern as everywhere else); `matches(data)`
+reduces `data` (errors.json's own raw list, or `None`) to `len(data) if
+data is not None else 0` and delegates to its own nested predicate.
+`Errors3.ARG_TYPES` widened to `(Idchain3, Message3, Count3)`;
+`ResultsReferenceFinder3._read_accessor()` gates on it (sets `data =
+None` if `accessor.arg.matches(data)` is `False`) alongside the pre-
+existing FILTER branches. `Errors3`'s own code comment rewritten to
+document all three now-shipped shapes (FILTER/`:idchain()``:message()`,
+chained-GATE/`:idchain()`, nested-GATE/`:count()`) as the complete
+picture, not two.
+
+**3. The actual blocker: `:all()`/accessor pooling was unconditionally
+rejected.** Both normative-example lines need `match_all` (every
+instance in a run) combined with a content accessor (`:errors()`) --
+`query()` had an immediate, unconditional rejection for exactly this
+combination, with its own comment explicitly anticipating this moment
+("no established case needs this... left as-is rather than widened
+speculatively"). Relaxed to the SAME deferred `ambiguous_content_read`/
+Rule-1 pattern `_query_star_traversal`'s own pooling tail
+(`_star_pool_and_reduce`) already used for the identical combination
+reached via `'*'`-root traversal — not new invention, closing a parity
+gap between the two dispatch trees. `query()` now pools every instance
+(flagged `ambiguous_content_read` when more than one comes back);
+`.resolve()`/`resolve_from()` still refuse to read more than one whole-
+resource accessor at once (Rule 1, unchanged) — a caller finds which
+instances qualify by resolving them one at a time. Also fixed, for
+correctness rather than because this example needed it: both `query()`
+and `_star_pool_and_reduce()` computed `ambiguous_content_read` from the
+candidate RUN count (`len(selected_runs)`/`len(run_homes)`), which
+can't see `match_all` expanding ONE run into several instances — changed
+to compute from the actual built `results` list length instead, in both
+places. `_query_star_traversal`'s OWN parallel rejection (line ~740,
+`'*'`-root traversal specifically) was deliberately left exactly as-is
+— no worked example needs it relaxed yet, and `_star_group_and_reduce`'s
+own correctness reasoning currently depends on it staying a hard block
+— its own comment, and `_star_group_and_reduce`'s, updated to stop
+claiming symmetry with `query()`'s now-different check.
+
+**4. Two general `name_three` parsing rules, surfaced by this example,
+unrelated to `:count()` itself.** Initially proposed (wrongly) that
+normative-examples line 490 was a spec typo to delete — David checked
+the compendium directly and caught the correction: both lines exercise
+already-documented, GENERAL rules, not a one-off:
+- Compendium 4.2b/4.3a + normative examples 393-404: `:all()` and a
+  literal `*` are flatly equivalent in `name_three`. `_name_three_
+  selector()` used to unconditionally reject a `Star3` body ("use
+  :all() instead") — now folds it into the same `match_all` flag,
+  raising only if BOTH an explicit `*` and `:all()` are present
+  together (two wildcards).
+- Compendium 3.19b: "When `name_three` is solely one or more functions,
+  a `*` is implied." `_name_three_selector()` used to unconditionally
+  reject a bare accessor/field-call with no identity/`:all()`/range
+  riding alongside it — now implies `match_all = True` instead, exactly
+  when `name_three.functions` is non-empty (by this point any
+  unrecognized function has already raised, so non-empty here always
+  means a real accessor/field_call survived).
+
+**Tests**: `tests/references/functions/selectors/test_after_3.py`
+(`matches()`, `PredicateFunction3` isinstance), new
+`tests/references/functions/filters/test_count_3.py`,
+`test_errors_3.py` (Count3 as a valid nested arg),
+`TestErrorsCountGate` in `test_results_reference_finder_3.py` (both
+normative-example forms, explicit-identity gate pass/fail, missing-file,
+filter-shape-unaffected), plus three rewritten `TestScopeLimits`/
+`TestWellKnownFileAccessors` tests that previously asserted the now-
+intentionally-changed rejections. Full `tests/references/` suite: 1741
+passed (up from 1721). Full local-backend suite: 4202 passed, 11 failed
+(known SFTP/S3 credential baseline, unrelated).
+
+With this, all 7 of the originally deliberately-deferred items are
+either built (this one and the generic predicate-argument mechanism) or
+correctly re-confirmed as still blocked (the 3 spec-blocked items) or
+downgraded to "no driving use case" (FILES' broader `name_one.functions`
+generalization) — see `project_references_v3_remaining_scope.md` for the
+up-to-date summary David asked to be kept current without re-deriving.
+
 ## `$name.files.:manifest():last()` (ordinal pointer into a single named-file's own manifest) — BUILT 2026-10-16
 
 David, 2026-08-21: raised while reviewing the compendium's `path`-per-
@@ -883,10 +999,17 @@ and a stale-entry correction, are both done — see
     this time. Lesson repeated: check a source's own header/status
     before citing it as backing, not just that the string appears
     somewhere that sounds official.
-  - `:count()` — tied to the predicate-argument GATE mechanism (its only
-    real appearance is nested as `:errors(:count(:above(10)))`), the
-    same unbuilt, design-blocked prerequisite as `:on_arrival(:not_
-    none())` above. Correctly still blocked, not newly questionable.
+  - `:count()` — **BUILT 2026-10-17.** Was previously described here as
+    "tied to the predicate-argument GATE mechanism, the same unbuilt
+    prerequisite as `:on_arrival(:not_none())`" — turned out NOT to be
+    true once actually built: `:count()` operates on the LENGTH of
+    errors.json (aggregate count-then-compare), a genuinely different
+    mechanism from the per-candidate field-value filtering the FILES
+    `:on_arrival()` work built, and needed its own separate design in
+    `ResultsReferenceFinder3`. See the new, dedicated "`:count()` /
+    `:above()` as a dual-role predicate" entry below for the full build
+    (and the `:above()` "naming collision" correction David caught —
+    there was no collision at all).
 
 - **`:quarter()` — deliberately NOT building, decided 2026-10-16, removed
   from the list above.** David: it is "both easy and suspect" — trivial to

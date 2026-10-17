@@ -2667,13 +2667,22 @@ class TestWellKnownFileAccessors:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_accessor_combined_with_all_raises(self, acme_archive):
+    def test_accessor_combined_with_all_pools_and_resolve_raises_when_ambiguous(
+        self, acme_archive
+    ):
         # run1 has two instances: company_names and "1", each with its
-        # own separate meta.json. Resolving full content always touches
-        # exactly one entity (settled 2026-08-07), so :all() (every
-        # instance in the run) combined with an accessor is illegal now,
-        # not "each instance's own file, pooled" as it used to be -- a
-        # specific identity is required to pick one instance.
+        # own separate meta.json. :all() (every instance in the run)
+        # combined with an accessor used to be an immediate, unconditional
+        # rejection here -- relaxed 2026-10-17 alongside
+        # ":errors(:count(:above(10)))" (normative examples 489-491),
+        # which needs exactly this combination to pool candidates before
+        # each one's own count is gated. query() now pools both instances
+        # (flagged ambiguous_content_read); resolving full content for
+        # both AT ONCE is still Rule 1 territory -- resolve() refuses,
+        # same deferred pattern every other whole-resource accessor
+        # already uses (see test_all_grouping_with_name_three_content_
+        # accessor_resolve_raises_when_ambiguous just above's '*'-root
+        # equivalent).
         base = f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00"
         os.makedirs(f"{base}/company_names", exist_ok=True)
         os.makedirs(f"{base}/1", exist_ok=True)
@@ -2684,8 +2693,11 @@ class TestWellKnownFileAccessors:
         finder = _finder(
             "$acme.results.customers/2025:first().:all():meta()", acme_archive
         )
+        results = finder.query()
+        assert len(results.results) == 2
+        assert results.ambiguous_content_read is True
         with pytest.raises(ReferenceException3):
-            finder.query()
+            finder.resolve()
 
     def test_accessor_combined_with_a_specific_identity_still_works(
         self, acme_archive
@@ -2815,6 +2827,129 @@ class TestErrorsIdchainGate:
             {"source": "name[1]", "message": "bad name"},
         ]
         with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        results = _finder(
+            '$acme.results.customers/2025:first().company_names'
+            ':errors(:idchain("add[0]string[2]"))',
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data == [errors[0]]
+
+
+class TestErrorsCountGate:
+    # the third, EXPLICIT exception to nested=FILTER (see Errors3's own
+    # comment and Count3's docstring) -- normative examples 489-491's
+    # worked example, ":errors(:count(:above(10)))". Despite being
+    # NESTED (normally the FILTER position), :count() cannot filter
+    # entries -- it is an aggregate over the whole array -- so it gates
+    # the whole, unfiltered content instead, same all-or-nothing
+    # treatment as the chained :idchain() GATE above. Built 2026-10-17,
+    # alongside the ":all()"/"'*'"-at-name_three and implied-'*' parsing
+    # fixes this worked example also needed (see TestScopeLimits).
+
+    def _write_errors(self, instance_dir: str, count: int) -> None:
+        errors = [{"source": f"add[{i}]", "message": "bad add"} for i in range(count)]
+        os.makedirs(instance_dir, exist_ok=True)
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+
+    def test_gate_passes_when_count_is_above_bound(self, acme_archive):
+        base = f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00"
+        self._write_errors(f"{base}/company_names", 11)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names"
+            ":errors(:count(:above(10)))",
+            acme_archive,
+        ).resolve()
+        assert len(results.results[0].data) == 11
+
+    def test_gate_fails_when_count_is_at_or_below_bound(self, acme_archive):
+        base = f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00"
+        self._write_errors(f"{base}/company_names", 10)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names"
+            ":errors(:count(:above(10)))",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_gate_with_no_errors_file_resolves_to_none(self, acme_archive):
+        base = f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00"
+        os.makedirs(f"{base}/company_names", exist_ok=True)
+        results = _finder(
+            "$acme.results.customers/2025:first().company_names"
+            ":errors(:count(:above(10)))",
+            acme_archive,
+        ).resolve()
+        assert results.results[0].data is None
+
+    def test_explicit_star_pools_every_instance_and_each_gates_on_its_own(
+        self, acme_archive
+    ):
+        # "$acme.results.customers/2025:first().*:errors(:count(
+        # :above(10)))" -- normative examples 489-491's first form.
+        # run1 (:first()) has two instances: company_names (11 errors,
+        # qualifies) and "1" (3 errors, does not).
+        base = f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00"
+        self._write_errors(f"{base}/company_names", 11)
+        self._write_errors(f"{base}/1", 3)
+        finder = _finder(
+            "$acme.results.customers/2025:first().*:errors(:count(:above(10)))",
+            acme_archive,
+        )
+        results = finder.query()
+        assert len(results.results) == 2
+        assert results.ambiguous_content_read is True
+        # resolving both pooled instances AT ONCE is still Rule 1
+        # territory -- resolve() refuses, same as every other whole-
+        # resource accessor's own pooled case.
+        with pytest.raises(ReferenceException3):
+            finder.resolve()
+        # resolving each instance individually, though, works fine and
+        # gates correctly per instance -- select()'s own
+        # ambiguous_content_read is copied from the original (still
+        # True), but resolve_from()'s raise is also conditioned on
+        # len(results) > 1, so a single-path selection never raises.
+        qualifying = []
+        for r in results.results:
+            resolved = finder.resolve_from([r.path])
+            if resolved.results[0].data is not None:
+                qualifying.append(resolved.results[0].data)
+        assert len(qualifying) == 1
+        assert len(qualifying[0]) == 11
+
+    def test_implied_star_bare_form_is_equivalent_to_the_explicit_star_form(
+        self, acme_archive
+    ):
+        # "$acme.results.customers/2025:first().:errors(:count(
+        # :above(10)))" -- normative examples 489-491's second form,
+        # declared equivalent to the first (compendium 3.19b's implied
+        # '*' for a functions-only name_three).
+        base = f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00"
+        self._write_errors(f"{base}/company_names", 11)
+        self._write_errors(f"{base}/1", 3)
+        finder = _finder(
+            "$acme.results.customers/2025:first().:errors(:count(:above(10)))",
+            acme_archive,
+        )
+        results = finder.query()
+        assert len(results.results) == 2
+        assert results.ambiguous_content_read is True
+
+    def test_filter_shape_is_unaffected_still_narrows_the_entries(
+        self, acme_archive
+    ):
+        # confirms the new GATE dispatch did not disturb the pre-
+        # existing, nested :idchain()/:message() FILTER shape (same
+        # nested position, different mechanism -- see Errors3's own
+        # comment for why :count() is the one documented exception).
+        base = f"{acme_archive}/acme/customers/2025/2026-01-01_00-00-00"
+        errors = [
+            {"source": "add[0]string[2]", "message": "bad add"},
+            {"source": "name[1]", "message": "bad name"},
+        ]
+        os.makedirs(f"{base}/company_names", exist_ok=True)
+        with open(f"{base}/company_names/errors.json", "w") as f:
             json.dump(errors, f)
         results = _finder(
             '$acme.results.customers/2025:first().company_names'
@@ -3704,8 +3839,26 @@ class TestScopeLimits:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_star_body_on_name_three_not_supported(self, acme_archive):
+    def test_star_body_on_name_three_is_the_same_wildcard_as_all(
+        self, acme_archive
+    ):
+        # compendium 4.2b/4.3a: ":all() devolves to the same meaning as
+        # '*' in name_three" -- normative examples 393-404 declare them
+        # flatly equivalent. Relaxed 2026-10-17 (was: an unconditional
+        # rejection here) alongside :count()'s own worked example
+        # (normative examples 489-491), which needed this to even
+        # parse. run1 (selected by :first()) has two instances --
+        # "*" pools both, same as ":all()" would.
         finder = _finder("$acme.results.customers/2025:first().*", acme_archive)
+        results = finder.query()
+        assert len(results.results) == 2
+
+    def test_star_body_combined_with_all_raises(self, acme_archive):
+        # both are the same wildcard -- combining them is "two wildcards
+        # in name_three," still illegal.
+        finder = _finder(
+            "$acme.results.customers/2025:first().*:all()", acme_archive
+        )
         with pytest.raises(ReferenceException3):
             finder.query()
 
@@ -3716,15 +3869,26 @@ class TestScopeLimits:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_accessor_alone_with_no_identity_or_all_raises(self, acme_archive):
-        # :data() is registered and meaningful for results, but it does
-        # not itself select which instance it applies to -- it needs a
-        # literal identity or :all() riding alongside it.
+    def test_bare_accessor_implies_star_and_pools_every_instance(
+        self, acme_archive
+    ):
+        # compendium 3.19b: "When name_three is solely one or more
+        # functions, a '*' is implied, in the same way as in name_one."
+        # :data() is registered and meaningful for results, but does not
+        # itself select which instance it applies to -- it used to be an
+        # unconditional rejection without an explicit identity/:all()
+        # riding alongside it; relaxed 2026-10-17 (the same worked
+        # example as test_star_body_on_name_three_is_the_same_wildcard_
+        # as_all above) to imply '*' instead, pooling every instance in
+        # the run, same as an explicit ":all():data()" would.
         finder = _finder(
             "$acme.results.customers/2025:first().:data()", acme_archive
         )
+        results = finder.query()
+        assert len(results.results) == 2
+        assert results.ambiguous_content_read is True
         with pytest.raises(ReferenceException3):
-            finder.query()
+            finder.resolve()
 
     def test_identity_combined_with_all_raises(self, acme_archive):
         # contradictory: a literal identity selects one instance, :all()

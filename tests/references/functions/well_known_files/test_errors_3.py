@@ -1,8 +1,10 @@
 import pytest
 
 from csvpath.references.functions.well_known_files.errors_3 import Errors3
+from csvpath.references.functions.selectors.after_3 import After3
 from csvpath.references.functions.selectors.first_3 import First3
 from csvpath.references.functions.function_3 import Function3
+from csvpath.references.functions.filters.count_3 import Count3
 from csvpath.references.functions.filters.idchain_3 import Idchain3
 from csvpath.references.reference_3 import Reference3
 from csvpath.references.reference_exceptions_3 import ReferenceException3
@@ -32,7 +34,13 @@ def test_idchain_arg_is_accepted():
 
 
 def test_a_different_functions_arg_is_rejected():
-    # only Idchain3 specifically is meaningful here -- not just any
-    # Function3.
+    # only Idchain3/Message3/Count3 specifically are meaningful here --
+    # not just any Function3.
     with pytest.raises(ReferenceException3):
         Errors3(arg=First3()).check_valid()
+
+
+def test_count_arg_is_accepted():
+    # the third, EXPLICIT exception to nested=FILTER (see this class's
+    # own comment) -- added 2026-10-17, normative examples 489-491.
+    Errors3(arg=Count3(arg=After3(arg=10))).check_valid()  # should not raise

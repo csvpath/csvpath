@@ -7,6 +7,7 @@ from csvpath.util.original_file_utility import OriginalFileUtility as orut
 from csvpath.util.path_util import PathUtility as pathu
 
 from .functions.function_3 import Function3
+from .functions.filters.count_3 import Count3
 from .functions.filters.idchain_3 import Idchain3
 from .functions.filters.message_3 import Message3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
@@ -639,22 +640,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # actually tries to resolve more than one of these at once.
             selected_runs = candidates
 
-        if match_all and accessor is not None:
-            # :all() pools every instance in the run -- each instance has
-            # its own separate well-known file on disk. Unlike the
-            # run-level case above, this stays an immediate, unconditional
-            # rejection for now (not deferred to resolve()) -- no
-            # established case needs ":all()" combined with a content
-            # accessor to succeed even when it happens to match exactly
-            # one instance, so this is left as-is rather than widened
-            # speculatively.
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 requires a specific statement "
-                "identity, not :all(), to read full well-known-file "
-                "content -- resolving full content always touches "
-                "exactly one entity."
-            )
-
+        # :all() pools every instance in the run -- each instance has its
+        # own separate well-known file on disk. Used to be an immediate,
+        # unconditional rejection here ("no established case needs
+        # ':all()' combined with a content accessor") -- that case has
+        # now arrived (":errors(:count(:above(10)))", normative examples
+        # 489-491, needs every instance pooled so each one's own count
+        # can be gated independently). Relaxed 2026-10-17 to the same
+        # deferred Rule 1 pattern _star_pool_and_reduce() already uses
+        # for the identical match_all+accessor combination reached via
+        # '*'-root traversal -- query() itself never raises for this,
+        # only resolve()/resolve_from() do, and only when more than one
+        # of the pooled results is actually asked for at once.
         results = []
         for run_dir in selected_runs:
             results.extend(
@@ -664,7 +661,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
         return ReferenceResults3(
             results=results,
-            ambiguous_content_read=wants_full_content and len(selected_runs) > 1,
+            ambiguous_content_read=wants_full_content and len(results) > 1,
         )
 
     def _query_star_traversal(
@@ -741,11 +738,20 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             reference.name_three
         )
         if match_all and accessor is not None:
-            # same "more than one entity" rule the literal-root case
-            # already enforces, unconditionally, regardless of run
-            # count -- :all() at name_three means every instance in
-            # whichever run(s) match, each with its own separate well-
-            # known file on disk.
+            # :all() at name_three means every instance in whichever
+            # run(s) match, each with its own separate well-known file
+            # on disk. query()'s own literal-root equivalent of this
+            # check was relaxed 2026-10-17 (deferred to the
+            # ambiguous_content_read/Rule-1 pattern instead, see its own
+            # comment) once ":errors(:count(:above(10)))" needed it for
+            # a literal root_major -- left as an unconditional rejection
+            # HERE deliberately, since no worked example yet needs this
+            # combination across a '*'-root traversal specifically; a
+            # future one could extend this the same way, but doing so
+            # now would also require re-auditing _star_group_and_reduce's
+            # own "len(results) > 1 can only mean legitimate multi-group
+            # winners" reasoning below, which currently depends on this
+            # staying a hard block.
             raise ReferenceException3(
                 "ResultsReferenceFinder3 requires a specific statement "
                 "identity, not :all(), to read full well-known-file "
@@ -1079,15 +1085,22 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             return ReferenceResults3(
                 results=results,
-                ambiguous_content_read=accessor is not None and len(run_homes) > 1,
+                ambiguous_content_read=accessor is not None and len(results) > 1,
             )
         selected = self._apply_pointer(pointer, run_homes)
         if selected is None:
             return ReferenceResults3(results=[])
+        results = self._results_for_run(
+            selected, identity, match_all, range_bounds, accessor
+        )
         return ReferenceResults3(
-            results=self._results_for_run(
-                selected, identity, match_all, range_bounds, accessor
-            )
+            results=results,
+            # match_all can still pool more than one instance out of this
+            # one, already-pointer-selected run -- added 2026-10-17
+            # alongside the ':count()' worked example, same reasoning as
+            # the no-pointer branch above (previously unreachable, since
+            # match_all+accessor was blocked outright before this fix).
+            ambiguous_content_read=accessor is not None and len(results) > 1,
         )
 
     def _star_group_and_reduce(
@@ -1126,13 +1139,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         internal guards (checked below) already guarantee AT MOST one
         `ReferenceResult3` per run whenever `accessor is not None` --
         `match_all` combined with an accessor is intercepted earlier by
-        this class's own unconditional instance-level rejection (see
-        query()'s and this method's own sibling's `match_all and
-        accessor is not None` checks, deliberately left as-is, a
-        genuinely different, structural case, not a count-dependent one
-        -- see the bucket list), and a `range_bounds` match of more than
-        one statement is independently rejected inside
-        `_results_for_run()` itself. So `len(results) > 1` here can only
+        this method's own sibling's unconditional instance-level
+        rejection (`_query_star_traversal`'s own `match_all and accessor
+        is not None` check, deliberately left in place for '*'-root
+        traversal specifically -- see its own comment; query()'s
+        LITERAL-root equivalent was relaxed 2026-10-17 for
+        ":errors(:count(:above(10)))", but that path never reaches
+        this method), and a `range_bounds` match of more than one
+        statement is independently rejected inside `_results_for_run()`
+        itself. So `len(results) > 1` here can only
         ever mean "more than one GROUP's own already-individually-
         legitimate winner," the identical shape already proven safe to
         defer rather than raise -- flagged via `ambiguous_content_read`
@@ -1472,14 +1487,24 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         nested :message(...) argument (added 2026-10-17, the direct
         sibling of :idchain(...) -- normative_reference_examples.txt
         places them right next to each other) filters by the entry's
-        own "message" field instead, same treatment."""
+        own "message" field instead, same treatment. A nested
+        :count(...) argument (added 2026-10-17, Errors3's own
+        documented exception to the nested=FILTER rule) is not a
+        per-entry filter at all -- see Count3.matches(), applied here
+        directly against `data` (not per-entry) and gating the whole,
+        unfiltered list to None if unsatisfied, same all-or-nothing
+        treatment _apply_errors_gate() already gives the chained-
+        :idchain() GATE case."""
         if accessor.name in cls._JSON_ACCESSOR_FILES:
             path = Nos(instance_dir).join(cls._JSON_ACCESSOR_FILES[accessor.name])
             data = cls._read_well_known_json(path)
-            if data is not None and accessor.name == "errors":
-                if isinstance(accessor.arg, Idchain3):
+            if accessor.name == "errors":
+                if isinstance(accessor.arg, Count3):
+                    if not accessor.arg.matches(data):
+                        data = None
+                elif data is not None and isinstance(accessor.arg, Idchain3):
                     data = [e for e in data if accessor.arg.matches(e.get("source"))]
-                elif isinstance(accessor.arg, Message3):
+                elif data is not None and isinstance(accessor.arg, Message3):
                     data = [e for e in data if accessor.arg.matches(e.get("message"))]
             return data
         if accessor.name == "printouts" and accessor.arg:
@@ -1875,10 +1900,24 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
         body = name_three.body
         if isinstance(body, Star3):
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 does not support a bare '*' as "
-                "name_three's body -- use :all() instead."
-            )
+            # compendium 4.2b/4.3a: ":all() devolves to the same
+            # meaning as '*' in name_three" -- normative examples
+            # 393-404 declare them flatly equivalent (e.g.
+            # "$acme.results.:last().:all()" == "$acme.results.
+            # :last().*"), so a literal '*' body folds into the same
+            # match_all flag ':all()' already sets, rather than being
+            # a separate, unsupported shape. Added 2026-10-17 alongside
+            # :count()'s own worked example (normative examples
+            # 489-491), which needed this to even parse.
+            if match_all:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3's name_three cannot combine "
+                    "a literal '*' body with ':all()' -- both are the "
+                    "same wildcard, at most one may be used in "
+                    "name_three."
+                )
+            match_all = True
+            body = None
         if sum([body is not None, match_all, range_bounds is not None]) > 1:
             raise ReferenceException3(
                 "ResultsReferenceFinder3 cannot combine a literal "
@@ -1886,12 +1925,23 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "instances a different, contradictory way; use only one."
             )
         if body is None and not match_all and range_bounds is None:
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 requires name_three to be a "
-                "literal statement identity, :all(), or ':from()'/':to()' "
-                "to select which instance(s) a well-known-file function "
-                "applies to."
-            )
+            if name_three.functions:
+                # compendium 3.19b: "When name_three is solely one or
+                # more functions, a '*' is implied, in the same way as
+                # in name_one." -- e.g. ":errors(:count(:above(10)))"
+                # with nothing else in name_three. Added 2026-10-17,
+                # same worked example as the '*'-body carve-out above.
+                # By this point an unrecognized function has already
+                # raised (above), so `functions` being non-empty here
+                # means an accessor/field_call is actually present.
+                match_all = True
+            else:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 requires name_three to be a "
+                    "literal statement identity, :all(), or ':from()'/"
+                    "':to()' to select which instance(s) a well-known-"
+                    "file function applies to."
+                )
         return body, match_all, accessor, field_call, range_bounds, gate_call
 
     @classmethod
