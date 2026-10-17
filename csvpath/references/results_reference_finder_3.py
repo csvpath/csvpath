@@ -8,6 +8,7 @@ from csvpath.util.path_util import PathUtility as pathu
 
 from .functions.function_3 import Function3
 from .functions.filters.idchain_3 import Idchain3
+from .functions.filters.message_3 import Message3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_3 import FunctionCall3, Reference3, Star3
 from .reference_exceptions_3 import ReferenceException3
@@ -1447,16 +1448,19 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         list down to entries whose own "source" field (Error.to_json()
         -- Matchable.my_chain, recorded once at error time, not walked
         live) matches -- zero matches is a legitimate empty list, not
-        None or an error; the file itself was found and read fine."""
+        None or an error; the file itself was found and read fine. A
+        nested :message(...) argument (added 2026-10-17, the direct
+        sibling of :idchain(...) -- normative_reference_examples.txt
+        places them right next to each other) filters by the entry's
+        own "message" field instead, same treatment."""
         if accessor.name in cls._JSON_ACCESSOR_FILES:
             path = Nos(instance_dir).join(cls._JSON_ACCESSOR_FILES[accessor.name])
             data = cls._read_well_known_json(path)
-            if (
-                data is not None
-                and accessor.name == "errors"
-                and isinstance(accessor.arg, Idchain3)
-            ):
-                data = [e for e in data if accessor.arg.matches(e.get("source"))]
+            if data is not None and accessor.name == "errors":
+                if isinstance(accessor.arg, Idchain3):
+                    data = [e for e in data if accessor.arg.matches(e.get("source"))]
+                elif isinstance(accessor.arg, Message3):
+                    data = [e for e in data if accessor.arg.matches(e.get("message"))]
             return data
         if accessor.name == "printouts" and accessor.arg:
             # a named stream under print-mode:separate (added
