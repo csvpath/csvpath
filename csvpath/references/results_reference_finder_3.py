@@ -825,9 +825,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
         if self._is_bare_function_only(name_one):
             calls = self._combined_name_one_calls(name_one)
-            pointer, all_call, flatten_call, having_call, field_call, groups_call = (
-                self._star_run_selector_chain(calls)
-            )
+            (
+                pointer,
+                all_call,
+                flatten_call,
+                having_call,
+                field_calls,
+                groups_call,
+                bare_time_window,
+            ) = self._star_run_selector_chain(calls)
             if all_call is not None:
                 # zero-level, degenerate -- the SAME [] restriction bare
                 # ':all()' already applies for one literal group (see the
@@ -853,7 +859,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     range_bounds,
                     accessor,
                     having_call,
-                    field_call,
+                    field_calls,
+                    bare_time_window,
                 )
             if groups_call is not None:
                 # any depth, every named-results group -- BUILT
@@ -885,7 +892,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     range_bounds,
                     accessor,
                     having_call,
-                    field_call,
+                    field_calls,
+                    bare_time_window,
                 )
             if flatten_call is not None:
                 # any depth, every group -- _discover_run_homes(None)
@@ -918,7 +926,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 range_bounds,
                 accessor,
                 having_call,
-                field_call,
+                field_calls,
+                bare_time_window,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -935,8 +944,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             prefix_pattern = self._compile_path_pattern(name_one.path[:-1])
             calls = list(name_one.functions)
-            pointer, _, _, having_call, field_call, _ = self._star_run_selector_chain(
-                calls
+            pointer, _, _, having_call, field_calls, _, bare_time_window = (
+                self._star_run_selector_chain(calls)
             )
             run_homes = [
                 rh
@@ -955,7 +964,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 range_bounds,
                 accessor,
                 having_call,
-                field_call,
+                field_calls,
+                bare_time_window,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -977,8 +987,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             pattern = self._compile_path_pattern(name_one.path[:-1])
             calls = list(name_one.functions)
-            pointer, _, _, having_call, field_call, _ = self._star_run_selector_chain(
-                calls
+            pointer, _, _, having_call, field_calls, _, bare_time_window = (
+                self._star_run_selector_chain(calls)
             )
             partitioned = []
             for rh, group in self._discover_run_homes(None, name_filter):
@@ -1003,7 +1013,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 range_bounds,
                 accessor,
                 having_call,
-                field_call,
+                field_calls,
+                bare_time_window,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -1025,8 +1036,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             prefix_pattern = self._compile_path_pattern(name_one.path[:-1])
             calls = list(name_one.functions)
-            pointer, _, _, having_call, field_call, _ = self._star_run_selector_chain(
-                calls
+            pointer, _, _, having_call, field_calls, _, bare_time_window = (
+                self._star_run_selector_chain(calls)
             )
             partitioned = []
             for rh, group in self._discover_run_homes(None, name_filter):
@@ -1051,7 +1062,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 range_bounds,
                 accessor,
                 having_call,
-                field_call,
+                field_calls,
+                bare_time_window,
             )
 
         # plain literal/'*' path, no trailing ':flatten()'/':all()'/
@@ -1067,8 +1079,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             path = path[:-1]
         pattern = self._compile_path_pattern(path)
         calls = list(name_one.functions)
-        pointer, _, _, having_call, field_call, _ = self._star_run_selector_chain(
-            calls
+        pointer, _, _, having_call, field_calls, _, bare_time_window = (
+            self._star_run_selector_chain(calls)
         )
         run_homes = [
             rh
@@ -1085,7 +1097,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             range_bounds,
             accessor,
             having_call,
-            field_call,
+            field_calls,
+            bare_time_window,
         )
 
     def _star_run_selector_chain(self, calls: list) -> tuple:
@@ -1095,14 +1108,36 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         out of what used to be inline-only-for-the-bare-case logic once
         the literal/'*'-prefixed shapes needed the identical validation.
         Returns (pointer, all_call, flatten_call, having_call,
-        field_call, groups_call) -- field_call added 2026-10-18,
-        alongside :error_count()'s own predicate-argument GATE, so the
-        shared tail methods (_star_pool_and_reduce()/_star_group_and_
-        reduce()) can apply it to the pooled candidate list;
-        groups_call added the same day, alongside ':groups()' finally
-        getting its own '*'-traversal support (previously an
-        unconditional rejection -- see this class's own comment at the
-        bare-shape dispatch for the worked example that needed it).
+        field_calls, groups_call, bare_time_window) -- field_calls
+        (added 2026-10-18, alongside :error_count()'s own predicate-
+        argument GATE) is now a LIST, not a single call: REVISED
+        2026-10-18 (compendium 5.20b/GATE-trailing-chain work) once
+        ":manifest():uuid(\"...\"):run_home()" and ":manifest():
+        named_paths_name(\"...\"):yesterday()" (both confirmed live,
+        normative-examples golden-corpus revival) showed a SECOND
+        field-accessor chained after the first was rejected outright as
+        an unsupported extra -- every argued one in the list is its own
+        independent GATE (position does not matter, see
+        _star_pool_and_reduce()/_star_group_and_reduce()'s own copies
+        of this loop), and _extract_data()'s own resolve-target sites
+        separately pick the correct one to resolve to (the LAST, via
+        _last_field_function_call() -- see their own comments).
+        bare_time_window (added the same day, same fix) is a BARE
+        TimeWindowFunction3 (e.g. ":yesterday()") riding in the chain --
+        previously silently mismatched for a field_call by accident
+        (TimeWindowFunction3.SOURCE == "clock" is "not None" too, so
+        _find_field_function_call() used to return it whenever it was
+        the only candidate, letting it through the non_pointers
+        rejection below while never actually filtering anything, since
+        nothing downstream applied it) -- now its own, separate,
+        correctly-applied category, mirroring query()'s own already-
+        correct literal-root `bare_time_windows` handling (see this
+        file's own top-of-method comment there). groups_call added the
+        same day as field_call's own original addition, alongside
+        ':groups()' finally getting its own '*'-traversal support
+        (previously an unconditional rejection -- see this class's own
+        comment at the bare-shape dispatch for the worked example that
+        needed it).
         all_call/flatten_call/groups_call are only ever non-None for the
         bare shape (calls includes name_one.path[0] itself there) --
         for a prefixed shape, calls is just name_one.functions, and the
@@ -1151,7 +1186,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         touched (a separate, already-merged PR, not blocking anything
         needed here)."""
         built = self._build_chain(calls)
-        field_call = self._find_field_function_call(built)
+        field_calls = self._find_field_function_calls(built, Reference3.RESULTS)
+        bare_time_windows = [f for f in built if isinstance(f, TimeWindowFunction3)]
+        if len(bare_time_windows) > 1:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not support combining more "
+                "than one bare time-component function (e.g. "
+                "':yesterday()') in the same '*'-traversal chain."
+            )
+        bare_time_window = bare_time_windows[0] if bare_time_windows else None
         all_call = next((f for f in built if f.name == "all"), None)
         flatten_call = next((f for f in built if f.name == "flatten"), None)
         groups_call = next((f for f in built if f.name == "groups"), None)
@@ -1168,7 +1211,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             f
             for f in built
             if f.ROLE != Function3.POINTER
-            and f is not field_call
+            and not any(f is fc for fc in field_calls)
+            and f is not bare_time_window
             and f is not flatten_call
             and f is not all_call
             and f is not groups_call
@@ -1182,11 +1226,21 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 f":{non_pointers[0].name}() combined with '*' traversal -- "
                 "only a bare pointer (:first()/:last()/:index(n)), "
                 "optionally combined with ':all()'/':flatten()'/':groups()', "
-                "':manifest()', ':having(\"identity\")', and/or a run-level "
-                "field-accessor function (e.g. :uuid()), is supported so far."
+                "':manifest()', ':having(\"identity\")', a bare time-"
+                "component function (e.g. :yesterday()), and/or one or "
+                "more run-level field-accessor functions (e.g. :uuid()), "
+                "is supported so far."
             )
         pointer = self._pointer_from_calls(calls)
-        return pointer, all_call, flatten_call, having_call, field_call, groups_call
+        return (
+            pointer,
+            all_call,
+            flatten_call,
+            having_call,
+            field_calls,
+            groups_call,
+            bare_time_window,
+        )
 
     def _run_field_value(self, run_dir: str, field_call):
         """the value a run-level field-accessor function (e.g.
@@ -1275,7 +1329,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         range_bounds: tuple | None,
         accessor,
         having_call=None,
-        field_call=None,
+        field_calls: list = None,
+        bare_time_window=None,
     ) -> ReferenceResults3:
         """POOL mode's shared tail -- added 2026-08-19, alongside
         _star_group_and_reduce(), factored out once name_three needed
@@ -1287,12 +1342,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         branches, since every one of them already funnels into this
         shared tail (or _star_group_and_reduce's, which applies the same
         filter itself before delegating here for its own no-pointer
-        case). `field_call` (added 2026-10-18) similarly filters
+        case). `field_calls` (added 2026-10-18, REVISED the same day
+        from a single `field_call` to a list -- see
+        _star_run_selector_chain()'s own comment) similarly filters
         `run_homes` down to those whose own field value (e.g.
-        "error_count") satisfies field_call's own predicate/exact-match
-        argument, e.g. ":error_count(:above(3))" -- a no-op when
-        field_call carries no argument at all (an ordinary bare field
-        read, e.g. ":uuid()", unaffected). A
+        "error_count") satisfies EACH argued call's own predicate/
+        exact-match argument, e.g. ":error_count(:above(3))" -- a no-op
+        for any call that carries no argument at all (an ordinary bare
+        field read, e.g. ":uuid()", unaffected), and every argued one
+        filters independently (AND-combined), regardless of position in
+        the chain. `bare_time_window` (added the same day) similarly
+        filters `run_homes` to those within its own date range, same as
+        query()'s own literal-root `_apply_bare_time_window()` call. A
         missing pointer (added 2026-08-19, see _star_run_selector_chain()'s
         own comment for why) means every matched run comes back,
         unreduced -- which can now be MORE than one run. Resolving full
@@ -1314,14 +1375,17 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 for rh in run_homes
                 if self._run_satisfies_having(rh, having_call)
             ]
-        if field_call is not None and field_call.arg is not None:
-            run_homes = [
-                rh
-                for rh in run_homes
-                if self._matches_field_predicate(
-                    self._run_field_value(rh, field_call), field_call.arg
-                )
-            ]
+        for field_call in field_calls or []:
+            if field_call.arg is not None:
+                run_homes = [
+                    rh
+                    for rh in run_homes
+                    if self._matches_field_predicate(
+                        self._run_field_value(rh, field_call), field_call.arg
+                    )
+                ]
+        if bare_time_window is not None:
+            run_homes = self._apply_bare_time_window(run_homes, bare_time_window)
         run_homes = sorted(run_homes, key=self._run_dir_sort_key)
         if pointer is None:
             results = []
@@ -1360,7 +1424,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         range_bounds: tuple | None,
         accessor,
         having_call=None,
-        field_call=None,
+        field_calls: list = None,
+        bare_time_window=None,
     ) -> ReferenceResults3:
         """GROUP mode's shared tail (":all()", bare or literal/'*'-
         prefixed) -- added 2026-08-19. `partitioned`: list of
@@ -1370,10 +1435,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         -- same position/reasoning as _star_pool_and_reduce's own copy
         of this filter (not shared as one call, since the two methods
         filter different-shaped inputs -- a flat list here vs. pairs).
-        `field_call` (added 2026-10-18) similarly filters `partitioned`
-        down to runs whose own field value satisfies field_call's own
-        predicate/exact-match argument, same reasoning as
-        _star_pool_and_reduce's own copy -- see its own comment.
+        `field_calls`/`bare_time_window` (added 2026-10-18, `field_
+        calls` REVISED the same day from a single `field_call` to a
+        list) similarly filter `partitioned` down to runs whose own
+        field value(s)/run-directory date satisfy them, same reasoning
+        as _star_pool_and_reduce's own copy -- see its own comment.
         Unlike POOL mode, a pointer here can still select MORE than one
         run overall (one per partition) -- so a name_three CONTENT
         accessor (:errors()/:vars()/etc, as opposed to a poolable field
@@ -1428,13 +1494,22 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 for rh, key in partitioned
                 if self._run_satisfies_having(rh, having_call)
             ]
-        if field_call is not None and field_call.arg is not None:
+        for field_call in field_calls or []:
+            if field_call.arg is not None:
+                partitioned = [
+                    (rh, key)
+                    for rh, key in partitioned
+                    if self._matches_field_predicate(
+                        self._run_field_value(rh, field_call), field_call.arg
+                    )
+                ]
+        if bare_time_window is not None:
+            start = bare_time_window.start_datetime()
+            end = bare_time_window.end_datetime()
             partitioned = [
                 (rh, key)
                 for rh, key in partitioned
-                if self._matches_field_predicate(
-                    self._run_field_value(rh, field_call), field_call.arg
-                )
+                if start <= self._run_dir_datetime(rh) <= end
             ]
         if pointer is None:
             return self._star_pool_and_reduce(
@@ -1554,7 +1629,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             entry = self._read_well_known_json(
                 Nos(result.path).join("manifest.json")
             )
-            manifest_field_call = self._find_field_function_call(name_one_calls)
+            # last-wins (compendium 5.20b, added 2026-10-18) -- was
+            # _find_field_function_call() (first match), confirmed wrong
+            # the moment a second field accessor could ride alongside
+            # :manifest() in the same chain (e.g. the '*'-traversal
+            # ":manifest():uuid(...):run_home()" shape -- see
+            # _star_run_selector_chain()'s own 2026-10-18 comment).
+            manifest_field_call = self._last_field_function_call(name_one_calls)
             if manifest_field_call is not None:
                 # ':manifest():named_file_uuid()'-style -- added
                 # 2026-08-28, David's own worked example ("get all the
@@ -1593,7 +1674,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return function_cls.transform_value(value)
             return entry
 
-        run_field_call = self._find_field_function_call(name_one_calls)
+        # last-wins (compendium 5.20b, added 2026-10-18) -- same reason
+        # as manifest_field_call's own identical change just above.
+        run_field_call = self._last_field_function_call(name_one_calls)
         if run_field_call is not None:
             # a registered field-accessor (e.g. :run_uuid()) riding
             # beside the run-selecting pointer in name_one, the same
@@ -2154,7 +2237,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         to_call = None
         if name_three.functions:
             built = self._build_chain(name_three.functions)
-            field_call = ResultsReferenceFinder3._find_field_function_call(built)
+            # last-wins (compendium 5.20b, added 2026-10-18) -- same
+            # reason as manifest_field_call's own identical change in
+            # _extract_data(). Instance call (not the class-qualified
+            # staticmethod this used to be), since _last_field_function_
+            # call() needs self.csvpaths.logger to warn on ambiguity.
+            field_call = self._last_field_function_call(built)
             # from_call/to_call here mean LOWER/UPPER bound, not
             # literally ":from()'/':to()' -- generalized 2026-10-16
             # (compendium 6.28) to also recognize their exclusive

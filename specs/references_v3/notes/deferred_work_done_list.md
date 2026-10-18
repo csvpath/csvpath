@@ -3494,3 +3494,142 @@ own — see that entry for `:groups()`/RESULTS `:having()`.)
   forms, the exact normative example, the `origin_path` fallback, the
   uncited-combination regression guard, and a `:type()` regression
   check. Full `tests/references/` suite: 1890 passed.
+
+## GATE-trailing-chain limit (RESULTS `'*'`-root) + resolve-target "last wins" (compendium 5.20b) — BUILT 2026-10-18
+
+A real, confirmed-live gap found the same day while reviving the golden
+normative-examples corpus (PR for `test_normative_examples_results.py`):
+the `:error_count()`-style GATE mechanism's own `'*'`-root exemption
+(`ResultsReferenceFinder3._star_run_selector_chain()`) only ever
+protected ONE chained field accessor from the non-pointer rejection --
+a SECOND one chained after it (another field read, or a bare context-
+setter like `:yesterday()`) raised outright ("does not yet support
+<fn>() combined with '*' traversal"). Three of the doc's own worked
+examples hit this directly: `$*.results.:manifest():uuid(
+"a381..."):run_home()`, `$*.results.:manifest():named_paths_name(
+"orders"):yesterday()`, and both the `:manifest()`/`:flatten()` forms
+of `$*.results....:run_uuid("789a..."):template()`.
+
+Separately, but surfaced by the same investigation: a bare
+`TimeWindowFunction3` (e.g. `:yesterday()`) was ALSO, by accident,
+mismatched for the one exempted field accessor whenever it was alone
+in the chain (`TimeWindowFunction3.SOURCE == "clock"` is "not None"
+too) -- letting it through the rejection check while nothing
+downstream ever actually applied its own filtering. Confirmed live
+(after retracting an earlier, wrong claim that bare `:yesterday()`
+itself was broken -- it was not; the test fixture had set a date on
+the WRONG field, `manifest.json`'s `"time"`, when `_run_dir_datetime()`
+reads it from the run DIRECTORY'S OWN timestamp-prefixed name): a bare
+`$*.results.:yesterday()` returned every run regardless of date, since
+star-traversal's shared tail methods (`_star_pool_and_reduce()`/
+`_star_group_and_reduce()`) never called `_apply_bare_time_window()`
+at all -- unlike the literal-root `query()` path, which already did.
+
+Also confirmed live, a related but logically separate bug in CSVPATHS
+(not RESULTS, and not star-traversal -- the literal, bare-pointer
+case): `$acme.csvpaths.:last():uuid():named_paths_name()` resolved to
+`:uuid()`'s own value, not `:named_paths_name()`'s -- the shared
+`_find_field_function_call()` helper (used at every finder's own
+resolve-target call site) returns the FIRST field accessor it finds in
+a chain, which was never a deliberate design choice, just what the
+single-match helper happened to do once a second field accessor could
+reach the same chain.
+
+David settled the general rule the same day, adding compendium 5.20b
+himself: "in the case there are two possible interpretation[s] of a
+reference's resolve value(s) due to there being multiple functions
+which could provide the value[,] the last value-producing function
+wins... This limited case is the only exception to the order
+indeterminacy of functions... log a warning when this situation
+occurs, but should not raise an error." His own reasoning: "[I feel
+like] in the case of ambiguity the user needs a rule and the rule
+should be if there are two possible answers the last function wins.
+Users know they can write functions in any order, so they know they
+can choose the correct order, if there is a lack of clarity."
+GATE-ness and resolve-target-ness are explicitly orthogonal: an
+argued field accessor GATEs regardless of chain position (every one
+does, independently, AND-combined); resolve-target selection is
+positional and applies only among genuine field accessors specifically
+(never a `TimeWindowFunction3` anchor, never a marker like
+`:manifest()`/`:having()`/a pointer) -- among those, the LAST wins.
+
+**Implementation**: two new shared methods on base `ReferenceFinder3`
+(`reference_finder_3.py`): `_find_field_function_calls(functions,
+datatype=None)` (plural -- returns EVERY qualifying field accessor,
+excluding a bare `TimeWindowFunction3`; the optional `datatype` filter
+was added after it was needed -- see below) and
+`_last_field_function_call(functions)` (the LAST of those, logging
+`self.csvpaths.logger.warning(...)` whenever 2+ qualify -- a single
+candidate is not ambiguous at all and stays silent). Replaced
+`_find_field_function_call()` (singular, first-match) with
+`_last_field_function_call()` at every confirmed resolve-target call
+site: `ResultsReferenceFinder3._extract_data()`'s `manifest_field_call`
+and `run_field_call` sites, `_name_three_selector()`'s own `field_call`
+site, and `CsvpathsReferenceFinder3._extract_data()`'s `field_call`
+site. FILES' three analogous call sites were left untouched -- confirmed
+live that FILES cannot yet reach the two-field-accessor ambiguity at
+all (`_extract_gate_field_call()`'s own earlier, separate single-match
+limitation blocks it upstream, e.g. `$finn.files.:type("csv"):
+template()` already raises on its own).
+
+`_star_run_selector_chain()` widened: `field_calls` (plural, a list,
+REVISED from the single `field_call` it used to return) collects every
+qualifying field accessor via the new `_find_field_function_calls()`,
+each GATEing independently if argued (not just the first); a bare
+`TimeWindowFunction3` now gets its OWN separate `bare_time_window`
+slot in the returned tuple (7 values now, up from 6), correctly
+exempted AND correctly applied downstream, rather than being
+accidentally, silently absorbed into the old single `field_call` slot.
+All 5 of its own call sites, and both `_star_pool_and_reduce()`/
+`_star_group_and_reduce()` (which now loop over `field_calls` instead
+of checking one, and apply `_apply_bare_time_window()` when
+`bare_time_window` is set -- `_star_group_and_reduce()`'s own copy
+inlines the same start/end-datetime comparison rather than calling the
+staticmethod directly, since it filters `(run_home, key)` pairs, not a
+flat list), were updated to match.
+
+**The `datatype` parameter on `_find_field_function_calls()` closed a
+real gap this widening exposed, not a hypothetical one**: a star-
+traversal regression test (`:last():named_paths_name():webhooks()`,
+expecting a raise) started passing with no error once every match was
+collected instead of just the first -- `:webhooks()` is registered for
+a completely different datatype, and the plain `SOURCE is not None`
+test alone cannot tell datatypes apart (the old single-match helper
+only avoided this by accident: a wrong-datatype match simply was never
+THE one match returned, so it still fell through to the ordinary
+"unsupported extra" rejection). Fixed by checking `datatype in
+function_cls.DATATYPES` too, passed through from
+`_star_run_selector_chain()` (`Reference3.RESULTS`, hardcoded -- this
+method only ever belongs to `ResultsReferenceFinder3`) and from
+`_last_field_function_call()` (`self.ref.parsed.datatype`, the
+caller's own actual datatype).
+
+Compendium 5.20b's own worked example had a grammar bug of its own,
+also fixed: `$a.files.orders.csv:from():template()` cannot parse (a
+bare literal path segment cannot contain an unquoted "." per the
+grammar) and used `:from()` as if it were a value-producing field
+accessor, when it is actually a range SELECTOR (`selectors/from_3.py`,
+narrows an already-ordered list, never resolves to a scalar on its
+own) -- corrected to `$a.files.:name("orders.csv"):fingerprint():
+template()`, two genuine FILES field accessors, `:template()`
+(the last) winning.
+
+**Tests**: `TestGateTrailingChain` (5 tests) in
+`test_normative_examples_results.py`, encoding the exact three
+previously-broken doc examples as real, passing assertions (replacing
+the module docstring's own "flagging this for David" note) plus a
+no-ambiguity/no-warning control; `TestStarTraversal::
+test_two_argued_field_accessors_both_gate_independently`/
+`test_bare_time_window_filters_within_all_grouping` in
+`test_results_reference_finder_3.py` (unit-level POOL+GROUP coverage
+for the widened multi-GATE/bare-time-window mechanics specifically);
+`TestResolveTargetLastWins` (3 tests) in
+`test_csvpaths_reference_finder_3.py`, proving the CSVPATHS bug fix
+AND that chain ORDER genuinely controls the result (reversing the two
+field accessors reverses which value wins). New `_FakeLogger` test
+double (`.warnings` list) added to `_FakeCsvPaths` in both
+`test_results_reference_finder_3.py` and
+`test_normative_examples_results.py` (CSVPATHS' own test file already
+had one). Full `tests/references/` suite: 1929 passed. Full local-
+backend suite: 4390 passed, 11 failed (known SFTP/S3/AWS credential
+baseline, unrelated).

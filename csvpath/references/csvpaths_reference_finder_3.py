@@ -717,7 +717,14 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # one key from the matched version's manifest entry (or, for
             # a definition.json-backed field, the group's definition
             # config) instead of the whole entry.
-            field_call = self._find_field_function_call(combined_for_path)
+            # last-wins (compendium 5.20b, added 2026-10-18) -- was
+            # _find_field_function_call() (first match), confirmed wrong
+            # live: "$acme.csvpaths.:last():uuid():named_paths_name()"
+            # used to resolve to :uuid()'s own value (the first field
+            # accessor found) instead of :named_paths_name()'s (the
+            # last, and the one a user chaining two field accessors
+            # almost certainly means to read).
+            field_call = self._last_field_function_call(combined_for_path)
             if field_call is not None:
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     field_call.name

@@ -54,34 +54,38 @@ The `.:all():data()` example (which raised, since Rule 1 forbids combining
 ':all()' with any content accessor) was removed from the doc entirely; no
 corresponding test lives here for it.
 
-A REAL, confirmed-live gap found 2026-10-18 while adding this week's
-"functional taxonomy" GATE coverage below -- NOT in this file's own
-excluded-doc-lines list above, since it is not about a missing
-function, but about chaining TWO things onto one `:manifest()`/
-`:flatten()` candidate list at once. The GATE mechanism built this
-week (`field_call`/`_matches_field_predicate`) only supports exactly
-ONE chained field accessor after `:manifest()`/`:flatten()` -- a
-SECOND function chained after the GATE (another field read, or a
-context-setter like `:yesterday()`) raises "does not yet support
-<fn>() combined with '*' traversal." Three of the doc's own worked
-examples hit this directly, confirmed live:
+FIXED 2026-10-18 (same day as the finding, below, once David settled
+compendium 5.20b): a REAL, confirmed-live gap had been found while
+adding this week's "functional taxonomy" GATE coverage -- not about a
+missing function, but about chaining TWO things onto one `:manifest()`/
+`:flatten()` candidate list at once. The GATE mechanism built that week
+(`field_call`/`_matches_field_predicate`) only supported exactly ONE
+chained field accessor after `:manifest()`/`:flatten()` -- a SECOND
+function chained after the GATE (another field read, or a context-
+setter like `:yesterday()`) raised "does not yet support <fn>()
+combined with '*' traversal." Three of the doc's own worked examples
+hit this directly:
   - `$*.results.:manifest():uuid("a381..."):run_home()` (line ~681,
     "two ways to get the run dir of a run containing a csvpath
     instance with a certain UUID" -- the archive-ledger route; the
-    paired `:having()` route on line ~682 DOES work, already covered
-    by TestHavingNestedFieldAccessor in test_results_reference_finder_3
-    .py, so this is NOT "the whole example is broken," just this one
-    of its two cited forms).
+    paired `:having()` route on line ~682 already worked, covered by
+    TestHavingNestedFieldAccessor in test_results_reference_finder_3.py).
   - `$*.results.:manifest():named_paths_name("orders"):yesterday()`
     (line ~696, "find all the instances in runs with the named_paths
     group `orders` that happened yesterday").
   - `$*.results.:manifest():run_uuid("789a..."):template()` and
     `$*.results.:flatten():run_uuid("789a..."):template()` (lines
     ~716-717, "two ways of finding the template used by a run").
-Flagging this for David rather than building a workaround -- it is a
-real, scoped, buildable follow-up to this week's GATE work (generalize
-the single-field_call exemption to a short CHAIN of them), not a
-documentation issue.
+Fixed by: (a) widening `_star_run_selector_chain()`'s exemption from
+one field accessor to every qualifying one, each GATEing
+independently if argued; (b) giving a bare `TimeWindowFunction3` (e.g.
+`:yesterday()`) its own separate exemption + filtering, mirroring
+query()'s own already-correct literal-root handling (it used to be
+accidentally, silently let through with no filtering effect at all);
+and (c) compendium 5.20b's new rule for which function's value
+resolve() actually returns once 2+ qualify ("the last value-producing
+function wins," with a logged warning) -- see TestGateTrailingChain
+below for the real, passing coverage.
 
 REVISED 2026-09-21: an earlier version of this docstring (and this file's
 own fixtures) treated bare '*'/':all()' as one-level operators, peers of
@@ -130,10 +134,28 @@ class _FakeResultsManager:
             return json.load(f)
 
 
+class _FakeLogger:
+    def __init__(self):
+        self.warnings = []
+
+    def warning(self, msg, *args):
+        self.warnings.append(msg % args if args else msg)
+
+    def info(self, *args, **kwargs):
+        pass
+
+    def error(self, *args, **kwargs):
+        pass
+
+    def debug(self, *args, **kwargs):
+        pass
+
+
 class _FakeCsvPaths:
     def __init__(self, archive: str):
         self.results_manager = _FakeResultsManager(archive)
         self.config = _FakeConfig(archive)
+        self.logger = _FakeLogger()
 
 
 def _write_json(path, data) -> None:
@@ -589,3 +611,113 @@ class TestFunctionalTaxonomyGates:
             "$mco.results.:name(/^M.*/)/2025:first().invoices", str(tmp_path)
         ).query()
         assert results.uuids == ["inv-m"]
+
+
+class TestGateTrailingChain:
+    # added 2026-10-18, proving the GATE-trailing-chain fix (compendium
+    # 5.20b + _star_run_selector_chain()'s widened exemption) against
+    # the exact three doc examples that used to raise -- see this
+    # file's own module docstring, "FIXED 2026-10-18" paragraph, for
+    # the full history.
+    @pytest.fixture
+    def acme_archive(self, tmp_path):
+        from csvpath.util.date_util import DateUtility as daut
+        from datetime import timedelta
+
+        base = tmp_path / "acme"
+        yesterday = (daut.now() - timedelta(days=1)).strftime(
+            "%Y-%m-%d_00-00-00"
+        )
+        r1 = _make_run(base, yesterday, "a381-run1", {})
+        _write_json(
+            Path(r1) / "manifest.json",
+            {
+                "run_uuid": "a381-run1",
+                "run_home": r1,
+                "named_paths_name": "orders",
+                "template": "orders-template",
+            },
+        )
+        r2 = _make_run(base, "2020-01-01_00-00-00", "789a-run2", {})
+        _write_json(
+            Path(r2) / "manifest.json",
+            {
+                "run_uuid": "789a-run2",
+                "run_home": r2,
+                "named_paths_name": "invoices",
+                "template": "invoices-template",
+            },
+        )
+        _write_archive_manifest(tmp_path, "acme", [r1, r2])
+        return str(tmp_path)
+
+    def test_manifest_uuid_gate_then_run_home_resolve_target(
+        self, acme_archive
+    ):
+        # doc line ~681: "two ways to get the run dir of a run
+        # containing a csvpath instance with a certain UUID" -- the
+        # archive-ledger route. ':uuid("a381-run1")' GATEs the pooled
+        # candidate list down to the one matching run; ':run_home()',
+        # the LAST field accessor in the chain, is the resolve target
+        # (compendium 5.20b) -- used to raise outright before this fix.
+        finder = _finder(
+            '$*.results.:manifest():uuid("a381-run1"):run_home()',
+            acme_archive,
+        )
+        results = finder.resolve()
+        assert len(results.results) == 1
+        assert Path(results.results[0].data).name.endswith("00-00-00")
+        assert results.results[0].uuid == "a381-run1"
+        # 2 qualifying field accessors (:uuid()/:run_home()) -> 5.20b's
+        # ambiguity warning fires exactly once.
+        assert len(finder.csvpaths.logger.warnings) == 1
+
+    def test_manifest_named_paths_name_gate_then_bare_yesterday_window(
+        self, acme_archive
+    ):
+        # doc line ~696: "find all the instances in runs with the
+        # named_paths group `orders` that happened yesterday" -- used
+        # to raise ("does not yet support :yesterday() combined with
+        # '*' traversal") since a bare TimeWindowFunction3 chained
+        # after a real field accessor was never exempted, nor ever
+        # actually applied as a filter even on its own.
+        results = _finder(
+            '$*.results.:manifest():named_paths_name("orders"):yesterday()',
+            acme_archive,
+        ).query()
+        assert results.uuids == ["a381-run1"]
+
+    def test_manifest_run_uuid_gate_then_template_resolve_target(
+        self, acme_archive
+    ):
+        # doc line ~716: "two ways of finding the template used by a
+        # run" -- the ':manifest()' route.
+        results = _finder(
+            '$*.results.:manifest():run_uuid("789a-run2"):template()',
+            acme_archive,
+        ).resolve()
+        assert len(results.results) == 1
+        assert results.results[0].data == "invoices-template"
+
+    def test_flatten_run_uuid_gate_then_template_resolve_target(
+        self, acme_archive
+    ):
+        # doc line ~717: the ':flatten()' route to the same example.
+        results = _finder(
+            '$*.results.:flatten():run_uuid("789a-run2"):template()',
+            acme_archive,
+        ).resolve()
+        assert len(results.results) == 1
+        assert results.results[0].data == "invoices-template"
+
+    def test_single_field_accessor_is_not_ambiguous_no_warning(
+        self, acme_archive
+    ):
+        # a single qualifying field accessor is not the ambiguous case
+        # compendium 5.20b exists for -- no warning logged.
+        finder = _finder(
+            "$*.results.:manifest():run_home()", acme_archive
+        )
+        results = finder.resolve()
+        assert len(results.results) == 2
+        assert finder.csvpaths.logger.warnings == []

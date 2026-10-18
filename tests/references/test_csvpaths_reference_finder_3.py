@@ -108,6 +108,28 @@ class _FakeConfig:
         self.log_file = log_file
 
 
+class _FakeLogger:
+    """captures warning()/etc calls instead of writing anywhere real --
+    added 2026-10-18 so tests can assert on the compendium 5.20b
+    "last value-producing function wins" warning without needing a
+    real csvpaths.logger."""
+
+    def __init__(self):
+        self.warnings = []
+
+    def warning(self, msg, *args):
+        self.warnings.append(msg % args if args else msg)
+
+    def info(self, *args, **kwargs):
+        pass
+
+    def error(self, *args, **kwargs):
+        pass
+
+    def debug(self, *args, **kwargs):
+        pass
+
+
 class _FakeCsvPaths:
     def __init__(
         self,
@@ -117,6 +139,7 @@ class _FakeCsvPaths:
     ):
         self.paths_manager = paths_manager
         self.config = _FakeConfig(inputs_csvpaths_path, log_file=log_file)
+        self.logger = _FakeLogger()
 
 
 def _finder(
@@ -1618,6 +1641,49 @@ class TestFieldAccessorFunctions:
             "$acme.csvpaths.:last():username()", RICH_MANIFEST, ledger=ledger
         ).resolve()
         assert results.results[0].data is None
+
+
+class TestResolveTargetLastWins:
+    # added 2026-10-18 (compendium 5.20b), fixing a real, confirmed-live
+    # bug: _extract_data()'s own field-accessor resolve-target site used
+    # to pick the FIRST field accessor in the chain (via the shared
+    # _find_field_function_call()), not the one a user chaining two of
+    # them almost certainly means to read. "$acme.csvpaths.:last():
+    # uuid():named_paths_name()" used to resolve to :uuid()'s own value
+    # instead of :named_paths_name()'s.
+    def test_last_of_two_chained_field_accessors_wins(self):
+        manifest = [
+            {**RICH_MANIFEST[0], "named_paths_name": "acme"},
+            {**RICH_MANIFEST[1], "named_paths_name": "acme"},
+        ]
+        finder = _finder(
+            "$acme.csvpaths.:last():uuid():named_paths_name()", manifest
+        )
+        results = finder.resolve()
+        assert results.results[0].data == "acme"
+        assert results.results[0].data != "v1-uuid"
+        # 2 qualifying field accessors -> the ambiguity warning fires.
+        assert len(finder.csvpaths.logger.warnings) == 1
+
+    def test_reversed_order_still_picks_the_last_one(self):
+        # proves this is genuinely about CHAIN POSITION, not just
+        # ":named_paths_name()" always winning regardless of order --
+        # users can choose the order to get the value they want
+        # (David: "they know they can choose the correct order, if
+        # there is a lack of clarity").
+        manifest = [
+            {**RICH_MANIFEST[0], "named_paths_name": "acme"},
+            {**RICH_MANIFEST[1], "named_paths_name": "acme"},
+        ]
+        results = _finder(
+            "$acme.csvpaths.:last():named_paths_name():uuid()", manifest
+        ).resolve()
+        assert results.results[0].data == "v1-uuid"
+
+    def test_single_field_accessor_is_not_ambiguous_no_warning(self):
+        finder = _finder("$acme.csvpaths.:last():uuid()", RICH_MANIFEST)
+        finder.resolve()
+        assert finder.csvpaths.logger.warnings == []
 
 
 class TestNamedPathsHomeFunction:

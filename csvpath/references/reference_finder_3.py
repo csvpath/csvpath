@@ -1217,6 +1217,70 @@ class ReferenceFinder3(ABC):
                 return f
         return None
 
+    @staticmethod
+    def _find_field_function_calls(functions: list, datatype: str | None = None) -> list:
+        """returns EVERY function in `functions` that is a registered
+        field-accessor (its class declares a SOURCE), excluding any bare
+        TimeWindowFunction3 (e.g. :yesterday()) -- that is its own,
+        separately-handled category (see _apply_bare_time_window() and
+        each finder's own `bare_time_window(s)` handling), not an
+        ordinary field accessor, even though its own SOURCE == "clock"
+        would otherwise match the same test _find_field_function_call()
+        uses. Added 2026-10-18 (compendium 5.20b) so a caller can: (a)
+        GATE candidates by EVERY argued field accessor in a chain,
+        independent of position, not just the first one
+        _find_field_function_call() finds; and (b) hand the full list to
+        _last_field_function_call() to pick the correct resolve target.
+        `datatype`, when given, also excludes a function not registered
+        for THIS datatype at all (DATATYPES) -- without this, a
+        function registered for a completely different datatype (e.g.
+        ":webhooks()" riding in a RESULTS reference) would wrongly
+        count as a qualifying field accessor too, something the old,
+        single-match _find_field_function_call() never exposed (a
+        wrong-datatype match simply was not THE one match returned, so
+        it still fell through to the ordinary "unsupported extra"
+        rejection elsewhere) -- confirmed live the moment this method
+        started returning every match instead of just the first."""
+        found = []
+        for f in functions:
+            if isinstance(f, TimeWindowFunction3):
+                continue
+            function_cls = ReferenceFunctionFactory.get_registered_class(f.name)
+            if function_cls is None or function_cls.SOURCE is None:
+                continue
+            if datatype is not None and datatype not in function_cls.DATATYPES:
+                continue
+            found.append(f)
+        return found
+
+    def _last_field_function_call(self, functions: list) -> "FunctionCall3 | None":
+        """returns the LAST qualifying field-accessor in `functions`
+        (see _find_field_function_calls()) -- the one whose value
+        resolve() actually returns, per compendium 5.20b ("in the case
+        there are two possible interpretations of a reference's resolve
+        value(s) due to there being multiple functions which could
+        provide the value the last value-producing function wins").
+        Added 2026-10-18, replacing _find_field_function_call()'s
+        first-match behavior at every confirmed resolve-target call
+        site (first-match was never a deliberate design choice there --
+        it was simply what the single-match helper happened to return,
+        confirmed live-wrong once a second field accessor could reach
+        the same chain, e.g. CsvpathsReferenceFinder3's own
+        ':last():uuid():named_paths_name()'). Logs a warning (never
+        raises) whenever 2+ candidates qualify, since that is the
+        genuinely ambiguous case compendium 5.20b exists to resolve --
+        a single candidate is not ambiguous at all and is silent."""
+        calls = self._find_field_function_calls(functions, self.ref.parsed.datatype)
+        if len(calls) > 1:
+            self.csvpaths.logger.warning(
+                "Reference resolves to the value of the last field-"
+                "accessor function in its chain (:%s()) -- :%s() earlier "
+                "in the same chain could also have provided a value; "
+                "see compendium 5.20b.",
+                calls[-1].name,
+                "(), :".join(f.name for f in calls[:-1]),
+            )
+        return calls[-1] if calls else None
 
     @staticmethod
     def _find_by_identity(identity: str, identities: list) -> int | None:

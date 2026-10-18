@@ -46,10 +46,33 @@ class _FakeResultsManager:
             return json.load(f)
 
 
+class _FakeLogger:
+    """captures warning()/etc calls instead of writing anywhere real --
+    added 2026-10-18 so tests can assert on the compendium 5.20b
+    "last value-producing function wins" warning without needing a
+    real csvpaths.logger."""
+
+    def __init__(self):
+        self.warnings = []
+
+    def warning(self, msg, *args):
+        self.warnings.append(msg % args if args else msg)
+
+    def info(self, *args, **kwargs):
+        pass
+
+    def error(self, *args, **kwargs):
+        pass
+
+    def debug(self, *args, **kwargs):
+        pass
+
+
 class _FakeCsvPaths:
     def __init__(self, archive: str, log_file: str | None = None):
         self.results_manager = _FakeResultsManager(archive)
         self.config = _FakeConfig(archive, log_file=log_file)
+        self.logger = _FakeLogger()
 
 
 def _write_json(path, data) -> None:
@@ -3890,6 +3913,60 @@ class TestStarTraversal:
         # on a bare star-traversal reference before this fix.
         result = _finder("$*.results.:last()", two_group_archive).resolve()
         assert result.results[0].data is None
+
+    def test_two_argued_field_accessors_both_gate_independently(
+        self, two_group_archive
+    ):
+        # compendium 5.20b / GATE-trailing-chain fix, added 2026-10-18:
+        # _star_run_selector_chain()'s exemption used to only ever
+        # protect ONE field accessor from the non-pointer rejection,
+        # and _star_pool_and_reduce() only ever GATEd by that one --
+        # a second argued field accessor chained alongside it used to
+        # raise outright. Both GATEs here are independent (AND-
+        # combined, position does not matter): named_paths_name("acme")
+        # alone would match both acme runs; uuid("acme-run2-uuid")
+        # alone would match just one of them -- together, exactly one.
+        _write_json(
+            Path(two_group_archive) / "acme" / "2026-01-01_00-00-00" / "manifest.json",
+            {"run_uuid": "acme-run1-uuid", "named_paths_name": "acme"},
+        )
+        _write_json(
+            Path(two_group_archive) / "acme" / "2026-01-02_00-00-00" / "manifest.json",
+            {"run_uuid": "acme-run2-uuid", "named_paths_name": "acme"},
+        )
+        results = _finder(
+            '$*.results.:named_paths_name("acme"):uuid("acme-run2-uuid")',
+            two_group_archive,
+        ).query()
+        assert results.uuids == ["acme-run2-uuid"]
+
+    def test_bare_time_window_filters_within_all_grouping(
+        self, two_group_archive
+    ):
+        # same fix as above, but exercising _star_group_and_reduce()'s
+        # own copy of the bare-time-window filter (':all()' GROUP mode)
+        # rather than _star_pool_and_reduce()'s (POOL mode, covered by
+        # TestGateTrailingChain in test_normative_examples_results.py)
+        # -- previously, a bare TimeWindowFunction3 was silently never
+        # applied here either.
+        from datetime import timedelta
+
+        from csvpath.util.date_util import DateUtility as daut
+
+        yesterday_dir = Path(two_group_archive) / "acme" / (
+            (daut.now() - timedelta(days=1)).strftime("%Y-%m-%d_00-00-00")
+        )
+        _write_json(
+            yesterday_dir / "manifest.json", {"run_uuid": "acme-yesterday-uuid"}
+        )
+        archive_manifest = Path(two_group_archive) / "manifest.json"
+        entries = json.loads(archive_manifest.read_text())
+        entries.append(
+            {"named_paths_name": "acme", "run_home": str(yesterday_dir)}
+        )
+        _write_json(archive_manifest, entries)
+        results = _finder("$*.results.:all():yesterday()", two_group_archive).query()
+        assert results.uuids == ["acme-yesterday-uuid"]
 
 
 class TestStarTraversalHaving:
