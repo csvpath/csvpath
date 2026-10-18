@@ -18,6 +18,20 @@ in test_csvpaths_reference_finder_3.py for that raise, already covered there.
 
 Doc lines are given by their current heading text as of 2026-08-13; when the
 doc's CSVPATHS section changes, update the references here to match.
+
+STALE as of 2026-10-18: the "aspirational QUESTION line"/"not buildable
+yet" cross-reference above no longer resolves -- neither the literal
+"QUESTION"/"not buildable yet" markers nor the named test
+(`test_star_traversal_combined_with_name_three_is_not_yet_supported`)
+exist anywhere in the current doc/test suite any more (confirmed via
+grep, not assumed) -- whatever that item was has evidently since been
+resolved and the old cross-reference was simply never updated. Left as
+historical context rather than deleted; not re-investigated further
+here (out of scope for this pass -- flagging the staleness is the
+useful signal, re-deriving what the original item even was is a
+separate task). Separately, the doc's own "### UUIDs" section gained a
+new CSVPATHS worked example this week's bare-selector build
+implements -- see TestBareUuidSelector below.
 """
 
 import pytest
@@ -573,3 +587,16 @@ class TestFieldAccessorsOnOneMatchedVersion:
             "$acme.csvpaths.:last():named_paths_count()", FIELD_ACCESSOR_MANIFEST
         ).resolve()
         assert results.results[0].data == 2
+
+
+class TestBareUuidSelector:
+    # added 2026-10-18 -- this week's :uuid() bare-selector build
+    # (compendium 6.7's "uuid" functional group, SELECTOR_WHEN_ARGUED).
+    # doc: "Find `acme` version by UUID; the most specific reference
+    # possible" -- "$acme.csvpaths.:uuid(\"45ad7aa7-fe08-4f18-8b1b-
+    # e2d11675bf36\")" (here spelled against ACME_MANIFEST's own real
+    # uuid, not the doc's illustrative placeholder).
+    def test_select_a_version_by_its_uuid(self):
+        results = _finder('$acme.csvpaths.:uuid("v1-uuid")', ACME_MANIFEST).query()
+        assert results.uuids == ["v1-uuid"]
+        assert results.files == [GROUP_FILE_PATH]
