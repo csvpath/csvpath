@@ -210,6 +210,70 @@ class TestBareUuidLookup:
             _finder('$acme.csvpaths.:last():uuid("x")').query()
 
 
+FINGERPRINT_MANIFEST = [
+    {
+        "group_file_path": GROUP_FILE_PATH,
+        "uuid": "v0-uuid",
+        "named_paths": ["stmt text A", "stmt text B"],
+        "named_paths_identities": ["company_names", "1"],
+        "fingerprint": "aaaa",
+    },
+    {
+        "group_file_path": GROUP_FILE_PATH,
+        "uuid": "v1-uuid",
+        "named_paths": ["stmt text C"],
+        "named_paths_identities": ["0"],
+        "fingerprint": "cccc",
+    },
+]
+
+
+class TestBareFingerprintLookup:
+    # bare ':fingerprint("cccc")' -- settled as an intentional,
+    # decided capability 2026-10-18, not just an accidental side
+    # effect. An automated cross-datatype consistency sweep found this
+    # already worked, live, before anyone had decided it should --
+    # CsvpathsReferenceFinder3's own `_is_bare_selector_reference()`
+    # dispatch (added for :uuid()'s own build, same day) is generic,
+    # keyed on SELECTOR_WHEN_ARGUED, not hardcoded to "uuid," so it
+    # picked up :fingerprint() too, for free. Fingerprint3's own
+    # docstring used to claim "CSVPATHS has no bare-lookup shape" --
+    # David's own call once flagged: keep it (CSVPATHS versions
+    # genuinely ARE fingerprinted, so this is coherent, not
+    # nonsensical), fix the stale docstring instead. This is the
+    # positive-match test that decision needed -- the sweep's own
+    # test only proved "does not raise," never a real match.
+    def test_finds_the_matching_version_with_real_path_and_uuid(self):
+        results = _finder(
+            '$acme.csvpaths.:fingerprint("cccc")', manifest=FINGERPRINT_MANIFEST
+        ).query()
+        assert results.files == [GROUP_FILE_PATH]
+        assert results.uuids == ["v1-uuid"]
+
+    def test_no_match_gives_empty(self):
+        results = _finder(
+            '$acme.csvpaths.:fingerprint("nope")', manifest=FINGERPRINT_MANIFEST
+        ).query()
+        assert results.results == []
+
+    def test_combined_with_name_three_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$acme.csvpaths.:fingerprint("cccc").company_names',
+                manifest=FINGERPRINT_MANIFEST,
+            ).query()
+
+    def test_an_argument_in_the_field_accessor_position_is_rejected(self):
+        # same guard :uuid()'s own ordinary-position case already has
+        # -- riding alongside a pointer instead of bare, an argument
+        # is rejected rather than silently ignored.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$acme.csvpaths.:last():fingerprint("x")',
+                manifest=FINGERPRINT_MANIFEST,
+            ).query()
+
+
 class TestNoPointerReturnsEveryVersion:
     # a chain with no pointer at all (e.g. a bare :all()) does not
     # narrow to one version -- every version in the manifest comes

@@ -259,24 +259,25 @@ class TestSelectorWhenArguedWiring:
         assert results.results == []
 
     def test_fingerprint_bare_selector_now_also_reaches_csvpaths(self):
-        # REAL FINDING, 2026-10-18, surfaced by this sweep -- NOT the
-        # behavior fingerprint_3.py's own docstring claims
-        # ("CSVPATHS has no bare-lookup shape... FILES-only"). That
-        # docstring predates CsvpathsReferenceFinder3's own
-        # _is_bare_selector_reference() dispatch branch, added later
-        # for :uuid()'s own cross-datatype PR -- but that dispatch is
-        # GENERIC (keyed on SELECTOR_WHEN_ARGUED, not hardcoded to
-        # "uuid"), so it picks up :fingerprint() too, for free,
-        # whether or not that was intended. Confirmed live: the PURE
-        # bare form (no name_three chain at all) does NOT raise for
-        # CSVPATHS today -- it reaches the bare-selector branch and
-        # returns an empty (not erroring) result, searching the
-        # group's own version manifest for a "fingerprint" match
-        # (CSVPATHS versions ARE fingerprinted -- Fingerprint3.KEY
-        # already has a CSVPATHS entry). This test asserts the ACTUAL
-        # current behavior, not the stale docstring's claim -- see
-        # this PR's own description for why this is flagged as a
-        # finding to discuss, not silently "fixed" either direction.
+        # SETTLED 2026-10-18, as an intentional, decided capability,
+        # not just an accident -- this sweep originally surfaced it as
+        # a real finding BEFORE anyone had decided it should work
+        # (fingerprint_3.py's own docstring used to claim "CSVPATHS has
+        # no bare-lookup shape... FILES-only," written 2026-08-13,
+        # before CsvpathsReferenceFinder3 grew its own
+        # _is_bare_selector_reference() dispatch branch for :uuid()'s
+        # own cross-datatype build, same day as this sweep -- that
+        # dispatch is GENERIC, keyed on SELECTOR_WHEN_ARGUED, not
+        # hardcoded to "uuid," so it picked up :fingerprint() too, for
+        # free). David's own call once flagged: keep it -- CSVPATHS
+        # versions genuinely ARE fingerprinted (Fingerprint3.KEY
+        # already has a CSVPATHS entry), so "select a group version by
+        # its own content hash" is exactly as coherent as the FILES
+        # case already built for. fingerprint_3.py's own docstring is
+        # now corrected to match; a real positive-match test (this one
+        # only ever proved "does not raise," not an actual match) lives
+        # in test_csvpaths_reference_finder_3.py's own
+        # TestBareFingerprintLookup.
         results = _csvpaths_finder(
             '$acme.csvpaths.:fingerprint("some-hash")', manifest=[]
         ).query()

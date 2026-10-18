@@ -46,15 +46,32 @@ class Fingerprint3(Function3):
     #
     SELECTOR_WHEN_ARGUED = True
     #
+    # CORRECTED 2026-10-18: this docstring used to claim "CSVPATHS has
+    # no bare-lookup shape (that's FILES-only)" -- that was true when
+    # written (2026-08-13), but went stale once CsvpathsReferenceFinder3
+    # grew its own `_is_bare_selector_reference()` dispatch branch for
+    # :uuid()'s own cross-datatype build (2026-10-18). That dispatch is
+    # GENERIC (keyed on SELECTOR_WHEN_ARGUED, not hardcoded to "uuid"),
+    # so it picked this function up too, for free -- confirmed live,
+    # surfaced by an automated cross-datatype consistency sweep, NOT
+    # something anyone deliberately decided at the time. David's own
+    # call once flagged (2026-10-18): keep it -- CSVPATHS versions
+    # genuinely ARE fingerprinted (same KEY entry below), so "select a
+    # named-paths group version by its own content hash" is exactly as
+    # coherent a thing to want as the FILES case already built for.
+    # ":fingerprint()" now has the bare-lookup shape for BOTH FILES and
+    # CSVPATHS, not FILES-only.
+    #
     NAME = "fingerprint"
     SUMMARY = (
         "The content-integrity hash of the resolved named-file/named-"
         "paths version's own defining content (the file's bytes, or "
         "group.csvpaths' text) -- SHA256 in most cases; S3-backed "
         "content uses MD5 instead, per the same fingerprint mechanism "
-        "used throughout the framework. For FILES only, also usable "
-        "bare with a known hash to look up the specific version it "
-        "identifies, across every path under a named-file."
+        "used throughout the framework. Also usable bare, for both "
+        "FILES and CSVPATHS, with a known hash to look up the "
+        "specific version it identifies, across every path/version "
+        "under the resolved named-entity."
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS)
@@ -67,10 +84,15 @@ class Fingerprint3(Function3):
         Reference3.CSVPATHS: "fingerprint",
     }
     #
-    # CSVPATHS has no bare-lookup shape (that's FILES-only, see above) --
-    # always the ordinary field-accessor position. FILES has BOTH: the
-    # bare, name_one, content-hash lookup form, and the ordinary
-    # field-accessor position (name_three, beside a matched pointer).
+    # CSVPATHS' own name_one is ALWAYS the version-selecting function
+    # chain (there is no separate name_three position the way FILES
+    # has), so POSITIONS alone cannot distinguish "bare selector, sole
+    # content, no pointer" from "ordinary field-accessor chained
+    # alongside a pointer" the way FILES' own two-position declaration
+    # does -- both shapes share the identical NAME_ONE position here.
+    # The SHAPE itself (sole path element + an argument + no pointer)
+    # is what `_is_bare_selector_reference()` keys on instead; see its
+    # own docstring.
     #
     POSITIONS = {
         Reference3.FILES: (Reference3.NAME_ONE, Reference3.NAME_THREE),
