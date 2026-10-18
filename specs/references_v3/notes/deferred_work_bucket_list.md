@@ -1163,17 +1163,54 @@ and a stale-entry correction, are both done — see
     data()`'s own field-extraction call sites (run-level via
     `:manifest()`, run-level direct, instance-level).
 
-    **A real, separate, adjacent gap found but NOT built today, flagged
-    to David instead**: `normative_reference_examples.txt` ALSO already
-    requires `:error_count()` itself to accept a predicate argument --
-    `$*.results.:flatten():error_count(:above(3))` and `:error_count(
-    :below(1))`/`:error_count(0)` ("two ways of selecting runs without
-    errors"), a `'*'`-traversal GATE mechanism mirroring `:count()`'s
-    own, but `ErrorCount3.ARG_TYPES` is still `()` -- this normative
-    requirement is not satisfied yet. Genuinely separate, larger scope
-    than today's ask (David asked specifically for `:has_errors()`,
-    "the simplest" of the deferred items) -- not folded in without
-    confirming first.
+    **The adjacent `:error_count()` predicate-argument gap flagged here
+    -- BUILT 2026-10-18, separate branch/PR, same day.** David asked
+    for it explicitly once he understood the gap ("thank you, that
+    helps... yes, please build it"), after a first explanation that
+    didn't land -- re-explained with a concrete before/after pair
+    (`:error_count()` bare, reading one already-selected entity's own
+    count, vs. `:error_count(:above(3))` GATING a pooled list by that
+    same count) rather than the mechanism-first framing that didn't.
+    `ErrorCount3.ARG_TYPES` widened from `()` to `(int,
+    PredicateFunction3)` -- a bare int (`:error_count(0)`) is an exact-
+    match test, no dedicated predicate class needed for it.
+    `:below()`/`:lt()` (`Before3`) needed the SAME dual-role treatment
+    `:above()`/`:gt()` (`After3`) already got for `:count()` --
+    extends `PredicateFunction3` now too, with its own `matches()`
+    (strictly-less-than, mirroring `After3`'s strictly-greater-than,
+    including the same clear rejection of a nonsensical
+    `TimeWindowFunction3` bound).
+
+    New shared `ResultsReferenceFinder3._matches_field_predicate(value,
+    arg)` (a `PredicateFunction3` arg delegates to its own `matches()`;
+    a bare leaf value is an exact-match test) and `_run_field_value(
+    run_dir, field_call)` (reads a run's own manifest field, running it
+    through `transform_value()` for consistency with however the same
+    field actually resolves). Wired into THREE places, since the GATE
+    needs to apply wherever a pooled candidate list is assembled, not
+    just where one is finally resolved: `query()`'s own literal-root
+    candidate-finalization (right alongside `:having()`'s own copy of
+    this same filter-then-pool pattern), and BOTH of `_query_star_
+    traversal()`'s shared tails (`_star_pool_and_reduce()`/`_star_
+    group_and_reduce()`) for the `'*'`-root case -- required widening
+    `_star_run_selector_chain()`'s own return tuple (4 values -> 5,
+    adding `field_call`) and updating all four of its call sites. A
+    no-op whenever the field accessor carries no argument at all (an
+    ordinary bare field read, e.g. `:uuid()`, unaffected -- confirmed
+    by a dedicated test).
+
+    **Tests**: `TestErrorCountPredicateGate` in `test_results_
+    reference_finder_3.py` -- all three normative-example forms
+    (`:above()`/`:below()`/bare-int-exact-match), confirmed equivalent
+    to each other where the doc says so, BOTH the `'*'`-root and
+    literal-root forms (the normative doc only shows `'*'`-root, the
+    literal-root path is the same shared mechanism, confirmed live not
+    assumed), and the bare-no-predicate no-op case. `TestMatchesField
+    Predicate` for the shared helper directly. `Before3`'s own new
+    `matches()` (mirroring `test_after_3.py`'s own `TestMatches`
+    exactly). `tests/references/`: 1814 passed (up from 1800). Full
+    local-backend suite: 4275 passed, 11 failed (known SFTP/S3
+    credential baseline, unrelated).
 
     **Tests**: `tests/references/functions/fields/test_has_errors_3.py`
     (metadata, `transform_value()` unit tests), `test_error_count_3.py`

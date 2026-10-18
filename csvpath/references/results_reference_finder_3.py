@@ -11,6 +11,7 @@ from .functions.function_3 import Function3
 from .functions.filters.count_3 import Count3
 from .functions.filters.idchain_3 import Idchain3
 from .functions.filters.message_3 import Message3
+from .functions.filters.predicate_function_3 import PredicateFunction3
 from .functions.values.time_window_function_3 import TimeWindowFunction3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_3 import FunctionCall3, Reference3, Star3
@@ -541,6 +542,25 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 for rh in candidates
                 if having_call.arg in self._list_instance_identities(rh)
             ]
+        name_one_field_call = self._find_field_function_call(
+            self._build_chain(calls)
+        )
+        if name_one_field_call is not None and name_one_field_call.arg is not None:
+            # :error_count()'s own predicate-argument GATE (added
+            # 2026-10-18, e.g. ":error_count(:above(3))") -- same
+            # literal-root equivalent as _star_pool_and_reduce()'s/
+            # _star_group_and_reduce()'s own copy of this filter, see
+            # their shared comment for the full reasoning. A no-op
+            # whenever the field accessor carries no argument at all
+            # (an ordinary bare field read, e.g. ":uuid()").
+            candidates = [
+                rh
+                for rh in candidates
+                if self._matches_field_predicate(
+                    self._run_field_value(rh, name_one_field_call),
+                    name_one_field_call.arg,
+                )
+            ]
 
         from_call, to_call = self._range_calls_from_calls(calls)
         # Gap 1 of compendium 6.27/TimeWindowFunction3 (added 2026-10-17)
@@ -803,8 +823,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
         if self._is_bare_function_only(name_one):
             calls = self._combined_name_one_calls(name_one)
-            pointer, all_call, flatten_call, having_call = self._star_run_selector_chain(
-                calls
+            pointer, all_call, flatten_call, having_call, field_call = (
+                self._star_run_selector_chain(calls)
             )
             if all_call is not None:
                 # zero-level, degenerate -- the SAME [] restriction bare
@@ -831,6 +851,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     range_bounds,
                     accessor,
                     having_call,
+                    field_call,
                 )
             if flatten_call is not None:
                 # any depth, every group -- _discover_run_homes(None)
@@ -863,6 +884,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 range_bounds,
                 accessor,
                 having_call,
+                field_call,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -879,7 +901,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             prefix_pattern = self._compile_path_pattern(name_one.path[:-1])
             calls = list(name_one.functions)
-            pointer, _, _, having_call = self._star_run_selector_chain(calls)
+            pointer, _, _, having_call, field_call = self._star_run_selector_chain(
+                calls
+            )
             run_homes = [
                 rh
                 for rh, group in self._discover_run_homes(None, name_filter)
@@ -897,6 +921,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 range_bounds,
                 accessor,
                 having_call,
+                field_call,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -918,7 +943,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             pattern = self._compile_path_pattern(name_one.path[:-1])
             calls = list(name_one.functions)
-            pointer, _, _, having_call = self._star_run_selector_chain(calls)
+            pointer, _, _, having_call, field_call = self._star_run_selector_chain(
+                calls
+            )
             partitioned = []
             for rh, group in self._discover_run_homes(None, name_filter):
                 home = self.csvpaths.results_manager.get_named_results_home(group)
@@ -942,6 +969,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 range_bounds,
                 accessor,
                 having_call,
+                field_call,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -967,7 +995,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             path = path[:-1]
         pattern = self._compile_path_pattern(path)
         calls = list(name_one.functions)
-        pointer, _, _, having_call = self._star_run_selector_chain(calls)
+        pointer, _, _, having_call, field_call = self._star_run_selector_chain(
+            calls
+        )
         run_homes = [
             rh
             for rh, group in self._discover_run_homes(None, name_filter)
@@ -983,6 +1013,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             range_bounds,
             accessor,
             having_call,
+            field_call,
         )
 
     def _star_run_selector_chain(self, calls: list) -> tuple:
@@ -991,7 +1022,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         and literal/'*'-prefixed alike) -- added 2026-08-19, factored
         out of what used to be inline-only-for-the-bare-case logic once
         the literal/'*'-prefixed shapes needed the identical validation.
-        Returns (pointer, all_call, flatten_call, having_call); all_call/flatten_call
+        Returns (pointer, all_call, flatten_call, having_call,
+        field_call) -- field_call added 2026-10-18, alongside
+        :error_count()'s own predicate-argument GATE, so the shared
+        tail methods (_star_pool_and_reduce()/_star_group_and_reduce())
+        can apply it to the pooled candidate list; all_call/flatten_call
         are only ever non-None for the bare shape (calls includes
         name_one.path[0] itself there) -- for a prefixed shape, calls is
         just name_one.functions, and the ':all()'/':flatten()' marker
@@ -1072,7 +1107,42 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "function (e.g. :uuid()), is supported so far."
             )
         pointer = self._pointer_from_calls(calls)
-        return pointer, all_call, flatten_call, having_call
+        return pointer, all_call, flatten_call, having_call, field_call
+
+    @staticmethod
+    def _matches_field_predicate(value, arg) -> bool:
+        """generic test for a field-accessor's own predicate/exact-
+        match argument -- added 2026-10-18 for :error_count()'s own
+        GATE (e.g. ":error_count(:above(3))"/":error_count(0))", the
+        first field accessor to carry one. A PredicateFunction3 arg
+        (":above()"/":below()", both built as dual-role range-bound/
+        predicate classes) delegates to its own matches(); a bare leaf
+        value (int/str) is an exact-match test instead -- no dedicated
+        predicate class needed for ":error_count(0)". Shared by
+        _star_pool_and_reduce()/_star_group_and_reduce()'s own '*'-
+        traversal gate and query()'s own literal-root equivalent."""
+        if isinstance(arg, PredicateFunction3):
+            return arg.matches(value)
+        return value == arg
+
+    def _run_field_value(self, run_dir: str, field_call):
+        """the value a run-level field-accessor function (e.g.
+        :error_count()) reads off this one run's own manifest.json --
+        added 2026-10-18 alongside _matches_field_predicate(), shared by
+        every call site that needs to test a pooled candidate's own
+        field value without yet committing to resolving it as this
+        reference's final answer. Runs the SAME transform_value() hook
+        _extract_data()'s own field-accessor dispatch applies, so a
+        future field accessor whose resolved value differs from its raw
+        manifest value (the way :has_errors() does) is gated
+        consistently with however it actually resolves."""
+        function_cls = ReferenceFunctionFactory.get_registered_class(
+            field_call.name
+        )
+        entry = self._read_well_known_json(Nos(run_dir).join("manifest.json"))
+        key_path = function_cls.KEY.get(Reference3.RESULTS)
+        value = self._extract_field_value(entry, key_path)
+        return function_cls.transform_value(value)
 
     def _star_pool_and_reduce(
         self,
@@ -1083,6 +1153,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         range_bounds: tuple | None,
         accessor,
         having_call=None,
+        field_call=None,
     ) -> ReferenceResults3:
         """POOL mode's shared tail -- added 2026-08-19, alongside
         _star_group_and_reduce(), factored out once name_three needed
@@ -1094,7 +1165,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         branches, since every one of them already funnels into this
         shared tail (or _star_group_and_reduce's, which applies the same
         filter itself before delegating here for its own no-pointer
-        case). A
+        case). `field_call` (added 2026-10-18) similarly filters
+        `run_homes` down to those whose own field value (e.g.
+        "error_count") satisfies field_call's own predicate/exact-match
+        argument, e.g. ":error_count(:above(3))" -- a no-op when
+        field_call carries no argument at all (an ordinary bare field
+        read, e.g. ":uuid()", unaffected). A
         missing pointer (added 2026-08-19, see _star_run_selector_chain()'s
         own comment for why) means every matched run comes back,
         unreduced -- which can now be MORE than one run. Resolving full
@@ -1115,6 +1191,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 rh
                 for rh in run_homes
                 if having_call.arg in self._list_instance_identities(rh)
+            ]
+        if field_call is not None and field_call.arg is not None:
+            run_homes = [
+                rh
+                for rh in run_homes
+                if self._matches_field_predicate(
+                    self._run_field_value(rh, field_call), field_call.arg
+                )
             ]
         run_homes = sorted(run_homes, key=self._run_dir_sort_key)
         if pointer is None:
@@ -1154,6 +1238,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         range_bounds: tuple | None,
         accessor,
         having_call=None,
+        field_call=None,
     ) -> ReferenceResults3:
         """GROUP mode's shared tail (":all()", bare or literal/'*'-
         prefixed) -- added 2026-08-19. `partitioned`: list of
@@ -1163,6 +1248,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         -- same position/reasoning as _star_pool_and_reduce's own copy
         of this filter (not shared as one call, since the two methods
         filter different-shaped inputs -- a flat list here vs. pairs).
+        `field_call` (added 2026-10-18) similarly filters `partitioned`
+        down to runs whose own field value satisfies field_call's own
+        predicate/exact-match argument, same reasoning as
+        _star_pool_and_reduce's own copy -- see its own comment.
         Unlike POOL mode, a pointer here can still select MORE than one
         run overall (one per partition) -- so a name_three CONTENT
         accessor (:errors()/:vars()/etc, as opposed to a poolable field
@@ -1216,6 +1305,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 (rh, key)
                 for rh, key in partitioned
                 if having_call.arg in self._list_instance_identities(rh)
+            ]
+        if field_call is not None and field_call.arg is not None:
+            partitioned = [
+                (rh, key)
+                for rh, key in partitioned
+                if self._matches_field_predicate(
+                    self._run_field_value(rh, field_call), field_call.arg
+                )
             ]
         if pointer is None:
             return self._star_pool_and_reduce(
