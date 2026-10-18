@@ -11,6 +11,15 @@ had unbuilt time/filter functions to skip. Doc lines are given by their
 current position in the doc as of 2026-08-12; each test is commented with
 the exact line(s) it encodes. When the doc's FILES section changes, update
 the line references here to match.
+
+UPDATED 2026-10-18: the doc's own "## The field accessor functional
+taxonomy"/"### UUIDs"/"### Fingerprint"/":status()" sections (added
+well after 2026-08-12, outside the originally-reviewed "The Files
+Datatype" section this docstring's own scope note describes) gained
+several new FILES worked examples this week's "functional taxonomy"
+GATE/bare-selector build actually implements -- see
+TestFunctionalTaxonomyGatesAndSelectors below for the new coverage
+(:uuid() as a bare selector, :type()/:status() as GATEs).
 """
 
 import json
@@ -700,3 +709,73 @@ class TestComputedFields:
             ALPHA_MANIFEST,
         ).resolve()
         assert results.results[0].data == ALPHA_HOME
+
+
+TYPE_MANIFEST = [
+    {
+        "file": "inputs/named_files/alpha/orders.csv/aaa.csv",
+        "file_home": "inputs/named_files/alpha/orders.csv",
+        "uuid": "u-csv",
+        "type": "csv",
+    },
+    {
+        "file": "inputs/named_files/alpha/data.xlsx/bbb.csv",
+        "file_home": "inputs/named_files/alpha/data.xlsx",
+        "uuid": "u-xlsx",
+        "type": "xlsx",
+    },
+]
+
+STATUS_LEDGER = [
+    {
+        "named_file_name": "orders",
+        "status": "Registration failed",
+        "uuid": "fail-1",
+        "file_path": None,
+        "origin_path": "/tmp/orders1.csv",
+    },
+    {
+        "named_file_name": "invoices",
+        "status": "Registration failed",
+        "uuid": "fail-2",
+        "file_path": None,
+        "origin_path": "/tmp/invoices1.csv",
+    },
+]
+
+
+class TestFunctionalTaxonomyGatesAndSelectors:
+    # added 2026-10-18 -- this week's "functional taxonomy" GATE/bare-
+    # selector build (compendium 6.7) for FILES, encoding the doc's own
+    # new worked examples this file never picked up (added well after
+    # the 2026-08-11/12 review this file's own docstring describes).
+    def test_select_a_registered_version_by_its_uuid(self):
+        # doc: "Select a registered version of an `acme` file by its
+        # UUID" -- "$acme.files.:uuid(\"ab37-fef3...\")" (here spelled
+        # against ALPHA_MANIFEST's own real uuid, not the doc's
+        # illustrative placeholder).
+        results = _finder(
+            '$alpha.files.:uuid("u-orders-1")', ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert results.uuids == ["u-orders-1"]
+
+    def test_type_gate_via_flatten(self):
+        # doc: "$acme.files.:flatten():type(\"xlsx\")" (normative_
+        # reference_examples.txt line 271).
+        results = _finder(
+            '$alpha.files.:flatten():type("xlsx")', ALPHA_HOME, TYPE_MANIFEST
+        ).query()
+        assert results.files == ["inputs/named_files/alpha/data.xlsx"]
+
+    def test_status_gate_combined_with_named_file_name(self):
+        # doc: "Select named-files registrations for `orders` that
+        # failed" -- "$*.files.:status(\"Registration failed\"):
+        # named_file_name(\"orders\")".
+        results = _finder(
+            '$*.files.:status("Registration failed"):named_file_name("orders")',
+            ALPHA_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+        ).query()
+        assert results.uuids == ["fail-1"]
+        assert results.files == ["/tmp/orders1.csv"]

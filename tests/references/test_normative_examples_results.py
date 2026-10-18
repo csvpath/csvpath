@@ -13,23 +13,75 @@ gains new supported examples, or a currently-excluded one becomes
 supported, add/move the corresponding test here -- this file is meant to
 grow in lockstep with the doc, not be written once and left behind.
 
-Excluded doc lines and why (checked directly against the doc as of
-2026-08-12, not assumed):
+Excluded doc lines and why (RE-CHECKED LIVE 2026-10-18, not assumed --
+most of the 2026-08-12 reasoning below is now stale; the doc has also
+grown substantially since, with new worked examples for this week's
+"functional taxonomy" GATE build -- see TestFunctionalTaxonomyGates):
   - line 39 (:groups()) -- built 2026-08-12 (was excluded/deferred as of
     this file's original writing); see TestFindingTheLastRun.
   - lines 42/48/51 (:from()/:yesterday()/:hour()/:message()/:count()/
-    :above()) -- none of these functions are built yet. Lines 42/51 also
-    use a bare '*' in name_three, which is illegal (see
-    references_v3_compendium.md's "Why `*` is disallowed as name_three's
-    body").
-  - lines 69/72/75/78 (:name() with a regex/star/@var argument, :choice(),
-    :type()) -- Name3 is str-arg only today; :choice()/:type() do not
-    exist yet.
-  - lines 96-111 (:from(), :date(), :year(), :type()) -- none built yet.
+    :above()) -- STALE as of 2026-10-18: all of these functions are
+    built now. Lines 42/51's own bare '*' in name_three is still
+    illegal regardless (see references_v3_compendium.md's "Why `*` is
+    disallowed as name_three's body") -- not re-checked individually,
+    since that's a separate, still-true grammar rule, not a missing-
+    function question.
+  - :name() with a regex argument -- STALE as of 2026-10-18: `Name3`
+    now accepts `(str, Regex3)` and includes RESULTS in its DATATYPES;
+    confirmed live, "$acme.results.:name(/^M.*/)/2025:first().invoices"
+    (the doc's own worked example, "`invoices` in 1st run w/2-level
+    template starting with `M` and ending `2025/:run_dir`") resolves
+    correctly now. See TestFunctionalTaxonomyGates.
+  - `:choice("acme|star|general")/2025:first().invoices` ("`invoices`
+    from 1st run w/template ... beginning with `acme`, `star`, or
+    `general`") -- STILL genuinely unbuilt, re-confirmed live 2026-10-
+    18: `:choice()` is not a registered function at all (raises
+    "Does not yet support :choice() as a name_one path segment").
+  - `$acme.results.*/2025:first():type("csv").invoices` ("`invoices`
+    from 1st run w/2-level template ... w/source data CSV") -- STILL
+    genuinely unbuilt, re-confirmed live 2026-10-18, but the REASON has
+    changed: `:type()` is now a real, registered function (built this
+    week for FILES -- the file extension of a registered named-file
+    version), but it is FILES-ONLY (`Type3.DATATYPES = (Reference3.
+    FILES,)`) -- raises "`:type()` is not legal at name_one for
+    results." This specific worked example wants something
+    conceptually different at RESULTS scope (whether the RUN's own
+    SOURCE data was a csv) -- a real, confirmed gap worth flagging to
+    David, not just a stale doc note; no RESULTS-scope "source data
+    type" field/function exists anywhere in the registry today.
 
 The `.:all():data()` example (which raised, since Rule 1 forbids combining
 ':all()' with any content accessor) was removed from the doc entirely; no
 corresponding test lives here for it.
+
+A REAL, confirmed-live gap found 2026-10-18 while adding this week's
+"functional taxonomy" GATE coverage below -- NOT in this file's own
+excluded-doc-lines list above, since it is not about a missing
+function, but about chaining TWO things onto one `:manifest()`/
+`:flatten()` candidate list at once. The GATE mechanism built this
+week (`field_call`/`_matches_field_predicate`) only supports exactly
+ONE chained field accessor after `:manifest()`/`:flatten()` -- a
+SECOND function chained after the GATE (another field read, or a
+context-setter like `:yesterday()`) raises "does not yet support
+<fn>() combined with '*' traversal." Three of the doc's own worked
+examples hit this directly, confirmed live:
+  - `$*.results.:manifest():uuid("a381..."):run_home()` (line ~681,
+    "two ways to get the run dir of a run containing a csvpath
+    instance with a certain UUID" -- the archive-ledger route; the
+    paired `:having()` route on line ~682 DOES work, already covered
+    by TestHavingNestedFieldAccessor in test_results_reference_finder_3
+    .py, so this is NOT "the whole example is broken," just this one
+    of its two cited forms).
+  - `$*.results.:manifest():named_paths_name("orders"):yesterday()`
+    (line ~696, "find all the instances in runs with the named_paths
+    group `orders` that happened yesterday").
+  - `$*.results.:manifest():run_uuid("789a..."):template()` and
+    `$*.results.:flatten():run_uuid("789a..."):template()` (lines
+    ~716-717, "two ways of finding the template used by a run").
+Flagging this for David rather than building a workaround -- it is a
+real, scoped, buildable follow-up to this week's GATE work (generalize
+the single-field_call exemption to a short CHAIN of them), not a
+documentation issue.
 
 REVISED 2026-09-21: an earlier version of this docstring (and this file's
 own fixtures) treated bare '*'/':all()' as one-level operators, peers of
@@ -45,6 +97,7 @@ implementation-side fix this test file was rewritten to match.
 """
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -453,3 +506,86 @@ class TestHomeAsAZeroLevelSelector:
         assert set(plain_prefix.uuids) == {"beta-1", "beta-2"}
         with pytest.raises(ReferenceException3):
             _finder("$acme.results.beta/:home()", str(tmp_path)).query()
+
+
+class TestFunctionalTaxonomyGates:
+    # added 2026-10-18, covering this week's "functional taxonomy" GATE
+    # build (compendium 6.7's uuid/name/fingerprint groups) and the
+    # :groups()+'*' traversal build -- the doc gained several new
+    # worked examples for these that this file never picked up.
+    @pytest.fixture
+    def acme_archive(self, tmp_path):
+        # both runs zero-level (no template) -- a bare pointer only
+        # matches zero-level runs (compendium 4.2b), and this class's
+        # own worked examples are all bare-pointer-adjacent.
+        base = tmp_path / "acme"
+        r1 = _make_run(base, "2026-01-01_00-00-00", "r1", {})
+        _write_json(
+            Path(r1) / "manifest.json",
+            {
+                "run_uuid": "r1",
+                "named_file_name": "orders",
+                "named_file_uuid": "file-uuid-1",
+                "named_paths_uuid": "paths-uuid-1",
+                "named_results_name": "resultsname-1",
+            },
+        )
+        r2 = _make_run(base, "2026-01-02_00-00-00", "r2", {})
+        _write_json(
+            Path(r2) / "manifest.json",
+            {"run_uuid": "r2", "named_file_name": "invoices"},
+        )
+        _write_archive_manifest(tmp_path, "acme", [r1, r2])
+        return str(tmp_path)
+
+    def test_groups_named_file_name_first(self, acme_archive):
+        # doc: "select the first run for each template for runs having
+        # the named-file name `orders`" --
+        # "$*.results.:groups():named_file_name(\"orders\"):first()"
+        results = _finder(
+            '$*.results.:groups():named_file_name("orders"):first()',
+            acme_archive,
+        ).query()
+        assert results.uuids == ["r1"]
+
+    def test_first_named_file_uuid(self, acme_archive):
+        # doc: "Return the UUID of the named-file used in the run" --
+        # "$acme.results.:first():named_file_uuid()"
+        results = _finder(
+            "$acme.results.:first():named_file_uuid()", acme_archive
+        ).resolve()
+        assert results.results[0].data == "file-uuid-1"
+
+    def test_first_named_paths_uuid(self, acme_archive):
+        # doc: "Return the UUID of the named-paths group version used
+        # in the run" -- "$acme.results.:first():named_paths_uuid()"
+        results = _finder(
+            "$acme.results.:first():named_paths_uuid()", acme_archive
+        ).resolve()
+        assert results.results[0].data == "paths-uuid-1"
+
+    def test_first_named_results_name(self, acme_archive):
+        # doc: "$widgets.results.:first():named_results_name()"
+        results = _finder(
+            "$acme.results.:first():named_results_name()", acme_archive
+        ).resolve()
+        assert results.results[0].data == "resultsname-1"
+
+    def test_name_regex_path_segment(self, tmp_path):
+        # doc: "`invoices` in 1st run w/2-level template starting with
+        # `M` and ending `2025/:run_dir`" --
+        # "$acme.results.:name(/^M.*/)/2025/:first().invoices" -- STALE
+        # exclusion lifted 2026-10-18, confirmed live: Name3 now accepts
+        # (str, Regex3) and includes RESULTS in DATATYPES.
+        base = tmp_path / "mco"
+        mrun = _make_run(
+            base / "Mregion" / "2025",
+            "2026-01-01_00-00-00",
+            "m-run",
+            {"invoices": "inv-m"},
+        )
+        _write_archive_manifest(tmp_path, "mco", [mrun])
+        results = _finder(
+            "$mco.results.:name(/^M.*/)/2025:first().invoices", str(tmp_path)
+        ).query()
+        assert results.uuids == ["inv-m"]
