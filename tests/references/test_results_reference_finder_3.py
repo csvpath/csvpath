@@ -2482,6 +2482,95 @@ class TestFieldAccessorFunctions:
         assert results.results[0].data == "run-template"
 
 
+class TestMatchesFieldPredicate:
+    # the generic, shared test _star_pool_and_reduce()/
+    # _star_group_and_reduce()/query() all use for a field-accessor's
+    # own predicate/exact-match argument -- added 2026-10-18.
+    def test_predicate_arg_delegates_to_its_own_matches(self):
+        from csvpath.references.functions.selectors.after_3 import After3
+
+        assert ResultsReferenceFinder3._matches_field_predicate(5, After3(arg=3))
+        assert not ResultsReferenceFinder3._matches_field_predicate(
+            2, After3(arg=3)
+        )
+
+    def test_bare_value_is_an_exact_match_test(self):
+        assert ResultsReferenceFinder3._matches_field_predicate(0, 0)
+        assert not ResultsReferenceFinder3._matches_field_predicate(1, 0)
+
+
+class TestErrorCountPredicateGate:
+    # normative_reference_examples.txt's own worked examples, added
+    # 2026-10-18 -- ":error_count()" GATEs a pooled '*'/':flatten()'
+    # candidate list by its own field value, same mechanism :count()'s
+    # own GATE already uses, just reading a manifest field directly
+    # instead of opening errors.json:
+    #   $*.results.:flatten():error_count(:above(3))   -- more than 3
+    #   $*.results.:flatten():error_count(:below(1))   -- none
+    #   $*.results.:flatten():error_count(0)            -- none, exact
+    @pytest.fixture
+    def three_runs(self, tmp_path):
+        # _write_json OVERWRITES rather than merging -- each run's own
+        # manifest.json is written once, complete, not patched after
+        # _make_run's own initial write (which would otherwise lose the
+        # "run_uuid" _make_run already wrote).
+        base = tmp_path / "acme"
+        runs = {}
+        for name, run_name, count in (
+            ("many-errors", "2026-01-01_00-00-00", 5),
+            ("few-errors", "2026-01-02_00-00-00", 2),
+            ("no-errors", "2026-01-03_00-00-00", 0),
+        ):
+            run_dir = base / run_name
+            _write_json(
+                run_dir / "manifest.json",
+                {"run_uuid": name, "error_count": count},
+            )
+            runs[name] = str(run_dir)
+        _write_archive_manifest(tmp_path, "acme", list(runs.values()))
+        return str(tmp_path)
+
+    def test_star_root_above_gate(self, three_runs):
+        results = _finder(
+            "$*.results.:flatten():error_count(:above(3))", three_runs
+        ).query()
+        assert set(results.uuids) == {"many-errors"}
+
+    def test_star_root_below_gate(self, three_runs):
+        results = _finder(
+            "$*.results.:flatten():error_count(:below(1))", three_runs
+        ).query()
+        assert set(results.uuids) == {"no-errors"}
+
+    def test_star_root_exact_int_gate(self, three_runs):
+        # "two ways of selecting runs without errors" -- declared
+        # equivalent to :below(1) in the normative doc.
+        below = _finder(
+            "$*.results.:flatten():error_count(:below(1))", three_runs
+        ).query()
+        exact = _finder(
+            "$*.results.:flatten():error_count(0)", three_runs
+        ).query()
+        assert set(below.uuids) == set(exact.uuids) == {"no-errors"}
+
+    def test_literal_root_gate_is_the_same_mechanism(self, three_runs):
+        # the literal-root equivalent -- query()'s own copy of the same
+        # filter, not just the '*'-traversal shape the normative doc
+        # happens to show.
+        results = _finder(
+            "$acme.results.:flatten():error_count(:above(3))", three_runs
+        ).query()
+        assert set(results.uuids) == {"many-errors"}
+
+    def test_bare_field_read_without_a_predicate_is_unaffected(self, three_runs):
+        # a no-op when the field accessor carries no argument at all --
+        # every run still comes back, each resolving to its own count.
+        results = _finder(
+            "$*.results.:flatten():error_count()", three_runs
+        ).resolve()
+        assert sorted(r.data for r in results.results) == [0, 2, 5]
+
+
 class TestArchiveLedgerFallback:
     # Table 7 (the Archive Run Manifest, RESULTS' own global ledger) is
     # per-statement-execution, keyed by "run_uuid" + "identity", not a

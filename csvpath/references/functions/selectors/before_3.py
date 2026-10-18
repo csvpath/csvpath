@@ -1,10 +1,12 @@
 from ...reference_3 import Reference3
+from ...reference_exceptions_3 import ReferenceException3
 from ..function_3 import Function3
+from ..filters.predicate_function_3 import PredicateFunction3
 from ..values.time_window_function_3 import TimeWindowFunction3
 from .index_3 import Index3
 
 
-class Before3(Function3):
+class Before3(PredicateFunction3):
     #
     # the EXCLUSIVE sibling of :to() -- compendium 6.28/6.28b/6.28c,
     # built 2026-10-16. Same two index/date modes, same shared
@@ -36,6 +38,17 @@ class Before3(Function3):
     # four-way directional rule). Date3 is itself a TimeWindowFunction3
     # now, so this is strictly a widening.
     #
+    # Extends PredicateFunction3 (not just Function3), added 2026-10-18
+    # -- normative_reference_examples.txt's own worked examples
+    # (":error_count(:below(1))", "two ways of selecting runs without
+    # errors") need ":below()" to also work as a scalar predicate
+    # (count < bound), mirroring After3's own identical reasoning for
+    # ":above()" (built 2026-10-17 for ":count(:above(10))"). One class
+    # serves both roles, "position decides meaning": riding as a range
+    # bound still goes through _apply_range()/_apply_date_range()
+    # exactly as before; nested inside a predicate-accepting field
+    # accessor (e.g. ":error_count()") goes through matches() instead.
+    #
     NAME = "before"
     SUMMARY = (
         "The exclusive end of a range over the current scope's ordered "
@@ -43,7 +56,10 @@ class Before3(Function3):
         "position (negative counts from the end), from the start or "
         "from :after()'s/:from()'s position if present. date-mode: up "
         "to but not including this calendar date, compared against "
-        "each run's own arrival date. Aliases: ':below()'/':lt()'."
+        "each run's own arrival date. Aliases: ':below()'/':lt()'. "
+        "Nested inside a predicate-accepting field accessor (e.g. "
+        "':error_count(:below(1))'), acts as a scalar predicate "
+        "instead: matches any value strictly less than its own bound."
     )
     ROLE = Function3.CONTEXT_SETTER
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
@@ -57,3 +73,23 @@ class Before3(Function3):
         Reference3.CSVPATHS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
         Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
     }
+
+    def matches(self, value) -> bool:
+        """scalar-predicate mode, used nested inside a predicate-
+        accepting field accessor (e.g. :error_count()) -- true if
+        `value` is strictly less than this function's own bound. Same
+        unwrap as After3's own matches() (a bare int/str leaf, or a
+        nested :index() wrapper's own .arg); same clear rejection of a
+        TimeWindowFunction3 bound (nonsensical here -- comparing a
+        count against a date has no meaning)."""
+        bound = self._arg
+        if isinstance(bound, TimeWindowFunction3):
+            raise ReferenceException3(
+                ":below()/:before() cannot compare against "
+                f":{bound.NAME}() -- as a predicate (e.g. nested inside "
+                ":error_count()), its bound must be a plain number, "
+                "not a time-component function."
+            )
+        if not isinstance(bound, (int, str)):
+            bound = bound.arg
+        return value < bound
