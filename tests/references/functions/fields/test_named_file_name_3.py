@@ -16,6 +16,14 @@ def test_metadata():
         Reference3.RESULTS: "named_file_name",
         Reference3.RESULT: "named_file_name",
     }
+    # LEDGER_KEY added 2026-10-18, alongside ':status()'s own FILES
+    # build -- chained onto a bare ':status(...)' GATE, this reads the
+    # real "named_file_name" field the global arrivals ledger already
+    # carries on every entry (distinct from FILES' own "computed"
+    # single-resolved-name position, unaffected by this addition).
+    assert f.LEDGER_KEY == {
+        Reference3.FILES: "named_file_name",
+    }
 
 
 def test_no_arg_is_valid():
