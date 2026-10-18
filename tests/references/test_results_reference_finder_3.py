@@ -1312,6 +1312,179 @@ class TestRunLevelDateRange:
             ).query()
 
 
+class TestTimeWindowFunctionAnchors:
+    # Gap 2 of compendium 6.27/TimeWindowFunction3 (added 2026-10-17) --
+    # a time-component function (":year()"/":yesterday()"/etc) nested
+    # as :from()'s/:to()'s/:before()'s/:after()'s own argument, not
+    # just the previously-only-supported literal ":date(...)". Pins
+    # DateUtility's own "now" to a known, fixed calendar date (via
+    # OFFSET_DAYS, computed relative to the real moment the test
+    # actually runs) so every assertion is deterministic regardless of
+    # when the suite runs -- the clock functions themselves, and
+    # ResultsReferenceFinder3's own date-range filtering, both read
+    # DateUtility.now() exclusively (confirmed against the real code,
+    # not assumed).
+    @pytest.fixture
+    def pinned_now(self):
+        from datetime import date
+
+        from csvpath.util.date_util import DateUtility as daut
+
+        target = date(2026, 6, 15)  # safely mid-month, mid-year
+        real_now = daut.now()
+        daut.OFFSET_DAYS = (target - real_now.date()).days
+        daut.OFFSET_MONTHS = 0
+        daut.OFFSET_YEARS = 0
+        try:
+            yield target
+        finally:
+            daut.OFFSET_DAYS = 0
+            daut.OFFSET_MONTHS = 0
+            daut.OFFSET_YEARS = 0
+
+    @pytest.fixture
+    def dated_runs(self, tmp_path, pinned_now):
+        # "now" is pinned to 2026-06-15 -- these runs straddle every
+        # boundary this class's tests check (prior year, this year's
+        # own first day, mid-year, yesterday, today).
+        base = tmp_path / "acme" / "customers"
+        runs = {
+            "run-2025": _make_run(base, "2025-12-31_00-00-00", "run-2025", {}),
+            "run-jan1": _make_run(base, "2026-01-01_00-00-00", "run-jan1", {}),
+            "run-may1": _make_run(base, "2026-05-01_00-00-00", "run-may1", {}),
+            "run-jun1": _make_run(base, "2026-06-01_00-00-00", "run-jun1", {}),
+            "run-yesterday": _make_run(
+                base, "2026-06-14_00-00-00", "run-yesterday", {}
+            ),
+            "run-today": _make_run(base, "2026-06-15_00-00-00", "run-today", {}),
+        }
+        _write_archive_manifest(tmp_path, "acme", list(runs.values()))
+        return str(tmp_path)
+
+    def test_from_year_keeps_this_years_runs_onward(self, dated_runs):
+        # :year() -> [2026-01-01, 2026-12-31] -- :from() uses its start.
+        results = _finder(
+            "$acme.results.customers:from(:year())", dated_runs
+        ).query()
+        assert set(results.uuids) == {
+            "run-jan1",
+            "run-may1",
+            "run-jun1",
+            "run-yesterday",
+            "run-today",
+        }
+
+    def test_to_month_keeps_up_through_this_months_own_end(self, dated_runs):
+        # :month() -> [2026-06-01, 2026-06-30] -- :to() uses its end,
+        # so everything through the end of June is kept (not just up
+        # to June 1st).
+        results = _finder(
+            "$acme.results.customers:to(:month())", dated_runs
+        ).query()
+        assert set(results.uuids) == {
+            "run-2025",
+            "run-jan1",
+            "run-may1",
+            "run-jun1",
+            "run-yesterday",
+            "run-today",
+        }
+
+    def test_before_today_excludes_the_whole_of_today(self, dated_runs):
+        # :before(:today()) -> exclusive upper, excludes the WHOLE
+        # named day, not just one instant within it -- same "excludes
+        # the whole period it names" rule the already-shipped
+        # :before(:date(...)) shape uses.
+        results = _finder(
+            "$acme.results.customers:before(:today())", dated_runs
+        ).query()
+        assert set(results.uuids) == {
+            "run-2025",
+            "run-jan1",
+            "run-may1",
+            "run-jun1",
+            "run-yesterday",
+        }
+
+    def test_after_yesterday_excludes_yesterday_and_earlier(self, dated_runs):
+        # :after(:yesterday()) -> exclusive lower, excludes the whole
+        # of yesterday (and earlier) -- only strictly later survives.
+        results = _finder(
+            "$acme.results.customers:after(:yesterday())", dated_runs
+        ).query()
+        assert set(results.uuids) == {"run-today"}
+
+    def test_compendium_6_27f_flagship_example(self, dated_runs):
+        # compendium 6.27f's own confirmed worked example:
+        # ":from(:yesterday()):before(:today())" == "yesterday, the
+        # whole day" -- the one example this entire mechanism was
+        # designed against.
+        results = _finder(
+            "$acme.results.customers:from(:yesterday()):before(:today())",
+            dated_runs,
+        ).query()
+        assert set(results.uuids) == {"run-yesterday"}
+
+    def test_mixing_index_and_time_window_modes_is_rejected(self, dated_runs):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.results.customers:from(1):to(:year())", dated_runs
+            ).query()
+
+    def test_bare_yesterday_is_a_range_matching_6_27f_exactly(self, dated_runs):
+        # Gap 1 of compendium 6.27/TimeWindowFunction3, added
+        # 2026-10-17 -- a BARE time-component function riding in the
+        # chain (no explicit :from()/:to()), the compendium's own
+        # flagship worked example (6.27e's first bullet, 6.27f's own
+        # confirmed answer: "every file home with changes within
+        # yesterday's window").
+        results = _finder(
+            "$acme.results.customers:yesterday()", dated_runs
+        ).query()
+        assert set(results.uuids) == {"run-yesterday"}
+
+    def test_bare_today_is_inclusive_both_ends(self, dated_runs):
+        results = _finder(
+            "$acme.results.customers:today()", dated_runs
+        ).query()
+        assert set(results.uuids) == {"run-today"}
+
+    def test_bare_year_pools_the_whole_year(self, dated_runs):
+        results = _finder(
+            "$acme.results.customers:year()", dated_runs
+        ).query()
+        assert set(results.uuids) == {
+            "run-jan1",
+            "run-may1",
+            "run-jun1",
+            "run-yesterday",
+            "run-today",
+        }
+
+    def test_bare_time_window_as_context_for_a_pointer(self, dated_runs):
+        # 6.27e's second bullet -- "use as a context for a pointer":
+        # ":yesterday():last()" finds the last registration within
+        # yesterday's own window (here, the only one).
+        results = _finder(
+            "$acme.results.customers:yesterday():last()", dated_runs
+        ).query()
+        assert results.uuids == ["run-yesterday"]
+
+    def test_bare_time_window_combined_with_explicit_range_is_rejected(
+        self, dated_runs
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.results.customers:yesterday():from(1)", dated_runs
+            ).query()
+
+    def test_two_bare_time_window_functions_is_rejected(self, dated_runs):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.results.customers:yesterday():today()", dated_runs
+            ).query()
+
+
 class TestRunLevelDirectionFunctions:
     # ':before()'/':after()' as a run-level range -- compendium 6.28/
     # 6.28b/6.28c, built 2026-10-16, the EXCLUSIVE siblings of ':to()'/

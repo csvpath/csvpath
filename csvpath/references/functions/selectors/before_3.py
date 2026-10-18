@@ -1,6 +1,6 @@
 from ...reference_3 import Reference3
 from ..function_3 import Function3
-from .date_3 import Date3
+from ..values.time_window_function_3 import TimeWindowFunction3
 from .index_3 import Index3
 
 
@@ -27,6 +27,15 @@ class Before3(Function3):
     # not alike directions, nothing to narrow. May pair with :after()/
     # :from() (a LOWER bound) to form a range, same as :to() may.
     #
+    # ARG_TYPES widened 2026-10-17 from Date3 specifically to
+    # TimeWindowFunction3 generically (compendium 6.27) -- ":before(
+    # :year())"/etc are now equally legal, using that function's own
+    # start_datetime() as the exclusive upper cutoff (excludes the
+    # whole period it names, same as the already-shipped day-granular
+    # behavior -- see TimeWindowFunction3's own docstring for the full
+    # four-way directional rule). Date3 is itself a TimeWindowFunction3
+    # now, so this is strictly a widening.
+    #
     NAME = "before"
     SUMMARY = (
         "The exclusive end of a range over the current scope's ordered "
@@ -38,7 +47,7 @@ class Before3(Function3):
     )
     ROLE = Function3.CONTEXT_SETTER
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    ARG_TYPES = (int, Index3, str, Date3)
+    ARG_TYPES = (int, Index3, str, TimeWindowFunction3)
     ARG_REQUIRED = True
     #
     # see From3's own POSITIONS comment -- always paired, same positions.

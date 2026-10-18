@@ -1,7 +1,8 @@
 from ...reference_3 import Reference3
+from ...reference_exceptions_3 import ReferenceException3
 from ..function_3 import Function3
 from ..filters.predicate_function_3 import PredicateFunction3
-from .date_3 import Date3
+from ..values.time_window_function_3 import TimeWindowFunction3
 from .index_3 import Index3
 
 
@@ -30,21 +31,36 @@ class After3(PredicateFunction3):
     # see the deferred_work_bucket_list.md correction, David caught a
     # wrong "naming collision" claim here and this is the actual fix.
     #
+    # ARG_TYPES widened 2026-10-17 from Date3 specifically to
+    # TimeWindowFunction3 generically (compendium 6.27) -- ":after(
+    # :year())"/etc are now equally legal as a RANGE bound, using that
+    # function's own end_datetime() as the exclusive lower cutoff (see
+    # TimeWindowFunction3's own docstring for the full four-way rule).
+    # This is unrelated to this class's OWN separate, scalar-predicate
+    # role (matches() below, used nested inside :count()) -- the two
+    # roles share this class but not this widening's own reasoning;
+    # matches() guards against a non-orderable TimeWindowFunction3 arg
+    # being passed to IT (e.g. the nonsensical ":count(:above(:year()
+    # ))"), which ARG_TYPES alone cannot distinguish from the
+    # legitimate range-bound usage.
+    #
     NAME = "after"
     SUMMARY = (
         "The exclusive start of a range over the current scope's "
         "ordered items -- index-mode: from, but NOT including, this "
         "0-based position (negative counts from the end) to the end, "
         "or to :before()'s/:to()'s position if present. date-mode: "
-        "from, but not including, this calendar date onward, compared "
-        "against each run's own arrival date. Aliases: ':above()'/"
-        "':gt()'. Nested inside :count() (e.g. ':count(:above(10))'), "
-        "acts as a scalar predicate instead: matches any value strictly "
-        "greater than its own bound."
+        "from, but not including, this calendar date onward (or the "
+        "end of a coarser time-component function's own period, e.g. "
+        ":year()/:month()), compared against each run's own arrival "
+        "date. Aliases: ':above()'/':gt()'. Nested inside :count() "
+        "(e.g. ':count(:above(10))'), acts as a scalar predicate "
+        "instead: matches any value strictly greater than its own "
+        "bound."
     )
     ROLE = Function3.CONTEXT_SETTER
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    ARG_TYPES = (int, Index3, str, Date3)
+    ARG_TYPES = (int, Index3, str, TimeWindowFunction3)
     ARG_REQUIRED = True
     #
     # see From3's own POSITIONS comment -- always paired, same positions.
@@ -59,11 +75,22 @@ class After3(PredicateFunction3):
         """scalar-predicate mode, used nested inside :count() -- true
         if `value` is strictly greater than this function's own bound.
         Same unwrap as ReferenceFinder3._range_bound() (a bare int/str
-        leaf, or a nested :index()/:date() wrapper's own .arg) -- not
-        reused directly to avoid a circular import (that helper lives
-        on the finder base class, which imports this function module,
-        not the other way around)."""
+        leaf, or a nested :index() wrapper's own .arg) -- not reused
+        directly to avoid a circular import (that helper lives on the
+        finder base class, which imports this function module, not the
+        other way around). A TimeWindowFunction3 arg (e.g. the
+        nonsensical ":count(:above(:year()))") is rejected clearly here
+        rather than crashing on an unwrapped TypeError -- ARG_TYPES
+        alone cannot distinguish this from the legitimate range-bound
+        usage, since both roles share this one class."""
         bound = self._arg
+        if isinstance(bound, TimeWindowFunction3):
+            raise ReferenceException3(
+                ":above()/:after() cannot compare against "
+                f":{bound.NAME}() -- as a predicate (e.g. nested inside "
+                ":count()), its bound must be a plain number, not a "
+                "time-component function."
+            )
         if not isinstance(bound, (int, str)):
             bound = bound.arg
         return value > bound

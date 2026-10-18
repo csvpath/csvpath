@@ -7,6 +7,7 @@ from csvpath.util.xlsx.xlsx_reader_helper import XlsxReaderHelper
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
+from .functions.values.time_window_function_3 import TimeWindowFunction3
 from .reference_3 import FunctionCall3, Reference3, Star3
 from .reference_exceptions_3 import ReferenceException3
 from .reference_finder_3 import ReferenceFinder3
@@ -625,8 +626,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # here for lack of a driving use case.
             from_bound = self._range_bound(lower_call) if lower_call is not None else None
             to_bound = self._range_bound(upper_call) if upper_call is not None else None
-            from_is_date = isinstance(from_bound, str)
-            to_is_date = isinstance(to_bound, str)
+            # TimeWindowFunction3 (":year()"/":date(...)"/etc, compendium
+            # 6.27, added 2026-10-17) is date-mode too, same as a plain
+            # string -- _range_bound() returns it as-is now, not
+            # unwrapped to a raw value (see its own docstring).
+            from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
+            to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
             if (from_bound is not None and to_bound is not None) and (
                 from_is_date != to_is_date
             ):
@@ -634,10 +639,38 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "FilesReferenceFinder3 does not support mixing index-"
                     "mode and date-mode range bounds in the same range."
                 )
-            if from_is_date:
+            # a TimeWindowFunction3 bound has nothing to validate this
+            # way -- never a raw user-supplied string (Date3 already
+            # validates its own format at construction); only a bare
+            # string bound needs this check.
+            if isinstance(from_bound, str):
                 self._validate_date_format(from_bound)
-            if to_is_date:
+            if isinstance(to_bound, str):
                 self._validate_date_format(to_bound)
+        # Gap 1 of compendium 6.27/TimeWindowFunction3 (added 2026-10-17)
+        # -- a BARE time-component function riding in the chain, with
+        # no explicit ':from()'/':to()'/':before()'/':after()' of its
+        # own (6.27e's first bullet -- the compendium's own flagship
+        # example, "$acme.files.:yesterday()"). Detected as its own,
+        # separate entry in `built` -- a TimeWindowFunction3 nested as
+        # lower_call's/upper_call's own .arg (Gap 2, handled above)
+        # never shows up here.
+        bare_time_windows = [f for f in built if isinstance(f, TimeWindowFunction3)]
+        if len(bare_time_windows) > 1:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not support combining more "
+                "than one bare time-component function (e.g. "
+                "':yesterday()') in the same name_three chain."
+            )
+        bare_time_window = bare_time_windows[0] if bare_time_windows else None
+        if bare_time_window is not None and has_range:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not support combining a bare "
+                "time-component function (e.g. ':yesterday()') with an "
+                "explicit ':from()'/':to()'/':before()'/':after()' bound "
+                "in the same name_three chain -- the bare function "
+                "already means its own whole period, both ends included."
+            )
         # the old "at least one recognized category present" gate that
         # used to live here is now unreachable, not just redundant: the
         # _check_position() loop above already guarantees every element
@@ -647,27 +680,29 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # has_range cover the complete set of name_three-legal FILES
         # functions), so at least one of them is always true here.
 
-        if partitioned and has_range:
-            # ':from()'/':to()' combined with ':all()'/':groups()' grouping
-            # -- split into its own check 2026-09-25 (was previously
-            # merged into the :manifest() check just below, giving a
-            # confusing "combining with :manifest()" error even when no
-            # :manifest() was present at all, confirmed live -- see the
-            # bucket list). Still rejected, not built: the range-applying
-            # code just below (`if has_range: candidates = self._apply_
-            # range(...)`) operates on the POOLED candidate list, before
-            # partitioning by file_home -- "the last N versions" would
-            # mean the last N pooled across every group, not the last N
-            # WITHIN each group, the same AMBIGUOUS-reading concern
-            # RESULTS' own identical rejection cites (does "last 2" mean
-            # per-group or pooled-then-split -- nothing here picks one).
-            # No driving use case has asked for either reading, so this
-            # stays a clear rejection rather than a guess, matching
-            # RESULTS' own precedent exactly.
+        if partitioned and (has_range or bare_time_window is not None):
+            # ':from()'/':to()' (or a bare time-component function, same
+            # reasoning, added 2026-10-17) combined with ':all()'/
+            # ':groups()' grouping -- split into its own check 2026-09-25
+            # (was previously merged into the :manifest() check just
+            # below, giving a confusing "combining with :manifest()"
+            # error even when no :manifest() was present at all,
+            # confirmed live -- see the bucket list). Still rejected, not
+            # built: the range-applying code just below (`if has_range:
+            # candidates = self._apply_range(...)`) operates on the
+            # POOLED candidate list, before partitioning by file_home --
+            # "the last N versions" would mean the last N pooled across
+            # every group, not the last N WITHIN each group, the same
+            # AMBIGUOUS-reading concern RESULTS' own identical rejection
+            # cites (does "last 2" mean per-group or pooled-then-split --
+            # nothing here picks one). No driving use case has asked for
+            # either reading, so this stays a clear rejection rather than
+            # a guess, matching RESULTS' own precedent exactly.
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support combining "
-                "':all()'/':groups()' grouping with ':from()'/':to()' -- "
-                "resolve the grouped versions on their own first."
+                "':all()'/':groups()' grouping with ':from()'/':to()' or "
+                "a bare time-component function -- resolve the grouped "
+                "versions on their own first."
             )
 
         # `partitioned and pointers and has_manifest` used to be an
@@ -690,7 +725,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # rather than this method raising to avoid the ambiguity
         # entirely.
 
-        if has_range:
+        if bare_time_window is not None:
+            # Gap 1 -- see this method's own comment above. `partitioned`
+            # combined with a bare time window already raised above, so
+            # this never runs concurrently with the by_file_home
+            # partition branch below.
+            candidates = self._apply_bare_time_window_to_manifest(
+                candidates, bare_time_window
+            )
+        elif has_range:
             # narrow to the RANGE first -- a pointer riding alongside it
             # (below) then reduces that range, not the full candidate
             # set, same as RESULTS' own run-level range does. `partitioned`

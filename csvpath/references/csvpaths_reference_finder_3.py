@@ -2,7 +2,7 @@ from csvpath.util.nos import Nos
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
-from .functions.selectors.date_3 import Date3
+from .functions.values.time_window_function_3 import TimeWindowFunction3
 from .reference_3 import FunctionCall3, Reference3, Star3
 from .reference_exceptions_3 import ReferenceException3
 from .reference_finder_3 import ReferenceFinder3
@@ -230,21 +230,24 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # rule.
                 from_call, to_call = self._range_calls_from_built(built)
                 for f in (from_call, to_call):
-                    # a :date(...)-wrapped bound is rejected -- statements
-                    # have no arrival date of their own. A bare string
-                    # bound is NOT rejected (added 2026-09-22, per
-                    # normative_reference_examples.txt's own "Identities"
-                    # section): it selects by statement IDENTITY, a third
-                    # mode distinct from name_one's own index/date modes
-                    # -- see the per-version windowing below, which
-                    # resolves it via _find_by_identity() before slicing.
-                    if f is not None and isinstance(f.arg, Date3):
+                    # a TimeWindowFunction3-wrapped bound (":date(...)"/
+                    # ":year()"/etc, compendium 6.27 -- widened 2026-10-17
+                    # from Date3-only, same reasoning applies to every
+                    # sibling) is rejected -- statements have no arrival
+                    # date of their own. A bare string bound is NOT
+                    # rejected (added 2026-09-22, per normative_reference_
+                    # examples.txt's own "Identities" section): it selects
+                    # by statement IDENTITY, a third mode distinct from
+                    # name_one's own index/date modes -- see the per-
+                    # version windowing below, which resolves it via
+                    # _find_by_identity() before slicing.
+                    if f is not None and isinstance(f.arg, TimeWindowFunction3):
                         raise ReferenceException3(
                             "CsvpathsReferenceFinder3's ':from()'/':to()' "
-                            "does not support date-mode bounds (:date(...)) "
-                            "in name_three -- statements have no arrival "
-                            "date of their own. A bare string bound selects "
-                            "by statement identity instead."
+                            "does not support date-mode bounds (:date(...)/"
+                            ":year()/etc) in name_three -- statements have "
+                            "no arrival date of their own. A bare string "
+                            "bound selects by statement identity instead."
                         )
                 if name_three.body is not None and (from_call or to_call):
                     raise ReferenceException3(
@@ -846,11 +849,45 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         # ':before()' and enforces 6.28c's "same direction twice is
         # illegal" rule.
         from_call, to_call = self._range_calls_from_built(built)
-        if from_call is not None or to_call is not None:
+        # Gap 1 of compendium 6.27/TimeWindowFunction3 (added 2026-10-17)
+        # -- a BARE time-component function riding in the chain, with
+        # no explicit ':from()'/':to()'/':before()'/':after()' of its
+        # own (6.27e's first bullet). Detected as its own, separate
+        # entry in `built` -- a TimeWindowFunction3 nested as from_
+        # call's/to_call's own .arg (Gap 2, handled below) never shows
+        # up here.
+        bare_time_windows = [f for f in built if isinstance(f, TimeWindowFunction3)]
+        if len(bare_time_windows) > 1:
+            raise ReferenceException3(
+                "CsvpathsReferenceFinder3 does not support combining "
+                "more than one bare time-component function (e.g. "
+                "':yesterday()') in the same name_one chain."
+            )
+        bare_time_window = bare_time_windows[0] if bare_time_windows else None
+        if bare_time_window is not None and (
+            from_call is not None or to_call is not None
+        ):
+            raise ReferenceException3(
+                "CsvpathsReferenceFinder3 does not support combining a "
+                "bare time-component function (e.g. ':yesterday()') "
+                "with an explicit ':from()'/':to()'/':before()'/"
+                "':after()' bound in the same name_one chain -- the "
+                "bare function already means its own whole period, "
+                "both ends included."
+            )
+        if bare_time_window is not None:
+            manifest = self._apply_bare_time_window_to_manifest(
+                manifest, bare_time_window
+            )
+        elif from_call is not None or to_call is not None:
             from_bound = self._range_bound(from_call) if from_call is not None else None
             to_bound = self._range_bound(to_call) if to_call is not None else None
-            from_is_date = isinstance(from_bound, str)
-            to_is_date = isinstance(to_bound, str)
+            # TimeWindowFunction3 (":year()"/":date(...)"/etc, compendium
+            # 6.27, added 2026-10-17) is date-mode too, same as a plain
+            # string -- _range_bound() returns it as-is now, not
+            # unwrapped to a raw value (see its own docstring).
+            from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
+            to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
             if (from_bound is not None and to_bound is not None) and (
                 from_is_date != to_is_date
             ):
@@ -872,9 +909,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     "range."
                 )
             if from_is_date or to_is_date:
-                if from_is_date:
+                # a TimeWindowFunction3 bound has nothing to validate
+                # this way -- never a raw user-supplied string (Date3
+                # already validates its own format at construction);
+                # only a bare string bound needs this check.
+                if isinstance(from_bound, str):
                     self._validate_date_format(from_bound)
-                if to_is_date:
+                if isinstance(to_bound, str):
                     self._validate_date_format(to_bound)
                 manifest = self._apply_manifest_date_range(
                     manifest, from_call, to_call

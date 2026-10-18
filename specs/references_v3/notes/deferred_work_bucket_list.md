@@ -161,7 +161,7 @@ field accessor) remains deferred and unaffected by this fix —
 `ReferenceFinder3._apply_implied_star()` needed no change at all; this
 was purely about FILES' own call-site placement.
 
-## Time component functions acting as context setters — not built at all; ROLE is currently static per function, never usage-dependent
+## Time component functions acting as context setters — BUILT 2026-10-17
 
 Surfaced 2026-09-21, first pass through `csvpath/references/functions/values/`
 during the test-first alignment work. This is an architectural gap, not a
@@ -208,6 +208,127 @@ datatype (files/csvpaths/results all have different "what does the anchor
 apply to" semantics per §6.27f's arrival/load/runtime split) before
 anything is buildable — same shape as the other still-open design items in
 this file, not a quick fix.
+
+### BUILT 2026-10-17 — full writeup
+
+David: "please do the full list. I think we can extrapolate to get to Gap 2.
+Please go that way." Two genuinely separate gaps, both now built, for all
+ten relevant functions (`:year()`/`:month()`/`:day()`/`:hour()`/`:hour_24()`/
+`:minute()`/`:second()`/`:yesterday()`/`:today()`/`:date()`) across all
+three datatypes.
+
+**Three functions deliberately excluded** from the whole mechanism, stay
+plain `SOURCE == "clock"` `VALUE` functions, unchanged:
+- `:now()` — §6.27g gives it only the interpolation/stringification role,
+  never the three-role treatment `:yesterday()` gets; it names an instant,
+  not a period.
+- `:month_name()`/`:day_name()` — a bare name ("Monday", "August") has no
+  year attached, so there is no single absolute date to anchor to.
+
+**The reconciling model, confirmed with David directly** — §6.27b's literal
+"first moment" text does not, by itself, reproduce either §6.27f's own
+worked example or the already-shipped day-granular `:before()`/`:after()`
+"excludes the whole day it names" behavior. Checked against real cases
+(`:before(X)` using just X's first moment correctly excludes X's whole
+period; `:after(X)` does NOT — a candidate at noon on the day X names is
+"after" X's first moment but must still be excluded; `:to(X)` needs X's
+*end*, not its start, for the same reason). The rule that reproduces both:
+every time-bound exposes a full `[start, end]` window, and each directional
+function picks whichever side suits its own direction:
+```
+:from(X)   keeps candidates >= X.start
+:to(X)     keeps candidates <= X.end
+:before(X) keeps candidates <  X.start
+:after(X)  keeps candidates >  X.end
+```
+Bare/standalone use (Gap 1) is just the same pair used as an implicit,
+always-inclusive `:from(X):to(X)`.
+
+**A second correction, also confirmed with David**: the first draft of this
+design assumed day-only truncation (`:hour()`/`:minute()`/`:second()`
+collapsing to mean the same as `:today()`, since every existing date
+comparison only ever compared a 10-character "YYYY-MM-DD" prefix). David
+pushed back — "what is the basis for taking a finer-grained pointer and
+treating it like a coarser-grained pointer?" Checked the actual data rather
+than the comparison code alone: FILES/CSVPATHS manifest `"time"` fields are
+full `datetime.isoformat()` strings (`metadata.py`'s own `time_string`
+property), and RESULTS run directories are named `%Y-%m-%d_%H-%M-%S`
+(`run_home_maker.py`) — both already carry real hour/minute/second
+precision. The day-only truncation was never a property of the data, only
+of the bounds that happened to exist so far (all day-granular). Fixed by
+rewriting the comparison helpers to parse real `datetime` objects instead
+of slicing strings, so `:hour()`/`:minute()`/`:second()` now narrow for
+real.
+
+**New shared base class**: `TimeWindowFunction3` (`csvpath/references/
+functions/values/time_window_function_3.py`) — each of the ten subclasses
+implements `start_datetime()`/`end_datetime()` (naive, UTC wall-clock —
+tzinfo stripped so these compare cleanly against RESULTS' own tzinfo-less
+run-directory datetimes). `Date3` moved here too (from a bare `Function3`)
+and its own `DATATYPES` widened from `(RESULTS,)` to all three — a real,
+previously-harmless gap, since FILES/CSVPATHS already accepted a
+Date3-wrapped bound via `From3`/`To3`/`Before3`/`After3`'s own `ARG_TYPES`
+and already ran it through the shared `_apply_manifest_date_range()`.
+
+**Gap 2 (nested anchor, e.g. `:from(:year())`)**: `From3`/`To3`/`Before3`/
+`After3.ARG_TYPES` widened from `Date3` specifically to `TimeWindowFunction3`
+generically. `ReferenceFinder3._range_bound()` now returns a
+`TimeWindowFunction3` instance as-is (not unwrapped) when the arg is one;
+new `_bound_window(call)` resolves ANY bound (plain string or
+`TimeWindowFunction3`) into a `(start, end)` pair; `_apply_manifest_date_
+range()` (shared, FILES/CSVPATHS) and `ResultsReferenceFinder3._apply_date_
+range()` were both rewritten around this pair and the four-way rule above,
+replacing the old fixed `[:10]` string-slice comparison with real `datetime`
+parsing (`_parse_manifest_time()`/`_run_dir_datetime()`, the latter renamed
+from `_run_dir_date()`). Each finder's own `from_is_date`/`to_is_date`
+mode-detection widened to recognize `TimeWindowFunction3` alongside `str`;
+`_validate_date_format()` calls narrowed to only fire for an actual raw
+string (a `TimeWindowFunction3` bound has nothing to validate that way —
+`Date3` already validates its own format at construction).
+`CsvpathsReferenceFinder3`'s own name_three rejection ("statements have no
+arrival date of their own") widened from `Date3`-only to the same generic
+check, for the same reason.
+
+**Gap 1 (bare context setter, e.g. `:yesterday():last()`)**: detected as a
+`TimeWindowFunction3` instance riding as its OWN entry in a finder's built
+chain (never nested as a `:from()`/`:to()` call's own `.arg` — that is Gap 2,
+structurally distinct and never conflated). New `_apply_bare_time_window()`
+(RESULTS, run directories) and `_apply_bare_time_window_to_manifest()`
+(shared, manifest-entry dicts) apply the bound's own `[start, end]` window,
+always inclusive both ends (no separate directional function to pick
+otherwise). Wired into each finder's own name_one/name_three dispatch,
+right where the existing `:from()`/`:to()` range application already lived —
+mutually exclusive with it (`elif`), and rejected outright if both a bare
+time-component function and an explicit directional bound are present
+together, or if more than one bare time-component function rides in the
+same chain. **A real regression caught by the test suite before shipping**:
+the ten functions' own `ROLE` was first changed `VALUE` → `CONTEXT_SETTER`
+to match §6.43's own taxonomy — this broke the compendium-explicit `{...}`
+interpolation usage (`:name("partner-{:year()}-orders")`, §6.42's own
+worked example), since `reference_3.py`'s interpolation check hard-requires
+`ROLE == VALUE`. Reverted: `ROLE` stays `VALUE` on all ten (this is, after
+all, the pre-existing "ROLE is static per function, never usage-dependent"
+gap this whole section used to describe) — the new bare-context-setter/
+anchor capability is detected structurally instead, via `isinstance(f,
+TimeWindowFunction3)`, never via `ROLE`. Also needed: `POSITIONS` added to
+all ten (none had any before — a function with no `POSITIONS` entry was
+only ever legal as a name_one path segment or `{...}` interpolation span,
+neither of which goes through `_check_position()` at all; without this a
+bare `:year()` in the chain was rejected outright). Same positions `From3`/
+`To3`/`Before3`/`After3` already occupy.
+
+**Tests**: new unit tests for each function's own `start_datetime()`/
+`end_datetime()` (deterministic via `DateUtility.OFFSET_DAYS`, computed
+relative to the real moment the test runs, never a hardcoded "now");
+`TestTimeWindowFunctionAnchors` (RESULTS, both gaps, including the
+compendium's own 6.27f flagship example verbatim —
+`:from(:yesterday()):before(:today())` resolving to exactly "yesterday, the
+whole day") plus one confirming test apiece for FILES/CSVPATHS (not just
+assumed from the shared mechanism) — FILES' own confirming test uses the
+compendium's own literal flagship example, `$acme.files.:yesterday()`.
+`tests/references/`: 1789 passed (up from 1721 before this item started).
+Full local-backend suite: 4250 passed, 11 failed (known SFTP/S3 credential
+baseline, unrelated).
 
 ## Archive Run Manifest `uuid` field — RESOLVED, 2026-09-22 (no-repro, false alarm)
 

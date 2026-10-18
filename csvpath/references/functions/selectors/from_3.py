@@ -1,6 +1,6 @@
 from ...reference_3 import Reference3
 from ..function_3 import Function3
-from .date_3 import Date3
+from ..values.time_window_function_3 import TimeWindowFunction3
 from .index_3 import Index3
 
 
@@ -27,32 +27,42 @@ class From3(Function3):
     # The two modes are never mixed within one :from()/:to() pair --
     # query() rejects that combination explicitly.
     #
-    # ARG_TYPES includes Index3/Date3, not just int/str, because the
-    # doc's own NOTES block explicitly requires ":from(:index(-3))" to
-    # be legal and identical to ":from(-3)" (and, by the same "wrapper
-    # is optional but must be technically possible" pattern,
-    # ":from(:date(...))" identical to a bare date string) -- by the
-    # time ReferenceFunctionFactory.build() constructs this function, a
-    # nested ":index(...)"/":date(...)" arg has already been recursively
-    # built into a real Index3/Date3 instance (not a plain int/str), so
-    # both shapes need to be accepted here. Neither counts as a POINTER
-    # for build_chain()'s "at most one pointer per chain" rule -- both
-    # are nested ARGUMENTS, already unwrapped before build_chain() ever
-    # sees the outer chain, exactly like ":idchain()"/":from(:index(0))"
-    # nested-arg precedent noted elsewhere in this codebase's design
-    # history.
+    # ARG_TYPES includes Index3/TimeWindowFunction3, not just int/str,
+    # because the doc's own NOTES block explicitly requires
+    # ":from(:index(-3))" to be legal and identical to ":from(-3)" (and,
+    # by the same "wrapper is optional but must be technically
+    # possible" pattern, ":from(:date(...))" identical to a bare date
+    # string) -- by the time ReferenceFunctionFactory.build() constructs
+    # this function, a nested ":index(...)"/":date(...)" arg has already
+    # been recursively built into a real Index3/Date3 instance (not a
+    # plain int/str), so both shapes need to be accepted here. Neither
+    # counts as a POINTER for build_chain()'s "at most one pointer per
+    # chain" rule -- both are nested ARGUMENTS, already unwrapped before
+    # build_chain() ever sees the outer chain, exactly like ":idchain()"/
+    # ":from(:index(0))" nested-arg precedent noted elsewhere in this
+    # codebase's design history.
+    #
+    # ARG_TYPES widened 2026-10-17 from Date3 specifically to
+    # TimeWindowFunction3 generically (compendium 6.27) -- ":from(
+    # :year())"/":from(:month())"/etc are now equally legal, using that
+    # function's own start_datetime() as the inclusive lower cutoff
+    # (see TimeWindowFunction3's own docstring for the four-way
+    # directional rule). Date3 is itself a TimeWindowFunction3 now, so
+    # this is strictly a widening, not a change for the already-shipped
+    # ":from(:date(...))" shape.
     #
     NAME = "from"
     SUMMARY = (
         "The start of a range over the current scope's ordered items -- "
         "index-mode: from this 0-based position (negative counts from "
         "the end) to the end, or to :to()'s position if present. date-"
-        "mode: from this calendar date onward, compared against each "
-        "run's own arrival date."
+        "mode: from this calendar date onward (or the start of a "
+        "coarser time-component function's own period, e.g. :year()/"
+        ":month()), compared against each run's own arrival date."
     )
     ROLE = Function3.CONTEXT_SETTER
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    ARG_TYPES = (int, Index3, str, Date3)
+    ARG_TYPES = (int, Index3, str, TimeWindowFunction3)
     ARG_REQUIRED = True
     #
     # FILES: name_three only (its own version-selector position -- no
