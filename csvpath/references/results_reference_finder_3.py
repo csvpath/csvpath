@@ -1361,7 +1361,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     manifest_field_call.name
                 )
                 key_path = function_cls.KEY.get(Reference3.RESULTS)
-                return self._extract_field_value_with_ledger_fallback(
+                value = self._extract_field_value_with_ledger_fallback(
                     entry=entry,
                     key_path=key_path,
                     function_cls=function_cls,
@@ -1371,6 +1371,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         run_uuid=entry.get("run_uuid") if entry else None,
                     ),
                 )
+                return function_cls.transform_value(value)
             return entry
 
         run_field_call = self._find_field_function_call(name_one_calls)
@@ -1405,7 +1406,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 Nos(result.path).join("manifest.json")
             )
             key_path = function_cls.KEY.get(Reference3.RESULTS)
-            return self._extract_field_value_with_ledger_fallback(
+            value = self._extract_field_value_with_ledger_fallback(
                 entry=entry,
                 key_path=key_path,
                 function_cls=function_cls,
@@ -1415,6 +1416,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     run_uuid=entry.get("run_uuid") if entry else None,
                 ),
             )
+            return function_cls.transform_value(value)
 
         kind = reference.resolve_kind
         if kind in (Reference3.METADATA_FILE, Reference3.METADATA_FIELD):
@@ -1462,7 +1464,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     Nos(result.path).join("manifest.json")
                 )
                 key_path = function_cls.KEY.get(Reference3.RESULT)
-                return self._extract_field_value_with_ledger_fallback(
+                value = self._extract_field_value_with_ledger_fallback(
                     entry=entry,
                     key_path=key_path,
                     function_cls=function_cls,
@@ -1473,6 +1475,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         identity=entry.get("instance_identity") if entry else None,
                     ),
                 )
+                return function_cls.transform_value(value)
         if kind != Reference3.FIRST_PARTY:
             raise ReferenceException3(
                 f"ResultsReferenceFinder3 does not yet support "

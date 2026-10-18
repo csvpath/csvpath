@@ -236,3 +236,19 @@ class TestSelectorWhenArgued:
     def test_surfaces_in_describe(self):
         f = _NoArgFunction()
         assert f.describe()["selector_when_argued"] is False
+
+
+class TestTransformValue:
+    # added 2026-10-18 for HasErrors3 -- the first function needing
+    # anything other than the raw stored value verbatim. A classmethod
+    # (not an instance method) -- every finder's own field-accessor
+    # dispatch only ever has the registered CLASS at this point, never
+    # a built instance.
+    def test_default_is_identity(self):
+        # called directly on the class, with no instance at all -- the
+        # same way a finder's own field-accessor dispatch calls it
+        # (only ever has the class, from ReferenceFunctionFactory.
+        # get_registered_class(), never a built instance).
+        assert _NoArgFunction.transform_value(42) == 42
+        assert _NoArgFunction.transform_value(None) is None
+        assert _NoArgFunction.transform_value("x") == "x"

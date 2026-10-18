@@ -2369,6 +2369,100 @@ class TestFieldAccessorFunctions:
         assert _val("named_paths_uuid") == "paths-uuid-1"
         assert _val("archive") == "archive-2026"
 
+    def test_error_count_and_has_errors_at_run_and_instance_scope(
+        self, tmp_path
+    ):
+        # ErrorCount3's own KEY widened 2026-10-18 to include instance
+        # scope -- the field was already being written by
+        # result_registrar.py, confirmed directly against that file,
+        # just never exposed; the earlier code comment claiming no
+        # per-instance field existed was wrong. :has_errors() (also
+        # added 2026-10-18) mirrors Result.has_errors() -- the same
+        # "error_count" field, reduced to a bool.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json",
+            {"run_uuid": "run1-uuid", "error_count": 3},
+        )
+        _write_json(
+            run_dir / "company_names" / "manifest.json",
+            {"uuid": "inst1-uuid", "error_count": 0},
+        )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        run_count = _finder(
+            "$widgets.results.:first():error_count()", str(tmp_path)
+        ).resolve()
+        assert run_count.results[0].data == 3
+
+        run_has_errors = _finder(
+            "$widgets.results.:first():has_errors()", str(tmp_path)
+        ).resolve()
+        assert run_has_errors.results[0].data is True
+
+        instance_count = _finder(
+            "$widgets.results.:first().company_names:error_count()",
+            str(tmp_path),
+        ).resolve()
+        assert instance_count.results[0].data == 0
+
+        instance_has_errors = _finder(
+            "$widgets.results.:first().company_names:has_errors()",
+            str(tmp_path),
+        ).resolve()
+        assert instance_has_errors.results[0].data is False
+
+    def test_has_errors_with_no_error_count_recorded_is_false(self, tmp_path):
+        # genuinely optional, same treatment every other well-known
+        # manifest field gets -- missing is not an error.
+        base = tmp_path / "widgets"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+
+        results = _finder(
+            "$widgets.results.:first():has_errors()", str(tmp_path)
+        ).resolve()
+        assert results.results[0].data is False
+
+    def test_error_count_and_has_errors_pooled_across_all_instances(
+        self, tmp_path
+    ):
+        # normative_reference_examples.txt's own worked example --
+        # "$alpha.results.:flatten():first().:all():error_count()" --
+        # this exact shape was UNRELATED to :has_errors() but
+        # previously unsatisfiable: error_count()'s own POSITIONS only
+        # allowed name_one before this same fix (2026-10-18), so a
+        # name_three ':all():error_count()' would have raised
+        # "error_count() is not legal at name_three for results."
+        # Confirmed by reading the old POSITIONS dict directly, not
+        # assumed.
+        base = tmp_path / "alpha"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        _write_json(
+            run_dir / "stmt1" / "manifest.json",
+            {"uuid": "inst1-uuid", "error_count": 2},
+        )
+        _write_json(
+            run_dir / "stmt2" / "manifest.json",
+            {"uuid": "inst2-uuid", "error_count": 0},
+        )
+        _write_archive_manifest(tmp_path, "alpha", [str(run_dir)])
+
+        counts = _finder(
+            "$alpha.results.:flatten():first().:all():error_count()",
+            str(tmp_path),
+        ).resolve()
+        assert sorted(r.data for r in counts.results) == [0, 2]
+
+        has_errors = _finder(
+            "$alpha.results.:flatten():first().:all():has_errors()",
+            str(tmp_path),
+        ).resolve()
+        assert sorted(r.data for r in has_errors.results) == [False, True]
+
     def test_template_at_run_scope(self, tmp_path):
         # :template() (built 2026-08-26) is simple at RESULTS run scope
         # -- no bare/definition duality the way FILES/CSVPATHS have,

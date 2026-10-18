@@ -1071,7 +1071,9 @@ and a stale-entry correction, are both done — see
 ## Functions
 
 - Functions named in the spec/example-queries docs with no `Function3`
-  subclass yet: `:count()`, `:has_errors()`. (Corrected 2026-08-26:
+  subclass yet: `:count()`, `:has_errors()`. **Both BUILT now (2026-10-
+  17/18 respectively) -- this line is historical, kept for the dated
+  correction trail below, not current status.** (Corrected 2026-08-26:
   `:type()` used to be listed here too, but it was built as part of the
   Table 1 field-accessor batch — confirmed live, `Type3` is registered,
   `NAME = "type"` — this list had gone stale; removed. Corrected again
@@ -1100,26 +1102,90 @@ and a stale-entry correction, are both done — see
     tests in `TestWellKnownFileAccessors` (exact-string, regex,
     `:not_none()`, no-match-is-a-legitimate-empty-list). Full
     `tests/references/` suite: 1713 passed (up from 1697).
-  - **`:has_errors()` — re-audit CORRECTED 2026-10-17, this entry's own
-    earlier "DOES have real backing" claim (2026-10-16) was wrong, not
-    re-verified carefully enough before writing it.** Checked each
-    source file's own header this time: `normative_reference_
-    expressions_examples.txt` (where it appears) opens with "DO NOT USE
-    THIS AS A NORMATIVE REFERENCES TEST SET UNTIL DAVID REMOVES THIS
-    NOTE... this is just a draft/WIP"; `references_v3_expressions.md`
-    (where it also appears) says explicitly "The pseudocode below is
-    for directional illustration only. It is not settled in form." Its
-    only other appearance is `more_reference_queries.txt`, the same
-    informal-scratch-notes category as `creating references v3.txt`.
-    None of these is `normative_reference_examples.txt` (the doc whose
-    own header says "must be tested against and work before v3 is
-    deemed ready for release"). So `:has_errors()` is actually in the
-    SAME "no settled semantics" bucket as `:choice()`/`:names()`/
-    `:at()` — unclear whether it is run-level or instance-level, and
-    what "has errors" precisely means — not built, correctly deferred
-    this time. Lesson repeated: check a source's own header/status
-    before citing it as backing, not just that the string appears
-    somewhere that sounds official.
+  - **`:has_errors()` — BUILT 2026-10-18.** The 2026-10-17 re-audit above
+    correctly found no SETTLED worked example anywhere (every citation
+    was draft/WIP) -- that was still true the day this was built; David
+    instead gave the semantics directly: "mirror `csvpath.managers.
+    results.result.Result.has_errors()`" (literally `self.errors_count
+    > 0`), plus the concrete goal ("filter or resolve items that have
+    errors, or that don't, without having to use the errors count with
+    boolean logic"), which is its own worked-example-equivalent. David
+    also raised a real, separate question while scoping this: whether
+    `error_count` even exists on the RESULT INSTANCE manifest at all (he
+    had looked at a running FlightPath Data and not seen it, and
+    believed it wasn't there) -- checked `result_registrar.py` directly
+    rather than assume either way: it IS written there (`mdata.
+    error_count = self.result.errors_count`, then `m["error_count"] =
+    mdata.error_count`, unconditional), confirmed by David independently
+    checking the same registrar himself.
+
+    **A real, separate, previously-undetected bug surfaced by that
+    check**: `ErrorCount3` (`:error_count()`) only exposed the RUN-level
+    copy of this same field -- its own code comment claimed "no
+    equivalent per-instance field... confirmed against
+    result_registrar.py," which was simply wrong, contradicted by that
+    very file. The spec doc (`references_v3_required_manifest_
+    functions.md`, table 6) had the identical gap -- `error_count`
+    documented in table 5 (Run Manifest) but missing from table 6
+    (Result Instance Manifest) even though the field is written there
+    too. This also meant TWO ALREADY-NORMATIVE worked examples in
+    `normative_reference_examples.txt` (`$alpha.results.:flatten():
+    first().:all():error_count()` and the `:index(5)` sibling right
+    after it, both name_three/instance-level) were unsatisfiable before
+    today -- `ErrorCount3`'s own `POSITIONS` only allowed `NAME_ONE`,
+    so these would have raised "`:error_count()` is not legal at
+    `name_three` for results," not just returned wrong data. Fixed
+    alongside `:has_errors()` (same root class, directly adjacent, David
+    confirmed "please proceed, including the `ErrorCount3` fix") --
+    `KEY`/`POSITIONS` widened to the same dual run/instance shape
+    `Time3` already established. Confirmed live, not just fixed and
+    assumed: both previously-broken normative examples now resolve
+    correctly.
+
+    **Implementation**: `HasErrors3` (`csvpath/references/functions/
+    fields/has_errors_3.py`) -- a plain `SOURCE == "manifest"` field
+    accessor reading the SAME `"error_count"` key `ErrorCount3` does
+    (both run and instance level), NOT built as sugar for `:errors(
+    :count(:above(0)))` despite the two being semantically equivalent
+    (same underlying `Error` collection, two different persisted
+    representations) -- that composition is exactly the "errors count
+    with boolean logic" David asked not to have to write. One new,
+    small, generic piece needed: every existing field accessor before
+    this returned its raw manifest value verbatim (confirmed -- no
+    function anywhere post-processed its own value). Added `Function3.
+    transform_value(value)` (a classmethod, not an instance method --
+    a finder's own field-accessor dispatch only ever has the registered
+    CLASS at this point, from `ReferenceFunctionFactory.get_registered_
+    class()`, never a built instance; default is a no-op/identity, so
+    every existing field accessor is unaffected without its own
+    override); `HasErrors3` overrides it to reduce the raw int to a
+    bool. Wired into all three of `ResultsReferenceFinder3._extract_
+    data()`'s own field-extraction call sites (run-level via
+    `:manifest()`, run-level direct, instance-level).
+
+    **A real, separate, adjacent gap found but NOT built today, flagged
+    to David instead**: `normative_reference_examples.txt` ALSO already
+    requires `:error_count()` itself to accept a predicate argument --
+    `$*.results.:flatten():error_count(:above(3))` and `:error_count(
+    :below(1))`/`:error_count(0)` ("two ways of selecting runs without
+    errors"), a `'*'`-traversal GATE mechanism mirroring `:count()`'s
+    own, but `ErrorCount3.ARG_TYPES` is still `()` -- this normative
+    requirement is not satisfied yet. Genuinely separate, larger scope
+    than today's ask (David asked specifically for `:has_errors()`,
+    "the simplest" of the deferred items) -- not folded in without
+    confirming first.
+
+    **Tests**: `tests/references/functions/fields/test_has_errors_3.py`
+    (metadata, `transform_value()` unit tests), `test_error_count_3.py`
+    updated for the widened `KEY`/`POSITIONS`, `TestTransformValue` added
+    to `tests/references/functions/test_function_3.py` (the generic
+    hook's own default-identity behavior), plus new integration tests
+    in `test_results_reference_finder_3.py` (run/instance scope for
+    both functions, the previously-broken `:all():error_count()`/
+    `:all():has_errors()` pooled shape, missing-field-is-`False`). Full
+    `tests/references/` suite: 1800 passed (up from 1789). Full local-
+    backend suite: 4261 passed, 11 failed (known SFTP/S3 credential
+    baseline, unrelated).
   - `:count()` — **BUILT 2026-10-17.** Was previously described here as
     "tied to the predicate-argument GATE mechanism, the same unbuilt
     prerequisite as `:on_arrival(:not_none())`" — turned out NOT to be
@@ -1357,6 +1423,22 @@ the shape doesn't need re-deriving:
 
 David's own call, 2026-10-17: start with the generic predicate-argument
 mechanism, since it unlocks the two dependent items as a side effect.
+
+**SUPERSEDED, 2026-10-18 — this whole cross-reference is now historical.**
+The predicate-argument mechanism and time-component context setters were
+both built 2026-10-17 (own dedicated entries above); `:count()` was also
+built that same day, confirmed NOT actually dependent on the predicate
+mechanism after all (a separate, aggregate-length mechanism); the FILES
+`name_one.functions` generalization was re-assessed and downgraded to "no
+driving use case" (its only motivating example was satisfied by the
+predicate mechanism's own narrower fix). `:has_errors()` was built
+2026-10-18 (own dedicated entry above), given concrete semantics directly
+by David rather than needing a worked example first. What is left of the
+original 7: just 2 of the 3 spec-blocked items (`:groups()`+`'*'`
+traversal, the cross-datatype uuid/set-ops item) — `:has_errors()` is
+done, not still spec-blocked. See `project_references_v3_remaining_
+scope.md` (Claude's own memory, kept current without re-deriving) for the
+up-to-date summary.
 
 ## Process note
 

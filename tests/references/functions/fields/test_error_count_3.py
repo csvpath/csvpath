@@ -12,7 +12,16 @@ def test_metadata():
     assert f.ROLE == Function3.VALUE
     assert f.DATATYPES == (Reference3.RESULTS,)
     assert f.SOURCE == "manifest"
-    assert f.KEY == {Reference3.RESULTS: "error_count"}
+    # KEY widened 2026-10-18 to include Reference3.RESULT (instance
+    # level) -- the per-instance "error_count" field was already being
+    # written by result_registrar.py, this class just never exposed it.
+    assert f.KEY == {
+        Reference3.RESULTS: "error_count",
+        Reference3.RESULT: "error_count",
+    }
+    assert f.POSITIONS == {
+        Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
+    }
 
 
 def test_no_arg_is_valid():
