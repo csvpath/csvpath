@@ -987,15 +987,23 @@ NOT part of that build:
   `:having(@id)`, `:regex(@aregex)` once that function exists) — **BUILT
   2026-08-27**, see `deferred_work_done_list.md`.
 
-## `'*'` traversal — RESULTS/CSVPATHS remaining gap — all but one item BUILT, `:groups()`+`'*'` semantics still design-blocked
+## `'*'` traversal — RESULTS/CSVPATHS remaining gap — ALL ITEMS BUILT
 
 The `:manifest()`-combined-with-narrowing gap this section used to track,
 and a stale-entry correction, are both done — see
-`deferred_work_done_list.md`. Still open:
+`deferred_work_done_list.md`.
 
-- `:groups()` combined with `'*'` traversal (RESULTS) — no established
-  per-GROUP-of-named-results-groups meaning settled yet for the any-depth
-  case.
+- `:groups()` combined with `'*'` traversal (RESULTS) — **BUILT
+  2026-10-18**, see `deferred_work_done_list.md`. Settled meaning: the
+  n-level form of `:all()` (compendium 4.2/4.2b) extended to `'*'`
+  traversal — partitioned per named-results group first, then by each
+  run's own full relative-path tuple beyond any fixed prefix, any depth
+  (mirroring the literal-root `query()`'s own bare/prefixed `:groups()`
+  branches and this method's own `:flatten()` sibling). Closed the
+  layered gap in normative_reference_examples.txt's own
+  `$*.results.:groups():named_file_name("orders"):first()` worked
+  example, alongside `NamedFileName3.ARG_TYPES`'s own widening (see
+  `deferred_work_done_list.md`) for the filter half.
 - `:having()` for RESULTS — **BUILT 2026-08-27**, see
   `deferred_work_done_list.md`.
 - **`:manifest()` combined with a chained field accessor in name_one
@@ -1473,8 +1481,13 @@ predicate mechanism's own narrower fix). `:has_errors()` was built
 by David rather than needing a worked example first. What is left of the
 original 7: just 2 of the 3 spec-blocked items (`:groups()`+`'*'`
 traversal, the cross-datatype uuid/set-ops item) — `:has_errors()` is
-done, not still spec-blocked. See `project_references_v3_remaining_
-scope.md` (Claude's own memory, kept current without re-deriving) for the
+done, not still spec-blocked. **`:groups()`+`'*'` traversal is ALSO now
+BUILT (2026-10-18)** — see this file's own "`'*'` traversal — RESULTS/
+CSVPATHS remaining gap" entry above. What remains of the original 7:
+just the cross-datatype uuid/set-ops item (still genuinely
+spec-blocked — `Uuid3.ARG_TYPES` is still `()`, no worked examples per
+datatype exist yet). See `project_references_v3_remaining_scope.md`
+(Claude's own memory, kept current without re-deriving) for the
 up-to-date summary.
 
 ## Process note

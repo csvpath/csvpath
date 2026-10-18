@@ -3074,3 +3074,61 @@ own — see that entry for `:groups()`/RESULTS `:having()`.)
   own "Direction/ordinal functions" entry for the full writeup (the
   alias-rollout/mechanism decisions, the `Function3Describer` alias-
   rendering fix it also needed, and the test tally).
+- `:groups()` combined with `'*'` traversal for RESULTS, plus
+  `NamedFileName3`'s own filter-argument gap -- **built 2026-10-18**,
+  branch `feature/references-v3-groups-star-traversal`. Driven by
+  normative_reference_examples.txt's own worked example ("select the
+  first run for each template for runs having the named-file name
+  orders"): `$*.results.:groups():named_file_name("orders"):first()`.
+  Confirmed, via direct testing before building, that this was two
+  layered gaps, not one: `:groups()`+`'*'` was the genuinely open,
+  previously-design-blocked item (no established per-GROUP-of-named-
+  results-groups meaning existed yet for the any-depth case); but
+  `:named_file_name()`-as-filter was NOT a new design question at all --
+  it needed the exact same generic `field_call`/
+  `_matches_field_predicate` GATE mechanism `:error_count()`'s own
+  predicate-argument build (2026-10-17/18, see this file's entry above)
+  already shipped, just with `NamedFileName3.ARG_TYPES` widened from
+  `()` to `(str,)` to let an exact-match string argument through.
+  (Explicitly NOT the same mechanism as `SELECTOR_WHEN_ARGUED`, the
+  separate, still-fully-open bare-selector-by-uuid item -- see the
+  bucket list's "cross-datatype 'select by known uuid'" entry.)
+
+  `ResultsReferenceFinder3._query_star_traversal()` changes:
+  `_star_run_selector_chain()` widened to detect a `groups_call`
+  alongside `all_call`/`flatten_call`/`manifest_call`/`home_call`/
+  `having_call`/`field_call`, and to reject at most one of
+  `all_call`/`flatten_call`/`groups_call` combined (previously only
+  `all_call`+`flatten_call` was checked). Two new/completed branches,
+  both mirroring the literal-root `query()`'s own existing `:groups()`
+  branches and this method's own `:flatten()` sibling (any depth, no
+  fixed level restriction) but GROUP mode instead of POOL mode --
+  partitioned by named-results group first, then by each run's own full
+  relative-path tuple beyond any fixed prefix (`_group_key`, any
+  depth): bare `:groups()` in name_one (previously silently fell into
+  the generic non-pointer rejection), and a literal/wildcard prefix
+  before `:groups()` as the last path segment (e.g. `beta/:groups()`,
+  previously its own unconditional raise with a dedicated "no
+  established per-GROUP... meaning" message). Both route through
+  `_star_group_and_reduce()`, the same shared tail `:all()`/`:flatten()`
+  already use, so having/field-accessor gating and the pointer-optional
+  rule all compose for free.
+
+  Two pre-existing tests whose own premise was `:groups()`+`'*'` being
+  rejected (written when that was still true) were rewritten rather
+  than deleted, per established practice: `TestStarTraversal::
+  test_field_accessor_exemption_does_not_let_a_second_extra_through`
+  (swapped its "genuinely unsupported extra" example from `:groups()`
+  to `:webhooks()`, a function registered for a different datatype
+  entirely) and `TestPositionEnforcement::
+  test_star_traversal_rejects_groups_not_just_all_flatten_manifest`
+  (renamed to `..._groups_with_a_pointer_now_works`, asserting the
+  correct new per-group result instead of a raise). New coverage added:
+  `TestStarTraversalGroups` (5 tests -- bare+pointer any-depth
+  partitioning, bare with no pointer, prefixed partitioning, argument
+  rejection, illegal double-marker combination) plus one confirming
+  integration test reproducing the exact normative worked example
+  end-to-end, and `TestExactMatchArgument` in `test_named_file_name_3.py`
+  (2 tests). Full `tests/references/` suite: 1821 passed. Full
+  local-backend suite: 4282 passed, 11 failed (the known SFTP/S3
+  credential baseline, unrelated).
