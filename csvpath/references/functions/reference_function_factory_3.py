@@ -77,6 +77,7 @@ class ReferenceFunctionFactory:
         from .fields.group_file_3 import GroupFile3
         from .fields.group_home_3 import GroupHome3
         from .fields.group_manifest_3 import GroupManifest3
+        from .fields.has_errors_3 import HasErrors3
         from .fields.home_3 import Home3
         from .fields.host_3 import Host3
         from .fields.identity_3 import Identity3
@@ -286,6 +287,7 @@ class ReferenceFunctionFactory:
             GroupFile3.NAME: GroupFile3,
             NamedPaths3.NAME: NamedPaths3,
             ErrorCount3.NAME: ErrorCount3,
+            HasErrors3.NAME: HasErrors3,
             NamedPathsUuid3.NAME: NamedPathsUuid3,
             NamedFileUuid3.NAME: NamedFileUuid3,
             NamedFilePath3.NAME: NamedFilePath3,

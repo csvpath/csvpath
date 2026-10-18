@@ -522,6 +522,16 @@ $alpha.results.:flatten():first().:all():error_count()
 #### Error counts for all statements of the 5th 0-level alpha results
 $alpha.results.:all():index(5).:all():error_count()
 
+#### Whether each statement of the first alpha results has any errors at all
+Added 2026-10-18: :has_errors() mirrors Result.has_errors() -- a plain
+bool, not a count, so a caller does not have to write their own
+"error_count() with boolean logic." Legal at the same two positions as
+:error_count() (confirmed against result_registrar.py: the same
+"error_count" field is written at BOTH run and instance scope, a real,
+previously-undetected gap -- see the Required Manifest Functions doc).
+$alpha.results.:flatten():first():has_errors()
+$alpha.results.:flatten():first().:all():has_errors()
+
 ---
 
 ### Run directories must be represented in `name_one`

@@ -233,6 +233,28 @@ class Function3:
             "SOURCE == \"clock\" functions do."
         )
 
+    @classmethod
+    def transform_value(cls, value: Any) -> Any:
+        """post-processes a SOURCE == "manifest"/"definition" field
+        accessor's own raw, already-extracted value before it is
+        returned -- added 2026-10-18 for :has_errors(), the first
+        function needing anything other than the raw stored value
+        verbatim (every other field accessor returns exactly what
+        _extract_field_value()/_extract_field_value_with_ledger_
+        fallback() found, no further processing). A classmethod, not an
+        instance method -- every finder's own field-accessor dispatch
+        only ever has the registered CLASS at this point (from
+        ReferenceFunctionFactory.get_registered_class()), never a built
+        instance, the same reason metadata_kind() below is a classmethod
+        too. Default is a no-op (identity) so every existing field
+        accessor is unaffected without needing its own override;
+        HasErrors3 overrides this to turn its own raw "error_count" int
+        into a bool. Called by each finder's field-accessor dispatch
+        immediately after extraction, regardless of SOURCE -- cheap, and
+        correct to apply unconditionally since every other function's
+        own override is just "return value" anyway."""
+        return value
+
     def __init__(self, *, arg: Any = None) -> None:
         self._arg = arg
 
