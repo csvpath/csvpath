@@ -1262,17 +1262,26 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
     @classmethod
     def _run_satisfies_having(cls, run_dir: str, having_call) -> bool:
-        """dispatches ':having()'s own two argument shapes -- added
+        """dispatches ':having()'s own three argument shapes -- added
         2026-10-18 alongside its ARG_TYPES widening, shared by every
         call site that used to inline the plain-identity-string check
         directly. A nested Function3 argument (e.g. ':having(:uuid(
         "a381..."))') matches by INSTANCE FIELD value
-        (_any_instance_matches_field()); a plain string (the original,
-        unchanged shape) matches by instance IDENTITY NAME, exactly as
+        (_any_instance_matches_field()); a list (only ever reachable
+        via an `@variable` -- the grammar has no literal list syntax)
+        matches by ANY of its identity strings being present, added
+        same day once a list-valued variable was confirmed live to
+        raise instead of working ("does this run/version have an
+        instance matching any of these identities," per the normative
+        doc's own need); a plain string (the original, unchanged
+        shape) matches by ONE instance identity NAME, exactly as
         before."""
         if isinstance(having_call.arg, Function3):
             return cls._any_instance_matches_field(run_dir, having_call.arg)
-        return having_call.arg in cls._list_instance_identities(run_dir)
+        identities = cls._list_instance_identities(run_dir)
+        if isinstance(having_call.arg, list):
+            return any(identity in identities for identity in having_call.arg)
+        return having_call.arg in identities
 
     def _star_pool_and_reduce(
         self,

@@ -62,19 +62,38 @@ class Having3(Function3):
     # so it still only accepts a plain string there (explicitly
     # rejected otherwise, see CsvpathsReferenceFinder3's own guards).
     #
+    # ARG_TYPES widened again 2026-10-18 (same day) to also accept a
+    # `list` -- confirmed, live, that a variable resolving to a list
+    # was rejected outright (ReferenceRuntimeException3), and David
+    # confirmed the spec genuinely needs "does this run/version have
+    # an instance matching ANY of these identities" (a `@variable`
+    # holding a list is the only way a list ever reaches here -- the
+    # grammar has no literal list syntax). A no-op structural addition
+    # by itself (list can never be `self._arg` at parse time, only the
+    # RESOLVED value of an `@variable` -- see ReferenceFinder3.
+    # _resolve_arg()'s own runtime isinstance check) -- the actual
+    # "any of" semantics live in each finder's own having-call
+    # consumer (CsvpathsReferenceFinder3/ResultsReferenceFinder3), not
+    # here. Works for BOTH datatypes, unlike the Function3 (nested
+    # field-accessor) case just above -- "any of these identity
+    # strings" is meaningful everywhere plain identity matching
+    # already was.
+    #
     NAME = "having"
     SUMMARY = (
         "Filters this named-paths group's versions, or (RESULTS) this "
         "group's runs, down to those whose own statement/instance list "
-        "contains one with this identity. For RESULTS only, the "
-        "argument may instead be any registered field-accessor "
-        "function (e.g. ':having(:uuid(\"a381...\"))') -- filters down "
-        "to runs containing an INSTANCE whose own field matches, "
-        "rather than matching by identity name."
+        "contains one with this identity -- or, given a list (always "
+        "via an `@variable`, never a literal), one with ANY of these "
+        "identities. For RESULTS only, the argument may instead be any "
+        "registered field-accessor function (e.g. ':having(:uuid("
+        "\"a381...\"))') -- filters down to runs containing an INSTANCE "
+        "whose own field matches, rather than matching by identity "
+        "name."
     )
     ROLE = Function3.CONTEXT_SETTER
     DATATYPES = (Reference3.CSVPATHS, Reference3.RESULTS)
-    ARG_TYPES = (str, Function3)
+    ARG_TYPES = (str, Function3, list)
     ARG_REQUIRED = True
     POSITIONS = {
         Reference3.CSVPATHS: (Reference3.NAME_ONE,),

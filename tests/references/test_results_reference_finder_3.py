@@ -2777,6 +2777,55 @@ class TestHavingNestedFieldAccessor:
             ).query()
 
 
+class TestHavingListArgument:
+    # ':having()' widened again 2026-10-18 (same day) to also accept a
+    # `list` -- confirmed live that a variable resolving to a list used
+    # to raise ReferenceRuntimeException3 outright. David confirmed the
+    # normative doc genuinely needs "does this run have an instance
+    # matching ANY of these identities," distinct from (and simpler
+    # than) the nested-field-accessor case above -- a list is only ever
+    # reachable via an `@variable`, the grammar has no literal list
+    # syntax.
+    @pytest.fixture
+    def three_runs_with_instances(self, tmp_path):
+        base = tmp_path / "acme"
+        run1 = _make_run(base, "2026-01-01_00-00-00", "run1", {"invoices": "x"})
+        run2 = _make_run(base, "2026-01-02_00-00-00", "run2", {"receipts": "y"})
+        run3 = _make_run(base, "2026-01-03_00-00-00", "run3", {"other": "z"})
+        _write_archive_manifest(tmp_path, "acme", [run1, run2, run3])
+        return str(tmp_path)
+
+    def test_matches_any_run_with_an_instance_in_the_list(
+        self, three_runs_with_instances
+    ):
+        results = _finder(
+            "$*.results.:flatten():having(@identities)",
+            three_runs_with_instances,
+            variables={"identities": ["invoices", "receipts"]},
+        ).query()
+        assert sorted(results.uuids) == ["run1", "run2"]
+
+    def test_no_matching_identity_in_the_list_gives_empty(
+        self, three_runs_with_instances
+    ):
+        results = _finder(
+            "$*.results.:flatten():having(@identities)",
+            three_runs_with_instances,
+            variables={"identities": ["nope", "also-nope"]},
+        ).query()
+        assert results.results == []
+
+    def test_literal_root_list_having_is_the_same_mechanism(
+        self, three_runs_with_instances
+    ):
+        results = _finder(
+            "$acme.results.:flatten():having(@identities)",
+            three_runs_with_instances,
+            variables={"identities": ["other"]},
+        ).query()
+        assert sorted(results.uuids) == ["run3"]
+
+
 class TestArchiveLedgerFallback:
     # Table 7 (the Archive Run Manifest, RESULTS' own global ledger) is
     # per-statement-execution, keyed by "run_uuid" + "identity", not a

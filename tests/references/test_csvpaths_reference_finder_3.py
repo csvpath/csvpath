@@ -271,6 +271,25 @@ class TestHaving:
         with pytest.raises(ReferenceException3):
             _finder('$acme.csvpaths.:having(:uuid("x")):last()').query()
 
+    def test_having_accepts_a_list_for_any_of_these_identities(self):
+        # widened again 2026-10-18 (same day) -- a list is only ever
+        # reachable via an `@variable` (the grammar has no literal list
+        # syntax); confirmed live before this that a list-valued
+        # variable raised ReferenceRuntimeException3 outright. v0 has
+        # "company_names"; neither version has "nope".
+        results = _finder(
+            "$acme.csvpaths.:having(@identities):last()",
+            variables={"identities": ["company_names", "nope"]},
+        ).query()
+        assert results.uuids == ["v0-uuid"]
+
+    def test_having_list_with_no_match_at_all_is_empty(self):
+        results = _finder(
+            "$acme.csvpaths.:having(@identities):last()",
+            variables={"identities": ["nope", "also-nope"]},
+        ).query()
+        assert results.uuids == []
+
 
 VERSION_RANGE_GROUP_FILE_PATH = "named_paths/dater/group.csvpath"
 VERSION_RANGE_MANIFEST = [
@@ -1341,6 +1360,17 @@ class TestStarTraversalHaving:
         # meaning a bare pointer-less reference now has too.
         results = _finder(
             "$*.csvpaths.:having(\"orders\")", by_name=self.HAVING_BY_NAME
+        ).query()
+        assert results.uuids == ["a-v1"]
+
+    def test_list_having_matches_any_of_these_identities(self):
+        # widened 2026-10-18 -- "not-real" matches nothing, "orders"
+        # matches a-v1 only (a-v2/b-v1 both have "other", not in the
+        # list).
+        results = _finder(
+            "$*.csvpaths.:all():having(@identities)",
+            by_name=self.HAVING_BY_NAME,
+            variables={"identities": ["orders", "not-real"]},
         ).query()
         assert results.uuids == ["a-v1"]
 

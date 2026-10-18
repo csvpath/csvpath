@@ -3328,3 +3328,38 @@ own — see that entry for `:groups()`/RESULTS `:having()`.)
     Needs a new DATATYPES/KEY/POSITIONS entry on `Status3` (or a new
     class) plus confirmation of the real ledger field name, not just
     an `ARG_TYPES` widening.
+- `:having()` widened to accept a `list` ("any of these identities")
+  -- **BUILT 2026-10-18**, same branch/PR as the functional-taxonomy
+  widenings above, same day. David's own follow-up: presented with a
+  hypothetical `:having(:identity(@identities))`, he first confirmed
+  the `Identity3`-widening half of that example wasn't worth building
+  (traced live: the manifest field and the directory-name identity
+  always agree, so wrapping would just be a slower way to spell the
+  same check `:having("x")` already does) -- but flagged that `:having
+  ()` genuinely needs to accept a LIST, for "any of these identities,"
+  which the spec's own normative example calls for. Confirmed live,
+  BEFORE this fix, that a list-valued `@variable` raised
+  `ReferenceRuntimeException3` outright ("resolved to a list, expected
+  one of (str, Function3)") -- a list can never appear as a literal in
+  the grammar, only as a resolved `@variable` value, so this is purely
+  a runtime-acceptance widening (`Having3.ARG_TYPES` -> `(str,
+  Function3, list)`), not a new parse-time shape.
+
+  New `CsvpathsReferenceFinder3._version_satisfies_having()` and a
+  widened `ResultsReferenceFinder3._run_satisfies_having()` (the
+  method #11's own `:having()` build already introduced) -- both now
+  dispatch THREE argument shapes: `str` (exact identity, unchanged),
+  `list` (any-of, new), `Function3` (RESULTS-only per-instance field
+  match, from #11). CSVPATHS' two call sites (`_resolve_versions()`'s
+  closure and `_query_star_traversal()`'s own copy) were de-duplicated
+  onto the one new shared helper rather than inlining the list check
+  twice. Confirmed live for both datatypes, both traversal shapes
+  (literal-root and `'*'`), including the exact "no match at all"
+  empty case.
+
+  New tests: `TestListArgument` in `test_having_3.py`; two new tests
+  in `TestHaving` and one in `TestStarTraversalHaving`
+  (`test_csvpaths_reference_finder_3.py`); new
+  `TestHavingListArgument` (3 tests) in
+  `test_results_reference_finder_3.py`. Full `tests/references/`
+  suite: 1870 passed.

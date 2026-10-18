@@ -576,7 +576,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             return [
                 entry
                 for entry in manifest
-                if having_call.arg in (entry.get("named_paths_identities") or [])
+                if self._version_satisfies_having(entry, having_call)
             ]
 
         if is_grouped:
@@ -872,6 +872,26 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
         return root_major, self._find_manifest_entry_by_uuid(manifest, uuid)
 
+    @staticmethod
+    def _version_satisfies_having(entry: dict, having_call) -> bool:
+        """dispatches ':having()'s own two CSVPATHS-legal argument
+        shapes -- added 2026-10-18 alongside its ARG_TYPES widening,
+        shared by both call sites that used to inline the plain-
+        identity-string check directly. A list (only ever reachable
+        via an `@variable` -- the grammar has no literal list syntax)
+        matches if ANY of its identity strings is present in this
+        version's own "named_paths_identities" ("does this version
+        have a statement matching any of these identities"); a plain
+        string (the original, unchanged shape) matches by ONE identity
+        name, exactly as before. A nested Function3 argument is
+        already rejected by both call sites before this is ever
+        reached -- csvpaths has no per-statement field to match
+        against."""
+        identities = entry.get("named_paths_identities") or []
+        if isinstance(having_call.arg, list):
+            return any(identity in identities for identity in having_call.arg)
+        return having_call.arg in identities
+
     def _resolve_versions(self, name_one, manifest: list) -> list:
         """name_one's sole job for csvpaths is selecting which
         version(s) to work with, so its path_prefix must reduce to
@@ -963,7 +983,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             manifest = [
                 entry
                 for entry in manifest
-                if having_call.arg in (entry.get("named_paths_identities") or [])
+                if self._version_satisfies_having(entry, having_call)
             ]
         # from_call/to_call here mean LOWER/UPPER bound -- generalized
         # 2026-10-16 (compendium 6.28) via the shared

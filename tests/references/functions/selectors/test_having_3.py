@@ -44,3 +44,16 @@ class TestNestedFieldAccessorArgument:
     def test_nested_function_arg_is_valid(self):
         Having3(arg=Uuid3(arg="a381...")).check_valid()  # should not raise
 
+
+class TestListArgument:
+    # ARG_TYPES widened again 2026-10-18 (same day) to also accept a
+    # `list` -- "does this run/version have an instance matching ANY
+    # of these identities," confirmed by David as a real spec need
+    # (a list is only ever reachable via an `@variable` resolving to
+    # one; the grammar itself has no literal list syntax, so this is
+    # purely a runtime-resolution-time acceptance, not a new parse-time
+    # shape -- see ReferenceFinder3._resolve_arg()'s own isinstance
+    # check against ARG_TYPES post-resolution).
+    def test_list_arg_is_valid(self):
+        Having3(arg=["a", "b"]).check_valid()  # should not raise
+
