@@ -13,11 +13,26 @@ class NamedFileFingerprint3(Function3):
     # comparison purposes (byte-identity) despite belonging to
     # different entities.
     #
+    # ARG_TYPES widened 2026-10-18 (was: `()`, bare-only) --
+    # normative_reference_examples.txt's own worked example ("select
+    # all runs that used a specific version of a named-file": "$*.
+    # results.:flatten():named_file_fingerprint(\"4fd50acf...\")") needs
+    # a string argument to GATE a pooled RESULTS candidate list by this
+    # field -- part of compendium 6.7's "fingerprint" functional group
+    # (:fingerprint()/:named_file_fingerprint()), the same retrieve/
+    # select duality rule already built for :fingerprint() itself. Same
+    # generic field_call/_matches_field_predicate mechanism :error_
+    # count()/:uuid() already use, no finder-side code needed.
+    #
     NAME = "named_file_fingerprint"
-    SUMMARY = "The fingerprint of the named-file version used as input to the resolved run."
+    SUMMARY = (
+        "The fingerprint of the named-file version used as input to "
+        "the resolved run. An optional string argument GATES a pooled "
+        "candidate list by this field."
+    )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.RESULTS,)
-    ARG_TYPES = ()
+    ARG_TYPES = (str,)
     ARG_REQUIRED = False
     SOURCE = "manifest"
     KIND = "fingerprint"

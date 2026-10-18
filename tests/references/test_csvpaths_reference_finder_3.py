@@ -260,6 +260,36 @@ class TestHaving:
         with pytest.raises(ReferenceException3):
             _finder("$acme.csvpaths.:having():last()").query()
 
+    def test_having_rejects_a_nested_function_argument(self):
+        # ':having()'s own ARG_TYPES widened 2026-10-18 to also accept
+        # a nested function (RESULTS' own need, see test_results_
+        # reference_finder_3.py's TestHavingNestedFieldAccessor) --
+        # CSVPATHS has no per-statement field to match against (no
+        # per-statement uuid at all), so it still only accepts a plain
+        # identity string, now explicitly rejected rather than
+        # silently matching nothing.
+        with pytest.raises(ReferenceException3):
+            _finder('$acme.csvpaths.:having(:uuid("x")):last()').query()
+
+    def test_having_accepts_a_list_for_any_of_these_identities(self):
+        # widened again 2026-10-18 (same day) -- a list is only ever
+        # reachable via an `@variable` (the grammar has no literal list
+        # syntax); confirmed live before this that a list-valued
+        # variable raised ReferenceRuntimeException3 outright. v0 has
+        # "company_names"; neither version has "nope".
+        results = _finder(
+            "$acme.csvpaths.:having(@identities):last()",
+            variables={"identities": ["company_names", "nope"]},
+        ).query()
+        assert results.uuids == ["v0-uuid"]
+
+    def test_having_list_with_no_match_at_all_is_empty(self):
+        results = _finder(
+            "$acme.csvpaths.:having(@identities):last()",
+            variables={"identities": ["nope", "also-nope"]},
+        ).query()
+        assert results.uuids == []
+
 
 VERSION_RANGE_GROUP_FILE_PATH = "named_paths/dater/group.csvpath"
 VERSION_RANGE_MANIFEST = [
@@ -1094,6 +1124,54 @@ class TestStarTraversalFieldAccessor:
         assert results.results[0].uuid == "b-v1"
         assert results.results[0].data == {"on_complete_all": "beta_notify.py"}
 
+    def test_an_argument_on_the_field_accessor_is_rejected(self):
+        # added 2026-10-18, alongside :named_paths_name()'s own (and
+        # :uuid()'s own) ARG_TYPES widening -- this method has no GATE
+        # mechanism to consume a field accessor's own argument during
+        # '*' traversal (confirmed live before this guard existed: a
+        # bogus argument was silently ignored, returning the real
+        # field value regardless).
+        by_name = {
+            "alpha": [
+                {
+                    "group_file_path": "named_paths/alpha/group.csvpath",
+                    "uuid": "a-v1",
+                    "time": "2026-01-01T00:00:00+00:00",
+                    "named_paths_name": "alpha",
+                }
+            ],
+        }
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$*.csvpaths.:last():named_paths_name("x")', by_name=by_name
+            ).query()
+
+    def test_a_templated_key_functions_own_argument_is_not_rejected(self):
+        # the guard above must not catch EVERY argued field accessor --
+        # :destination_address()'s own KEY has a "{}" placeholder,
+        # genuinely consumed by _apply_key_arg() at resolve() time, not
+        # silently ignored. Confirmed live before this exemption
+        # existed that the broader guard wrongly rejected this (and
+        # six sibling definition-sourced sub-field accessors) too.
+        by_name = {
+            "alpha": [
+                {
+                    "group_file_path": "named_paths/alpha/group.csvpath",
+                    "uuid": "a-v1",
+                    "time": "2026-01-01T00:00:00+00:00",
+                }
+            ],
+        }
+        definitions_by_name = {
+            "alpha": {"destinations": {"myd": {"address": "ftp.example.com"}}}
+        }
+        results = _finder(
+            '$*.csvpaths.:last():destination_address("myd")',
+            by_name=by_name,
+            definitions_by_name=definitions_by_name,
+        ).resolve()
+        assert results.results[0].data == "ftp.example.com"
+
 
 class TestGroupManifestEntry:
     # _group_manifest_entry() -- added 2026-08-18 alongside the field-
@@ -1262,6 +1340,17 @@ class TestStarTraversalHaving:
         ).query()
         assert results.results == []
 
+    def test_having_rejects_a_nested_function_argument(self):
+        # ':having()'s own ARG_TYPES widened 2026-10-18 to also accept
+        # a nested function (RESULTS' own need) -- CSVPATHS has no
+        # per-statement field to match against, so it still only
+        # accepts a plain identity string here too, in '*' traversal.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$*.csvpaths.:all():having(:uuid("x"))',
+                by_name=self.HAVING_BY_NAME,
+            ).query()
+
     def test_bare_having_alone_with_no_pointer_lists_matching_versions(self):
         # a pointer is optional everywhere in csvpaths' star traversal
         # now (settled 2026-08-19, closing the one place it was still
@@ -1271,6 +1360,17 @@ class TestStarTraversalHaving:
         # meaning a bare pointer-less reference now has too.
         results = _finder(
             "$*.csvpaths.:having(\"orders\")", by_name=self.HAVING_BY_NAME
+        ).query()
+        assert results.uuids == ["a-v1"]
+
+    def test_list_having_matches_any_of_these_identities(self):
+        # widened 2026-10-18 -- "not-real" matches nothing, "orders"
+        # matches a-v1 only (a-v2/b-v1 both have "other", not in the
+        # list).
+        results = _finder(
+            "$*.csvpaths.:all():having(@identities)",
+            by_name=self.HAVING_BY_NAME,
+            variables={"identities": ["orders", "not-real"]},
         ).query()
         assert results.uuids == ["a-v1"]
 

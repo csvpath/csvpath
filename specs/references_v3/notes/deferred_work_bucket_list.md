@@ -1515,7 +1515,44 @@ just the cross-datatype uuid/set-ops item (still genuinely
 spec-blocked — `Uuid3.ARG_TYPES` is still `()`, no worked examples per
 datatype exist yet). See `project_references_v3_remaining_scope.md`
 (Claude's own memory, kept current without re-deriving) for the
-up-to-date summary.
+up-to-date summary. **This whole cross-reference is now fully
+historical (2026-10-18 EOD)** — the cross-datatype uuid/set-ops item
+was itself resolved that same day (see `deferred_work_done_list.md`'s
+own entry), closing all 7 of the original deliberate deferrals.
+
+## `:type()`/`:status()` (FILES) — surfaced 2026-10-18, deliberately not built yet
+
+David asked for every function that "seems to need to accept a
+function, but does not, today" — answered from compendium 6.7's own
+closed "functional taxonomy" enumeration. 6 of the 10 listed functions
+got a straightforward `ARG_TYPES` GATE widening that same day (see
+`deferred_work_done_list.md`'s own entry); `:type()` (the taxonomy's
+sole "type" group member) and `:status()` (cited directly in
+`normative_reference_examples.txt` line 250, `$*.files.:status(
+"Registration failed"):named_file_name("orders")`) were investigated
+live and turned out to need real new work, not just a widening:
+
+- **`:type()`**: compendium 3.9d's own claimed equivalence
+  (`$acme.files.:type("csv")` == `$acme.files.*:type("csv")`) IS real
+  at the grammar level — `ReferenceFinder3._apply_implied_star()`
+  already normalizes the bare form into the explicit-`*` one — but
+  neither shape actually resolves today. Confirmed live:
+  `FilesReferenceFinder3.query()`'s own literal-root branch has an
+  explicit, by-design "does not yet support functions attached
+  directly to name_one" rejection, with NO field_call/GATE exemption
+  at all (unlike RESULTS' own equivalent, and unlike CSVPATHS' new one
+  from this same day's build). Needs real new dispatch — same general
+  shape as RESULTS' `:groups()`+`'*'` build, but for FILES' own bare-
+  field-accessor-implied-star case specifically.
+- **`:status()`**: the cited FILES-scope function does not exist as
+  code at all. Today's `Status3` is RESULTS-only (lifecycle "started"/
+  "complete"); its own comment already flags that the FILES ledger has
+  a DIFFERENT "status" field (a failure message) that is "unexposed
+  today." Needs `Status3` widened to a second DATATYPES/KEY/POSITIONS
+  entry (or a new class), plus confirmation of the real ledger field
+  name against a live manifest, not just an `ARG_TYPES` widening.
+
+Needs its own design pass, not a drop-in follow-up to the batch above.
 
 ## Process note
 

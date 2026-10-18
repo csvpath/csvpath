@@ -22,6 +22,15 @@ def test_no_arg_is_valid():
     NamedPathsFingerprint3().check_valid()  # should not raise
 
 
-def test_arg_is_rejected():
-    with pytest.raises(ReferenceException3):
-        NamedPathsFingerprint3(arg="x").check_valid()
+class TestGateArgument:
+    # ARG_TYPES widened 2026-10-18 from () -- compendium 6.7's
+    # "fingerprint" functional group (KIND="fingerprint"), same
+    # retrieve/select duality rule :fingerprint()/:named_file_
+    # fingerprint() already have. A string argument GATES a pooled
+    # RESULTS candidate list by this field.
+    def test_string_arg_is_valid(self):
+        NamedPathsFingerprint3(arg="aaaa").check_valid()  # should not raise
+
+    def test_int_arg_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            NamedPathsFingerprint3(arg=1).check_valid()

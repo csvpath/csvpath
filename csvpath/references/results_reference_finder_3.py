@@ -540,7 +540,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             candidates = [
                 rh
                 for rh in candidates
-                if having_call.arg in self._list_instance_identities(rh)
+                if self._run_satisfies_having(rh, having_call)
             ]
         name_one_field_call = self._find_field_function_call(
             self._build_chain(calls)
@@ -1224,6 +1224,65 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         value = self._extract_field_value(entry, key_path)
         return function_cls.transform_value(value)
 
+    @classmethod
+    def _any_instance_matches_field(cls, run_dir: str, field_call) -> bool:
+        """true if ANY of `run_dir`'s own instance subdirectories has a
+        field (per `field_call`'s own KEY, instance/RESULT scope) that
+        matches `field_call`'s own argument -- added 2026-10-18 for
+        ':having()'s own broadened argument (David: "scope it more
+        broadly," generalizing past the single :uuid() worked example
+        that raised it -- normative_reference_examples.txt's own "$*.
+        results.:flatten():having(:uuid(\"a381...\")):run_home()", "the
+        run dir of a run containing a csvpath instance with a certain
+        UUID"). Distinct from _run_field_value() (reads the RUN's own
+        manifest.json, Reference3.RESULTS scope) -- this walks every
+        one of the run's own INSTANCE directories (_list_instance_
+        identities(), the same real filesystem listing ':having()'s
+        own plain-identity-string form already uses) and reads EACH
+        one's own manifest.json at Reference3.RESULT scope, stopping at
+        the first match (":having()" only needs to know whether one
+        exists, not which, or how many)."""
+        function_cls = ReferenceFunctionFactory.get_registered_class(
+            field_call.name
+        )
+        key_path = function_cls.KEY.get(Reference3.RESULT)
+        if key_path is None:
+            raise ReferenceException3(
+                f":having() cannot match by :{field_call.name}() -- it has "
+                "no per-instance (name_three) field to read."
+            )
+        for identity in cls._list_instance_identities(run_dir):
+            inst_dir = Nos(run_dir).join(identity)
+            entry = cls._read_well_known_json(Nos(inst_dir).join("manifest.json"))
+            value = cls._extract_field_value(entry, key_path)
+            value = function_cls.transform_value(value)
+            if cls._matches_field_predicate(value, field_call.arg):
+                return True
+        return False
+
+    @classmethod
+    def _run_satisfies_having(cls, run_dir: str, having_call) -> bool:
+        """dispatches ':having()'s own three argument shapes -- added
+        2026-10-18 alongside its ARG_TYPES widening, shared by every
+        call site that used to inline the plain-identity-string check
+        directly. A nested Function3 argument (e.g. ':having(:uuid(
+        "a381..."))') matches by INSTANCE FIELD value
+        (_any_instance_matches_field()); a list (only ever reachable
+        via an `@variable` -- the grammar has no literal list syntax)
+        matches by ANY of its identity strings being present, added
+        same day once a list-valued variable was confirmed live to
+        raise instead of working ("does this run/version have an
+        instance matching any of these identities," per the normative
+        doc's own need); a plain string (the original, unchanged
+        shape) matches by ONE instance identity NAME, exactly as
+        before."""
+        if isinstance(having_call.arg, Function3):
+            return cls._any_instance_matches_field(run_dir, having_call.arg)
+        identities = cls._list_instance_identities(run_dir)
+        if isinstance(having_call.arg, list):
+            return any(identity in identities for identity in having_call.arg)
+        return having_call.arg in identities
+
     def _star_pool_and_reduce(
         self,
         run_homes: list,
@@ -1270,7 +1329,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             run_homes = [
                 rh
                 for rh in run_homes
-                if having_call.arg in self._list_instance_identities(rh)
+                if self._run_satisfies_having(rh, having_call)
             ]
         if field_call is not None and field_call.arg is not None:
             run_homes = [
@@ -1384,7 +1443,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             partitioned = [
                 (rh, key)
                 for rh, key in partitioned
-                if having_call.arg in self._list_instance_identities(rh)
+                if self._run_satisfies_having(rh, having_call)
             ]
         if field_call is not None and field_call.arg is not None:
             partitioned = [

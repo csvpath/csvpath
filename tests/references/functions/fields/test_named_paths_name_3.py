@@ -22,6 +22,18 @@ def test_no_arg_is_valid():
     NamedPathsName3().check_valid()  # should not raise
 
 
-def test_arg_is_rejected():
-    with pytest.raises(ReferenceException3):
-        NamedPathsName3(arg="x").check_valid()
+class TestGateArgument:
+    # ARG_TYPES widened 2026-10-18 from () -- compendium 6.7's "name"
+    # functional group (:named_paths_name()/:named_results_name()/
+    # :named_file_name()) shares the retrieve/select duality rule
+    # :uuid() already has. A string argument GATES a pooled RESULTS
+    # candidate list by this field (normative_reference_examples.txt's
+    # own "$*.results.:manifest():named_paths_name(\"orders\"):
+    # yesterday()"); not supported for CSVPATHS (see
+    # CsvpathsReferenceFinder3's own guard -- redundant there).
+    def test_string_arg_is_valid(self):
+        NamedPathsName3(arg="orders").check_valid()  # should not raise
+
+    def test_int_arg_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            NamedPathsName3(arg=1).check_valid()

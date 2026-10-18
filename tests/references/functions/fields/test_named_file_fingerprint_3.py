@@ -21,6 +21,15 @@ def test_no_arg_is_valid():
     NamedFileFingerprint3().check_valid()  # should not raise
 
 
-def test_arg_is_rejected():
-    with pytest.raises(ReferenceException3):
-        NamedFileFingerprint3(arg="x").check_valid()
+class TestGateArgument:
+    # ARG_TYPES widened 2026-10-18 from () -- normative_reference_
+    # examples.txt's own worked example ("select all runs that used a
+    # specific version of a named-file": "$*.results.:flatten():
+    # named_file_fingerprint(\"4fd50acf...\")") needs a string argument
+    # to GATE a pooled RESULTS candidate list by this field.
+    def test_string_arg_is_valid(self):
+        NamedFileFingerprint3(arg="4fd50acf").check_valid()  # should not raise
+
+    def test_int_arg_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            NamedFileFingerprint3(arg=1).check_valid()

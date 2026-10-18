@@ -2624,6 +2624,208 @@ class TestUuidGate:
         assert set(results.uuids) == {"run-b"}
 
 
+class TestNameAndFingerprintGroupGates:
+    # David asked for a list of every function in compendium 6.7's
+    # closed "functional taxonomy" that could plausibly need this same
+    # retrieve/select duality as :uuid()/:fingerprint()/:named_file_
+    # name() but didn't have it yet -- this confirms the remaining
+    # five, added 2026-10-18 alongside their own ARG_TYPES widening
+    # (same generic field_call/_matches_field_predicate mechanism, no
+    # new finder code for any of them):
+    #   :named_paths_name() -- "name" group
+    #   :named_results_name() -- "name" group
+    #   :named_file_uuid() -- "uuid" group
+    #   :named_paths_uuid() -- "uuid" group
+    #   :named_file_fingerprint() -- "fingerprint" group (also directly
+    #     cited: normative_reference_examples.txt's own "select all
+    #     runs that used a specific version of a named-file")
+    #   :named_paths_fingerprint() -- "fingerprint" group
+    @pytest.fixture
+    def two_runs(self, tmp_path):
+        base = tmp_path / "acme"
+        runs = {}
+        for name, run_name, named_results_name, nf_uuid, np_uuid, nf_fp, np_fp in (
+            ("run-a", "2026-01-01_00-00-00", "resA", "fileA", "pathsA", "fpA", "fpB"),
+            ("run-b", "2026-01-02_00-00-00", "resB", "fileB", "pathsB", "fpC", "fpD"),
+        ):
+            run_dir = base / run_name
+            _write_json(
+                run_dir / "manifest.json",
+                {
+                    "run_uuid": name,
+                    "named_paths_name": "acme",
+                    "named_results_name": named_results_name,
+                    "named_file_uuid": nf_uuid,
+                    "named_paths_uuid": np_uuid,
+                    "named_file_fingerprint": nf_fp,
+                    "named_paths_fingerprint": np_fp,
+                },
+            )
+            runs[name] = str(run_dir)
+        _write_archive_manifest(tmp_path, "acme", list(runs.values()))
+        return str(tmp_path)
+
+    def test_named_paths_name_gate(self, two_runs):
+        results = _finder(
+            '$*.results.:flatten():named_paths_name("acme")', two_runs
+        ).query()
+        assert set(results.uuids) == {"run-a", "run-b"}
+
+    def test_named_paths_name_gate_no_match(self, two_runs):
+        results = _finder(
+            '$*.results.:flatten():named_paths_name("nope")', two_runs
+        ).query()
+        assert results.results == []
+
+    def test_named_results_name_gate(self, two_runs):
+        results = _finder(
+            '$*.results.:flatten():named_results_name("resB")', two_runs
+        ).query()
+        assert set(results.uuids) == {"run-b"}
+
+    def test_named_file_uuid_gate(self, two_runs):
+        results = _finder(
+            '$*.results.:flatten():named_file_uuid("fileA")', two_runs
+        ).query()
+        assert set(results.uuids) == {"run-a"}
+
+    def test_named_paths_uuid_gate(self, two_runs):
+        results = _finder(
+            '$*.results.:flatten():named_paths_uuid("pathsB")', two_runs
+        ).query()
+        assert set(results.uuids) == {"run-b"}
+
+    def test_named_file_fingerprint_gate(self, two_runs):
+        results = _finder(
+            '$*.results.:flatten():named_file_fingerprint("fpC")', two_runs
+        ).query()
+        assert set(results.uuids) == {"run-b"}
+
+    def test_named_paths_fingerprint_gate(self, two_runs):
+        results = _finder(
+            '$*.results.:flatten():named_paths_fingerprint("fpB")', two_runs
+        ).query()
+        assert set(results.uuids) == {"run-a"}
+
+    def test_literal_root_gate_is_the_same_mechanism(self, two_runs):
+        results = _finder(
+            '$acme.results.:flatten():named_results_name("resA")', two_runs
+        ).query()
+        assert set(results.uuids) == {"run-a"}
+
+
+class TestHavingNestedFieldAccessor:
+    # ':having()' widened 2026-10-18 to accept a nested field-accessor
+    # function, not just a plain identity string -- David: "scoping it
+    # more broadly fits the brief, and the intent." Closes the layered
+    # gap in normative_reference_examples.txt's own "two ways to get
+    # the run dir of a run containing a csvpath instance with a
+    # certain UUID": "$*.results.:manifest():uuid(\"a381...\"):
+    # run_home()" (built in #395, the archive-ledger route) and
+    # "$*.results.:flatten():having(:uuid(\"a381...\")):run_home()"
+    # (built here, the direct-access route) -- "functionally
+    # identical," per the doc's own framing.
+    @pytest.fixture
+    def two_runs_with_instances(self, tmp_path):
+        base = tmp_path / "acme"
+        run1 = _make_run(
+            base, "2026-01-01_00-00-00", "run1", {"invoices": "a381-match"}
+        )
+        run2 = _make_run(base, "2026-01-02_00-00-00", "run2", {"invoices": "other"})
+        _write_archive_manifest(tmp_path, "acme", [run1, run2])
+        return str(tmp_path)
+
+    def test_matches_the_run_containing_an_instance_with_that_uuid(
+        self, two_runs_with_instances
+    ):
+        results = _finder(
+            '$*.results.:flatten():having(:uuid("a381-match")):run_home()',
+            two_runs_with_instances,
+        ).query()
+        assert sorted(results.uuids) == ["run1"]
+
+    def test_no_matching_instance_gives_empty(self, two_runs_with_instances):
+        results = _finder(
+            '$*.results.:flatten():having(:uuid("no-such-uuid")):run_home()',
+            two_runs_with_instances,
+        ).query()
+        assert results.results == []
+
+    def test_plain_identity_string_form_is_unaffected(
+        self, two_runs_with_instances
+    ):
+        # the original, unchanged shape -- matches by instance IDENTITY
+        # NAME, not by a field's VALUE. Both runs have an "invoices"
+        # instance, so both come back.
+        results = _finder(
+            '$*.results.:flatten():having("invoices"):run_home()',
+            two_runs_with_instances,
+        ).query()
+        assert sorted(results.uuids) == ["run1", "run2"]
+
+    def test_field_with_no_instance_scope_key_raises_clearly(
+        self, two_runs_with_instances
+    ):
+        # :named_paths_name() has no Reference3.RESULT (instance-scope)
+        # KEY entry -- run scope only -- so matching by it per-instance
+        # is meaningless; raises clearly rather than silently matching
+        # nothing.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$*.results.:flatten():having(:named_paths_name("x")):run_home()',
+                two_runs_with_instances,
+            ).query()
+
+
+class TestHavingListArgument:
+    # ':having()' widened again 2026-10-18 (same day) to also accept a
+    # `list` -- confirmed live that a variable resolving to a list used
+    # to raise ReferenceRuntimeException3 outright. David confirmed the
+    # normative doc genuinely needs "does this run have an instance
+    # matching ANY of these identities," distinct from (and simpler
+    # than) the nested-field-accessor case above -- a list is only ever
+    # reachable via an `@variable`, the grammar has no literal list
+    # syntax.
+    @pytest.fixture
+    def three_runs_with_instances(self, tmp_path):
+        base = tmp_path / "acme"
+        run1 = _make_run(base, "2026-01-01_00-00-00", "run1", {"invoices": "x"})
+        run2 = _make_run(base, "2026-01-02_00-00-00", "run2", {"receipts": "y"})
+        run3 = _make_run(base, "2026-01-03_00-00-00", "run3", {"other": "z"})
+        _write_archive_manifest(tmp_path, "acme", [run1, run2, run3])
+        return str(tmp_path)
+
+    def test_matches_any_run_with_an_instance_in_the_list(
+        self, three_runs_with_instances
+    ):
+        results = _finder(
+            "$*.results.:flatten():having(@identities)",
+            three_runs_with_instances,
+            variables={"identities": ["invoices", "receipts"]},
+        ).query()
+        assert sorted(results.uuids) == ["run1", "run2"]
+
+    def test_no_matching_identity_in_the_list_gives_empty(
+        self, three_runs_with_instances
+    ):
+        results = _finder(
+            "$*.results.:flatten():having(@identities)",
+            three_runs_with_instances,
+            variables={"identities": ["nope", "also-nope"]},
+        ).query()
+        assert results.results == []
+
+    def test_literal_root_list_having_is_the_same_mechanism(
+        self, three_runs_with_instances
+    ):
+        results = _finder(
+            "$acme.results.:flatten():having(@identities)",
+            three_runs_with_instances,
+            variables={"identities": ["other"]},
+        ).query()
+        assert sorted(results.uuids) == ["run3"]
+
+
 class TestArchiveLedgerFallback:
     # Table 7 (the Archive Run Manifest, RESULTS' own global ledger) is
     # per-statement-execution, keyed by "run_uuid" + "identity", not a

@@ -20,6 +20,14 @@ def test_no_arg_is_valid():
     NamedFileUuid3().check_valid()  # should not raise
 
 
-def test_arg_is_rejected():
-    with pytest.raises(ReferenceException3):
-        NamedFileUuid3(arg="x").check_valid()
+class TestGateArgument:
+    # ARG_TYPES widened 2026-10-18 from () -- compendium 6.7's "uuid"
+    # functional group, same retrieve/select duality rule :uuid()/
+    # :run_uuid() already have. A string argument GATES a pooled
+    # RESULTS candidate list by this field.
+    def test_string_arg_is_valid(self):
+        NamedFileUuid3(arg="ab37-fef3").check_valid()  # should not raise
+
+    def test_int_arg_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            NamedFileUuid3(arg=1).check_valid()

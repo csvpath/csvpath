@@ -24,6 +24,14 @@ def test_no_arg_is_valid():
     NamedResultsName3().check_valid()  # should not raise
 
 
-def test_arg_is_rejected():
-    with pytest.raises(ReferenceException3):
-        NamedResultsName3(arg="x").check_valid()
+class TestGateArgument:
+    # ARG_TYPES widened 2026-10-18 from () -- compendium 6.7's "name"
+    # functional group, same retrieve/select duality rule :uuid()
+    # already has. A string argument GATES a pooled RESULTS candidate
+    # list by this field.
+    def test_string_arg_is_valid(self):
+        NamedResultsName3(arg="widgets").check_valid()  # should not raise
+
+    def test_int_arg_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            NamedResultsName3(arg=1).check_valid()
