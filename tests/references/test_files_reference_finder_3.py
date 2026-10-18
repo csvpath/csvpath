@@ -1884,6 +1884,59 @@ class TestBareFingerprintLookup:
         assert results.uuids == ["u-orders-1", "u-orders-backup-1"]
 
 
+class TestBareUuidLookup:
+    # bare ':uuid("u-returns-1")' -- added 2026-10-18, the compendium's
+    # own worked example ("select a registered version of an acme file
+    # by its UUID"). Same SELECTOR_WHEN_ARGUED mechanism :fingerprint()
+    # already has (see test_an_argument_in_the_field_accessor_position_
+    # is_rejected above for that one's own version of this guard) --
+    # the registry-driven dispatch/guard are both shared code, this is
+    # the second function to exercise them, not a parallel copy.
+    def test_finds_the_matching_version_with_real_path_and_uuid(self):
+        results = _finder(
+            '$finn.files.:uuid("u-returns-1")', FINGERPRINT_HOME, FINGERPRINT_MANIFEST
+        ).query()
+        assert results.files == ["inputs/named_files/finn/2025/returns.csv/cccc.csv"]
+        assert results.uuids == ["u-returns-1"]
+
+    def test_no_match_gives_empty(self):
+        results = _finder(
+            '$finn.files.:uuid("nope")', FINGERPRINT_HOME, FINGERPRINT_MANIFEST
+        ).query()
+        assert results.results == []
+
+    def test_combined_with_name_three_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$finn.files.:uuid("u-returns-1").:last()',
+                FINGERPRINT_HOME,
+                FINGERPRINT_MANIFEST,
+            ).query()
+
+    def test_ordinary_field_accessor_usage_is_unaffected(self):
+        # riding alongside a matched version in name_three (its
+        # original, pre-existing job, unchanged by this build) still
+        # works exactly as before.
+        results = _finder(
+            '$finn.files.:name("orders.csv").:first():uuid()',
+            FINGERPRINT_HOME,
+            FINGERPRINT_MANIFEST,
+        ).resolve()
+        assert results.results[0].data == "u-orders-1"
+
+    def test_an_argument_in_the_field_accessor_position_is_rejected(self):
+        # ARG_TYPES now allows a str arg (for the bare lookup form) --
+        # confirm it does NOT get silently ignored when :uuid() rides
+        # in its ordinary field-accessor position instead (the exact
+        # footgun confirmed live before this guard existed).
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$finn.files.:name("orders.csv").:first():uuid("x")',
+                FINGERPRINT_HOME,
+                FINGERPRINT_MANIFEST,
+            ).query()
+
+
 class TestLiteralNameThreeBody:
     # a literal name_three body -- e.g. "orders.aaaa" -- names the
     # FINGERPRINT of the version, per compendium 3.19b/3.20. Added

@@ -84,7 +84,11 @@ class TestDescribeOneFunction:
         assert "Selector when argued" in doc
 
     def test_non_selector_function_has_no_selector_when_argued_row(self):
-        doc = Function3Describer.describe(Uuid3)
+        # Uuid3 used to be this test's own example of "non-selector" --
+        # it became a SELECTOR_WHEN_ARGUED function itself 2026-10-18
+        # (same mechanism Fingerprint3 already had), so Template3 (a
+        # plain field accessor, never a selector) takes its place here.
+        doc = Function3Describer.describe(Template3)
         assert "Selector when argued" not in doc
 
     def test_non_metadata_function_has_no_resolves_as_row(self):

@@ -2571,6 +2571,59 @@ class TestErrorCountPredicateGate:
         assert sorted(r.data for r in results.results) == [0, 2, 5]
 
 
+class TestUuidGate:
+    # normative_reference_examples.txt's own worked examples, added
+    # 2026-10-18 alongside Uuid3/RunUuid3's own ARG_TYPES widening --
+    # a side effect of building the bare SELECTOR_WHEN_ARGUED mechanism
+    # for FILES/CSVPATHS (see test_uuid_3.py/test_csvpaths_reference_
+    # finder_3.py), confirmed live to ALSO correctly GATE RESULTS'
+    # pooled candidate lists for free, via the exact same generic
+    # field_call/_matches_field_predicate mechanism :error_count() uses
+    # (see TestErrorCountPredicateGate just above) -- no RESULTS-side
+    # finder code needed, since that mechanism keys on "does this chain
+    # member carry an arg," never on which function it is:
+    #   $*.results.:flatten():run_uuid("789a..."):template()
+    #   $*.results.:flatten():uuid("...")
+    @pytest.fixture
+    def two_runs(self, tmp_path):
+        base = tmp_path / "acme"
+        runs = {}
+        for name, run_name in (
+            ("run-a", "2026-01-01_00-00-00"),
+            ("run-b", "2026-01-02_00-00-00"),
+        ):
+            run_dir = base / run_name
+            _write_json(run_dir / "manifest.json", {"run_uuid": name})
+            runs[name] = str(run_dir)
+        _write_archive_manifest(tmp_path, "acme", list(runs.values()))
+        return str(tmp_path)
+
+    def test_run_uuid_gate(self, two_runs):
+        results = _finder(
+            '$*.results.:flatten():run_uuid("run-b")', two_runs
+        ).query()
+        assert set(results.uuids) == {"run-b"}
+
+    def test_uuid_gate_is_the_same_mechanism(self, two_runs):
+        # ":uuid()" reads "run_uuid" at run scope too (same value as
+        # ":run_uuid()", per Uuid3's own docstring) -- confirms the
+        # widening applies to both uuid-KIND functions, not just one.
+        results = _finder('$*.results.:flatten():uuid("run-a")', two_runs).query()
+        assert set(results.uuids) == {"run-a"}
+
+    def test_no_match_gives_empty(self, two_runs):
+        results = _finder(
+            '$*.results.:flatten():run_uuid("nope")', two_runs
+        ).query()
+        assert results.results == []
+
+    def test_literal_root_gate_is_the_same_mechanism(self, two_runs):
+        results = _finder(
+            '$acme.results.:flatten():run_uuid("run-b")', two_runs
+        ).query()
+        assert set(results.uuids) == {"run-b"}
+
+
 class TestArchiveLedgerFallback:
     # Table 7 (the Archive Run Manifest, RESULTS' own global ledger) is
     # per-statement-execution, keyed by "run_uuid" + "identity", not a

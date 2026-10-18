@@ -173,6 +173,43 @@ class TestVersionPointer:
             _finder("$acme.csvpaths.:last():index(0)").query()
 
 
+class TestBareUuidLookup:
+    # bare ':uuid("v1-uuid")' -- added 2026-10-18, the compendium's own
+    # worked example ("find acme version by UUID; the most specific
+    # reference possible"). CSVPATHS never had a bare-lookup shape for
+    # ANY function before this -- Fingerprint3's own docstring is
+    # explicit that its identical mechanism is FILES-only. Mirrors
+    # FilesReferenceFinder3's own TestBareUuidLookup/TestBare
+    # FingerprintLookup exactly (same registry-driven
+    # SELECTOR_WHEN_ARGUED dispatch/guard, shared code).
+    def test_finds_the_matching_version_with_real_path_and_uuid(self):
+        results = _finder('$acme.csvpaths.:uuid("v1-uuid")').query()
+        assert results.files == [GROUP_FILE_PATH]
+        assert results.uuids == ["v1-uuid"]
+
+    def test_no_match_gives_empty(self):
+        results = _finder('$acme.csvpaths.:uuid("nope")').query()
+        assert results.results == []
+
+    def test_combined_with_name_three_is_not_yet_supported(self):
+        with pytest.raises(ReferenceException3):
+            _finder('$acme.csvpaths.:uuid("v1-uuid").company_names').query()
+
+    def test_ordinary_field_accessor_usage_is_unaffected(self):
+        # riding alongside a pointer in its original, pre-existing job
+        # (bare, no arg) still works exactly as before.
+        results = _finder("$acme.csvpaths.:last():uuid()").resolve()
+        assert results.results[0].data == "v1-uuid"
+
+    def test_an_argument_in_the_field_accessor_position_is_rejected(self):
+        # ARG_TYPES now allows a str arg (for the bare lookup form) --
+        # confirm it does NOT get silently ignored when :uuid() rides
+        # alongside a pointer instead (the exact footgun confirmed
+        # live before this guard existed).
+        with pytest.raises(ReferenceException3):
+            _finder('$acme.csvpaths.:last():uuid("x")').query()
+
+
 class TestNoPointerReturnsEveryVersion:
     # a chain with no pointer at all (e.g. a bare :all()) does not
     # narrow to one version -- every version in the manifest comes

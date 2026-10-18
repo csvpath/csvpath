@@ -559,21 +559,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # recognized at all" case unreachable now, not just
             # redundant.
             self._check_position(f, Reference3.NAME_THREE, Reference3.FILES)
-            if f.name == "fingerprint" and f.arg is not None:
-                # ':fingerprint(...)' only takes an argument in its bare,
-                # name_one lookup form (settled 2026-08-13) -- riding
-                # alongside a matched version here, in its ordinary
-                # field-accessor position, it takes none (it reads
-                # whatever the matched version's own fingerprint IS, it
-                # does not filter by a given one). Raising here avoids
-                # an arg being silently ignored, which ARG_TYPES = (str,)
-                # would otherwise allow through unnoticed.
-                raise ReferenceException3(
-                    "FilesReferenceFinder3's ':fingerprint()' only takes "
-                    "an argument in its bare, name_one lookup form -- "
-                    "riding alongside a matched version in name_three, "
-                    "it takes none."
-                )
+            # generalized 2026-10-18 (was: a ':fingerprint()'-specific,
+            # hand-written check, settled 2026-08-13) -- :uuid() became
+            # a second SELECTOR_WHEN_ARGUED function needing the
+            # identical guard once its own ARG_TYPES widened, so this
+            # is now registry-driven instead of hardcoding a function
+            # name. See _reject_selector_arg_outside_its_bare_form()'s
+            # own docstring.
+            self._reject_selector_arg_outside_its_bare_form(f)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         if name_one.name_two is not None and not pointers:
             raise ReferenceException3(

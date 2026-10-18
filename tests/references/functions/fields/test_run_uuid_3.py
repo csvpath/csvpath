@@ -23,6 +23,22 @@ def test_no_arg_is_valid():
     RunUuid3().check_valid()  # should not raise
 
 
-def test_arg_is_rejected():
-    with pytest.raises(ReferenceException3):
-        RunUuid3(arg="x").check_valid()
+def test_is_not_selector_when_argued():
+    # distinct from :uuid() -- RunUuid3 has no FILES/CSVPATHS bare-
+    # lookup shape at all (RESULTS-only), so there is no "entity" for
+    # a bare form to select here; its argument is GATE-only.
+    assert RunUuid3.SELECTOR_WHEN_ARGUED is False
+
+
+class TestGateArgument:
+    # ARG_TYPES widened 2026-10-18 from () -- normative_reference_
+    # examples.txt's own worked examples ("$*.results.:manifest():
+    # run_uuid(\"789a...\"):template()", "$*.results.:flatten():
+    # run_uuid(\"789a...\"):template()") need a string argument to GATE
+    # a pooled/manifest-read RESULTS candidate list by this field.
+    def test_string_arg_is_valid(self):
+        RunUuid3(arg="789a").check_valid()  # should not raise
+
+    def test_int_arg_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            RunUuid3(arg=1).check_valid()
