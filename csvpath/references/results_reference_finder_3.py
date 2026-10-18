@@ -744,11 +744,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         pattern" is the SAME candidate-gathering '*' already does here,
         just pre-filtered before enumeration, not a new traversal mode.
         None (the default) means every group, the ordinary '*' case,
-        unchanged. ':groups()' (any-depth GROUP)
-        stays unsupported here, same as bare ':groups()' already was --
-        no established per-GROUP-of-named-results-groups meaning exists
-        for it yet, left for if/when a real use case asks. name_three
-        (an instance selector) is now supported too (added 2026-08-19)
+        unchanged. ':groups()' (any-depth GROUP, bare and literal/'*'-
+        prefixed alike) is now supported too -- BUILT 2026-10-18, see
+        `_star_run_selector_chain()`'s own `groups_call` and this
+        method's own dedicated branches, closing the one remaining
+        unconditional rejection here (`normative_reference_examples.txt`'s
+        own `$*.results.:groups():named_file_name("orders"):first()`).
+        name_three (an instance selector) is now supported too (added
+        2026-08-19)
         -- _results_for_run() already does the identity/':all()'/range
         selection entirely from a real run directory, independent of
         group, so it composes with every shape above unchanged; the one
@@ -823,7 +826,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
         if self._is_bare_function_only(name_one):
             calls = self._combined_name_one_calls(name_one)
-            pointer, all_call, flatten_call, having_call, field_call = (
+            pointer, all_call, flatten_call, having_call, field_call, groups_call = (
                 self._star_run_selector_chain(calls)
             )
             if all_call is not None:
@@ -843,6 +846,38 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         partitioned.append(
                             (rh, (group, self._group_key(rh, home)))
                         )
+                return self._star_group_and_reduce(
+                    partitioned,
+                    pointer,
+                    identity,
+                    match_all,
+                    range_bounds,
+                    accessor,
+                    having_call,
+                    field_call,
+                )
+            if groups_call is not None:
+                # any depth, every named-results group -- BUILT
+                # 2026-10-18 (normative_reference_examples.txt's own
+                # "$*.results.:groups():named_file_name(\"orders\"):
+                # first()" -- "select the first run for each template
+                # for runs having the named-file name orders"), closing
+                # the one remaining unconditional rejection this method
+                # had. Same any-depth discovery ':flatten()' already
+                # uses below (no prefix restriction of its own), but
+                # PARTITIONED by each run's own FULL relative path
+                # (_group_key, prefix_len=0) instead of pooled -- the
+                # direct '*'-traversal extension of the literal-root
+                # query()'s own `is_deep_grouped` branch, and this
+                # method's own ':groups()'-as-last-segment sibling
+                # below (identical candidate-gathering, just with no
+                # fixed prefix to match against first).
+                partitioned = []
+                for rh, group in self._discover_run_homes(None, name_filter):
+                    home = self.csvpaths.results_manager.get_named_results_home(
+                        group
+                    )
+                    partitioned.append((rh, (group, self._group_key(rh, home))))
                 return self._star_group_and_reduce(
                     partitioned,
                     pointer,
@@ -901,7 +936,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             prefix_pattern = self._compile_path_pattern(name_one.path[:-1])
             calls = list(name_one.functions)
-            pointer, _, _, having_call, field_call = self._star_run_selector_chain(
+            pointer, _, _, having_call, field_call, _ = self._star_run_selector_chain(
                 calls
             )
             run_homes = [
@@ -943,7 +978,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             pattern = self._compile_path_pattern(name_one.path[:-1])
             calls = list(name_one.functions)
-            pointer, _, _, having_call, field_call = self._star_run_selector_chain(
+            pointer, _, _, having_call, field_call, _ = self._star_run_selector_chain(
                 calls
             )
             partitioned = []
@@ -975,11 +1010,49 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
             -1
         ].name == "groups":
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 does not yet support ':groups()' "
-                "combined with '*' traversal -- no established per-GROUP-"
-                "of-named-results-groups meaning exists yet, unlike the "
-                "literal-root case's own ':groups()'."
+            # a literal/wildcard prefix, then ':groups()' as the last
+            # path segment, e.g. "beta/:groups():last()" -- BUILT
+            # 2026-10-18, mirroring the literal-root query()'s own
+            # identical branch (matches this prefix, relative to each
+            # candidate's OWN group home, then anything at any
+            # remaining depth, grouped by everything beyond the fixed
+            # prefix) and this method's own ':flatten()'-as-last-
+            # segment sibling above (identical candidate-gathering,
+            # partitioned instead of pooled).
+            if name_one.path[-1].arg is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3's ':groups()' does not take "
+                    "an argument."
+                )
+            prefix_pattern = self._compile_path_pattern(name_one.path[:-1])
+            calls = list(name_one.functions)
+            pointer, _, _, having_call, field_call, _ = self._star_run_selector_chain(
+                calls
+            )
+            partitioned = []
+            for rh, group in self._discover_run_homes(None, name_filter):
+                home = self.csvpaths.results_manager.get_named_results_home(group)
+                if self._matches_prefix_at_least(rh, home, prefix_pattern):
+                    partitioned.append(
+                        (
+                            rh,
+                            (
+                                group,
+                                self._group_key(
+                                    rh, home, prefix_len=len(prefix_pattern)
+                                ),
+                            ),
+                        )
+                    )
+            return self._star_group_and_reduce(
+                partitioned,
+                pointer,
+                identity,
+                match_all,
+                range_bounds,
+                accessor,
+                having_call,
+                field_call,
             )
 
         # plain literal/'*' path, no trailing ':flatten()'/':all()'/
@@ -995,7 +1068,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             path = path[:-1]
         pattern = self._compile_path_pattern(path)
         calls = list(name_one.functions)
-        pointer, _, _, having_call, field_call = self._star_run_selector_chain(
+        pointer, _, _, having_call, field_call, _ = self._star_run_selector_chain(
             calls
         )
         run_homes = [
@@ -1023,16 +1096,21 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         out of what used to be inline-only-for-the-bare-case logic once
         the literal/'*'-prefixed shapes needed the identical validation.
         Returns (pointer, all_call, flatten_call, having_call,
-        field_call) -- field_call added 2026-10-18, alongside
-        :error_count()'s own predicate-argument GATE, so the shared
-        tail methods (_star_pool_and_reduce()/_star_group_and_reduce())
-        can apply it to the pooled candidate list; all_call/flatten_call
-        are only ever non-None for the bare shape (calls includes
-        name_one.path[0] itself there) -- for a prefixed shape, calls is
-        just name_one.functions, and the ':all()'/':flatten()' marker
-        lives in name_one.path[-1] instead, inspected separately by the
-        caller, so it can never appear in `built` here; returning
-        None/None for those callers is correct, not a missed case.
+        field_call, groups_call) -- field_call added 2026-10-18,
+        alongside :error_count()'s own predicate-argument GATE, so the
+        shared tail methods (_star_pool_and_reduce()/_star_group_and_
+        reduce()) can apply it to the pooled candidate list;
+        groups_call added the same day, alongside ':groups()' finally
+        getting its own '*'-traversal support (previously an
+        unconditional rejection -- see this class's own comment at the
+        bare-shape dispatch for the worked example that needed it).
+        all_call/flatten_call/groups_call are only ever non-None for the
+        bare shape (calls includes name_one.path[0] itself there) --
+        for a prefixed shape, calls is just name_one.functions, and the
+        ':all()'/':flatten()'/':groups()' marker lives in
+        name_one.path[-1] instead, inspected separately by the caller,
+        so it can never appear in `built` here; returning None for
+        those callers is correct, not a missed case.
         A run-level field-accessor function (e.g. :uuid(),
         :named_paths_name() -- added 2026-08-18) is exempt from the
         non-pointer rejection below, same as ':all()'/':flatten()' are:
@@ -1077,14 +1155,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         field_call = self._find_field_function_call(built)
         all_call = next((f for f in built if f.name == "all"), None)
         flatten_call = next((f for f in built if f.name == "flatten"), None)
+        groups_call = next((f for f in built if f.name == "groups"), None)
         manifest_call = next((f for f in built if f.name == "manifest"), None)
         home_call = next((f for f in built if f.name == "home"), None)
         having_call = next((f for f in built if f.name == "having"), None)
-        if all_call is not None and flatten_call is not None:
+        if sum([all_call is not None, flatten_call is not None, groups_call is not None]) > 1:
             raise ReferenceException3(
                 "ResultsReferenceFinder3 does not support combining "
-                "':all()'/':flatten()' -- each is its own depth/grouping "
-                "choice, not to be combined with another."
+                "':all()'/':flatten()'/':groups()' -- each is its own "
+                "depth/grouping choice, not to be combined with another."
             )
         non_pointers = [
             f
@@ -1093,6 +1172,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             and f is not field_call
             and f is not flatten_call
             and f is not all_call
+            and f is not groups_call
             and f is not manifest_call
             and f is not home_call
             and f is not having_call
@@ -1102,12 +1182,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 f"ResultsReferenceFinder3 does not yet support "
                 f":{non_pointers[0].name}() combined with '*' traversal -- "
                 "only a bare pointer (:first()/:last()/:index(n)), "
-                "optionally combined with ':all()'/':flatten()', :manifest(), "
-                "':having(\"identity\")', and/or a run-level field-accessor "
-                "function (e.g. :uuid()), is supported so far."
+                "optionally combined with ':all()'/':flatten()'/':groups()', "
+                "':manifest()', ':having(\"identity\")', and/or a run-level "
+                "field-accessor function (e.g. :uuid()), is supported so far."
             )
         pointer = self._pointer_from_calls(calls)
-        return pointer, all_call, flatten_call, having_call, field_call
+        return pointer, all_call, flatten_call, having_call, field_call, groups_call
 
     @staticmethod
     def _matches_field_predicate(value, arg) -> bool:

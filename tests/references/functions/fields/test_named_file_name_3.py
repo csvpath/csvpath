@@ -22,6 +22,16 @@ def test_no_arg_is_valid():
     NamedFileName3().check_valid()  # should not raise
 
 
-def test_arg_is_rejected():
-    with pytest.raises(ReferenceException3):
-        NamedFileName3(arg="x").check_valid()
+class TestExactMatchArgument:
+    # ARG_TYPES widened 2026-10-18 from () -- normative_reference_
+    # examples.txt's own worked example needs a string argument to GATE
+    # a pooled/grouped '*' candidate list by this field (e.g.
+    # ':named_file_name("orders")'), the same generic field_call/
+    # _matches_field_predicate GATE mechanism :error_count() uses for
+    # its own exact-match case.
+    def test_string_arg_is_valid(self):
+        NamedFileName3(arg="orders").check_valid()  # should not raise
+
+    def test_int_arg_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            NamedFileName3(arg=1).check_valid()

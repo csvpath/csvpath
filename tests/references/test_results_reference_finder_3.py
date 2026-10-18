@@ -3567,13 +3567,17 @@ class TestStarTraversal:
         self, two_group_archive
     ):
         # a field accessor is now exempt from the non-pointer rejection,
-        # but a genuinely unsupported extra (e.g. :groups()) riding
-        # alongside it is still rejected -- proves the exemption is
-        # narrowly scoped to the one matched field call, not "anything
-        # goes once one field accessor is present".
+        # but a genuinely unsupported extra riding alongside it is
+        # still rejected -- proves the exemption is narrowly scoped to
+        # the one matched field call, not "anything goes once one
+        # field accessor is present". :groups() used to be this test's
+        # own example of "genuinely unsupported" -- it got its own '*'-
+        # traversal support 2026-10-18, so :webhooks() (registered for
+        # a different datatype entirely, not even results-relevant)
+        # takes its place here instead.
         with pytest.raises(ReferenceException3):
             _finder(
-                "$*.results.:last():named_paths_name():groups()",
+                "$*.results.:last():named_paths_name():webhooks()",
                 two_group_archive,
             ).query()
 
@@ -3933,6 +3937,198 @@ class TestStarTraversalPathNarrowingAndNameThree:
         assert results.results[0].uuid == "acme-invoices"
 
 
+class TestStarTraversalGroups:
+    # BUILT 2026-10-18 -- closes the one remaining unconditional
+    # rejection _query_star_traversal had, confirmed as a real gap via
+    # normative_reference_examples.txt's own "$*.results.:groups():
+    # named_file_name(\"orders\"):first()" worked example ("select the
+    # first run for each template for runs having the named-file name
+    # orders"). Mirrors the literal-root query()'s own bare/prefixed
+    # ':groups()' branches (compendium 4.2/4.2b: the n-level form of
+    # ':all()', grouping by EVERY segment beyond a fixed prefix, any
+    # depth) -- just partitioned PER named-results group first (the one
+    # dimension star traversal always adds), then by each run's own
+    # relative-path tuple within that group.
+    def test_bare_groups_with_pointer_partitions_by_full_template_any_depth(
+        self, tmp_path
+    ):
+        # two runs sharing the SAME template ("beta/x") merge into one
+        # partition (pointer picks the latest); a run one level up
+        # ("beta/y") does not merge with them despite being in the same
+        # named-results group; a run in a DIFFERENT group ("gamma/x")
+        # does not merge with "beta/x" despite sharing a trailing
+        # segment -- proves the key is the group AND the full tuple,
+        # not just the last segment (see _group_key's own docstring).
+        acme_beta_x_1 = _make_run(
+            tmp_path / "acme" / "beta" / "x",
+            "2026-01-01_00-00-00",
+            "acme-beta-x-1",
+            {},
+        )
+        acme_beta_x_2 = _make_run(
+            tmp_path / "acme" / "beta" / "x",
+            "2026-01-02_00-00-00",
+            "acme-beta-x-2",
+            {},
+        )
+        acme_beta_y = _make_run(
+            tmp_path / "acme" / "beta" / "y",
+            "2026-01-03_00-00-00",
+            "acme-beta-y",
+            {},
+        )
+        gamma_x = _make_run(
+            tmp_path / "gamma" / "x", "2026-01-04_00-00-00", "gamma-x", {}
+        )
+        _write_archive_manifest_multi(
+            tmp_path,
+            {
+                "acme": [acme_beta_x_1, acme_beta_x_2, acme_beta_y],
+                "gamma": [gamma_x],
+            },
+        )
+        results = _finder("$*.results.:groups():last()", str(tmp_path)).query()
+        assert sorted(results.uuids) == [
+            "acme-beta-x-2",
+            "acme-beta-y",
+            "gamma-x",
+        ]
+
+    def test_bare_groups_with_no_pointer_returns_every_run_unreduced(
+        self, tmp_path
+    ):
+        # a pointer is optional everywhere in star traversal (settled
+        # 2026-08-19) -- absence means every matched run, not just one
+        # winner per partition.
+        acme_beta_x_1 = _make_run(
+            tmp_path / "acme" / "beta" / "x",
+            "2026-01-01_00-00-00",
+            "acme-beta-x-1",
+            {},
+        )
+        acme_beta_x_2 = _make_run(
+            tmp_path / "acme" / "beta" / "x",
+            "2026-01-02_00-00-00",
+            "acme-beta-x-2",
+            {},
+        )
+        _write_archive_manifest(
+            tmp_path, "acme", [acme_beta_x_1, acme_beta_x_2]
+        )
+        results = _finder("$*.results.:groups()", str(tmp_path)).query()
+        assert sorted(results.uuids) == ["acme-beta-x-1", "acme-beta-x-2"]
+
+    def test_prefixed_groups_partitions_beyond_the_fixed_prefix(
+        self, tmp_path
+    ):
+        # "beta/:groups():last()" -- same partitioning as the bare
+        # shape, but only among runs matching the literal "beta" prefix
+        # first; "gamma/x" never even reaches grouping since it fails
+        # the prefix match outright, unlike the bare test above where
+        # it formed its own separate partition.
+        acme_beta_x_1 = _make_run(
+            tmp_path / "acme" / "beta" / "x",
+            "2026-01-01_00-00-00",
+            "acme-beta-x-1",
+            {},
+        )
+        acme_beta_x_2 = _make_run(
+            tmp_path / "acme" / "beta" / "x",
+            "2026-01-02_00-00-00",
+            "acme-beta-x-2",
+            {},
+        )
+        acme_beta_y = _make_run(
+            tmp_path / "acme" / "beta" / "y",
+            "2026-01-03_00-00-00",
+            "acme-beta-y",
+            {},
+        )
+        gamma_x = _make_run(
+            tmp_path / "gamma" / "x", "2026-01-04_00-00-00", "gamma-x", {}
+        )
+        _write_archive_manifest_multi(
+            tmp_path,
+            {
+                "acme": [acme_beta_x_1, acme_beta_x_2, acme_beta_y],
+                "gamma": [gamma_x],
+            },
+        )
+        results = _finder(
+            "$*.results.beta/:groups():last()", str(tmp_path)
+        ).query()
+        assert sorted(results.uuids) == ["acme-beta-x-2", "acme-beta-y"]
+
+    def test_prefixed_groups_rejects_an_argument(self, tmp_path):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$*.results.beta/:groups(1):last()", str(tmp_path)
+            ).query()
+
+    def test_bare_and_prefixed_groups_combine_with_two_grouping_markers_illegally(
+        self, two_group_archive
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$*.results.:groups():all():last()", two_group_archive
+            ).query()
+
+    def test_groups_combined_with_named_file_name_filter_matches_the_normative_example(
+        self, tmp_path
+    ):
+        # the EXACT normative_reference_examples.txt worked example
+        # ("select the first run for each template for runs having the
+        # named-file name orders"): "$*.results.:groups():named_file_
+        # name(\"orders\"):first()" -- the layered gap this whole
+        # branch and NamedFileName3's own ARG_TYPES widening close
+        # together. Two groups each have a "beta" template with TWO
+        # runs sharing that template but different named_file_name
+        # values -- proves the filter is actually reading
+        # named_file_name per-run, not just piggybacking on the
+        # template/group key, and that ':first()' picks the earliest
+        # SURVIVING run, not just the earliest in the template.
+        acme_orders_1 = _make_run(
+            tmp_path / "acme" / "beta", "2026-01-01_00-00-00", "acme-orders-1", {}
+        )
+        acme_orders_2 = _make_run(
+            tmp_path / "acme" / "beta", "2026-01-02_00-00-00", "acme-orders-2", {}
+        )
+        acme_invoices = _make_run(
+            tmp_path / "acme" / "beta",
+            "2026-01-03_00-00-00",
+            "acme-invoices",
+            {},
+        )
+        widgets_orders = _make_run(
+            tmp_path / "widgets" / "beta",
+            "2026-01-04_00-00-00",
+            "widgets-orders",
+            {},
+        )
+        for run_home, run_uuid, name in (
+            (acme_orders_1, "acme-orders-1", "orders"),
+            (acme_orders_2, "acme-orders-2", "orders"),
+            (acme_invoices, "acme-invoices", "invoices"),
+            (widgets_orders, "widgets-orders", "orders"),
+        ):
+            _write_json(
+                Path(run_home) / "manifest.json",
+                {"run_uuid": run_uuid, "named_file_name": name},
+            )
+        _write_archive_manifest_multi(
+            tmp_path,
+            {
+                "acme": [acme_orders_1, acme_orders_2, acme_invoices],
+                "widgets": [widgets_orders],
+            },
+        )
+        results = _finder(
+            '$*.results.:groups():named_file_name("orders"):first()',
+            str(tmp_path),
+        ).query()
+        assert sorted(results.uuids) == ["acme-orders-1", "widgets-orders"]
+
+
 class TestStarTraversalPointerIsOptional:
     # a pointer is optional in EVERY '*' traversal shape now (settled
     # 2026-08-19) -- absence means every matched run comes back,
@@ -4121,18 +4317,20 @@ class TestPositionEnforcement:
         results = _finder("$acme.results.customers/2025:last()", acme_archive).query()
         assert results.results[0].uuid == "run2-uuid"
 
-    def test_star_traversal_rejects_groups_not_just_all_flatten_manifest(
-        self, two_group_archive
-    ):
-        # the old star-traversal guard only named-checked
-        # "all"/"flatten"/"manifest" plus a separate field-function
-        # check -- neither caught ':groups()', confirmed via direct
-        # testing before this fix that it silently no-opped instead of
-        # raising. Replaced with one check covering everything that is
-        # not a bare pointer, matching the method's own documented
-        # restriction.
-        with pytest.raises(ReferenceException3):
-            _finder("$*.results.:last():groups()", two_group_archive).query()
+    def test_star_traversal_groups_with_a_pointer_now_works(self, two_group_archive):
+        # RENAMED/REWRITTEN 2026-10-18 (was:
+        # "...rejects_groups_not_just_all_flatten_manifest" -- at the time
+        # ':groups()' had no explicit handling in '*' traversal at all and
+        # fell into the generic non-pointer rejection; this test proved
+        # that rejection actually caught it, not just "all"/"flatten"/
+        # "manifest"). ':groups()' got its own '*'-traversal support this
+        # same day (normative_reference_examples.txt's own worked
+        # example), so the correct assertion is now the opposite: one
+        # winner PER named-results group (acme's own latest run, not
+        # pooled against widgets' single run), proving a pointer composes
+        # with grouping instead of being silently dropped.
+        results = _finder("$*.results.:last():groups()", two_group_archive).query()
+        assert sorted(results.uuids) == ["acme-run2-uuid", "widgets-run1-uuid"]
 
     def test_star_traversal_rejects_a_range_function_too(self, two_group_archive):
         with pytest.raises(ReferenceException3):
