@@ -2624,6 +2624,48 @@ class TestUuidGate:
         assert set(results.uuids) == {"run-b"}
 
 
+class TestStatusGate:
+    # ':status()' widened 2026-10-18 to also cover FILES (its own
+    # dedicated GATE build, PR #398) -- confirmed live at the time, but
+    # never committed as a test, that this ALSO GATEs RESULTS' own
+    # pooled candidate lists for free, via the exact same generic
+    # field_call/_matches_field_predicate mechanism every other
+    # widening this week used. RESULTS' own bare, no-arg usage
+    # (reading "started"/"complete" off an already-selected run) is
+    # unchanged and untouched by this.
+    @pytest.fixture
+    def two_runs(self, tmp_path):
+        base = tmp_path / "acme"
+        runs = {}
+        for name, run_name, status in (
+            ("run-a", "2026-01-01_00-00-00", "started"),
+            ("run-b", "2026-01-02_00-00-00", "complete"),
+        ):
+            run_dir = base / run_name
+            _write_json(run_dir / "manifest.json", {"run_uuid": name, "status": status})
+            runs[name] = str(run_dir)
+        _write_archive_manifest(tmp_path, "acme", list(runs.values()))
+        return str(tmp_path)
+
+    def test_status_gate(self, two_runs):
+        results = _finder('$*.results.:flatten():status("complete")', two_runs).query()
+        assert set(results.uuids) == {"run-b"}
+
+    def test_no_match_gives_empty(self, two_runs):
+        results = _finder('$*.results.:flatten():status("nope")', two_runs).query()
+        assert results.results == []
+
+    def test_literal_root_gate_is_the_same_mechanism(self, two_runs):
+        results = _finder('$acme.results.:flatten():status("started")', two_runs).query()
+        assert set(results.uuids) == {"run-a"}
+
+    def test_bare_no_arg_read_is_unaffected(self, two_runs):
+        # the original, unchanged shape -- reads the value off an
+        # already-selected run, no filtering.
+        results = _finder('$acme.results.:last():status()', two_runs).resolve()
+        assert results.results[0].data == "complete"
+
+
 class TestNameAndFingerprintGroupGates:
     # David asked for a list of every function in compendium 6.7's
     # closed "functional taxonomy" that could plausibly need this same
