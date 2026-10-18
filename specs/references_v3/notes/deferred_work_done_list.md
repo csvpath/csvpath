@@ -3231,3 +3231,100 @@ own — see that entry for `:groups()`/RESULTS `:having()`.)
   `test_function_describer_3.py` rewritten (`Uuid3` was its own "non-
   selector" example; swapped for `Template3` since `Uuid3` is now a
   real selector). Full `tests/references/` suite: 1840 passed.
+- Remaining compendium 6.7 "functional taxonomy" GATE widenings, plus
+  `:having()`'s own generalization -- **BUILT 2026-10-18**, branch
+  `feature/references-v3-functional-taxonomy-widening`. David asked
+  for a list of every function that "seems to need to accept a
+  function, but does not, today" -- answered by going straight to the
+  spec's own closed enumeration (compendium 6.7) rather than guessing:
+  10 named functions across 4 groups (uuid/name/fingerprint/type) get
+  the retrieve/select duality rule; 4 were already done (`:uuid()`/
+  `:run_uuid()`/`:named_file_name()`/`:fingerprint()`). This PR closes
+  the remaining 6, plus `:having()` itself (not one of the 10, but the
+  item that originally raised the question), broadened per David's own
+  call ("scoping it more broadly fits the brief, and the intent").
+
+  **The 6 straightforward GATE widenings** -- `ARG_TYPES` from `()` to
+  `(str,)` on `NamedPathsName3`/`NamedResultsName3`/`NamedFileUuid3`/
+  `NamedPathsUuid3`/`NamedFileFingerprint3`/`NamedPathsFingerprint3`.
+  Confirmed live, zero finder-side code needed for any of them -- same
+  generic `field_call`/`_matches_field_predicate` mechanism `:error_
+  count()`/`:uuid()` already use. `NamedPathsName3` is the one member
+  of this batch also registered for CSVPATHS (the other 5 are RESULTS-
+  only) -- confirmed live, BEFORE any guard existed, that CSVPATHS
+  silently ignored an argument there (no GATE mechanism exists for
+  CSVPATHS at all). Closing this surfaced TWO separate, pre-existing
+  silent-ignore footguns in `CsvpathsReferenceFinder3` that had nothing
+  to do with `named_paths_name` specifically -- any ordinary field
+  accessor's argument was already silently dropped in both
+  `_resolve_versions()` (literal root) and `_query_star_traversal()`
+  (`'*'` root), confirmed live for `:uuid()` too (not just the new
+  widening). Added two new guards, one per method, each generalized
+  (registry/KEY-driven, not named to one function) so any future
+  widening is protected automatically. **A real false-positive caught
+  before shipping**: the first version of each guard also rejected
+  legitimate templated-KEY functions (`:destination_address()`/
+  `:transfer_on_complete_all()`/five siblings), whose own argument IS
+  consumed, via `_apply_key_arg()`'s `"{}"`-placeholder substitution,
+  just not by the mechanism the guard was checking for -- caught by
+  running the full suite and seeing 7 unrelated failures, not by
+  inspection. Both guards now exempt any function whose own KEY path
+  for that datatype contains `"{}"`.
+
+  **`:having()`'s own generalization** -- `ARG_TYPES` widened from
+  `(str,)` to `(str, Function3)` (the same generic "any function
+  instance" acceptance `Definition3.ARG_TYPES` already uses). Closes
+  the normative doc's own "$*.results.:flatten():having(:uuid(
+  "a381...")):run_home()" ("the run dir of a run containing a csvpath
+  instance with a certain UUID," paired with the already-built
+  archive-ledger route, "$*.results.:manifest():uuid("a381..."):
+  run_home()" -- the doc's own words, "functionally identical"). New
+  `ResultsReferenceFinder3._any_instance_matches_field()` -- unlike
+  the plain-string form (checks the run's own identity LIST, already
+  in hand), a nested-function argument needs a real per-instance
+  filesystem walk: every one of the run's own instance subdirectories'
+  own `manifest.json`, read via the SAME `Reference3.RESULT`-scope KEY
+  lookup `_run_field_value()` already uses at run scope, stopping at
+  the first match. New `_run_satisfies_having()` dispatches the two
+  shapes, replacing 3 duplicated inline checks across the literal-root
+  and both `'*'`-traversal shared-tail call sites. RESULTS-only --
+  CSVPATHS has no per-statement uuid/field at all, so a nested-function
+  argument there is explicitly rejected (2 new guards, literal-root and
+  `'*'` traversal) rather than silently matching nothing.
+
+  New/changed tests: 6 field-accessor test files gained a
+  `TestGateArgument` class each (string valid, non-string rejected);
+  `test_having_3.py` gained `TestNestedFieldAccessorArgument`;
+  `TestNameAndFingerprintGroupGates` (8 tests) and
+  `TestHavingNestedFieldAccessor` (4 tests) added to
+  `test_results_reference_finder_3.py`; `test_csvpaths_reference_
+  finder_3.py` gained 4 new tests across `TestNamedPathsName`-style
+  rejection coverage, `TestHaving`, and `TestStarTraversalFieldAccessor`/
+  `TestStarTraversalHaving` (including the templated-key false-positive
+  regression test). Full `tests/references/` suite: 1863 passed.
+
+  **Deliberately NOT built this round, flagged for a separate
+  decision**: `:type()` and `:status()`, both also named in David's
+  original ask. Investigated live rather than assumed, and both turned
+  out bigger than the straightforward widenings above:
+  - `:type()` (FILES) -- compendium 3.9d's own claimed equivalence
+    (`$acme.files.:type("csv")` == `$acme.files.*:type("csv")`) is
+    real at the GRAMMAR level (`_apply_implied_star()` already
+    normalizes the first into the second), but neither shape actually
+    WORKS today -- confirmed live, `FilesReferenceFinder3.query()`'s
+    own literal-root branch has an explicit, by-design "does not yet
+    support functions attached directly to name_one" rejection with NO
+    field_call/GATE exemption at all (unlike RESULTS' and now
+    CSVPATHS' own equivalents). This needs real new dispatch, not an
+    `ARG_TYPES` widening -- same general shape as RESULTS' `:groups()`
+    +`'*'` build, but for FILES' own bare-field-accessor-implied-star
+    case.
+  - `:status()` (FILES) -- normative_reference_examples.txt's own
+    `$*.files.:status("Registration failed"):named_file_name("orders")`
+    cites a FILES-scope function that does not exist as code at all
+    yet. Today's `Status3` is RESULTS-only (lifecycle "started"/
+    "complete"); its own comment explicitly flags a DIFFERENT FILES
+    ledger "status" field (a failure message) as "unexposed today."
+    Needs a new DATATYPES/KEY/POSITIONS entry on `Status3` (or a new
+    class) plus confirmation of the real ledger field name, not just
+    an `ARG_TYPES` widening.

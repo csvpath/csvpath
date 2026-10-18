@@ -44,15 +44,37 @@ class Having3(Function3):
     # the same "narrow, then optionally reduce" pattern ':all()'/
     # ':from()'/':to()' already use elsewhere in this codebase.
     #
+    # ARG_TYPES widened 2026-10-18 (was: `(str,)` only) -- David's own
+    # framing, broadened beyond the single worked example that raised
+    # it: "scoping it more broadly fits the brief, and the intent."
+    # The normative doc's own `$*.results.:flatten():having(:uuid(
+    # "a381...")):run_home()` ("the run dir of a run containing a
+    # csvpath instance with a certain UUID") needs ':having()' to
+    # accept ANY registered field-accessor function as its argument,
+    # not just a plain identity string -- "does this run contain an
+    # INSTANCE whose own FIELD matches," a genuinely different test
+    # than "does this run's own identity list contain this NAME."
+    # RESULTS-only: a nested function here is matched against each
+    # candidate run's own per-INSTANCE manifest.json (see
+    # ResultsReferenceFinder3._any_instance_matches_field(), the new
+    # per-run filesystem walk this needed) -- CSVPATHS has no per-
+    # statement field to match against (no per-statement uuid at all),
+    # so it still only accepts a plain string there (explicitly
+    # rejected otherwise, see CsvpathsReferenceFinder3's own guards).
+    #
     NAME = "having"
     SUMMARY = (
         "Filters this named-paths group's versions, or (RESULTS) this "
         "group's runs, down to those whose own statement/instance list "
-        "contains one with this identity."
+        "contains one with this identity. For RESULTS only, the "
+        "argument may instead be any registered field-accessor "
+        "function (e.g. ':having(:uuid(\"a381...\"))') -- filters down "
+        "to runs containing an INSTANCE whose own field matches, "
+        "rather than matching by identity name."
     )
     ROLE = Function3.CONTEXT_SETTER
     DATATYPES = (Reference3.CSVPATHS, Reference3.RESULTS)
-    ARG_TYPES = (str,)
+    ARG_TYPES = (str, Function3)
     ARG_REQUIRED = True
     POSITIONS = {
         Reference3.CSVPATHS: (Reference3.NAME_ONE,),

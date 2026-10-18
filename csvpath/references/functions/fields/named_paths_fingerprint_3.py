@@ -18,14 +18,25 @@ class NamedPathsFingerprint3(Function3):
     # fingerprints), something named_paths_uuid/:named_paths_uuid()
     # cannot do.
     #
+    # ARG_TYPES widened 2026-10-18 (was: `()`, bare-only) -- not
+    # directly cited with an argument in the normative doc, but this
+    # class already declares KIND="fingerprint" (compendium 6.7's
+    # "fingerprint" functional group, alongside :fingerprint()/:named_
+    # file_fingerprint()), the same retrieve/select duality rule
+    # already built for its two siblings. An argument GATES a pooled
+    # RESULTS candidate list by this field -- same generic field_call/
+    # _matches_field_predicate mechanism :error_count()/:uuid() already
+    # use, no finder-side code needed.
+    #
     NAME = "named_paths_fingerprint"
     SUMMARY = (
         "The fingerprint of the named-paths group version whose content "
-        "drove the resolved run."
+        "drove the resolved run. An optional string argument GATES a "
+        "pooled candidate list by this field."
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.RESULTS,)
-    ARG_TYPES = ()
+    ARG_TYPES = (str,)
     ARG_REQUIRED = False
     SOURCE = "manifest"
     KIND = "fingerprint"

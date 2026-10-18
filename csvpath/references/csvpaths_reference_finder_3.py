@@ -532,10 +532,47 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 ":manifest(), or a registered field-accessor function "
                 "(e.g. :uuid()), is supported so far."
             )
+        field_call_key_path = (
+            field_call.KEY.get(Reference3.CSVPATHS)
+            if field_call is not None and field_call.KEY
+            else None
+        )
+        field_call_key_has_placeholder = (
+            field_call_key_path is not None and "{}" in field_call_key_path
+        )
+        if (
+            field_call is not None
+            and field_call.arg is not None
+            and not field_call_key_has_placeholder
+        ):
+            # added 2026-10-18 -- this method has no GATE mechanism
+            # (unlike RESULTS' own field_call/_matches_field_predicate)
+            # to consume a field accessor's own argument during '*'
+            # traversal, and the bare-selector shape (:uuid("...")) is
+            # dispatched entirely separately, earlier in query(), before
+            # '*' traversal is ever reached. Confirmed live before this
+            # guard existed: a widened ARG_TYPES (e.g. :uuid()'s own)
+            # let an argument through silently here, ignored, returning
+            # the real field value regardless. Excludes functions whose
+            # own KEY path has a "{}" placeholder (e.g. :destination_
+            # address()) -- those DO consume their arg later, at
+            # resolve() time via _apply_key_arg(), not silently; same
+            # exemption _resolve_versions()'s own identical guard needs.
+            raise ReferenceException3(
+                f":{field_call.name}() does not take an argument here -- "
+                "there is no filtering mechanism in CsvpathsReferenceFinder3's "
+                "'*' traversal to apply it to."
+            )
 
         def _having_filtered(manifest: list) -> list:
             if having_call is None:
                 return manifest
+            if isinstance(having_call.arg, Function3):
+                raise ReferenceException3(
+                    "CsvpathsReferenceFinder3's ':having()' only accepts a "
+                    "plain identity string -- csvpaths has no per-statement "
+                    "field to match a nested function against."
+                )
             return [
                 entry
                 for entry in manifest
@@ -887,8 +924,42 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # docstring (shared with FilesReferenceFinder3's identical
             # guard).
             self._reject_selector_arg_outside_its_bare_form(f)
+            # added 2026-10-18, alongside :named_paths_name()'s own
+            # ARG_TYPES widening (RESULTS' worked example) -- CSVPATHS
+            # has no GATE mechanism at all (unlike RESULTS' own field_
+            # call/_matches_field_predicate) to consume an ordinary
+            # field accessor's own argument here. Confirmed live before
+            # this guard existed: a widened ARG_TYPES let an argument
+            # through silently, ignored, returning the real field value
+            # regardless. SELECTOR_WHEN_ARGUED functions are already
+            # covered by the check just above (:uuid()/:fingerprint());
+            # this is the general case for any OTHER field accessor
+            # that widens its own ARG_TYPES in the future. EXCLUDES
+            # functions whose own KEY path has a "{}" placeholder
+            # (e.g. :transfer_on_complete_all()/:destination_address())
+            # -- those DO consume their arg, via _apply_key_arg() a few
+            # lines below this loop, not silently.
+            own_key_path = f.KEY.get(Reference3.CSVPATHS) if f.KEY else None
+            key_has_placeholder = own_key_path is not None and "{}" in own_key_path
+            if (
+                f.SOURCE is not None
+                and not f.SELECTOR_WHEN_ARGUED
+                and not key_has_placeholder
+                and f.arg is not None
+            ):
+                raise ReferenceException3(
+                    f":{f.name}() does not take an argument in "
+                    "CsvpathsReferenceFinder3 -- there is no filtering "
+                    "mechanism here to apply it to."
+                )
         having_call = next((f for f in built if f.name == "having"), None)
         if having_call is not None:
+            if isinstance(having_call.arg, Function3):
+                raise ReferenceException3(
+                    "CsvpathsReferenceFinder3's ':having()' only accepts a "
+                    "plain identity string -- csvpaths has no per-statement "
+                    "field to match a nested function against."
+                )
             manifest = [
                 entry
                 for entry in manifest
