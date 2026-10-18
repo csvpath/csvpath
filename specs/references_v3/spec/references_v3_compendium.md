@@ -809,6 +809,17 @@ structure in the right place to find the value they operate on. In the case
 of idchains, the function must know to look at the `idchain` key of each
 error dictionary in the list contained by `errors.json`.
 
+#### 5.20b
+In the case there are two possible interpretation of a reference's resolve
+value(s) due to there being multiple functions which could provide the value
+the last value-producing function wins and provides its value on resolve.
+This limited case is the only exception to the order indeterminacy of
+functions.
+
+For example, in `$a.files.:name("orders.csv"):fingerprint():template()` the
+value returned on resolve() is the template string. Implementations should
+log a warning when this situation occurs, but should not raise an error.
+
 The full resolve matrix by termination point and pointer kind:
 #### 5.21
 | | name_one, no pointer | name_three, no pointer | name_one, file pointer | name_three, file pointer | name_one, field pointer | name_three, field pointer |
