@@ -29,6 +29,23 @@ def test_no_arg_is_valid():
     Uuid3().check_valid()  # should not raise
 
 
-def test_arg_is_rejected():
-    with pytest.raises(ReferenceException3):
-        Uuid3(arg="x").check_valid()
+def test_is_selector_when_argued():
+    # added 2026-10-18 -- the compendium's own stated rule for the
+    # "uuid" functional group: "select an entity when its value
+    # matches the function's argument." Same mechanism :fingerprint()
+    # already has.
+    assert Uuid3.SELECTOR_WHEN_ARGUED is True
+
+
+class TestSelectByUuidArgument:
+    # ARG_TYPES widened 2026-10-18 from () -- normative_reference_
+    # examples.txt's own worked examples need a string argument to
+    # SELECT an entity by known uuid (FILES/CSVPATHS, bare) or GATE a
+    # pooled RESULTS candidate list (same mechanism :error_count()/
+    # :named_file_name() use).
+    def test_string_arg_is_valid(self):
+        Uuid3(arg="ab37-fef3").check_valid()  # should not raise
+
+    def test_int_arg_is_rejected(self):
+        with pytest.raises(ReferenceException3):
+            Uuid3(arg=1).check_valid()

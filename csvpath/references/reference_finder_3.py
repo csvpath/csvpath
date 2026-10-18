@@ -937,6 +937,38 @@ class ReferenceFinder3(ABC):
         function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
         return function_cls is not None and function_cls.SELECTOR_WHEN_ARGUED
 
+    @staticmethod
+    def _reject_selector_arg_outside_its_bare_form(f: FunctionCall3) -> None:
+        """raises if `f` is a SELECTOR_WHEN_ARGUED function (e.g.
+        :fingerprint()/:uuid()) carrying an argument OUTSIDE its bare,
+        sole-name_one-content lookup form (_is_bare_selector_reference's
+        own shape) -- i.e. riding alongside a matched entity in its
+        ordinary field-accessor position instead. There, it reads
+        whatever the matched entity's own value IS, it does not filter
+        by a given one, so a caller that got this far already knows
+        `f` is NOT the bare-selector shape itself. Generalized
+        2026-10-18 from FilesReferenceFinder3's own original, hand-
+        written ':fingerprint()'-specific check (added 2026-08-13),
+        once :uuid() became a second SELECTOR_WHEN_ARGUED function
+        needing the identical guard -- same registry-driven
+        generalization _is_bare_selector_reference() itself already
+        got from its own original bespoke, single-function check.
+        Raising here avoids an arg being silently ignored, which a
+        widened ARG_TYPES would otherwise allow through unnoticed
+        (confirmed live before this generalization existed)."""
+        function_cls = ReferenceFunctionFactory.get_registered_class(f.name)
+        if (
+            function_cls is not None
+            and function_cls.SELECTOR_WHEN_ARGUED
+            and f.arg is not None
+        ):
+            raise ReferenceException3(
+                f":{f.name}() only takes an argument in its bare, "
+                "name_one lookup form -- riding alongside a matched "
+                "entity in its ordinary field-accessor position, it "
+                "takes none."
+            )
+
     def _resolve_value(self, value):
         """returns `value` unchanged if it is a plain literal (str, int,
         etc.); resolves it if it is a bare Variable3 (added 2026-08-27,

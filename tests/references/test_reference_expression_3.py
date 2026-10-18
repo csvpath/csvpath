@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 import pytest
 
@@ -389,10 +390,28 @@ class _FakeConfig:
         return self._archive
 
 
+class _FakeFileManager:
+    # minimal -- just enough for a literal, non-'*' FILES reference
+    # (get_manifest()/named_file_home()), added 2026-10-18 to support a
+    # genuinely cross-DATATYPE (not just cross-group) INTERSECT test.
+    # by_name: {name: (home, manifest)}.
+    def __init__(self, by_name: dict):
+        self._by_name = by_name
+
+    def get_manifest(self, name):
+        return self._by_name[name][1]
+
+    def named_file_home(self, name):
+        return self._by_name[name][0]
+
+
 class _FakeCsvPaths:
-    def __init__(self, archive: str, paths_by_name: dict):
+    def __init__(
+        self, archive: str, paths_by_name: dict, files_by_name: dict | None = None
+    ):
         self.paths_manager = _FakePathsManager(paths_by_name)
         self.results_manager = _FakeResultsManager(archive)
+        self.file_manager = _FakeFileManager(files_by_name or {})
         self.config = _FakeConfig(archive)
 
 
@@ -451,6 +470,75 @@ def orders_archive(tmp_path):
     ]
     _write_archive_manifest_multi(archive, {"groupa": a_runs, "groupb": b_runs})
     return _FakeCsvPaths(str(archive), {"groupa": GROUPA_MANIFEST, "groupb": GROUPB_MANIFEST})
+
+
+@pytest.fixture
+def orders_archive_with_files(tmp_path):
+    # added 2026-10-18 -- a genuinely cross-DATATYPE (FILES/RESULTS)
+    # fixture, not just cross-group like orders_archive's own runs.
+    # One run recorded "file-uuid-1" as the named-file version it
+    # consumed; the named-file "finn" has TWO registered versions,
+    # "file-uuid-1" and "file-uuid-2" -- "file-uuid-2" was registered
+    # but never actually used by any run, so it must NOT survive an
+    # INTERSECT. Confirms ReferenceExpression3's own
+    # _filter_by_native_uuid() docstring claim verbatim: "every named-
+    # file whose uuid intersects the named-file-uuids recorded across a
+    # set of runs... a genuine cross-datatype capability, not just an
+    # edge case."
+    archive = tmp_path / "archive"
+    a1 = _make_run(archive / "groupa", "2026-01-01_00-00-00", "a1", "groupa")
+    _write_json(
+        Path(a1) / "manifest.json",
+        {
+            "run_uuid": "a1",
+            "named_paths_name": "groupa",
+            "named_file_uuid": "file-uuid-1",
+        },
+    )
+    b1 = _make_run(archive / "groupb", "2026-01-01_00-00-00", "b1", "groupb")
+    _write_json(
+        Path(b1) / "manifest.json",
+        {
+            "run_uuid": "b1",
+            "named_paths_name": "groupb",
+            "named_file_uuid": "other-file-uuid",
+        },
+    )
+    _write_archive_manifest_multi(archive, {"groupa": [a1], "groupb": [b1]})
+    # real files on disk -- ReferenceExpression3.resolve() reads each
+    # surviving item's own content (unlike RESULTS' own paths-with-no-
+    # field-accessor case, FILES' _extract_data() does not tolerate a
+    # non-existent path gracefully), so these must be genuine files,
+    # not just manifest entries.
+    files_home = tmp_path / "named_files" / "finn"
+    orders_path = files_home / "orders.csv" / "file-uuid-1.csv"
+    backup_path = files_home / "backup.csv" / "file-uuid-2.csv"
+    orders_path.parent.mkdir(parents=True, exist_ok=True)
+    backup_path.parent.mkdir(parents=True, exist_ok=True)
+    orders_path.write_text("a,b\n1,2\n")
+    backup_path.write_text("c,d\n3,4\n")
+    files_by_name = {
+        "finn": (
+            str(files_home),
+            [
+                {
+                    "file": str(orders_path),
+                    "file_home": str(orders_path.parent),
+                    "uuid": "file-uuid-1",
+                },
+                {
+                    "file": str(backup_path),
+                    "file_home": str(backup_path.parent),
+                    "uuid": "file-uuid-2",
+                },
+            ],
+        )
+    }
+    return _FakeCsvPaths(
+        str(archive),
+        {"groupa": GROUPA_MANIFEST, "groupb": GROUPB_MANIFEST},
+        files_by_name,
+    )
 
 
 def _left_side(csvpaths) -> str:
@@ -735,6 +823,28 @@ class TestPathsVsValuesEndToEnd:
         # LHS's own .data (the group name) survives -- the comparison
         # basis fell back to identity, the output shape did not change.
         assert all(r.data == "groupa" for r in result.results)
+
+    def test_intersect_files_paths_left_results_values_right_is_genuinely_cross_datatype(
+        self, orders_archive_with_files
+    ):
+        # the actual cross-DATATYPE case (FILES/RESULTS), not just
+        # cross-GROUP within RESULTS like the tests above. Confirms
+        # David's own question got the right answer: no new "set
+        # operations" mechanism was needed -- this already works via
+        # the existing _filter_by_native_uuid() path, each side
+        # resolved completely independently (no shared query planner;
+        # narrowing, if any, is each side's own job before it ever
+        # reaches this expression).
+        expr = ReferenceExpression3(
+            left="$finn.files.:all().:last()",  # paths -- native uuids file-uuid-1, file-uuid-2
+            op=ReferenceExpression3.INTERSECT,
+            right="$*.results.:flatten():named_file_uuid()",  # values, uuid-valued -- file-uuid-1, other-file-uuid
+            csvpaths=orders_archive_with_files,
+        )
+        result = expr.resolve()
+        # file-uuid-2 was registered but never consumed by any run --
+        # it does not survive.
+        assert sorted(r.uuid for r in result.results) == ["file-uuid-1"]
 
     def test_intersect_paths_left_values_right_non_uuid_raises(self, orders_archive):
         expr = ReferenceExpression3(

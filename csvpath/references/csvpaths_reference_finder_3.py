@@ -51,9 +51,15 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     #    version's own manifest entry, instead of its statement text.
     #    Literal/"*"/path-building content, and the
     #    "#worksheet" marker (name_two, files-only), are not meaningful
-    #    for csvpaths and are rejected. :uuid() is not yet a registered
-    #    function, so it is "not yet supported" for now like any other
-    #    unbuilt function.
+    #    for csvpaths and are rejected. :uuid() IS a registered function
+    #    (STALE comment corrected 2026-10-18 -- it has been registered,
+    #    DATATYPES-including-CSVPATHS, since 2026-08-11; this comment
+    #    had simply never been updated) -- ordinary bare use riding
+    #    alongside a pointer (e.g. ":last():uuid()") already worked via
+    #    the generic field-accessor machinery below; an ARGUED bare
+    #    ':uuid("...")' (selecting a version by known uuid, "the most
+    #    specific reference possible") is now ALSO supported, via its
+    #    own dedicated branch above (SELECTOR_WHEN_ARGUED).
     #  - name_three, if present, is either a literal identity lookup
     #    into that version's named_paths_identities list -- matched by
     #    identity string, or by the stringified index an unnamed
@@ -181,6 +187,40 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 "CsvpathsReferenceFinder3 does not support combining "
                 "version selection with ':readme()' in name_one -- it "
                 "must be the entire, sole content of name_one."
+            )
+
+        if self._is_bare_selector_reference(name_one):
+            # bare ':uuid("45ad7aa7...")' -- added 2026-10-18, the
+            # compendium's own worked example ("find acme version by
+            # UUID; the most specific reference possible"). CSVPATHS
+            # never had a bare-lookup shape for ANY function before --
+            # Fingerprint3's own docstring is explicit that its own
+            # identical mechanism is FILES-only ("CSVPATHS has no bare-
+            # lookup shape"). Mirrors FilesReferenceFinder3's own
+            # equivalent branch (SELECTOR_WHEN_ARGUED, see Function3/
+            # ReferenceFinder3._is_bare_selector_reference()) exactly --
+            # searches the WHOLE named-paths group's own version
+            # manifest directly for the entry whose own field (this
+            # function's own KEY) matches, rather than reading a field
+            # off an already-pointer-selected version.
+            call = name_one.path[0]
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    f"CsvpathsReferenceFinder3 does not yet support "
+                    f"combining a bare ':{call.name}(...)' lookup with "
+                    "name_three -- it already identifies one specific "
+                    "version on its own."
+                )
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            key = function_cls.KEY.get(Reference3.CSVPATHS)
+            manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
+            value = call.arg
+            matched = [e for e in manifest if e.get(key) == value]
+            return ReferenceResults3(
+                results=[
+                    ReferenceResult3(path=e["group_file_path"], uuid=e["uuid"])
+                    for e in matched
+                ]
             )
 
         manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
@@ -836,6 +876,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         built = self._build_chain(calls)
         for f in built:
             self._check_position(f, Reference3.NAME_ONE, Reference3.CSVPATHS)
+            # added 2026-10-18, alongside :uuid()'s own bare-selector
+            # shape just above in query() -- a SELECTOR_WHEN_ARGUED
+            # function (e.g. :uuid()/:fingerprint()) riding here,
+            # alongside a pointer, is NOT the bare-selector shape (that
+            # already returned earlier, before _resolve_versions() was
+            # ever reached) -- it is the ordinary ride-along-a-pointer
+            # field-accessor position instead, which takes no argument.
+            # See _reject_selector_arg_outside_its_bare_form()'s own
+            # docstring (shared with FilesReferenceFinder3's identical
+            # guard).
+            self._reject_selector_arg_outside_its_bare_form(f)
         having_call = next((f for f in built if f.name == "having"), None)
         if having_call is not None:
             manifest = [

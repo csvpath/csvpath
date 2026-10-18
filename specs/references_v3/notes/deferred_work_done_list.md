@@ -3132,3 +3132,102 @@ own — see that entry for `:groups()`/RESULTS `:having()`.)
   (2 tests). Full `tests/references/` suite: 1821 passed. Full
   local-backend suite: 4282 passed, 11 failed (the known SFTP/S3
   credential baseline, unrelated).
+- Cross-datatype "select by known uuid" + set operations -- **BUILT
+  2026-10-18**, branch `feature/references-v3-uuid-selector`. David
+  asked for the gap to be broken down into plain language; the
+  resulting discussion closed BOTH halves of the original item, not
+  just one.
+
+  **Piece 1 -- "select by uuid" per datatype.** `Uuid3.
+  SELECTOR_WHEN_ARGUED = True` + `ARG_TYPES` widened from `()` to
+  `(str,)` (same mechanism `:fingerprint()` already has -- compendium's
+  own stated rule for the "uuid" functional group: "select an entity
+  when its value matches the function's argument"). Two normative
+  worked examples needed this directly: `$acme.files.:uuid("ab37-
+  fef3...")` and `$acme.csvpaths.:uuid("45ad7aa7...")`. FILES picked
+  this up for free via the existing registry-driven
+  `_is_bare_selector_reference()`/`FilesReferenceFinder3.query()`
+  dispatch -- zero finder-side code needed there. `CsvpathsReference
+  Finder3` needed an actual new dispatch branch: CSVPATHS never had a
+  bare-lookup shape for ANY function before (confirmed live --
+  `Fingerprint3`'s own identical mechanism is FILES-only, per its own
+  docstring), so the branch (mirroring FILES' own exactly) plus a stale
+  class-docstring correction (it had claimed "`:uuid()` is not yet a
+  registered function," wrong since 2026-08-11) were both added.
+
+  A real footgun caught and fixed before it could ship: widening
+  `Uuid3.ARG_TYPES` makes an argument syntactically legal everywhere
+  `:uuid()` is positioned, including its ORDINARY field-accessor
+  position riding alongside a pointer (e.g. `$acme.csvpaths.:last():
+  uuid("x")`) -- confirmed live, BEFORE any guard existed, that this
+  silently ignored the bogus argument and returned the real uuid
+  anyway, for both FILES and CSVPATHS. FILES already had an identical,
+  hand-written guard for `:fingerprint()` alone (added 2026-08-13);
+  generalized it to a shared, registry-driven
+  `ReferenceFinder3._reject_selector_arg_outside_its_bare_form()` (any
+  `SELECTOR_WHEN_ARGUED` function, not just one hardcoded name) and
+  added the matching call to `CsvpathsReferenceFinder3._resolve_
+  versions()`'s own combined-chain loop, which had no such guard for
+  `:fingerprint()` either (a separate, pre-existing latent gap, now
+  also closed as a direct consequence of adding the first such guard
+  to this finder).
+
+  As a side effect of the SAME `ARG_TYPES` widening, confirmed live
+  that `:uuid()` also correctly GATES a pooled RESULTS candidate list
+  (e.g. `$*.results.:flatten():uuid("...")`) via the exact same generic
+  `field_call`/`_matches_field_predicate` mechanism `:error_count()`/
+  `:named_file_name()` already use -- no RESULTS-side code needed at
+  all, since that mechanism keys on "does this chain member carry an
+  arg," never on which function it is. `RunUuid3.ARG_TYPES` was
+  widened the same way (`()` to `(str,)`, NOT also `SELECTOR_WHEN_
+  ARGUED` -- it has no FILES/CSVPATHS bare-lookup shape, RESULTS-only)
+  to satisfy its own normative worked examples (`$*.results.:manifest():
+  run_uuid("789a..."):template()`, `$*.results.:flatten():run_uuid(
+  "789a..."):template()`).
+
+  **Piece 2 -- "set operations over uuid-linked entities" -- turned out
+  to be ALREADY BUILT, not a new capability.** David's own question,
+  verbatim: "what if the burden of being smart on both sides of your
+  set operations is on you, the reference writer, not the mechanics of
+  reference expressions? I.e. we're not trying to match SQL's brainy
+  query planners." Investigated live rather than assumed (per
+  [[feedback_verify_redundancy_claims_live]]) -- `ReferenceExpression3`'s
+  own INTERSECT/SUBTRACT already does exactly this:
+  `_filter_by_native_uuid()` (built 2026-08-18/26, well before this
+  bucket-list item ever called the capability "undesigned"), whose own
+  docstring states outright: "every named-file whose uuid intersects
+  the named-file-uuids recorded across a set of runs... a genuine
+  cross-datatype capability, not just an edge case." A test already
+  covered this for cross-GROUP RESULTS-vs-RESULTS
+  (`test_intersect_paths_left_values_right_uuid_valued_compares_
+  native_uuid`); confirmed the actual cross-DATATYPE case (FILES paths
+  vs. RESULTS values) with a new end-to-end test using real files on
+  disk (`TestPathsVsValuesEndToEnd::
+  test_intersect_files_paths_left_results_values_right_is_genuinely_
+  cross_datatype`, in a new `orders_archive_with_files` fixture --
+  needed a `_FakeFileManager` added to this test module's own
+  `_FakeCsvPaths`, which previously only had `paths_manager`/
+  `results_manager`). The bucket list's own prior framing of this piece
+  ("a wide, foundational capability... closer in size to the
+  predicate-argument mechanism") was simply wrong -- corrected rather
+  than left stale.
+
+  **Deliberately NOT built, flagged not fixed**: `Having3.ARG_TYPES`
+  does not accept a nested `FunctionCall3` (normative doc's own
+  `$*.results.:flatten():having(:uuid("a381..."))`) -- `Having3` only
+  matches a plain identity string today. A genuinely different,
+  bigger semantic question than either piece above (search an already-
+  selected run's own INSTANCE set for one whose given FIELD matches,
+  not its identity string), out of scope for what was asked this round.
+
+  New/changed tests: `test_uuid_3.py`/`test_run_uuid_3.py`
+  (SELECTOR_WHEN_ARGUED + widened-ARG_TYPES coverage),
+  `TestBareUuidLookup` in both `test_files_reference_finder_3.py` and
+  `test_csvpaths_reference_finder_3.py` (5 tests each, mirroring
+  `TestBareFingerprintLookup`), `TestUuidGate` in
+  `test_results_reference_finder_3.py` (4 tests, confirming the GATE
+  side effect), one new cross-datatype INTERSECT test in
+  `test_reference_expression_3.py`, and one pre-existing test in
+  `test_function_describer_3.py` rewritten (`Uuid3` was its own "non-
+  selector" example; swapped for `Template3` since `Uuid3` is now a
+  real selector). Full `tests/references/` suite: 1840 passed.

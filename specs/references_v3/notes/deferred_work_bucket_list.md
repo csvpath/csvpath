@@ -944,25 +944,52 @@ NOT part of that build:
   unargued form exists or is implied to mean anything yet.)
 
 - **Cross-datatype "select by known uuid" + set operations — reframed
-  2026-08-28 (David), still fully open.** UUID is the connective tissue
-  between *every* datatype: every place the system registers/loads
-  something (a named-file version, a named-paths group version) or
-  generates something (a run, a run's per-file instance) attaches a uuid
-  that links it to the other datatypes. So "select an entity by a known
-  uuid, and do set operations (union/intersect/exclude) across uuid-linked
-  entities across datatypes" is a wide, foundational capability, not a
-  one-function special case — closer in size to the predicate-argument
-  mechanism above than to a single-function fix. Two separate pieces, both
-  undesigned:
-  1. **What "select by uuid" means per datatype** — a different lookup
-     shape for a named-file entry vs. a named-paths group vs. a run vs. a
-     run's file vs. a result.
-  2. **What "set operations" over uuid-linked entities means** — e.g. "the
-     files that fed this run," "the runs that consumed this file"; a
-     genuinely new query capability, not just a selector.
-  Needs worked examples per datatype before anything is buildable —
-  currently `Uuid3.ARG_TYPES = ()`, any argument at all is rejected
-  outright, so nothing here parses yet.
+  2026-08-28 (David), BOTH PIECES NOW RESOLVED 2026-10-18.** UUID is the
+  connective tissue between *every* datatype: every place the system
+  registers/loads something (a named-file version, a named-paths group
+  version) or generates something (a run, a run's per-file instance)
+  attaches a uuid that links it to the other datatypes. This was
+  originally framed as two separate, both-undesigned pieces:
+  1. **"What select by uuid means per datatype" — BUILT 2026-10-18.**
+     `Uuid3.SELECTOR_WHEN_ARGUED = True` + `ARG_TYPES` widened to
+     `(str,)` — same mechanism `:fingerprint()` already has (compendium's
+     own stated rule for the uuid functional group: "select an entity
+     when its value matches the function's argument"). FILES picked this
+     up for free via the existing registry-driven dispatch;
+     `CsvpathsReferenceFinder3` needed a new dispatch branch (CSVPATHS
+     never had a bare-lookup shape for ANY function before — see
+     `deferred_work_done_list.md` for the full build). As a side effect,
+     also correctly GATEs RESULTS' own pooled candidate lists (`:uuid()`/
+     `:run_uuid()`, confirmed live) via the exact same generic field_
+     call/`_matches_field_predicate` mechanism `:error_count()` uses — no
+     RESULTS-side code needed.
+  2. **"What set operations over uuid-linked entities means" — turned
+     out to be ALREADY BUILT, not a new capability at all.** David's own
+     question (2026-10-18): "what if the burden of being smart on both
+     sides of your set operations is on you, the reference writer, not
+     the mechanics?" Investigated live rather than assumed —
+     `ReferenceExpression3`'s own INTERSECT/SUBTRACT already does exactly
+     this (`_filter_by_native_uuid()`, its own docstring: "a genuine
+     cross-datatype capability, not just an edge case"), confirmed with a
+     real FILES(paths)/RESULTS(values) test
+     (`test_intersect_files_paths_left_results_values_right_is_
+     genuinely_cross_datatype`), not just the pre-existing same-datatype
+     cross-group one. Each side resolves completely independently — no
+     shared query planner; any narrowing (a date range, etc.) is the
+     writer's own job on whichever side needs it, exactly matching
+     David's proposed division of labor. This list's own prior framing
+     ("a wide, foundational capability... closer in size to the
+     predicate-argument mechanism") was corrected — it is not a new
+     mechanism, it was already shipped (2026-08-18/26) under a different
+     name before this item ever called it out.
+  One narrower, genuinely still-open loose end noticed while building
+  piece 1, deliberately NOT built (out of scope for what was asked):
+  `Having3.ARG_TYPES` does not accept a nested FunctionCall3 (e.g.
+  `:having(:uuid("a381..."))`, normative_reference_examples.txt line
+  682) — `Having3` only matches a plain identity string today. A
+  genuinely different, bigger semantic question (search an already-
+  selected run's own INSTANCE set for one whose given FIELD matches, not
+  its identity string) than anything piece 1 touched.
 
 ## Grammar / argument-type gaps — ALL BUILT, kept as a historical record
 

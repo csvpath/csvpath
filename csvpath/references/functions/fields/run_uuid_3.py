@@ -16,14 +16,28 @@ class RunUuid3(Function3):
     # scope (and is instance-only) -- "which run does this belong to"
     # vs. "this entity's own id" only coincide below run scope.
     #
+    # ARG_TYPES widened 2026-10-18 (was: `()`, bare-only) -- normative_
+    # reference_examples.txt's own worked examples ("$*.results.
+    # :manifest():run_uuid(\"789a...\"):template()", "$*.results.
+    # :flatten():run_uuid(\"789a...\"):template()") need a string
+    # argument to GATE a pooled/manifest-read RESULTS candidate list by
+    # this field -- the exact same generic field_call/_matches_field_
+    # predicate mechanism :error_count()/:uuid() use, confirmed live,
+    # no finder-side code needed. NOT also SELECTOR_WHEN_ARGUED -- this
+    # function has no FILES/CSVPATHS bare-lookup shape at all (RESULTS-
+    # only, unlike :uuid()), so there is no "entity" for a bare form to
+    # select here.
+    #
     NAME = "run_uuid"
     SUMMARY = (
         "The uuid of the run the resolved run or instance belongs to -- "
-        "same literal key at every RESULTS scope it applies to."
+        "same literal key at every RESULTS scope it applies to. An "
+        "optional string argument GATES a pooled/manifest-read "
+        "candidate list by this field."
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.RESULTS,)
-    ARG_TYPES = ()
+    ARG_TYPES = (str,)
     ARG_REQUIRED = False
     SOURCE = "manifest"
     KIND = "uuid"
