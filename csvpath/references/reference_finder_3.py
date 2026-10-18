@@ -7,6 +7,7 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
 from .functions.function_3 import Function3
+from .functions.filters.predicate_function_3 import PredicateFunction3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .functions.values.time_window_function_3 import TimeWindowFunction3
 from .reference_3 import (
@@ -968,6 +969,23 @@ class ReferenceFinder3(ABC):
                 "entity in its ordinary field-accessor position, it "
                 "takes none."
             )
+
+    @staticmethod
+    def _matches_field_predicate(value, arg) -> bool:
+        """generic test for a field-accessor's own predicate/exact-
+        match argument -- added 2026-10-18 for ResultsReferenceFinder3's
+        own ':error_count()' GATE (e.g. ":error_count(:above(3))"/
+        ":error_count(0))", the first field accessor to carry one; moved
+        up to this shared base the same day FilesReferenceFinder3 needed
+        the identical mechanism for ':type()'s own GATE, rather than
+        duplicate it a second time. A PredicateFunction3 arg (":above()"/
+        ":below()", both built as dual-role range-bound/predicate
+        classes) delegates to its own matches(); a bare leaf value (int/
+        str) is an exact-match test instead -- no dedicated predicate
+        class needed for ":error_count(0)"/":type(\"csv\")"."""
+        if isinstance(arg, PredicateFunction3):
+            return arg.matches(value)
+        return value == arg
 
     def _resolve_value(self, value):
         """returns `value` unchanged if it is a plain literal (str, int,

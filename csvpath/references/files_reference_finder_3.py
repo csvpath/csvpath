@@ -290,6 +290,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 results=[ReferenceResult3(path=selected["file"], uuid=selected["uuid"])]
             )
 
+        field_call = self._extract_gate_field_call(name_one)
         if name_one.functions:
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support functions attached "
@@ -471,6 +472,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # recognized shape is exposed to (none of them reach this
             # `else` at all once matched).
             self._apply_implied_star(name_one)
+            if field_call is None:
+                # the bare/prefixed implied-star shapes (e.g. ':type(
+                # "csv")', 'orders/:type("csv")') only populate
+                # name_one.functions via _apply_implied_star()'s own
+                # mutation just above -- the earlier extraction
+                # attempt (before this branch) necessarily found
+                # nothing yet, since the function was still sitting in
+                # name_one.path at that point, not .functions.
+                field_call = self._extract_gate_field_call(name_one)
             if name_one.functions:
                 raise ReferenceException3(
                     "FilesReferenceFinder3 does not yet support functions "
@@ -479,6 +489,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
             pattern = self._compile_path_pattern(name_one.path)
             candidates = self._candidates_for_name(root_major, pattern)
+
+        if field_call is not None:
+            # compendium 3.9d's own GATE, added 2026-10-18 -- e.g.
+            # ':type("csv")'/'*:type("csv")'/':flatten():type("xlsx")'
+            # (normative_reference_examples.txt line 271) all converge
+            # here regardless of which branch above built `candidates`,
+            # same "filter before any grouping/reduction" composition
+            # RESULTS'/CSVPATHS' own GATE mechanisms already use.
+            key = field_call.KEY.get(Reference3.FILES)
+            candidates = [
+                c
+                for c in candidates
+                if self._matches_field_predicate(c.get(key), field_call.arg)
+            ]
 
         name_three = reference.name_three
         if name_three is None:
@@ -1255,6 +1279,57 @@ class FilesReferenceFinder3(ReferenceFinder3):
             for entry in manifest
             if pathu.parts(entry["file_home"])[: len(home_parts)] == home_parts
         ]
+
+    def _extract_gate_field_call(self, name_one) -> "Function3 | None":
+        """pops a single GATE-able field-accessor function (e.g.
+        ':type("csv")') out of `name_one.functions`, IN PLACE, when it
+        is the only thing there and genuinely carries an argument to
+        filter by -- leaves `name_one.functions` empty afterward, so
+        every bare-shape check below (`_is_bare_all_reference()` etc.)
+        sees it exactly as if the field accessor were never there, the
+        same "pop it off, handle it separately" pattern
+        `ReferenceFinder3._apply_implied_star()` already uses for the
+        path itself. Added 2026-10-18 for ':type()'s own GATE
+        (compendium 3.9d's own claimed equivalence between the bare and
+        explicit-'*' forms, e.g. ":type(\"csv\")" == "*:type(\"csv\")"
+        -- both reach this same extraction, just at different points in
+        query()'s own dispatch, since the bare form's function still
+        sits in `name_one.path` at the point THIS check first runs, not
+        `.functions`, until `_apply_implied_star()` moves it there).
+
+        Deliberately narrow, matching exactly what :type()'s own gap
+        needs, not a general "any field accessor chains onto name_one"
+        capability: excludes SELECTOR_WHEN_ARGUED functions (a
+        different, already-decided-against shape -- :uuid()'s own
+        bare-selector form has its own, separate dispatch earlier in
+        query(), with no pointer/prefix involved at all), any accessor
+        with no argument, and any accessor not declaring
+        Reference3.NAME_ONE legal for FILES in its own POSITIONS
+        (checked the same registry-driven way _check_position() does,
+        just returning None instead of raising, so the caller's own
+        generic "unsupported extra" rejection fires with its existing
+        message) -- reading a bare value this way, or chaining a
+        function with no NAME_ONE GATE position of its own, is a
+        separate question no worked example has asked for yet, left
+        unbuilt rather than guessed at (same reasoning
+        `_bare_manifest_field_call()`'s own docstring uses elsewhere in
+        this file)."""
+        if len(name_one.functions) != 1:
+            return None
+        candidate = name_one.functions[0]
+        function_cls = ReferenceFunctionFactory.get_registered_class(candidate.name)
+        if (
+            function_cls is None
+            or function_cls.SOURCE is None
+            or function_cls.SELECTOR_WHEN_ARGUED
+            or candidate.arg is None
+            or Reference3.NAME_ONE
+            not in (function_cls.POSITIONS.get(Reference3.FILES) or ())
+        ):
+            return None
+        field_call = self._build(candidate)
+        name_one.functions.pop(0)
+        return field_call
 
     @staticmethod
     def _is_bare_all_reference(name_one) -> bool:
