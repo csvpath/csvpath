@@ -1937,6 +1937,118 @@ class TestBareUuidLookup:
             ).query()
 
 
+TYPE_HOME = "inputs/named_files/finn"
+TYPE_MANIFEST = [
+    {
+        "file": "inputs/named_files/finn/orders.csv/aaaa.csv",
+        "file_home": "inputs/named_files/finn/orders.csv",
+        "uuid": "u-csv",
+        "type": "csv",
+    },
+    {
+        "file": "inputs/named_files/finn/data.xlsx/bbbb.xlsx",
+        "file_home": "inputs/named_files/finn/data.xlsx",
+        "uuid": "u-xlsx",
+        "type": "xlsx",
+    },
+]
+
+TYPE_PREFIXED_MANIFEST = [
+    {
+        "file": "inputs/named_files/finn/orders/2026/aaaa.csv",
+        "file_home": "inputs/named_files/finn/orders/2026",
+        "uuid": "u-2026-csv",
+        "type": "csv",
+    },
+    {
+        "file": "inputs/named_files/finn/orders/2027/bbbb.xlsx",
+        "file_home": "inputs/named_files/finn/orders/2027",
+        "uuid": "u-2027-xlsx",
+        "type": "xlsx",
+    },
+    {
+        "file": "inputs/named_files/finn/other/cccc.csv",
+        "file_home": "inputs/named_files/finn/other",
+        "uuid": "u-other-csv",
+        "type": "csv",
+    },
+]
+
+
+class TestTypeGate:
+    # ':type()' widened 2026-10-18 to accept a string argument, GATE-
+    # ing a candidate list in name_one -- compendium 3.9d's own claimed
+    # equivalence between the bare and explicit-'*' forms
+    # (":type(\"csv\")" == "*:type(\"csv\")"), plus its own worked
+    # example (normative_reference_examples.txt line 271, ":flatten():
+    # type(\"xlsx\")"). FilesReferenceFinder3.query()'s own literal-
+    # root branch previously rejected ANY function chained in name_one
+    # unconditionally, at two different checkpoints (confirmed live
+    # before this fix) -- see _extract_gate_field_call()'s own
+    # docstring for why both exist.
+    def test_bare_implied_star_gate(self):
+        results = _finder(
+            '$finn.files.:type("csv")', TYPE_HOME, TYPE_MANIFEST
+        ).query()
+        assert results.files == ["inputs/named_files/finn/orders.csv"]
+
+    def test_explicit_star_gate_is_the_same_mechanism(self):
+        # compendium 3.9d's own claimed equivalence, confirmed live --
+        # both forms must give the identical answer.
+        bare = _finder(
+            '$finn.files.:type("csv")', TYPE_HOME, TYPE_MANIFEST
+        ).query()
+        explicit = _finder(
+            '$finn.files.*:type("csv")', TYPE_HOME, TYPE_MANIFEST
+        ).query()
+        assert bare.files == explicit.files
+
+    def test_flatten_gate(self):
+        results = _finder(
+            '$finn.files.:flatten():type("xlsx")', TYPE_HOME, TYPE_MANIFEST
+        ).query()
+        assert results.files == ["inputs/named_files/finn/data.xlsx"]
+
+    def test_prefixed_bare_gate(self):
+        results = _finder(
+            '$finn.files.orders/:type("csv")', TYPE_HOME, TYPE_PREFIXED_MANIFEST
+        ).query()
+        assert results.files == ["inputs/named_files/finn/orders/2026"]
+
+    def test_prefixed_explicit_star_gate_is_the_same_mechanism(self):
+        bare = _finder(
+            '$finn.files.orders/:type("csv")', TYPE_HOME, TYPE_PREFIXED_MANIFEST
+        ).query()
+        explicit = _finder(
+            '$finn.files.orders/*:type("csv")', TYPE_HOME, TYPE_PREFIXED_MANIFEST
+        ).query()
+        assert bare.files == explicit.files
+
+    def test_no_match_gives_empty(self):
+        results = _finder(
+            '$finn.files.:type("nope")', TYPE_HOME, TYPE_MANIFEST
+        ).query()
+        assert results.results == []
+
+    def test_composes_with_name_three_pointer(self):
+        results = _finder(
+            '$finn.files.:type("csv").:last()', TYPE_HOME, TYPE_MANIFEST
+        ).query()
+        assert results.uuids == ["u-csv"]
+
+    def test_a_field_accessor_with_no_name_one_position_still_raises(self):
+        # :named_file_name() accepts a string argument (widened for
+        # RESULTS' own GATE need, a separate PR) but its own FILES
+        # POSITIONS entry is still NAME_THREE-only -- confirms the new
+        # extraction is scoped to functions that actually declare
+        # NAME_ONE legal for FILES, not just any argument-accepting
+        # field accessor.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$finn.files.:named_file_name("orders")', TYPE_HOME, TYPE_MANIFEST
+            ).query()
+
+
 class TestLiteralNameThreeBody:
     # a literal name_three body -- e.g. "orders.aaaa" -- names the
     # FINGERPRINT of the version, per compendium 3.19b/3.20. Added

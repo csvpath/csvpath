@@ -3363,3 +3363,53 @@ own — see that entry for `:groups()`/RESULTS `:having()`.)
   `TestHavingListArgument` (3 tests) in
   `test_results_reference_finder_3.py`. Full `tests/references/`
   suite: 1870 passed.
+- `:type()` GATE (compendium 3.9d) -- **BUILT 2026-10-18**, own
+  branch/PR. The one piece of David's "functions that seem to need to
+  accept a function" ask flagged as needing real new dispatch, not
+  just an `ARG_TYPES` widening -- confirmed live before building:
+  `FilesReferenceFinder3.query()`'s literal-root branch unconditionally
+  rejected ANY function chained in `name_one`, at TWO different
+  checkpoints depending on parse shape (confirmed by inspecting the
+  parser's own output for each cited form) -- an EARLY one (`name_one.
+  functions` already non-empty straight from the grammar: `*:type(
+  "csv")`, `orders/*:type("csv")`, `:flatten():type("xlsx")`,
+  `:all():type("csv")`, `:groups():type("csv")`) and a LATE one (only
+  reached by the bare/prefixed implied-`'*'` forms -- `:type("csv")`,
+  `orders/:type("csv")` -- whose function sits in `name_one.path`
+  until `ReferenceFinder3._apply_implied_star()`'s own mutation moves
+  it into `.functions`). Compendium 3.9d's own claimed equivalence
+  between the bare and explicit-`*` forms means both checkpoints
+  genuinely needed the identical fix, not just one.
+
+  New `FilesReferenceFinder3._extract_gate_field_call()` -- pops a
+  single qualifying field-accessor function (SOURCE set, not
+  SELECTOR_WHEN_ARGUED, carries an argument, declares `Reference3.
+  NAME_ONE` legal in its own `POSITIONS` for FILES) out of `name_one.
+  functions` IN PLACE (mutating the underlying list via `.pop(0)`, the
+  same technique `_apply_implied_star()` itself already uses -- a
+  first attempt tried reassigning `name_one.functions = []` and hit
+  `AttributeError: property 'functions' of 'NameOne3' object has no
+  setter`, confirmed live before fixing), called at both checkpoints.
+  The extracted `field_call`, if any, GATEs whatever `candidates` list
+  ends up being built by ANY of the branches below (bare/prefixed
+  `:all()`/`:flatten()`/`:groups()`/`:home()`/the implied-`'*'` case)
+  via `ReferenceFinder3._matches_field_predicate()` -- moved up from
+  `ResultsReferenceFinder3` to the shared base this same day, once
+  FILES became its second real user, rather than duplicate it.
+
+  `Type3.ARG_TYPES` widened from `()` to `(str,)`; `POSITIONS` widened
+  to `(NAME_ONE, NAME_THREE)` (was `NAME_THREE`-only) -- NAME_ONE is
+  the new GATE position, checked declaratively by `_extract_gate_
+  field_call()` itself (not hardcoded to `:type()`'s own name), so any
+  future field accessor that widens its own `POSITIONS` the same way
+  gets this for free. Confirmed live for every cited shape (bare,
+  explicit `*`, prefixed, prefixed+explicit `*`, `:flatten()`, plus
+  the previously-uncited-but-free `:all()`/`:groups()` extensions),
+  composing correctly with a trailing name_three pointer, and that a
+  function with no NAME_ONE position (`:named_file_name()`, FILES-side
+  NAME_THREE-only) still correctly raises, unaffected.
+
+  New tests: `TestGateArgument` in `test_type_3.py` (plus a `POSITIONS`
+  assertion added to its own `test_metadata`); new `TestTypeGate` (8
+  tests) in `test_files_reference_finder_3.py`. Full `tests/
+  references/` suite: 1879 passed.

@@ -1520,39 +1520,58 @@ historical (2026-10-18 EOD)** — the cross-datatype uuid/set-ops item
 was itself resolved that same day (see `deferred_work_done_list.md`'s
 own entry), closing all 7 of the original deliberate deferrals.
 
-## `:type()`/`:status()` (FILES) — surfaced 2026-10-18, deliberately not built yet
+## `:status()` (FILES) — surfaced 2026-10-18, deliberately not built yet
 
 David asked for every function that "seems to need to accept a
 function, but does not, today" — answered from compendium 6.7's own
 closed "functional taxonomy" enumeration. 6 of the 10 listed functions
 got a straightforward `ARG_TYPES` GATE widening that same day (see
 `deferred_work_done_list.md`'s own entry); `:type()` (the taxonomy's
-sole "type" group member) and `:status()` (cited directly in
-`normative_reference_examples.txt` line 250, `$*.files.:status(
-"Registration failed"):named_file_name("orders")`) were investigated
-live and turned out to need real new work, not just a widening:
+sole "type" group member) turned out to need real new dispatch too,
+**since built** (own done-list entry, same day) -- `:status()` (cited
+directly in `normative_reference_examples.txt` line 250, `$*.files.
+:status("Registration failed"):named_file_name("orders")`) remains
+open, investigated live and confirmed to need MORE than `:type()` did:
 
-- **`:type()`**: compendium 3.9d's own claimed equivalence
-  (`$acme.files.:type("csv")` == `$acme.files.*:type("csv")`) IS real
-  at the grammar level — `ReferenceFinder3._apply_implied_star()`
-  already normalizes the bare form into the explicit-`*` one — but
-  neither shape actually resolves today. Confirmed live:
-  `FilesReferenceFinder3.query()`'s own literal-root branch has an
-  explicit, by-design "does not yet support functions attached
-  directly to name_one" rejection, with NO field_call/GATE exemption
-  at all (unlike RESULTS' own equivalent, and unlike CSVPATHS' new one
-  from this same day's build). Needs real new dispatch — same general
-  shape as RESULTS' `:groups()`+`'*'` build, but for FILES' own bare-
-  field-accessor-implied-star case specifically.
-- **`:status()`**: the cited FILES-scope function does not exist as
-  code at all. Today's `Status3` is RESULTS-only (lifecycle "started"/
-  "complete"); its own comment already flags that the FILES ledger has
-  a DIFFERENT "status" field (a failure message) that is "unexposed
-  today." Needs `Status3` widened to a second DATATYPES/KEY/POSITIONS
-  entry (or a new class), plus confirmation of the real ledger field
-  name against a live manifest, not just an `ARG_TYPES` widening.
+- The cited FILES-scope function does not exist as code at all.
+  Today's `Status3` is RESULTS-only (lifecycle "started"/"complete");
+  its own comment already flags that the FILES ledger has a DIFFERENT
+  "status" field (a failure message) that is "unexposed today." Traced
+  the real write path (not guessed): `file_manager.py`'s own
+  `mdata.status = "Registration failed"`, written via `FilesListener.
+  metadata_update()` -- confirmed this lands ONLY in the GLOBAL
+  arrivals ledger (`files_root_manifest`), never a per-name manifest
+  (a failed registration often has no real name/path to file itself
+  under). The field name is confirmed as literally `"status"`, so
+  `Status3` needs a `Reference3.FILES` `KEY`/`DATATYPES`/`POSITIONS`
+  entry, not a new class.
+- The worked example itself has NO `:manifest()` anywhere in it --
+  root is `*`, name_one is TWO chained field accessors
+  (`:status("Registration failed")` then `:named_file_name("orders")`),
+  EACH carrying its own argument, both acting as filters directly on
+  the global ledger. Confirmed live that the existing mechanism for "a
+  field accessor chained in name_one" (`_bare_manifest_field_call()`)
+  requires an explicit `:manifest()` token and exactly one accessor
+  with NO argument -- neither condition holds here. This needs new
+  dispatch in `FilesReferenceFinder3._query_star_traversal()`:
+  recognize a bare chain of GATE-ing field accessors with no
+  `:manifest()` at all, read the global ledger directly, and apply
+  EACH chained accessor as its own filter (not just one, unlike
+  `:type()`'s own single-GATE fix).
+- One more wrinkle this surfaced: `:named_file_name()` has no `FILES`-
+  scope manifest `KEY` today -- at FILES it is `SOURCE = "computed"`
+  (reads `reference.root_major` directly), which only makes sense for
+  one resolved name, not when scanning the whole ledger across every
+  name. The ledger entries already carry their own `"named_file_name"`
+  field (confirmed -- other code already reads `e["named_file_name"]`
+  directly off ledger entries), so this needs a small, additional
+  `KEY[Reference3.FILES] = "named_file_name"` entry on `NamedFileName3`
+  for the ledger-GATE path specifically, distinct from its existing
+  `SOURCE = "computed"` behavior for the single-resolved-name case.
 
-Needs its own design pass, not a drop-in follow-up to the batch above.
+Needs its own design pass -- a new dispatch mechanism (the global-
+ledger multi-GATE chain), not a drop-in follow-up to `:type()`'s own
+single-GATE fix.
 
 ## Process note
 
