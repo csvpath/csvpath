@@ -126,6 +126,32 @@ class FilesReferenceFinder3(ReferenceFinder3):
             return log_results
         root_major = reference.root_major
         if isinstance(root_major, Star3):
+            status_chain = self._bare_status_gate_chain(reference.name_one)
+            if status_chain is not None:
+                # every named-file at once -- added 2026-10-18, the
+                # normative doc's own exact worked example ("select
+                # named-files registrations for orders that failed").
+                # No per-name filter at all here, unlike the literal-
+                # root case above -- every ledger entry is a candidate.
+                if reference.name_three is not None:
+                    raise ReferenceException3(
+                        "FilesReferenceFinder3 does not yet support "
+                        "combining a bare ':status(...)' lookup with "
+                        "name_three -- it reads the global arrivals "
+                        "ledger directly, which has no per-name-file "
+                        "structure to narrow further."
+                    )
+                ledger = self.csvpaths.file_manager.files_root_manifest
+                matched = self._filter_ledger_by_gate_chain(ledger, status_chain)
+                return ReferenceResults3(
+                    results=[
+                        ReferenceResult3(
+                            path=self._ledger_entry_result_path(e),
+                            uuid=e.get("uuid"),
+                        )
+                        for e in matched
+                    ]
+                )
             if self._is_bare_pointer_reference(reference, "manifest"):
                 # Rule 1a (manifest_field_functions_proposal.md): "*" at
                 # root_major combined with a bare :manifest() is the one
@@ -193,6 +219,33 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "marker (name_two) combined with a bare context-setter/"
                 "pointer function in name_one -- it only applies to a "
                 "literal named-file path."
+            )
+
+        status_chain = self._bare_status_gate_chain(name_one)
+        if status_chain is not None:
+            # a literal root narrows the global ledger to just this
+            # name -- added 2026-10-18, David: "if you were inspecting
+            # a run that should have happened overnight you would know
+            # what status you were looking for... in many cases we
+            # know those high risk files by name" -- confirmed just as
+            # real a need as the '*' form below, built together.
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not yet support combining "
+                    "a bare ':status(...)' lookup with name_three -- it "
+                    "reads the global arrivals ledger directly, which has "
+                    "no per-name-file structure to narrow further."
+                )
+            ledger = self.csvpaths.file_manager.files_root_manifest
+            by_name = [e for e in ledger if e.get("named_file_name") == root_major]
+            matched = self._filter_ledger_by_gate_chain(by_name, status_chain)
+            return ReferenceResults3(
+                results=[
+                    ReferenceResult3(
+                        path=self._ledger_entry_result_path(e), uuid=e.get("uuid")
+                    )
+                    for e in matched
+                ]
             )
 
         if self._is_bare_pointer_reference(
@@ -1303,17 +1356,25 @@ class FilesReferenceFinder3(ReferenceFinder3):
         different, already-decided-against shape -- :uuid()'s own
         bare-selector form has its own, separate dispatch earlier in
         query(), with no pointer/prefix involved at all), any accessor
-        with no argument, and any accessor not declaring
-        Reference3.NAME_ONE legal for FILES in its own POSITIONS
-        (checked the same registry-driven way _check_position() does,
-        just returning None instead of raising, so the caller's own
-        generic "unsupported extra" rejection fires with its existing
-        message) -- reading a bare value this way, or chaining a
-        function with no NAME_ONE GATE position of its own, is a
-        separate question no worked example has asked for yet, left
-        unbuilt rather than guessed at (same reasoning
-        `_bare_manifest_field_call()`'s own docstring uses elsewhere in
-        this file)."""
+        with no argument, any accessor not declaring Reference3.
+        NAME_ONE legal for FILES in its own POSITIONS (checked the
+        same registry-driven way _check_position() does, just
+        returning None instead of raising, so the caller's own generic
+        "unsupported extra" rejection fires with its existing message)
+        -- reading a bare value this way, or chaining a function with
+        no NAME_ONE GATE position of its own, is a separate question
+        no worked example has asked for yet, left unbuilt rather than
+        guessed at (same reasoning `_bare_manifest_field_call()`'s own
+        docstring uses elsewhere in this file) -- and, added 2026-10-18
+        alongside ':status()'s own build, any accessor with no real
+        `KEY` entry for FILES (a genuinely ledger-only field, e.g.
+        ':status()' itself, declared via LEDGER_KEY instead -- see
+        `username_3.py`'s own established precedent). This candidates
+        list is the PER-NAME manifest, which a ledger-only field never
+        appears in at all; without this check, a combination no worked
+        example asks for (e.g. ':flatten():status("x")') would
+        silently match nothing instead of raising, confirmed live
+        before adding this guard."""
         if len(name_one.functions) != 1:
             return None
         candidate = name_one.functions[0]
@@ -1323,6 +1384,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             or function_cls.SOURCE is None
             or function_cls.SELECTOR_WHEN_ARGUED
             or candidate.arg is None
+            or function_cls.KEY.get(Reference3.FILES) is None
             or Reference3.NAME_ONE
             not in (function_cls.POSITIONS.get(Reference3.FILES) or ())
         ):
@@ -1330,6 +1392,115 @@ class FilesReferenceFinder3(ReferenceFinder3):
         field_call = self._build(candidate)
         name_one.functions.pop(0)
         return field_call
+
+    def _bare_status_gate_chain(self, name_one) -> "list | None":
+        """returns the full chain of GATE-able field-accessor
+        instances (built, real Function3 objects) when name_one's
+        entire content is a bare ':status(...)' chain -- ':status()'
+        itself as the sole path segment, carrying its own argument,
+        with zero or more additional chained field accessors (e.g.
+        ':named_file_name("orders")'), each ALSO carrying its own
+        argument -- or None if this shape does not apply. Added
+        2026-10-18 for the normative doc's own "$*.files.:status(
+        \"Registration failed\"):named_file_name(\"orders\")" ("select
+        named-files registrations for orders that failed").
+
+        Named/narrow, matching `_bare_manifest_field_call()`'s own
+        established style in this file, rather than the more generic
+        `_extract_gate_field_call()` above -- ':status()' is the ONLY
+        field that exists SOLELY in the global arrivals ledger
+        (confirmed live against the real registration code: never
+        written to any per-name manifest, a failed registration often
+        has no real name/path to file itself under), so this reads the
+        ledger DIRECTLY rather than going through the ordinary PER-
+        NAME-manifest candidate pipeline `_extract_gate_field_call()`
+        feeds at all -- a genuinely different data source, not just a
+        different filter on the same one. Detecting "this bare chain
+        needs the ledger" is keyed specifically on seeing ':status()'
+        as the chain's own first member, not on a declarative per-
+        function flag -- there is currently no second ledger-only
+        root trigger to generalize from (contrast `_matches_field_
+        predicate()`'s own `KEY` check for ordinary chain MEMBERS,
+        which IS generic).
+
+        Every member (the leading ':status()' and any chained field
+        accessors) must carry an argument and declare a real
+        `KEY`/`LEDGER_KEY` entry for FILES -- that same per-entry
+        lookup is what `FilesReferenceFinder3._filter_ledger_by_gate_
+        chain()` uses to read each one directly off a raw ledger
+        dict."""
+        if len(name_one.path) != 1 or not isinstance(name_one.path[0], FunctionCall3):
+            return None
+        if name_one.path[0].name != "status" or name_one.path[0].arg is None:
+            return None
+        calls = [name_one.path[0], *name_one.functions]
+        built = []
+        for call in calls:
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            key = None
+            if function_cls is not None:
+                key = function_cls.KEY.get(
+                    Reference3.FILES
+                ) or function_cls.LEDGER_KEY.get(Reference3.FILES)
+            if (
+                function_cls is None
+                or function_cls.SELECTOR_WHEN_ARGUED
+                or call.arg is None
+                or key is None
+            ):
+                return None
+            built.append(self._build(call))
+        return built
+
+    @staticmethod
+    def _filter_ledger_by_gate_chain(ledger: list, chain: list) -> list:
+        """every global-ledger entry matching ALL of `chain`'s own
+        GATE arguments (AND-combined) -- e.g. ':status("Registration
+        failed"):named_file_name("orders")' keeps only entries where
+        BOTH match. Added 2026-10-18 alongside `_bare_status_gate_
+        chain()`, the only current producer of `chain` -- reads each
+        member's own value directly off the raw ledger dict via
+        `KEY`/`LEDGER_KEY` (whichever is populated for FILES), the
+        same dual lookup `_bare_status_gate_chain()` itself already
+        validated is present on every member."""
+        results = []
+        for entry in ledger:
+            matched = True
+            for field_call in chain:
+                key = field_call.KEY.get(
+                    Reference3.FILES
+                ) or field_call.LEDGER_KEY.get(Reference3.FILES)
+                if not ReferenceFinder3._matches_field_predicate(
+                    entry.get(key), field_call.arg
+                ):
+                    matched = False
+                    break
+            if matched:
+                results.append(entry)
+        return results
+
+    @staticmethod
+    def _ledger_entry_result_path(entry: dict) -> str:
+        """the real path to use for a `ReferenceResult3` built from a
+        raw global-ledger entry -- added 2026-10-18, caught live before
+        shipping: `ReferenceResult3` itself forbids a None/empty path,
+        but a "Registration failed" entry's own "file_path" is always
+        None (the registration never got that far -- confirmed against
+        `file_manager.py`'s own `_registration_failed()`, which never
+        sets `file_path`/`file_home`/`file_name` at all). Falls back to
+        "origin_path" (the attempted source file -- the one real path
+        a failure entry DOES always carry) when "file_path" is empty;
+        raises clearly, rather than letting `ReferenceResult3`'s own
+        generic error leak through confusingly, if somehow neither is
+        present."""
+        path = entry.get("file_path") or entry.get("origin_path")
+        if not path:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 found a global arrivals ledger "
+                "entry with neither a 'file_path' nor an 'origin_path' "
+                "to report -- cannot build a result from it."
+            )
+        return path
 
     @staticmethod
     def _is_bare_all_reference(name_one) -> bool:

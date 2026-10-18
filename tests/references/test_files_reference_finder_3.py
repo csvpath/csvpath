@@ -2049,6 +2049,141 @@ class TestTypeGate:
             ).query()
 
 
+STATUS_LEDGER = [
+    {
+        "named_file_name": "orders",
+        "status": "Registration failed",
+        "uuid": "fail-1",
+        "file_path": None,
+        "origin_path": "/tmp/orders1.csv",
+    },
+    {
+        "named_file_name": "orders",
+        "status": None,
+        "uuid": "ok-1",
+        "file_path": "inputs/named_files/orders/orders.csv/aaaa.csv",
+    },
+    {
+        "named_file_name": "invoices",
+        "status": "Registration failed",
+        "uuid": "fail-2",
+        "file_path": None,
+        "origin_path": "/tmp/invoices1.csv",
+    },
+]
+
+
+class TestStatusGate:
+    # ':status()' widened 2026-10-18 to also cover FILES -- the global
+    # arrivals ledger's own "status" field (a failure message),
+    # confirmed live by tracing the real registration code
+    # (file_manager.py's own "mdata.status = 'Registration failed'",
+    # written only to files_root_manifest, never a per-name manifest).
+    # normative_reference_examples.txt's own worked example: "select
+    # named-files registrations for orders that failed" --
+    # "$*.files.:status(\"Registration failed\"):named_file_name(
+    # \"orders\")". Both the '*' form AND the literal-root form are
+    # built -- David confirmed the literal form is at least as common
+    # an operational need ("if you were inspecting a run that should
+    # have happened overnight you would know what status you were
+    # looking for... we know those high risk files by name").
+    def test_star_root_matches_the_normative_example(self):
+        results = _finder(
+            '$*.files.:status("Registration failed"):named_file_name("orders")',
+            TYPE_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+        ).query()
+        assert results.uuids == ["fail-1"]
+        # a failed registration never got a real file_path -- falls
+        # back to origin_path, the one real path it does carry.
+        assert results.files == ["/tmp/orders1.csv"]
+
+    def test_star_root_bare_status_alone(self):
+        results = _finder(
+            '$*.files.:status("Registration failed")', TYPE_HOME, [], ledger=STATUS_LEDGER
+        ).query()
+        assert sorted(results.uuids) == ["fail-1", "fail-2"]
+
+    def test_literal_root_is_just_as_real_a_need(self):
+        results = _finder(
+            '$orders.files.:status("Registration failed")',
+            TYPE_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+        ).query()
+        assert results.uuids == ["fail-1"]
+
+    def test_literal_root_combined_with_named_file_name_chain(self):
+        results = _finder(
+            '$orders.files.:status("Registration failed"):named_file_name("orders")',
+            TYPE_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+        ).query()
+        assert results.uuids == ["fail-1"]
+
+    def test_literal_root_excludes_other_names(self):
+        # "invoices" also has a failed registration, but this query is
+        # scoped to "orders" -- confirms the literal root genuinely
+        # narrows, not just filters client-side afterward.
+        results = _finder(
+            '$invoices.files.:status("Registration failed"):named_file_name("orders")',
+            TYPE_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+        ).query()
+        assert results.results == []
+
+    def test_no_match_gives_empty(self):
+        results = _finder(
+            '$*.files.:status("nope")', TYPE_HOME, [], ledger=STATUS_LEDGER
+        ).query()
+        assert results.results == []
+
+    def test_name_three_is_rejected_star_root(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$*.files.:status("Registration failed").:last()',
+                TYPE_HOME,
+                [],
+                ledger=STATUS_LEDGER,
+            ).query()
+
+    def test_name_three_is_rejected_literal_root(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$orders.files.:status("Registration failed").:last()',
+                TYPE_HOME,
+                [],
+                ledger=STATUS_LEDGER,
+            ).query()
+
+    def test_an_uncited_combination_still_raises_clearly(self):
+        # ':status()' is genuinely ledger-only -- chaining it onto
+        # ':flatten()' (reading the PER-NAME manifest instead) is not
+        # a shape any worked example asks for. Confirms the new KEY-
+        # presence guard in _extract_gate_field_call() -- without it,
+        # this would have silently matched nothing instead of raising
+        # (confirmed live before adding that guard).
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$finn.files.:flatten():status("x")',
+                TYPE_HOME,
+                TYPE_MANIFEST,
+                ledger=STATUS_LEDGER,
+            ).query()
+
+    def test_type_gate_is_unaffected(self):
+        # regression check -- the new KEY-presence guard added for
+        # ':status()' must not affect ':type()'s own, already-working
+        # GATE.
+        results = _finder(
+            '$finn.files.:type("csv")', TYPE_HOME, TYPE_MANIFEST
+        ).query()
+        assert results.files == ["inputs/named_files/finn/orders.csv"]
+
+
 class TestLiteralNameThreeBody:
     # a literal name_three body -- e.g. "orders.aaaa" -- names the
     # FINGERPRINT of the version, per compendium 3.19b/3.20. Added

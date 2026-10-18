@@ -3413,3 +3413,84 @@ own — see that entry for `:groups()`/RESULTS `:having()`.)
   assertion added to its own `test_metadata`); new `TestTypeGate` (8
   tests) in `test_files_reference_finder_3.py`. Full `tests/
   references/` suite: 1879 passed.
+- `:status()` GATE, both the `'*'` and literal-root forms --
+  **BUILT 2026-10-18**, own branch/PR. The second, bigger item
+  `:type()`'s own PR flagged. David confirmed the literal-root form is
+  at least as common an operational need as the `'*'` form: "if you
+  were inspecting a run that should have happened overnight you would
+  know what status you were looking for... in many cases we know
+  those high risk files by name" -- both built together, not staged.
+
+  Confirmed live before building: a "Registration failed" ledger entry
+  has no per-name-manifest presence at all (`file_manager.py`'s own
+  `_registration_failed()` never sets `file_path`/`file_home`/
+  `file_name`), and the cited worked example (`$*.files.:status(
+  "Registration failed"):named_file_name("orders")`) has NO
+  `:manifest()` anywhere in it -- TWO chained field accessors, each
+  carrying its own argument, both filtering the global arrivals ledger
+  directly. The existing "field accessor chained in name_one" detector
+  (`_bare_manifest_field_call()`) requires an explicit `:manifest()`
+  token and exactly one argument-less accessor -- neither condition
+  holds here, so this needed real new, named dispatch, not a reuse of
+  `:type()`'s own single-GATE `_extract_gate_field_call()`.
+
+  New `FilesReferenceFinder3._bare_status_gate_chain()` -- detects a
+  bare chain of 1+ GATE-able field accessors whose FIRST member is
+  `:status(...)` specifically (narrow/named, matching `_bare_manifest_
+  field_call()`'s own established style in this file, not the later,
+  generic single-GATE mechanism -- `:status()` is the only field that
+  exists solely in the ledger, so there is no second case to
+  generalize from yet). New `_filter_ledger_by_gate_chain()` AND-
+  combines every chain member's own argument against a raw ledger
+  entry. Wired into TWO places in `query()`: the literal-root branch
+  (narrows the ledger to just that name first, via each entry's own
+  `"named_file_name"` field) and the `Star3` root branch (no name
+  filter at all -- every ledger entry is a candidate), both returning
+  directly rather than falling through to the ordinary per-name-
+  manifest pipeline.
+
+  **`Status3`/`NamedFileName3` use `LEDGER_KEY`, not `KEY`, for their
+  new FILES entries** -- per `username_3.py`'s own established
+  precedent for a genuinely ledger-only field (`status`/
+  `named_file_name` are never written to any per-name manifest).
+  This is not just semantic correctness -- confirmed live, a real
+  silent-wrong-answer bug if done the other way: `FilesReferenceFinder3
+  ._extract_gate_field_call()` (the EARLIER, `:type()`-style single-
+  GATE mechanism, which filters the PER-NAME manifest) would otherwise
+  wrongly pick up an uncited combination like `:flatten():status("x")`
+  and silently match nothing, instead of correctly routing to the
+  ledger (or raising). Added a defensive `function_cls.KEY.get(
+  Reference3.FILES) is None` exclusion to that method too, confirmed
+  live against exactly that combination.
+
+  **A second real bug caught live, not by inspection**: the first
+  implementation built each `ReferenceResult3` with `path=e.get(
+  "file_path")`, matching the sibling `:manifest():uuid()`-during-`'*'`
+  -traversal code's own existing convention -- but `ReferenceResult3`
+  itself FORBIDS a `None`/empty path, and a "Registration failed"
+  entry's own `file_path` is always `None` (confirmed by tracing
+  `_registration_failed()`'s own code, which never sets it). Every
+  prior ledger-reading branch in this file had only ever been
+  exercised against SUCCESSFUL registrations, where `file_path` is
+  always real -- `:status()` is the first to surface a failure entry
+  at all. New `_ledger_entry_result_path()` falls back to
+  `"origin_path"` (the one real path a failure entry does always
+  carry -- the attempted source file), raising clearly if somehow
+  neither is present.
+
+  `Status3` widened: `DATATYPES` to include FILES, `ARG_TYPES` to
+  `(str,)`, `POSITIONS[FILES] = (NAME_ONE,)` (no `NAME_THREE` -- status
+  is never readable off an already-resolved specific version, since it
+  is never written per-name at all). As a confirmed side effect
+  (same generic `field_call`/`_matches_field_predicate` mechanism
+  `:error_count()`/`:uuid()`/etc. already use), `:status()` now also
+  GATEs RESULTS' own pooled candidate lists for free (e.g. `:status(
+  "complete")`), not just the RESULTS bare-read it already had.
+
+  New tests: `test_status_3.py` fully rewritten (`TestArgument`, plus
+  the widened `test_metadata`); `LEDGER_KEY` assertion added to
+  `test_named_file_name_3.py`'s own `test_metadata`; new `TestStatusGate`
+  (10 tests) in `test_files_reference_finder_3.py`, covering both root
+  forms, the exact normative example, the `origin_path` fallback, the
+  uncited-combination regression guard, and a `:type()` regression
+  check. Full `tests/references/` suite: 1890 passed.
