@@ -982,14 +982,20 @@ NOT part of that build:
      predicate-argument mechanism") was corrected — it is not a new
      mechanism, it was already shipped (2026-08-18/26) under a different
      name before this item ever called it out.
-  One narrower, genuinely still-open loose end noticed while building
-  piece 1, deliberately NOT built (out of scope for what was asked):
-  `Having3.ARG_TYPES` does not accept a nested FunctionCall3 (e.g.
-  `:having(:uuid("a381..."))`, normative_reference_examples.txt line
-  682) — `Having3` only matches a plain identity string today. A
-  genuinely different, bigger semantic question (search an already-
-  selected run's own INSTANCE set for one whose given FIELD matches, not
-  its identity string) than anything piece 1 touched.
+  One narrower loose end noticed while building piece 1, deliberately
+  NOT built there (out of scope for what was asked): `Having3.ARG_TYPES`
+  did not accept a nested FunctionCall3 (e.g. `:having(:uuid("a381...
+  "))`, normative_reference_examples.txt line 682) — `Having3` only
+  matched a plain identity string. A genuinely different, bigger
+  semantic question (search an already-selected run's own INSTANCE set
+  for one whose given FIELD matches, not its identity string) than
+  anything piece 1 touched. **BUILT the very next session, 2026-10-18**
+  — see `deferred_work_done_list.md`'s "`:having()` widened to accept a
+  `list`"/taxonomy-completion entries: `Having3.ARG_TYPES` widened to
+  `(str, Function3, list)` (David: "scoping it more broadly fits the
+  brief, and the intent" — past just the single `:uuid()` example here,
+  to accept ANY registered function), plus a `list` for "any of these
+  identities." Confirmed live, `ARG_TYPES = (str, Function3, list)`.
 
 ## Grammar / argument-type gaps — ALL BUILT, kept as a historical record
 
@@ -1040,7 +1046,7 @@ and a stale-entry correction, are both done — see
   `_extract_data()` bug, not `'*'`-traversal-specific — literal root had
   the identical gap, just never exercised by a test.
 
-## `'*'` traversal — FILES — all items BUILT except the predicate itself (`:on_arrival(:not_none())`, design-blocked on the generic predicate-argument mechanism above)
+## `'*'` traversal — FILES — ALL ITEMS NOW BUILT, including the predicate itself
 
 - `FilesReferenceFinder3`'s own `_query_star_traversal()` combining `'*'`
   traversal with a field accessor riding beside the pointer in
@@ -1066,13 +1072,14 @@ and a stale-entry correction, are both done — see
      `deferred_work_done_list.md`.
   3. **Chaining `:home():definition()` together — BUILT 2026-08-27**, see
      `deferred_work_done_list.md`.
-  4. **The predicate itself, `:on_arrival(:not_none())` — still NOT
-     built.** See the predicate-argument entry above (the "any field
-     accessor takes a predicate argument" mechanism it needs is still
-     unbuilt). The full acceptance test
-     (`$*.files.:home():definition(:on_arrival(:not_none()))`) still
-     cannot parse until this lands — #1/#2/#3 were tested with the
-     predicate dropped, per the done-list entry's own worked examples.
+  4. **The predicate itself, `:on_arrival(:not_none())` — BUILT
+     2026-10-17.** See the "Predicate-argument field accessors" entry
+     above — the generic "any field accessor takes a predicate
+     argument" mechanism landed that day. The full acceptance test
+     (`$*.files.:home():definition(:on_arrival(:not_none()))`) now
+     parses and resolves correctly (confirmed live, and via real test
+     coverage in `test_files_reference_finder_3.py`) — #1/#2/#3 were
+     only ever tested with the predicate dropped before this.
 - **Bare `:manifest()` combined with one chained field accessor (e.g.
   `:manifest():uuid()`, `:manifest():time()`), literal-root and `'*'`
   alike — BUILT 2026-08-28**, see `deferred_work_done_list.md`. Driven by
@@ -1522,12 +1529,17 @@ own entry), closing all 7 of the original deliberate deferrals.
 
 ## Process note
 
-`references_v3_compendium.md` §6 ("Known gaps")/§7 ("Not yet built at all")
-cover a lot of this same ground at a more structural, spec-vs-implementation
-level. This list is the lighter-weight, more granular working companion to
-that — check both, but don't feel obligated to keep every item in perfect
-sync between the two; this list is allowed to be the messier, more
-immediate one.
+**STALE AS OF 2026-10-20, corrected**: this note originally pointed to
+`references_v3_compendium.md` §6 ("Known gaps")/§7 ("Not yet built at
+all") as a structural, spec-vs-implementation-level companion to this
+list. The compendium has since been restructured substantially (a new
+§4 "Wildcards" inserted, §6 renamed "Functions" and roughly doubled in
+size, per the golden-corpus-revival PR's own Phase 3 compendium regen,
+2026-10-18) — it no longer carries any section by either of those
+names, or any dedicated gaps-tracking section at all; it is purely
+normative spec now. This list and `project_references_v3_remaining_
+scope.md` (Claude's own memory, kept current without re-deriving) are
+the sole gap-tracking sources going forward.
 
 As of 2026-08-26, completed entries live in a paired file,
 `deferred_work_done_list.md`, rather than being deleted outright — the
