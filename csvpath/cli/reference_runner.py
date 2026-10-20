@@ -95,8 +95,11 @@ class ReferenceRunner:
         if len(results) == 0:
             print("No results.\n")
             return
+        # 0-based, matching :index()'s own 0-based semantics -- a
+        # 1-based row number next to 0-based :index() results (#411)
+        # invited exactly the confusion it's there to avoid.
         headers = ["#", "path", "uuid", "data"]
-        rows = [[i + 1, r.path, r.uuid, r.data] for i, r in enumerate(results)]
+        rows = [[i, r.path, r.uuid, r.data] for i, r in enumerate(results)]
         print(tabulate(rows, headers=headers, tablefmt="simple_grid"))
         print("")
 
@@ -125,7 +128,14 @@ class ReferenceRunner:
                 return []
             return [h for h in history if isinstance(h, str)]
         except Exception as e:
+            # #412 -- a read/write failure here used to be logged only
+            # (easy to miss -- the log file, not the CLI session, is
+            # where it lands), which is consistent with David seeing a
+            # successful run silently fail to show up in "rerun
+            # recent" with no visible error at all. Printed here too
+            # now, so a failure is never silent in the CLI itself.
             self._cli.csvpaths.logger.error(e)
+            print(f"\nCould not read recent-expression history: {e}\n")
             return []
 
     def _remember(self, expression: str) -> None:
@@ -139,4 +149,6 @@ class ReferenceRunner:
             with open(self._history_path(), "w", encoding="utf-8") as f:
                 json.dump(history, f)
         except Exception as e:
+            # see _load_history()'s own comment on #412.
             self._cli.csvpaths.logger.error(e)
+            print(f"\nCould not save this expression to recent history: {e}\n")
