@@ -9,7 +9,10 @@ from csvpath.references.reference_3 import (
     Star3,
     Variable3,
 )
-from csvpath.references.reference_exceptions_3 import ReferenceRuntimeException3
+from csvpath.references.reference_exceptions_3 import (
+    ReferenceException3,
+    ReferenceRuntimeException3,
+)
 from csvpath.references.reference_finder_3 import ReferenceFinder3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -684,3 +687,40 @@ class TestTailLines:
         path = tmp_path / "trailing.log"
         path.write_text("a\nb\nc\n")
         assert ReferenceFinder3._tail_lines(path=str(path), lines=2) == "b\nc"
+
+
+class TestDateWindow:
+    # issue #409 -- a literal date-mode bound ("YYYY-MM-DD") must also
+    # accept the Framework's own run-dir timestamp form ("YYYY-MM-DD_
+    # HH-MM-SS"), the time portion optional, never required (David:
+    # v2 references allowed this; the code never caught up). Mirrors
+    # Date3's own TestOptionalTimeSuffix (functions/selectors/
+    # test_date_3.py) -- see _date_window()'s own docstring for why
+    # this is duplicated rather than shared.
+    def test_date_only_still_validates(self):
+        ReferenceFinder3._validate_date_format("2026-10-20")  # no raise
+
+    def test_date_with_time_validates(self):
+        ReferenceFinder3._validate_date_format(
+            "2026-10-20_17-00-00"
+        )  # no raise
+
+    def test_malformed_value_is_rejected(self):
+        # strptime happily accepts non-zero-padded fields -- a
+        # genuinely invalid value is needed to exercise the rejection.
+        with pytest.raises(ReferenceException3):
+            ReferenceFinder3._validate_date_format("2026-10-20_99-99-99")
+
+    def test_date_only_window_spans_the_whole_day(self):
+        from datetime import datetime
+
+        start, end = ReferenceFinder3._date_window("2026-10-20")
+        assert start == datetime(2026, 10, 20, 0, 0, 0, 0)
+        assert end == datetime(2026, 10, 20, 23, 59, 59, 999999)
+
+    def test_date_with_time_window_spans_just_that_second(self):
+        from datetime import datetime
+
+        start, end = ReferenceFinder3._date_window("2026-10-20_17-00-00")
+        assert start == datetime(2026, 10, 20, 17, 0, 0, 0)
+        assert end == datetime(2026, 10, 20, 17, 0, 0, 999999)

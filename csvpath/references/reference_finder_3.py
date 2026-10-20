@@ -306,43 +306,63 @@ class ReferenceFinder3(ABC):
     @staticmethod
     def _validate_date_format(value: str) -> None:
         """raises unless `value` is a real calendar date in "YYYY-MM-DD"
-        form -- shared 2026-08-13 (previously RESULTS-only) alongside
-        FILES/CSVPATHS getting their own date-mode ':from()'/':to()'.
-        Function3.check_valid()'s own generic ARG_TYPES check only
-        confirms an arg is A str, not that its CONTENT is a valid date --
-        a malformed date bound would otherwise be silently compared as
-        an ordinary string (no crash, just a meaningless answer), which
-        is worse than a clear, immediate rejection."""
+        form, optionally with a time ("YYYY-MM-DD_HH-MM-SS", the
+        Framework's own run-dir timestamp form -- never required,
+        issue #409) -- shared 2026-08-13 (previously RESULTS-only)
+        alongside FILES/CSVPATHS getting their own date-mode ':from()'/
+        ':to()'. Function3.check_valid()'s own generic ARG_TYPES check
+        only confirms an arg is A str, not that its CONTENT is a valid
+        date -- a malformed date bound would otherwise be silently
+        compared as an ordinary string (no crash, just a meaningless
+        answer), which is worse than a clear, immediate rejection."""
         try:
-            datetime.strptime(value, "%Y-%m-%d")
+            ReferenceFinder3._date_window(value)
         except ValueError:
             raise ReferenceException3(
                 "date-mode ':from()'/':to()'/':after()'/':before()' "
-                "requires a real calendar "
-                f"date in 'YYYY-MM-DD' form, got {value!r}."
+                "requires a real calendar date in 'YYYY-MM-DD' form, "
+                "optionally with a time ('YYYY-MM-DD_HH-MM-SS'), got "
+                f"{value!r}."
             ) from None
+
+    @staticmethod
+    def _date_window(value: str) -> tuple:
+        """(start, end) for a literal "YYYY-MM-DD"/"YYYY-MM-DD_HH-MM-
+        SS" date-mode bound -- day granularity spans the whole day;
+        an explicit time narrows to just that one second. The time
+        portion is optional, never required (issue #409: David -- v2
+        references allowed this; the code never caught up). Raises
+        ValueError, same as a plain strptime() would, if neither form
+        matches. Mirrors Date3._window() exactly (functions/selectors/
+        date_3.py), duplicated to avoid a finder<->function circular
+        import (finders import functions, never the reverse)."""
+        try:
+            start = datetime.strptime(value, "%Y-%m-%d_%H-%M-%S")
+            return start, start.replace(microsecond=999999)
+        except ValueError:
+            pass
+        start = datetime.strptime(value, "%Y-%m-%d")
+        return start, start.replace(hour=23, minute=59, second=59, microsecond=999999)
 
     @classmethod
     def _bound_window(cls, call) -> tuple:
         """(start_datetime, end_datetime) for a built ':from()'/':to()'/
         ':before()'/':after()' call's own date-mode bound -- added
         2026-10-17 (compendium 6.27) alongside TimeWindowFunction3.
-        `call.arg` is either a plain "YYYY-MM-DD" string (the original,
-        day-granular shape -- both ends fall on the same day) or a
-        TimeWindowFunction3 instance (":year()"/":date(...)"/etc), each
-        of which already knows its own [start, end] window at whatever
-        granularity it represents. See TimeWindowFunction3's own
-        docstring for the four-way directional rule
-        (_apply_manifest_date_range()/ResultsReferenceFinder3._apply_
-        date_range()) that consumes this pair -- which side a given
-        directional function actually uses depends on its own
-        inclusive/exclusive, lower/upper role, not on this method."""
+        `call.arg` is either a plain "YYYY-MM-DD"/"YYYY-MM-DD_HH-MM-SS"
+        string (see _date_window()) or a TimeWindowFunction3 instance
+        (":year()"/":date(...)"/etc), each of which already knows its
+        own [start, end] window at whatever granularity it represents.
+        See TimeWindowFunction3's own docstring for the four-way
+        directional rule (_apply_manifest_date_range()/
+        ResultsReferenceFinder3._apply_date_range()) that consumes this
+        pair -- which side a given directional function actually uses
+        depends on its own inclusive/exclusive, lower/upper role, not
+        on this method."""
         bound = cls._range_bound(call)
         if isinstance(bound, TimeWindowFunction3):
             return bound.start_datetime(), bound.end_datetime()
-        start = datetime.strptime(bound, "%Y-%m-%d")
-        end = start.replace(hour=23, minute=59, second=59, microsecond=999999)
-        return start, end
+        return cls._date_window(bound)
 
     @staticmethod
     def _parse_manifest_time(value) -> datetime:
