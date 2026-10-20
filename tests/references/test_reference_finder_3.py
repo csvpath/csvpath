@@ -642,3 +642,45 @@ class TestBuildAndResolveArg:
         outer = FunctionCall3(name="errors", arg=inner)
         built = finder._build(outer)
         assert built.arg.arg == "add[0]"
+
+
+class TestTailLines:
+    # _tail_lines() -- added 2026-10-20 so :log(N) stops reading the
+    # whole log file just to throw most of it away. Must match the old
+    # "read everything, then text.splitlines()[-lines:]" approach's
+    # own result exactly; these tests build a file big enough (well
+    # over the 64KB chunk size) to force the seek loop to actually run
+    # more than one iteration, not just read the file in one shot.
+
+    @staticmethod
+    def _old_way(text: str, lines: int) -> str:
+        return "\n".join(text.splitlines()[-lines:])
+
+    def test_matches_whole_file_slicing_across_multiple_chunks(self, tmp_path):
+        text = "\n".join(f"line {i} of many" for i in range(20000))
+        path = tmp_path / "big.log"
+        path.write_text(text)
+        assert len(text.encode("utf-8")) > 65536
+        for n in (1, 3, 10, 500):
+            assert ReferenceFinder3._tail_lines(path=str(path), lines=n) == (
+                self._old_way(text, n)
+            )
+
+    def test_requesting_more_lines_than_the_file_has_returns_everything(
+        self, tmp_path
+    ):
+        text = "\n".join(f"line {i}" for i in range(5))
+        path = tmp_path / "short.log"
+        path.write_text(text)
+        assert ReferenceFinder3._tail_lines(path=str(path), lines=100) == text
+
+    def test_exact_line_count_match(self, tmp_path):
+        text = "\n".join(f"line {i}" for i in range(7))
+        path = tmp_path / "exact.log"
+        path.write_text(text)
+        assert ReferenceFinder3._tail_lines(path=str(path), lines=7) == text
+
+    def test_no_trailing_newline_in_result_even_when_file_has_one(self, tmp_path):
+        path = tmp_path / "trailing.log"
+        path.write_text("a\nb\nc\n")
+        assert ReferenceFinder3._tail_lines(path=str(path), lines=2) == "b\nc"

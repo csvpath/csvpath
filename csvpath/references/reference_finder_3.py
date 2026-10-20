@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -734,13 +735,60 @@ class ReferenceFinder3(ABC):
         single string, not raw bytes or a list of line strings, per
         the compendium's own "gives... a string" resolve-type framing
         for text content). None if the log file does not exist yet
-        (nothing has ever been logged)."""
+        (nothing has ever been logged).
+
+        For a bounded `lines` request, delegates to _tail_lines() to
+        avoid reading the whole file just to throw most of it away --
+        added 2026-10-20, David found :log(10) against a large log
+        file was reading and decoding the entire file before slicing
+        off the last 10 lines. `lines <= 0` falls through to the old
+        whole-file behavior unchanged (not part of the documented
+        "N most recent lines" usage, so not worth a new code path)."""
         if not Nos(path).exists():
             return None
+        if lines is not None and lines > 0:
+            return cls._tail_lines(path=path, lines=lines)
         with DataFileReader(path=path) as reader:
             text = reader.source.read()
         if lines is None:
             return text
+        return "\n".join(text.splitlines()[-lines:])
+
+    @staticmethod
+    def _tail_lines(*, path: str, lines: int) -> str:
+        """the last `lines` lines of a local text file, without
+        reading the whole file into memory first. Seeks backward from
+        the end in fixed-size chunks, accumulating raw bytes, until at
+        least `lines` newlines have been seen or the start of the file
+        is reached -- then decodes just that tail and trims to exactly
+        `lines` lines. Produces the same result as reading the whole
+        file and taking text.splitlines()[-lines:], just bounded to
+        roughly how much text is actually needed rather than the
+        whole file's size.
+
+        decode(errors="replace") rather than strict: a backward seek
+        can land mid-character on a multi-byte UTF-8 sequence. That
+        can only corrupt the EARLIEST (leading) partial line of the
+        decoded tail -- which is always either discarded (the loop
+        only stops once it has strictly more than `lines` newlines, so
+        there is always at least one extra leading line to absorb it)
+        or doesn't exist at all (the loop stopped at the real start of
+        the file, a clean boundary)."""
+        chunk_size = 65536
+        blocks = []
+        newline_count = 0
+        with open(path, "rb") as f:
+            f.seek(0, os.SEEK_END)
+            position = f.tell()
+            while position > 0 and newline_count <= lines:
+                read_size = min(chunk_size, position)
+                position -= read_size
+                f.seek(position)
+                block = f.read(read_size)
+                newline_count += block.count(b"\n")
+                blocks.append(block)
+        data = b"".join(reversed(blocks))
+        text = data.decode("utf-8", errors="replace")
         return "\n".join(text.splitlines()[-lines:])
 
     @staticmethod
