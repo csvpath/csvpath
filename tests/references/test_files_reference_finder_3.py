@@ -2465,6 +2465,109 @@ class TestManifestPointerSymmetry:
         assert results.results[0].data == TEMPLATED_MANIFEST[-1]
 
 
+class TestNameOneBarePointer:
+    # compendium 5.21's resolve matrix documents "name_one, file
+    # pointer" as legal for FILES ("contents of manifest.json") -- the
+    # code never caught up to it (this code predates the spec's own
+    # third revision, per David 2026-10-20: "take the spec over the
+    # code"). A lone pointer (:first()/:last()/:index(n)) directly in
+    # name_one, with NO separating '.' before it and no explicit
+    # ':manifest()', is now equivalent to TestManifestPointerSymmetry's
+    # own explicit ':manifest()'+pointer shape above. (The normative
+    # examples doc's own ':name(...).{dot}:last()' pairs, e.g. lines
+    # 866/956-957, have a '.' before the pointer -- confirmed live
+    # that parses as a real name_three, a different, already-working
+    # shape, NOT what this class covers; see _name_one_pointer's own
+    # docstring.)
+    def test_bare_last_pools_the_whole_group_same_as_manifest_last(self):
+        bare = _finder("$alpha.files.:last()", ALPHA_HOME, ALPHA_MANIFEST).resolve()
+        explicit = _finder(
+            "$alpha.files.:manifest():last()", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert bare.results[0].data == ALPHA_MANIFEST[-1]
+        assert bare.results[0].data == explicit.results[0].data
+
+    def test_explicit_star_before_last_is_the_same_shape_as_bare(self):
+        starred = _finder(
+            "$alpha.files.*:last()", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert starred.results[0].data == ALPHA_MANIFEST[-1]
+
+    def test_bare_first(self):
+        results = _finder("$alpha.files.:first()", ALPHA_HOME, ALPHA_MANIFEST).resolve()
+        assert results.results[0].data == ALPHA_MANIFEST[0]
+
+    def test_bare_index(self):
+        results = _finder(
+            "$alpha.files.:index(1)", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert results.results[0].data == ALPHA_MANIFEST[1]
+
+    def test_name_then_pointer_narrows_to_just_that_file(self):
+        # "one.csv" has two of alpha's three entries (u-one-1, u-one-2)
+        # -- :last() among just those, not the whole group's own last
+        # entry (which here happens to be the same one, so this also
+        # exercises :first() to be sure the narrowing is real). No '.'
+        # before the pointer -- see this class's own comment on why
+        # that matters.
+        last = _finder(
+            '$alpha.files.:name("one.csv"):last()', ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        first = _finder(
+            '$alpha.files.:name("one.csv"):first()', ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert last.results[0].data == ALPHA_MANIFEST[2]
+        assert first.results[0].data == ALPHA_MANIFEST[1]
+
+    def test_query_gives_the_selected_entrys_own_path_and_uuid(self):
+        results = _finder("$alpha.files.:last()", ALPHA_HOME, ALPHA_MANIFEST).query()
+        assert len(results.results) == 1
+        assert results.results[0].path == ALPHA_MANIFEST[-1]["file"]
+        assert results.results[0].uuid == ALPHA_MANIFEST[-1]["uuid"]
+
+    def test_out_of_range_index_gives_no_results(self):
+        results = _finder(
+            "$alpha.files.:index(99)", ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert len(results.results) == 0
+
+    def test_two_pointers_together_is_still_rejected(self):
+        # two pointers in name_one is nonsensical (normative_reference_
+        # examples.txt line 284: "cannot specify the 4th item and the
+        # last item at the same time") -- _apply_implied_star() only
+        # relocates the LAST path segment (":last()"), leaving
+        # ":index(3)" sitting in name_one.path; _name_one_pointer()'s
+        # own guard against another pointer-role function still being
+        # in .path is what catches this (caught live by this exact
+        # test before that guard existed -- it silently returned
+        # u-one-2, the group's overall last entry, treating ":index(3)"
+        # as a harmless no-op path segment instead of raising).
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:index(3):last()", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
+    def test_combined_with_worksheet_marker_is_rejected(self):
+        # a worksheet read means content (the sheet's own rows), not a
+        # manifest entry -- not yet supported, see this fix's own
+        # comment in query() for why it is rejected rather than
+        # silently giving the (probably unwanted) manifest entry.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.*#sheet1:last()", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
+    def test_combined_with_name_three_is_still_rejected(self):
+        # unchanged, pre-existing behavior -- this fix only recognizes
+        # the shape when name_three is absent (see _name_one_pointer's
+        # own callers); combining both is a separate, untested
+        # question no worked example asks for.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$alpha.files.:last().:last()", ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
+
 RANGE_HOME = "inputs/named_files/ranger"
 RANGE_MANIFEST = [
     {

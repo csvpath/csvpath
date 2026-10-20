@@ -344,10 +344,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
 
         field_call = self._extract_gate_field_call(name_one)
+        name_one_pointer = None
         name_one_manifest = None
         if reference.name_three is None:
-            name_one_manifest = self._name_one_manifest_call(name_one)
-        if name_one.functions and name_one_manifest is None:
+            name_one_pointer = self._name_one_pointer(name_one)
+            if name_one_pointer is None:
+                name_one_manifest = self._name_one_manifest_call(name_one)
+        if (
+            name_one.functions
+            and name_one_pointer is None
+            and name_one_manifest is None
+        ):
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support functions attached "
                 "directly to name_one -- put the version-selecting function in "
@@ -537,9 +544,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # nothing yet, since the function was still sitting in
                 # name_one.path at that point, not .functions.
                 field_call = self._extract_gate_field_call(name_one)
-            if name_one_manifest is None and reference.name_three is None:
-                name_one_manifest = self._name_one_manifest_call(name_one)
-            if name_one.functions and name_one_manifest is None:
+            if reference.name_three is None:
+                if name_one_pointer is None:
+                    name_one_pointer = self._name_one_pointer(name_one)
+                if name_one_pointer is None and name_one_manifest is None:
+                    name_one_manifest = self._name_one_manifest_call(name_one)
+            if (
+                name_one.functions
+                and name_one_pointer is None
+                and name_one_manifest is None
+            ):
                 raise ReferenceException3(
                     "FilesReferenceFinder3 does not yet support functions "
                     "attached directly to name_one -- put the version-"
@@ -564,6 +578,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
         name_three = reference.name_three
         if name_three is None:
+            if name_one_pointer is not None and name_one.name_two is not None:
+                # not yet supported -- a worksheet read means content
+                # (the sheet's own rows), not a manifest entry, which
+                # is what the "name_one, file pointer" shape below
+                # resolves to. No worked example asks for this
+                # combination, so it is rejected explicitly rather than
+                # silently giving the (probably unwanted) manifest
+                # entry instead of sheet content.
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not yet support a version-"
+                    "selecting pointer directly in name_one (e.g. ':last()') "
+                    "combined with the '#worksheet' marker (name_two) -- put "
+                    "the pointer in name_three instead."
+                )
             if name_one_manifest is not None and name_one.name_two is not None:
                 # not yet supported -- no worked example asks for a
                 # worksheet read alongside a bare, name_one-narrowed
@@ -575,6 +603,23 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "':manifest()' directly in name_one combined with the "
                     "'#worksheet' marker (name_two) -- put the manifest "
                     "read in name_three instead."
+                )
+            if name_one_pointer is not None:
+                # compendium 5.21's "name_one, file pointer" shape --
+                # the pointer already narrowed `candidates` (filtered
+                # by field_call above, if any) to the one manifest
+                # entry it selects, same ordinal lookup
+                # _pointer_before_manifest's own explicit ':manifest()'+
+                # pointer shape already uses.
+                selected = self._apply_pointer(name_one_pointer, candidates)
+                if selected is None:
+                    return ReferenceResults3(results=[])
+                return ReferenceResults3(
+                    results=[
+                        ReferenceResult3(
+                            path=selected["file"], uuid=selected["uuid"]
+                        )
+                    ]
                 )
             if name_one_manifest is not None:
                 # issue #410 -- a bare ':manifest()' chained after a
@@ -1363,6 +1408,64 @@ class FilesReferenceFinder3(ReferenceFinder3):
             if pathu.parts(entry["file_home"])[: len(home_parts)] == home_parts
         ]
 
+    def _name_one_pointer(self, name_one) -> "FunctionCall3 | None":
+        """the version-selecting pointer (:first()/:last()/:index(n))
+        when it is the ONLY thing left in `name_one.functions` -- a
+        peek, not a pop, deliberately: mirrors _pointer_before_
+        manifest()'s own non-mutating design (reference_finder_3.py)
+        so both query() and _extract_data() can call this
+        independently and get the same answer regardless of which
+        runs first/already mutated name_one.path via
+        _apply_implied_star() -- popping here (the way
+        _extract_gate_field_call() pops its own match) would erase the
+        only signal _extract_data() has left to recognize this shape
+        once query() is done with it. Added 2026-10-20.
+
+        Closes a real code-vs-spec gap, not a new design: compendium
+        5.21's own resolve matrix already documents "name_one, file
+        pointer" as legal for FILES ("contents of manifest.json") --
+        a lone pointer here implies :manifest(), the same way the
+        already-built explicit ':manifest()'+pointer shape
+        (_pointer_before_manifest) does. The code never caught up to
+        that (David, 2026-10-20: "take the spec over the code"). NOTE:
+        the normative examples doc's own "equivalent" ':name(...).
+        :last()'/':name(...).:manifest():last()' pairs (e.g. lines
+        866/956-957) have a '.' before ':last()' -- confirmed live
+        that parses as a real name_three, not a name_one-chained
+        function at all, a DIFFERENT (and already correctly working)
+        shape; this method and its callers are about the undotted
+        form (':name(...):last()', no separating '.'), which the
+        grammar parses into name_one.path + name_one.functions.
+
+        Returns None if more than one function is left, the sole one
+        is not a pointer, or any OTHER pointer-role function is still
+        sitting in name_one.path (e.g. ':index(3):last()' -- a
+        malformed/illegal combo the normative doc itself calls out,
+        line 284 -- `_apply_implied_star()` only ever relocates the
+        LAST path segment, so an earlier pointer wrongly left in
+        `.path` would otherwise be silently treated as a harmless,
+        no-op path segment instead of the second pointer it actually
+        is; caught live by a test before this guard was added). Every
+        such case still raises via the caller's own existing
+        "functions attached directly to name_one" check, unchanged."""
+        if len(name_one.functions) != 1:
+            return None
+        candidate = name_one.functions[0]
+        if not isinstance(candidate, FunctionCall3) or candidate.name not in (
+            "first",
+            "last",
+            "index",
+        ):
+            return None
+        for segment in name_one.path:
+            if isinstance(segment, FunctionCall3) and segment.name in (
+                "first",
+                "last",
+                "index",
+            ):
+                return None
+        return candidate
+
     def _name_one_manifest_call(self, name_one) -> "FunctionCall3 | None":
         """the bare, argument-less ':manifest()' call when it is the
         only thing left in `name_one.functions`, chained (no
@@ -1854,6 +1957,27 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # _query_star_traversal's own early METADATA_FILE branch,
             # regardless of which form matched there.
             return self._read_well_known_file(result.path)
+        if (
+            reference.name_three is None
+            and not isinstance(reference.root_major, Star3)
+            and result.uuid is not None
+            and self._name_one_pointer(reference.name_one) is not None
+        ):
+            # compendium 5.21's "name_one, file pointer" shape -- a lone
+            # pointer (:first()/:last()/:index(n)) directly in name_one
+            # implies :manifest(), same as the explicit ':manifest()'+
+            # pointer shape just below (_pointer_before_manifest)
+            # already means. Checked here, BEFORE resolve_kind is read,
+            # for the same reason the _chained_definition_call check
+            # just above is: resolve_kind's own generic classification
+            # has nothing to go on here (the pointer itself carries no
+            # metadata_kind() of its own, unlike an explicit
+            # ':manifest()' call), so it would otherwise default to
+            # FIRST_PARTY and never reach the re-derive-by-uuid logic
+            # the kind == METADATA_FILE block below uses for every
+            # other shape that selects one manifest entry this way.
+            manifest = self.csvpaths.file_manager.get_manifest(reference.root_major)
+            return self._find_manifest_entry_by_uuid(manifest, result.uuid)
         kind = reference.resolve_kind
         if kind == Reference3.FIRST_PARTY:
             if reference.name_three is None:
