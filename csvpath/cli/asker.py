@@ -1,5 +1,6 @@
 from prompt_toolkit import Application
 from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.document import Document
 from prompt_toolkit.layout.containers import (
     HSplit,
     VSplit,
@@ -14,7 +15,7 @@ from prompt_toolkit.completion import WordCompleter
 
 
 class Asker:
-    def __init__(self, cli, *, name_type, prompt=None) -> None:
+    def __init__(self, cli, *, name_type, prompt=None, initial_text: str = None) -> None:
         self._cli = cli
         names = None
         self.name_type = name_type
@@ -31,6 +32,7 @@ class Asker:
         self.completer = WordCompleter(names, ignore_case=True)
         self.result = None
         self.prompt = prompt
+        self.initial_text = initial_text
 
     def create_prompt_application(self, prompt_text=None):
         if prompt_text is None:
@@ -43,7 +45,16 @@ class Asker:
             else:
                 prompt_text = self.prompt
         # Create a buffer to store input
-        buffer = Buffer(completer=self.completer, complete_while_typing=True)
+        document = None
+        if self.initial_text:
+            document = Document(
+                text=self.initial_text, cursor_position=len(self.initial_text)
+            )
+        buffer = Buffer(
+            completer=self.completer,
+            complete_while_typing=True,
+            document=document,
+        )
         # Create key bindings
         kb = KeyBindings()
 

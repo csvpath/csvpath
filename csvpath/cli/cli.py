@@ -9,6 +9,7 @@ from .debug_config import DebugConfig
 from csvpath.util.nos import Nos
 from .asker import Asker
 from .function_lister import FunctionLister
+from .reference_runner import ReferenceRunner
 from .const import Const
 from .error_menu_utility import ErrorMenuUtility as erut
 
@@ -79,6 +80,7 @@ class Cli:
                     Const.NAMED_PATHS,
                     Const.ARCHIVE,
                     "run",
+                    "run reference expressions",
                     "config",
                     "functions",
                     Const.QUIT,
@@ -98,6 +100,8 @@ class Cli:
         try:
             if t == "run":
                 self.run()
+            if t == "run reference expressions":
+                self._references()
             if t == Const.NAMED_FILES:
                 self._files()
             if t == Const.NAMED_PATHS:
@@ -116,6 +120,9 @@ class Cli:
 
     def _functions(self) -> None:
         FunctionLister(self).list_functions()
+
+    def _references(self) -> None:
+        ReferenceRunner(self).menu()
 
     def _config(self) -> None:
         DebugConfig(self).show()
