@@ -10,25 +10,13 @@ from csvpath.util.nos import Nos
 from .asker import Asker
 from .function_lister import FunctionLister
 from .const import Const
+from .error_menu_utility import ErrorMenuUtility as erut
 
 
 class Cli:
     def __init__(self):
         self.csvpaths = CsvPaths()
         self.clear()
-        """
-        splash = ""
-          *** *            ******        **  **
-        ***  **   *        **  **      **** **
-       **        ** **  * ** *** ***** **  *****
-       **    * **** **** ***** *** ** **  ** **
-       **   **** ****** **     ** ** *** ** ** **
-         ***   **** *  **      *** ** ****   **
-***************************
-CsvPath Command Line Interface
-Try tab completion and menu-by-key.
-For help see https://www.csvpath.org
-"""
         print(Const.SPLASH)
         self._return_to_cont()
         self.clear()
@@ -43,16 +31,6 @@ For help see https://www.csvpath.org
         time.sleep(0.5)
 
     ITALIC = "\033[3m"
-    # SIDEBAR_COLOR = "\033[36m"
-    # REVERT = "\033[0m"
-    # STOP_HERE = f"{Const.SIDEBAR_COLOR}{ITALIC}... done picking dir{Const.REVERT}"
-    # STOP_HERE2 = "👍 pick this dir"
-    # CANCEL = f"{Const.SIDEBAR_COLOR}{ITALIC}... cancel{Const.REVERT}"
-    # CANCEL2 = "← cancel"
-    # QUIT = "← quit"
-    # NAMED_FILES = "register data"
-    # NAMED_PATHS = "load csvpaths"
-    # ARCHIVE = "access the archive"
 
     def _return_to_cont(self):
         print(
@@ -267,23 +245,8 @@ For help see https://www.csvpath.org
             else:
                 self.csvpaths.fast_forward_paths(filename=file, pathsname=paths)
         except Exception as e:
-            self.csvpaths.logger.error(e)
-            cfg = None
-            while cfg in [None, "c", "e"]:
-                print("\nThere was an error.")
-                print("Click 'e' and return to print the stack trace. ")
-                print("Click 'c' and return to change config options. ")
-                print("Click return to continue. ")
-                cfg = input("")
-                if cfg == "c":
-                    DebugConfig(self).show()
-                elif cfg == "e":
-                    self.clear()
-                    print(traceback.format_exc())
-                    input("\n\nClick return to continue")
-                else:
-                    return
-                self.clear()
+            if not erut.handle(self, e):
+                return
         self._return_to_cont()
 
     def complete_file_reference(self) -> str:

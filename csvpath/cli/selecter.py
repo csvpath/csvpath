@@ -18,6 +18,15 @@ T = TypeVar("T")
 
 class CRadioList(RadioList):
     def _get_text_fragments(self) -> StyleAndTextTuples:
+        #
+        # prompt_toolkit's RadioList renders a "*" marker on the
+        # selected cursor position; we don't want that marker, so we
+        # find it by scanning the rendered fragments for the
+        # "SetCursorPosition" sentinel (the fragment right after it is
+        # the cursor line) and for a literal "*" fragment, and blank
+        # each one out in place. There's no public hook for suppressing
+        # the marker, so this string-matches the render output instead.
+        #
         result = super()._get_text_fragments()
         for i, _ in enumerate(result):
             if _[0].find("SetCursorPosition") > -1:
