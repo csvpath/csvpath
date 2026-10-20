@@ -437,6 +437,29 @@ class TestVersionRange:
                 VERSION_RANGE_MANIFEST,
             ).query()
 
+    def test_date_mode_accepts_the_optional_time_suffix(self):
+        # issue #409 -- David's own exact repro:
+        # "$acme.csvpaths.:before(:date(\"2026-10-20_17-00-00\"))" used
+        # to raise outright. Every fixture entry's own "time" is
+        # exactly midnight, so a time-suffixed bound at midnight gives
+        # the identical result to the plain date-only bound just above.
+        results = _finder(
+            '$dater.csvpaths.:from(:date("2026-01-03_00-00-00"))',
+            VERSION_RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v2-uuid", "v3-uuid", "v4-uuid"]
+
+    def test_date_mode_time_suffix_narrows_to_the_named_second(self):
+        # v2-uuid's own time is exactly "2026-01-03T00:00:00" -- a
+        # bound one hour later on the same day excludes it, proving
+        # the time suffix is real second-granularity, not silently
+        # ignored/truncated back to day-granularity.
+        results = _finder(
+            '$dater.csvpaths.:from(:date("2026-01-03_01-00-00"))',
+            VERSION_RANGE_MANIFEST,
+        ).query()
+        assert results.uuids == ["v3-uuid", "v4-uuid"]
+
     def test_a_malformed_date_bound_is_rejected(self):
         with pytest.raises(ReferenceException3):
             _finder(

@@ -61,3 +61,36 @@ class TestStartEndDatetime:
     def test_end_is_end_of_the_named_date(self):
         f = Date3(arg="2025-01-31")
         assert f.end_datetime() == datetime(2025, 1, 31, 23, 59, 59, 999999)
+
+
+class TestOptionalTimeSuffix:
+    # issue #409 -- David: the Framework's own run-dir timestamp form
+    # "YYYY-MM-DD_HH-MM-SS" was always allowed, never required, as a
+    # date-mode argument in v2 references; the v3 code never caught up
+    # (:date() rejected it outright). The time portion narrows
+    # granularity from the whole day down to the one named second --
+    # it does not change anything about the date-only form.
+    def test_date_with_time_is_valid(self):
+        Date3(arg="2026-10-20_17-00-00").check_valid()  # should not raise
+
+    def test_date_only_is_still_valid(self):
+        Date3(arg="2026-10-20").check_valid()  # should not raise
+
+    def test_malformed_time_suffix_is_still_rejected(self):
+        # strptime happily accepts non-zero-padded fields (e.g.
+        # "20-0-0" parses fine as 20:00:00) -- a genuinely invalid
+        # value is needed to actually exercise the rejection.
+        with pytest.raises(ReferenceException3):
+            Date3(arg="2026-10-20_99-99-99").check_valid()
+
+    def test_start_and_end_both_land_on_the_named_second(self):
+        f = Date3(arg="2026-10-20_17-00-00")
+        assert f.start_datetime() == datetime(2026, 10, 20, 17, 0, 0, 0)
+        assert f.end_datetime() == datetime(2026, 10, 20, 17, 0, 0, 999999)
+
+    def test_date_only_form_still_spans_the_whole_day(self):
+        # confirms the time-suffix addition did not change the
+        # existing day-granular behavior for the plain form.
+        f = Date3(arg="2026-10-20")
+        assert f.start_datetime() == datetime(2026, 10, 20, 0, 0, 0, 0)
+        assert f.end_datetime() == datetime(2026, 10, 20, 23, 59, 59, 999999)

@@ -42,10 +42,12 @@ class Date3(TimeWindowFunction3):
     #
     NAME = "date"
     SUMMARY = (
-        "A literal calendar date (YYYY-MM-DD) -- used as :from()'s/"
-        ":to()'s date-mode bound, e.g. ':from(:date(\"2025-01-01\"))' "
-        "for 'runs from this date onward,' or bare/nested as a date-"
-        "range context setter/anchor -- see TimeWindowFunction3."
+        "A literal calendar date (YYYY-MM-DD), or the Framework's own "
+        "run-dir timestamp form (YYYY-MM-DD_HH-MM-SS) when the time "
+        "matters too -- used as :from()'s/:to()'s date-mode bound, "
+        "e.g. ':from(:date(\"2025-01-01\"))' for 'runs from this date "
+        "onward,' or bare/nested as a date-range context setter/"
+        "anchor -- see TimeWindowFunction3."
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
@@ -73,16 +75,38 @@ class Date3(TimeWindowFunction3):
         # rather than shared to avoid a finder<->function circular
         # import (finders import functions, never the reverse).
         try:
-            datetime.strptime(self._arg, "%Y-%m-%d")
+            self._window(self._arg)
         except ValueError:
             raise ReferenceException3(
                 ":date() requires a real calendar date in 'YYYY-MM-DD' "
-                f"form, got {self._arg!r}."
+                "form, optionally with a time ('YYYY-MM-DD_HH-MM-SS', "
+                "the Framework's own run-dir timestamp form -- the "
+                f"time is never required), got {self._arg!r}."
             ) from None
 
     def start_datetime(self) -> datetime:
-        return datetime.strptime(self._arg, "%Y-%m-%d")
+        return self._window(self._arg)[0]
 
     def end_datetime(self) -> datetime:
-        start = self.start_datetime()
-        return start.replace(hour=23, minute=59, second=59, microsecond=999999)
+        return self._window(self._arg)[1]
+
+    @staticmethod
+    def _window(value: str) -> tuple:
+        """(start, end) for a literal date-mode bound -- accepts
+        either plain "YYYY-MM-DD" (day granularity, spans the whole
+        day) or the Framework's own run-dir timestamp form "YYYY-MM-
+        DD_HH-MM-SS" (second granularity, spans just that one second)
+        -- the time portion is optional, never required (issue #409:
+        David -- v2 references allowed this; the code never caught
+        up). Raises ValueError, same as a plain strptime() would, if
+        neither form matches -- check_valid() catches it the same way
+        it always has. Mirrors ReferenceFinder3._bound_window()
+        exactly, duplicated for the same reason check_valid()'s own
+        docstring gives."""
+        try:
+            start = datetime.strptime(value, "%Y-%m-%d_%H-%M-%S")
+            return start, start.replace(microsecond=999999)
+        except ValueError:
+            pass
+        start = datetime.strptime(value, "%Y-%m-%d")
+        return start, start.replace(hour=23, minute=59, second=59, microsecond=999999)
