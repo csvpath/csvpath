@@ -75,6 +75,17 @@ class ReferenceRunner:
             results = finder.resolve()
             self._remember(expression)
             self._display(results)
+        except KeyboardInterrupt:
+            #
+            # a slow resolve (e.g. :log() against a large log file) is
+            # otherwise uninterruptible except by ctrl-c -- and since
+            # Cli._do()'s own KeyboardInterrupt handler treats ANY
+            # ctrl-c as "quit the whole CLI", an uncaught one here would
+            # kill the entire session just to cancel one query. Catch
+            # it here instead, so cancelling only returns to this menu.
+            #
+            print("\nCancelled.\n")
+            return
         except Exception as e:
             if not erut.handle(self._cli, e):
                 return

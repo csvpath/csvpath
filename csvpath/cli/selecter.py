@@ -23,9 +23,13 @@ class CRadioList(RadioList):
         # selected cursor position; we don't want that marker, so we
         # find it by scanning the rendered fragments for the
         # "SetCursorPosition" sentinel (the fragment right after it is
-        # the cursor line) and for a literal "*" fragment, and blank
-        # each one out in place. There's no public hook for suppressing
-        # the marker, so this string-matches the render output instead.
+        # the cursor line) and for a fragment that IS exactly "*", and
+        # blank each one out in place. There's no public hook for
+        # suppressing the marker, so this string-matches the render
+        # output instead. Must be an exact match, not a substring check
+        # -- a label can legitimately contain a literal "*" (e.g. a
+        # reference expression like "$*.files...."), and a substring
+        # match would blank the whole label, not just the marker.
         #
         result = super()._get_text_fragments()
         for i, _ in enumerate(result):
@@ -33,7 +37,7 @@ class CRadioList(RadioList):
                 _ = list(result[i + 1])
                 _[1] = " "
                 result[i + 1] = tuple(_)
-            elif _[1].find("*") > -1:
+            elif _[1] == "*":
                 _ = list(result[i])
                 _[1] = " "
                 result[i] = tuple(_)
