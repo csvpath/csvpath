@@ -1,8 +1,7 @@
 import os
-import traceback
-from .debug_config import DebugConfig
 from .asker import Asker
 from .const import Const
+from .error_menu_utility import ErrorMenuUtility as erut
 
 
 class DrillDown:
@@ -45,23 +44,9 @@ class DrillDown:
                 self._cli.csvpaths.file_manager.add_named_files_from_dir(dirname=p)
             else:
                 self._cli.csvpaths.file_manager.set_named_files_from_json(filename=p)
-        except Exception:
-            cfg = None
-            while cfg in [None, "c", "e"]:
-                print("\nThere was an error.")
-                print("Click 'e' and return to print the stack trace. ")
-                print("Click 'c' and return to change config options. ")
-                print("Click return to continue. ")
-                cfg = input("")
-                if cfg == "c":
-                    DebugConfig(self).show()
-                elif cfg == "e":
-                    self._cli.clear()
-                    print(traceback.format_exc())
-                    input("\n\nClick return to continue")
-                else:
-                    return
-                self._cli.clear()
+        except Exception as e:
+            if not erut.handle(self._cli, e):
+                return
 
     # ============================
     # Paths
@@ -103,23 +88,8 @@ class DrillDown:
             else:
                 self._cli.csvpaths.paths_manager.add_named_paths_from_json(file_path=p)
         except Exception as e:
-            self._cli.csvpaths.logger.error(e)
-            cfg = None
-            while cfg in [None, "c", "e"]:
-                print("\nThere was an error.")
-                print("Click 'e' and return to print the stack trace. ")
-                print("Click 'c' and return to change config options. ")
-                print("Click return to continue. ")
-                cfg = input("")
-                if cfg == "c":
-                    DebugConfig(self).show()
-                elif cfg == "e":
-                    self._cli.clear()
-                    print(traceback.format_exc())
-                    input("\n\nClick return to continue")
-                else:
-                    return
-                self._cli.clear()
+            if not erut.handle(self._cli, e):
+                return
 
     # ============================
     # Utilities
