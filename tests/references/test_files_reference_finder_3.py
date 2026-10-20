@@ -2319,6 +2319,85 @@ class TestBareManifestFieldAccessor:
         assert results.results[0].data == "u-one-1"
 
 
+class TestNameOneNarrowedManifestCall:
+    # issue #410 -- David's own exact repro ($food.files.:name(
+    # "food.csv"):manifest()) raised "does not yet support functions
+    # attached directly to name_one." Unlike TestBareManifestField
+    # Accessor above (a fully-bare ':manifest()', no narrowing prefix
+    # at all) or TestManifestPointerSymmetry below (a pointer
+    # alongside ':manifest()', reducing to exactly ONE entry), this is
+    # a REAL narrowing prefix (':name(...)'/'*'/etc.) with no pointer
+    # -- maps the manifest ENTRY (not a field) over every candidate
+    # the prefix matches, analogous to _bare_manifest_field_call()'s
+    # own "map a field over every entry" shape but with no field.
+    def test_name_then_manifest_maps_the_entry_over_matching_candidates(self):
+        # "one.csv" has two of alpha's three entries.
+        results = _finder(
+            '$alpha.files.:name("one.csv"):manifest()', ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert {r.uuid for r in results.results} == {"u-one-1", "u-one-2"}
+        assert {
+            r.data["uuid"] if isinstance(r.data, dict) else None
+            for r in results.results
+        } == {"u-one-1", "u-one-2"}
+
+    def test_query_gives_one_result_per_matching_candidate(self):
+        results = _finder(
+            '$alpha.files.:name("one.csv"):manifest()', ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert {r.uuid for r in results.results} == {"u-one-1", "u-one-2"}
+
+    def test_resolve_gives_the_whole_entry_not_just_a_field(self):
+        results = _finder(
+            '$alpha.files.:name("one.csv"):manifest()', ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        matched = next(
+            e for e in ALPHA_MANIFEST if e["uuid"] == results.results[0].uuid
+        )
+        assert results.results[0].data == matched
+
+    def test_explicit_star_before_manifest_is_the_same_shape(self):
+        # no ':name(...)' narrowing at all -- every file in the group
+        # is a candidate.
+        results = _finder(
+            "$alpha.files.*:manifest()", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert {r.uuid for r in results.results} == {
+            "u-zero-1",
+            "u-one-1",
+            "u-one-2",
+        }
+
+    def test_combined_with_a_pointer_is_still_rejected(self):
+        # untested/undecided combination -- no worked example asks
+        # for ':manifest()' alongside a pointer AND a narrowing
+        # prefix all at once in name_one.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$alpha.files.:name("one.csv"):last():manifest()',
+                ALPHA_HOME,
+                ALPHA_MANIFEST,
+            ).query()
+
+    def test_combined_with_worksheet_marker_is_rejected(self):
+        # a worksheet read means content (the sheet's own rows), not
+        # manifest entries -- not yet supported.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$alpha.files.:name("one.csv")#sheet1:manifest()',
+                ALPHA_HOME,
+                ALPHA_MANIFEST,
+            ).query()
+
+    def test_combined_with_name_three_is_still_rejected(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$alpha.files.:name("one.csv"):manifest().:last()',
+                ALPHA_HOME,
+                ALPHA_MANIFEST,
+            ).query()
+
+
 class TestManifestPointerSymmetry:
     # the literal-root_major counterpart to TestGlobalArrivalsLedger
     # OrdinalIndexing's Rule 1b -- a pointer (:first()/:last()/:index(n))

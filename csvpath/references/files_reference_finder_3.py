@@ -344,7 +344,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
 
         field_call = self._extract_gate_field_call(name_one)
-        if name_one.functions:
+        name_one_manifest = None
+        if reference.name_three is None:
+            name_one_manifest = self._name_one_manifest_call(name_one)
+        if name_one.functions and name_one_manifest is None:
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not yet support functions attached "
                 "directly to name_one -- put the version-selecting function in "
@@ -534,7 +537,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # nothing yet, since the function was still sitting in
                 # name_one.path at that point, not .functions.
                 field_call = self._extract_gate_field_call(name_one)
-            if name_one.functions:
+            if name_one_manifest is None and reference.name_three is None:
+                name_one_manifest = self._name_one_manifest_call(name_one)
+            if name_one.functions and name_one_manifest is None:
                 raise ReferenceException3(
                     "FilesReferenceFinder3 does not yet support functions "
                     "attached directly to name_one -- put the version-"
@@ -559,6 +564,31 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
         name_three = reference.name_three
         if name_three is None:
+            if name_one_manifest is not None and name_one.name_two is not None:
+                # not yet supported -- no worked example asks for a
+                # worksheet read alongside a bare, name_one-narrowed
+                # ':manifest()' (which resolves to manifest entries,
+                # not file content), so rejected explicitly rather
+                # than silently giving the wrong kind of result.
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not yet support a bare "
+                    "':manifest()' directly in name_one combined with the "
+                    "'#worksheet' marker (name_two) -- put the manifest "
+                    "read in name_three instead."
+                )
+            if name_one_manifest is not None:
+                # issue #410 -- a bare ':manifest()' chained after a
+                # real name_one narrowing prefix (e.g. ':name(
+                # "food.csv")') maps the manifest ENTRY over every
+                # candidate that prefix matched, analogous to
+                # _bare_manifest_field_call()'s own "map a field over
+                # every entry" shape but with no field to drill into.
+                return ReferenceResults3(
+                    results=[
+                        ReferenceResult3(path=c["file"], uuid=c["uuid"])
+                        for c in candidates
+                    ]
+                )
             if name_one.name_two is not None:
                 raise ReferenceException3(
                     "FilesReferenceFinder3 requires a version-selecting "
@@ -1333,6 +1363,36 @@ class FilesReferenceFinder3(ReferenceFinder3):
             if pathu.parts(entry["file_home"])[: len(home_parts)] == home_parts
         ]
 
+    def _name_one_manifest_call(self, name_one) -> "FunctionCall3 | None":
+        """the bare, argument-less ':manifest()' call when it is the
+        only thing left in `name_one.functions`, chained (no
+        separating '.') directly after a real narrowing prefix in
+        `name_one.path` (e.g. ':name("food.csv"):manifest()') -- a
+        peek, not a pop, same non-mutating reasoning as
+        _pointer_before_manifest() (reference_finder_3.py): so both
+        query() and _extract_data() can call this independently and
+        get the same answer. Added 2026-10-20 for issue #410.
+
+        The fully-bare ':manifest()' shape (nothing else at all) is
+        already intercepted earlier in query() by
+        _is_bare_pointer_reference() -- this is specifically the
+        combined, name_one-narrowed shape that was missing: maps the
+        manifest ENTRY (not a field) over every candidate the
+        narrowing prefix matches, the way _bare_manifest_field_call()
+        already maps a trailing FIELD over every entry of a fully-bare
+        ':manifest()' -- same idea, just with a real narrowing prefix
+        instead of none, and no field to drill into."""
+        if len(name_one.functions) != 1:
+            return None
+        candidate = name_one.functions[0]
+        if (
+            not isinstance(candidate, FunctionCall3)
+            or candidate.name != "manifest"
+            or candidate.arg is not None
+        ):
+            return None
+        return candidate
+
     def _extract_gate_field_call(self, name_one) -> "Function3 | None":
         """pops a single GATE-able field-accessor function (e.g.
         ':type("csv")') out of `name_one.functions`, IN PLACE, when it
@@ -1845,6 +1905,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # into '*' traversal (no worked example demonstrates or
                 # requires it there; see the bucket list).
                 return self._read_well_known_file(result.path)
+            if (
+                not isinstance(reference.root_major, Star3)
+                and reference.name_three is None
+                and self._name_one_manifest_call(reference.name_one) is not None
+                and result.uuid is not None
+            ):
+                # issue #410 -- query()'s own new branch already
+                # produced one ReferenceResult3 per candidate a real
+                # name_one narrowing prefix (e.g. ':name("food.csv")')
+                # matched; re-derive each one's own manifest entry by
+                # uuid, same pattern as every other METADATA_FILE
+                # branch here.
+                manifest = self.csvpaths.file_manager.get_manifest(
+                    reference.root_major
+                )
+                return self._find_manifest_entry_by_uuid(manifest, result.uuid)
             if isinstance(reference.root_major, Star3) and result.uuid is not None:
                 # Rule 1b -- a pointer already reduced the global ledger
                 # to one entry in query(); re-derive it the same way the
