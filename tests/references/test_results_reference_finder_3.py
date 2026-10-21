@@ -1819,18 +1819,33 @@ class TestStatementLevelPointer:
                 one_run_five_statements,
             ).query()
 
-    def test_not_yet_supported_across_a_star_root(
+    def test_now_supported_across_a_star_root(self, one_run_five_statements):
+        # not-yet-supported sweep #8, 2026-10-20: issue #418 originally
+        # built the literal-root case only -- _name_three_selector()
+        # was already shared, but nothing threaded `instance_pointer`
+        # into _results_for_run() for '*' traversal, so this used to
+        # raise explicitly rather than silently falling back to "the
+        # whole run." Now threaded through _star_pool_and_reduce()/
+        # _star_group_and_reduce() the same way the literal-root query()
+        # already passes it, so this resolves the same statement.
+        results = _finder(
+            "$*.results.customers/2025:first().:last()",
+            one_run_five_statements,
+        ).query()
+        assert results.uuids == ["f-uuid"]
+
+    def test_now_supported_across_a_star_root_group_mode(
         self, one_run_five_statements
     ):
-        # issue #418 is scoped to the literal-root case only (both
-        # David's own repro and the compendium's own worked example
-        # are literal-root) -- explicitly rejected here rather than
-        # silently falling back to "the whole run" across a '*' root.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$*.results.customers/2025:first().:last()",
-                one_run_five_statements,
-            ).query()
+        # same fix, GROUP mode's own code path (_star_group_and_reduce())
+        # instead of POOL mode's (_star_pool_and_reduce()) -- ':groups()'
+        # reaches any depth, matching this fixture's own "customers/2025"
+        # path.
+        results = _finder(
+            "$*.results.:groups():last().:last()",
+            one_run_five_statements,
+        ).query()
+        assert results.uuids == ["f-uuid"]
 
 
 class TestHomeAsAZeroLevelSelector:
