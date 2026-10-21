@@ -214,9 +214,24 @@ class TestBareUuidLookup:
         results = _finder('$acme.csvpaths.:uuid("nope")').query()
         assert results.results == []
 
-    def test_combined_with_name_three_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _finder('$acme.csvpaths.:uuid("v1-uuid").company_names').query()
+    def test_combines_with_name_three(self):
+        # not-yet-supported sweep #9, 2026-10-20: the bare selector
+        # already reduces to at most one version by construction, so
+        # name_three composes safely -- reuses the exact same shared
+        # _apply_name_three_to_versions() tail every other selected-
+        # versions path in this file goes through. "0" is v1-uuid's own
+        # real identity (ACME_MANIFEST above).
+        results = _finder('$acme.csvpaths.:uuid("v1-uuid").0').query()
+        assert results.uuids == ["v1-uuid"]
+        assert results.results[0].identity == "0"
+
+    def test_combined_with_name_three_no_match_gives_empty(self):
+        # "company_names" is a real identity, but it belongs to
+        # v0-uuid's own version, not v1-uuid's -- confirms the lookup is
+        # scoped to the matched version's own identities, not every
+        # version's.
+        results = _finder('$acme.csvpaths.:uuid("v1-uuid").company_names').query()
+        assert results.results == []
 
     def test_ordinary_field_accessor_usage_is_unaffected(self):
         # riding alongside a pointer in its original, pre-existing job
@@ -279,12 +294,23 @@ class TestBareFingerprintLookup:
         ).query()
         assert results.results == []
 
-    def test_combined_with_name_three_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$acme.csvpaths.:fingerprint("cccc").company_names',
-                manifest=FINGERPRINT_MANIFEST,
-            ).query()
+    def test_combines_with_name_three(self):
+        # not-yet-supported sweep #9, 2026-10-20 -- same fix as
+        # TestBareUuidLookup's own test above, shared code. "0" is
+        # v1-uuid's own real identity (FINGERPRINT_MANIFEST above).
+        results = _finder(
+            '$acme.csvpaths.:fingerprint("cccc").0',
+            manifest=FINGERPRINT_MANIFEST,
+        ).query()
+        assert results.uuids == ["v1-uuid"]
+        assert results.results[0].identity == "0"
+
+    def test_combined_with_name_three_no_match_gives_empty(self):
+        results = _finder(
+            '$acme.csvpaths.:fingerprint("cccc").company_names',
+            manifest=FINGERPRINT_MANIFEST,
+        ).query()
+        assert results.results == []
 
     def test_an_argument_in_the_field_accessor_position_is_rejected(self):
         # same guard :uuid()'s own ordinary-position case already has
@@ -985,6 +1011,7 @@ STAR_BETA_MANIFEST = [
         "group_file_path": "named_paths/beta/group.csvpath",
         "uuid": "b-v1",
         "time": "2026-01-03T00:00:00+00:00",
+        "named_paths_identities": ["orders", "1"],
     },
 ]
 STAR_BY_NAME = {"beta": STAR_BETA_MANIFEST, "alpha": STAR_ALPHA_MANIFEST}
@@ -1033,9 +1060,20 @@ class TestStarTraversalFlatten:
     # test below is what actually proves this class's sibling fix (the
     # traversal-guard exemption fixed 2026-08-26).
 
-    def test_name_three_combined_with_traversal_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _star_finder("$*.csvpaths.:last().0").query()
+    def test_name_three_now_composes_with_traversal(self):
+        # not-yet-supported sweep #9, 2026-10-20: name_three now
+        # applies generically to whatever _query_star_traversal() pools/
+        # groups across every named-paths group, the same shared tail
+        # the literal-root case already uses. ":last()" pools to b-v1
+        # (the true latest, per the test above); "orders" is its own
+        # real identity.
+        results = _star_finder("$*.csvpaths.:last().orders").query()
+        assert results.uuids == ["b-v1"]
+        assert results.results[0].identity == "orders"
+
+    def test_name_three_no_match_gives_empty(self):
+        results = _star_finder("$*.csvpaths.:last().nope").query()
+        assert results.results == []
 
 
 class TestStarTraversalPoolNoPointerIsOptional:
@@ -2043,10 +2081,20 @@ class TestTemplateBareVsPointerDualSource:
 
 
 class TestScopeLimits:
-    def test_star_root_major_not_yet_supported(self):
+    def test_star_root_major_now_supported(self):
+        # not-yet-supported sweep #9, 2026-10-20 -- this was a real
+        # scope limit (name_three unconditionally rejected during '*'
+        # traversal), now lifted; see TestStarTraversalFlatten's own
+        # test_name_three_now_composes_with_traversal for the full
+        # positive-match coverage. With the DEFAULT fixture here (no
+        # by_name -- named_paths_names comes back empty, see
+        # _FakePathsManager's own docstring), '*' traversal matches no
+        # groups at all, so this now resolves to empty results rather
+        # than raising -- confirms query() itself no longer blocks this
+        # shape outright.
         finder = _finder("$*.csvpaths.:last().x")
-        with pytest.raises(ReferenceException3):
-            finder.query()
+        results = finder.query()
+        assert results.results == []
 
     def test_name_two_worksheet_marker_not_yet_supported(self):
         finder = _finder("$acme.csvpaths.:last()#sheet1.x")

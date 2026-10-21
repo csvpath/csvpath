@@ -42,8 +42,14 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     #    that -- index-mode (int/:index(n)) POSITIONALLY slices;
     #    date-mode (str/:date(...)) FILTERS by each version's own "time"
     #    manifest field (see functions/fields/time_3.py). Mixing modes
-    #    in one pair is rejected. Not yet supported combined with '*'
-    #    traversal -- see _resolve_versions/_query_star_traversal.
+    #    in one pair is rejected. Combined with '*' traversal, this is a
+    #    settled restriction, not a gap (not-yet-supported sweep #9,
+    #    2026-10-20) -- the range would apply to the pooled/grouped
+    #    version list before any grouping-by-name partitioning, the same
+    #    inherent pooled-vs-per-group ambiguity FilesReferenceFinder3's
+    #    and ResultsReferenceFinder3's own identical restrictions have
+    #    (see _query_star_traversal()'s own `non_pointers` catch-all,
+    #    which already raises for this shape).
     #    ":manifest()" may ride alongside the version
     #    pointer in this same combined chain (e.g. ":last():manifest()")
     #    -- it never narrows/selects itself (see functions/manifest_3.py),
@@ -77,7 +83,12 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     #    across every matched statement -- ReferenceResult3.identity
     #    (see its own docstring) is what _extract_data() uses to tell
     #    them apart. No other function chain on name_three is supported
-    #    yet (see "creating references v3.txt"'s † footnote on this).
+    #    (see "creating references v3.txt"'s † footnote on this).
+    #    name_three now composes with '*' traversal too (added
+    #    2026-10-20, not-yet-supported sweep #9) -- applied generically
+    #    via the shared _apply_name_three_to_versions(), the literal-
+    #    root case's own logic extracted so _query_star_traversal() can
+    #    reuse it unchanged.
     #
     # storage facts this relies on (confirmed against PathsManager/
     # PathsRegistrar and the real per-group manifest schema, not
@@ -204,24 +215,24 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # function's own KEY) matches, rather than reading a field
             # off an already-pointer-selected version.
             call = name_one.path[0]
-            if reference.name_three is not None:
-                raise ReferenceException3(
-                    f"CsvpathsReferenceFinder3 does not yet support "
-                    f"combining a bare ':{call.name}(...)' lookup with "
-                    "name_three -- it already identifies one specific "
-                    "version on its own."
-                )
+            # name_three now composes here too (not-yet-supported sweep
+            # #9, 2026-10-20) -- `matched` is already reduced to at most
+            # one version by construction (a uuid/fingerprint-style
+            # lookup is unique in practice, same reasoning FILES' own
+            # analogous selector-plus-name_three fix relies on), and
+            # unlike a bare chain riding in name_one (task #2's own
+            # FILES finding), there is no resolve_kind conflict here --
+            # this selector's whole job is already done once `matched`
+            # is computed, it carries no field-read intent of its own
+            # for name_three to clobber. Reuses the exact shared tail
+            # _apply_name_three_to_versions() every other selected-
+            # versions path in this file already goes through.
             function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
             key = function_cls.KEY.get(Reference3.CSVPATHS)
             manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
             value = call.arg
             matched = [e for e in manifest if e.get(key) == value]
-            return ReferenceResults3(
-                results=[
-                    ReferenceResult3(path=e["group_file_path"], uuid=e["uuid"])
-                    for e in matched
-                ]
-            )
+            return self._apply_name_three_to_versions(matched, reference.name_three)
 
         manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
         selected_versions = self._resolve_versions(name_one, manifest)
@@ -246,7 +257,27 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         has_manifest = any(seg.name == "manifest" for seg in combined)
         ambiguous_content_read = has_manifest and len(selected_versions) > 1
 
-        name_three = reference.name_three
+        return self._apply_name_three_to_versions(
+            selected_versions, reference.name_three, ambiguous_content_read
+        )
+
+    def _apply_name_three_to_versions(
+        self,
+        selected_versions: list,
+        name_three,
+        ambiguous_content_read: bool = False,
+    ) -> ReferenceResults3:
+        """applies name_three's own identity/range semantics to each
+        already-selected version generically -- shared between query()'s
+        literal-root case and _query_star_traversal() (added 2026-10-20,
+        not-yet-supported sweep #9, closing the "name_three combined
+        with '*' traversal" gap this class's own docstring used to flag
+        as "not yet supported"). Nothing here depends on how
+        `selected_versions` was gathered (one group's manifest vs. every
+        matching group's own, pooled or partitioned) -- each entry's own
+        shape (group_file_path/uuid/named_paths_identities) is identical
+        either way, confirmed by both call sites reading from the same
+        PathsManager.get_manifest_for_name() source."""
         from_call = to_call = None
         if name_three is not None:
             if name_three.functions:
@@ -441,9 +472,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         query() through a completely different branch (_pointer_before_
         manifest below) and never lands here at all.
 
-        Still deliberately narrow, matching FILES' own scoping: combining
-        '*' traversal with name_three is not yet supported -- raises
-        clearly rather than guessing. A registered field-accessor
+        Still deliberately narrow, matching FILES' own scoping. name_three
+        (a statement identity/range lookup) IS now supported alongside
+        '*' traversal (added 2026-10-20, not-yet-supported sweep #9) --
+        applied generically to every matched version via the shared
+        _apply_name_three_to_versions(), the same way query()'s own
+        literal-root case already does; nothing in that logic depends on
+        how `selected_versions` was gathered. A registered field-accessor
         function (e.g. :uuid(), :named_paths_name()) IS now supported
         alongside the pointer (added 2026-08-18, mirroring RESULTS' own
         equivalent fix) -- _extract_data() resolves it via
@@ -474,11 +509,6 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             raise ReferenceException3(
                 "CsvpathsReferenceFinder3 does not support the '#worksheet' "
                 "marker (name_two) -- it is files-only."
-            )
-        if reference.name_three is not None:
-            raise ReferenceException3(
-                "CsvpathsReferenceFinder3 does not yet support name_three "
-                "(a statement identity lookup) combined with '*' traversal."
             )
         if len(name_one.path) != 1 or not isinstance(name_one.path[0], FunctionCall3):
             raise ReferenceException3(
@@ -524,13 +554,21 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             and f is not manifest_call
         ]
         if non_pointers:
+            # exhaustive, not partial (not-yet-supported sweep #9) --
+            # mirrors ResultsReferenceFinder3's own identical `non_
+            # pointers` catch-all exactly (already confirmed exhaustive
+            # there): every currently-recognized category is already
+            # excluded by name above, so reaching here means a
+            # genuinely unrecognized function, including name_one's own
+            # ':from()'/':to()' (a settled restriction, not a gap -- see
+            # this class's own docstring on why).
             raise ReferenceException3(
-                f"CsvpathsReferenceFinder3 does not yet support "
+                f"CsvpathsReferenceFinder3 does not support "
                 f":{non_pointers[0].name}() combined with '*' traversal -- "
                 "only a plain pointer (:first()/:last()/:index(n)), "
                 "optionally combined with :all(), :having(\"identity\"), "
                 ":manifest(), or a registered field-accessor function "
-                "(e.g. :uuid()), is supported so far."
+                "(e.g. :uuid()), is supported."
             )
         field_call_key_path = (
             field_call.KEY.get(Reference3.CSVPATHS)
@@ -627,11 +665,8 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             else:
                 selected_versions = pooled
 
-        return ReferenceResults3(
-            results=[
-                ReferenceResult3(path=c["group_file_path"], uuid=c["uuid"])
-                for c in selected_versions
-            ]
+        return self._apply_name_three_to_versions(
+            selected_versions, reference.name_three
         )
 
     def _extract_data(self, result: ReferenceResult3):
@@ -844,12 +879,14 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         and named_paths_home_3.py."""
         if name == "named_paths_home":
             if self._is_traversal_root(reference.root_major):
+                # settled, not a gap (not-yet-supported sweep #9) --
                 # unlike _group_manifest_entry() (which can search every
                 # group for a matching uuid), "the home directory" has
                 # no single answer across several groups at once -- not
-                # attempted, see the function's own docstring.
+                # a missing feature, a structural impossibility (see
+                # the function's own docstring).
                 raise ReferenceException3(
-                    "CsvpathsReferenceFinder3 does not yet support "
+                    "CsvpathsReferenceFinder3 does not support "
                     ":named_paths_home() combined with '*'/:regex() "
                     "traversal -- root_major must be a literal named-"
                     "paths group name."
