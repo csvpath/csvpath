@@ -138,18 +138,22 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             return self._query_star_traversal(reference)
 
         if isinstance(root_major, FunctionCall3):
-            # :regex() at root_major -- added 2026-08-27. Structurally
-            # identical to the Star3 case just above (every group is a
-            # candidate), just pre-filtered by pattern before
+            # :regex()/:choice() at root_major -- :regex() added
+            # 2026-08-27, :choice() added 2026-10-20 (ChoiceSelector3's
+            # own .pattern property already compiles down to an
+            # equivalent anchored regex alternation, so it is built and
+            # used identically from here on). Structurally identical to
+            # the Star3 case just above (every group is a candidate),
+            # just pre-filtered by pattern before
             # _query_star_traversal() enumerates -- see its own
             # name_filter docstring. No other function is legal here;
             # the grammar itself is permissive (any function, see
             # reference_grammar_3.py's own note) so this is a semantic
             # check, not a grammar-level one.
-            if root_major.name != "regex":
+            if root_major.name not in ("regex", "choice"):
                 raise ReferenceException3(
                     f":{root_major.name}() is not a legal root_major "
-                    "function -- only :regex() is supported."
+                    "function -- only :regex()/:choice() are supported."
                 )
             built = self._build(root_major)
             return self._query_star_traversal(reference, name_filter=built.pattern)

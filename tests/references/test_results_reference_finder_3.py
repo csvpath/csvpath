@@ -5120,3 +5120,36 @@ class TestRegexRootMajor:
             variables={"aregex": "^abba_.*"},
         ).query()
         assert results.uuids == ["abba-run-uuid"]
+
+
+class TestChoiceRootMajor:
+    # :choice() at root_major -- added 2026-10-20, the exact-match
+    # sibling of :regex() just above. Minimal symmetric coverage --
+    # the real behavioral tests live in test_files_reference_finder_3.py
+    # (TestChoiceRootMajor/TestChoiceAsNameOnePathSegment); this just
+    # confirms ResultsReferenceFinder3 wires it the same way.
+    @pytest.fixture
+    def choice_archive(self, tmp_path):
+        acme_run = _make_run(
+            tmp_path / "acme_group", "2026-01-01_00-00-00", "acme-run-uuid", {}
+        )
+        abba_run = _make_run(
+            tmp_path / "abba_group", "2026-01-02_00-00-00", "abba-run-uuid", {}
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme_group": [acme_run], "abba_group": [abba_run]}
+        )
+        return str(tmp_path)
+
+    def test_choice_filters_to_listed_groups(self, choice_archive):
+        results = _finder(
+            '$:choice("abba_group|zzz_nonexistent").results.:last()',
+            choice_archive,
+        ).query()
+        assert results.uuids == ["abba-run-uuid"]
+
+    def test_choice_does_not_partial_match(self, choice_archive):
+        results = _finder(
+            '$:choice("abba").results.:last()', choice_archive
+        ).query()
+        assert results.uuids == []

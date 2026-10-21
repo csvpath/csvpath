@@ -202,18 +202,22 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             return self._query_star_traversal(reference)
 
         if isinstance(root_major, FunctionCall3):
-            # :regex() at root_major -- added 2026-08-27. Structurally
-            # identical to the Star3 case just above (every group is a
-            # candidate), just pre-filtered by pattern before
+            # :regex()/:choice() at root_major -- :regex() added
+            # 2026-08-27, :choice() added 2026-10-20 (ChoiceSelector3's
+            # own .pattern property already compiles down to an
+            # equivalent anchored regex alternation, so it is built and
+            # used identically from here on). Structurally identical to
+            # the Star3 case just above (every group is a candidate),
+            # just pre-filtered by pattern before
             # _query_star_traversal() enumerates -- see its own
             # name_filter docstring. No other function is legal here;
             # the grammar itself is permissive (any function, see
             # reference_grammar_3.py's own note) so this is a semantic
             # check, not a grammar-level one.
-            if root_major.name != "regex":
+            if root_major.name not in ("regex", "choice"):
                 raise ReferenceException3(
                     f":{root_major.name}() is not a legal root_major "
-                    "function -- only :regex() is supported."
+                    "function -- only :regex()/:choice() are supported."
                 )
             built = self._build(root_major)
             return self._query_star_traversal(reference, name_filter=built.pattern)
@@ -2127,19 +2131,21 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         """true for a name_one with no literal path at all -- its sole
         path "segment" is itself a version-selecting function (e.g.
         :all()/:first()/:last()/:index(n)), mirroring csvpaths' own
-        "path[0] is a FunctionCall3" shape. :name("...")/:regex(...) are
-        excluded -- both are path-*building* (matching a template
-        segment, literally or by pattern), not a version selector, so
-        they stay in the ordinary literal-path shape even as the sole
-        segment (added 2026-09-23 for ':regex()', matching ':name()'s'
-        own precedent -- e.g. "$alpha.results.:regex(\"2026-01-01_\").
-        header_checks:errors()" needs to reach _compile_path_pattern(),
-        not be misclassified as a version-selector/grouping marker the
-        way ':all()'/':first()' are)."""
+        "path[0] is a FunctionCall3" shape. :name("...")/:regex(...)/
+        :choice(...) are excluded -- all three are path-*building*
+        (matching a template segment, literally, by pattern, or by
+        exact-match alternation), not a version selector, so they stay
+        in the ordinary literal-path shape even as the sole segment
+        (added 2026-09-23 for ':regex()', matching ':name()'s' own
+        precedent, and 2026-10-20 for ':choice()' the same way -- e.g.
+        "$alpha.results.:regex(\"2026-01-01_\").header_checks:errors()"
+        needs to reach _compile_path_pattern(), not be misclassified
+        as a version-selector/grouping marker the way ':all()'/
+        ':first()' are)."""
         return (
             len(name_one.path) == 1
             and isinstance(name_one.path[0], FunctionCall3)
-            and name_one.path[0].name not in ("name", "regex")
+            and name_one.path[0].name not in ("name", "regex", "choice")
         )
 
     def _pointer_from_calls(self, calls: list):
