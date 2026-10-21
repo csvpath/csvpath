@@ -287,22 +287,19 @@ class TestTemplatePredicateFiltering:
 
 
 class TestStarTemplatePredicateFiltering:
-    """FilesReferenceFinder3.query()'s Star3 root_major branch raises
-    ReferenceException3('Does not yet support :template() as a name_one
-    path segment') for the EXACT normative example
+    """FilesReferenceFinder3.query()'s Star3 root_major branch previously
+    raised ReferenceException3('Does not yet support :template() as a
+    name_one path segment') for the EXACT normative example
     '$*.files.:template(:not_empty())' (normative_reference_examples.txt
     line 197, "get a list of all templates used in registrations") --
     a known, cleanly-rejected gap, not silently wrong, but it still
-    blocks this normative example from working at all. Fix tracked in a
-    separate PR (#436, stacked on this one -- _query_star_traversal()
-    needs to recognize a bare BARE_SOURCE == "definition" field call the
-    way the literal-root branch, fixed here, already does), not yet
-    present on this branch."""
+    blocked this normative example from working at all. Fixed 2026-10-21:
+    _query_star_traversal() now recognizes a bare BARE_SOURCE ==
+    "definition" field call (the same _bare_definition_field_call()
+    check the literal-root branch uses) and applies the identical
+    predicate-filtering logic across every matching named-file, instead
+    of falling through to generic path-pattern compilation."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="Star3 :template(predicate) dispatch -- fix tracked in #436, not this branch.",
-    )
     def test_not_empty_matches_every_named_file_with_no_default_template(self, csvpaths):
         # none of the four named-files groups has ever set a default
         # template via a dedicated call (see TestTemplatePredicateFiltering
@@ -313,10 +310,6 @@ class TestStarTemplatePredicateFiltering:
             for name in ("acme_invoices", "orders", "zipcodes", "energy_readings")
         )
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="Star3 :template(predicate) dispatch -- fix tracked in #436, not this branch.",
-    )
     def test_empty_matches_none(self, csvpaths):
         r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:empty())")
         assert r.files == []
