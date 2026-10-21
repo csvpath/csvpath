@@ -1829,9 +1829,10 @@ class TestBareFingerprintLookup:
                 "$finn.files.:fingerprint()", FINGERPRINT_HOME, FINGERPRINT_MANIFEST
             ).query()
 
-    def test_combined_with_name_three_is_not_yet_supported(self):
+    def test_combined_with_name_three_is_rejected(self):
         # a fingerprint already identifies one specific version -- no
-        # further narrowing is meaningful.
+        # further narrowing is meaningful. Settled, not a gap -- see
+        # query()'s own comment.
         with pytest.raises(ReferenceException3):
             _finder(
                 '$finn.files.:fingerprint("cccc").:last()',
@@ -2141,19 +2142,75 @@ class TestStatusGate:
         ).query()
         assert results.results == []
 
-    def test_name_three_is_rejected_star_root(self):
+    def test_name_three_pointer_star_root(self):
+        # not-yet-supported sweep #2, 2026-10-20: a lone version-
+        # selecting pointer in name_three now reduces the status-
+        # filtered ledger matches to one, same as every other pointer-
+        # reduced FILES reference -- no _extract_data() changes needed,
+        # since the returned result's path/uuid already point straight
+        # at the selected entry (see _pointer_into_status_matches()'s
+        # own docstring).
+        results = _finder(
+            '$*.files.:status("Registration failed").:last()',
+            TYPE_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+        ).query()
+        assert results.uuids == ["fail-2"]
+
+    def test_name_three_pointer_literal_root(self):
+        results = _finder(
+            '$orders.files.:status("Registration failed").:first()',
+            TYPE_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+        ).query()
+        assert results.uuids == ["fail-1"]
+
+    def test_name_three_index_pointer(self):
+        results = _finder(
+            '$*.files.:status("Registration failed").:index(1)',
+            TYPE_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+        ).query()
+        assert results.uuids == ["fail-2"]
+
+    def test_name_three_pointer_narrows_a_named_file_name_chain_too(self):
+        results = _finder(
+            '$*.files.:status("Registration failed"):named_file_name("orders").:first()',
+            TYPE_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+        ).query()
+        assert results.uuids == ["fail-1"]
+
+    def test_name_three_pointer_no_match_gives_empty(self):
+        results = _finder(
+            '$*.files.:status("nope").:last()',
+            TYPE_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+        ).query()
+        assert results.results == []
+
+    def test_name_three_field_accessor_is_rejected(self):
+        # the ledger-vs-manifest plumbing a chained field accessor would
+        # need in _extract_data() is not built -- see
+        # _pointer_into_status_matches()'s own docstring. Only a lone
+        # pointer is supported.
         with pytest.raises(ReferenceException3):
             _finder(
-                '$*.files.:status("Registration failed").:last()',
+                '$*.files.:status("Registration failed").:last():uuid()',
                 TYPE_HOME,
                 [],
                 ledger=STATUS_LEDGER,
             ).query()
 
-    def test_name_three_is_rejected_literal_root(self):
+    def test_name_three_literal_body_is_rejected(self):
         with pytest.raises(ReferenceException3):
             _finder(
-                '$orders.files.:status("Registration failed").:last()',
+                '$orders.files.:status("Registration failed").some_fingerprint',
                 TYPE_HOME,
                 [],
                 ledger=STATUS_LEDGER,
