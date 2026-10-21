@@ -773,20 +773,65 @@ class TestAllGrouping:
         ).query()
         assert results.uuids == ["beta-2"]
 
-    def test_all_grouping_combined_with_manifest_is_not_yet_supported(
+    def test_all_grouping_combined_with_manifest_query_reduces_each_group_first(
         self, tmp_path
     ):
-        # REVISED 2026-09-21: the fixture run moved to zero-level (was
-        # 1-level "zero/", which ':all()' no longer matches at all --
-        # with no candidates, group_key_for would come back empty/falsy
-        # and this exception would never trigger).
-        base = tmp_path / "alpha"
-        run1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
-        _write_archive_manifest(tmp_path, "alpha", [run1])
+        # not-yet-supported sweep #7, 2026-10-20: used to raise
+        # unconditionally here -- query() no longer does, since each
+        # distinct group reduces to AT MOST one run via the pointer
+        # BEFORE ':manifest()' ever reads anything (the identical shape
+        # _star_group_and_reduce() already proved safe to let past
+        # query() for '*' traversal). resolve() is a separate question
+        # -- see the two tests below -- this file's own
+        # ambiguous_content_read computation was deliberately NOT given
+        # FilesReferenceFinder3's own partition-aware exemption (that
+        # would need the same re-audit _star_group_and_reduce()'s own
+        # comment on this exact point flags as unfinished), so resolving
+        # more than one group's own full content at once still raises,
+        # same as before -- only query() itself was blocked unnecessarily.
+        base = tmp_path / "alpha" / "test"
+        x1 = _make_run(base / "x" / "one", "2026-01-01_00-00-00", "x-1", {})
+        x2 = _make_run(base / "x" / "one", "2026-01-02_00-00-00", "x-2", {})
+        y1 = _make_run(base / "y" / "one", "2026-01-03_00-00-00", "y-1", {})
+        _write_archive_manifest(tmp_path, "alpha", [x1, x2, y1])
+        results = _finder(
+            "$alpha.results.test/:all()/one:last():manifest()", str(tmp_path)
+        ).query()
+        assert set(results.uuids) == {"x-2", "y-1"}
+
+    def test_all_grouping_combined_with_manifest_resolves_when_exactly_one_group(
+        self, tmp_path
+    ):
+        # with only one distinct group, len(results) == 1, so there is
+        # no ambiguity at all -- resolve() succeeds and reads the real
+        # manifest entry.
+        base = tmp_path / "alpha" / "test"
+        x1 = _make_run(base / "x" / "one", "2026-01-01_00-00-00", "x-1", {})
+        x2 = _make_run(base / "x" / "one", "2026-01-02_00-00-00", "x-2", {})
+        _write_archive_manifest(tmp_path, "alpha", [x1, x2])
+        results = _finder(
+            "$alpha.results.test/:all()/one:last():manifest()", str(tmp_path)
+        ).resolve()
+        assert results.uuids == ["x-2"]
+        assert isinstance(results.results[0].data, dict)
+
+    def test_all_grouping_combined_with_manifest_resolve_still_rejects_plural(
+        self, tmp_path
+    ):
+        # Rule 1 (manifest_field_functions_proposal.md): resolving full
+        # content for more than one entity at once is still illegal --
+        # deliberately NOT relaxed here (unlike FilesReferenceFinder3's
+        # own partition-aware exemption), so two distinct groups' own
+        # :manifest() reads still cannot both be resolved at once.
+        base = tmp_path / "alpha" / "test"
+        x1 = _make_run(base / "x" / "one", "2026-01-01_00-00-00", "x-1", {})
+        x2 = _make_run(base / "x" / "one", "2026-01-02_00-00-00", "x-2", {})
+        y1 = _make_run(base / "y" / "one", "2026-01-03_00-00-00", "y-1", {})
+        _write_archive_manifest(tmp_path, "alpha", [x1, x2, y1])
         with pytest.raises(ReferenceException3):
             _finder(
-                "$alpha.results.:all():last():manifest()", str(tmp_path)
-            ).query()
+                "$alpha.results.test/:all()/one:last():manifest()", str(tmp_path)
+            ).resolve()
 
 
 class TestAllGroupingAtAMiddlePosition:
@@ -1138,14 +1183,22 @@ class TestGroups:
                 "$alpha.results.:flatten():groups():last()", str(tmp_path)
             ).query()
 
-    def test_groups_combined_with_manifest_is_not_yet_supported(self, tmp_path):
+    def test_groups_combined_with_manifest_resolves_with_one_group(self, tmp_path):
+        # not-yet-supported sweep #7, 2026-10-20: used to raise
+        # unconditionally in query() -- the single group here reduces
+        # to exactly one run via the pointer before ':manifest()' reads
+        # anything, so there is no ambiguity at all and resolve()
+        # succeeds. See TestAllGrouping's own tests for the multi-group
+        # case (query() succeeds too; resolve() still correctly rejects
+        # resolving more than one group's content at once, unchanged).
         base = tmp_path / "alpha"
         run1 = _make_run(base / "zero", "2026-01-01_00-00-00", "zero-1", {})
         _write_archive_manifest(tmp_path, "alpha", [run1])
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$alpha.results.:groups():last():manifest()", str(tmp_path)
-            ).query()
+        results = _finder(
+            "$alpha.results.:groups():last():manifest()", str(tmp_path)
+        ).resolve()
+        assert results.uuids == ["zero-1"]
+        assert isinstance(results.results[0].data, dict)
 
 
 class TestRunLevelRange:

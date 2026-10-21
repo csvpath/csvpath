@@ -620,8 +620,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # semantics question is deliberately settled, not attempted
             # here for lack of a driving use case.
             if group_key_for:
+                # settled, not a gap (not-yet-supported sweep #7): the
+                # range would apply to the POOLED candidate list before
+                # partitioning -- "the last N" could mean the last N
+                # pooled across every group, or the last N WITHIN each
+                # group, and nothing in the spec picks one. Matches
+                # FilesReferenceFinder3's own identical rejection for
+                # the identical shape (that file's own copy was fixed
+                # to this exact wording in task #5 of this same sweep).
                 raise ReferenceException3(
-                    "ResultsReferenceFinder3 does not yet support combining "
+                    "ResultsReferenceFinder3 does not support combining "
                     "':from()'/':to()' with ':all()'/':groups()' grouping."
                 )
             from_bound = self._range_bound(from_call) if from_call is not None else None
@@ -668,16 +676,24 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             if isinstance(seg, FunctionCall3)
         )
         wants_full_content = has_manifest or accessor is not None
-        if group_key_for and (
-            wants_full_content or self._find_field_function_call(calls) is not None
-        ):
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 does not yet support combining "
-                "':all()'/':groups()' grouping with :manifest() or a "
-                "run-level field accessor -- resolve the grouped runs on "
-                "their own first."
-            )
-
+        # partition-aware fix, added 2026-10-20 (not-yet-supported sweep
+        # #7): this used to be an unconditional rejection here --
+        # "ResultsReferenceFinder3 does not yet support combining
+        # ':all()'/':groups()' grouping with :manifest() or a run-level
+        # field accessor." group_key_for is only ever set alongside a
+        # real `pointer` (every site that sets it above is itself inside
+        # an `if pointer is not None:` guard), so the `if group_key_for:`
+        # branch just below already reduces each distinct group to AT
+        # MOST one run via that pointer, BEFORE :manifest()/a field
+        # accessor ever reads anything -- the identical shape
+        # `_star_group_and_reduce()` (this file's own '*'-traversal twin)
+        # already proved safe to defer rather than raise, confirmed via
+        # its own docstring before porting the fix here. `len(results) >
+        # 1` at the bottom can therefore only mean "more than one
+        # group's own already-individually-legitimate winner," which
+        # `ambiguous_content_read` already defers correctly -- no new
+        # exemption needed, this file's own existing computation already
+        # handles it.
         if group_key_for:
             # partition candidates by their own observed group key,
             # apply the pointer independently within each partition --
