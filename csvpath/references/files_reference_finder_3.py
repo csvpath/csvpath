@@ -355,8 +355,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
             and name_one_pointer is None
             and name_one_manifest is None
         ):
+            # settled, not a gap (not-yet-supported sweep #3): the
+            # compendium's own STRUCTURE table draws this exact line --
+            # name_one picks WHICH file, name_three picks WHICH version
+            # -- and no worked example anywhere chains a version-
+            # selecting function directly onto a literal path with no
+            # separating "." (every one either uses name_three, or uses
+            # a path-BUILDING function like :name()/:regex() exempted
+            # above). This is restating the design, not deferring it.
             raise ReferenceException3(
-                "FilesReferenceFinder3 does not yet support functions attached "
+                "FilesReferenceFinder3 does not support functions attached "
                 "directly to name_one -- put the version-selecting function in "
                 "name_three instead."
             )
@@ -554,8 +562,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 and name_one_pointer is None
                 and name_one_manifest is None
             ):
+                # same settled restriction as the literal-root branch
+                # above (not-yet-supported sweep #3) -- just reached via
+                # the implied-'*' normalization instead of a direct
+                # literal path, e.g. "orders/:after(...)".
                 raise ReferenceException3(
-                    "FilesReferenceFinder3 does not yet support functions "
+                    "FilesReferenceFinder3 does not support functions "
                     "attached directly to name_one -- put the version-"
                     "selecting function in name_three instead."
                 )
@@ -1234,8 +1246,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # elsewhere in this method.
             manifest_field_call = self._bare_manifest_field_call(name_one)
             if reference.name_three is not None:
+                # settled, not a gap -- the '*' traversal twin of the
+                # literal-root restriction query() raises for the same
+                # shape (not-yet-supported sweep #2's own writeup):
+                # resolve_kind's terminal_functions reads only name_three.
+                # functions once name_three exists, so a pointer riding
+                # here would silently drop this chain's own field intent.
                 raise ReferenceException3(
-                    f"FilesReferenceFinder3 does not yet support combining a "
+                    f"FilesReferenceFinder3 does not support combining a "
                     f"bare ':manifest():{manifest_field_call.name}()' lookup "
                     "with name_three during '*' traversal -- it already "
                     "reads a field from every matched entry on its own."
@@ -1251,8 +1269,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         else:
             if name_one.functions:
+                # same settled restriction as query()'s own literal-root
+                # branch (not-yet-supported sweep #3), for '*' traversal.
                 raise ReferenceException3(
-                    "FilesReferenceFinder3 does not yet support functions "
+                    "FilesReferenceFinder3 does not support functions "
                     "attached directly to name_one for '*' traversal -- put "
                     "the version-selecting function in name_three instead."
                 )
