@@ -2239,3 +2239,23 @@ class TestRegexRootMajor:
             by_name=REGEX_BY_NAME,
         ).resolve()
         assert results.results[0].data == "abba-v1"
+
+
+class TestChoiceRootMajor:
+    # :choice() at root_major -- added 2026-10-20, the exact-match
+    # sibling of :regex() just above. Minimal symmetric coverage --
+    # the real behavioral tests live in test_files_reference_finder_3.py
+    # (TestChoiceRootMajor/TestChoiceAsNameOnePathSegment); this just
+    # confirms CsvpathsReferenceFinder3 wires it the same way.
+    def test_choice_filters_to_listed_groups(self):
+        results = _finder(
+            '$:choice("abba_group|zzz_nonexistent").csvpaths.:last()',
+            by_name=REGEX_BY_NAME,
+        ).query()
+        assert results.uuids == ["abba-v1"]
+
+    def test_choice_does_not_partial_match(self):
+        results = _finder(
+            '$:choice("abba").csvpaths.:last()', by_name=REGEX_BY_NAME
+        ).query()
+        assert results.uuids == []

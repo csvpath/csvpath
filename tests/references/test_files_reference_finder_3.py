@@ -3866,3 +3866,109 @@ class TestRegexRootMajor:
             variables={"aregex": "^abba_.*"},
         ).query()
         assert results.files == [REGEX_ABBA_HOME]
+
+
+class TestChoiceRootMajor:
+    # :choice() at root_major -- added 2026-10-20, closing one of the
+    # 30 "does not yet support" sites catalogued that day
+    # (reference_finder_3.py's own "Does not yet support :X() as a
+    # name_one path segment," since the compendium lists :choice() as
+    # a path-segment-occupying analog of :name()/:regex() -- but
+    # :choice() was never a registered function at all until now).
+    # Compendium "Functions in root_major": "a pipe-delimited sequence
+    # of matching names" -- exact-match alternative to :regex()'s own
+    # pattern match. Reuses the exact same '*'-traversal machinery
+    # :regex() already does (same REGEX_* fixtures), just via
+    # ChoiceSelector3's own .pattern property instead.
+    def test_choice_selects_every_listed_name(self):
+        results = _finder(
+            '$:choice("acme_orders|abba_invoices").files.:home()',
+            REGEX_ACME_HOME,
+            REGEX_ACME_MANIFEST,
+            by_name=REGEX_BY_NAME,
+        ).query()
+        assert set(results.files) == {REGEX_ACME_HOME, REGEX_ABBA_HOME}
+
+    def test_choice_excludes_names_not_listed(self):
+        results = _finder(
+            '$:choice("abba_invoices").files.:home()',
+            REGEX_ACME_HOME,
+            REGEX_ACME_MANIFEST,
+            by_name=REGEX_BY_NAME,
+        ).query()
+        assert results.files == [REGEX_ABBA_HOME]
+
+    def test_choice_with_no_matching_name_gives_empty(self):
+        results = _finder(
+            '$:choice("zzz_nonexistent").files.:home()',
+            REGEX_ACME_HOME,
+            REGEX_ACME_MANIFEST,
+            by_name=REGEX_BY_NAME,
+        ).query()
+        assert results.files == []
+
+    def test_choice_does_not_do_partial_or_pattern_matching(self):
+        # exact match only -- "acme" alone must not match
+        # "acme_orders" the way a :regex() substring search would.
+        results = _finder(
+            '$:choice("acme").files.:home()',
+            REGEX_ACME_HOME,
+            REGEX_ACME_MANIFEST,
+            by_name=REGEX_BY_NAME,
+        ).query()
+        assert results.files == []
+
+    def test_choice_accepts_a_registered_variable(self):
+        results = _finder(
+            "$:choice(@names).files.:home()",
+            REGEX_ACME_HOME,
+            REGEX_ACME_MANIFEST,
+            by_name=REGEX_BY_NAME,
+            variables={"names": "abba_invoices"},
+        ).query()
+        assert results.files == [REGEX_ABBA_HOME]
+
+
+class TestChoiceAsNameOnePathSegment:
+    # :choice() as a bare/implied-'*' name_one path segment -- the
+    # OTHER half of compendium 3.9c's own "fully occupies a path
+    # segment" listing (:name()/:regex()/:choice()). Reuses the exact
+    # same _compile_path_pattern()/_apply_implied_star() machinery
+    # :regex() already does, via the shared Regex3 wrapper.
+    def test_choice_matches_one_of_several_literal_files_in_a_group(self):
+        results = _finder(
+            '$alpha.files.:choice("one.csv|zero.csv").:last()',
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-one-2"]
+
+    def test_choice_excludes_a_file_not_listed(self):
+        results = _finder(
+            '$alpha.files.:choice("zero.csv"):last()',
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-zero-1"]
+
+    def test_choice_combined_with_the_worksheet_marker_is_legal(self):
+        # same exemption :name()/:regex() already get -- a path-
+        # BUILDING function (a literal name, pattern, or alternation)
+        # is not a version-selector/grouping marker, so '#worksheet'
+        # is allowed alongside it (an actual version still needs to
+        # be selected too, via name_three, or this still raises for
+        # an unrelated reason -- not exercised further here, just
+        # confirming the '#worksheet'-requires-literal-path guard
+        # itself does not reject :choice() outright the way it would
+        # an unrelated function).
+        with pytest.raises(ReferenceException3) as exc_info:
+            _finder(
+                '$alpha.files.:choice("one.csv")#sheet1',
+                ALPHA_HOME,
+                ALPHA_MANIFEST,
+            ).query()
+        # the raised error must be the "needs a pointer" one, not the
+        # "#worksheet only means anything against a literal path" one
+        # -- proving :choice() was correctly recognized as path-
+        # building, same as :name()/:regex().
+        assert "requires a version-selecting pointer" in str(exc_info.value)

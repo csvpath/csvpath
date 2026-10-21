@@ -181,18 +181,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
             return self._query_star_traversal(reference)
 
         if isinstance(root_major, FunctionCall3):
-            # :regex() at root_major -- added 2026-08-27. Structurally
-            # identical to the Star3 case just above (every named-file
-            # is a candidate), just pre-filtered by pattern before
+            # :regex()/:choice() at root_major -- :regex() added
+            # 2026-08-27, :choice() added 2026-10-20 (ChoiceSelector3's
+            # own .pattern property already compiles down to an
+            # equivalent anchored regex alternation, so it is built and
+            # used identically from here on). Structurally identical to
+            # the Star3 case just above (every named-file is a
+            # candidate), just pre-filtered by pattern before
             # _query_star_traversal() enumerates -- see its own
             # name_filter docstring. No other function is legal here;
             # the grammar itself is permissive (any function, see
             # reference_grammar_3.py's own note) so this is a semantic
             # check, not a grammar-level one.
-            if root_major.name != "regex":
+            if root_major.name not in ("regex", "choice"):
                 raise ReferenceException3(
                     f":{root_major.name}() is not a legal root_major "
-                    "function -- only :regex() is supported."
+                    "function -- only :regex()/:choice() are supported."
                 )
             built = self._build(root_major)
             return self._query_star_traversal(reference, name_filter=built.pattern)
@@ -201,12 +205,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if (
             name_one.name_two is not None
             and isinstance(name_one.path[0], FunctionCall3)
-            and name_one.path[0].name not in ("name", "regex")
+            and name_one.path[0].name not in ("name", "regex", "choice")
         ):
             # '#worksheet' only means anything against a literal named-
             # file path (there is one specific file to have worksheets
-            # in) -- ':name("...")'/':regex(...)' are both path-BUILDING
-            # (a literal name, or a pattern match, added 2026-09-23 for
+            # in) -- ':name("...")'/':regex(...)'/':choice(...)' are all
+            # path-BUILDING (a literal name, a pattern match, or an
+            # exact-match alternation, added 2026-09-23 for
             # ':regex()' -- same reasoning), same as any other literal
             # path segment, so both are exempt here same as they are
             # from _is_bare_function_only's own "bare marker" test; a

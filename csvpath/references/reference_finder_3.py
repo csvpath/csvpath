@@ -546,6 +546,11 @@ class ReferenceFinder3(ABC):
             "groups",
             "name",
             "regex",
+            # ':choice()' -- added 2026-10-20, same reasoning as
+            # ':name()'/':regex()' just above: compendium 3.9c groups
+            # all three as "fully occupies a path segment," so none of
+            # them implies a '*' wildcard.
+            "choice",
             # ':home()' is a zero-level PLACEHOLDER marker (see
             # home_3.py), not an ordinary field accessor -- David
             # deliberately decided against a prefixed "beta/:home()"
@@ -899,15 +904,29 @@ class ReferenceFinder3(ABC):
                     built = self._build(segment)
                     pattern.append(Regex3(pattern=built.pattern))
                     continue
+                if segment.name == "choice":
+                    # a bare ":choice(...)" path segment -- added
+                    # 2026-10-20, closing the first of the 30 "does not
+                    # yet support" sites catalogued that day.
+                    # ChoiceSelector3's own .pattern property already
+                    # compiles its pipe-delimited names down to an
+                    # anchored, escaped regex alternation -- wrapped in
+                    # a Regex3 here exactly like :regex() just above,
+                    # so _segment_matches() takes the identical
+                    # existing branch, no new matching logic needed.
+                    built = self._build(segment)
+                    pattern.append(Regex3(pattern=built.pattern))
+                    continue
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     segment.name
                 )
                 if function_cls is None or function_cls.SOURCE != "clock":
                     raise ReferenceException3(
                         f"Does not yet support :{segment.name}() as a "
-                        "name_one path segment -- only :name(\"...\"), a "
-                        "clock value function (e.g. :year()), and "
-                        "literal/'*' segments are supported."
+                        "name_one path segment -- only :name(\"...\"), "
+                        "a clock value function (e.g. :year()), "
+                        "literal/'*' segments, and :choice(...)/:regex(...) "
+                        "are supported."
                     )
                 built = self._build(segment)
                 pattern.append(str(built.compute()))
@@ -942,18 +961,22 @@ class ReferenceFinder3(ABC):
     @staticmethod
     def _is_traversal_root(root_major) -> bool:
         """true when root_major spans potentially more than one entity
-        -- either the '*' token, or a :regex() selector (added
-        2026-08-27) -- as opposed to a literal, single-entity
-        IDENTIFIER. Used wherever a finder needs to decide "could this
-        matched result have come from any of several named-files/
-        named-paths groups/named-results groups" (e.g.
-        CsvpathsReferenceFinder3._group_manifest_entry()), as distinct
-        from the narrower, Star3-ONLY Rule 1a/1b global-ledger checks
-        each finder's own query()/_extract_data() also makes --
-        :regex() never reaches those, it has no equivalent global-
-        ledger shortcut of its own (see each finder's own query())."""
+        -- either the '*' token, or a :regex()/:choice() selector
+        (:regex() added 2026-08-27; :choice() added 2026-10-20, same
+        reasoning -- it can match more than one named-file/named-paths/
+        named-results group just as easily as :regex() can) -- as
+        opposed to a literal, single-entity IDENTIFIER. Used wherever a
+        finder needs to decide "could this matched result have come
+        from any of several named-files/named-paths groups/named-
+        results groups" (e.g. CsvpathsReferenceFinder3._group_manifest_
+        entry()), as distinct from the narrower, Star3-ONLY Rule 1a/1b
+        global-ledger checks each finder's own query()/_extract_data()
+        also makes -- neither :regex() nor :choice() ever reaches
+        those, they have no equivalent global-ledger shortcut of their
+        own (see each finder's own query())."""
         return isinstance(root_major, Star3) or (
-            isinstance(root_major, FunctionCall3) and root_major.name == "regex"
+            isinstance(root_major, FunctionCall3)
+            and root_major.name in ("regex", "choice")
         )
 
     @staticmethod

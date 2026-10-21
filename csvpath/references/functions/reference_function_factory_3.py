@@ -19,6 +19,7 @@ class ReferenceFunctionFactory:
         from .selectors.after_3 import After3
         from .selectors.all_3 import All3
         from .selectors.before_3 import Before3
+        from .selectors.choice_3 import ChoiceSelector3
         from .selectors.date_3 import Date3
         from .selectors.first_3 import First3
         from .selectors.flatten_3 import Flatten3
@@ -162,6 +163,7 @@ class ReferenceFunctionFactory:
             Index3.NAME: Index3,
             Name3.NAME: Name3,
             RegexSelector3.NAME: RegexSelector3,
+            ChoiceSelector3.NAME: ChoiceSelector3,
             All3.NAME: All3,
             Flatten3.NAME: Flatten3,
             Groups3.NAME: Groups3,
