@@ -18,12 +18,19 @@
 # which keeps it useful for testing :yesterday()/:today()/etc. indefinitely
 # instead of slowly going stale.
 #
-# When the same `source` file is used for more than one version/load/run of
-# the same group, generate.py automatically mutates a throwaway copy (CSVs:
-# duplicate the last row; .csvpath/.csvpaths: append one more trivial, always-
-# valid statement) so each one gets a genuinely distinct content fingerprint
-# -- CsvPath Framework dedupes identical content and silently drops a repeat
-# registration/load otherwise (confirmed live before relying on this).
+# When the same `source` file is used for more than one version of a
+# named_files group, generate.py automatically mutates a throwaway copy
+# (CSVs: duplicate the last row) so each one gets a genuinely distinct
+# content fingerprint -- CsvPath Framework dedupes identical content and
+# silently drops a repeat registration otherwise (confirmed live before
+# relying on this).
+#
+# named_paths groups work differently: `source` is the group's STARTING
+# content (its first load/version only). Every version after the first is a
+# real PathsManager.add_named_paths(..., append=True) call that adds one
+# more trivial, always-valid statement onto whatever the group's content
+# already was -- genuine accumulation, not independent mutations of the
+# pristine original.
 
 named_files:
   # 5 REAL distinct source files (no mutation needed) -- already has a
@@ -92,27 +99,23 @@ named_file_failures:
 
 named_paths:
   - name: validate_orders
+    source: tests/csvpaths/test_resources/named_paths/food.csvpaths
     versions:
-      - source: tests/csvpaths/test_resources/named_paths/food.csvpaths
-        offset_days: -85
-      - source: tests/csvpaths/test_resources/named_paths/food.csvpaths
-        offset_days: -50
-      - source: tests/csvpaths/test_resources/named_paths/food.csvpaths
-        offset_days: -15
+      - offset_days: -85
+      - offset_days: -50
+      - offset_days: -15
 
   - name: check_zipcodes
+    source: tests/corpus/assets/generic_scan.csvpath
     versions:
-      - source: tests/corpus/assets/generic_scan.csvpath
-        offset_days: -74
-      - source: tests/corpus/assets/generic_scan.csvpath
-        offset_days: -22
+      - offset_days: -74
+      - offset_days: -22
 
   - name: scan_invoices
+    source: tests/corpus/assets/generic_scan.csvpath
     versions:
-      - source: tests/corpus/assets/generic_scan.csvpath
-        offset_days: -80
-      - source: tests/corpus/assets/generic_scan.csvpath
-        offset_days: -30
+      - offset_days: -80
+      - offset_days: -30
 
 # each run drives CsvPaths.fast_forward_paths() for real -- every run_dir
 # name and manifest "time"/"run_uuid" field comes from that real call, under

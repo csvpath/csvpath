@@ -15,8 +15,8 @@
     ],
     "named_paths_count": 2,
     "fingerprint": "1a63f868c467ac9b8eb9f4a5de904696dd3c0c503abb1fa522b8204dadb0f2ab",
-    "time": "2026-07-28T18:20:48.319751+00:00",
-    "uuid": "8d3baf02-4166-4984-b60e-943105a2855c",
+    "time": "2026-07-28T19:17:06.583162+00:00",
+    "uuid": "a799cade-b6d2-4b55-b4cc-d98d7732a5db",
     "manifest_path": "tests/corpus/data/inputs/named_paths/validate_orders/manifest.json"
   },
   {
@@ -24,11 +24,10 @@
     "named_paths_name": "validate_orders",
     "named_paths_home": "tests/corpus/data/inputs/named_paths/validate_orders",
     "group_file_path": "tests/corpus/data/inputs/named_paths/validate_orders/group.csvpaths",
-    "source_path": "tests/corpus/.scratch/validate_orders__2/food.csvpaths",
     "named_paths": [
       "~ name: candy check\n  description: invalid if there is more than one candy item\n  expected: this example will always fail\n~\n\n$[*][\n    #type == \"candy\" -> push( \"candy\", count_lines() )\n    above(size(\"candy\"), 1) -> print(\"$.csvpath.count_lines: too much candy at: $.variables.candy \")\n    above(size(\"candy\"), 1) -> fail_and_stop()\n]",
       "~ name: first type\n  description: type variable latches on the first #type it sees\n  expected: there is no validation expectation in this csvpath\n~\n\n$[1*][\n    count_lines.nocontrib() == 1 -> print(\" \")\n    @type.latch = #type\n    above(#year, 1850) -> print(\"$.csvpath.count_lines $.headers.food is modern food\")\n]",
-      "~ name: generated check 2\n  description: appended by the corpus generator to force a new\n    version/load with a distinct content fingerprint.\n~\n\n$[*][\n    yes()\n]"
+      "~ name: generated check 2\n  description: appended by the corpus generator to simulate a\n    named-paths group gaining an additional check over time.\n~\n\n$[*][\n    yes()\n]"
     ],
     "named_paths_identities": [
       "candy check",
@@ -36,9 +35,9 @@
       "generated check 2"
     ],
     "named_paths_count": 3,
-    "fingerprint": "72b1570a556e80d4aa77e672551421e695cf5d16b26061a75adaad692e2167ca",
-    "time": "2026-09-01T18:20:48.650304+00:00",
-    "uuid": "9e27a13f-54ee-4aa4-a324-c39240afe416",
+    "fingerprint": "07c60fb2b3cf3b74f6a5557a9c739d1094dc1e8d26ee8dd6e4bd38269b808572",
+    "time": "2026-09-01T19:17:06.868933+00:00",
+    "uuid": "819ba2b9-6631-4230-916b-19e1e279d44e",
     "manifest_path": "tests/corpus/data/inputs/named_paths/validate_orders/manifest.json"
   },
   {
@@ -46,21 +45,22 @@
     "named_paths_name": "validate_orders",
     "named_paths_home": "tests/corpus/data/inputs/named_paths/validate_orders",
     "group_file_path": "tests/corpus/data/inputs/named_paths/validate_orders/group.csvpaths",
-    "source_path": "tests/corpus/.scratch/validate_orders__3/food.csvpaths",
     "named_paths": [
       "~ name: candy check\n  description: invalid if there is more than one candy item\n  expected: this example will always fail\n~\n\n$[*][\n    #type == \"candy\" -> push( \"candy\", count_lines() )\n    above(size(\"candy\"), 1) -> print(\"$.csvpath.count_lines: too much candy at: $.variables.candy \")\n    above(size(\"candy\"), 1) -> fail_and_stop()\n]",
       "~ name: first type\n  description: type variable latches on the first #type it sees\n  expected: there is no validation expectation in this csvpath\n~\n\n$[1*][\n    count_lines.nocontrib() == 1 -> print(\" \")\n    @type.latch = #type\n    above(#year, 1850) -> print(\"$.csvpath.count_lines $.headers.food is modern food\")\n]",
-      "~ name: generated check 3\n  description: appended by the corpus generator to force a new\n    version/load with a distinct content fingerprint.\n~\n\n$[*][\n    yes()\n]"
+      "~ name: generated check 2\n  description: appended by the corpus generator to simulate a\n    named-paths group gaining an additional check over time.\n~\n\n$[*][\n    yes()\n]",
+      "~ name: generated check 3\n  description: appended by the corpus generator to simulate a\n    named-paths group gaining an additional check over time.\n~\n\n$[*][\n    yes()\n]"
     ],
     "named_paths_identities": [
       "candy check",
       "first type",
+      "generated check 2",
       "generated check 3"
     ],
-    "named_paths_count": 3,
-    "fingerprint": "8376341235c98f782c2e5df032e1879cb7aef40a143b4a16af7f87c53c8dbb2d",
-    "time": "2026-10-06T18:20:48.873545+00:00",
-    "uuid": "379a520d-4f58-4a09-bde2-690b8a7fa4ca",
+    "named_paths_count": 4,
+    "fingerprint": "a4eb90f4380461cf8d6d030077bb1f5871f1711be6b9fe86abc2ffc17428ad1d",
+    "time": "2026-10-06T19:17:07.088044+00:00",
+    "uuid": "186c71ce-8542-46fd-86c1-5e3ec6a75372",
     "manifest_path": "tests/corpus/data/inputs/named_paths/validate_orders/manifest.json"
   }
 ]

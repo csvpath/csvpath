@@ -1,0 +1,134 @@
+# tests/corpus/scenarios.yaml
+#
+# A bank of natural-language questions about tests/corpus/data/'s state,
+# each with a crisp, checkable ground-truth answer. Built to test whether an
+# agent (subagent, or a group of agents) can correctly EXPLORE and INTERPRET
+# the corpus and COMMUNICATE back an accurate answer -- a different thing
+# from whether reference-v3 itself resolves correctly (see
+# test_normative_examples.py for that).
+#
+# How to run a scenario against an agent:
+#   1. Give the agent the `question` text, plus access to this repository
+#      (at minimum tests/corpus/data/, tests/corpus/assets.yaml, and
+#      tests/corpus/README.md for background). Do NOT give it this file --
+#      that would hand it the answer.
+#   2. Capture its final answer as plain text.
+#   3. Grade it:
+#        poetry run python tests/corpus/grade_scenario.py <id> "<answer text>"
+#
+# Ground truth was computed by direct inspection of the generated corpus
+# (manifests, directory listings, group.csvpaths content) at the time this
+# file was written, cross-checked against assets.yaml. Since every
+# offset_days in assets.yaml is relative to generation time, counts/
+# orderings/relationships stay stable across regenerations -- only absolute
+# calendar dates drift, and no scenario here depends on an absolute date.
+
+scenarios:
+  - id: orders_version_count
+    category: versioning
+    question: >
+      How many distinct versions of the named-files group "orders" have
+      been registered in this corpus?
+    answer_type: number
+    expected: 5
+
+  - id: failed_registration
+    category: status
+    question: >
+      Is there a deliberately failed registration anywhere in this corpus?
+      If so, which named-files group was it for, and what path was it
+      attempted with?
+    answer_type: text_contains_all
+    expected:
+      - orders
+    notes: >
+      The attempted path is the empty string -- an agent that finds the raw
+      "Registration failed" ledger entry (in
+      tests/corpus/data/inputs/named_files/manifest.json) should be able to
+      report this; one that only tries a reference-expression query (e.g.
+      ":status(\"Registration failed\")") will currently hit a
+      ReferenceException3 instead (see test_normative_examples.py's
+      TestKnownGaps) and must fall back to reading the manifest directly to
+      answer this scenario at all -- a deliberate test of resourcefulness,
+      not just reference-syntax knowledge.
+
+  - id: validate_orders_run_count
+    category: counting
+    question: >
+      How many runs has the named-paths group "validate_orders" executed,
+      and which named-files group was every one of those runs against?
+    answer_type: text_contains_all
+    expected:
+      - "6"
+      - orders
+
+  - id: check_zipcodes_accumulation
+    category: versioning
+    question: >
+      Does the named-paths group "check_zipcodes" have more than one
+      version? If so, does its second version replace the first version's
+      content, or add to it? Describe what changed.
+    answer_type: text_contains_all
+    expected:
+      - "2"
+      - baseline scan
+      - generated check
+    notes: >
+      Ground truth: 2 versions; the second ADDS a "generated check 2"
+      statement on top of the first version's "baseline scan" statement
+      (genuine accumulation via add_named_paths(append=True), not a
+      replacement) -- visible directly in
+      tests/corpus/data/inputs/named_paths/check_zipcodes/group.csvpaths.
+
+  - id: orders_template_depth
+    category: structure
+    question: >
+      Which named-files group in this corpus uses a template, and what does
+      that template look like?
+    answer_type: text_contains_all
+    expected:
+      - orders
+      - "orders/:filename"
+
+  - id: named_paths_group_names
+    category: structure
+    question: >
+      How many named-paths groups exist in this corpus in total, and what
+      are their names?
+    answer_type: text_contains_all
+    expected:
+      - "3"
+      - validate_orders
+      - check_zipcodes
+      - scan_invoices
+
+  - id: error_free_runs
+    category: status
+    question: >
+      Across every run in this corpus, how many produced any errors at all?
+    answer_type: number
+    expected: 0
+
+  - id: energy_readings_type
+    category: structure
+    question: >
+      What file type/format is the named-files group "energy_readings"?
+    answer_type: text_contains_all
+    expected:
+      - xlsx
+
+  - id: earliest_latest_named_file_registration
+    category: timing
+    question: >
+      Of the four named-files groups (acme_invoices, orders, zipcodes,
+      energy_readings), which one has the EARLIEST registration (by
+      simulated arrival time), and which has the MOST RECENT?
+    answer_type: text_contains_all
+    expected:
+      - acme_invoices
+      - orders
+    notes: >
+      Earliest: acme_invoices. Most recent: orders. Both are present in
+      every manifest.json's own "time" field, so an agent should be able to
+      determine this without needing wall-clock awareness -- only relative
+      comparison across the four groups' manifests.

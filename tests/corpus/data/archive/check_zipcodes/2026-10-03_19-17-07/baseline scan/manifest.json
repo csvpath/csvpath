@@ -1,0 +1,31 @@
+{
+  "time": "2026-10-03T19:17:07.061830+00:00",
+  "uuid": "6febae06-b31b-41b4-ae42-510ead674c4f",
+  "serial": true,
+  "archive_name": "archive",
+  "named_results_name": "check_zipcodes",
+  "named_paths_uuid": "9319e7c0-2c24-4436-a4db-63e80e06aca7",
+  "run": "2026-10-03_19-17-07",
+  "run_uuid": "827e1754-d536-4745-9f1f-bb6e0d0e4970",
+  "run_home": "tests/corpus/data/archive/check_zipcodes/2026-10-03_19-17-07",
+  "instance_identity": "baseline scan",
+  "instance_index": "0",
+  "instance_home": "tests/corpus/data/archive/check_zipcodes/2026-10-03_19-17-07/baseline scan",
+  "file_fingerprints": {
+    "meta.json": "3517a338cb398305db76fad7a67ab289b33953fc30933244ad7bb951fe25f09f",
+    "errors.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "vars.json": "72e76bae842cbebc7841e2b33079e75b9e7452904a775fb74939fd6e36bca1d0"
+  },
+  "files_expected": true,
+  "number_of_files_expected": 3,
+  "number_of_files_generated": 3,
+  "valid": true,
+  "completed": true,
+  "error_count": 0,
+  "method": "fast_forward_paths",
+  "source_mode_preceding": false,
+  "actual_data_file": "tests/corpus/data/inputs/named_files/zipcodes/zipcodes.csv/e520ea5182132e6b3280edfba34b31e407882a52fcc858e2d51a77c1c10b4b6c.csv",
+  "origin_data_file": "tests/corpus/data/inputs/named_files/zipcodes/zipcodes.csv/e520ea5182132e6b3280edfba34b31e407882a52fcc858e2d51a77c1c10b4b6c.csv",
+  "named_file_name": "zipcodes",
+  "manifest_path": "tests/corpus/data/archive/check_zipcodes/2026-10-03_19-17-07/baseline scan/manifest.json"
+}

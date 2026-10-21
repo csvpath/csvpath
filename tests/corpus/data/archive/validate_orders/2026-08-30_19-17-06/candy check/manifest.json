@@ -1,0 +1,32 @@
+{
+  "time": "2026-08-30T19:17:06.821763+00:00",
+  "uuid": "f2ad7ebb-7d65-47f5-bb8a-ff23443aa94c",
+  "serial": true,
+  "archive_name": "archive",
+  "named_results_name": "validate_orders",
+  "named_paths_uuid": "a799cade-b6d2-4b55-b4cc-d98d7732a5db",
+  "run": "2026-08-30_19-17-06",
+  "run_uuid": "edd02728-edf9-46e8-b6b3-65ae9d2daabd",
+  "run_home": "tests/corpus/data/archive/validate_orders/2026-08-30_19-17-06",
+  "instance_identity": "candy check",
+  "instance_index": "0",
+  "instance_home": "tests/corpus/data/archive/validate_orders/2026-08-30_19-17-06/candy check",
+  "file_fingerprints": {
+    "meta.json": "c762320ef45b9b06f299097fb13f2c56b311f04b4c1f0b8815789113786c5a00",
+    "printouts.txt": "d984dd9909c638c541051751af89e9e657a893dc61ebb542637a920f0253521b",
+    "errors.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "vars.json": "af05d73405b1aaf5e7f1f629525fb4c27725900c0826bfb9ecf97bf0d7b9362f"
+  },
+  "files_expected": true,
+  "number_of_files_expected": 3,
+  "number_of_files_generated": 4,
+  "valid": false,
+  "completed": false,
+  "error_count": 0,
+  "method": "fast_forward_paths",
+  "source_mode_preceding": false,
+  "actual_data_file": "tests/corpus/data/inputs/named_files/orders/orders/food.csv/a17d564b600794d2ad1c079e2449abdece847e9d84f04bd7f73f12f4373fc6a5.csv",
+  "origin_data_file": "tests/corpus/data/inputs/named_files/orders/orders/food.csv/a17d564b600794d2ad1c079e2449abdece847e9d84f04bd7f73f12f4373fc6a5.csv",
+  "named_file_name": "orders",
+  "manifest_path": "tests/corpus/data/archive/validate_orders/2026-08-30_19-17-06/candy check/manifest.json"
+}
