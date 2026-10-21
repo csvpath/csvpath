@@ -1,4 +1,5 @@
 from ...reference_3 import Reference3
+from ..filters.predicate_function_3 import PredicateFunction3
 from ..function_3 import Function3
 
 
@@ -49,7 +50,20 @@ class Template3(Function3):
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    ARG_TYPES = ()
+    #
+    # widened 2026-10-21 to accept a PredicateFunction3 -- mirrors
+    # OnArrival3's own identical widening (2026-10-17) for the exact
+    # same reason: FILES' bare ':template(:not_empty())'/
+    # ':template(:empty())' (normative_reference_examples.txt lines
+    # 193/197) were being rejected by _build() before
+    # FilesReferenceFinder3.query()'s own bare_field_call dispatch ever
+    # got a chance to apply the predicate. CSVPATHS/RESULTS have no
+    # equivalent bare/definition duality (see this class's own docstring
+    # above) and no code path that reads this arg, so the widening is a
+    # no-op for them -- ARG_REQUIRED stays False, an ordinary bare field
+    # read (no predicate) is unaffected everywhere.
+    #
+    ARG_TYPES = (PredicateFunction3,)
     ARG_REQUIRED = False
     SOURCE = "manifest"
     BARE_SOURCE = "definition"

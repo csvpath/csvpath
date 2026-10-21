@@ -230,33 +230,96 @@ class TestOnePointerPerReference:
             _query(csvpaths, FilesReferenceFinder3, "$orders.files.:first():last()")
 
 
-class TestKnownGaps:
-    """Two gaps this validation pass found by exercising REAL corpus data
-    through the real finders (not yet seen by tests/references/'s
-    synthetic-fixture unit tests, which never happened to construct
-    these exact shapes) -- flagged to David, not yet fixed (tests-only
-    scope: core-code changes need confirmation first, per CLAUDE.md).
-    xfail(strict=True) so a future fix makes these tests FAIL loudly
-    (prompting removal of the xfail) rather than silently staying green.
+class TestTemplatePredicateFiltering:
+    """FilesReferenceFinder3.query()'s literal-root bare_field_call branch
+    previously returned definition.json unconditionally for ANY
+    ':template(...)' call, ignoring the argument entirely -- confirmed
+    live, :template(:empty()) and :template(:not_empty()) both matched
+    every named-file regardless of its actual template value. Fixed
+    2026-10-21, two changes:
+    - Template3.ARG_TYPES widened from () to (PredicateFunction3,),
+      mirroring OnArrival3's own identical widening -- the argument was
+      being rejected by _build() before query() ever got a chance to
+      apply it.
+    - query()'s bare_field_call branch now calls the existing, already-
+      generic _matches_definition_field_predicate() (built for
+      ':on_arrival()' nested inside ':definition(...)' during '*'
+      traversal) when an argument is present, instead of ignoring it.
+
+    Neither `orders` nor `zipcodes` has ever set a DEFAULT template via
+    a dedicated call -- per David, a named-file's definition.json
+    intentionally does NOT store a default merely because some
+    individual add_named_file() registration happened to pass a
+    template (unlike named-paths, where the add-time template IS the
+    assumed default for future runs). So both groups' real `template`
+    value is None, and :not_empty() correctly matches both (None != ""),
+    while :empty() matches neither (None != "") -- :empty()/:not_empty()
+    distinguish from a literal empty string, not from a missing/None
+    value (that's :none()'s own, separate job per the compendium's
+    empty/none table) -- confirmed this is consistent with Empty3/
+    NotEmpty3's own existing, unmodified implementation.
     """
+
+    def test_not_empty_matches_named_files_with_no_default_template(self, csvpaths):
+        for name in ("zipcodes", "orders"):
+            r = _query(csvpaths, FilesReferenceFinder3, f"${name}.files.:template(:not_empty())")
+            assert r.files == [f"tests/corpus/data/inputs/named_files/{name}/definition.json"]
+
+    def test_empty_matches_neither_since_value_is_none_not_empty_string(self, csvpaths):
+        for name in ("zipcodes", "orders"):
+            r = _query(csvpaths, FilesReferenceFinder3, f"${name}.files.:template(:empty())")
+            assert r.files == []
+
+    def test_bare_template_still_unaffected(self, csvpaths):
+        # no argument at all -- the ordinary bare read, confirmed
+        # unaffected by the predicate-filtering addition.
+        r = _query(csvpaths, FilesReferenceFinder3, "$orders.files.:template()")
+        assert r.files == ["tests/corpus/data/inputs/named_files/orders/definition.json"]
+
+    def test_literal_string_argument_still_rejected(self, csvpaths):
+        # Template3.ARG_TYPES only widened to accept a PredicateFunction3
+        # (matching OnArrival3's own precedent exactly) -- a raw literal
+        # is not one of the "select by literal match" functional-taxonomy
+        # fields (uuid/name/fingerprint/type), so this stays rejected,
+        # not silently accepted.
+        with pytest.raises(ReferenceException3):
+            _query(csvpaths, FilesReferenceFinder3, '$orders.files.:template("orders/:filename")')
+
+
+class TestStatusRegistrationFailed:
+    """FilesReferenceFinder3._ledger_entry_result_path() raises
+    ReferenceException3 for a 'Registration failed' ledger entry whose
+    origin_path is the empty string -- the one input confirmed (by the
+    real test_file_registration_failed test) to actually produce this
+    status can never be reported back through
+    :status("Registration failed"). Flagged to David, not yet fixed on
+    this branch (tracked separately -- see PR #434)."""
 
     @pytest.mark.xfail(
         strict=True,
         reason=(
-            "FilesReferenceFinder3.query()'s literal-root bare_field_call "
-            "branch (files_reference_finder_3.py, around the "
-            "'_bare_definition_field_call(name_one)' check) returns "
-            "definition.json unconditionally for ANY ':template(...)' "
-            "call, ignoring the argument entirely -- :template(:empty()) "
-            "and :template(:not_empty()) both match every named-file "
-            "regardless of its actual template value. Confirmed live: "
-            "zipcodes' own template field is '' (no template), yet both "
-            "predicates return the same non-empty result for it."
+            "FilesReferenceFinder3._ledger_entry_result_path() raises "
+            "ReferenceException3 for a 'Registration failed' ledger entry "
+            "whose origin_path is the empty string -- fix tracked in a "
+            "separate PR (#434), not this branch."
         ),
     )
-    def test_template_not_empty_predicate_is_applied(self, csvpaths):
-        r = _query(csvpaths, FilesReferenceFinder3, "$zipcodes.files.:template(:not_empty())")
-        assert r.files == []
+    def test_status_registration_failed_is_selectable(self, csvpaths):
+        r = _query(
+            csvpaths, FilesReferenceFinder3,
+            '$orders.files.:status("Registration failed")',
+        )
+        assert len(r.files) == 1
+
+
+class TestKnownGaps:
+    """Gap this validation pass found by exercising REAL corpus data
+    through the real finders -- flagged to David, not yet fixed (tests-
+    only scope: core-code changes need confirmation first, per
+    CLAUDE.md). xfail(strict=True) so a future fix makes this test FAIL
+    loudly (prompting removal of the xfail) rather than silently staying
+    green.
+    """
 
     @pytest.mark.xfail(
         strict=True,
@@ -267,30 +330,14 @@ class TestKnownGaps:
             "'$*.files.:template(:not_empty())' (normative_reference_"
             "examples.txt line 197) -- a known, cleanly-rejected gap, not "
             "silently wrong, but still blocks this normative example from "
-            "actually working."
+            "actually working. Needs new dispatch wiring in "
+            "_query_star_traversal() (recognizing a bare BARE_SOURCE == "
+            "'definition' field call there, the way the literal-root "
+            "branch now does), not just the ARG_TYPES/predicate-application "
+            "fix that TestTemplatePredicateFiltering already covers -- a "
+            "bigger lift than the literal-root fix, flagged separately."
         ),
     )
     def test_star_template_predicate_normative_example(self, csvpaths):
         r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:not_empty())")
         assert len(r.files) >= 1
-
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "FilesReferenceFinder3._ledger_entry_result_path() raises "
-            "ReferenceException3 for a 'Registration failed' ledger entry "
-            "whose origin_path is the empty string ('path cannot be None "
-            "or empty', confirmed the real trigger for this status via "
-            "tests/csvpaths/managers/test_csvpaths_managers_files_manager."
-            "py::test_file_registration_failed) -- `entry.get('origin_path')` "
-            "is falsy for '' same as for None, so the one input that is "
-            "actually CONFIRMED to produce this status can never be "
-            "reported back through :status(\"Registration failed\")."
-        ),
-    )
-    def test_status_registration_failed_is_selectable(self, csvpaths):
-        r = _query(
-            csvpaths, FilesReferenceFinder3,
-            '$orders.files.:status("Registration failed")',
-        )
-        assert len(r.files) == 1
