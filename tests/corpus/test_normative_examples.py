@@ -230,6 +230,24 @@ class TestOnePointerPerReference:
             _query(csvpaths, FilesReferenceFinder3, "$orders.files.:first():last()")
 
 
+class TestStatusRegistrationFailed:
+    """FilesReferenceFinder3._ledger_entry_result_path() previously raised
+    ReferenceException3 for a 'Registration failed' ledger entry whose
+    origin_path is the empty string -- the one input confirmed (by the
+    real test_file_registration_failed test) to actually produce this
+    status could never be reported back through
+    :status("Registration failed"). Fixed 2026-10-21: falls back to the
+    global arrivals ledger's own manifest.json when neither file_path nor
+    a non-empty origin_path is available."""
+
+    def test_status_registration_failed_is_selectable(self, csvpaths):
+        r = _query(
+            csvpaths, FilesReferenceFinder3,
+            '$orders.files.:status("Registration failed")',
+        )
+        assert r.files == ["tests/corpus/data/inputs/named_files/manifest.json"]
+
+
 class TestKnownGaps:
     """Two gaps this validation pass found by exercising REAL corpus data
     through the real finders (not yet seen by tests/references/'s
@@ -238,20 +256,37 @@ class TestKnownGaps:
     scope: core-code changes need confirmation first, per CLAUDE.md).
     xfail(strict=True) so a future fix makes these tests FAIL loudly
     (prompting removal of the xfail) rather than silently staying green.
+
+    Both gaps below turned out, on investigation, to share one deeper
+    root cause: FileManager.add_named_file() never persists `template`
+    into the named-file's own definition.json at registration time at
+    all (confirmed live: definition.json is literally "{}" for both
+    `orders` and `zipcodes`, even though `orders` genuinely registered
+    with a real template) -- unlike PathsManager, which does exactly
+    this via store_template_for_paths() during its own registration
+    flow (paths_manager.py line 549). FilesReferenceFinder3's bare
+    ':template()' read already correctly consults definition.json
+    (matching Template3's own documented BARE_SOURCE == "definition"
+    design) -- the finder is reading the right place, it is just never
+    written. Fixing the predicate-matching alone (what these two tests
+    were originally written to describe) would not make the normative
+    doc's own worked examples actually return correct answers, since
+    the underlying value read is already wrong before any predicate is
+    even applied. Flagged to David as a bigger, FileManager-side fix
+    than first assessed -- not fixed here.
     """
 
     @pytest.mark.xfail(
         strict=True,
         reason=(
-            "FilesReferenceFinder3.query()'s literal-root bare_field_call "
-            "branch (files_reference_finder_3.py, around the "
-            "'_bare_definition_field_call(name_one)' check) returns "
-            "definition.json unconditionally for ANY ':template(...)' "
-            "call, ignoring the argument entirely -- :template(:empty()) "
-            "and :template(:not_empty()) both match every named-file "
-            "regardless of its actual template value. Confirmed live: "
-            "zipcodes' own template field is '' (no template), yet both "
-            "predicates return the same non-empty result for it."
+            "FileManager.add_named_file() never writes 'template' into "
+            "definition.json at registration time (unlike PathsManager's "
+            "store_template_for_paths()), so FilesReferenceFinder3's bare "
+            "':template()' read -- which correctly consults definition.json "
+            "-- always finds it empty regardless of predicate matching. "
+            ":template(:empty()) and :template(:not_empty()) both match "
+            "every named-file today, including 'orders', which genuinely "
+            "registered with a real template."
         ),
     )
     def test_template_not_empty_predicate_is_applied(self, csvpaths):
@@ -267,30 +302,11 @@ class TestKnownGaps:
             "'$*.files.:template(:not_empty())' (normative_reference_"
             "examples.txt line 197) -- a known, cleanly-rejected gap, not "
             "silently wrong, but still blocks this normative example from "
-            "actually working."
+            "actually working. Also gated on the definition.json-population "
+            "gap above: even once this dispatch is built, it would need "
+            "that fix too to return correct (not just non-crashing) answers."
         ),
     )
     def test_star_template_predicate_normative_example(self, csvpaths):
         r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:not_empty())")
         assert len(r.files) >= 1
-
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "FilesReferenceFinder3._ledger_entry_result_path() raises "
-            "ReferenceException3 for a 'Registration failed' ledger entry "
-            "whose origin_path is the empty string ('path cannot be None "
-            "or empty', confirmed the real trigger for this status via "
-            "tests/csvpaths/managers/test_csvpaths_managers_files_manager."
-            "py::test_file_registration_failed) -- `entry.get('origin_path')` "
-            "is falsy for '' same as for None, so the one input that is "
-            "actually CONFIRMED to produce this status can never be "
-            "reported back through :status(\"Registration failed\")."
-        ),
-    )
-    def test_status_registration_failed_is_selectable(self, csvpaths):
-        r = _query(
-            csvpaths, FilesReferenceFinder3,
-            '$orders.files.:status("Registration failed")',
-        )
-        assert len(r.files) == 1
