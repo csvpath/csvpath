@@ -3634,17 +3634,19 @@ class TestExtractData:
         results = finder.resolve()
         assert results.results[0].data == content
 
-    def test_metadata_file_kind_not_yet_supported(self):
-        # :meta() is not a registered function yet, so a real
+    def test_metadata_file_kind_unreachable_via_a_real_reference(self):
+        # :meta() is not a registered function at all, so a real
         # query()/resolve() would already reject this reference earlier
         # (unknown function, in build_chain()). calling _extract_data()
-        # directly tests its own resolve_kind branching in isolation,
-        # ahead of any metadata-file function actually existing.
+        # directly tests its own resolve_kind branching in isolation --
+        # this confirms the generic resolve_kind fallback (not-yet-
+        # supported sweep #10) is a defensive safety net, not a pending
+        # gap.
         finder = _finder("$alpha.files.*.:meta()", ALPHA_HOME, ALPHA_MANIFEST)
         with pytest.raises(ReferenceException3):
             finder._extract_data(ReferenceResult3(path="p", uuid="u"))
 
-    def test_metadata_field_kind_not_yet_supported(self):
+    def test_metadata_field_kind_unreachable_via_a_real_reference(self):
         finder = _finder(
             '$alpha.files.*.:meta(:idchain("a[0]"))', ALPHA_HOME, ALPHA_MANIFEST
         )

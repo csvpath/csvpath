@@ -2164,10 +2164,21 @@ class FilesReferenceFinder3(ReferenceFinder3):
                         self.csvpaths.file_manager.files_root_manifest, result.uuid
                     ),
                 )
+        # confirmed unreachable via any real reference (not-yet-
+        # supported sweep #10), not a pending gap: every function that
+        # can reach resolve_kind's own METADATA_FILE/METADATA_FIELD
+        # classification is already dispatched to its own branch above
+        # (bare :manifest()/:definition()/:readme(), the Star3 ledger
+        # case, a name_one-narrowed manifest read, every registered
+        # field-accessor via field_call) -- TestExtractData's own two
+        # tests only reach this line by calling _extract_data()
+        # directly with a hypothetical, unregistered function name
+        # (":meta()"), something query()/resolve() would already have
+        # rejected earlier in build_chain() for any real reference.
         raise ReferenceException3(
-            f"FilesReferenceFinder3 does not yet support resolve_kind={kind!r} "
+            f"FilesReferenceFinder3 does not support resolve_kind={kind!r} "
             "-- only :manifest()/:definition() and registered field-accessor "
-            "functions are wired up as metadata-file/field functions so far."
+            "functions are wired up as metadata-file/field functions."
         )
 
     def _compute_field(self, name: str, reference: "Reference3") -> object:

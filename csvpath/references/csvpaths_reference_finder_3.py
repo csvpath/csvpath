@@ -774,11 +774,20 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     ),
                 )
         if kind != Reference3.FIRST_PARTY:
+            # confirmed unreachable via any real reference (not-yet-
+            # supported sweep #10), not a pending gap: when name_three
+            # is present, its own functions are restricted to :from()/
+            # :to() only (neither metadata-kind), so resolve_kind's walk
+            # only ever sees name_one's own chain here, which the
+            # METADATA_FILE/METADATA_FIELD branches above already fully
+            # dispatch (bare manifest/definition/readme, the Star3
+            # ledger case, has_manifest, every registered field-
+            # accessor via field_call).
             raise ReferenceException3(
-                f"CsvpathsReferenceFinder3 does not yet support "
+                f"CsvpathsReferenceFinder3 does not support "
                 f"resolve_kind={kind!r} -- only :manifest()/:definition() "
                 "and registered field-accessor functions are wired up as "
-                "metadata-file/field functions so far."
+                "metadata-file/field functions."
             )
         name_three = reference.name_three
         if name_three is None:

@@ -2078,14 +2078,15 @@ class TestScopeLimits:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_metadata_kind_not_yet_supported(self):
+    def test_metadata_kind_unreachable_via_a_real_reference(self):
         # :meta() is a real registered function (Meta3, RESOLVES_AS ==
         # Reference3.METADATA_FILE -- see Function3.metadata_kind()),
         # but query() would already reject this reference for a
         # different reason first (functions on name_three are rejected
         # outright for csvpaths), so _extract_data() is called directly
-        # to test its own resolve_kind branching in isolation, ahead of
-        # any real metadata-access function existing for csvpaths.
+        # to test its own resolve_kind branching in isolation -- this
+        # confirms the generic resolve_kind fallback (not-yet-supported
+        # sweep #10) is a defensive safety net, not a pending gap.
         finder = _finder("$acme.csvpaths.:first().:meta()")
         with pytest.raises(ReferenceException3):
             finder._extract_data(ReferenceResult3(path="p", uuid="v0-uuid"))
