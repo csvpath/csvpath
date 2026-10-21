@@ -164,13 +164,23 @@ class ReferenceRunner:
 
     def _history_path(self) -> str:
         #
-        # the archive root (gitignored, e.g. tmp/local/archive) is
-        # local runtime state, same as the results it already holds --
-        # not config/, which is tracked.
+        # issue #412 -- NOT archive_path (where this lived originally):
+        # tests/conftest.py's own wipe_local_test_artifacts fixture is
+        # session-scoped and autouse, and does an unconditional
+        # nos.remove() on config.archive_path (among others) at the
+        # start of EVERY pytest run, local-backend test suite included
+        # -- confirmed live to be exactly why a successful CLI run's
+        # history kept vanishing with no error: any test run started
+        # in between silently wiped it out from under the CLI. The
+        # directory holding config.ini itself is not in that fixture's
+        # wipe list (it is tracked source, not generated runtime
+        # data), so it survives every test run -- the history file's
+        # own name is added to .gitignore so it is never mistaken for
+        # tracked config and committed by accident.
         #
-        archive_dir = self._cli.csvpaths.config.archive_path
-        os.makedirs(archive_dir, exist_ok=True)
-        return os.path.join(archive_dir, self.HISTORY_FILE_NAME)
+        config_dir = os.path.dirname(self._cli.csvpaths.config.config_path)
+        os.makedirs(config_dir, exist_ok=True)
+        return os.path.join(config_dir, self.HISTORY_FILE_NAME)
 
     def _load_history(self) -> list:
         path = self._history_path()

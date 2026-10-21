@@ -8,6 +8,10 @@ inputs/
 out.txt
 temp/*
 deleteme/*
+# CLI "run reference expressions" recent-history file -- runtime
+# state that lives next to config.ini (see reference_runner.py's own
+# _history_path()), never tracked content.
+config/cli_reference_history.json
 
 
 # Byte-compiled / optimized / DLL files
