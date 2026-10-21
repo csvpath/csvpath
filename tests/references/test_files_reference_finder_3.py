@@ -1095,9 +1095,17 @@ class TestStarTraversalHome:
         results = _home_star_finder("$*.files.:home()").query()
         assert results.files == [HOME_STAR_ALPHA_HOME]
 
-    def test_chaining_anything_other_than_definition_is_not_yet_supported(self):
+    def test_chaining_anything_other_than_definition_is_rejected(self):
         with pytest.raises(ReferenceException3):
             _home_star_finder("$*.files.:home():uuid().:last()").query()
+
+    def test_worksheet_marker_is_rejected(self):
+        # not-yet-supported sweep #6, 2026-10-20: '#worksheet' means
+        # content from exactly one specific XLSX file -- '*' traversal
+        # matches across every named-file by definition, so this is a
+        # settled rejection, not a pending gap.
+        with pytest.raises(ReferenceException3):
+            _home_star_finder("$*.files.*#Summary.:last()").query()
 
 
 class TestStarTraversalDefinition:
@@ -1131,11 +1139,11 @@ class TestStarTraversalDefinition:
         assert results.files == [pathu.resep(f"{HOME_STAR_ALPHA_HOME}/definition.json")]
         assert results.ambiguous_content_read is False
 
-    def test_bare_definition_combined_with_name_three_is_not_yet_supported(self):
+    def test_bare_definition_combined_with_name_three_is_rejected(self):
         with pytest.raises(ReferenceException3):
             _home_star_finder("$*.files.:definition().:last()").query()
 
-    def test_home_prefixed_definition_combined_with_name_three_is_not_yet_supported(
+    def test_home_prefixed_definition_combined_with_name_three_is_rejected(
         self,
     ):
         with pytest.raises(ReferenceException3):

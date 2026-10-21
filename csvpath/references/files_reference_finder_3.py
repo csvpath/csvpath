@@ -1078,17 +1078,31 @@ class FilesReferenceFinder3(ReferenceFinder3):
         """
         name_one = reference.name_one
         if name_one.name_two is not None:
+            # settled, not a gap (not-yet-supported sweep #6): reading a
+            # worksheet means content from exactly ONE specific XLSX
+            # file, but '*' traversal by definition matches across
+            # every named-file -- no worked example asks for this, and
+            # deciding how a pointer-reduced '*' match should interact
+            # with a worksheet read is undecided, so this stays a clear
+            # rejection rather than a guess (same reasoning the literal-
+            # root '#worksheet'-combination rejections elsewhere in this
+            # file already use).
             raise ReferenceException3(
-                "FilesReferenceFinder3 does not yet support the '#worksheet' "
-                "marker (name_two)."
+                "FilesReferenceFinder3 does not support the '#worksheet' "
+                "marker (name_two) during '*' traversal -- it only applies "
+                "to a literal named-file path."
             )
         is_home = self._is_home_prefixed_reference(name_one)
         is_bare_definition = self._is_bare_definition_reference(name_one)
         definition_call = self._chained_definition_call(name_one)
         if is_bare_definition or (is_home and definition_call is not None):
             if reference.name_three is not None:
+                # settled, not a gap -- definition.json is never
+                # versioned (same reasoning as every other :definition()
+                # restriction in this file), so there is structurally
+                # nothing for name_three to select.
                 raise ReferenceException3(
-                    "FilesReferenceFinder3 does not yet support combining "
+                    "FilesReferenceFinder3 does not support combining "
                     "':definition()' with name_three during '*' traversal "
                     "-- definition.json is not versioned, there is no "
                     "version to select."
@@ -1167,11 +1181,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # version, it does not pick one winner per named-file (that
             # is what ':all()' is for).
             if name_one.functions:
+                # settled, not a gap -- ':definition()' is the only
+                # function this design ever scoped chaining onto a bare
+                # ':home()' during '*' traversal to (the one worked
+                # example driving this shape, "which named-files have
+                # on_arrival set," needs exactly that combination). No
+                # other worked example asks for a different function
+                # here.
                 raise ReferenceException3(
-                    "FilesReferenceFinder3 does not yet support chaining "
+                    "FilesReferenceFinder3 does not support chaining "
                     f":{name_one.functions[0].name}() onto ':home()' "
                     "during '*' traversal -- only ':definition()' is "
-                    "supported so far."
+                    "supported."
                 )
             candidates = []
             for name in self._matching_names(
