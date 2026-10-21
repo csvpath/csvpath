@@ -133,16 +133,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # named-files registrations for orders that failed").
                 # No per-name filter at all here, unlike the literal-
                 # root case above -- every ledger entry is a candidate.
-                if reference.name_three is not None:
-                    raise ReferenceException3(
-                        "FilesReferenceFinder3 does not yet support "
-                        "combining a bare ':status(...)' lookup with "
-                        "name_three -- it reads the global arrivals "
-                        "ledger directly, which has no per-name-file "
-                        "structure to narrow further."
-                    )
                 ledger = self.csvpaths.file_manager.files_root_manifest
                 matched = self._filter_ledger_by_gate_chain(ledger, status_chain)
+                if reference.name_three is not None:
+                    return self._pointer_into_status_matches(reference, matched)
                 return ReferenceResults3(
                     results=[
                         ReferenceResult3(
@@ -229,16 +223,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # what status you were looking for... in many cases we
             # know those high risk files by name" -- confirmed just as
             # real a need as the '*' form below, built together.
-            if reference.name_three is not None:
-                raise ReferenceException3(
-                    "FilesReferenceFinder3 does not yet support combining "
-                    "a bare ':status(...)' lookup with name_three -- it "
-                    "reads the global arrivals ledger directly, which has "
-                    "no per-name-file structure to narrow further."
-                )
             ledger = self.csvpaths.file_manager.files_root_manifest
             by_name = [e for e in ledger if e.get("named_file_name") == root_major]
             matched = self._filter_ledger_by_gate_chain(by_name, status_chain)
+            if reference.name_three is not None:
+                return self._pointer_into_status_matches(reference, matched)
             return ReferenceResults3(
                 results=[
                     ReferenceResult3(
@@ -300,11 +289,27 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # at that layer, only here (producing N real results) and
             # in _extract_data() (reading the field per result).
             if reference.name_three is not None:
+                # settled, not a gap (not-yet-supported sweep #2):
+                # resolve_kind's own terminal_functions property reads
+                # ONLY name_three.functions once name_three is present
+                # (see reference_3.py's own docstring), so a name_three
+                # pointer riding alongside this bare chain (e.g.
+                # ":manifest():uuid().:last()") would silently DROP the
+                # ":uuid()" field intent and resolve to raw file bytes
+                # instead -- confirmed by tracing resolve_kind/
+                # _extract_data before rejecting this, not assumed.
+                # Correctly expressing "pointer, then field" already
+                # has its own, unambiguous shape (e.g. ":last():uuid()",
+                # see normative_reference_examples.txt line 1001) -- no
+                # worked example asks for the field-then-pointer
+                # ordering this would add, and building it would need
+                # resolve_kind itself to change first.
                 raise ReferenceException3(
-                    f"FilesReferenceFinder3 does not yet support combining a "
+                    f"FilesReferenceFinder3 does not support combining a "
                     f"bare ':manifest():{manifest_field_call.name}()' lookup "
                     "with name_three -- it already reads a field from every "
-                    "matched entry on its own."
+                    "matched entry on its own; put the pointer first "
+                    f"instead (e.g. ':last():{manifest_field_call.name}()')."
                 )
             manifest = self.csvpaths.file_manager.get_manifest(root_major)
             return ReferenceResults3(
@@ -434,12 +439,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # -- unlike ':name()', a fingerprint already identifies one
             # SPECIFIC version, there is no further "which version"
             # narrowing step to defer. name_three combined with this
-            # shape is not yet supported (redundant by construction --
-            # there is nothing left to narrow).
+            # shape is settled, not a gap (not-yet-supported sweep #2):
+            # redundant by construction (a content-hash match is already
+            # 0-or-1 results, nothing left for a pointer to narrow), and
+            # a field accessor would hit the identical resolve_kind
+            # pitfall ':manifest():field()'+name_three does just above
+            # (terminal_functions reads only name_three.functions once
+            # name_three exists, silently dropping this bare selector's
+            # own field intent).
             call = name_one.path[0]
             if reference.name_three is not None:
                 raise ReferenceException3(
-                    f"FilesReferenceFinder3 does not yet support combining "
+                    f"FilesReferenceFinder3 does not support combining "
                     f"a bare ':{call.name}(...)' lookup with name_three -- "
                     "it already identifies one specific version on its own."
                 )
@@ -1727,6 +1738,63 @@ class FilesReferenceFinder3(ReferenceFinder3):
             if matched:
                 results.append(entry)
         return results
+
+    def _pointer_into_status_matches(
+        self, reference: Reference3, matched: list
+    ) -> ReferenceResults3:
+        """name_three riding alongside a bare ':status(...)' lookup --
+        added 2026-10-20 (not-yet-supported sweep #2), closing the gap
+        both `query()` call sites above used to reject outright.
+        `matched` is already the status-filtered ledger entries (every
+        candidate the bare chain selects); unlike the per-name manifest
+        shapes elsewhere in this file, ledger entries are NOT guaranteed
+        to also exist in `get_manifest(root_major)` (a failed
+        registration is ledger-only, see `file_manager.py`'s own
+        `_registration_failed()`), so `_extract_data()`'s ordinary
+        METADATA_FIELD-by-uuid re-derivation (which reads
+        `get_manifest(root_major)` for a literal root) cannot safely
+        back a chained field accessor here. Scoped to exactly one
+        version-selecting POINTER (:first()/:last()/:index(n)) and
+        nothing else riding alongside it -- a literal body, a field
+        accessor, or a range function would all need that same ledger-
+        vs-manifest plumbing fixed in `_extract_data()` first, and no
+        worked example asks for any of them yet, so they stay a clear
+        rejection rather than a guess. A lone pointer needs no such
+        fix: it only reduces `matched` to the one entry it selects, and
+        the returned result's own path/uuid already point straight at
+        that entry (the same plain FIRST_PARTY default every other
+        pointer-reduced FILES reference already resolves to -- no
+        `_extract_data()` changes needed at all)."""
+        name_three = reference.name_three
+        if name_three.body is not None:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not yet support a literal "
+                "name_three body alongside a bare ':status(...)' lookup "
+                "-- name_three must resolve to a single version-selecting "
+                "pointer (:first()/:last()/:index(n))."
+            )
+        built = self._build_chain(name_three.functions)
+        pointers = [f for f in built if f.ROLE == Function3.POINTER]
+        if len(built) != 1 or len(pointers) != 1:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 only supports a single version-"
+                "selecting pointer (:first()/:last()/:index(n)) in "
+                "name_three alongside a bare ':status(...)' lookup -- a "
+                "field accessor or range function riding alongside it is "
+                "not yet supported."
+            )
+        self._check_position(pointers[0], Reference3.NAME_THREE, Reference3.FILES)
+        selected = self._apply_pointer(pointers[0], matched)
+        if selected is None:
+            return ReferenceResults3(results=[])
+        return ReferenceResults3(
+            results=[
+                ReferenceResult3(
+                    path=self._ledger_entry_result_path(selected),
+                    uuid=selected.get("uuid"),
+                )
+            ]
+        )
 
     @staticmethod
     def _ledger_entry_result_path(entry: dict) -> str:
