@@ -843,8 +843,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # nothing here picks one). No driving use case has asked for
             # either reading, so this stays a clear rejection rather than
             # a guess, matching RESULTS' own precedent exactly.
+            # settled, not a gap (not-yet-supported sweep #5): the
+            # ambiguity is inherent, not an implementation gap -- "the
+            # last N" could mean the last N pooled across every group,
+            # or the last N WITHIN each group, and nothing in the spec
+            # picks one. Matches ResultsReferenceFinder3's own identical
+            # rejection for the identical shape (already worded "does
+            # not support," not "does not yet support" -- this file's
+            # own copy was simply left stale).
             raise ReferenceException3(
-                "FilesReferenceFinder3 does not yet support combining "
+                "FilesReferenceFinder3 does not support combining "
                 "':all()'/':groups()' grouping with ':from()'/':to()' or "
                 "a bare time-component function -- resolve the grouped "
                 "versions on their own first."
