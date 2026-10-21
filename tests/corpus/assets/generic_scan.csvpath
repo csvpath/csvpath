@@ -1,0 +1,12 @@
+---- CSVPATH ----
+
+~ name: baseline scan
+  description: a deliberately header-agnostic statement -- works against any
+    CSV/TSV/etc. regardless of column names, so it can be registered against
+    whichever named-file the corpus generator points it at.
+~
+
+$[*][
+    @lines.onmatch = count_lines()
+    yes()
+]

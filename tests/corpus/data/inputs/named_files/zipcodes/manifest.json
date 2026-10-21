@@ -1,0 +1,32 @@
+[
+  {
+    "type": "csv",
+    "reference": "$zipcodes.files.71990e87a06c2d8e13299485a43f6001c7589bc6677153f7fab30c796db0a6e3",
+    "file": "tests/corpus/data/inputs/named_files/zipcodes/zipcodes.csv/71990e87a06c2d8e13299485a43f6001c7589bc6677153f7fab30c796db0a6e3.csv",
+    "file_home": "tests/corpus/data/inputs/named_files/zipcodes/zipcodes.csv",
+    "fingerprint": "71990e87a06c2d8e13299485a43f6001c7589bc6677153f7fab30c796db0a6e3",
+    "uuid": "1ae0dd84-9f76-4981-a3e5-4f10f51be304",
+    "time": "2026-08-06T18:20:48.406880+00:00",
+    "from": "tests/csvpaths/test_resources/named_files/zipcodes.csv",
+    "template": "",
+    "manifest_path": "tests/corpus/data/inputs/named_files/zipcodes/manifest.json",
+    "file_name": "zipcodes.csv",
+    "username": "davidkershaw",
+    "hostname": "davids-Virtual-Machine.local"
+  },
+  {
+    "type": "csv",
+    "reference": "$zipcodes.files.e520ea5182132e6b3280edfba34b31e407882a52fcc858e2d51a77c1c10b4b6c",
+    "file": "tests/corpus/data/inputs/named_files/zipcodes/zipcodes.csv/e520ea5182132e6b3280edfba34b31e407882a52fcc858e2d51a77c1c10b4b6c.csv",
+    "file_home": "tests/corpus/data/inputs/named_files/zipcodes/zipcodes.csv",
+    "fingerprint": "e520ea5182132e6b3280edfba34b31e407882a52fcc858e2d51a77c1c10b4b6c",
+    "uuid": "94f8ebc4-189e-4168-9746-0c488d171fef",
+    "time": "2026-09-30T18:20:48.777054+00:00",
+    "from": "tests/corpus/.scratch/zipcodes__2/zipcodes.csv",
+    "template": "",
+    "manifest_path": "tests/corpus/data/inputs/named_files/zipcodes/manifest.json",
+    "file_name": "zipcodes.csv",
+    "username": "davidkershaw",
+    "hostname": "davids-Virtual-Machine.local"
+  }
+]

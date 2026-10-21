@@ -1,0 +1,40 @@
+[
+  {
+    "archive_name": "archive",
+    "named_paths_name": "check_zipcodes",
+    "named_paths_home": "tests/corpus/data/inputs/named_paths/check_zipcodes",
+    "group_file_path": "tests/corpus/data/inputs/named_paths/check_zipcodes/group.csvpaths",
+    "source_path": "tests/corpus/assets/generic_scan.csvpath",
+    "named_paths": [
+      "~ name: baseline scan\n  description: a deliberately header-agnostic statement -- works against any\n    CSV/TSV/etc. regardless of column names, so it can be registered against\n    whichever named-file the corpus generator points it at.\n~\n\n$[*][\n    @lines.onmatch = count_lines()\n    yes()\n]"
+    ],
+    "named_paths_identities": [
+      "baseline scan"
+    ],
+    "named_paths_count": 1,
+    "fingerprint": "73866b3fdb88f4fedbd0949639cec20441e0794e59765a60656ed00d003998a0",
+    "time": "2026-08-08T18:20:48.452499+00:00",
+    "uuid": "18016db2-b3f4-4b8a-b1a1-ed78e819be08",
+    "manifest_path": "tests/corpus/data/inputs/named_paths/check_zipcodes/manifest.json"
+  },
+  {
+    "archive_name": "archive",
+    "named_paths_name": "check_zipcodes",
+    "named_paths_home": "tests/corpus/data/inputs/named_paths/check_zipcodes",
+    "group_file_path": "tests/corpus/data/inputs/named_paths/check_zipcodes/group.csvpaths",
+    "source_path": "tests/corpus/.scratch/check_zipcodes__2/generic_scan.csvpath",
+    "named_paths": [
+      "~ name: baseline scan\n  description: a deliberately header-agnostic statement -- works against any\n    CSV/TSV/etc. regardless of column names, so it can be registered against\n    whichever named-file the corpus generator points it at.\n~\n\n$[*][\n    @lines.onmatch = count_lines()\n    yes()\n]",
+      "~ name: generated check 2\n  description: appended by the corpus generator to force a new\n    version/load with a distinct content fingerprint.\n~\n\n$[*][\n    yes()\n]"
+    ],
+    "named_paths_identities": [
+      "baseline scan",
+      "generated check 2"
+    ],
+    "named_paths_count": 2,
+    "fingerprint": "513cdf9c7856e6e06efd4b8c00fd51074f6c70bb09c576eaea9efdb860c8c48e",
+    "time": "2026-09-29T18:20:48.775707+00:00",
+    "uuid": "82d7e48f-3c09-44a9-ba7d-34889049b482",
+    "manifest_path": "tests/corpus/data/inputs/named_paths/check_zipcodes/manifest.json"
+  }
+]

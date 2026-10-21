@@ -1,0 +1,17 @@
+[
+  {
+    "type": "xlsx",
+    "reference": "$energy_readings.files.1ab4814264d9814d2af96de37f8affe2f7f01678bc782fce5b951f83c4f6d15f",
+    "file": "tests/corpus/data/inputs/named_files/energy_readings/Book1.xlsx/1ab4814264d9814d2af96de37f8affe2f7f01678bc782fce5b951f83c4f6d15f.xlsx",
+    "file_home": "tests/corpus/data/inputs/named_files/energy_readings/Book1.xlsx",
+    "fingerprint": "1ab4814264d9814d2af96de37f8affe2f7f01678bc782fce5b951f83c4f6d15f",
+    "uuid": "a6c19036-4dd8-4bd4-913a-8680052015e3",
+    "time": "2026-09-06T18:20:48.654022+00:00",
+    "from": "tests/csvpaths/test_resources/Book1.xlsx",
+    "template": "",
+    "manifest_path": "tests/corpus/data/inputs/named_files/energy_readings/manifest.json",
+    "file_name": "Book1.xlsx",
+    "username": "davidkershaw",
+    "hostname": "davids-Virtual-Machine.local"
+  }
+]

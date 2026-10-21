@@ -1,0 +1,32 @@
+[
+  {
+    "type": "csv",
+    "reference": "$orders.files.74d3787c36bdb2098a3479126d28970618696237d63f9006717d61e86af5a988",
+    "file": "tests/corpus/data/inputs/named_files/orders/orders/food.csv/74d3787c36bdb2098a3479126d28970618696237d63f9006717d61e86af5a988.csv",
+    "file_home": "tests/corpus/data/inputs/named_files/orders/orders/food.csv",
+    "fingerprint": "74d3787c36bdb2098a3479126d28970618696237d63f9006717d61e86af5a988",
+    "uuid": "699505b3-686a-453b-aa00-dac794b83bc5",
+    "time": "2026-07-29T18:20:48.323426+00:00",
+    "from": "tests/csvpaths/test_resources/named_files/food.csv",
+    "template": "orders/:filename",
+    "manifest_path": "tests/corpus/data/inputs/named_files/orders/manifest.json",
+    "file_name": "food.csv",
+    "username": "davidkershaw",
+    "hostname": "davids-Virtual-Machine.local"
+  },
+  {
+    "type": "csv",
+    "reference": "$orders.files.084f52949fe0952c2ad5bc4629f300e1f7dad4c9127fa96c3a701a34229c2f3b",
+    "file": "tests/corpus/data/inputs/named_files/orders/orders/food.csv/084f52949fe0952c2ad5bc4629f300e1f7dad4c9127fa96c3a701a34229c2f3b.csv",
+    "file_home": "tests/corpus/data/inputs/named_files/orders/orders/food.csv",
+    "fingerprint": "084f52949fe0952c2ad5bc4629f300e1f7dad4c9127fa96c3a701a34229c2f3b",
+    "uuid": "c9549eba-2ff1-4734-b359-84b3f24bd360",
+    "time": "2026-08-12T18:20:48.461819+00:00",
+    "from": "tests/corpus/.scratch/orders__2/food.csv",
+    "template": "orders/:filename",
+    "manifest_path": "tests/corpus/data/inputs/named_files/orders/manifest.json",
+    "file_name": "food.csv",
+    "username": "davidkershaw",
+    "hostname": "davids-Virtual-Machine.local"
+  }
+]
