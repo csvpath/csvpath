@@ -1,7 +1,7 @@
 [
   {
-    "time": "2026-07-25T18:20:48.315276+00:00",
-    "uuid": "10c97f62-0d37-4d6b-bca5-8cbb8ce297f7",
+    "time": "2026-07-25T19:17:06.578654+00:00",
+    "uuid": "fcee1579-8c43-44c0-bae5-533ba2ff08c3",
     "file_manifest": "tests/corpus/data/inputs/named_files/acme_invoices/manifest.json",
     "username": "davidkershaw",
     "hostname": "davids-Virtual-Machine.local",
@@ -18,8 +18,8 @@
     "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json"
   },
   {
-    "time": "2026-07-29T18:20:48.323426+00:00",
-    "uuid": "699505b3-686a-453b-aa00-dac794b83bc5",
+    "time": "2026-07-29T19:17:06.585782+00:00",
+    "uuid": "6f3721f2-07f1-453c-a9cb-c362b5df6061",
     "file_manifest": "tests/corpus/data/inputs/named_files/orders/manifest.json",
     "username": "davidkershaw",
     "hostname": "davids-Virtual-Machine.local",
@@ -36,8 +36,8 @@
     "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json"
   },
   {
-    "time": "2026-08-06T18:20:48.406880+00:00",
-    "uuid": "1ae0dd84-9f76-4981-a3e5-4f10f51be304",
+    "time": "2026-08-06T19:17:06.660701+00:00",
+    "uuid": "0f49c06c-a705-4270-8058-6458e6cb8be9",
     "file_manifest": "tests/corpus/data/inputs/named_files/zipcodes/manifest.json",
     "username": "davidkershaw",
     "hostname": "davids-Virtual-Machine.local",
@@ -54,8 +54,8 @@
     "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json"
   },
   {
-    "time": "2026-08-12T18:20:48.461819+00:00",
-    "uuid": "c9549eba-2ff1-4734-b359-84b3f24bd360",
+    "time": "2026-08-12T19:17:06.698259+00:00",
+    "uuid": "029f8b93-c36a-4801-8445-7370ad9f0710",
     "file_manifest": "tests/corpus/data/inputs/named_files/orders/manifest.json",
     "username": "davidkershaw",
     "hostname": "davids-Virtual-Machine.local",
@@ -72,8 +72,8 @@
     "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json"
   },
   {
-    "time": "2026-08-19T18:20:48.570204+00:00",
-    "uuid": "69b5e588-0cbb-446f-bd77-b7dc6ce9a06b",
+    "time": "2026-08-19T19:17:06.789139+00:00",
+    "uuid": "19c5e257-5894-4b33-8d23-edf835669f28",
     "file_manifest": "tests/corpus/data/inputs/named_files/acme_invoices/manifest.json",
     "username": "davidkershaw",
     "hostname": "davids-Virtual-Machine.local",
@@ -90,8 +90,8 @@
     "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json"
   },
   {
-    "time": "2026-08-21T18:20:48.572677+00:00",
-    "uuid": "bb4609cb-3748-41c5-bd4b-1e6de1f5fe3e",
+    "time": "2026-08-21T19:17:06.791324+00:00",
+    "uuid": "1f5c42f5-518e-4a93-bec8-7bb3d1a42f97",
     "file_manifest": "tests/corpus/data/inputs/named_files/acme_invoices/manifest.json",
     "username": "davidkershaw",
     "hostname": "davids-Virtual-Machine.local",
@@ -108,8 +108,8 @@
     "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json"
   },
   {
-    "time": "2026-08-23T18:20:48.575231+00:00",
-    "uuid": "084970d0-4666-4915-b415-5cee62e2d1c6",
+    "time": "2026-08-23T19:17:06.793829+00:00",
+    "uuid": "eceb54f7-a312-4cd9-af6e-1ffd25038c41",
     "file_manifest": "tests/corpus/data/inputs/named_files/acme_invoices/manifest.json",
     "username": "davidkershaw",
     "hostname": "davids-Virtual-Machine.local",
@@ -126,8 +126,26 @@
     "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json"
   },
   {
-    "time": "2026-09-04T18:20:48.650843+00:00",
-    "uuid": "b6b20aa5-0a37-4a5f-989c-566f26334287",
+    "time": "2026-08-27T19:17:06.815217+00:00",
+    "uuid": "2e8d9724-123d-40af-8157-6f02da90d8a4",
+    "file_manifest": "tests/corpus/data/inputs/named_files/orders/manifest.json",
+    "username": "davidkershaw",
+    "hostname": "davids-Virtual-Machine.local",
+    "type": "csv",
+    "named_file_name": "orders",
+    "origin_path": "tests/corpus/.scratch/orders__3/food.csv",
+    "fingerprint": "a17d564b600794d2ad1c079e2449abdece847e9d84f04bd7f73f12f4373fc6a5",
+    "reference": "$orders.files.a17d564b600794d2ad1c079e2449abdece847e9d84f04bd7f73f12f4373fc6a5",
+    "file_path": "tests/corpus/data/inputs/named_files/orders/orders/food.csv/a17d564b600794d2ad1c079e2449abdece847e9d84f04bd7f73f12f4373fc6a5.csv",
+    "file_home": "tests/corpus/data/inputs/named_files/orders/orders/food.csv",
+    "file_name": "food.csv",
+    "name_home": "tests/corpus/data/inputs/named_files/orders",
+    "template": "orders/:filename",
+    "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json"
+  },
+  {
+    "time": "2026-09-04T19:17:06.869396+00:00",
+    "uuid": "c6da16fd-292a-467b-ab5d-d9d35c130a4f",
     "file_manifest": null,
     "username": "davidkershaw",
     "hostname": "davids-Virtual-Machine.local",
@@ -145,8 +163,8 @@
     "status": "Registration failed"
   },
   {
-    "time": "2026-09-06T18:20:48.654022+00:00",
-    "uuid": "a6c19036-4dd8-4bd4-913a-8680052015e3",
+    "time": "2026-09-06T19:17:06.872334+00:00",
+    "uuid": "b9f8ec4a-eefd-4572-b71b-4ee95973e347",
     "file_manifest": "tests/corpus/data/inputs/named_files/energy_readings/manifest.json",
     "username": "davidkershaw",
     "hostname": "davids-Virtual-Machine.local",
@@ -163,8 +181,26 @@
     "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json"
   },
   {
-    "time": "2026-09-19T18:20:48.728633+00:00",
-    "uuid": "517bae88-c0a8-41e4-af24-a26a6a4b37ff",
+    "time": "2026-09-11T19:17:06.874847+00:00",
+    "uuid": "39e5df07-9d60-4abd-bf0b-3e2bda1f09b5",
+    "file_manifest": "tests/corpus/data/inputs/named_files/orders/manifest.json",
+    "username": "davidkershaw",
+    "hostname": "davids-Virtual-Machine.local",
+    "type": "csv",
+    "named_file_name": "orders",
+    "origin_path": "tests/corpus/.scratch/orders__4/food.csv",
+    "fingerprint": "2c87c6e3ea8544e536e619c3ab4c33f80bcf255646e13bd0234a7d1cc0f9ae69",
+    "reference": "$orders.files.2c87c6e3ea8544e536e619c3ab4c33f80bcf255646e13bd0234a7d1cc0f9ae69",
+    "file_path": "tests/corpus/data/inputs/named_files/orders/orders/food.csv/2c87c6e3ea8544e536e619c3ab4c33f80bcf255646e13bd0234a7d1cc0f9ae69.csv",
+    "file_home": "tests/corpus/data/inputs/named_files/orders/orders/food.csv",
+    "file_name": "food.csv",
+    "name_home": "tests/corpus/data/inputs/named_files/orders",
+    "template": "orders/:filename",
+    "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json"
+  },
+  {
+    "time": "2026-09-19T19:17:06.943986+00:00",
+    "uuid": "36d748fb-81de-4a18-a5a2-51331fdedec9",
     "file_manifest": "tests/corpus/data/inputs/named_files/acme_invoices/manifest.json",
     "username": "davidkershaw",
     "hostname": "davids-Virtual-Machine.local",
@@ -181,8 +217,8 @@
     "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json"
   },
   {
-    "time": "2026-09-30T18:20:48.777054+00:00",
-    "uuid": "94f8ebc4-189e-4168-9746-0c488d171fef",
+    "time": "2026-09-30T19:17:06.989688+00:00",
+    "uuid": "75a41f6e-8efc-405c-b95d-41c724a9b055",
     "file_manifest": "tests/corpus/data/inputs/named_files/zipcodes/manifest.json",
     "username": "davidkershaw",
     "hostname": "davids-Virtual-Machine.local",
@@ -196,6 +232,24 @@
     "file_name": "zipcodes.csv",
     "name_home": "tests/corpus/data/inputs/named_files/zipcodes",
     "template": "",
+    "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json"
+  },
+  {
+    "time": "2026-10-09T19:17:07.089787+00:00",
+    "uuid": "6968309e-aafc-4ae7-939e-1135505e13be",
+    "file_manifest": "tests/corpus/data/inputs/named_files/orders/manifest.json",
+    "username": "davidkershaw",
+    "hostname": "davids-Virtual-Machine.local",
+    "type": "csv",
+    "named_file_name": "orders",
+    "origin_path": "tests/corpus/.scratch/orders__5/food.csv",
+    "fingerprint": "baf45aae8cbdb1de423d10e9f81f689f417ee21b29ee88bf95ce71600ae2aa44",
+    "reference": "$orders.files.baf45aae8cbdb1de423d10e9f81f689f417ee21b29ee88bf95ce71600ae2aa44",
+    "file_path": "tests/corpus/data/inputs/named_files/orders/orders/food.csv/baf45aae8cbdb1de423d10e9f81f689f417ee21b29ee88bf95ce71600ae2aa44.csv",
+    "file_home": "tests/corpus/data/inputs/named_files/orders/orders/food.csv",
+    "file_name": "food.csv",
+    "name_home": "tests/corpus/data/inputs/named_files/orders",
+    "template": "orders/:filename",
     "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json"
   }
 ]

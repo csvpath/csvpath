@@ -13,8 +13,8 @@
     ],
     "named_paths_count": 1,
     "fingerprint": "73866b3fdb88f4fedbd0949639cec20441e0794e59765a60656ed00d003998a0",
-    "time": "2026-08-02T18:20:48.402139+00:00",
-    "uuid": "ae3d2456-6310-4829-8f2b-df8c536769bc",
+    "time": "2026-08-02T19:17:06.658427+00:00",
+    "uuid": "d0dc95a9-f554-4c48-b348-6ebc863cc485",
     "manifest_path": "tests/corpus/data/inputs/named_paths/scan_invoices/manifest.json"
   },
   {
@@ -22,19 +22,18 @@
     "named_paths_name": "scan_invoices",
     "named_paths_home": "tests/corpus/data/inputs/named_paths/scan_invoices",
     "group_file_path": "tests/corpus/data/inputs/named_paths/scan_invoices/group.csvpaths",
-    "source_path": "tests/corpus/.scratch/scan_invoices__2/generic_scan.csvpath",
     "named_paths": [
       "~ name: baseline scan\n  description: a deliberately header-agnostic statement -- works against any\n    CSV/TSV/etc. regardless of column names, so it can be registered against\n    whichever named-file the corpus generator points it at.\n~\n\n$[*][\n    @lines.onmatch = count_lines()\n    yes()\n]",
-      "~ name: generated check 2\n  description: appended by the corpus generator to force a new\n    version/load with a distinct content fingerprint.\n~\n\n$[*][\n    yes()\n]"
+      "~ name: generated check 2\n  description: appended by the corpus generator to simulate a\n    named-paths group gaining an additional check over time.\n~\n\n$[*][\n    yes()\n]"
     ],
     "named_paths_identities": [
       "baseline scan",
       "generated check 2"
     ],
     "named_paths_count": 2,
-    "fingerprint": "513cdf9c7856e6e06efd4b8c00fd51074f6c70bb09c576eaea9efdb860c8c48e",
-    "time": "2026-09-21T18:20:48.732805+00:00",
-    "uuid": "59c125ed-c2ad-4d40-bfe3-082da91d1a1a",
+    "fingerprint": "6b9819ec62700d9055e0f49343fa3c1162f713d7ac595011ac29bcedf6718066",
+    "time": "2026-09-21T19:17:06.947508+00:00",
+    "uuid": "acb91274-7515-414f-b93e-49dc3c217245",
     "manifest_path": "tests/corpus/data/inputs/named_paths/scan_invoices/manifest.json"
   }
 ]

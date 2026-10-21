@@ -16,8 +16,8 @@ $[*][
 ---- CSVPATH ----
 
 ~ name: generated check 2
-  description: appended by the corpus generator to force a new
-    version/load with a distinct content fingerprint.
+  description: appended by the corpus generator to simulate a
+    named-paths group gaining an additional check over time.
 ~
 
 $[*][

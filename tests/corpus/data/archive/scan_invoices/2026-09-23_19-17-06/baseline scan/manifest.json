@@ -1,0 +1,31 @@
+{
+  "time": "2026-09-23T19:17:06.953622+00:00",
+  "uuid": "b5ee2820-ff30-4a17-9d88-de53e20c838b",
+  "serial": true,
+  "archive_name": "archive",
+  "named_results_name": "scan_invoices",
+  "named_paths_uuid": "acb91274-7515-414f-b93e-49dc3c217245",
+  "run": "2026-09-23_19-17-06",
+  "run_uuid": "3915d388-0448-4357-bc4d-a66cbcbb82b6",
+  "run_home": "tests/corpus/data/archive/scan_invoices/2026-09-23_19-17-06",
+  "instance_identity": "baseline scan",
+  "instance_index": "0",
+  "instance_home": "tests/corpus/data/archive/scan_invoices/2026-09-23_19-17-06/baseline scan",
+  "file_fingerprints": {
+    "meta.json": "ffc03136124ba5bdd19ddc4c8a31346b3a455cdbdb9faf8558601aa21d9cab7f",
+    "errors.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "vars.json": "fee517061f3dc72234102992e3fc937e4a7fdb0570da41cd4c218878d7a64283"
+  },
+  "files_expected": true,
+  "number_of_files_expected": 3,
+  "number_of_files_generated": 3,
+  "valid": true,
+  "completed": true,
+  "error_count": 0,
+  "method": "fast_forward_paths",
+  "source_mode_preceding": false,
+  "actual_data_file": "tests/corpus/data/inputs/named_files/acme_invoices/Acme_invoices_2025-03-31.csv/a0de7c859e9058d5e05784b49c7d426cc5844359255aa143b44832f339a8b055.csv",
+  "origin_data_file": "tests/corpus/data/inputs/named_files/acme_invoices/Acme_invoices_2025-03-31.csv/a0de7c859e9058d5e05784b49c7d426cc5844359255aa143b44832f339a8b055.csv",
+  "named_file_name": "acme_invoices",
+  "manifest_path": "tests/corpus/data/archive/scan_invoices/2026-09-23_19-17-06/baseline scan/manifest.json"
+}

@@ -39,18 +39,69 @@ scratch. Only `assets.yaml` (and any new fixture it references under
 `assets/`) needs editing to grow the corpus; `data/` is always a derived
 artifact.
 
+## Validating reference-v3 against the corpus
+
+`test_normative_examples.py` runs real reference-v3 expressions (the
+`FilesReferenceFinder3`/`ResultsReferenceFinder3`/`CsvpathsReferenceFinder3`
+classes under `csvpath/references/`) against the committed corpus and
+asserts on ground-truth results, catching the same way as any other pytest
+module:
+
+```
+poetry run pytest tests/corpus/test_normative_examples.py -v
+```
+
+This is a different layer than `tests/references/`'s own unit tests, which
+exercise the finders against hand-built, synthetic manifest fixtures — a
+pass here proves the finder's expectations about manifest/directory shape
+match what production registration/run code actually writes. It's a
+representative first pass (one or two cases per major construct family from
+`specs/references_v3/spec/normative_reference_examples.txt`), not a
+line-by-line transcription of the whole spec — extend it as the corpus
+grows. Three known gaps found by this validation pass are recorded as
+`xfail(strict=True)` tests in `TestKnownGaps` rather than fixed (core-code
+changes are out of this repo's current tests-only scope) — see that class's
+own docstrings/reasons for the specifics.
+
+## Testing subagent interpretation of the corpus
+
+`scenarios.yaml` is a bank of natural-language questions about the corpus's
+state, each with a crisp, checkable ground-truth answer — for testing
+whether an agent can correctly explore and interpret the corpus and
+communicate an accurate answer back, as opposed to whether reference-v3
+itself resolves correctly (that's what `test_normative_examples.py` is for).
+
+To run a scenario against an agent:
+
+1. Give the agent the scenario's `question` text, plus access to this
+   repository (at minimum `tests/corpus/data/`, `tests/corpus/assets.yaml`,
+   and this README for background). Don't give it `scenarios.yaml` itself —
+   that hands over the answer.
+2. Capture its final answer as plain text.
+3. Grade it:
+   ```
+   poetry run python tests/corpus/grade_scenario.py <scenario_id> "<answer text>"
+   ```
+   Exit code 0 means PASS, 1 means FAIL. `grade_scenario.py --all answers.json`
+   grades a batch at once (a JSON object mapping scenario id to answer text).
+
+There's no API wired up to spawn an agent directly from the grading script —
+Claude Code's own Agent tool is only callable from inside a Claude Code
+session. The intended flow is for a human or an orchestrating session to
+hand off the question, capture the answer, and grade it.
+
 ## Design notes / known limitations (v1)
 
 - **Content-fingerprint dedup**: CsvPath Framework dedupes identical content
-  silently, so each repeat "version" of the same source file is generated
-  from a mutated scratch copy (CSVs: duplicate the last row; `.csvpath`/
-  `.csvpaths`: append one more trivial, always-valid statement) to force a
-  genuinely distinct fingerprint. These mutations currently do NOT
-  accumulate — each version is mutated independently from the pristine
-  original, so a later version's one added line/statement replaces rather
-  than adds to an earlier version's. Good enough for exercising
-  version-selection reference expressions; not yet a fully realistic
-  "statements accumulate over time" simulation.
+  silently. Named-paths groups now accumulate for real across repeat
+  versions — each one after the first is a genuine
+  `PathsManager.add_named_paths(paths=[...], append=True)` call that adds
+  one more trivial statement onto whatever content the group already had,
+  rather than mutating the pristine original independently each time.
+  Named-files groups have no equivalent append mode, so repeat CSV versions
+  are still independent mutations of the pristine original (duplicating the
+  source's own last row `count - 1` times, so each version is still
+  genuinely distinct from every other).
 - **Template date tokens are unaffected by `DateUtility`**: `:year`,
   `:month_name`, `:day`, etc. in `TemplateUtility.transform_template` read
   real wall-clock time directly, not `DateUtility`. Only positional tokens

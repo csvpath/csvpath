@@ -21,6 +21,15 @@ system's history would have unfolded, rather than every run seeing the
 group's final, most-mutated version regardless of how far back it claims to
 be.
 
+Named-paths groups accumulate for real: each version after a group's first
+load is a genuine PathsManager.add_named_paths(paths=[...], append=True)
+call that adds one more trivial statement onto whatever content the group
+already had (confirmed live: append=True rewrites the group file as
+existing-content + new-content), not an independent mutation of the
+pristine original. Named-files groups have no equivalent append mode, so
+repeat versions there are still independent mutated copies (CSV: duplicate
+the last row) under their own scratch subdirectory.
+
 Note: template date tokens (":year", ":month_name", etc., in
 TemplateUtility.transform_template) read real wall-clock time directly, NOT
 DateUtility -- they are unaffected by the offsets here. Template-preserving
@@ -90,10 +99,19 @@ def reset_now() -> None:
     DateUtility.OFFSET_YEARS = 0
 
 
-def mutate_csv(source: Path, dest: Path) -> None:
+def mutate_csv(source: Path, dest: Path, count: int) -> None:
     """forces a new content fingerprint by duplicating the source's own
-    last line -- stays genuinely valid tabular data (same column
-    structure), just one more row than the original."""
+    last line `count - 1` times -- stays genuinely valid tabular data
+    (same column structure), just more rows than the original. Scaling
+    the duplicate count by `count` (rather than always adding exactly
+    one row) matters: every use mutates from the PRISTINE original, not
+    cumulatively from the previous mutation (no append-mode equivalent
+    exists for named-files, unlike named-paths), so a fixed single-row
+    addition would produce byte-identical output -- and therefore the
+    SAME fingerprint -- on every call, silently deduping every version
+    after the second down to just one (confirmed live before relying on
+    this fix: orders had 5 versions scheduled in assets.yaml but only 2
+    distinct fingerprints actually registered)."""
     text = source.read_text()
     if not text:
         shutil.copy(source, dest)
@@ -102,48 +120,45 @@ def mutate_csv(source: Path, dest: Path) -> None:
         text += "\n"
     lines = text.splitlines(keepends=True)
     last = lines[-1]
-    dest.write_text(text + last)
+    dest.write_text(text + last * (count - 1))
 
 
-def mutate_csvpath(source: Path, dest: Path, marker: str) -> None:
-    """forces a new content fingerprint by appending one more trivial,
-    always-valid statement -- simulates a named-paths group gaining an
-    additional check over time, rather than an arbitrary byte change."""
-    content = source.read_text()
-    addition = (
-        "\n---- CSVPATH ----\n\n"
+def append_statement(marker: str) -> str:
+    """one more trivial, always-valid csvpath statement -- passed to
+    PathsManager.add_named_paths(paths=[...], append=True) so a repeat
+    "version" of a named-paths group genuinely accumulates onto whatever
+    content the group already had, rather than independently mutating the
+    pristine original."""
+    return (
         f"~ name: generated check {marker}\n"
-        "  description: appended by the corpus generator to force a new\n"
-        "    version/load with a distinct content fingerprint.\n"
+        "  description: appended by the corpus generator to simulate a\n"
+        "    named-paths group gaining an additional check over time.\n"
         "~\n\n"
         "$[*][\n"
         "    yes()\n"
-        "]\n"
+        "]"
     )
-    dest.write_text(content + addition)
 
 
-def versioned_source(
-    group_name: str, source_rel: str, use_counts: dict, *, is_csvpath: bool
-) -> Path:
-    """returns the real source path for a group's FIRST use of
+def versioned_source(group_name: str, source_rel: str, use_counts: dict) -> Path:
+    """returns the real source path for a named_files group's FIRST use of
     `source_rel`, or a mutated scratch copy -- under its OWN numbered
     subdirectory, with the ORIGINAL basename preserved -- for every
     subsequent use. CsvPath Framework dedupes identical content and
-    silently drops a repeat registration/load otherwise (confirmed live
-    before relying on this), so a genuinely distinct fingerprint is
-    required; keeping the original basename (rather than folding the
-    group name/count into the filename itself) matters because the
-    registration's own file_home directory is named after it -- a
-    mutated copy should look like an ordinary later arrival of the same
-    file, not generator scratch output leaking into the corpus.
+    silently drops a repeat registration otherwise (confirmed live before
+    relying on this), so a genuinely distinct fingerprint is required;
+    keeping the original basename (rather than folding the group name/
+    count into the filename itself) matters because the registration's
+    own file_home directory is named after it -- a mutated copy should
+    look like an ordinary later arrival of the same file, not generator
+    scratch output leaking into the corpus.
 
     Returned relative to the current working directory (expected to be
     REPO_ROOT, per this module's own Usage docstring), not absolute --
-    FileManager/PathsManager record whatever path string they are given
-    verbatim as "origin_path"/"source_path" in the manifest, and an
-    absolute path there would bake this machine's own home directory
-    into a file meant to be committed and shared."""
+    FileManager records whatever path string it is given verbatim as
+    "origin_path" in the manifest, and an absolute path there would bake
+    this machine's own home directory into a file meant to be committed
+    and shared."""
     source = REPO_ROOT / source_rel
     key = (group_name, source_rel)
     use_counts[key] = use_counts.get(key, 0) + 1
@@ -154,17 +169,14 @@ def versioned_source(
         scratch_subdir = SCRATCH_DIR / f"{group_name}__{count}"
         scratch_subdir.mkdir(parents=True, exist_ok=True)
         mutated = scratch_subdir / source.name
-        if is_csvpath:
-            mutate_csvpath(source, mutated, marker=str(count))
+        if source.suffix.lower() == ".csv":
+            mutate_csv(source, mutated, count=count)
         else:
-            if source.suffix.lower() == ".csv":
-                mutate_csv(source, mutated)
-            else:
-                # no mutation strategy for this extension (e.g. .xlsx) --
-                # repeats of a non-CSV source would just silently dedupe;
-                # the asset list is expected to only use each non-CSV
-                # source once per group until a mutator exists for it.
-                shutil.copy(source, mutated)
+            # no mutation strategy for this extension (e.g. .xlsx) --
+            # repeats of a non-CSV source would just silently dedupe;
+            # the asset list is expected to only use each non-CSV source
+            # once per group until a mutator exists for it.
+            shutil.copy(source, mutated)
         result = mutated
     return Path(os.path.relpath(result, start=Path.cwd()))
 
@@ -196,9 +208,10 @@ def build_events(assets: dict) -> list[tuple[int, str, dict]]:
         )
     for group in assets.get("named_paths", []) or []:
         name = group["name"]
+        source = group["source"]
         for version in group["versions"]:
             events.append(
-                (version["offset_days"], "paths", {"name": name, "source": version["source"]})
+                (version["offset_days"], "paths", {"name": name, "source": source})
             )
     for run_group in assets.get("results", []) or []:
         paths_name = run_group["paths_name"]
@@ -216,13 +229,12 @@ def build_events(assets: dict) -> list[tuple[int, str, dict]]:
 
 
 def run_events(csvpaths: CsvPaths, events: list[tuple[int, str, dict]]) -> None:
-    use_counts: dict = {}
+    file_use_counts: dict = {}
+    paths_use_counts: dict = {}
     for offset_days, kind, payload in events:
         set_now(offset_days)
         if kind == "file":
-            src = versioned_source(
-                payload["name"], payload["source"], use_counts, is_csvpath=False
-            )
+            src = versioned_source(payload["name"], payload["source"], file_use_counts)
             csvpaths.file_manager.add_named_file(
                 name=payload["name"], path=str(src), template=payload["template"]
             )
@@ -244,12 +256,22 @@ def run_events(csvpaths: CsvPaths, events: list[tuple[int, str, dict]]) -> None:
             except ValueError:
                 pass
         elif kind == "paths":
-            src = versioned_source(
-                payload["name"], payload["source"], use_counts, is_csvpath=True
-            )
-            csvpaths.paths_manager.add_named_paths(
-                name=payload["name"], from_file=str(src)
-            )
+            name = payload["name"]
+            paths_use_counts[name] = paths_use_counts.get(name, 0) + 1
+            count = paths_use_counts[name]
+            if count == 1:
+                csvpaths.paths_manager.add_named_paths(
+                    name=name, from_file=payload["source"]
+                )
+            else:
+                # real accumulation: this appends one more trivial statement
+                # onto whatever the group's content already was, rather than
+                # mutating the pristine original independently each time
+                # (confirmed live: add_named_paths(append=True) rewrites the
+                # group file as existing-content + new-content).
+                csvpaths.paths_manager.add_named_paths(
+                    name=name, paths=[append_statement(str(count))], append=True
+                )
         elif kind == "run":
             csvpaths.fast_forward_paths(
                 pathsname=payload["paths_name"], filename=payload["against_file"]
