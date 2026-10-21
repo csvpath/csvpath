@@ -1811,11 +1811,21 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
                 return function_cls.transform_value(value)
         if kind != Reference3.FIRST_PARTY:
+            # confirmed unreachable via any real reference (not-yet-
+            # supported sweep #10), not a pending gap: by the time
+            # name_three.functions reaches resolve_kind's own walk,
+            # _name_three_selector() above has already dispatched every
+            # one of its members into accessor/field_call/range_bounds/
+            # gate_call/pointer_call, or raised its own "does not
+            # support :X() as a name_three function" for anything else
+            # (confirmed exhaustive in task #8) -- so `kind` can only
+            # be METADATA_FILE/METADATA_FIELD here when `accessor` was
+            # also set, which the block above already returns from.
             raise ReferenceException3(
-                f"ResultsReferenceFinder3 does not yet support "
+                f"ResultsReferenceFinder3 does not support "
                 f"resolve_kind={kind!r} -- only :errors()/:vars()/:meta()/"
                 ":data()/:unmatched()/:file() are wired up as metadata-"
-                "file functions so far."
+                "file functions."
             )
         # a run directory (no name_three) or an instance directory matched
         # by identity/:all() with no accessor riding alongside has no
