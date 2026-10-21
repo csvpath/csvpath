@@ -631,7 +631,7 @@ And named-file `beta`:
 
 And named-file `cappa`:
 - `three.csv` [1 version]
-- `orders/2026/four.csv` [2 versions
+- `orders/2026/four.csv` [2 versions]
 
 Expect the following results from these references:
 - `$*.files.*.:last()` → 1 most-recent registration, considering all named-files
@@ -640,6 +640,7 @@ Expect the following results from these references:
 - `$alpha.files.:all().:last()` → 2 most-recent registrations, one per file home
 - `$*.files.:groups().:last()` → 5 most-recent registrations, one per file home
 - `$*.files.:flatten().:from(4):to(:index(-1))` → last 4 most-recent registrations of all 8
+- `$*.files.:groups().:from(0):to(1)` → first 2 registrations for each group found in name_one
 
 Note that the following references are equivalent. While References v3 prefers to have 1 way to do things, not multiple ways, these examples fall naturally out of desirable behavior, so are acceptable redundancies.
 - `$*.files.:flatten().:all()` → all 8 most-recent registrations

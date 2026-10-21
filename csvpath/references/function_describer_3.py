@@ -17,8 +17,7 @@ from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 # fits the actual Function3 model better than adapting the match-side
 # one. Deliberately just a markdown-string producer -- writing the
 # result to a file, or wiring it into any interactive CLI, is a
-# separate integration question (v3 is not wired into production yet,
-# see the bucket list).
+# separate integration question.
 #
 class Function3Describer:
     @classmethod
