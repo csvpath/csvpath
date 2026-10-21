@@ -1901,8 +1901,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             ]
         )
 
-    @staticmethod
-    def _ledger_entry_result_path(entry: dict) -> str:
+    def _ledger_entry_result_path(self, entry: dict) -> str:
         """the real path to use for a `ReferenceResult3` built from a
         raw global-ledger entry -- added 2026-10-18, caught live before
         shipping: `ReferenceResult3` itself forbids a None/empty path,
@@ -1911,17 +1910,23 @@ class FilesReferenceFinder3(ReferenceFinder3):
         `file_manager.py`'s own `_registration_failed()`, which never
         sets `file_path`/`file_home`/`file_name` at all). Falls back to
         "origin_path" (the attempted source file -- the one real path
-        a failure entry DOES always carry) when "file_path" is empty;
-        raises clearly, rather than letting `ReferenceResult3`'s own
-        generic error leak through confusingly, if somehow neither is
-        present."""
+        a failure entry usually carries) when "file_path" is empty.
+        Widened 2026-10-21: "origin_path" itself can ALSO be empty --
+        confirmed live this is exactly the shape the one real, tested
+        trigger for this status produces (add_named_file(path="") --
+        see test_file_registration_failed), not a hypothetical. Falls
+        back a second time, to the global arrivals ledger's own
+        manifest.json -- the one real path that always exists and
+        genuinely contains this entry -- so a reference can still
+        select and report it instead of raising on the one input
+        actually confirmed to cause it. Converted from @staticmethod
+        to read self.csvpaths.config for this fallback; every existing
+        call site already invokes this as self._ledger_entry_result_
+        path(...), so no call site changes."""
         path = entry.get("file_path") or entry.get("origin_path")
         if not path:
-            raise ReferenceException3(
-                "FilesReferenceFinder3 found a global arrivals ledger "
-                "entry with neither a 'file_path' nor an 'origin_path' "
-                "to report -- cannot build a result from it."
-            )
+            home = self.csvpaths.config.inputs_files_path
+            return Nos(home).join("manifest.json")
         return path
 
     @staticmethod

@@ -286,58 +286,61 @@ class TestTemplatePredicateFiltering:
             _query(csvpaths, FilesReferenceFinder3, '$orders.files.:template("orders/:filename")')
 
 
-class TestStatusRegistrationFailed:
-    """FilesReferenceFinder3._ledger_entry_result_path() raises
-    ReferenceException3 for a 'Registration failed' ledger entry whose
-    origin_path is the empty string -- the one input confirmed (by the
-    real test_file_registration_failed test) to actually produce this
-    status can never be reported back through
-    :status("Registration failed"). Flagged to David, not yet fixed on
-    this branch (tracked separately -- see PR #434)."""
+class TestStarTemplatePredicateFiltering:
+    """FilesReferenceFinder3.query()'s Star3 root_major branch raises
+    ReferenceException3('Does not yet support :template() as a name_one
+    path segment') for the EXACT normative example
+    '$*.files.:template(:not_empty())' (normative_reference_examples.txt
+    line 197, "get a list of all templates used in registrations") --
+    a known, cleanly-rejected gap, not silently wrong, but it still
+    blocks this normative example from working at all. Fix tracked in a
+    separate PR (#436, stacked on this one -- _query_star_traversal()
+    needs to recognize a bare BARE_SOURCE == "definition" field call the
+    way the literal-root branch, fixed here, already does), not yet
+    present on this branch."""
 
     @pytest.mark.xfail(
         strict=True,
-        reason=(
-            "FilesReferenceFinder3._ledger_entry_result_path() raises "
-            "ReferenceException3 for a 'Registration failed' ledger entry "
-            "whose origin_path is the empty string -- fix tracked in a "
-            "separate PR (#434), not this branch."
-        ),
+        reason="Star3 :template(predicate) dispatch -- fix tracked in #436, not this branch.",
     )
+    def test_not_empty_matches_every_named_file_with_no_default_template(self, csvpaths):
+        # none of the four named-files groups has ever set a default
+        # template via a dedicated call (see TestTemplatePredicateFiltering
+        # above) -- :not_empty() correctly matches all of them (None != "").
+        r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:not_empty())")
+        assert sorted(r.files) == sorted(
+            f"tests/corpus/data/inputs/named_files/{name}/definition.json"
+            for name in ("acme_invoices", "orders", "zipcodes", "energy_readings")
+        )
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason="Star3 :template(predicate) dispatch -- fix tracked in #436, not this branch.",
+    )
+    def test_empty_matches_none(self, csvpaths):
+        r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:empty())")
+        assert r.files == []
+
+    def test_name_three_still_rejected(self, csvpaths):
+        # definition.json is never versioned -- same restriction as the
+        # literal-root branch and as bare ':definition()' itself.
+        with pytest.raises(ReferenceException3):
+            _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:not_empty()).:first()")
+
+
+class TestStatusRegistrationFailed:
+    """FilesReferenceFinder3._ledger_entry_result_path() previously raised
+    ReferenceException3 for a 'Registration failed' ledger entry whose
+    origin_path is the empty string -- the one input confirmed (by the
+    real test_file_registration_failed test) to actually produce this
+    status could never be reported back through
+    :status("Registration failed"). Fixed 2026-10-21: falls back to the
+    global arrivals ledger's own manifest.json when neither file_path nor
+    a non-empty origin_path is available."""
+
     def test_status_registration_failed_is_selectable(self, csvpaths):
         r = _query(
             csvpaths, FilesReferenceFinder3,
             '$orders.files.:status("Registration failed")',
         )
-        assert len(r.files) == 1
-
-
-class TestKnownGaps:
-    """Gap this validation pass found by exercising REAL corpus data
-    through the real finders -- flagged to David, not yet fixed (tests-
-    only scope: core-code changes need confirmation first, per
-    CLAUDE.md). xfail(strict=True) so a future fix makes this test FAIL
-    loudly (prompting removal of the xfail) rather than silently staying
-    green.
-    """
-
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "FilesReferenceFinder3.query()'s Star3 root_major branch "
-            "raises ReferenceException3('Does not yet support :template() "
-            "as a name_one path segment') for the EXACT normative example "
-            "'$*.files.:template(:not_empty())' (normative_reference_"
-            "examples.txt line 197) -- a known, cleanly-rejected gap, not "
-            "silently wrong, but still blocks this normative example from "
-            "actually working. Needs new dispatch wiring in "
-            "_query_star_traversal() (recognizing a bare BARE_SOURCE == "
-            "'definition' field call there, the way the literal-root "
-            "branch now does), not just the ARG_TYPES/predicate-application "
-            "fix that TestTemplatePredicateFiltering already covers -- a "
-            "bigger lift than the literal-root fix, flagged separately."
-        ),
-    )
-    def test_star_template_predicate_normative_example(self, csvpaths):
-        r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:not_empty())")
-        assert len(r.files) >= 1
+        assert r.files == ["tests/corpus/data/inputs/named_files/manifest.json"]
