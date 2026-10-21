@@ -5,6 +5,7 @@ from csvpath.util.nos import Nos
 from csvpath.util.path_util import PathUtility as pathu
 from csvpath.util.xlsx.xlsx_reader_helper import XlsxReaderHelper
 
+from .functions.filters.predicate_function_3 import PredicateFunction3
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .functions.values.time_window_function_3 import TimeWindowFunction3
@@ -268,18 +269,50 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
         bare_field_call = self._bare_definition_field_call(name_one)
         if bare_field_call is not None:
-            # ":on_arrival()"/":sources()" bare -- settled 2026-08-12,
-            # David: an arrival activation lives in the named-file's own
-            # definition.json, it "doesn't go to the version level" --
-            # confirmed by direct testing that the value is identical
-            # regardless of which version a :name(...)+pointer combo
-            # narrowed to (SOURCE == "definition" means _extract_data()
-            # never reads result.uuid for these), so requiring either
-            # was a real inconsistency with :definition() itself, which
-            # already gets this same bare treatment. No :name(...)/
-            # version needed at all -- matches :definition()'s own
-            # precedent exactly, this just extracts one key from it
-            # instead of returning the whole file.
+            # ":on_arrival()"/":sources()"/":template()" bare -- settled
+            # 2026-08-12, David: an arrival activation lives in the
+            # named-file's own definition.json, it "doesn't go to the
+            # version level" -- confirmed by direct testing that the
+            # value is identical regardless of which version a
+            # :name(...)+pointer combo narrowed to (SOURCE == "definition"
+            # means _extract_data() never reads result.uuid for these),
+            # so requiring either was a real inconsistency with
+            # :definition() itself, which already gets this same bare
+            # treatment. No :name(...)/version needed at all -- matches
+            # :definition()'s own precedent exactly, this just extracts
+            # one key from it instead of returning the whole file.
+            #
+            # Predicate-argument filtering added 2026-10-21: this bare
+            # position was unconditionally matching regardless of the
+            # argument (':template(:not_empty())' and ':template(:empty())'
+            # both matched every named-file, confirmed live before fixing)
+            # -- the exact generic mechanism already built for
+            # ':on_arrival()' nested inside ':definition(...)' during '*'
+            # traversal (_matches_definition_field_predicate(), added
+            # 2026-10-17, "deliberately NOT bespoke to ':on_arrival()'")
+            # was simply never wired into this, the other BARE_SOURCE ==
+            # "definition" dispatch position. self._build(bare_field_call)
+            # recursively builds the call AND its nested predicate arg into
+            # real Function3 instances (confirmed live: bare_field_call.arg
+            # is still a raw, un-built FunctionCall3 AST node at this point,
+            # with no .matches() method, until built).
+            #
+            # Only PredicateFunction3 args (e.g. ':not_empty()') mean
+            # "filter" here -- some other BARE_SOURCE == "definition"
+            # functions take a plain KEY string instead (e.g.
+            # ':source_port("email")', parameterizing WHICH value to
+            # read, not filtering -- caught live before shipping: treating
+            # every non-None arg as a filter broke exactly these, since a
+            # bare string has no .matches()). _extract_data()'s own
+            # "use_definition" branch already applies that KEY arg later,
+            # via _apply_key_arg() -- unchanged, not this branch's job.
+            if bare_field_call.arg is not None:
+                built = self._build(bare_field_call)
+                if isinstance(built.arg, PredicateFunction3):
+                    if not self._matches_definition_field_predicate(
+                        root_major, built
+                    ):
+                        return ReferenceResults3(results=[])
             home = self.csvpaths.file_manager.named_file_home(root_major)
             path = Nos(home).join("definition.json")
             return ReferenceResults3(results=[ReferenceResult3(path=path, uuid=None)])
