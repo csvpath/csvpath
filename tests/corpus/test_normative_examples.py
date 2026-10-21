@@ -230,6 +230,104 @@ class TestOnePointerPerReference:
             _query(csvpaths, FilesReferenceFinder3, "$orders.files.:first():last()")
 
 
+class TestTemplatePredicateFiltering:
+    """FilesReferenceFinder3.query()'s literal-root bare_field_call branch
+    previously returned definition.json unconditionally for ANY
+    ':template(...)' call, ignoring the argument entirely -- confirmed
+    live, :template(:empty()) and :template(:not_empty()) both matched
+    every named-file regardless of its actual template value. Fixed
+    2026-10-21, two changes:
+    - Template3.ARG_TYPES widened from () to (PredicateFunction3,),
+      mirroring OnArrival3's own identical widening -- the argument was
+      being rejected by _build() before query() ever got a chance to
+      apply it.
+    - query()'s bare_field_call branch now calls the existing, already-
+      generic _matches_definition_field_predicate() (built for
+      ':on_arrival()' nested inside ':definition(...)' during '*'
+      traversal) when an argument is present, instead of ignoring it.
+
+    Neither `orders` nor `zipcodes` has ever set a DEFAULT template via
+    a dedicated call -- per David, a named-file's definition.json
+    intentionally does NOT store a default merely because some
+    individual add_named_file() registration happened to pass a
+    template (unlike named-paths, where the add-time template IS the
+    assumed default for future runs). So both groups' real `template`
+    value is None, and :not_empty() correctly matches both (None != ""),
+    while :empty() matches neither (None != "") -- :empty()/:not_empty()
+    distinguish from a literal empty string, not from a missing/None
+    value (that's :none()'s own, separate job per the compendium's
+    empty/none table) -- confirmed this is consistent with Empty3/
+    NotEmpty3's own existing, unmodified implementation.
+    """
+
+    def test_not_empty_matches_named_files_with_no_default_template(self, csvpaths):
+        for name in ("zipcodes", "orders"):
+            r = _query(csvpaths, FilesReferenceFinder3, f"${name}.files.:template(:not_empty())")
+            assert r.files == [f"tests/corpus/data/inputs/named_files/{name}/definition.json"]
+
+    def test_empty_matches_neither_since_value_is_none_not_empty_string(self, csvpaths):
+        for name in ("zipcodes", "orders"):
+            r = _query(csvpaths, FilesReferenceFinder3, f"${name}.files.:template(:empty())")
+            assert r.files == []
+
+    def test_bare_template_still_unaffected(self, csvpaths):
+        # no argument at all -- the ordinary bare read, confirmed
+        # unaffected by the predicate-filtering addition.
+        r = _query(csvpaths, FilesReferenceFinder3, "$orders.files.:template()")
+        assert r.files == ["tests/corpus/data/inputs/named_files/orders/definition.json"]
+
+    def test_literal_string_argument_still_rejected(self, csvpaths):
+        # Template3.ARG_TYPES only widened to accept a PredicateFunction3
+        # (matching OnArrival3's own precedent exactly) -- a raw literal
+        # is not one of the "select by literal match" functional-taxonomy
+        # fields (uuid/name/fingerprint/type), so this stays rejected,
+        # not silently accepted.
+        with pytest.raises(ReferenceException3):
+            _query(csvpaths, FilesReferenceFinder3, '$orders.files.:template("orders/:filename")')
+
+
+class TestStarTemplatePredicateFiltering:
+    """FilesReferenceFinder3.query()'s Star3 root_major branch raises
+    ReferenceException3('Does not yet support :template() as a name_one
+    path segment') for the EXACT normative example
+    '$*.files.:template(:not_empty())' (normative_reference_examples.txt
+    line 197, "get a list of all templates used in registrations") --
+    a known, cleanly-rejected gap, not silently wrong, but it still
+    blocks this normative example from working at all. Fix tracked in a
+    separate PR (#436, stacked on this one -- _query_star_traversal()
+    needs to recognize a bare BARE_SOURCE == "definition" field call the
+    way the literal-root branch, fixed here, already does), not yet
+    present on this branch."""
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason="Star3 :template(predicate) dispatch -- fix tracked in #436, not this branch.",
+    )
+    def test_not_empty_matches_every_named_file_with_no_default_template(self, csvpaths):
+        # none of the four named-files groups has ever set a default
+        # template via a dedicated call (see TestTemplatePredicateFiltering
+        # above) -- :not_empty() correctly matches all of them (None != "").
+        r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:not_empty())")
+        assert sorted(r.files) == sorted(
+            f"tests/corpus/data/inputs/named_files/{name}/definition.json"
+            for name in ("acme_invoices", "orders", "zipcodes", "energy_readings")
+        )
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason="Star3 :template(predicate) dispatch -- fix tracked in #436, not this branch.",
+    )
+    def test_empty_matches_none(self, csvpaths):
+        r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:empty())")
+        assert r.files == []
+
+    def test_name_three_still_rejected(self, csvpaths):
+        # definition.json is never versioned -- same restriction as the
+        # literal-root branch and as bare ':definition()' itself.
+        with pytest.raises(ReferenceException3):
+            _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:not_empty()).:first()")
+
+
 class TestStatusRegistrationFailed:
     """FilesReferenceFinder3._ledger_entry_result_path() previously raised
     ReferenceException3 for a 'Registration failed' ledger entry whose
@@ -246,67 +344,3 @@ class TestStatusRegistrationFailed:
             '$orders.files.:status("Registration failed")',
         )
         assert r.files == ["tests/corpus/data/inputs/named_files/manifest.json"]
-
-
-class TestKnownGaps:
-    """Two gaps this validation pass found by exercising REAL corpus data
-    through the real finders (not yet seen by tests/references/'s
-    synthetic-fixture unit tests, which never happened to construct
-    these exact shapes) -- flagged to David, not yet fixed (tests-only
-    scope: core-code changes need confirmation first, per CLAUDE.md).
-    xfail(strict=True) so a future fix makes these tests FAIL loudly
-    (prompting removal of the xfail) rather than silently staying green.
-
-    Both gaps below turned out, on investigation, to share one deeper
-    root cause: FileManager.add_named_file() never persists `template`
-    into the named-file's own definition.json at registration time at
-    all (confirmed live: definition.json is literally "{}" for both
-    `orders` and `zipcodes`, even though `orders` genuinely registered
-    with a real template) -- unlike PathsManager, which does exactly
-    this via store_template_for_paths() during its own registration
-    flow (paths_manager.py line 549). FilesReferenceFinder3's bare
-    ':template()' read already correctly consults definition.json
-    (matching Template3's own documented BARE_SOURCE == "definition"
-    design) -- the finder is reading the right place, it is just never
-    written. Fixing the predicate-matching alone (what these two tests
-    were originally written to describe) would not make the normative
-    doc's own worked examples actually return correct answers, since
-    the underlying value read is already wrong before any predicate is
-    even applied. Flagged to David as a bigger, FileManager-side fix
-    than first assessed -- not fixed here.
-    """
-
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "FileManager.add_named_file() never writes 'template' into "
-            "definition.json at registration time (unlike PathsManager's "
-            "store_template_for_paths()), so FilesReferenceFinder3's bare "
-            "':template()' read -- which correctly consults definition.json "
-            "-- always finds it empty regardless of predicate matching. "
-            ":template(:empty()) and :template(:not_empty()) both match "
-            "every named-file today, including 'orders', which genuinely "
-            "registered with a real template."
-        ),
-    )
-    def test_template_not_empty_predicate_is_applied(self, csvpaths):
-        r = _query(csvpaths, FilesReferenceFinder3, "$zipcodes.files.:template(:not_empty())")
-        assert r.files == []
-
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "FilesReferenceFinder3.query()'s Star3 root_major branch "
-            "raises ReferenceException3('Does not yet support :template() "
-            "as a name_one path segment') for the EXACT normative example "
-            "'$*.files.:template(:not_empty())' (normative_reference_"
-            "examples.txt line 197) -- a known, cleanly-rejected gap, not "
-            "silently wrong, but still blocks this normative example from "
-            "actually working. Also gated on the definition.json-population "
-            "gap above: even once this dispatch is built, it would need "
-            "that fix too to return correct (not just non-crashing) answers."
-        ),
-    )
-    def test_star_template_predicate_normative_example(self, csvpaths):
-        r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:not_empty())")
-        assert len(r.files) >= 1
