@@ -660,38 +660,49 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # "fingerprint" field. No match is empty results, not an
             # error -- same convention CSVPATHS'/RESULTS' own literal-
             # identity lookups already use.
-            if name_three.functions:
-                raise ReferenceException3(
-                    "FilesReferenceFinder3 does not yet support a literal "
-                    "name_three body combined with trailing functions "
-                    "(e.g. ':manifest()') -- no worked example establishes "
-                    "what that combination should mean yet."
-                )
-            # a literal fingerprint body reduces to exactly one version,
-            # same as a real pointer would -- the '#worksheet' marker
-            # (name_one.name_two, carried through unchanged below) is
-            # satisfied by this reduction just as well as by a real
-            # POINTER function; no separate check needed here.
             matched = next(
                 (c for c in candidates if c.get("fingerprint") == name_three.body),
                 None,
             )
-            if matched is None:
-                return ReferenceResults3(results=[])
-            return ReferenceResults3(
-                results=[
-                    ReferenceResult3(
-                        path=matched["file"],
-                        uuid=matched["uuid"],
-                        identity=name_one.name_two,
-                    )
-                ]
-            )
-        if name_three.body is not None:
+            if not name_three.functions:
+                # a literal fingerprint body reduces to exactly one
+                # version, same as a real pointer would -- the
+                # '#worksheet' marker (name_one.name_two, carried
+                # through unchanged below) is satisfied by this
+                # reduction just as well as by a real POINTER function;
+                # no separate check needed here.
+                if matched is None:
+                    return ReferenceResults3(results=[])
+                return ReferenceResults3(
+                    results=[
+                        ReferenceResult3(
+                            path=matched["file"],
+                            uuid=matched["uuid"],
+                            identity=name_one.name_two,
+                        )
+                    ]
+                )
+            # a literal body combined with trailing functions (e.g.
+            # ":manifest()"/":uuid()") -- added 2026-10-20 (not-yet-
+            # supported sweep #4), closing the gap the old unconditional
+            # rejection left. The body already reduces `candidates` to
+            # at most one match before any function even runs, same as
+            # a real pointer would -- so falling through into the
+            # ordinary pointer/manifest/field-accessor machinery below,
+            # scoped to just that one candidate (or none), reuses it
+            # exactly, rather than duplicating it. Unlike the bare-
+            # chain-in-name_one shapes task #2 left unbuilt, there is no
+            # resolve_kind conflict here: resolve_kind's own terminal_
+            # functions reads name_three.functions regardless of
+            # whether name_three ALSO carries a body, so a trailing
+            # ':uuid()' is seen and resolved exactly as it would be
+            # after a real pointer.
+            candidates = [matched] if matched is not None else []
+        elif name_three.body is not None:
             raise ReferenceException3(
-                "FilesReferenceFinder3 does not yet support a literal name_three "
-                "body -- name_three must resolve to a pointer function "
-                "(:first()/:last()/:index(n))."
+                "FilesReferenceFinder3 does not support a literal name_three "
+                "body of this type -- it must be a string (the version's own "
+                "fingerprint) or absent."
             )
         built = self._build_chain(name_three.functions)
         for f in built:
@@ -1236,11 +1247,37 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 ]
             )
 
-        if name_three.body is not None:
+        if isinstance(name_three.body, str):
+            # literal fingerprint body, now at ANY named-file during
+            # '*' traversal -- added 2026-10-20 (not-yet-supported
+            # sweep #4), closing the real parity gap the old
+            # unconditional rejection here left: the identical literal-
+            # root shape (query()'s own "isinstance(name_three.body,
+            # str)" branch, just above) already supported this. No
+            # time-sort needed first (unlike the pointer-only path
+            # below) -- an exact fingerprint match does not care about
+            # arrival order. Falls through into the ordinary pointer/
+            # manifest/field-accessor machinery below, scoped to the
+            # one matched candidate (or none), same reuse the literal-
+            # root branch's own trailing-functions fix uses.
+            matched = next(
+                (c for c in candidates if c.get("fingerprint") == name_three.body),
+                None,
+            )
+            if not name_three.functions:
+                if matched is None:
+                    return ReferenceResults3(results=[])
+                return ReferenceResults3(
+                    results=[
+                        ReferenceResult3(path=matched["file"], uuid=matched["uuid"])
+                    ]
+                )
+            candidates = [matched] if matched is not None else []
+        elif name_three.body is not None:
             raise ReferenceException3(
-                "FilesReferenceFinder3 does not yet support a literal name_three "
-                "body -- name_three must resolve to a pointer function "
-                "(:first()/:last()/:index(n))."
+                "FilesReferenceFinder3 does not support a literal name_three "
+                "body of this type -- it must be a string (the version's own "
+                "fingerprint) or absent."
             )
         built = self._build_chain(name_three.functions)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
