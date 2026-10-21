@@ -1714,6 +1714,125 @@ class TestStatementLevelRange:
         assert results.uuids == ["z-uuid", "o-uuid", "t-uuid"]
 
 
+class TestStatementLevelPointer:
+    # ':first()'/':last()'/':index(n)' as a name_three statement-level
+    # POINTER -- issue #418, David's own exact repro ($food.results.
+    # :flatten().:last():data()) used to raise "does not yet support
+    # :last() as a name_three function," even though the compendium's
+    # own worked example ("$alpha.results.:flatten():first().:last():
+    # manifest()") uses the identical shape. Reuses
+    # one_run_five_statements (TestStatementLevelRange's own fixture,
+    # same scrambled-declaration-order reasoning) -- a pointer here is
+    # a fourth, mutually-exclusive alternative to literal identity/
+    # :all()/range, narrowing to exactly one statement by true
+    # declaration order, same as every other pointer in this codebase.
+    #
+    # fixture duplicated from TestStatementLevelRange rather than
+    # shared -- a class-scoped pytest fixture is not visible outside
+    # its own class, and no other test file in this package hoists
+    # this kind of fixture to module level either.
+    @pytest.fixture
+    def one_run_five_statements(self, tmp_path):
+        base = tmp_path / "acme" / "customers" / "2025"
+        run_dir = base / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        scrambled = {
+            "four": ("f-uuid", 4),
+            "zero": ("z-uuid", 0),
+            "two": ("t-uuid", 2),
+            "one": ("o-uuid", 1),
+            "three": ("th-uuid", 3),
+        }
+        for identity, (uuid, idx) in scrambled.items():
+            _write_json(
+                run_dir / identity / "manifest.json",
+                {"uuid": uuid, "instance_index": idx},
+            )
+        _write_archive_manifest(tmp_path, "acme", [str(run_dir)])
+        return str(tmp_path)
+
+    def test_last_picks_the_highest_instance_index(
+        self, one_run_five_statements
+    ):
+        results = _finder(
+            "$acme.results.customers/2025:first().:last()",
+            one_run_five_statements,
+        ).query()
+        assert results.uuids == ["f-uuid"]
+
+    def test_first_picks_the_lowest_instance_index(
+        self, one_run_five_statements
+    ):
+        results = _finder(
+            "$acme.results.customers/2025:first().:first()",
+            one_run_five_statements,
+        ).query()
+        assert results.uuids == ["z-uuid"]
+
+    def test_index_picks_the_nth_by_declaration_order(
+        self, one_run_five_statements
+    ):
+        results = _finder(
+            "$acme.results.customers/2025:first().:index(2)",
+            one_run_five_statements,
+        ).query()
+        assert results.uuids == ["t-uuid"]
+
+    def test_composes_with_a_content_accessor(self, one_run_five_statements):
+        # David's own exact shape -- a pointer riding alongside a
+        # content accessor, same composability identity/:all()/range
+        # already have with one.
+        results = _finder(
+            "$acme.results.customers/2025:first().:last():unmatched()",
+            one_run_five_statements,
+        ).resolve()
+        assert results.results[0].uuid == "f-uuid"
+        assert results.results[0].data is None  # never written, not an error
+
+    def test_composes_with_a_field_accessor(self, one_run_five_statements):
+        results = _finder(
+            "$acme.results.customers/2025:first().:last():uuid()",
+            one_run_five_statements,
+        ).resolve()
+        assert results.results[0].data == "f-uuid"
+
+    def test_cannot_combine_with_a_literal_identity(
+        self, one_run_five_statements
+    ):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.results.customers/2025:first().two:last()",
+                one_run_five_statements,
+            ).query()
+
+    def test_cannot_combine_with_all(self, one_run_five_statements):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.results.customers/2025:first().:all():last()",
+                one_run_five_statements,
+            ).query()
+
+    def test_cannot_combine_with_a_range(self, one_run_five_statements):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$acme.results.customers/2025:first().:from(1):last()",
+                one_run_five_statements,
+            ).query()
+
+    def test_not_yet_supported_across_a_star_root(
+        self, one_run_five_statements
+    ):
+        # issue #418 is scoped to the literal-root case only (both
+        # David's own repro and the compendium's own worked example
+        # are literal-root) -- explicitly rejected here rather than
+        # silently falling back to "the whole run" across a '*' root.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$*.results.customers/2025:first().:last()",
+                one_run_five_statements,
+            ).query()
+
+
 class TestHomeAsAZeroLevelSelector:
     # settled 2026-08-11: bare ':home()' (David's own framing --
     # "everything that has its home here") fills the one real gap left

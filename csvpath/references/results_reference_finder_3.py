@@ -653,9 +653,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             else:
                 candidates = self._apply_range(candidates, from_call, to_call)
 
-        identity, match_all, accessor, _, range_bounds, _ = self._name_three_selector(
-            reference.name_three
-        )
+        (
+            identity,
+            match_all,
+            accessor,
+            _,
+            range_bounds,
+            _,
+            instance_pointer,
+        ) = self._name_three_selector(reference.name_three)
         has_manifest = any(
             seg.contains_function_named("manifest")
             for seg in calls
@@ -717,7 +723,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         for run_dir in selected_runs:
             results.extend(
                 self._results_for_run(
-                    run_dir, identity, match_all, range_bounds, accessor
+                    run_dir,
+                    identity,
+                    match_all,
+                    range_bounds,
+                    accessor,
+                    instance_pointer,
                 )
             )
         return ReferenceResults3(
@@ -798,9 +809,30 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "ResultsReferenceFinder3 does not support the '#worksheet' "
                 "marker (name_two) -- it is files-only."
             )
-        identity, match_all, accessor, _, range_bounds, _ = self._name_three_selector(
-            reference.name_three
-        )
+        (
+            identity,
+            match_all,
+            accessor,
+            _,
+            range_bounds,
+            _,
+            instance_pointer,
+        ) = self._name_three_selector(reference.name_three)
+        if instance_pointer is not None:
+            # issue #418 built the literal-root_major case only (both
+            # David's own repro and the compendium's own worked
+            # example are literal-root) -- _name_three_selector() is
+            # shared, so it now recognizes a name_three pointer here
+            # too, but nothing below this point threads it into
+            # _results_for_run(). Raise explicitly rather than
+            # silently falling through to the "no selector" default
+            # (the whole run, not the pointer-selected instance).
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not yet support a "
+                "name_three pointer (:first()/:last()/:index(n)) "
+                "combined with a '*' root_major -- only a literal "
+                "root_major supports it so far."
+            )
         if match_all and accessor is not None:
             # :all() at name_three means every instance in whichever
             # run(s) match, each with its own separate well-known file
@@ -1737,7 +1769,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # branch already treats METADATA_FILE/METADATA_FIELD
             # identically and defers the real distinction to accessor/
             # field_call/gate_call below, not to `kind` itself.
-            _, _, accessor, field_call, _, gate_call = self._name_three_selector(
+            _, _, accessor, field_call, _, gate_call, _ = self._name_three_selector(
                 reference.name_three
             )
             if accessor is not None:
@@ -1972,8 +2004,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         match_all: bool,
         range_bounds: tuple | None = None,
         accessor=None,
+        instance_pointer=None,
     ) -> list[ReferenceResult3]:
-        if identity is None and not match_all and range_bounds is None:
+        if (
+            identity is None
+            and not match_all
+            and range_bounds is None
+            and instance_pointer is None
+        ):
             uuid = self._read_json_field(
                 Nos(run_dir).join("manifest.json"), "run_uuid"
             )
@@ -1982,6 +2020,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         instances = self._list_instance_identities(run_dir)
         if match_all:
             matched = instances
+        elif instance_pointer is not None:
+            # :first()/:last()/:index(n) as a statement-level pointer
+            # -- issue #418. Always narrows to at most one, same as
+            # every other pointer-consuming shape in this file, via
+            # the shared ReferenceFinder3._apply_pointer() -- no
+            # "more than one" guard needed the way range_bounds' own
+            # branch below has, since a pointer can never match more
+            # than one candidate by construction.
+            selected = self._apply_pointer(instance_pointer, instances)
+            matched = [selected] if selected is not None else []
         elif range_bounds is not None:
             # ':from()'/':to()' as a statement-level range -- added
             # 2026-08-13, David: ":from(:index(2)):unmatched() should
@@ -2184,9 +2232,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     def _name_three_selector(
         self,
         name_three,
-    ) -> tuple[str | None, bool, object, object, tuple, object]:
+    ) -> tuple[str | None, bool, object, object, tuple, object, object]:
         """returns (identity, match_all, accessor, field_call,
-        range_bounds, gate_call) for name_three -- identity is a literal statement-
+        range_bounds, gate_call, pointer_call) for name_three -- identity is a literal statement-
         identity string to look up (None if match_all/range_bounds, or
         if no selector is present at all); match_all is True for :all()
         (every instance in the run); range_bounds is (from_call, to_call)
@@ -2216,9 +2264,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         is the pre-existing FILTER half, untouched) -- requires
         `accessor` to also be present (raises otherwise, below); see
         ResultsReferenceFinder3._apply_errors_gate() for what it does
-        with it.
-        Resolving with none of identity/match_all/range_bounds present
-        gives None -- "no default". An unrecognized function raises via
+        with it. pointer_call (added 2026-10-20, issue #418) is a
+        :first()/:last()/:index(n) picking exactly ONE statement
+        instance within whichever run(s) name_one matched -- a fourth,
+        mutually-exclusive alternative to identity/match_all/
+        range_bounds (see the "more than one selection mode" check
+        below), composable with `accessor`/`field_call`/`gate_call`
+        exactly the way identity already is (e.g. ":last():data()").
+        Resolving with none of identity/match_all/range_bounds/
+        pointer_call present gives None -- "no default". An
+        unrecognized function raises via
         build_chain() itself ("Unknown reference function") if it is
         not registered at all, or is rejected here directly if it is
         registered but not meaningful as a name_three function (e.g.
@@ -2227,7 +2282,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         docstring: self._build_chain() needs this finder's own
         registered variables."""
         if name_three is None:
-            return None, False, None, None, None, None
+            return None, False, None, None, None, None, None
 
         match_all = False
         accessor = None
@@ -2235,6 +2290,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         gate_call = None
         from_call = None
         to_call = None
+        pointer_call = None
         if name_three.functions:
             built = self._build_chain(name_three.functions)
             # last-wins (compendium 5.20b, added 2026-10-18) -- same
@@ -2271,6 +2327,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     # FILTER shape, which never reaches this loop at all
                     # (it is accessor.arg, not its own entry in `built`).
                     gate_call = f
+                elif f.ROLE == Function3.POINTER:
+                    # :first()/:last()/:index(n) picking ONE statement
+                    # instance within the matched run(s) -- issue #418,
+                    # e.g. "$food.results.:flatten().:last():data()".
+                    # The compendium's own worked example
+                    # ("$alpha.results.:flatten():first().:last():
+                    # manifest()") is the same shape. "At most one
+                    # pointer" is already enforced generically by
+                    # build_chain() (same precedent _pointer_from_calls()'s
+                    # own docstring relies on for name_one), so no
+                    # second check is needed here.
+                    pointer_call = f
                 else:
                     raise ReferenceException3(
                         f"ResultsReferenceFinder3 does not yet support "
@@ -2305,13 +2373,29 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             match_all = True
             body = None
-        if sum([body is not None, match_all, range_bounds is not None]) > 1:
+        if (
+            sum(
+                [
+                    body is not None,
+                    match_all,
+                    range_bounds is not None,
+                    pointer_call is not None,
+                ]
+            )
+            > 1
+        ):
             raise ReferenceException3(
                 "ResultsReferenceFinder3 cannot combine a literal "
-                "identity, :all(), and ':from()'/':to()' -- each selects "
-                "instances a different, contradictory way; use only one."
+                "identity, a pointer (:first()/:last()/:index(n)), "
+                ":all(), and ':from()'/':to()' -- each selects instances "
+                "a different, contradictory way; use only one."
             )
-        if body is None and not match_all and range_bounds is None:
+        if (
+            body is None
+            and not match_all
+            and range_bounds is None
+            and pointer_call is None
+        ):
             if name_three.functions:
                 # compendium 3.19b: "When name_three is solely one or
                 # more functions, a '*' is implied, in the same way as
@@ -2329,7 +2413,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     "':to()' to select which instance(s) a well-known-"
                     "file function applies to."
                 )
-        return body, match_all, accessor, field_call, range_bounds, gate_call
+        return (
+            body,
+            match_all,
+            accessor,
+            field_call,
+            range_bounds,
+            gate_call,
+            pointer_call,
+        )
 
     @classmethod
     def _group_key(cls, run_home: str, home: str, prefix_len: int = 0) -> tuple:
