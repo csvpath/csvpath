@@ -419,9 +419,9 @@ Note that `:log()` is a reference to a single log file that contains log output 
 
 #### Get log file for current CsvPath Framework project
 The following are functionally identical:
-$acme.files.:log()
-$acme.csvpaths.:log()
-$acme.results.:log()
+$*.files.:log()
+$*.csvpaths.:log()
+$*.results.:log()
 
 ---
 

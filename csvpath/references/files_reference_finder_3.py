@@ -100,7 +100,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    concept, same as RESULTS' run start time) FILTERS by each
     #    version's own "time" manifest field. Mixing modes in one pair
     #    is rejected. Combining with ':all()'/':groups()' grouping in
-    #    name_one is not yet supported.
+    #    name_one applies the range/time-window WITHIN each distinct
+    #    file_home independently, the same as a plain pointer already
+    #    does in GROUP mode (built 2026-10-21 -- see query()'s own
+    #    _narrow() docstring; GROUP mode's defining feature is "reduce
+    #    per partition," so a range follows that same convention, not a
+    #    pooled-then-sliced one).
     #    name_three is
     #    optional: when absent, name_one alone is a prefix search that
     #    returns zero or more paths to file-home directories (one per
@@ -864,39 +869,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # has_range cover the complete set of name_three-legal FILES
         # functions), so at least one of them is always true here.
 
-        if partitioned and (has_range or bare_time_window is not None):
-            # ':from()'/':to()' (or a bare time-component function, same
-            # reasoning, added 2026-10-17) combined with ':all()'/
-            # ':groups()' grouping -- split into its own check 2026-09-25
-            # (was previously merged into the :manifest() check just
-            # below, giving a confusing "combining with :manifest()"
-            # error even when no :manifest() was present at all,
-            # confirmed live -- see the bucket list). Still rejected, not
-            # built: the range-applying code just below (`if has_range:
-            # candidates = self._apply_range(...)`) operates on the
-            # POOLED candidate list, before partitioning by file_home --
-            # "the last N versions" would mean the last N pooled across
-            # every group, not the last N WITHIN each group, the same
-            # AMBIGUOUS-reading concern RESULTS' own identical rejection
-            # cites (does "last 2" mean per-group or pooled-then-split --
-            # nothing here picks one). No driving use case has asked for
-            # either reading, so this stays a clear rejection rather than
-            # a guess, matching RESULTS' own precedent exactly.
-            # settled, not a gap (not-yet-supported sweep #5): the
-            # ambiguity is inherent, not an implementation gap -- "the
-            # last N" could mean the last N pooled across every group,
-            # or the last N WITHIN each group, and nothing in the spec
-            # picks one. Matches ResultsReferenceFinder3's own identical
-            # rejection for the identical shape (already worded "does
-            # not support," not "does not yet support" -- this file's
-            # own copy was simply left stale).
-            raise ReferenceException3(
-                "FilesReferenceFinder3 does not support combining "
-                "':all()'/':groups()' grouping with ':from()'/':to()' or "
-                "a bare time-component function -- resolve the grouped "
-                "versions on their own first."
-            )
-
         # `partitioned and pointers and has_manifest` used to be an
         # unconditional rejection here ("does not yet support combining
         # ':all()'/':groups()' grouping with :manifest()") -- removed
@@ -917,65 +889,86 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # rather than this method raising to avoid the ambiguity
         # entirely.
 
-        if bare_time_window is not None:
-            # Gap 1 -- see this method's own comment above. `partitioned`
-            # combined with a bare time window already raised above, so
-            # this never runs concurrently with the by_file_home
-            # partition branch below.
-            candidates = self._apply_bare_time_window_to_manifest(
-                candidates, bare_time_window
-            )
-        elif has_range:
-            # narrow to the RANGE first -- a pointer riding alongside it
-            # (below) then reduces that range, not the full candidate
-            # set, same as RESULTS' own run-level range does. `partitioned`
-            # combined with `has_range` already raised above, so this
-            # never runs concurrently with the by_file_home partition
-            # branch below.
-            if from_is_date or to_is_date:
-                candidates = self._apply_manifest_date_range(
-                    candidates, lower_call, upper_call
+        def _narrow(cands: list) -> list:
+            # ':from()'/':to()' (or a bare time-component function) as a
+            # name_three version range/window -- applied per-partition
+            # in GROUP mode (not-yet-supported sweep #5 follow-up, David:
+            # "isn't the path unambiguously Reading B? Wasn't that the
+            # point of :groups() being different from :flatten()?") --
+            # he's right: GROUP mode's own defining feature, already
+            # built and tested for a plain pointer (:first()/:last()/
+            # :index(n)), is "reduce independently within each distinct
+            # file_home," not "pool everything first." A range is just a
+            # multi-valued pointer, the same category of terminal
+            # reduction, so it follows the identical convention -- there
+            # was never a genuine second reading, just an earlier
+            # implementation that applied the range to the pooled list
+            # before this fix extended the per-partition treatment to
+            # it. Called once on the whole pooled `candidates` list in
+            # POOL mode, and once per distinct file_home's own candidate
+            # list in GROUP mode -- see the two call sites below.
+            if bare_time_window is not None:
+                return self._apply_bare_time_window_to_manifest(
+                    cands, bare_time_window
                 )
-            else:
-                candidates = self._apply_range(candidates, lower_call, upper_call)
+            if has_range:
+                if from_is_date or to_is_date:
+                    return self._apply_manifest_date_range(
+                        cands, lower_call, upper_call
+                    )
+                return self._apply_range(cands, lower_call, upper_call)
+            return cands
 
-        if pointers:
-            if partitioned:
-                # one independent reduction per distinct file_home, not
-                # one pooled answer across all of them -- mirrors
-                # _query_star_traversal's own is_grouped/is_deep_grouped
-                # branch, scoped to this one named-file's own candidates
-                # instead of every named-file's.
-                by_file_home = {}
-                for entry in candidates:
-                    by_file_home.setdefault(entry["file_home"], []).append(entry)
-                selected_candidates = []
-                for file_home in sorted(by_file_home):
-                    selected = self._apply_pointer(pointers[0], by_file_home[file_home])
+        if partitioned:
+            # one independent reduction per distinct file_home, not one
+            # pooled answer across all of them -- mirrors
+            # _query_star_traversal's own is_grouped/is_deep_grouped
+            # branch, scoped to this one named-file's own candidates
+            # instead of every named-file's. The range/time-window (if
+            # any) narrows EACH group's own candidates first, then the
+            # pointer (if any) reduces that group's own narrowed list --
+            # same order _narrow()'s own docstring explains.
+            by_file_home = {}
+            for entry in candidates:
+                by_file_home.setdefault(entry["file_home"], []).append(entry)
+            selected_candidates = []
+            for file_home in sorted(by_file_home):
+                group_candidates = _narrow(by_file_home[file_home])
+                if pointers:
+                    selected = self._apply_pointer(pointers[0], group_candidates)
                     if selected is not None:
                         selected_candidates.append(selected)
-            else:
+                else:
+                    # :all()/:groups() grouping with a range/time-window
+                    # but no pointer -- every version each group's own
+                    # window matches, unreduced (e.g. David's own worked
+                    # example, "$*.files.:groups().:from(0):to(1))" --
+                    # "first 2 registrations for each group").
+                    selected_candidates.extend(group_candidates)
+        else:
+            candidates = _narrow(candidates)
+            if pointers:
                 # a pointer (with or without :manifest() riding alongside
                 # it) reduces to one specific version, same as before.
                 selected = self._apply_pointer(pointers[0], candidates)
                 selected_candidates = [selected] if selected is not None else []
-        else:
-            # :manifest() alone, no pointer -- every matching version's
-            # own manifest entry, unreduced. Resolving full manifest
-            # content for more than one entity at once is still illegal
-            # (Rule 1, manifest_field_functions_proposal.md's "Entity
-            # resolution and pooling" section) -- but query() itself is
-            # always allowed to return every match, regardless of
-            # accessor (moved 2026-08-26, see the ":path()" retirement/
-            # Rule 1 bucket-list entry); it flags the result instead of
-            # raising, and ReferenceFinder3.resolve_from() raises only
-            # if a caller actually tries to resolve more than one of
-            # these at once. Field accessors are exempt from Rule 1
-            # entirely (Rule 3, same doc section) -- a scalar field
-            # value is cheap to pool, so :uuid() etc. stay poolable
-            # across every matched candidate with no pointer at all,
-            # same as before.
-            selected_candidates = candidates
+            else:
+                # :manifest() alone, no pointer -- every matching version's
+                # own manifest entry, unreduced. Resolving full manifest
+                # content for more than one entity at once is still illegal
+                # (Rule 1, manifest_field_functions_proposal.md's "Entity
+                # resolution and pooling" section) -- but query() itself is
+                # always allowed to return every match, regardless of
+                # accessor (moved 2026-08-26, see the ":path()" retirement/
+                # Rule 1 bucket-list entry); it flags the result instead of
+                # raising, and ReferenceFinder3.resolve_from() raises only
+                # if a caller actually tries to resolve more than one of
+                # these at once. Field accessors are exempt from Rule 1
+                # entirely (Rule 3, same doc section) -- a scalar field
+                # value is cheap to pool, so :uuid() etc. stay poolable
+                # across every matched candidate with no pointer at all,
+                # same as before.
+                selected_candidates = candidates
 
         return ReferenceResults3(
             results=[
@@ -1348,6 +1341,63 @@ class FilesReferenceFinder3(ReferenceFinder3):
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         has_manifest = any(f.name == "manifest" for f in built)
         field_call = self._find_field_function_call(built)
+        # ':from()'/':to()' and a bare time-component function, now
+        # supported during '*' traversal too (built 2026-10-21, closing
+        # a real gap this method never had at all -- unlike query()'s
+        # own literal-root path, which already had full range support,
+        # just blocked from combining with grouping until this same
+        # fix) -- see this method's own docstring and _narrow()'s own
+        # comment for the GROUP-mode-applies-per-partition reasoning.
+        lower_call, upper_call = self._range_calls_from_built(built)
+        has_range = lower_call is not None or upper_call is not None
+        from_is_date = to_is_date = False
+        from_bound = to_bound = None
+        if has_range:
+            from_bound = self._range_bound(lower_call) if lower_call is not None else None
+            to_bound = self._range_bound(upper_call) if upper_call is not None else None
+            from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
+            to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
+            if (from_bound is not None and to_bound is not None) and (
+                from_is_date != to_is_date
+            ):
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not support mixing index-"
+                    "mode and date-mode range bounds in the same range."
+                )
+            if isinstance(from_bound, str):
+                self._validate_date_format(from_bound)
+            if isinstance(to_bound, str):
+                self._validate_date_format(to_bound)
+        bare_time_windows = [f for f in built if isinstance(f, TimeWindowFunction3)]
+        if len(bare_time_windows) > 1:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not support combining more "
+                "than one bare time-component function (e.g. "
+                "':yesterday()') in the same name_three chain."
+            )
+        bare_time_window = bare_time_windows[0] if bare_time_windows else None
+        if bare_time_window is not None and has_range:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not support combining a bare "
+                "time-component function (e.g. ':yesterday()') with an "
+                "explicit ':from()'/':to()'/':before()'/':after()' bound "
+                "in the same name_three chain -- the bare function "
+                "already means its own whole period, both ends included."
+            )
+
+        def _narrow(cands: list) -> list:
+            if bare_time_window is not None:
+                return self._apply_bare_time_window_to_manifest(
+                    cands, bare_time_window
+                )
+            if has_range:
+                if from_is_date or to_is_date:
+                    return self._apply_manifest_date_range(
+                        cands, lower_call, upper_call
+                    )
+                return self._apply_range(cands, lower_call, upper_call)
+            return cands
+
         if not pointers:
             # a field accessor alone (no pointer) is legal here too --
             # added 2026-09-25, matching the literal-root query()'s own
@@ -1366,15 +1416,31 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # treatment regardless of grouping. A bare ':manifest()'
             # (added 2026-09-28, see below) is ALSO now legal without a
             # pointer, same as it always has been for the literal-root
-            # case -- only "neither a pointer, nor a field accessor, nor
-            # :manifest()" is still a genuine "nothing to resolve"
-            # rejection.
-            if field_call is None and not has_manifest:
+            # case, and so (added 2026-10-21) is a bare range/time-
+            # window -- only "neither a pointer, nor a field accessor,
+            # nor :manifest(), nor a range/time-window" is still a
+            # genuine "nothing to resolve" rejection.
+            if (
+                field_call is None
+                and not has_manifest
+                and not has_range
+                and bare_time_window is None
+            ):
                 raise ReferenceException3(
                     "FilesReferenceFinder3 requires name_three to resolve to "
                     "exactly one pointer function (:first()/:last()/:index(n)) "
                     "when traversing every named-file with '*'."
                 )
+            if has_range or bare_time_window is not None:
+                if partitioned:
+                    by_file_home = {}
+                    for entry in candidates:
+                        by_file_home.setdefault(entry["file_home"], []).append(entry)
+                    candidates = []
+                    for file_home in sorted(by_file_home):
+                        candidates.extend(_narrow(by_file_home[file_home]))
+                else:
+                    candidates = _narrow(sorted(candidates, key=lambda e: e["time"]))
             return ReferenceResults3(
                 results=[
                     ReferenceResult3(path=c["file"], uuid=c["uuid"])
@@ -1392,11 +1458,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 by_file_home.setdefault(entry["file_home"], []).append(entry)
             selected_candidates = []
             for file_home in sorted(by_file_home):
-                selected = self._apply_pointer(pointer, by_file_home[file_home])
+                group_candidates = _narrow(by_file_home[file_home])
+                selected = self._apply_pointer(pointer, group_candidates)
                 if selected is not None:
                     selected_candidates.append(selected)
         else:
-            pooled = sorted(candidates, key=lambda e: e["time"])
+            pooled = _narrow(sorted(candidates, key=lambda e: e["time"]))
             selected = self._apply_pointer(pointer, pooled)
             selected_candidates = [selected] if selected is not None else []
 

@@ -258,16 +258,83 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         is_grouped = any(
             isinstance(c, FunctionCall3) and c.name == "all" for c in calls
         )
-        # group_key_for: set only when ':all()'/':groups()' partitions
-        # candidates by observed value AND a pointer exists to reduce
-        # each partition (David's three-templates example -- three
-        # different one-level templates all group correctly by whatever
-        # directory each run actually landed in, not by which template
-        # produced it -- ':groups()' extends this to any depth, see
-        # _group_key). Left None when there is no pointer -- grouping
-        # only matters at the reduce step, so with no pointer the
-        # "grouped" and "pooled" candidate sets are identical anyway.
+        # moved earlier (not-yet-supported sweep #7 follow-up, 2026-10-21,
+        # David: "isn't :groups() being different from :flatten() the
+        # whole point?") -- detection only, no application yet (that
+        # still happens below, via _narrow()) -- needed this early so
+        # group_key_for (just below) can tell whether a range/bare time-
+        # window, not just a pointer, will need a per-group reduction.
+        from_call, to_call = self._range_calls_from_calls(calls)
+        has_range = from_call is not None or to_call is not None
+        from_bound = to_bound = None
+        from_is_date = to_is_date = False
+        if has_range:
+            from_bound = self._range_bound(from_call) if from_call is not None else None
+            to_bound = self._range_bound(to_call) if to_call is not None else None
+            from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
+            to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
+            if (from_bound is not None and to_bound is not None) and (
+                from_is_date != to_is_date
+            ):
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 does not support mixing index-"
+                    "mode and date-mode range bounds in the same range."
+                )
+            if isinstance(from_bound, str):
+                self._validate_date_format(from_bound)
+            if isinstance(to_bound, str):
+                self._validate_date_format(to_bound)
+        bare_time_windows = [
+            f for f in self._build_chain(calls) if isinstance(f, TimeWindowFunction3)
+        ]
+        if len(bare_time_windows) > 1:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not support combining more "
+                "than one bare time-component function (e.g. "
+                "':yesterday()') in the same name_one chain."
+            )
+        bare_time_window = bare_time_windows[0] if bare_time_windows else None
+        if bare_time_window is not None and has_range:
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not support combining a "
+                "bare time-component function (e.g. ':yesterday()') with "
+                "an explicit ':from()'/':to()'/':before()'/':after()' "
+                "bound in the same name_one chain -- the bare function "
+                "already means its own whole period, both ends included."
+            )
+
+        def _narrow(cands: list) -> list:
+            # applies the range/time-window narrowing -- called once on
+            # the whole pooled candidate list in POOL mode, and once per
+            # distinct group's own candidate list in GROUP mode (see the
+            # two call sites below). Built 2026-10-21: GROUP mode's own
+            # defining feature, already established for a plain pointer
+            # (reduce independently within each distinct group), applies
+            # here too -- a range is just a multi-valued pointer, the
+            # same category of terminal reduction, so it follows the
+            # identical convention rather than a pooled-then-sliced one.
+            if bare_time_window is not None:
+                return self._apply_bare_time_window(cands, bare_time_window)
+            if has_range:
+                if from_is_date or to_is_date:
+                    return self._apply_date_range(cands, from_call, to_call)
+                return self._apply_range(cands, from_call, to_call)
+            return cands
+
+        # group_key_for: set when ':all()'/':groups()' partitions
+        # candidates by observed value AND a pointer OR a range/bare
+        # time-window exists to reduce each partition (David's three-
+        # templates example -- three different one-level templates all
+        # group correctly by whatever directory each run actually landed
+        # in, not by which template produced it -- ':groups()' extends
+        # this to any depth, see _group_key). Left None when none of
+        # those is present -- grouping only matters at the reduce step,
+        # so with nothing to reduce the "grouped" and "pooled" candidate
+        # sets are identical anyway. Widened from "pointer only" to also
+        # include range/bare-time-window 2026-10-21 -- same reasoning as
+        # _narrow()'s own docstring just above.
         group_key_for = None
+        reduces = pointer is not None or has_range or bare_time_window is not None
 
         if self._is_bare_function_only(name_one):
             is_flattened = any(
@@ -302,7 +369,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 candidates = [
                     rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
                 ]
-                if pointer is not None:
+                if reduces:
                     group_key_for = {
                         rh: self._group_key(rh, home) for rh in candidates
                     }
@@ -325,7 +392,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # zero-level (no-template) run gets the empty-tuple key
                 # -- its own valid, distinct group, not a special case.
                 candidates = run_homes
-                if pointer is not None:
+                if reduces:
                     group_key_for = {
                         rh: self._group_key(rh, home) for rh in candidates
                     }
@@ -411,7 +478,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             candidates = [
                 rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
             ]
-            if pointer is not None:
+            if reduces:
                 group_key_for = {
                     rh: self._group_key(rh, home, prefix_len=len(pattern))
                     for rh in candidates
@@ -437,7 +504,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 for rh in run_homes
                 if self._matches_prefix_at_least(rh, home, prefix_pattern)
             ]
-            if pointer is not None:
+            if reduces:
                 group_key_for = {
                     rh: self._group_key(rh, home, prefix_len=len(prefix_pattern))
                     for rh in candidates
@@ -487,7 +554,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             candidates = [
                 rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
             ]
-            if pointer is not None:
+            if reduces:
                 # _group_key()'s own "every segment after prefix_len, as
                 # a tuple" already does the right thing here even though
                 # the suffix segments are included in that tuple too
@@ -565,105 +632,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             ]
 
-        from_call, to_call = self._range_calls_from_calls(calls)
-        # Gap 1 of compendium 6.27/TimeWindowFunction3 (added 2026-10-17)
-        # -- a BARE time-component function riding in the chain, with
-        # no explicit ':from()'/':to()'/':before()'/':after()' of its
-        # own (6.27e's first bullet, "use as a range" -- the compendium's
-        # own flagship example, "$acme.files.:yesterday()"). Detected as
-        # its own, separate entry in `built` -- a TimeWindowFunction3
-        # nested as from_call's/to_call's own .arg (Gap 2, already
-        # handled below) never shows up here, it is that call's .arg,
-        # not a sibling entry in the chain.
-        bare_time_windows = [
-            f for f in self._build_chain(calls) if isinstance(f, TimeWindowFunction3)
-        ]
-        if len(bare_time_windows) > 1:
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 does not support combining more "
-                "than one bare time-component function (e.g. "
-                "':yesterday()') in the same name_one chain."
-            )
-        bare_time_window = bare_time_windows[0] if bare_time_windows else None
-        if bare_time_window is not None and (
-            from_call is not None or to_call is not None
-        ):
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 does not support combining a "
-                "bare time-component function (e.g. ':yesterday()') with "
-                "an explicit ':from()'/':to()'/':before()'/':after()' "
-                "bound in the same name_one chain -- the bare function "
-                "already means its own whole period, both ends included."
-            )
-        if bare_time_window is not None:
-            candidates = self._apply_bare_time_window(candidates, bare_time_window)
-        elif from_call is not None or to_call is not None:
-            # ':from()'/':to()' as a run-level range -- added 2026-08-13,
-            # e.g. "customers:from(:index(-3))" -- "the last three runs
-            # with template customers." Stays a LIST (not reduced to
-            # one) unless a real pointer also rides alongside it, same
-            # as ':all()'/':groups()' already do -- the pointer, if
-            # present, reduces the RANGE, not the full candidate set.
-            #
-            # Two independent MODES, picked by each bound's own value
-            # type: index-mode (int/:index(n)) POSITIONALLY slices, via
-            # the shared _apply_range(); date-mode (str/:date(...),
-            # added the same day, David: "arrival and run order is even
-            # more important than indexing") FILTERS by each run's own
-            # arrival date instead, via _apply_date_range() below --
-            # comparing POSITIONS would be meaningless for a date bound.
-            # Mixing the two modes in one :from()/:to() pair is rejected
-            # -- not because it is meaningless (e.g.
-            # ":from(:date('2025-01-01')):to(:index(10))" is a
-            # reasonable ask: "10 runs starting from this date"), but
-            # because it is AMBIGUOUS and undecided which of at least
-            # two readings is meant -- is the index bound absolute
-            # position in the full candidate list, or relative to
-            # wherever the date bound starts matching? Nothing here
-            # picks one, so mixing is rejected until that anchor
-            # semantics question is deliberately settled, not attempted
-            # here for lack of a driving use case.
-            if group_key_for:
-                # settled, not a gap (not-yet-supported sweep #7): the
-                # range would apply to the POOLED candidate list before
-                # partitioning -- "the last N" could mean the last N
-                # pooled across every group, or the last N WITHIN each
-                # group, and nothing in the spec picks one. Matches
-                # FilesReferenceFinder3's own identical rejection for
-                # the identical shape (that file's own copy was fixed
-                # to this exact wording in task #5 of this same sweep).
-                raise ReferenceException3(
-                    "ResultsReferenceFinder3 does not support combining "
-                    "':from()'/':to()' with ':all()'/':groups()' grouping."
-                )
-            from_bound = self._range_bound(from_call) if from_call is not None else None
-            to_bound = self._range_bound(to_call) if to_call is not None else None
-            # TimeWindowFunction3 (":year()"/":date(...)"/etc, compendium
-            # 6.27, added 2026-10-17) is date-mode too, same as a plain
-            # string -- _range_bound() returns it as-is now, not
-            # unwrapped to a raw value (see its own docstring).
-            from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
-            to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
-            if (from_bound is not None and to_bound is not None) and (
-                from_is_date != to_is_date
-            ):
-                raise ReferenceException3(
-                    "ResultsReferenceFinder3 does not support mixing index-"
-                    "mode and date-mode range bounds in the same range."
-                )
-            if from_is_date or to_is_date:
-                # a TimeWindowFunction3 bound has nothing to validate
-                # this way -- it is never a raw user-supplied string
-                # (Date3 already validates its own format at
-                # construction, in check_valid()); only a bare string
-                # bound (":from(\"2025-01-01\")") needs this check.
-                if isinstance(from_bound, str):
-                    self._validate_date_format(from_bound)
-                if isinstance(to_bound, str):
-                    self._validate_date_format(to_bound)
-                candidates = self._apply_date_range(candidates, from_call, to_call)
-            else:
-                candidates = self._apply_range(candidates, from_call, to_call)
+        # range/bare-time-window detection+validation already happened
+        # earlier (right after `pointer`/`is_grouped`, so group_key_for
+        # could account for it) -- only the actual narrowing (via
+        # _narrow(), also defined there) still happens here, applied
+        # per-group or pooled below, same position this used to apply
+        # it pooled-only, before task #7's follow-up fix made it
+        # per-partition.
 
         (
             identity,
@@ -680,52 +655,65 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             if isinstance(seg, FunctionCall3)
         )
         wants_full_content = has_manifest or accessor is not None
-        # partition-aware fix, added 2026-10-20 (not-yet-supported sweep
-        # #7): this used to be an unconditional rejection here --
-        # "ResultsReferenceFinder3 does not yet support combining
-        # ':all()'/':groups()' grouping with :manifest() or a run-level
-        # field accessor." group_key_for is only ever set alongside a
-        # real `pointer` (every site that sets it above is itself inside
-        # an `if pointer is not None:` guard), so the `if group_key_for:`
-        # branch just below already reduces each distinct group to AT
-        # MOST one run via that pointer, BEFORE :manifest()/a field
-        # accessor ever reads anything -- the identical shape
-        # `_star_group_and_reduce()` (this file's own '*'-traversal twin)
-        # already proved safe to defer rather than raise, confirmed via
-        # its own docstring before porting the fix here. `len(results) >
-        # 1` at the bottom can therefore only mean "more than one
-        # group's own already-individually-legitimate winner," which
-        # `ambiguous_content_read` already defers correctly -- no new
-        # exemption needed, this file's own existing computation already
-        # handles it.
+        # partition-aware fix, added 2026-10-20, widened 2026-10-21 (not-
+        # yet-supported sweep #7 and its own follow-up): this used to be
+        # an unconditional rejection here -- "ResultsReferenceFinder3
+        # does not yet support combining ':all()'/':groups()' grouping
+        # with :manifest() or a run-level field accessor." group_key_for
+        # is only ever set alongside a real reduction step (`reduces` --
+        # a pointer and/or a range/bare-time-window, every site that
+        # sets it above is itself inside an `if reduces:` guard), so the
+        # `if group_key_for:` branch just below already reduces each
+        # distinct group to AT MOST one run (via its own pointer, once
+        # _narrow() has already windowed that group's own candidates)
+        # BEFORE :manifest()/a field accessor ever reads anything -- the
+        # identical shape `_star_group_and_reduce()` (this file's own
+        # '*'-traversal twin) already proved safe to defer rather than
+        # raise, confirmed via its own docstring before porting the fix
+        # here. `len(results) > 1` at the bottom can therefore only mean
+        # "more than one group's own already-individually-legitimate
+        # winner," which `ambiguous_content_read` already defers
+        # correctly -- no new exemption needed, this file's own existing
+        # computation already handles it.
         if group_key_for:
             # partition candidates by their own observed group key,
-            # apply the pointer independently within each partition --
-            # one result per distinct value observed. candidates is
-            # already sorted by _run_dir_sort_key, so each partition
-            # keeps correct arrival order internally.
+            # narrow each partition by the range/time-window (if any),
+            # then apply the pointer (if any) independently within each
+            # partition -- one result per distinct value observed, or
+            # every one of that group's own windowed candidates when
+            # there is no pointer to reduce further (David's own worked
+            # example, "$*.results.:groups().:from(0):to(1))" --
+            # "first 2 runs for each group"). candidates is already
+            # sorted by _run_dir_sort_key, so each partition keeps
+            # correct arrival order internally.
             groups: dict = {}
             for rh in candidates:
                 groups.setdefault(group_key_for[rh], []).append(rh)
             selected_runs = []
             for key in sorted(groups):
-                selected = self._apply_pointer(pointer, groups[key])
-                if selected is not None:
-                    selected_runs.append(selected)
-        elif pointer is not None:
-            selected = self._apply_pointer(pointer, candidates)
-            selected_runs = [selected] if selected is not None else []
+                group_candidates = _narrow(groups[key])
+                if pointer is not None:
+                    selected = self._apply_pointer(pointer, group_candidates)
+                    if selected is not None:
+                        selected_runs.append(selected)
+                else:
+                    selected_runs.extend(group_candidates)
         else:
-            # Resolving full manifest/well-known-file content for more
-            # than one run at once is still illegal (Rule 1, manifest_
-            # field_functions_proposal.md's "Entity resolution and
-            # pooling" section) -- but query() itself is always allowed
-            # to return every match, regardless of accessor (moved
-            # 2026-08-26, see the ":path()" retirement/Rule 1 bucket-
-            # list entry); this flags the result instead of raising, and
-            # ReferenceFinder3.resolve_from() raises only if a caller
-            # actually tries to resolve more than one of these at once.
-            selected_runs = candidates
+            candidates = _narrow(candidates)
+            if pointer is not None:
+                selected = self._apply_pointer(pointer, candidates)
+                selected_runs = [selected] if selected is not None else []
+            else:
+                # Resolving full manifest/well-known-file content for more
+                # than one run at once is still illegal (Rule 1, manifest_
+                # field_functions_proposal.md's "Entity resolution and
+                # pooling" section) -- but query() itself is always allowed
+                # to return every match, regardless of accessor (moved
+                # 2026-08-26, see the ":path()" retirement/Rule 1 bucket-
+                # list entry); this flags the result instead of raising, and
+                # ReferenceFinder3.resolve_from() raises only if a caller
+                # actually tries to resolve more than one of these at once.
+                selected_runs = candidates
 
         # :all() pools every instance in the run -- each instance has its
         # own separate well-known file on disk. Used to be an immediate,
@@ -870,6 +858,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 field_calls,
                 groups_call,
                 bare_time_window,
+                lower_call,
+                upper_call,
             ) = self._star_run_selector_chain(calls)
             if all_call is not None:
                 # zero-level, degenerate -- the SAME [] restriction bare
@@ -899,6 +889,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     field_calls,
                     bare_time_window,
                     instance_pointer=instance_pointer,
+                    lower_call=lower_call,
+                    upper_call=upper_call,
                 )
             if groups_call is not None:
                 # any depth, every named-results group -- BUILT
@@ -933,6 +925,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     field_calls,
                     bare_time_window,
                     instance_pointer=instance_pointer,
+                    lower_call=lower_call,
+                    upper_call=upper_call,
                 )
             if flatten_call is not None:
                 # any depth, every group -- _discover_run_homes(None)
@@ -968,6 +962,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 field_calls,
                 bare_time_window,
                 instance_pointer=instance_pointer,
+                lower_call=lower_call,
+                upper_call=upper_call,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -984,7 +980,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             prefix_pattern = self._compile_path_pattern(name_one.path[:-1])
             calls = list(name_one.functions)
-            pointer, _, _, having_call, field_calls, _, bare_time_window = (
+            pointer, _, _, having_call, field_calls, _, bare_time_window, lower_call, upper_call = (
                 self._star_run_selector_chain(calls)
             )
             run_homes = [
@@ -1007,6 +1003,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 field_calls,
                 bare_time_window,
                 instance_pointer=instance_pointer,
+                lower_call=lower_call,
+                upper_call=upper_call,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -1028,7 +1026,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             pattern = self._compile_path_pattern(name_one.path[:-1])
             calls = list(name_one.functions)
-            pointer, _, _, having_call, field_calls, _, bare_time_window = (
+            pointer, _, _, having_call, field_calls, _, bare_time_window, lower_call, upper_call = (
                 self._star_run_selector_chain(calls)
             )
             partitioned = []
@@ -1057,6 +1055,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 field_calls,
                 bare_time_window,
                 instance_pointer=instance_pointer,
+                lower_call=lower_call,
+                upper_call=upper_call,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -1078,7 +1078,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             prefix_pattern = self._compile_path_pattern(name_one.path[:-1])
             calls = list(name_one.functions)
-            pointer, _, _, having_call, field_calls, _, bare_time_window = (
+            pointer, _, _, having_call, field_calls, _, bare_time_window, lower_call, upper_call = (
                 self._star_run_selector_chain(calls)
             )
             partitioned = []
@@ -1107,6 +1107,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 field_calls,
                 bare_time_window,
                 instance_pointer=instance_pointer,
+                lower_call=lower_call,
+                upper_call=upper_call,
             )
 
         # plain literal/'*' path, no trailing ':flatten()'/':all()'/
@@ -1122,7 +1124,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             path = path[:-1]
         pattern = self._compile_path_pattern(path)
         calls = list(name_one.functions)
-        pointer, _, _, having_call, field_calls, _, bare_time_window = (
+        pointer, _, _, having_call, field_calls, _, bare_time_window, lower_call, upper_call = (
             self._star_run_selector_chain(calls)
         )
         run_homes = [
@@ -1143,6 +1145,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             field_calls,
             bare_time_window,
             instance_pointer=instance_pointer,
+            lower_call=lower_call,
+            upper_call=upper_call,
         )
 
     def _star_run_selector_chain(self, calls: list) -> tuple:
@@ -1152,7 +1156,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         out of what used to be inline-only-for-the-bare-case logic once
         the literal/'*'-prefixed shapes needed the identical validation.
         Returns (pointer, all_call, flatten_call, having_call,
-        field_calls, groups_call, bare_time_window) -- field_calls
+        field_calls, groups_call, bare_time_window, lower_call,
+        upper_call) -- `lower_call`/`upper_call` (added 2026-10-21,
+        closing a real gap this method never had at all: ':from()'/
+        ':to()' used to fall straight into the `non_pointers` catch-all
+        below, the SAME run-level range query()'s own literal-root path
+        already fully supports) are the built ':from()'/':to()' (or
+        ':after()'/':before()') calls, validated here exactly the way
+        query()'s own literal-root path does (mixing-mode rejection,
+        date-format validation) -- the actual application (index-mode
+        positional slice vs. date-mode filter, per-partition in GROUP
+        mode) happens in _star_pool_and_reduce()/_star_group_and_reduce(),
+        which both already receive them. field_calls
         (added 2026-10-18, alongside :error_count()'s own predicate-
         argument GATE) is now a LIST, not a single call: REVISED
         2026-10-18 (compendium 5.20b/GATE-trailing-chain work) once
@@ -1251,6 +1266,38 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "':all()'/':flatten()'/':groups()' -- each is its own "
                 "depth/grouping choice, not to be combined with another."
             )
+        # ':from()'/':to()' as a run-level range, now supported during
+        # '*' traversal too (built 2026-10-21 -- see this method's own
+        # docstring) -- validated here the same way query()'s own
+        # literal-root path validates it (mixing-mode rejection, date-
+        # format check); the actual application happens in
+        # _star_pool_and_reduce()/_star_group_and_reduce().
+        lower_call, upper_call = self._range_calls_from_built(built)
+        if lower_call is not None or upper_call is not None:
+            from_bound = self._range_bound(lower_call) if lower_call is not None else None
+            to_bound = self._range_bound(upper_call) if upper_call is not None else None
+            from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
+            to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
+            if (from_bound is not None and to_bound is not None) and (
+                from_is_date != to_is_date
+            ):
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 does not support mixing index-"
+                    "mode and date-mode range bounds in the same range."
+                )
+            if isinstance(from_bound, str):
+                self._validate_date_format(from_bound)
+            if isinstance(to_bound, str):
+                self._validate_date_format(to_bound)
+            if bare_time_window is not None:
+                raise ReferenceException3(
+                    "ResultsReferenceFinder3 does not support combining a "
+                    "bare time-component function (e.g. ':yesterday()') "
+                    "with an explicit ':from()'/':to()'/':before()'/"
+                    "':after()' bound in the same '*'-traversal chain -- "
+                    "the bare function already means its own whole "
+                    "period, both ends included."
+                )
         non_pointers = [
             f
             for f in built
@@ -1263,6 +1310,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             and f is not manifest_call
             and f is not home_call
             and f is not having_call
+            and f is not lower_call
+            and f is not upper_call
         ]
         if non_pointers:
             # exhaustive, not partial (not-yet-supported sweep #8) --
@@ -1276,9 +1325,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "only a bare pointer (:first()/:last()/:index(n)), "
                 "optionally combined with ':all()'/':flatten()'/':groups()', "
                 "':manifest()', ':having(\"identity\")', a bare time-"
-                "component function (e.g. :yesterday()), and/or one or "
-                "more run-level field-accessor functions (e.g. :uuid()), "
-                "is supported."
+                "component function (e.g. :yesterday()), ':from()'/':to()', "
+                "and/or one or more run-level field-accessor functions "
+                "(e.g. :uuid()), is supported."
             )
         pointer = self._pointer_from_calls(calls)
         return (
@@ -1289,6 +1338,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             field_calls,
             groups_call,
             bare_time_window,
+            lower_call,
+            upper_call,
         )
 
     def _run_field_value(self, run_dir: str, field_call):
@@ -1381,6 +1432,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         field_calls: list = None,
         bare_time_window=None,
         instance_pointer=None,
+        lower_call=None,
+        upper_call=None,
     ) -> ReferenceResults3:
         """POOL mode's shared tail -- added 2026-08-19, alongside
         _star_group_and_reduce(), factored out once name_three needed
@@ -1425,7 +1478,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         threaded through to _results_for_run() the same way the
         literal-root query() already does, closing the gap
         _query_star_traversal()'s own docstring used to flag ("nothing
-        below this point threads it into _results_for_run()")."""
+        below this point threads it into _results_for_run()").
+
+        `lower_call`/`upper_call` (added 2026-10-21) -- a run-level
+        ':from()'/':to()' range, applied to the pooled `run_homes` list
+        the same position `bare_time_window` already occupies (a POOL-
+        mode narrowing step, before the pointer reduces further)."""
         if having_call is not None:
             run_homes = [
                 rh
@@ -1443,6 +1501,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 ]
         if bare_time_window is not None:
             run_homes = self._apply_bare_time_window(run_homes, bare_time_window)
+        if lower_call is not None or upper_call is not None:
+            run_homes = sorted(run_homes, key=self._run_dir_sort_key)
+            run_homes = self._apply_run_level_range(run_homes, lower_call, upper_call)
         run_homes = sorted(run_homes, key=self._run_dir_sort_key)
         if pointer is None:
             results = []
@@ -1489,6 +1550,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         field_calls: list = None,
         bare_time_window=None,
         instance_pointer=None,
+        lower_call=None,
+        upper_call=None,
     ) -> ReferenceResults3:
         """GROUP mode's shared tail (":all()", bare or literal/'*'-
         prefixed) -- added 2026-08-19. `partitioned`: list of
@@ -1550,7 +1613,17 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         "list everything, unreduced" case _star_pool_and_reduce()
         already handles -- delegated there directly rather than
         duplicating that logic (that method's own ambiguous_content_read
-        computation applies unchanged in this delegated case)."""
+        computation applies unchanged in this delegated case). Only
+        delegated when there is truly nothing left to reduce by,
+        though (added 2026-10-21) -- a run-level ':from()'/':to()'
+        range with no pointer still needs its own per-group window
+        (David's own worked example, "$*.files.:groups().:from(0):
+        to(1))" -- "first 2 registrations for each group"), the same
+        reasoning _narrow()'s own docstring explains for query()'s
+        literal-root path: GROUP mode's defining feature is reducing
+        independently per partition, and a range is just a multi-
+        valued pointer, the same category of reduction a plain pointer
+        already gets this treatment for."""
         if having_call is not None:
             partitioned = [
                 (rh, key)
@@ -1574,7 +1647,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 for rh, key in partitioned
                 if start <= self._run_dir_datetime(rh) <= end
             ]
-        if pointer is None:
+        has_range = lower_call is not None or upper_call is not None
+        if pointer is None and not has_range:
             return self._star_pool_and_reduce(
                 [rh for rh, _ in partitioned],
                 None,
@@ -1590,11 +1664,19 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         results = []
         for key in sorted(groups):
             candidates = sorted(groups[key], key=self._run_dir_sort_key)
-            selected = self._apply_pointer(pointer, candidates)
-            if selected is not None:
+            if has_range:
+                candidates = self._apply_run_level_range(
+                    candidates, lower_call, upper_call
+                )
+            if pointer is not None:
+                selected = self._apply_pointer(pointer, candidates)
+                selected_runs = [selected] if selected is not None else []
+            else:
+                selected_runs = candidates
+            for rh in selected_runs:
                 results.extend(
                     self._results_for_run(
-                        selected,
+                        rh,
                         identity,
                         match_all,
                         range_bounds,
@@ -2250,6 +2332,28 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     continue
             result.append(rh)
         return result
+
+    @classmethod
+    def _apply_run_level_range(
+        cls, run_homes: list, lower_call, upper_call
+    ) -> list:
+        """picks index-mode (positional slice, via the shared
+        ReferenceFinder3._apply_range()) vs. date-mode (filter, via
+        this class's own _apply_date_range()) by each bound's own value
+        type -- added 2026-10-21, extracted so _star_pool_and_reduce()/
+        _star_group_and_reduce() can apply a run-level ':from()'/':to()'
+        range during '*' traversal the same way query()'s own literal-
+        root path already does (that path's own equivalent dispatch is
+        inlined there rather than calling this, since it was written
+        first and this was extracted once a second call site needed the
+        identical logic)."""
+        from_bound = cls._range_bound(lower_call) if lower_call is not None else None
+        to_bound = cls._range_bound(upper_call) if upper_call is not None else None
+        from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
+        to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
+        if from_is_date or to_is_date:
+            return cls._apply_date_range(run_homes, lower_call, upper_call)
+        return cls._apply_range(run_homes, lower_call, upper_call)
 
     @staticmethod
     def _run_dir_datetime(run_home: str) -> datetime:

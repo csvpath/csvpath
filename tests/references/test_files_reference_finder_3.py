@@ -743,6 +743,19 @@ class TestStarTraversalFlatten:
         with pytest.raises(ReferenceException3):
             _star_finder("$*.files.*:last().v1").query()
 
+    def test_range_with_no_pointer_pools_across_every_named_file(self):
+        # built 2026-10-21 -- '*' traversal had no range support at all
+        # before this (not just a grouping-interaction restriction, the
+        # way query()'s own literal-root path had); chronological order
+        # across every named-file is zero-1, one-1, one-2, two-1,
+        # two-2, so the last 2 pooled are two-1/two-2.
+        results = _star_finder("$*.files.*.:from(-2)").query()
+        assert set(results.uuids) == {"u-two-1", "u-two-2"}
+
+    def test_a_pointer_reduces_the_range_not_the_full_candidate_set(self):
+        results = _star_finder("$*.files.*.:from(-2):last()").query()
+        assert results.uuids == ["u-two-2"]
+
 
 class TestStarTraversalLiteralNameThreeBody:
     # a literal fingerprint body in name_three during '*' traversal --
@@ -1054,6 +1067,34 @@ class TestStarTraversalGroupsAnyDepth:
             "u-two-2",
             "u-gamma-deep-1",
         }
+
+    def test_range_with_no_pointer_applies_within_each_group(self):
+        # built 2026-10-21 -- David's own worked example (now in the
+        # compendium's Wildcards section): "$*.files.:groups().
+        # :from(0):to(1)" -> "first 2 registrations for each group
+        # found in name_one." zero.csv/one.csv/two.csv each have 1 or 2
+        # entries here, so "first 2" keeps everything (no group has a
+        # 3rd to exclude) -- this test confirms the combination no
+        # longer raises and resolves to every real entry, not that it
+        # narrows (see the next test for the narrowing proof).
+        results = _star_finder("$*.files.:groups().:from(0):to(1)").query()
+        assert set(results.uuids) == {
+            "u-zero-1",
+            "u-one-1",
+            "u-one-2",
+            "u-two-1",
+            "u-two-2",
+        }
+
+    def test_range_without_a_pointer_reduces_within_each_group_not_pooled(self):
+        # the actual GROUP-vs-POOL proof: the pooled '*' equivalent
+        # ("$*.files.*.:last()", TestStarTraversalFlatten above) gives
+        # ONE overall answer (u-two-2, the true global-latest). Grouping
+        # first gives one PER group instead -- the same convention
+        # already built/tested for a plain pointer in GROUP mode, now
+        # extended to a range.
+        results = _star_finder("$*.files.:groups().:from(-1)").query()
+        assert set(results.uuids) == {"u-zero-1", "u-one-2", "u-two-2"}
 
 
 #
@@ -1378,20 +1419,21 @@ class TestAllForOneNamedFile:
         ).resolve()
         assert {r.data["uuid"] for r in results.results} == {"u-zero-1", "u-one-2"}
 
-    def test_all_combined_with_a_range_is_rejected(self):
-        # split into its own check 2026-09-25 -- used to raise the SAME
-        # error as the :manifest() case above (a confusing "combining
-        # with :manifest()" message even though no :manifest() is
-        # present here at all, confirmed live before this fix -- see the
-        # bucket list). Still rejected, not built: the range would apply
-        # to the POOLED candidate list before partitioning, an
-        # ambiguous reading (last N overall vs. last N per group) with
-        # no driving use case to settle it, matching RESULTS' own
-        # identical rejection.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$alpha.files.:all().:from(-1)", ALPHA_HOME, ALPHA_MANIFEST
-            ).query()
+    def test_all_combined_with_a_range_applies_within_each_group(self):
+        # built 2026-10-21 (David: "isn't :groups() being different
+        # from :flatten() the whole point? Wasn't that already the
+        # answer?") -- yes: GROUP mode's own established convention
+        # (already built/tested for a plain pointer just above) is
+        # "reduce independently within each distinct file_home," and a
+        # range is just a multi-valued pointer, so it follows the same
+        # convention. "zero.csv" has one version (the window's own
+        # last 1 is itself); "one.csv" has two (the window's own last 1
+        # is u-one-2, its own last array entry) -- NOT the pooled last 1
+        # across everything (which would have been u-one-2 alone).
+        results = _finder(
+            "$alpha.files.:all().:from(-1)", ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert set(results.uuids) == {"u-zero-1", "u-one-2"}
 
     def test_all_combined_with_a_field_accessor_gives_one_value_per_group(self):
         # narrowed 2026-08-29 -- unlike ':manifest()' (a whole-resource
@@ -2764,11 +2806,17 @@ class TestNameThreeRange:
                 RANGE_MANIFEST,
             ).query()
 
-    def test_range_combined_with_grouping_is_rejected(self):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$ranger.files.:all().:from(-1)", RANGE_HOME, RANGE_MANIFEST
-            ).query()
+    def test_range_combined_with_grouping_applies_within_each_group(self):
+        # built 2026-10-21 -- see TestAllForOneNamedFile's own
+        # test_all_combined_with_a_range_applies_within_each_group for
+        # the full multi-group proof (this fixture's own 5 versions all
+        # share one file_home, so it cannot distinguish pooled-vs-per-
+        # group on its own -- it only confirms the combination no
+        # longer raises and windows correctly).
+        results = _finder(
+            "$ranger.files.:all().:from(-1)", RANGE_HOME, RANGE_MANIFEST
+        ).query()
+        assert results.uuids == ["v4"]
 
     def test_bare_time_window_function_is_gap_1s_flagship_files_example(
         self,

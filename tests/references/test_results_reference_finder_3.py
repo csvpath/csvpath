@@ -891,6 +891,54 @@ class TestAllGroupingAtAMiddlePosition:
                 '$alpha.results.test/:all("x")/one:last()', str(tmp_path)
             ).query()
 
+    def test_a_range_with_no_pointer_reduces_within_each_group_not_pooled(
+        self, tmp_path
+    ):
+        # built 2026-10-21 (David: "isn't :groups() being different
+        # from :flatten() the whole point? Wasn't that already the
+        # answer?") -- yes: GROUP mode's own established convention
+        # (already built/tested for a plain pointer just above) is
+        # "reduce independently within each distinct group," and a
+        # range is just a multi-valued pointer, so it follows the same
+        # convention. Group "x" has two runs, group "y" has two runs --
+        # the last 1 of EACH group is x-2/y-2, NOT the pooled last 1
+        # across everything (which would have been y-2 alone).
+        base = tmp_path / "alpha" / "test"
+        x1 = _make_run(base / "x" / "one", "2026-01-01_00-00-00", "x-1", {})
+        x2 = _make_run(base / "x" / "one", "2026-01-02_00-00-00", "x-2", {})
+        y1 = _make_run(base / "y" / "one", "2026-01-03_00-00-00", "y-1", {})
+        y2 = _make_run(base / "y" / "one", "2026-01-04_00-00-00", "y-2", {})
+        _write_archive_manifest(tmp_path, "alpha", [x1, x2, y1, y2])
+        results = _finder(
+            "$alpha.results.test/:all()/one:from(-1)", str(tmp_path)
+        ).query()
+        assert set(results.uuids) == {"x-2", "y-2"}
+
+    def test_a_range_with_a_pointer_reduces_the_range_within_each_group(
+        self, tmp_path
+    ):
+        # David's own worked example (now in the compendium's Wildcards
+        # section): "$*.files.:groups().:from(0):to(1)" -- "first 2
+        # registrations for each group." Same shape here, RESULTS-side,
+        # with a pointer riding alongside the range to reduce it
+        # further within each group: each group has THREE runs, so
+        # "the last of the first 2" (x-2/y-2) is distinct from both
+        # "the group's true last" (x-3/y-3) and "the pooled true last"
+        # (y-3 alone) -- proving the pointer reduces the RANGE, not the
+        # full candidate set, independently per group.
+        base = tmp_path / "alpha" / "test"
+        x1 = _make_run(base / "x" / "one", "2026-01-01_00-00-00", "x-1", {})
+        x2 = _make_run(base / "x" / "one", "2026-01-02_00-00-00", "x-2", {})
+        x3 = _make_run(base / "x" / "one", "2026-01-03_00-00-00", "x-3", {})
+        y1 = _make_run(base / "y" / "one", "2026-01-04_00-00-00", "y-1", {})
+        y2 = _make_run(base / "y" / "one", "2026-01-05_00-00-00", "y-2", {})
+        y3 = _make_run(base / "y" / "one", "2026-01-06_00-00-00", "y-3", {})
+        _write_archive_manifest(tmp_path, "alpha", [x1, x2, x3, y1, y2, y3])
+        results = _finder(
+            "$alpha.results.test/:all()/one:from(0):to(1):last()", str(tmp_path)
+        ).query()
+        assert set(results.uuids) == {"x-2", "y-2"}
+
 
 class TestRegexPathSegment:
     # ':regex(...)' as a name_one path segment -- added 2026-09-23,
@@ -1277,24 +1325,28 @@ class TestRunLevelRange:
         with pytest.raises(ReferenceException3):
             _finder("$acme.results.customers:from(:uuid())", five_runs).query()
 
-    def test_from_combined_with_all_grouping_is_not_yet_supported(
+    def test_from_combined_with_all_grouping_applies_within_the_group(
         self, tmp_path
     ):
-        # REVISED 2026-09-21: uses its own zero-level fixture -- bare
-        # ':all()' no longer matches five_runs' 1-level "customers/"
-        # runs at all (per the 4.2b degenerate-grouping fix), which
-        # would leave group_key_for empty/falsy and never trigger this
-        # exception in the first place.
+        # built 2026-10-21 (David: "isn't :groups() being different
+        # from :flatten() the whole point?") -- see TestAllGrouping's
+        # own multi-group proof in test_files_reference_finder_3.py for
+        # the full pooled-vs-per-group distinction; this fixture's five
+        # zero-level runs all collapse into ONE group (per the 4.2b
+        # degenerate-grouping rule), so it only confirms the combination
+        # no longer raises and windows/reduces correctly: positions 1
+        # onward is run-2..run-5, and ':last()' then reduces that range
+        # to run-5.
         base = tmp_path / "acme"
         runs = [
             _make_run(base, f"2026-01-0{i}_00-00-00", f"run-{i}", {})
             for i in range(1, 6)
         ]
         _write_archive_manifest(tmp_path, "acme", runs)
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$acme.results.:all():from(1):last()", str(tmp_path)
-            ).query()
+        results = _finder(
+            "$acme.results.:all():from(1):last()", str(tmp_path)
+        ).query()
+        assert results.uuids == ["run-5"]
 
     def test_from_with_manifest_and_more_than_one_run_requires_a_pointer(
         self, five_runs
@@ -4893,13 +4945,34 @@ class TestPositionEnforcement:
         results = _finder("$*.results.:last():groups()", two_group_archive).query()
         assert sorted(results.uuids) == ["acme-run2-uuid", "widgets-run1-uuid"]
 
-    def test_star_traversal_rejects_a_range_function_too(self, two_group_archive):
-        with pytest.raises(ReferenceException3):
-            _finder("$*.results.:last():from(1)", two_group_archive).query()
+    def test_star_traversal_now_supports_a_range_function_too(
+        self, two_group_archive
+    ):
+        # built 2026-10-21 -- '*' traversal had no run-level ':from()'/
+        # ':to()' support at all before this (not just a grouping-
+        # interaction restriction, the way query()'s own literal-root
+        # path had); the pointer reduces the range, not the full
+        # pooled candidate set, same convention as every other
+        # pointer+range position in this file.
+        results = _finder("$*.results.:last():from(1)", two_group_archive).query()
+        assert results.uuids == ["widgets-run1-uuid"]
 
     def test_star_traversal_bare_pointer_is_unaffected(self, two_group_archive):
         results = _finder("$*.results.:last()", two_group_archive).query()
         assert results.results[0].uuid == "widgets-run1-uuid"
+
+    def test_star_traversal_range_with_groups_reduces_within_each_group(
+        self, two_group_archive
+    ):
+        # David's own worked example (now in the compendium's Wildcards
+        # section): "$*.files.:groups().:from(0):to(1)" -- "first 2
+        # registrations for each group." Same shape here, RESULTS-side,
+        # with no pointer: acme's own group has 2 runs, widgets' has 1
+        # -- the last 1 of EACH group is run2/run1, NOT the pooled last
+        # 1 across everything (which would have been widgets-run1
+        # alone, per the bare-pointer test just above).
+        results = _finder("$*.results.:groups():from(-1)", two_group_archive).query()
+        assert sorted(results.uuids) == ["acme-run2-uuid", "widgets-run1-uuid"]
 
 
 class TestScopeLimits:
