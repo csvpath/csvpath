@@ -102,7 +102,15 @@ class Asker:
 
     def ask(self, prompt=None) -> str:
         try:
-            self.prompt = prompt
+            # #415 -- only override the constructor's own prompt (e.g.
+            # ReferenceRunner's "Expression? ") when the caller actually
+            # passes one here. No real call site does anymore (prompt is
+            # set via the constructor instead), so this used to always
+            # clobber it back to None, landing on create_prompt_
+            # application()'s "Named-file name?"/"Named-paths name?"
+            # fallback regardless of what the constructor set.
+            if prompt is not None:
+                self.prompt = prompt
             app = self.create_prompt_application()
             app.run()
             return self.result

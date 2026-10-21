@@ -1,6 +1,9 @@
 import json
 import os
+import re
 from tabulate import tabulate
+from csvpath.references.reference_exceptions_3 import ReferenceException3
+from csvpath.references.reference_expression_3 import ReferenceExpression3
 from csvpath.references.reference_finder_factory_3 import ReferenceFinderFactory3
 from csvpath.references.reference_results_3 import ReferenceResults3
 from .asker import Asker
@@ -11,15 +14,28 @@ from .error_menu_utility import ErrorMenuUtility as erut
 
 class ReferenceRunner:
     #
-    # interactive "run reference expressions" menu -- v1 scope is plain
-    # single CsvPath Reference Language v3 strings only (FILES/CSVPATHS/
-    # RESULTS, via ReferenceFinderFactory3.for_reference() + .resolve()).
-    # The compound UNION/INTERSECT/SUBTRACT expression language
-    # (ReferenceExpression3) is deliberately out of scope here -- it
-    # needs a real multi-line input UI that Asker does not have today.
+    # interactive "run reference expressions" menu -- handles both a
+    # plain single CsvPath Reference Language v3 string (FILES/
+    # CSVPATHS/RESULTS, via ReferenceFinderFactory3.for_reference() +
+    # .resolve()) and a compound UNION/INTERSECT/SUBTRACT expression
+    # (ReferenceExpression3), added 2026-10-20 for issue #416. Earlier
+    # scoped out on the assumption that the compound form needed a
+    # real multi-line input UI Asker does not have -- wrong: David's
+    # own worked example writes the operator as a keyword in the
+    # middle of ONE line ("$a UNION $b"), which the existing
+    # single-line input box already handles fine; see
+    # _parse_expression()'s own docstring for the actual mechanism.
     #
     MAX_RECENT = 10
     HISTORY_FILE_NAME = "cli_reference_history.json"
+    #
+    # a standalone UNION/INTERSECT/SUBTRACT keyword, surrounded by
+    # whitespace -- matches the compendium's and #416's own worked
+    # examples exactly (uppercase only, deliberately -- a lowercase
+    # match risks firing on a literal word inside some unrelated
+    # construct).
+    #
+    _OPERATOR_PATTERN = re.compile(r"\s+(UNION|INTERSECT|SUBTRACT)\s+")
 
     def __init__(self, cli):
         self._cli = cli
@@ -56,12 +72,44 @@ class ReferenceRunner:
         expr = Asker(
             self._cli,
             name_type="none",
-            prompt="Reference expression? ",
+            prompt="Expression? ",
             initial_text=initial_text,
         ).ask()
         if not expr:
             return
         self._run(expr)
+
+    def _parse_expression(self, text: str):
+        """splits `text` into (left, op, right) for ReferenceExpression3
+        when it contains a standalone UNION/INTERSECT/SUBTRACT keyword
+        -- issue #416, e.g. '$food.files.:all().:first() UNION
+        $food.csvpaths.:all().:index(0)'. Returns None when no keyword
+        is present at all, meaning `text` is an ordinary plain
+        reference (unchanged, existing behavior).
+
+        Deliberately does not support nesting (a sub-expression on
+        either side, e.g. two operators on one line) -- no worked
+        example asks for it, and this flat, one-line syntax has no
+        clean way to say which side a second operator belongs to; a
+        second keyword raises instead of guessing."""
+        matches = list(self._OPERATOR_PATTERN.finditer(text))
+        if not matches:
+            return None
+        if len(matches) > 1:
+            raise ReferenceException3(
+                "Only one UNION/INTERSECT/SUBTRACT operator is supported "
+                "per expression -- nested sub-expressions are not yet "
+                "supported."
+            )
+        match = matches[0]
+        left = text[: match.start()].strip()
+        right = text[match.end() :].strip()
+        if not left or not right:
+            raise ReferenceException3(
+                "A reference expression needs a reference on both sides "
+                f"of {match.group(1)}."
+            )
+        return left, match.group(1).lower(), right
 
     def _run(self, expression: str) -> None:
         if not expression:
@@ -69,9 +117,16 @@ class ReferenceRunner:
         self._cli.clear()
         self._cli.action(f"Running {expression}\n")
         try:
-            finder = ReferenceFinderFactory3.for_reference(
-                reference=expression, csvpaths=self._cli.csvpaths
-            )
+            parsed = self._parse_expression(expression)
+            if parsed is not None:
+                left, op, right = parsed
+                finder = ReferenceExpression3(
+                    left=left, op=op, right=right, csvpaths=self._cli.csvpaths
+                )
+            else:
+                finder = ReferenceFinderFactory3.for_reference(
+                    reference=expression, csvpaths=self._cli.csvpaths
+                )
             results = finder.resolve()
             self._remember(expression)
             self._display(results)
