@@ -1225,6 +1225,56 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 ambiguous_content_read=len(results) > 1,
             )
 
+        bare_field_call = self._bare_definition_field_call(name_one)
+        if bare_field_call is not None:
+            # the '*'-traversal counterpart to the literal-root bare_
+            # field_call branch above (query()'s own, not this method's)
+            # -- added 2026-10-21, closing the normative doc's own exact
+            # worked example ("$*.files.:template(:not_empty())",
+            # normative_reference_examples.txt line 197: "get a list of
+            # all templates used in registrations"). Previously fell
+            # through to the generic _compile_path_pattern() path and
+            # raised "not yet supported" for ANY such bare call here
+            # (":template()", ":on_arrival()", etc.), even argument-less,
+            # since none of :name()/a clock function/:choice()/:regex()
+            # matched it -- this was a real, cleanly-rejected gap, not
+            # silently wrong. Same shape as the literal-root branch, just
+            # over every matching named-file instead of one: no name_three
+            # (definition.json is never versioned, same reasoning as
+            # :definition() itself), predicate-argument filtering via the
+            # same isinstance(built.arg, PredicateFunction3) guard (NOT
+            # "arg is not None" -- see the literal-root branch's own
+            # comment for why: some BARE_SOURCE == "definition" functions,
+            # e.g. ":source_port(\"email\")", use .arg as a KEY string, not
+            # a filter, and must keep matching every name unfiltered).
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    f"FilesReferenceFinder3 does not support combining "
+                    f"':{bare_field_call.name}()' with name_three during "
+                    "'*' traversal -- definition.json is not versioned, "
+                    "there is no version to select."
+                )
+            names = self._matching_names(
+                self.csvpaths.file_manager.named_file_names, name_filter
+            )
+            if bare_field_call.arg is not None:
+                built = self._build(bare_field_call)
+                if isinstance(built.arg, PredicateFunction3):
+                    names = [
+                        name
+                        for name in names
+                        if self._matches_definition_field_predicate(name, built)
+                    ]
+            results = []
+            for name in names:
+                home = self.csvpaths.file_manager.named_file_home(name)
+                path = Nos(home).join("definition.json")
+                results.append(ReferenceResult3(path=path, uuid=None))
+            return ReferenceResults3(
+                results=results,
+                ambiguous_content_read=len(results) > 1,
+            )
+
         is_grouped = self._is_bare_all_reference(name_one)
         is_flattened = self._is_bare_flatten_reference(name_one)
         is_deep_grouped = self._is_bare_groups_reference(name_one)

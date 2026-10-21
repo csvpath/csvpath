@@ -312,32 +312,36 @@ class TestStatusRegistrationFailed:
         assert len(r.files) == 1
 
 
-class TestKnownGaps:
-    """Gap this validation pass found by exercising REAL corpus data
-    through the real finders -- flagged to David, not yet fixed (tests-
-    only scope: core-code changes need confirmation first, per
-    CLAUDE.md). xfail(strict=True) so a future fix makes this test FAIL
-    loudly (prompting removal of the xfail) rather than silently staying
-    green.
-    """
+class TestStarTemplatePredicateFiltering:
+    """FilesReferenceFinder3.query()'s Star3 root_major branch previously
+    raised ReferenceException3('Does not yet support :template() as a
+    name_one path segment') for the EXACT normative example
+    '$*.files.:template(:not_empty())' (normative_reference_examples.txt
+    line 197, "get a list of all templates used in registrations") --
+    a known, cleanly-rejected gap, not silently wrong, but it still
+    blocked this normative example from working at all. Fixed 2026-10-21:
+    _query_star_traversal() now recognizes a bare BARE_SOURCE ==
+    "definition" field call (the same _bare_definition_field_call()
+    check the literal-root branch uses) and applies the identical
+    predicate-filtering logic across every matching named-file, instead
+    of falling through to generic path-pattern compilation."""
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "FilesReferenceFinder3.query()'s Star3 root_major branch "
-            "raises ReferenceException3('Does not yet support :template() "
-            "as a name_one path segment') for the EXACT normative example "
-            "'$*.files.:template(:not_empty())' (normative_reference_"
-            "examples.txt line 197) -- a known, cleanly-rejected gap, not "
-            "silently wrong, but still blocks this normative example from "
-            "actually working. Needs new dispatch wiring in "
-            "_query_star_traversal() (recognizing a bare BARE_SOURCE == "
-            "'definition' field call there, the way the literal-root "
-            "branch now does), not just the ARG_TYPES/predicate-application "
-            "fix that TestTemplatePredicateFiltering already covers -- a "
-            "bigger lift than the literal-root fix, flagged separately."
-        ),
-    )
-    def test_star_template_predicate_normative_example(self, csvpaths):
+    def test_not_empty_matches_every_named_file_with_no_default_template(self, csvpaths):
+        # none of the four named-files groups has ever set a default
+        # template via a dedicated call (see TestTemplatePredicateFiltering
+        # above) -- :not_empty() correctly matches all of them (None != "").
         r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:not_empty())")
-        assert len(r.files) >= 1
+        assert sorted(r.files) == sorted(
+            f"tests/corpus/data/inputs/named_files/{name}/definition.json"
+            for name in ("acme_invoices", "orders", "zipcodes", "energy_readings")
+        )
+
+    def test_empty_matches_none(self, csvpaths):
+        r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:empty())")
+        assert r.files == []
+
+    def test_name_three_still_rejected(self, csvpaths):
+        # definition.json is never versioned -- same restriction as the
+        # literal-root branch and as bare ':definition()' itself.
+        with pytest.raises(ReferenceException3):
+            _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:not_empty()).:first()")
