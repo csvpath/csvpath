@@ -1339,7 +1339,7 @@ class TestAllForOneNamedFile:
         ).resolve()
         assert {r.data["uuid"] for r in results.results} == {"u-zero-1", "u-one-2"}
 
-    def test_all_combined_with_a_range_is_not_yet_supported(self):
+    def test_all_combined_with_a_range_is_rejected(self):
         # split into its own check 2026-09-25 -- used to raise the SAME
         # error as the :manifest() case above (a confusing "combining
         # with :manifest()" message even though no :manifest() is
@@ -2646,7 +2646,7 @@ class TestNameThreeRange:
                 RANGE_MANIFEST,
             ).query()
 
-    def test_range_combined_with_grouping_is_not_yet_supported(self):
+    def test_range_combined_with_grouping_is_rejected(self):
         with pytest.raises(ReferenceException3):
             _finder(
                 "$ranger.files.:all().:from(-1)", RANGE_HOME, RANGE_MANIFEST
