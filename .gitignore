@@ -5,6 +5,13 @@
 .DS_Store
 archive/
 inputs/
+# reference-v3 test corpus: committed on purpose (see tests/corpus/README.md),
+# so its inputs/archive subtrees need an explicit exception to the blanket
+# rules above.
+!tests/corpus/data/inputs/
+!tests/corpus/data/inputs/**
+!tests/corpus/data/archive/
+!tests/corpus/data/archive/**
 out.txt
 temp/*
 deleteme/*

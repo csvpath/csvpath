@@ -1,0 +1,142 @@
+# tests/corpus/assets.yaml
+#
+# Source-of-truth list for the reference-v3 test corpus. Edit this file to
+# grow the corpus (add a group, add a version, add a run), then regenerate
+# with:
+#
+#     poetry run python tests/corpus/generate.py
+#
+# generate.py wipes and rebuilds tests/corpus/data/ from scratch every run,
+# driving the real CsvPath Framework registration/run code (FileManager,
+# PathsManager, CsvPaths.fast_forward_paths) so every manifest, directory
+# name, and timestamp is exactly what production code writes -- nothing here
+# is a hand-authored manifest.
+#
+# `offset_days` is relative to whenever the generator is actually run (via
+# csvpath.util.date_util.DateUtility), not a fixed calendar date -- the whole
+# corpus's history stays "N days before now" no matter when you regenerate,
+# which keeps it useful for testing :yesterday()/:today()/etc. indefinitely
+# instead of slowly going stale.
+#
+# When the same `source` file is used for more than one version/load/run of
+# the same group, generate.py automatically mutates a throwaway copy (CSVs:
+# duplicate the last row; .csvpath/.csvpaths: append one more trivial, always-
+# valid statement) so each one gets a genuinely distinct content fingerprint
+# -- CsvPath Framework dedupes identical content and silently drops a repeat
+# registration/load otherwise (confirmed live before relying on this).
+
+named_files:
+  # 5 REAL distinct source files (no mutation needed) -- already has a
+  # genuine year/month folder structure in its own source tree, a good
+  # candidate for later template-preserving work (see the module docstring
+  # in generate.py for why that isn't done yet).
+  - name: acme_invoices
+    versions:
+      - source: tests/csvpaths/examples/csvpaths_examples_ops/data/customers/acme/invoices/2025/Jan/Acme_invoices_2025-01-31.csv
+        offset_days: -88
+      - source: tests/csvpaths/examples/csvpaths_examples_ops/data/customers/acme/invoices/2025/Feb/Acme_invoices_2025-01-25.csv
+        offset_days: -63
+      - source: tests/csvpaths/examples/csvpaths_examples_ops/data/customers/acme/invoices/2025/Feb/Acme_invoices_2025-01-26.csv
+        offset_days: -61
+      - source: tests/csvpaths/examples/csvpaths_examples_ops/data/customers/acme/invoices/2025/Feb/Acme_invoices_2025-01-27.csv
+        offset_days: -59
+      - source: tests/csvpaths/examples/csvpaths_examples_ops/data/customers/acme/invoices/2025/Mar/Acme_invoices_2025-03-31.csv
+        offset_days: -32
+
+  # one literal-segment template ("orders/:filename", a 1-level template) --
+  # deliberately a DIFFERENT depth than acme_invoices (0-level) and
+  # zipcodes (0-level) below, so the corpus has real uneven template depth
+  # to exercise :groups() (any-depth GROUP) against, not just :all().
+  - name: orders
+    template: "orders/:filename"
+    versions:
+      - source: tests/csvpaths/test_resources/named_files/food.csv
+        offset_days: -84
+      - source: tests/csvpaths/test_resources/named_files/food.csv
+        offset_days: -70
+      - source: tests/csvpaths/test_resources/named_files/food.csv
+        offset_days: -55
+      - source: tests/csvpaths/test_resources/named_files/food.csv
+        offset_days: -40
+      - source: tests/csvpaths/test_resources/named_files/food.csv
+        offset_days: -12
+
+  - name: zipcodes
+    versions:
+      - source: tests/csvpaths/test_resources/named_files/zipcodes.csv
+        offset_days: -76
+      - source: tests/csvpaths/test_resources/named_files/zipcodes.csv
+        offset_days: -21
+
+  # a single-version XLSX-backed named-file -- covers the "a few small
+  # xlsx" part of the agreed scope. No mutation support for XLSX yet (binary
+  # format), so just one version for now.
+  - name: energy_readings
+    versions:
+      - source: tests/csvpaths/test_resources/Book1.xlsx
+        offset_days: -45
+
+# deliberately seeded edge case: a failed registration, for :status().
+# add_named_file() raises ValueError for an empty/None path (confirmed: a
+# merely-nonexistent-but-plausible path does NOT trigger this -- can_load()
+# is a policy check, not an existence check, so it silently matches zero
+# files instead). The empty-path case raises AND, before raising, writes a
+# "Registration failed" entry to the global arrivals ledger -- exactly the
+# shape FilesReferenceFinder3._bare_status_gate_chain() reads. generate.py
+# catches the expected ValueError so the generator script itself doesn't
+# crash.
+named_file_failures:
+  - name: orders
+    bad_source: ""
+    offset_days: -47
+
+named_paths:
+  - name: validate_orders
+    versions:
+      - source: tests/csvpaths/test_resources/named_paths/food.csvpaths
+        offset_days: -85
+      - source: tests/csvpaths/test_resources/named_paths/food.csvpaths
+        offset_days: -50
+      - source: tests/csvpaths/test_resources/named_paths/food.csvpaths
+        offset_days: -15
+
+  - name: check_zipcodes
+    versions:
+      - source: tests/corpus/assets/generic_scan.csvpath
+        offset_days: -74
+      - source: tests/corpus/assets/generic_scan.csvpath
+        offset_days: -22
+
+  - name: scan_invoices
+    versions:
+      - source: tests/corpus/assets/generic_scan.csvpath
+        offset_days: -80
+      - source: tests/corpus/assets/generic_scan.csvpath
+        offset_days: -30
+
+# each run drives CsvPaths.fast_forward_paths() for real -- every run_dir
+# name and manifest "time"/"run_uuid" field comes from that real call, under
+# whatever DateUtility offset was active at the moment it ran.
+results:
+  - paths_name: validate_orders
+    against_file: orders
+    runs:
+      - offset_days: -83
+      - offset_days: -68
+      - offset_days: -52
+      - offset_days: -37
+      - offset_days: -20
+      - offset_days: -8
+
+  - paths_name: check_zipcodes
+    against_file: zipcodes
+    runs:
+      - offset_days: -70
+      - offset_days: -18
+
+  - paths_name: scan_invoices
+    against_file: acme_invoices
+    runs:
+      - offset_days: -75
+      - offset_days: -58
+      - offset_days: -28

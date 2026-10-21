@@ -1,0 +1,4 @@
+---- PRINTOUT: default
+2 Apple is modern food
+3 Skittles is modern food
+8 Swedish Fish is modern food
