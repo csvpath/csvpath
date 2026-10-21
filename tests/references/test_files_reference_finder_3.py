@@ -2834,7 +2834,7 @@ class TestImpliedStarForNameOneFunctions:
     # POSITIONS, "FILES' version selector never lives in name_one") --
     # it only makes both forms fail for the SAME, accurate reason.
     _MESSAGE = (
-        "FilesReferenceFinder3 does not yet support functions attached "
+        "FilesReferenceFinder3 does not support functions attached "
         "directly to name_one -- put the version-selecting function in "
         "name_three instead."
     )
