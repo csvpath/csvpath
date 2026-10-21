@@ -818,21 +818,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             _,
             instance_pointer,
         ) = self._name_three_selector(reference.name_three)
-        if instance_pointer is not None:
-            # issue #418 built the literal-root_major case only (both
-            # David's own repro and the compendium's own worked
-            # example are literal-root) -- _name_three_selector() is
-            # shared, so it now recognizes a name_three pointer here
-            # too, but nothing below this point threads it into
-            # _results_for_run(). Raise explicitly rather than
-            # silently falling through to the "no selector" default
-            # (the whole run, not the pointer-selected instance).
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 does not yet support a "
-                "name_three pointer (:first()/:last()/:index(n)) "
-                "combined with a '*' root_major -- only a literal "
-                "root_major supports it so far."
-            )
         if match_all and accessor is not None:
             # :all() at name_three means every instance in whichever
             # run(s) match, each with its own separate well-known file
@@ -893,6 +878,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     having_call,
                     field_calls,
                     bare_time_window,
+                    instance_pointer=instance_pointer,
                 )
             if groups_call is not None:
                 # any depth, every named-results group -- BUILT
@@ -926,6 +912,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     having_call,
                     field_calls,
                     bare_time_window,
+                    instance_pointer=instance_pointer,
                 )
             if flatten_call is not None:
                 # any depth, every group -- _discover_run_homes(None)
@@ -960,6 +947,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 having_call,
                 field_calls,
                 bare_time_window,
+                instance_pointer=instance_pointer,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -998,6 +986,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 having_call,
                 field_calls,
                 bare_time_window,
+                instance_pointer=instance_pointer,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -1047,6 +1036,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 having_call,
                 field_calls,
                 bare_time_window,
+                instance_pointer=instance_pointer,
             )
 
         if isinstance(name_one.path[-1], FunctionCall3) and name_one.path[
@@ -1096,6 +1086,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 having_call,
                 field_calls,
                 bare_time_window,
+                instance_pointer=instance_pointer,
             )
 
         # plain literal/'*' path, no trailing ':flatten()'/':all()'/
@@ -1131,6 +1122,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             having_call,
             field_calls,
             bare_time_window,
+            instance_pointer=instance_pointer,
         )
 
     def _star_run_selector_chain(self, calls: list) -> tuple:
@@ -1253,15 +1245,20 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             and f is not having_call
         ]
         if non_pointers:
+            # exhaustive, not partial (not-yet-supported sweep #8) --
+            # every other branch in this check already excludes each
+            # currently-recognized category by name, so reaching here
+            # means a genuinely unrecognized function, not a known one
+            # awaiting its own future category.
             raise ReferenceException3(
-                f"ResultsReferenceFinder3 does not yet support "
+                f"ResultsReferenceFinder3 does not support "
                 f":{non_pointers[0].name}() combined with '*' traversal -- "
                 "only a bare pointer (:first()/:last()/:index(n)), "
                 "optionally combined with ':all()'/':flatten()'/':groups()', "
                 "':manifest()', ':having(\"identity\")', a bare time-"
                 "component function (e.g. :yesterday()), and/or one or "
                 "more run-level field-accessor functions (e.g. :uuid()), "
-                "is supported so far."
+                "is supported."
             )
         pointer = self._pointer_from_calls(calls)
         return (
@@ -1363,6 +1360,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         having_call=None,
         field_calls: list = None,
         bare_time_window=None,
+        instance_pointer=None,
     ) -> ReferenceResults3:
         """POOL mode's shared tail -- added 2026-08-19, alongside
         _star_group_and_reduce(), factored out once name_three needed
@@ -1400,7 +1398,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         when `pointer` is None there is no per-partition reduction at
         all in THIS branch to worry about conflating with -- every
         matched run is genuinely unreduced, so the flag's own count
-        check at resolve() time means exactly what it says."""
+        check at resolve() time means exactly what it says.
+
+        `instance_pointer` (added 2026-10-20, not-yet-supported sweep
+        #8) -- a name_three statement-level pointer (issue #418), now
+        threaded through to _results_for_run() the same way the
+        literal-root query() already does, closing the gap
+        _query_star_traversal()'s own docstring used to flag ("nothing
+        below this point threads it into _results_for_run()")."""
         if having_call is not None:
             run_homes = [
                 rh
@@ -1424,7 +1429,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             for run_dir in run_homes:
                 results.extend(
                     self._results_for_run(
-                        run_dir, identity, match_all, range_bounds, accessor
+                        run_dir,
+                        identity,
+                        match_all,
+                        range_bounds,
+                        accessor,
+                        instance_pointer,
                     )
                 )
             return ReferenceResults3(
@@ -1435,7 +1445,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if selected is None:
             return ReferenceResults3(results=[])
         results = self._results_for_run(
-            selected, identity, match_all, range_bounds, accessor
+            selected, identity, match_all, range_bounds, accessor, instance_pointer
         )
         return ReferenceResults3(
             results=results,
@@ -1458,6 +1468,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         having_call=None,
         field_calls: list = None,
         bare_time_window=None,
+        instance_pointer=None,
     ) -> ReferenceResults3:
         """GROUP mode's shared tail (":all()", bare or literal/'*'-
         prefixed) -- added 2026-08-19. `partitioned`: list of
@@ -1551,6 +1562,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 match_all,
                 range_bounds,
                 accessor,
+                instance_pointer=instance_pointer,
             )
         groups: dict = {}
         for rh, key in partitioned:
@@ -1562,7 +1574,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             if selected is not None:
                 results.extend(
                     self._results_for_run(
-                        selected, identity, match_all, range_bounds, accessor
+                        selected,
+                        identity,
+                        match_all,
+                        range_bounds,
+                        accessor,
+                        instance_pointer,
                     )
                 )
         return ReferenceResults3(
@@ -2350,8 +2367,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     # second check is needed here.
                     pointer_call = f
                 else:
+                    # exhaustive, not partial (not-yet-supported sweep
+                    # #8) -- every recognized name_three category
+                    # (identity/match_all/accessor/field/range/gate/
+                    # pointer) is already matched by an earlier branch
+                    # in this same dispatch; reaching here means a
+                    # genuinely unrecognized function.
                     raise ReferenceException3(
-                        f"ResultsReferenceFinder3 does not yet support "
+                        f"ResultsReferenceFinder3 does not support "
                         f":{f.name}() as a name_three function."
                     )
         if gate_call is not None and accessor is None:
