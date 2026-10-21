@@ -628,18 +628,21 @@ STAR_ALPHA_MANIFEST = [
         "file_home": "inputs/named_files/alpha/zero.csv",
         "uuid": "u-zero-1",
         "time": "2026-01-01T00:00:00+00:00",
+        "fingerprint": "aaa",
     },
     {
         "file": "inputs/named_files/alpha/one.csv/bbb.csv",
         "file_home": "inputs/named_files/alpha/one.csv",
         "uuid": "u-one-1",
         "time": "2026-01-02T00:00:00+00:00",
+        "fingerprint": "bbb",
     },
     {
         "file": "inputs/named_files/alpha/one.csv/ccc.csv",
         "file_home": "inputs/named_files/alpha/one.csv",
         "uuid": "u-one-2",
         "time": "2026-01-03T00:00:00+00:00",
+        "fingerprint": "ccc",
     },
 ]
 STAR_BETA_HOME = "inputs/named_files/beta"
@@ -649,12 +652,14 @@ STAR_BETA_MANIFEST = [
         "file_home": "inputs/named_files/beta/two.csv",
         "uuid": "u-two-1",
         "time": "2026-01-04T00:00:00+00:00",
+        "fingerprint": "ddd",
     },
     {
         "file": "inputs/named_files/beta/two.csv/eee.csv",
         "file_home": "inputs/named_files/beta/two.csv",
         "uuid": "u-two-2",
         "time": "2026-01-05T00:00:00+00:00",
+        "fingerprint": "eee",
     },
 ]
 STAR_BY_NAME = {
@@ -670,11 +675,11 @@ STAR_BY_NAME = {
 # OTHER star-traversal test in this file, which never reads the ledger
 # at all.
 STAR_LEDGER = [
-    {"uuid": "u-zero-1"},
-    {"uuid": "u-one-1"},
-    {"uuid": "u-one-2"},
-    {"uuid": "u-two-1"},
-    {"uuid": "u-two-2"},
+    {"uuid": "u-zero-1", "fingerprint": "aaa"},
+    {"uuid": "u-one-1", "fingerprint": "bbb"},
+    {"uuid": "u-one-2", "fingerprint": "ccc"},
+    {"uuid": "u-two-1", "fingerprint": "ddd"},
+    {"uuid": "u-two-2", "fingerprint": "eee"},
 ]
 
 
@@ -737,6 +742,32 @@ class TestStarTraversalFlatten:
     def test_functions_directly_on_name_one_not_yet_supported(self):
         with pytest.raises(ReferenceException3):
             _star_finder("$*.files.*:last().v1").query()
+
+
+class TestStarTraversalLiteralNameThreeBody:
+    # a literal fingerprint body in name_three during '*' traversal --
+    # added 2026-10-20 (not-yet-supported sweep #4), closing a real
+    # parity gap: the identical literal-root shape (TestLiteralName
+    # ThreeBody above) already supported this, but '*' traversal
+    # rejected ANY name_three body unconditionally. Matches across
+    # every named-file's own pooled candidates, same as the bare '*'
+    # pointer case does for ordinal position.
+    def test_matches_across_every_named_file(self):
+        results = _star_finder("$*.files.*.bbb").query()
+        assert results.uuids == ["u-one-1"]
+
+    def test_no_match_gives_empty(self):
+        results = _star_finder("$*.files.*.zzz").query()
+        assert results.results == []
+
+    def test_combined_with_a_manifest_call(self):
+        results = _star_finder("$*.files.*.bbb:manifest()").resolve()
+        assert results.results[0].uuid == "u-one-1"
+        assert results.results[0].data["fingerprint"] == "bbb"
+
+    def test_combined_with_a_field_accessor(self):
+        results = _star_finder("$*.files.*.bbb:fingerprint()").resolve()
+        assert results.results[0].data == "bbb"
 
 
 MANIFEST_FIELD_LEDGER = [
@@ -2229,13 +2260,35 @@ class TestLiteralNameThreeBody:
         ).query()
         assert results.results == []
 
-    def test_combined_with_trailing_functions_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$finn.files.:name("orders.csv").aaaa:manifest()',
-                FINGERPRINT_HOME,
-                FINGERPRINT_MANIFEST,
-            ).query()
+    def test_combined_with_a_manifest_call(self):
+        # not-yet-supported sweep #4, 2026-10-20: the literal body
+        # already reduces to one candidate before any function runs --
+        # falls through into the ordinary single-candidate ':manifest()'
+        # machinery, same as a real pointer's own one-candidate
+        # reduction already does.
+        results = _finder(
+            '$finn.files.:name("orders.csv").aaaa:manifest()',
+            FINGERPRINT_HOME,
+            FINGERPRINT_MANIFEST,
+        ).resolve()
+        assert results.results[0].uuid == "u-orders-1"
+        assert results.results[0].data["fingerprint"] == "aaaa"
+
+    def test_combined_with_a_field_accessor(self):
+        results = _finder(
+            '$finn.files.:name("orders.csv").aaaa:fingerprint()',
+            FINGERPRINT_HOME,
+            FINGERPRINT_MANIFEST,
+        ).resolve()
+        assert results.results[0].data == "aaaa"
+
+    def test_combined_with_trailing_functions_no_match_gives_empty(self):
+        results = _finder(
+            '$finn.files.:name("orders.csv").zzzz:manifest()',
+            FINGERPRINT_HOME,
+            FINGERPRINT_MANIFEST,
+        ).query()
+        assert results.results == []
 
 
 class TestBareManifestFieldAccessor:
