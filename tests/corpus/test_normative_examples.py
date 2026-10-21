@@ -286,32 +286,6 @@ class TestTemplatePredicateFiltering:
             _query(csvpaths, FilesReferenceFinder3, '$orders.files.:template("orders/:filename")')
 
 
-class TestStatusRegistrationFailed:
-    """FilesReferenceFinder3._ledger_entry_result_path() raises
-    ReferenceException3 for a 'Registration failed' ledger entry whose
-    origin_path is the empty string -- the one input confirmed (by the
-    real test_file_registration_failed test) to actually produce this
-    status can never be reported back through
-    :status("Registration failed"). Flagged to David, not yet fixed on
-    this branch (tracked separately -- see PR #434)."""
-
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "FilesReferenceFinder3._ledger_entry_result_path() raises "
-            "ReferenceException3 for a 'Registration failed' ledger entry "
-            "whose origin_path is the empty string -- fix tracked in a "
-            "separate PR (#434), not this branch."
-        ),
-    )
-    def test_status_registration_failed_is_selectable(self, csvpaths):
-        r = _query(
-            csvpaths, FilesReferenceFinder3,
-            '$orders.files.:status("Registration failed")',
-        )
-        assert len(r.files) == 1
-
-
 class TestStarTemplatePredicateFiltering:
     """FilesReferenceFinder3.query()'s Star3 root_major branch previously
     raised ReferenceException3('Does not yet support :template() as a
@@ -345,3 +319,21 @@ class TestStarTemplatePredicateFiltering:
         # literal-root branch and as bare ':definition()' itself.
         with pytest.raises(ReferenceException3):
             _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:not_empty()).:first()")
+
+
+class TestStatusRegistrationFailed:
+    """FilesReferenceFinder3._ledger_entry_result_path() previously raised
+    ReferenceException3 for a 'Registration failed' ledger entry whose
+    origin_path is the empty string -- the one input confirmed (by the
+    real test_file_registration_failed test) to actually produce this
+    status could never be reported back through
+    :status("Registration failed"). Fixed 2026-10-21: falls back to the
+    global arrivals ledger's own manifest.json when neither file_path nor
+    a non-empty origin_path is available."""
+
+    def test_status_registration_failed_is_selectable(self, csvpaths):
+        r = _query(
+            csvpaths, FilesReferenceFinder3,
+            '$orders.files.:status("Registration failed")',
+        )
+        assert r.files == ["tests/corpus/data/inputs/named_files/manifest.json"]
