@@ -49,7 +49,13 @@ class ReferenceRunner:
         elif t == "new expression":
             self._edit_and_run("")
         elif t == "browse functions":
+            # without this, list_functions()'s own "Hit return to
+            # continue" drops straight back to Cli.loop()'s main menu --
+            # this re-enters the references submenu instead, since
+            # "browse functions" is itself one of this submenu's choices,
+            # not a one-shot action like "rerun recent"/"new expression".
             ReferenceFunctionLister(self._cli).list_functions()
+            self.menu()
 
     def _rerun_recent(self) -> None:
         recent = self._load_history()
