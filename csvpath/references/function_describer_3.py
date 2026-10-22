@@ -21,7 +21,9 @@ from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 #
 class Function3Describer:
     @classmethod
-    def describe(cls, function_cls: type, name: "str | None" = None) -> str:
+    def describe(
+        cls, function_cls: type, name: "str | None" = None, markdown: bool = True
+    ) -> str:
         """one function's own markdown documentation block. Heading is
         a plain "## {name}" (no backticks/colon/parens) specifically so
         describe_all()'s own index links resolve to a predictable
@@ -41,7 +43,16 @@ class Function3Describer:
         pointing at the SAME class (see Before3's own docstring), so
         without this override every alias would describe itself as its
         canonical name, breaking describe_all()'s own "index and blocks
-        agree on function count" invariant."""
+        agree on function count" invariant.
+
+        `markdown` (added 2026-10-22 for the CLI function browser --
+        see csvpath/cli/reference_function_lister.py) controls the
+        table's own tablefmt, same "pipe"/"simple_grid" choice
+        FunctionDescriber already makes for the identical CVL-side
+        markdown-file-vs-terminal distinction: True (default, unchanged
+        for every existing caller/test) renders a GFM pipe table for
+        committed .md output; False renders a boxed simple_grid table,
+        more readable printed directly to a terminal."""
         display_name = name if name is not None else function_cls.NAME
         lines = [f"## {display_name}", "", f"`:{display_name}()`", ""]
         if function_cls.SUMMARY:
@@ -93,7 +104,17 @@ class Function3Describer:
                     "already-selected one",
                 ]
             )
-        lines.append(tabulate(rows, tablefmt="pipe"))
+        if markdown:
+            lines.append(tabulate(rows, tablefmt="pipe"))
+        else:
+            # terminal-only wrapping -- some rows (e.g. "Selector when
+            # argued"/"Positions") carry long free text that would
+            # otherwise stretch simple_grid arbitrarily wide on a real
+            # terminal; a GFM pipe table has no such concern (the
+            # renderer wraps it), so this only applies here.
+            lines.append(
+                tabulate(rows, tablefmt="simple_grid", maxcolwidths=[22, 70])
+            )
         return "\n".join(lines)
 
     @classmethod

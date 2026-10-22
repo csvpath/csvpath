@@ -10,6 +10,7 @@ from .asker import Asker
 from .selecter import Selecter
 from .const import Const
 from .error_menu_utility import ErrorMenuUtility as erut
+from .reference_function_lister import ReferenceFunctionLister
 
 
 class ReferenceRunner:
@@ -41,12 +42,14 @@ class ReferenceRunner:
         self._cli = cli
 
     def menu(self) -> None:
-        choices = ["rerun recent", "new expression", Const.CANCEL2]
+        choices = ["rerun recent", "new expression", "browse functions", Const.CANCEL2]
         t = self._cli.ask(choices)
         if t == "rerun recent":
             self._rerun_recent()
         elif t == "new expression":
             self._edit_and_run("")
+        elif t == "browse functions":
+            ReferenceFunctionLister(self._cli).list_functions()
 
     def _rerun_recent(self) -> None:
         recent = self._load_history()
