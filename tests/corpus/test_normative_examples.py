@@ -337,3 +337,78 @@ class TestStatusRegistrationFailed:
             '$orders.files.:status("Registration failed")',
         )
         assert r.files == ["tests/corpus/data/inputs/named_files/manifest.json"]
+
+
+class TestStarTypeGate:
+    """Issue #438: FilesReferenceFinder3._query_star_traversal() previously
+    raised ReferenceException3('Does not yet support :type() as a name_one
+    path segment') for ANY ':type(...)' call during '*' traversal (e.g.
+    '$*.files.:type("xlsx")'). ':type()'s own GATE (compendium 3.9d) was
+    wired into the literal-root candidate pipeline 2026-10-18 (see
+    TestFieldAccessorTaxonomy.test_type_selects_xlsx) alongside ':status()',
+    which got BOTH root forms that day -- ':type()' only got the literal-root
+    half, an incomplete parity build rather than a deliberate exclusion.
+    Fixed: _query_star_traversal() now extracts the GATE field call the same
+    two-attempt way query()'s own literal-root branch does (catching both
+    the explicit '*:type(...)' and bare ':type(...)' forms), and applies it
+    to `candidates` after gathering, regardless of which branch (POOL/GROUP/
+    any-depth) built them.
+
+    energy_readings is the corpus's only xlsx-format named-files group --
+    every other group (acme_invoices/orders/zipcodes) is csv, confirmed
+    against the real manifest.json "type" field."""
+
+    def test_bare_type_gate_selects_only_matching_group(self, csvpaths):
+        r = _query(csvpaths, FilesReferenceFinder3, '$*.files.:type("xlsx")')
+        assert r.files == [
+            "tests/corpus/data/inputs/named_files/energy_readings/Book1.xlsx"
+        ]
+
+    def test_explicit_star_type_gate_is_equivalent(self, csvpaths):
+        # compendium 3.9d's own claimed equivalence (":type(\"x\")" ==
+        # "*:type(\"x\")") -- both forms reach the same extraction, just
+        # at different points in _query_star_traversal()'s own dispatch.
+        r = _query(csvpaths, FilesReferenceFinder3, '$*.files.*:type("xlsx")')
+        assert r.files == [
+            "tests/corpus/data/inputs/named_files/energy_readings/Book1.xlsx"
+        ]
+
+    def test_csv_gate_excludes_orders_due_to_template_depth(self, csvpaths):
+        # bare '*' is a one-level POOL (see TestPointerDepthMatrix) --
+        # `orders` has a 1-level template, so its real file_home sits two
+        # segments deep and is unreachable here, same pre-existing gotcha
+        # as every other one-level '*' query against it. acme_invoices and
+        # zipcodes are untemplated and both csv, so both are reachable and
+        # pass the GATE; `orders` is excluded by depth, not by the GATE.
+        r = _query(csvpaths, FilesReferenceFinder3, '$*.files.:type("csv")')
+        assert sorted(r.files) == sorted(
+            [
+                "tests/corpus/data/inputs/named_files/acme_invoices/Acme_invoices_2025-01-25.csv",
+                "tests/corpus/data/inputs/named_files/acme_invoices/Acme_invoices_2025-01-26.csv",
+                "tests/corpus/data/inputs/named_files/acme_invoices/Acme_invoices_2025-01-27.csv",
+                "tests/corpus/data/inputs/named_files/acme_invoices/Acme_invoices_2025-01-31.csv",
+                "tests/corpus/data/inputs/named_files/acme_invoices/Acme_invoices_2025-03-31.csv",
+                "tests/corpus/data/inputs/named_files/zipcodes/zipcodes.csv",
+            ]
+        )
+
+    def test_csv_gate_reaches_orders_via_groups(self, csvpaths):
+        # :groups() is the any-depth GROUP peer (TestPointerDepthMatrix) --
+        # combined with the GATE, this reaches orders/food.csv despite the
+        # template, confirming the GATE filter applies after ANY candidate-
+        # gathering shape, not just the bare one-level POOL default.
+        r = _query(csvpaths, FilesReferenceFinder3, '$*.files.:groups():type("csv")')
+        assert "tests/corpus/data/inputs/named_files/orders/orders/food.csv" in r.files
+
+    def test_gate_combines_with_name_three_pointer(self, csvpaths):
+        # the universal post-candidate filter runs BEFORE the name_three
+        # dispatch, so a version-selecting pointer riding alongside the
+        # GATE (not chained directly onto name_one -- that shape is
+        # rejected regardless of :type(), see TestOnePointerPerReference)
+        # already works for free: :first() picks the chronologically
+        # earliest GATE-matched candidate.
+        r = _query(csvpaths, FilesReferenceFinder3, '$*.files.:type("xlsx").:first()')
+        assert len(r.files) == 1
+        assert r.files[0].startswith(
+            "tests/corpus/data/inputs/named_files/energy_readings/Book1.xlsx/"
+        )

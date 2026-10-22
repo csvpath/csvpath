@@ -1275,6 +1275,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 ambiguous_content_read=len(results) > 1,
             )
 
+        # issue #438: the '*'-traversal counterpart to query()'s own
+        # literal-root GATE extraction (line 394 there). ':type()'s GATE
+        # was built 2026-10-18 for the literal-root candidate pipeline
+        # only -- unlike ':status()' (wired into BOTH root forms the
+        # same day), it was never mirrored here, so e.g.
+        # "$*.files.:type(\"xlsx\")" fell through to the generic
+        # _compile_path_pattern() path below and raised "not yet
+        # supported," even though nothing about the GATE mechanism
+        # itself is root-specific. Same two-attempt extraction as
+        # query()'s own (catches the explicit '*:type("xlsx")' form
+        # here; the bare ':type("xlsx")' form is only caught after
+        # _apply_implied_star() normalizes it, in the final `else`
+        # branch below), and the same universal post-candidate filter
+        # (applied once, after this whole if/elif/else chain, regardless
+        # of which branch built `candidates`) as query()'s own (line 631).
+        field_call = self._extract_gate_field_call(name_one)
         is_grouped = self._is_bare_all_reference(name_one)
         is_flattened = self._is_bare_flatten_reference(name_one)
         is_deep_grouped = self._is_bare_groups_reference(name_one)
@@ -1360,6 +1376,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 ]
             )
         else:
+            # issue #438: mirrors query()'s own identical normalization
+            # (lines 599-608) -- a bare field-accessor/GATE function
+            # (e.g. ':type("xlsx")') still sits in name_one.path at this
+            # point, not .functions, until _apply_implied_star() moves
+            # it there; the earlier extraction attempt above necessarily
+            # found nothing yet for this shape.
+            self._apply_implied_star(name_one)
+            if field_call is None:
+                field_call = self._extract_gate_field_call(name_one)
             if name_one.functions:
                 # same settled restriction as query()'s own literal-root
                 # branch (not-yet-supported sweep #3), for '*' traversal.
@@ -1374,6 +1399,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 self.csvpaths.file_manager.named_file_names, name_filter
             ):
                 candidates.extend(self._candidates_for_name(name, pattern))
+
+        if field_call is not None:
+            # issue #438: same universal, post-candidate-gathering GATE
+            # filter as query()'s own (line 631) -- applies regardless of
+            # which branch above built `candidates` (POOL/GROUP/any-depth).
+            key = field_call.KEY.get(Reference3.FILES)
+            candidates = [
+                c
+                for c in candidates
+                if self._matches_field_predicate(c.get(key), field_call.arg)
+            ]
 
         name_three = reference.name_three
         if name_three is None:
