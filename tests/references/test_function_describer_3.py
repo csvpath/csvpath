@@ -99,6 +99,34 @@ class TestDescribeOneFunction:
         assert "Resolves as" not in doc
 
 
+class TestMarkdownFlag:
+    # added 2026-10-22 for the CLI function browser (csvpath/cli/
+    # reference_function_lister.py) -- markdown=True (default) is
+    # unchanged, every test above still exercises it. markdown=False
+    # renders the same content as a boxed terminal table instead of a
+    # GFM pipe table, same "pipe"/"simple_grid" distinction
+    # FunctionDescriber already makes on the CVL side.
+    def test_default_is_markdown_pipe_table(self):
+        doc = Function3Describer.describe(Uuid3)
+        assert "|" in doc
+        assert "┌" not in doc
+
+    def test_markdown_false_renders_boxed_table(self):
+        doc = Function3Describer.describe(Uuid3, markdown=False)
+        assert "┌" in doc and "┐" in doc
+        assert "## uuid" in doc
+        assert Uuid3.SUMMARY in doc
+
+    def test_markdown_false_wraps_long_free_text_rows(self):
+        # Fingerprint3's own "Selector when argued" row text is long
+        # enough that, unwrapped, simple_grid would stretch the table
+        # far past any reasonable terminal width -- maxcolwidths keeps
+        # it readable by wrapping onto multiple lines instead.
+        doc = Function3Describer.describe(Fingerprint3, markdown=False)
+        lines = [l for l in doc.splitlines() if "│" in l]
+        assert all(len(l) < 100 for l in lines)
+
+
 class TestDescribeAll:
     def test_includes_every_registered_function_in_the_index(self):
         doc = Function3Describer.describe_all()
