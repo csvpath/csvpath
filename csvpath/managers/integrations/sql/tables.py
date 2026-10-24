@@ -3,6 +3,7 @@ from sqlalchemy import (
     Table,
     Column,
     String,
+    Text,
     Integer,
     DateTime,
     ForeignKey,
@@ -72,6 +73,11 @@ class Tables:
             Column("base_path", String(250)),
             Column("manifest_path", String(250), nullable=False),
             Column("template", String(250), nullable=True),
+            #
+            # the exact JSON entry the primary registrar wrote to its
+            # manifest for this row. see Metadata.manifest_entry.
+            #
+            Column("manifest_entry", Text, nullable=True),
         )
         self._named_paths = named_paths
         return self._named_paths
@@ -106,6 +112,7 @@ class Tables:
             Column("base_path", String(250)),
             Column("manifest_path", String(250), nullable=False),
             Column("template", String(250), nullable=True),
+            Column("manifest_entry", Text, nullable=True),
         )
         self._named_file = named_file
         return self._named_file
@@ -144,6 +151,7 @@ class Tables:
             Column("lines_matched", Integer, default=0),
             Column("error_count", Integer, default=-1),
             Column("manifest_path", String(250), nullable=False),
+            Column("manifest_entry", Text, nullable=True),
         )
         self._instance_run = instance_run
         return self._instance_run
@@ -186,6 +194,7 @@ class Tables:
             Column("username", String(45)),
             Column("ip_address", String(40)),
             Column("manifest_path", String(250)),
+            Column("manifest_entry", Text, nullable=True),
         )
         self._named_paths_group_run = group_run
         return self._named_paths_group_run

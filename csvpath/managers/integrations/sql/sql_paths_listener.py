@@ -1,3 +1,4 @@
+import json
 from sqlalchemy import Table
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.mysql import insert as mysql_insert
@@ -21,6 +22,17 @@ class SqlPathsListener(SqlListener):
     def metadata_update(self, mdata: Metadata) -> None:
         if not self.csvpaths:
             raise RuntimeError("CsvPaths cannot be None")
+        #
+        # mirror only what the primary registrar actually wrote. None
+        # means it skipped the write (e.g. an unchanged fingerprint) or
+        # the write failed.
+        #
+        if mdata.manifest_entry is None:
+            self.csvpaths.logger.info(
+                "No manifest entry for named-paths %s; not writing to SQL",
+                mdata.named_paths_name,
+            )
+            return
         named_paths_data = {
             "uuid": mdata.uuid_string,
             "at": mdata.time,
@@ -39,6 +51,7 @@ class SqlPathsListener(SqlListener):
             "base_path": "",
             "manifest_path": mdata.manifest_path,
             "template": mdata.template,
+            "manifest_entry": json.dumps(mdata.manifest_entry),
         }
         self._upsert_named_paths(named_paths_data)
 
@@ -87,4 +100,5 @@ class SqlPathsListener(SqlListener):
             "hostname": named_paths_data["hostname"],
             "username": named_paths_data["username"],
             "template": named_paths_data.get("template"),
+            "manifest_entry": named_paths_data.get("manifest_entry"),
         }

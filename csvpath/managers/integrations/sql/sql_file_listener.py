@@ -1,3 +1,4 @@
+import json
 from sqlalchemy import Table
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.mysql import insert as mysql_insert
@@ -21,6 +22,16 @@ class SqlFileListener(SqlListener):
     def metadata_update(self, mdata: Metadata) -> None:
         if not self.csvpaths:
             raise RuntimeError("CsvPaths cannot be None")
+        #
+        # mirror only what the primary registrar actually wrote. None
+        # means it skipped the write or the write failed.
+        #
+        if mdata.manifest_entry is None:
+            self.csvpaths.logger.info(
+                "No manifest entry for named-file %s; not writing to SQL",
+                mdata.named_file_name,
+            )
+            return
         named_file_data = {
             "uuid": mdata.uuid_string,
             "at": mdata.time,
@@ -44,6 +55,7 @@ class SqlFileListener(SqlListener):
             "base_path": "",
             "manifest_path": mdata.manifest_path,
             "template": mdata.template,
+            "manifest_entry": json.dumps(mdata.manifest_entry),
         }
         self._upsert_named_file(named_file_data)
 
@@ -96,4 +108,5 @@ class SqlFileListener(SqlListener):
             "template": named_file_data["template"]
             if "template" in named_file_data
             else None,
+            "manifest_entry": named_file_data.get("manifest_entry"),
         }

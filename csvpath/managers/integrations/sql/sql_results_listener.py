@@ -1,9 +1,11 @@
+import json
 from sqlalchemy import Table
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from csvpath.managers.metadata import Metadata
 from .sql_listener import SqlListener
+from .updates import Updates
 
 
 class SqlResultsListener(SqlListener):
@@ -20,6 +22,16 @@ class SqlResultsListener(SqlListener):
     def metadata_update(self, mdata: Metadata) -> None:
         if not self.csvpaths:
             raise RuntimeError("CsvPaths cannot be None")
+        #
+        # mirror only what the primary registrar actually wrote. None
+        # means it skipped the write or the write failed.
+        #
+        if mdata.manifest_entry is None:
+            self.csvpaths.logger.info(
+                "No manifest entry for run %s; not writing to SQL",
+                mdata.run_home,
+            )
+            return
         group_run_data = {
             "uuid": mdata.uuid_string,
             "at": mdata.time,
@@ -55,10 +67,18 @@ class SqlResultsListener(SqlListener):
             "username": mdata.username,
             "ip_address": mdata.ip_address,
             "manifest_path": mdata.manifest_path,
+            "manifest_entry": json.dumps(mdata.manifest_entry),
         }
         self._upsert_named_paths_group_run(group_run_data)
 
-    def _upsert_named_paths_group_run(self, group_run_data):
+    def _upsert_named_paths_group_run(self, group_run_data: dict):
+        try:
+            self._upsert_named_paths_group_run_unreliably(group_run_data)
+        except Exception:
+            Updates(self.engine).do_updates()
+            self._upsert_named_paths_group_run_unreliably(group_run_data)
+
+    def _upsert_named_paths_group_run_unreliably(self, group_run_data: dict):
         with self.engine.connect() as conn:
             dialect = conn.dialect.name
             self.csvpaths.logger.info(
@@ -110,4 +130,5 @@ class SqlResultsListener(SqlListener):
                 or group_run_data["all_expected_files"] == "Y"
             )
             else "N",
+            "manifest_entry": group_run_data.get("manifest_entry"),
         }
