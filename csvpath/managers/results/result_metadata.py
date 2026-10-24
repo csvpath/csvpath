@@ -10,6 +10,13 @@ class ResultMetadata(Metadata):
         # these we know right away
         self.named_paths_uuid = None
         #
+        # the uuid of the named-paths group run this instance belongs to
+        # (the run manifest's uuid; named_paths_group_run.uuid in SQL). not
+        # the same as named_paths_uuid, the named-paths group's registration
+        # identity.
+        #
+        self.group_run_uuid = None
+        #
         # TODO: populate this and add named_paths_name to the manifests.
         # it isn't always the same as named_results_name because it may
         # be a reference
@@ -185,6 +192,30 @@ ResultMetadata(
         if u and not isinstance(u, str):
             raise ValueError("Must be a string")
         self._named_paths_uuid = UUID(u)
+
+    @property
+    def group_run_uuid(self) -> UUID:
+        return self._group_run_uuid
+
+    @group_run_uuid.setter
+    def group_run_uuid(self, u: UUID) -> None:
+        if u and not isinstance(u, UUID):
+            raise ValueError("Must be a UUID")
+        self._group_run_uuid = u
+
+    @property
+    def group_run_uuid_string(self) -> str:
+        if self._group_run_uuid is None:
+            return None
+        return str(self._group_run_uuid)
+
+    @group_run_uuid_string.setter
+    def group_run_uuid_string(self, u: str) -> None:
+        if u is None:
+            raise ValueError("Group run UUID cannot be None")
+        if not isinstance(u, str):
+            raise ValueError("Must be a string")
+        self._group_run_uuid = UUID(u)
 
     @property
     def named_file_uuid(self) -> UUID:

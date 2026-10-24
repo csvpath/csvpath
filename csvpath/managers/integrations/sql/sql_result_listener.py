@@ -35,7 +35,7 @@ class SqlResultListener(SqlListener):
         instance_run_data = {
             "uuid": mdata.uuid_string,
             "at": mdata.time,
-            "group_run_uuid": mdata.named_paths_uuid_string,
+            "group_run_uuid": mdata.group_run_uuid_string,
             "instance_identity": mdata.instance_identity,
             "instance_index": mdata.instance_index,
             "instance_home": mdata.instance_home,
