@@ -1,5 +1,6 @@
 import os
 import json
+from typing import Any
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.references.reference_parser import ReferenceParser
@@ -134,7 +135,16 @@ class ResultRegistrar(Registrar, Listener):
         self.distribute_update(mdata)
         return mdata
 
-    def metadata_update(self, mdata: Metadata) -> None:
+    def create_json_from(
+        self, mdata: Metadata, *, manifest_path: str
+    ) -> dict[str, Any]:
+        """builds the instance manifest for mdata. pure: no reads or
+        writes. manifest_path is passed in because self.manifest_path
+        creates the instance dir as a side effect."""
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
+        if manifest_path is None or manifest_path.strip() == "":
+            raise ValueError("Manifest path cannot be None or empty")
         m = {}
         if mdata.time is None:
             raise ValueError("Time cannot be None")
@@ -166,10 +176,15 @@ class ResultRegistrar(Registrar, Listener):
         m["named_file_name"] = mdata.named_file_name
         if mdata.transfers:
             m["transfers"] = mdata.transfers
+        m["manifest_path"] = manifest_path
+        return m
+
+    def metadata_update(self, mdata: Metadata) -> None:
         mp = self.manifest_path
-        m["manifest_path"] = mp
+        m = self.create_json_from(mdata, manifest_path=mp)
         with DataFileWriter(path=mp) as file:
             json.dump(m, file.sink, indent=2)
+        mdata.manifest_entry = m
 
     @property
     def archive_name(self) -> str:

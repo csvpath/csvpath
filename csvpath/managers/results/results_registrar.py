@@ -1,4 +1,5 @@
 import json
+from typing import Any
 from csvpath.util.nos import Nos
 from csvpath.util.file_info import FileInfo
 from csvpath.util.exceptions import FileException
@@ -124,7 +125,10 @@ class ResultsRegistrar(Registrar, Listener):
         mdata.manifest_path = self.manifest_path
         self.distribute_update(mdata)
 
-    def metadata_update(self, mdata: Metadata) -> None:
+    def create_json_from(self, mdata: Metadata) -> dict[str, Any]:
+        """builds the run manifest for mdata. pure: no reads or writes."""
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
         m = {}
         m["time"] = mdata.time_string
         m["uuid"] = mdata.uuid_string
@@ -157,10 +161,15 @@ class ResultsRegistrar(Registrar, Listener):
         m["ip_address"] = mdata.ip_address
         m["method"] = mdata.method
         m["template"] = mdata.template or ""
+        m["manifest_path"] = mdata.manifest_path
+        return m
+
+    def metadata_update(self, mdata: Metadata) -> None:
+        m = self.create_json_from(mdata)
         mp = mdata.manifest_path
-        m["manifest_path"] = mp
         with DataFileWriter(path=mp) as file:
             json.dump(m, file.sink, indent=2)
+        mdata.manifest_entry = m
         #
         # extra data is a flat str->str dict that is provided by the CsvPaths caller at
         # run start time. we store it in the _extra_data directory within the run. we
