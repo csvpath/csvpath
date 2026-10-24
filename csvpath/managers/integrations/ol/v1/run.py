@@ -36,9 +36,9 @@ class RunBuilder:
 
     def build_result_run(self, mdata: Metadata):
         facets = {}
-        if mdata.named_paths_uuid is not None:
+        if mdata.group_run_uuid is not None:
             parent_run_facet = parent_run.ParentRunFacet(
-                run=parent_run.Run(runId=mdata.named_paths_uuid_string),
+                run=parent_run.Run(runId=mdata.group_run_uuid_string),
                 job=parent_run.Job(
                     namespace=mdata.archive_name,
                     name=f"Group:{mdata.named_results_name}",
@@ -47,7 +47,7 @@ class RunBuilder:
             facets["parent"] = parent_run_facet
         else:
             print(
-                "The OpenLineage run event builder cannot find the named_paths_uuid value in Metadata. If this is not testing please log a bug."
+                "The OpenLineage run event builder cannot find the group_run_uuid value in Metadata. If this is not testing please log a bug."
             )
 
         epath = f"{mdata.instance_home}/errors.json"
