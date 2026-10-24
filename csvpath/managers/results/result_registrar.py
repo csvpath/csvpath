@@ -51,11 +51,16 @@ class ResultRegistrar(Registrar, Listener):
             mdata.preceding_instance_identity = pid
         if p is None:
             self.result.csvpath.csvpaths.logger.debug(
-                "No named-paths manifest available at %s so not setting named_paths_uuid_string",
+                "No run manifest available at %s so not setting group_run_uuid or named_paths_uuid",
                 self.named_paths_manifest_path,
             )
         else:
-            mdata.named_paths_uuid_string = p["uuid"]
+            #
+            # p is the run manifest. its uuid is the group run's uuid; the
+            # named-paths group's own uuid is its named_paths_uuid.
+            #
+            mdata.group_run_uuid_string = p["uuid"]
+            mdata.named_paths_uuid_string = p.get("named_paths_uuid")
         mdata.valid = None
         self.distribute_update(mdata)
 
@@ -87,6 +92,7 @@ class ResultRegistrar(Registrar, Listener):
         mdata.named_paths_uuid_string = (
             self.csvpaths.run_metadata.named_paths_uuid_string
         )
+        mdata.group_run_uuid_string = self.csvpaths.run_metadata.uuid_string
         mdata.named_file_name = self.result.file_name
         mdata.named_file_uuid_string = self.csvpaths.run_metadata.named_file_uuid_string
         #

@@ -8,7 +8,11 @@ class Updates:
     def do_updates(self) -> None:
         stmts = [
             text("ALTER TABLE named_file ADD COLUMN template varchar(250)"),
-            text("ALTER TABLE named_paths ADD COLUMN template varchar(250)")
+            text("ALTER TABLE named_paths ADD COLUMN template varchar(250)"),
+            text("ALTER TABLE named_file ADD COLUMN manifest_entry TEXT"),
+            text("ALTER TABLE named_paths ADD COLUMN manifest_entry TEXT"),
+            text("ALTER TABLE instance_run ADD COLUMN manifest_entry TEXT"),
+            text("ALTER TABLE named_paths_group_run ADD COLUMN manifest_entry TEXT"),
             #
             # more updates if there are ever any go here
             #

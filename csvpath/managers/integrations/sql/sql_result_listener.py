@@ -1,9 +1,11 @@
+import json
 from sqlalchemy import Table
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from csvpath.managers.metadata import Metadata
 from .sql_listener import SqlListener
+from .updates import Updates
 
 
 class SqlResultListener(SqlListener):
@@ -20,10 +22,20 @@ class SqlResultListener(SqlListener):
     def metadata_update(self, mdata: Metadata) -> None:
         if not self.csvpaths:
             raise RuntimeError("CsvPaths cannot be None")
+        #
+        # mirror only what the primary registrar actually wrote. None
+        # means it skipped the write or the write failed.
+        #
+        if mdata.manifest_entry is None:
+            self.csvpaths.logger.info(
+                "No manifest entry for instance %s; not writing to SQL",
+                mdata.instance_identity,
+            )
+            return
         instance_run_data = {
             "uuid": mdata.uuid_string,
             "at": mdata.time,
-            "group_run_uuid": mdata.named_paths_uuid_string,
+            "group_run_uuid": mdata.group_run_uuid_string,
             "instance_identity": mdata.instance_identity,
             "instance_index": mdata.instance_index,
             "instance_home": mdata.instance_home,
@@ -49,10 +61,18 @@ class SqlResultListener(SqlListener):
             "lines_total": mdata.lines_total,
             "lines_matched": mdata.lines_matched,
             "manifest_path": mdata.manifest_path,
+            "manifest_entry": json.dumps(mdata.manifest_entry),
         }
         self._upsert_instance_run(instance_run_data)
 
-    def _upsert_instance_run(self, instance_run_data):
+    def _upsert_instance_run(self, instance_run_data: dict):
+        try:
+            self._upsert_instance_run_unreliably(instance_run_data)
+        except Exception:
+            Updates(self.engine).do_updates()
+            self._upsert_instance_run_unreliably(instance_run_data)
+
+    def _upsert_instance_run_unreliably(self, instance_run_data: dict):
         with self.engine.connect() as conn:
             dialect = conn.dialect.name
             self.csvpaths.logger.info("Inserting run result metadata into %s", dialect)
@@ -95,4 +115,5 @@ class SqlResultListener(SqlListener):
             "lines_scanned": instance_run_data["lines_scanned"],
             "lines_total": instance_run_data["lines_total"],
             "lines_matched": instance_run_data["lines_matched"],
+            "manifest_entry": instance_run_data.get("manifest_entry"),
         }
