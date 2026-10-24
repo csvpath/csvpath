@@ -1,4 +1,5 @@
 import os
+from typing import Any
 from csvpath.util.exceptions import InputException, FileException
 from csvpath.util.nos import Nos
 from csvpath.managers.registrar import Registrar
@@ -112,7 +113,11 @@ class FileRegistrar(Registrar, Listener):
             f"{new_home}{sep}{mani[index]['fingerprint']}.{mani[index]['type']}"
         )
 
-    def metadata_update(self, mdata: Metadata) -> None:
+    def create_json_from(self, mdata: Metadata) -> dict[str, Any]:
+        """builds the named-file manifest entry for mdata. pure: no
+        reads or writes."""
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
         path = mdata.origin_path
         rpath = mdata.file_path
         h = mdata.fingerprint
@@ -135,9 +140,15 @@ class FileRegistrar(Registrar, Listener):
         mani["file_name"] = mdata.file_name
         mani["username"] = mdata.username
         mani["hostname"] = mdata.hostname
+        return mani
+
+    def metadata_update(self, mdata: Metadata) -> None:
+        manifest_path = mdata.manifest_path
+        mani = self.create_json_from(mdata)
         jdata = self.get_manifest(manifest_path)
         jdata.append(mani)
         self.intermediary.put_json(manifest_path, jdata)
+        mdata.manifest_entry = mani
         #
         # drop update into an all-inputs/files record here?
         #

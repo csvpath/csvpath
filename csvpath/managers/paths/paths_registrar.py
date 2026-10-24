@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 from csvpath.util.exceptions import InputException
 from csvpath.util.file_readers import DataFileReader
@@ -101,37 +102,46 @@ class PathsRegistrar(Registrar, Listener):
                 with DataFileWriter(path=dest, mode="wb") as writer:
                     writer.write(reader.source.read())
 
+    def create_json_from(self, mdata: Metadata) -> dict[str, Any]:
+        """builds the named-paths manifest entry for mdata. pure: no
+        reads or writes."""
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
+        m = {}
+        #
+        # the inputs dir may be outside the archive dir, as by default, or
+        # inside. regardless, the point is that archive is the namespace.
+        # the inputs dirs are intended to stage assets for the archive
+        # regardless of if they are located in the archive or not.
+        #
+        m["archive_name"] = mdata.archive_name
+        m["named_paths_name"] = mdata.named_paths_name
+        m["named_paths_home"] = mdata.named_paths_home
+        m["group_file_path"] = mdata.group_file_path
+        if mdata.source_path is not None:
+            m["source_path"] = mdata.source_path
+        m["named_paths"] = mdata.named_paths
+        m["named_paths_identities"] = mdata.named_paths_identities
+        m["named_paths_count"] = mdata.named_paths_count
+        m["fingerprint"] = mdata.fingerprint
+        m["time"] = mdata.time_string
+        if mdata.time_started is not None:
+            m["time_started"] = mdata.time_started_string
+        if mdata.time_completed is not None:
+            m["time_completed"] = mdata.time_completed_string
+        m["uuid"] = mdata.uuid_string
+        m["manifest_path"] = mdata.manifest_path
+        if mdata.template is not None:
+            m["template"] = mdata.template
+        return m
+
     def metadata_update(self, mdata: Metadata) -> None:
         jdata = self.get_manifest(mdata.manifest_path)
         if len(jdata) == 0 or jdata[len(jdata) - 1]["fingerprint"] != mdata.fingerprint:
-            m = {}
-            #
-            # the inputs dir may be outside the archive dir, as by default, or
-            # inside. regardless, the point is that archive is the namespace.
-            # the inputs dirs are intended to stage assets for the archive
-            # regardless of if they are located in the archive or not.
-            #
-            m["archive_name"] = mdata.archive_name
-            m["named_paths_name"] = mdata.named_paths_name
-            m["named_paths_home"] = mdata.named_paths_home
-            m["group_file_path"] = mdata.group_file_path
-            if mdata.source_path is not None:
-                m["source_path"] = mdata.source_path
-            m["named_paths"] = mdata.named_paths
-            m["named_paths_identities"] = mdata.named_paths_identities
-            m["named_paths_count"] = mdata.named_paths_count
-            m["fingerprint"] = mdata.fingerprint
-            m["time"] = mdata.time_string
-            if mdata.time_started is not None:
-                m["time_started"] = mdata.time_started_string
-            if mdata.time_completed is not None:
-                m["time_completed"] = mdata.time_completed_string
-            m["uuid"] = mdata.uuid_string
-            m["manifest_path"] = mdata.manifest_path
-            if mdata.template is not None:
-                m["template"] = mdata.template
+            m = self.create_json_from(mdata)
             jdata.append(m)
             self.intermediary.put_json(mdata.manifest_path, jdata)
+            mdata.manifest_entry = m
             #
             # copy an ODCS contract into the group home only after the
             # manifest is written, so a failed copy cannot cost the group

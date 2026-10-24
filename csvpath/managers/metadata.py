@@ -34,6 +34,14 @@ class Metadata(ABC):
         #
         self.reference: str = None
         #
+        # the exact entry the primary registrar wrote to its manifest for
+        # this update. set only after a successful write; None means the
+        # registrar skipped the write or it failed. listeners that mirror
+        # manifests (e.g. the SQL listeners) use this rather than
+        # rebuilding the entry themselves.
+        #
+        self.manifest_entry: dict | None = None
+        #
         #
         #
         self._base_path = None
