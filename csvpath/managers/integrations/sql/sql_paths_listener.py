@@ -91,7 +91,7 @@ class SqlPathsListener(SqlListener):
 
     def _set(self, named_paths_data) -> dict:
         return {
-            "paths_root": named_paths_data["paths_name"],
+            "paths_root": named_paths_data["paths_root"],
             "paths_name": named_paths_data["paths_name"],
             "paths_home": named_paths_data["paths_home"],
             "group_file_path": named_paths_data["group_file_path"],
