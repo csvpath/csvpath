@@ -538,16 +538,6 @@ def _fail_instance_writes(paths: CsvPaths) -> None:
     )
 
 
-def _in_chain(ex: BaseException, cls) -> bool:
-    seen = []
-    while ex is not None and ex not in seen:
-        if isinstance(ex, cls):
-            return True
-        seen.append(ex)
-        ex = ex.__cause__ or ex.__context__
-    return False
-
-
 @pytest.mark.parametrize(
     "method", ["collect_paths", "fast_forward_paths", "next_paths"]
 )
@@ -556,20 +546,11 @@ def test_run_raises_under_on_when_instance_sql_write_fails(paths, tmp_path, meth
     _no_raise_policy(paths)
     _register(paths, tmp_path)
     _fail_instance_writes(paths)
-    #
-    # the raise path saves the result before re-raising. for an instance
-    # that failed before its csvpath ran, that save itself fails (a
-    # TypeError in CsvPath.completed) and masks the exception. that is
-    # pre-existing and not about SQL, so we only require the
-    # RequiredListenerException to be in the chain. had the policy
-    # absorbed it, there would be no chain.
-    #
-    with pytest.raises(Exception) as e:
+    with pytest.raises(RequiredListenerException):
         r = getattr(paths, method)(pathsname="orders", filename="orders")
         if method == "next_paths":
             for _ in r:
                 ...
-    assert _in_chain(e.value, RequiredListenerException)
 
 
 @pytest.mark.parametrize(

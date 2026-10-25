@@ -1090,7 +1090,10 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         # adding this test due to a bug. it may not be the best overall logic --
         # could it be better as True? not sure yet. seems to be a corner case.
         #
-        if self.scanner.to_line is None or self.line_monitor is None:
+        if (
+            self.scanner.to_line is None
+            or self.line_monitor.physical_line_number is None
+        ):
             return False
         #
         # we're not asking if this is the last line. it may not be and yet
