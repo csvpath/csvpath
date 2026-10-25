@@ -304,7 +304,7 @@ class PathsManager:
                 msg = f"Error adding named-paths from directory: {ex}"
                 src = traceback.format_exc()
                 self.csvpaths.error_manager.handle_error(source=src, msg=msg)
-                if self.csvpaths.ecoms.do_i_raise():
+                if self.csvpaths.ecoms.do_i_raise(ex):
                     raise
         else:
             msg = "Dirname must point to a directory"
@@ -365,7 +365,7 @@ class PathsManager:
             msg = f"Error adding named-paths from file: {ex}"
             src = traceback.format_exc()
             self.csvpaths.error_manager.handle_error(source=src, msg=msg)
-            if self.csvpaths.ecoms.do_i_raise():
+            if self.csvpaths.ecoms.do_i_raise(ex):
                 raise
             return None
 
@@ -602,7 +602,7 @@ class PathsManager:
             msg = f"Error adding named-paths list to named-paths group: {ex}"
             src = traceback.format_exc()
             self.csvpaths.error_manager.handle_error(source=src, msg=msg)
-            if self.csvpaths.ecoms.do_i_raise():
+            if self.csvpaths.ecoms.do_i_raise(ex):
                 raise
             return None
 

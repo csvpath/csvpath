@@ -22,6 +22,19 @@ class Listener(ABC):
     def config(self, c):
         self._config = c
 
+    def raise_on_update_error(self) -> bool:
+        """True if an exception from metadata_update should propagate out
+        of Registrar.distribute_update instead of only being logged. most
+        listeners are integrations whose failures must not stop a run, so
+        the default is False."""
+        return False
+
+    def update_is_required(self) -> bool:
+        """True if a failed metadata_update must stop the flow regardless
+        of the error policy. Registrar.distribute_update raises a
+        RequiredListenerException, which do_i_raise(ex) always raises."""
+        return False
+
     @abstractmethod
     def metadata_update(self, mdata: Metadata) -> None:
         """any system that wants updates about a registrar or manager registers to

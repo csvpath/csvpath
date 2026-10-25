@@ -960,7 +960,7 @@ class FileManager:
             self.csvpaths.error_manager.handle_error(
                 source=traceback.format_exc(), msg=msg
             )
-            if self.csvpaths.ecoms.do_i_raise():
+            if self.csvpaths.ecoms.do_i_raise(ex):
                 raise
 
     def _registration_failed(self, data: dict[str, str]) -> None:

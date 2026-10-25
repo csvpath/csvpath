@@ -16,7 +16,11 @@ from .managers.errors.error_collector import ErrorCollector
 from .util.config import Config
 from .util.log_utility import LogUtility as lout
 from .util.metadata_parser import MetadataParser
-from .util.exceptions import InputException, CsvPathsException
+from .util.exceptions import (
+    InputException,
+    CsvPathsException,
+    RequiredListenerException,
+)
 from .util.references.reference_parser import ReferenceParser
 from .util.run_home_maker import RunHomeMaker
 from .managers.paths.paths_manager import PathsManager
@@ -1035,7 +1039,7 @@ Cache: {cache}
                 result.unmatched = csvpath.unmatched
             except Exception as ex:  # pylint: disable=W0718
                 self.error_manager.handle_error(source=self, msg=f"{ex}")
-                if self.ecoms.do_i_raise():
+                if self.ecoms.do_i_raise(ex):
                     self.results_manager.save(result)
                     raise
             self.results_manager.save(result)
@@ -1198,7 +1202,7 @@ Cache: {cache}
                 )
             except Exception as ex:  # pylint: disable=W0718
                 self.error_manager.handle_error(source=self, msg=f"{ex}")
-                if self.ecoms.do_i_raise():
+                if self.ecoms.do_i_raise(ex):
                     self.results_manager.save(result)
                     raise
             self.results_manager.save(result)
@@ -1338,7 +1342,7 @@ Cache: {cache}
                     yield line
             except Exception as ex:  # pylint: disable=W0718
                 self.error_manager.handle_error(source=self, msg=f"{ex}")
-                if self.ecoms.do_i_raise():
+                if self.ecoms.do_i_raise(ex):
                     self.results_manager.save(result)
                     raise
             self.results_manager.save(result)
@@ -1807,6 +1811,14 @@ Cache: {cache}
                 self.results_manager.add_named_result(result)
             except Exception as ex:  # pylint: disable=W0718
                 self.error_manager.handle_error(source=self, msg=f"{ex}")
+                #
+                # this setup never raises for the error policy. a required
+                # listener failure (e.g. SQL when references rely on it) is
+                # not a policy question, so it raises. not do_i_raise(ex)
+                # because that would also start raising on the policy.
+                #
+                if isinstance(ex, RequiredListenerException):
+                    raise
                 #
                 # keep this comment for modelines avoidance
                 #
