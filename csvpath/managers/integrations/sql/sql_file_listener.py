@@ -12,6 +12,7 @@ class SqlFileListener(SqlListener):
     def __init__(self, config=None):
         SqlListener.__init__(self, config=config)
         self._named_file = None
+        self._named_file_ledger = None
 
     @property
     def named_file(self) -> Table:
@@ -19,19 +20,43 @@ class SqlFileListener(SqlListener):
             self._named_file = self.tables.named_file
         return self._named_file
 
+    @property
+    def named_file_ledger(self) -> Table:
+        if self._named_file_ledger is None:
+            self._named_file_ledger = self.tables.named_file_ledger
+        return self._named_file_ledger
+
     def metadata_update(self, mdata: Metadata) -> None:
         if not self.csvpaths:
             raise RuntimeError("CsvPaths cannot be None")
         #
-        # mirror only what the primary registrar actually wrote. None
-        # means it skipped the write or the write failed.
+        # mirror only what was actually written: the version by the
+        # primary registrar, the ledger entry by FilesListener. None means
+        # the write was skipped or failed.
         #
         if mdata.manifest_entry is None:
             self.csvpaths.logger.info(
-                "No manifest entry for named-file %s; not writing to SQL",
+                "No manifest entry for named-file %s; not writing a version to SQL",
                 mdata.named_file_name,
             )
-            return
+        else:
+            self._write_named_file(mdata)
+        if mdata.ledger_entry is None:
+            self.csvpaths.logger.info(
+                "No ledger entry for named-file %s; not writing a ledger row to SQL",
+                mdata.named_file_name,
+            )
+        else:
+            row = self._ledger_row(
+                mdata=mdata,
+                root_column="files_root",
+                root=mdata.named_files_root,
+                name_column="named_file_name",
+                name=mdata.named_file_name,
+            )
+            self._upsert_ledger_row(table=self.named_file_ledger, row=row)
+
+    def _write_named_file(self, mdata: Metadata) -> None:
         named_file_data = {
             "uuid": mdata.uuid_string,
             "at": mdata.time,

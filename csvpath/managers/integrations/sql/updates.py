@@ -22,8 +22,9 @@ class Updates:
         # ALTERs once applied
         #
         for table, indexes in Tables.INDEXES.items():
-            for name, column in indexes.items():
-                stmts.append(text(f"CREATE INDEX {name} ON {table} ({column})"))
+            for name, columns in indexes.items():
+                cols = ", ".join(Tables.index_columns(columns))
+                stmts.append(text(f"CREATE INDEX {name} ON {table} ({cols})"))
         #
         # more updates if there are ever any go above the indexes
         #

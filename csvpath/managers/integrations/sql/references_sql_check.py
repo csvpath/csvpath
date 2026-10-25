@@ -33,6 +33,12 @@ class ReferencesSqlCheck:
     #
     INDEX_COLUMN = "manifest_index"
     INDEX_COLUMN_TABLES = ["named_file", "named_paths"]
+    #
+    # the root-ledger mirrors. they hold ledger_entry, not manifest_entry,
+    # and were created complete, so only their existence and indexes are
+    # checked.
+    #
+    LEDGER_TABLES = ["named_file_ledger", "named_paths_ledger"]
 
     @classmethod
     def check(cls, *, csvpaths) -> None:
@@ -120,8 +126,19 @@ class ReferencesSqlCheck:
                 missing.append(f"table {table} has no {cls.ENTRY_COLUMN} column")
             if table in cls.INDEX_COLUMN_TABLES and cls.INDEX_COLUMN not in cols:
                 missing.append(f"table {table} has no {cls.INDEX_COLUMN} column")
-            indexes = [i["name"] for i in insp.get_indexes(table)]
-            for name in Tables.INDEXES[table]:
-                if name not in indexes:
-                    missing.append(f"table {table} has no index {name}")
+            missing += cls._missing_indexes(insp=insp, table=table)
+        for table in cls.LEDGER_TABLES:
+            if not insp.has_table(table):
+                missing.append(f"table {table} does not exist")
+                continue
+            missing += cls._missing_indexes(insp=insp, table=table)
         return missing
+
+    @classmethod
+    def _missing_indexes(cls, *, insp, table: str) -> list[str]:
+        indexes = [i["name"] for i in insp.get_indexes(table)]
+        return [
+            f"table {table} has no index {name}"
+            for name in Tables.INDEXES[table]
+            if name not in indexes
+        ]

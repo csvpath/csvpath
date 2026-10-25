@@ -86,3 +86,5 @@ class FilesListener(Listener):  # Registrar,
             j = json.dumps(jdata, indent=2)
             writer.sink.write(j)
             writer.sink.flush()
+        mdata.ledger_entry = mani
+        mdata.ledger_index = len(jdata) - 1

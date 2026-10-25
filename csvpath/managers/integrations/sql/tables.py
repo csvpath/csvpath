@@ -15,9 +15,10 @@ from .engine import Db
 
 class Tables:
     #
-    # table -> {index name: column}. the SQL reference source scopes and
-    # joins on these columns. new databases get the indexes from the table
-    # definitions; existing ones get them from Updates.
+    # table -> {index name: column, or a tuple of columns}. the SQL
+    # reference source scopes, joins and orders on these columns. new
+    # databases get the indexes from the table definitions; existing ones
+    # get them from Updates.
     #
     INDEXES = {
         "named_file": {
@@ -35,6 +36,18 @@ class Tables:
         "instance_run": {
             "ix_instance_run_group_run_uuid": "group_run_uuid",
         },
+        #
+        # ordered reads of a whole ledger, and per-name reads, e.g.
+        # :status() on a literal root
+        #
+        "named_file_ledger": {
+            "ix_named_file_ledger_root_index": ("files_root", "ledger_index"),
+            "ix_named_file_ledger_root_name": ("files_root", "named_file_name"),
+        },
+        "named_paths_ledger": {
+            "ix_named_paths_ledger_root_index": ("paths_root", "ledger_index"),
+            "ix_named_paths_ledger_root_name": ("paths_root", "paths_name"),
+        },
     }
 
     def __init__(self, config, *, engine=None):
@@ -45,6 +58,8 @@ class Tables:
         self._named_paths_group_run = None
         self._named_file = None
         self._named_paths = None
+        self._named_file_ledger = None
+        self._named_paths_ledger = None
 
     @property
     def metadata(self) -> MetaData:
@@ -57,6 +72,8 @@ class Tables:
         self._assure_table(self.instance_run)
         self._assure_table(self.named_file)
         self._assure_table(self.named_paths)
+        self._assure_table(self.named_file_ledger)
+        self._assure_table(self.named_paths_ledger)
 
     def _assure_table(self, table) -> None:
         if self.engine is None:
@@ -65,10 +82,25 @@ class Tables:
             metadata = table.metadata
             metadata.create_all(self.engine)
 
+    @classmethod
+    def index_columns(cls, columns: str | tuple) -> tuple:
+        """an INDEXES value as a tuple of column names"""
+        if isinstance(columns, str):
+            columns = (columns,)
+        if not isinstance(columns, tuple) or len(columns) == 0:
+            raise ValueError(f"Index columns must be a str or tuple: {columns}")
+        for c in columns:
+            if not isinstance(c, str) or c.strip() == "":
+                raise ValueError(f"Index column must be a non-empty str: {c}")
+        return columns
+
     def _indexes(self, table: str) -> list[Index]:
         if table not in self.INDEXES:
             raise ValueError(f"No indexes are defined for table {table}")
-        return [Index(name, column) for name, column in self.INDEXES[table].items()]
+        return [
+            Index(name, *self.index_columns(columns))
+            for name, columns in self.INDEXES[table].items()
+        ]
 
     # =============
     # tables
@@ -153,6 +185,62 @@ class Tables:
         )
         self._named_file = named_file
         return self._named_file
+
+    #
+    # the root ledgers: one row per entry FilesListener / PathsListener
+    # appended to inputs/named_files/manifest.json or
+    # inputs/named_paths/manifest.json, holding the exact entry and its
+    # position. a ledger has entries that are not versions (e.g. an
+    # unchanged named-paths reload), so these are not the version tables.
+    # status and lifecycle are read from the entry; NULL lifecycle means
+    # active, as an absent field does in the JSON. version_uuid is the
+    # named_file / named_paths row written by the same update, if any.
+    #
+    @property
+    def named_file_ledger(self) -> Table:
+        if self._named_file_ledger is not None:
+            return self._named_file_ledger
+        mdata = self.metadata
+        if "named_file_ledger" in mdata.tables:
+            return mdata.tables["named_file_ledger"]
+        self._named_file_ledger = Table(
+            "named_file_ledger",
+            mdata,
+            Column("uuid", String(40), primary_key=True, nullable=False),
+            Column("at", DateTime, nullable=False),
+            Column("files_root", String(250), nullable=False),
+            Column("named_file_name", String(40), nullable=False),
+            Column("ledger_entry", Text, nullable=False),
+            Column("ledger_index", Integer, nullable=False),
+            Column("status", String(40), nullable=True),
+            Column("lifecycle", String(20), nullable=True),
+            Column("version_uuid", String(40), nullable=True),
+            *self._indexes("named_file_ledger"),
+        )
+        return self._named_file_ledger
+
+    @property
+    def named_paths_ledger(self) -> Table:
+        if self._named_paths_ledger is not None:
+            return self._named_paths_ledger
+        mdata = self.metadata
+        if "named_paths_ledger" in mdata.tables:
+            return mdata.tables["named_paths_ledger"]
+        self._named_paths_ledger = Table(
+            "named_paths_ledger",
+            mdata,
+            Column("uuid", String(40), primary_key=True, nullable=False),
+            Column("at", DateTime, nullable=False),
+            Column("paths_root", String(250), nullable=False),
+            Column("paths_name", String(40), nullable=False),
+            Column("ledger_entry", Text, nullable=False),
+            Column("ledger_index", Integer, nullable=False),
+            Column("status", String(40), nullable=True),
+            Column("lifecycle", String(20), nullable=True),
+            Column("version_uuid", String(40), nullable=True),
+            *self._indexes("named_paths_ledger"),
+        )
+        return self._named_paths_ledger
 
     @property
     def instance_run(self) -> Table:

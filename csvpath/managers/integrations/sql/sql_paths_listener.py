@@ -12,6 +12,7 @@ class SqlPathsListener(SqlListener):
     def __init__(self, config=None):
         SqlListener.__init__(self, config=config)
         self._named_paths = None
+        self._named_paths_ledger = None
 
     @property
     def named_paths(self) -> Table:
@@ -19,20 +20,45 @@ class SqlPathsListener(SqlListener):
             self._named_paths = self.tables.named_paths
         return self._named_paths
 
+    @property
+    def named_paths_ledger(self) -> Table:
+        if self._named_paths_ledger is None:
+            self._named_paths_ledger = self.tables.named_paths_ledger
+        return self._named_paths_ledger
+
     def metadata_update(self, mdata: Metadata) -> None:
         if not self.csvpaths:
             raise RuntimeError("CsvPaths cannot be None")
         #
-        # mirror only what the primary registrar actually wrote. None
-        # means it skipped the write (e.g. an unchanged fingerprint) or
-        # the write failed.
+        # mirror only what was actually written: the version by the
+        # primary registrar, the ledger entry by PathsListener. None means
+        # the write was skipped (e.g. no version for an unchanged
+        # fingerprint) or failed. an unchanged reload still has a ledger
+        # entry.
         #
         if mdata.manifest_entry is None:
             self.csvpaths.logger.info(
-                "No manifest entry for named-paths %s; not writing to SQL",
+                "No manifest entry for named-paths %s; not writing a version to SQL",
                 mdata.named_paths_name,
             )
-            return
+        else:
+            self._write_named_paths(mdata)
+        if mdata.ledger_entry is None:
+            self.csvpaths.logger.info(
+                "No ledger entry for named-paths %s; not writing a ledger row to SQL",
+                mdata.named_paths_name,
+            )
+        else:
+            row = self._ledger_row(
+                mdata=mdata,
+                root_column="paths_root",
+                root=mdata.named_paths_root,
+                name_column="paths_name",
+                name=mdata.named_paths_name,
+            )
+            self._upsert_ledger_row(table=self.named_paths_ledger, row=row)
+
+    def _write_named_paths(self, mdata: Metadata) -> None:
         named_paths_data = {
             "uuid": mdata.uuid_string,
             "at": mdata.time,
