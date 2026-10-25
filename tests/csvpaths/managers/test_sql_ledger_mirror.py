@@ -337,15 +337,15 @@ def test_a_failed_ledger_row_raises_required_under_on(paths, tmp_path, policy):
         SqlListener._upsert_ledger_row_unreliably = original
     #
     # the JSON ledger is the source of truth and was written first. then
-    # add_named_file's except clause records the failure as well, with the
-    # same registration uuid: today a ledger uuid is not unique when a
-    # registration fails after FilesListener has written (see PR 3)
+    # add_named_file's except clause records the failure as well. the
+    # failure has its own uuid and links the attempt by registration_uuid
     #
     ledger = _files_ledger(paths)
     assert len(ledger) == 2
     assert "status" not in ledger[0]
     assert ledger[1]["status"] == "Registration failed"
-    assert ledger[0]["uuid"] == ledger[1]["uuid"]
+    assert ledger[0]["uuid"] != ledger[1]["uuid"]
+    assert ledger[1]["registration_uuid"] == ledger[0]["uuid"]
 
 
 def test_a_failed_ledger_row_is_logged_under_off_without_raise_policy(

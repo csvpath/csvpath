@@ -44,6 +44,15 @@ class Listener(ABC):
         because most listeners report events and a patch is not one."""
         return None
 
+    def metadata_failure(self, mdata: Metadata) -> None:
+        """a registration that failed, e.g. a named-file whose path cannot
+        be loaded. Registrar.distribute_failure sends it to listeners that
+        record failures, e.g. the root ledger writer and its SQL mirror.
+        there is no manifest entry. the default is to ignore failures, so
+        listeners that report registrations do not mistake one for a
+        registration."""
+        return None
+
     @abstractmethod
     def metadata_update(self, mdata: Metadata) -> None:
         """any system that wants updates about a registrar or manager registers to
