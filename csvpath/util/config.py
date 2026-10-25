@@ -126,11 +126,11 @@ allow_local_files=True
 
 [listeners]
 #
-# add listener group names to send events to the channel they represent. default
-# tracks registrations, loads, and (soon) results at the highest level. it isn't
-# required, but it is highly recommended.
+# add listener group names to send events to the channel they represent. the
+# named-files and named-paths root ledgers are always written; they do not
+# need a group.
 #
-groups = default,activation
+groups = activation
 #slack, openlineage, ckan, sftp, sftpplus, otlp, sqlite, sql
 
 # general purpose webhook caller
@@ -148,11 +148,6 @@ sql.results = from csvpath.managers.integrations.sql.sql_results_listener import
 # add sqlite to capture results in a local sqlite file
 sqlite.results = from csvpath.managers.integrations.sqlite.sqlite_results_listener import SqliteResultsListener
 sqlite.result = from csvpath.managers.integrations.sqlite.sqlite_result_listener import SqliteResultListener
-
-# add to capture a history of all named-file stagings and all named-paths loads in
-# an [inputs] files and an[inputs] paths root manifest.json
-default.file = from csvpath.managers.files.files_listener import FilesListener
-default.paths = from csvpath.managers.paths.paths_listener import PathsListener
 
 # adds a listener that uses info in a named-file descriptor to create a run when data arrives
 activation.file = from csvpath.managers.files.files_activation_listener import FileActivationListener

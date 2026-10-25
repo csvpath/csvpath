@@ -8,6 +8,7 @@ from csvpath.util.nos import Nos
 from csvpath.util.intermediary import Intermediary
 
 from .paths_metadata import PathsMetadata
+from .paths_listener import PathsListener
 from ..listener import Listener
 from ..metadata import Metadata
 from ..registrar import Registrar
@@ -23,6 +24,10 @@ class PathsRegistrar(Registrar, Listener):
         self.type_name = "paths"
         self.intermediary = Intermediary(csvpaths)
         self.csvpaths = csvpaths
+        #
+        # the named-paths root ledger is core, not optional (#442)
+        #
+        self.add_built_in_listener(PathsListener(csvpaths=csvpaths))
 
     @property
     def manager(self):

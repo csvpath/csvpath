@@ -6,6 +6,7 @@ from csvpath.managers.registrar import Registrar
 from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
 from csvpath.managers.files.file_metadata import FileMetadata
+from csvpath.managers.files.files_listener import FilesListener
 from csvpath.util.intermediary import Intermediary
 
 
@@ -21,6 +22,10 @@ class FileRegistrar(Registrar, Listener):
         self.config = csvpaths.config
         self.type_name = "file"
         self.intermediary = Intermediary(csvpaths)
+        #
+        # the named-files root ledger is core, not optional (#442)
+        #
+        self.add_built_in_listener(FilesListener(csvpaths=csvpaths))
 
     def get_fingerprint(self, home) -> str:
         mpath = self.manifest_path(home)
