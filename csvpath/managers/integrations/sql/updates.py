@@ -1,4 +1,5 @@
 from sqlalchemy import text
+from .tables import Tables
 
 
 class Updates:
@@ -13,10 +14,19 @@ class Updates:
             text("ALTER TABLE named_paths ADD COLUMN manifest_entry TEXT"),
             text("ALTER TABLE instance_run ADD COLUMN manifest_entry TEXT"),
             text("ALTER TABLE named_paths_group_run ADD COLUMN manifest_entry TEXT"),
-            #
-            # more updates if there are ever any go here
-            #
+            text("ALTER TABLE named_file ADD COLUMN manifest_index INTEGER"),
+            text("ALTER TABLE named_paths ADD COLUMN manifest_index INTEGER"),
         ]
+        #
+        # MySQL has no CREATE INDEX IF NOT EXISTS, so these fail like the
+        # ALTERs once applied
+        #
+        for table, indexes in Tables.INDEXES.items():
+            for name, column in indexes.items():
+                stmts.append(text(f"CREATE INDEX {name} ON {table} ({column})"))
+        #
+        # more updates if there are ever any go above the indexes
+        #
         for s in stmts:
             try:
                 print(f"doing an update to the database: {s}")

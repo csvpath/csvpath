@@ -7,12 +7,36 @@ from sqlalchemy import (
     Integer,
     DateTime,
     ForeignKey,
+    Index,
     inspect,
 )
 from .engine import Db
 
 
 class Tables:
+    #
+    # table -> {index name: column}. the SQL reference source scopes and
+    # joins on these columns. new databases get the indexes from the table
+    # definitions; existing ones get them from Updates.
+    #
+    INDEXES = {
+        "named_file": {
+            "ix_named_file_files_root": "files_root",
+            "ix_named_file_named_file_name": "named_file_name",
+        },
+        "named_paths": {
+            "ix_named_paths_paths_root": "paths_root",
+            "ix_named_paths_paths_name": "paths_name",
+        },
+        "named_paths_group_run": {
+            "ix_named_paths_group_run_named_paths_name": "named_paths_name",
+            "ix_named_paths_group_run_run_home": "run_home",
+        },
+        "instance_run": {
+            "ix_instance_run_group_run_uuid": "group_run_uuid",
+        },
+    }
+
     def __init__(self, config, *, engine=None):
         self.config = config
         self.engine = engine
@@ -40,6 +64,11 @@ class Tables:
         if not inspect(self.engine).has_table(table.name):
             metadata = table.metadata
             metadata.create_all(self.engine)
+
+    def _indexes(self, table: str) -> list[Index]:
+        if table not in self.INDEXES:
+            raise ValueError(f"No indexes are defined for table {table}")
+        return [Index(name, column) for name, column in self.INDEXES[table].items()]
 
     # =============
     # tables
@@ -78,6 +107,12 @@ class Tables:
             # manifest for this row. see Metadata.manifest_entry.
             #
             Column("manifest_entry", Text, nullable=True),
+            #
+            # manifest_entry's position in its manifest. see
+            # Metadata.manifest_index.
+            #
+            Column("manifest_index", Integer, nullable=True),
+            *self._indexes("named_paths"),
         )
         self._named_paths = named_paths
         return self._named_paths
@@ -113,6 +148,8 @@ class Tables:
             Column("manifest_path", String(250), nullable=False),
             Column("template", String(250), nullable=True),
             Column("manifest_entry", Text, nullable=True),
+            Column("manifest_index", Integer, nullable=True),
+            *self._indexes("named_file"),
         )
         self._named_file = named_file
         return self._named_file
@@ -152,6 +189,7 @@ class Tables:
             Column("error_count", Integer, default=-1),
             Column("manifest_path", String(250), nullable=False),
             Column("manifest_entry", Text, nullable=True),
+            *self._indexes("instance_run"),
         )
         self._instance_run = instance_run
         return self._instance_run
@@ -195,6 +233,7 @@ class Tables:
             Column("ip_address", String(40)),
             Column("manifest_path", String(250)),
             Column("manifest_entry", Text, nullable=True),
+            *self._indexes("named_paths_group_run"),
         )
         self._named_paths_group_run = group_run
         return self._named_paths_group_run

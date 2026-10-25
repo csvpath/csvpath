@@ -42,6 +42,13 @@ class Metadata(ABC):
         #
         self.manifest_entry: dict | None = None
         #
+        # the position of manifest_entry in its own manifest, set with it
+        # by the registrars whose manifests are appended lists (named-files
+        # and named-paths). None otherwise. lets SQL give the manifest's
+        # order exactly, where timestamps can tie.
+        #
+        self.manifest_index: int | None = None
+        #
         #
         #
         self._base_path = None
