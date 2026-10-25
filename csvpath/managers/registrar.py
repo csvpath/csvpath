@@ -16,7 +16,14 @@ class Registrar(ABC):
             self.csvpaths = csvpaths
         self.result = result
         self._type_name = None
+        #
+        # built-in listeners always run, right after the registrar itself and
+        # before any other listener, whatever [listeners] groups says. e.g.
+        # the named-files and named-paths root ledger writers.
+        #
+        self._built_in_listeners = []
         self._internal_listeners = []
+        self._skips_logged = set()
 
     @property
     def type_name(self) -> str:
@@ -32,14 +39,23 @@ class Registrar(ABC):
     def register_complete(self, mdata: Metadata) -> None:
         self.distribute_update(mdata)
 
+    def add_built_in_listener(self, lst: Listener) -> None:
+        if lst is None:
+            raise ValueError("Listener cannot be None")
+        self._attach(lst)
+        self._built_in_listeners.append(lst)
+
     def add_internal_listener(self, lst: Listener) -> None:
+        self._attach(lst)
+        self._internal_listeners.append(lst)
+
+    def _attach(self, lst: Listener) -> None:
         if hasattr(lst, "csvpaths"):
             setattr(lst, "csvpaths", self.csvpaths)
         if hasattr(lst, "result"):
             setattr(lst, "result", self.result)
         if not lst.config:
             lst.config = self.csvpaths.config
-        self._internal_listeners.append(lst)
 
     def distribute_update(self, mdata: Metadata) -> None:
         """any Listener will recieve a copy of a metadata that describes a
@@ -47,7 +63,7 @@ class Registrar(ABC):
 
         if mdata is None:
             raise InputException("Metadata cannot be None")
-        listeners = [self] + self._internal_listeners
+        listeners = [self] + self._built_in_listeners + self._internal_listeners
         #
         # if we don't have a csvpath we're working with a one-off CsvPath instance.
         # we don't allow integrations to act on CsvPath events. and with the
@@ -93,7 +109,7 @@ class Registrar(ABC):
         request, and a failed one has nothing for them to mirror."""
         if mdata is None:
             raise InputException("Metadata cannot be None")
-        listeners = [self] + self._internal_listeners
+        listeners = [self] + self._built_in_listeners + self._internal_listeners
         if self.csvpaths is not None:
             self.csvpaths.logger.info("Distributing a patch to listeners")
             try:
@@ -157,6 +173,9 @@ class Registrar(ABC):
                 for lst in ss:
                     self.load_additional_listener(lst, listeners)
 
+    def _is_built_in(self, lst) -> bool:
+        return any(type(lst) is type(b) for b in self._built_in_listeners)
+
     def load_additional_listener(self, load_cmd: str, listeners: list) -> None:
         self.csvpaths.logger.info("Loading additional listener %s", load_cmd)
         try:
@@ -165,6 +184,19 @@ class Registrar(ABC):
             if self.csvpaths:
                 kwargs = {"config": self.csvpaths.config}
             alistener = loader.load(load_cmd, [], kwargs)
+            if alistener is not None and self._is_built_in(alistener):
+                #
+                # e.g. an older config's default.file line. the built-in
+                # already ran; running it again would write twice. a
+                # subclass is a different class, so it still runs.
+                #
+                name = type(alistener).__name__
+                if name not in self._skips_logged:
+                    self._skips_logged.add(name)
+                    self.csvpaths.logger.info(
+                        "Skipping configured listener %s: it is built in", name
+                    )
+                return
             if alistener is not None:
                 if hasattr(alistener, "csvpaths"):
                     setattr(alistener, "csvpaths", self.csvpaths)
