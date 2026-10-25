@@ -22,9 +22,6 @@ class FilesListener(Listener):  # Registrar,
         #
         Listener.__init__(self, csvpaths.config if csvpaths else config)
         self.csvpaths = csvpaths
-        self.config = None
-        if self.csvpaths:
-            self.config = csvpaths.config
         self.type_name = "files"
 
     def manifest_path(self) -> str:
