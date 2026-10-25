@@ -4,6 +4,7 @@ import weakref
 from typing import Any, List
 from csvpath.util.config import OnError
 from csvpath.modes.error_mode import ErrorMode
+from csvpath.util.exceptions import RequiredListenerException
 
 
 class ErrorCommunications:
@@ -43,7 +44,13 @@ class ErrorCommunications:
     def do_i_quiet(self) -> bool:
         return self.in_policy(OnError.QUIET.value)
 
-    def do_i_raise(self) -> bool:
+    def do_i_raise(self, ex: Exception | None = None) -> bool:
+        #
+        # a required listener update failed. that is a correctness failure,
+        # not a validation error, so the error policy does not apply.
+        #
+        if isinstance(ex, RequiredListenerException):
+            return True
         if self.csvpath and self.csvpath.raise_validation_errors is not None:
             return self.csvpath.raise_validation_errors
         return self.in_policy(OnError.RAISE.value)

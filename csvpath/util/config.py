@@ -27,6 +27,18 @@ class OnError(Enum):
     PRINT = "print"
 
 
+class ReferencesSql(Enum):
+    #
+    # [references] sql: whether references v3 reads manifest data from the
+    # SQL listeners' tables. off: filesystem only (default). on: SQL.
+    # shadow: both, the filesystem result is returned and differences are
+    # logged.
+    #
+    OFF = "off"
+    ON = "on"
+    SHADOW = "shadow"
+
+
 class LogLevels(Enum):
     INFO = "info"
     DEBUG = "debug"
@@ -931,6 +943,13 @@ shell = /bin/bash
         #
         self._assure_inputs_files_path()
         self._assure_inputs_csvpaths_path()
+        #
+        # references sql mode. only the value is checked here; the checks
+        # that depend on other settings and on the database are in
+        # ReferencesSqlCheck, because validate_config runs on every
+        # add_to_config and settings are often added one at a time.
+        #
+        self.references_sql
 
     # ======================================
 
@@ -958,6 +977,19 @@ shell = /bin/bash
     @cache_dir_path.setter
     def cache_dir_path(self, p) -> None:
         self._set("cache", "path", p)
+
+    @property
+    def references_sql(self) -> str:
+        """[references] sql: off (the default), on, or shadow"""
+        v = self._get("references", "sql")
+        if v is None or (isinstance(v, str) and v.strip() == ""):
+            return ReferencesSql.OFF.value
+        allowed = [s.value for s in ReferencesSql]
+        if not isinstance(v, str) or v.strip().lower() not in allowed:
+            raise ConfigurationException(
+                f"[references] sql must be one of {allowed} in {self.configpath}: {v}"
+            )
+        return v.strip().lower()
 
     def halt_on_unmatched_file_fingerprints(self) -> bool:
         houf = self._get("inputs", "on_unmatched_file_fingerprints")

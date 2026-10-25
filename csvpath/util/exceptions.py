@@ -24,3 +24,8 @@ class ProcessingException(Exception):
 
 class VariableException(Exception):
     """when there is a problem creating or accessing a variable"""
+
+
+class RequiredListenerException(CsvPathsException):
+    """a listener whose update is required failed. e.g. a SQL listener when
+    [references] sql = on. it is raised regardless of the error policy"""

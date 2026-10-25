@@ -1,6 +1,6 @@
 import traceback
 from abc import ABC
-from csvpath.util.exceptions import InputException
+from csvpath.util.exceptions import InputException, RequiredListenerException
 from .metadata import Metadata
 from .listener import Listener
 from ..util.class_loader import ClassLoader
@@ -85,6 +85,22 @@ class Registrar(ABC):
                 print(traceback.format_exc())
                 if self.csvpaths:
                     self.csvpaths.logger.error(f"Error in distributing an update: {ex}")
+                #
+                # failures are logged, not raised, unless the listener asks for
+                # them to stop the flow. a required update (e.g. the SQL
+                # listeners when references rely on SQL) raises a type that
+                # do_i_raise(ex) always raises, so the error policy cannot
+                # absorb it. getattr because listeners are not required to
+                # subclass Listener.
+                #
+                req = getattr(lst, "update_is_required", None)
+                if req is not None and req() is True:
+                    raise RequiredListenerException(
+                        f"Required listener {type(lst).__name__} failed: {ex}"
+                    ) from ex
+                rou = getattr(lst, "raise_on_update_error", None)
+                if rou is not None and rou() is True:
+                    raise
 
     def load_additional_listeners(
         self, listener_type_name: str, listeners: list
