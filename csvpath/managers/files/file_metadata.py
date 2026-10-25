@@ -26,6 +26,13 @@ class FileMetadata(Metadata):
         self.template: str = None
         self.fingerprint: str = None
         #
+        # a requested change to an existing manifest entry. see
+        # FileRegistrar.patch_named_file. None for a registration.
+        #
+        self.patch: dict | None = None
+        # the manifest position to patch. -1 is the latest entry.
+        self.patch_index: int = -1
+        #
         # named_file_ref is the most specific reference possible it is
         # in the form $name.files.fingerprint
         #
