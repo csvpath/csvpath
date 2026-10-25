@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from abc import ABC, abstractmethod
@@ -22,6 +21,8 @@ from .reference_3 import (
 from .reference_exceptions_3 import ReferenceException3, ReferenceRuntimeException3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
+from .sources.filesystem_reference_source import FilesystemReferenceSource
+from .sources.reference_source import ReferenceSource
 
 
 class ReferenceFinder3(ABC):
@@ -60,6 +61,15 @@ class ReferenceFinder3(ABC):
         # still-open question, not addressed by this.
         #
         self._variables: dict = dict(variables) if variables else {}
+        self._source: ReferenceSource | None = None
+
+    @property
+    def source(self) -> ReferenceSource:
+        """where manifests, ledgers, names and run homes are read from.
+        every such read goes through here; see ReferenceSource."""
+        if self._source is None:
+            self._source = FilesystemReferenceSource(csvpaths=self._csvpaths)
+        return self._source
 
     @property
     def ref(self) -> ReferenceParser3:
@@ -825,10 +835,7 @@ class ReferenceFinder3(ABC):
         the spec's own "Following a reference" section: resolving a
         reference gives bytes, if binary, or a string or JSON
         structure -- these are the JSON-structure case)."""
-        if not Nos(path).exists():
-            return None
-        with DataFileReader(path) as reader:
-            return json.load(reader.source)
+        return FilesystemReferenceSource.read_json(path)
 
     @staticmethod
     def _find_manifest_entry_by_uuid(manifest: list, uuid: str) -> dict | None:

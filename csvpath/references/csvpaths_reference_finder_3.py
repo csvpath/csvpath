@@ -128,7 +128,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # instead of dumping the whole thing.
                 home = self.csvpaths.config.inputs_csvpaths_path
                 path = Nos(home).join("manifest.json")
-                ledger = self.csvpaths.paths_manager.paths_root_manifest
+                ledger = self.source.paths_ledger()
                 selected = self._apply_pointer(pointer_call, ledger)
                 if selected is None:
                     return ReferenceResults3(results=[])
@@ -233,12 +233,12 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # versions path in this file already goes through.
             function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
             key = function_cls.KEY.get(Reference3.CSVPATHS)
-            manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
+            manifest = self.source.paths_manifest(root_major)
             value = call.arg
             matched = [e for e in manifest if e.get(key) == value]
             return self._apply_name_three_to_versions(matched, reference.name_three)
 
-        manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
+        manifest = self.source.paths_manifest(root_major)
         selected_versions = self._resolve_versions(name_one, manifest)
         # Resolving full manifest content for more than one version at
         # once is still illegal (Rule 1, manifest_field_functions_
@@ -624,10 +624,10 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         if is_grouped:
             selected_versions = []
             for name in self._matching_names(
-                self.csvpaths.paths_manager.named_paths_names, name_filter
+                self.source.paths_names(), name_filter
             ):
                 manifest = _having_filtered(
-                    self.csvpaths.paths_manager.get_manifest_for_name(name)
+                    self.source.paths_manifest(name)
                 )
                 if pointers:
                     selected = self._apply_pointer(pointers[0], manifest)
@@ -655,11 +655,11 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # proved.
             pooled = []
             for name in self._matching_names(
-                self.csvpaths.paths_manager.named_paths_names, name_filter
+                self.source.paths_names(), name_filter
             ):
                 pooled.extend(
                     _having_filtered(
-                        self.csvpaths.paths_manager.get_manifest_for_name(name)
+                        self.source.paths_manifest(name)
                     )
                 )
             pooled.sort(key=lambda e: e["time"])
@@ -718,7 +718,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                         # the same way the per-group branch below does,
                         # just against the ledger instead of a named-
                         # paths group's own manifest.
-                        ledger = self.csvpaths.paths_manager.paths_root_manifest
+                        ledger = self.source.paths_ledger()
                         return self._find_manifest_entry_by_uuid(
                             ledger, result.uuid
                         )
@@ -809,7 +809,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     function_cls=function_cls,
                     datatype=reference.datatype,
                     ledger_entry_getter=lambda: self._find_manifest_entry_by_uuid(
-                        self.csvpaths.paths_manager.paths_root_manifest, result.uuid
+                        self.source.paths_ledger(), result.uuid
                     ),
                 )
         if kind != Reference3.FIRST_PARTY:
@@ -842,7 +842,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # defensively rather than assumed.
             return None
 
-        manifest = self.csvpaths.paths_manager.get_manifest_for_name(
+        manifest = self.source.paths_manifest(
             reference.root_major
         )
         selected = self._find_manifest_entry_by_uuid(manifest, result.uuid)
@@ -920,13 +920,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         equivalent helper for this same reason -- see
         ResultsReferenceFinder3._extract_data's own comment on why)."""
         if self._is_traversal_root(root_major):
-            for name in self.csvpaths.paths_manager.named_paths_names:
-                manifest = self.csvpaths.paths_manager.get_manifest_for_name(name)
+            for name in self.source.paths_names():
+                manifest = self.source.paths_manifest(name)
                 entry = self._find_manifest_entry_by_uuid(manifest, uuid)
                 if entry is not None:
                     return name, entry
             return None, None
-        manifest = self.csvpaths.paths_manager.get_manifest_for_name(root_major)
+        manifest = self.source.paths_manifest(root_major)
         return root_major, self._find_manifest_entry_by_uuid(manifest, uuid)
 
     @staticmethod

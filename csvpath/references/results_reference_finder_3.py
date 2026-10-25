@@ -1,8 +1,6 @@
-import json
 import re
 from datetime import datetime
 
-from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 from csvpath.util.original_file_utility import OriginalFileUtility as orut
 from csvpath.util.path_util import PathUtility as pathu
@@ -192,7 +190,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # the locator instead of the usual uuid.
                 archive = self.csvpaths.config.get(section="results", name="archive")
                 path = Nos(archive).join("manifest.json")
-                ledger = self.csvpaths.results_manager.results_root_manifest
+                ledger = self.source.results_ledger()
                 selected = self._apply_pointer(pointer_call, ledger)
                 if selected is None:
                     return ReferenceResults3(results=[])
@@ -1356,13 +1354,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         function_cls = ReferenceFunctionFactory.get_registered_class(
             field_call.name
         )
-        entry = self._read_well_known_json(Nos(run_dir).join("manifest.json"))
+        entry = self.source.run_manifest(run_dir)
         key_path = function_cls.KEY.get(Reference3.RESULTS)
         value = self._extract_field_value(entry, key_path)
         return function_cls.transform_value(value)
 
-    @classmethod
-    def _any_instance_matches_field(cls, run_dir: str, field_call) -> bool:
+    def _any_instance_matches_field(self, run_dir: str, field_call) -> bool:
         """true if ANY of `run_dir`'s own instance subdirectories has a
         field (per `field_call`'s own KEY, instance/RESULT scope) that
         matches `field_call`'s own argument -- added 2026-10-18 for
@@ -1388,17 +1385,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 f":having() cannot match by :{field_call.name}() -- it has "
                 "no per-instance (name_three) field to read."
             )
-        for identity in cls._list_instance_identities(run_dir):
+        for identity in self._list_instance_identities(run_dir):
             inst_dir = Nos(run_dir).join(identity)
-            entry = cls._read_well_known_json(Nos(inst_dir).join("manifest.json"))
-            value = cls._extract_field_value(entry, key_path)
+            entry = self.source.instance_manifest(inst_dir)
+            value = self._extract_field_value(entry, key_path)
             value = function_cls.transform_value(value)
-            if cls._matches_field_predicate(value, field_call.arg):
+            if self._matches_field_predicate(value, field_call.arg):
                 return True
         return False
 
-    @classmethod
-    def _run_satisfies_having(cls, run_dir: str, having_call) -> bool:
+    def _run_satisfies_having(self, run_dir: str, having_call) -> bool:
         """dispatches ':having()'s own three argument shapes -- added
         2026-10-18 alongside its ARG_TYPES widening, shared by every
         call site that used to inline the plain-identity-string check
@@ -1414,8 +1410,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         shape) matches by ONE instance identity NAME, exactly as
         before."""
         if isinstance(having_call.arg, Function3):
-            return cls._any_instance_matches_field(run_dir, having_call.arg)
-        identities = cls._list_instance_identities(run_dir)
+            return self._any_instance_matches_field(run_dir, having_call.arg)
+        identities = self._list_instance_identities(run_dir)
         if isinstance(having_call.arg, list):
             return any(identity in identities for identity in having_call.arg)
         return having_call.arg in identities
@@ -1732,7 +1728,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     # ledger to one entry in query(); re-derive it by
                     # run_uuid (the archive ledger's own locator -- see
                     # query()).
-                    ledger = self.csvpaths.results_manager.results_root_manifest
+                    ledger = self.source.results_ledger()
                     return next(
                         (e for e in ledger if e["run_uuid"] == result.uuid), None
                     )
@@ -1777,9 +1773,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     "the run's own manifest on its own, without a "
                     "further instance selector."
                 )
-            entry = self._read_well_known_json(
-                Nos(result.path).join("manifest.json")
-            )
+            entry = self.source.run_manifest(result.path)
             # last-wins (compendium 5.20b, added 2026-10-18) -- was
             # _find_field_function_call() (first match), confirmed wrong
             # the moment a second field accessor could ride alongside
@@ -1818,7 +1812,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     function_cls=function_cls,
                     datatype=Reference3.RESULTS,
                     ledger_entry_getter=lambda: self._find_archive_ledger_entry(
-                        ledger=self.csvpaths.results_manager.results_root_manifest,
+                        ledger=self.source.results_ledger(),
                         run_uuid=entry.get("run_uuid") if entry else None,
                     ),
                 )
@@ -1855,9 +1849,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             function_cls = ReferenceFunctionFactory.get_registered_class(
                 run_field_call.name
             )
-            entry = self._read_well_known_json(
-                Nos(result.path).join("manifest.json")
-            )
+            entry = self.source.run_manifest(result.path)
             key_path = function_cls.KEY.get(Reference3.RESULTS)
             value = self._extract_field_value_with_ledger_fallback(
                 entry=entry,
@@ -1865,7 +1857,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 function_cls=function_cls,
                 datatype=Reference3.RESULTS,
                 ledger_entry_getter=lambda: self._find_archive_ledger_entry(
-                    ledger=self.csvpaths.results_manager.results_root_manifest,
+                    ledger=self.source.results_ledger(),
                     run_uuid=entry.get("run_uuid") if entry else None,
                 ),
             )
@@ -1913,9 +1905,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     field_call.name
                 )
-                entry = self._read_well_known_json(
-                    Nos(result.path).join("manifest.json")
-                )
+                entry = self.source.instance_manifest(result.path)
                 key_path = function_cls.KEY.get(Reference3.RESULT)
                 value = self._extract_field_value_with_ledger_fallback(
                     entry=entry,
@@ -1923,7 +1913,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     function_cls=function_cls,
                     datatype=Reference3.RESULT,
                     ledger_entry_getter=lambda: self._find_archive_ledger_entry(
-                        ledger=self.csvpaths.results_manager.results_root_manifest,
+                        ledger=self.source.results_ledger(),
                         run_uuid=entry.get("run_uuid") if entry else None,
                         identity=entry.get("instance_identity") if entry else None,
                     ),
@@ -2106,25 +2096,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         entry per csvpath-statement execution, several statements per
         run), so dedupe; a stale entry (the run since deleted) is
         dropped via an existence check."""
-        archive = self.csvpaths.config.get(section="results", name="archive")
-        manifest_path = Nos(archive).join("manifest.json")
-        if not Nos(manifest_path).exists():
-            return []
-        with DataFileReader(manifest_path) as reader:
-            entries = json.load(reader.source)
-        homes = []
-        seen = set()
-        for entry in entries:
-            group = entry.get("named_paths_name")
-            if root_major is not None and group != root_major:
-                continue
-            if name_filter is not None and not re.search(name_filter, group or ""):
-                continue
-            run_home = entry.get("run_home")
-            if run_home and run_home not in seen:
-                seen.add(run_home)
-                homes.append((run_home, group))
-        return [pair for pair in homes if Nos(pair[0]).exists()]
+        return self.source.run_homes(root_major=root_major, name_filter=name_filter)
 
     def _results_for_run(
         self,
@@ -2141,9 +2113,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             and range_bounds is None
             and instance_pointer is None
         ):
-            uuid = self._read_json_field(
-                Nos(run_dir).join("manifest.json"), "run_uuid"
-            )
+            entry = self.source.run_manifest(run_dir)
+            uuid = entry.get("run_uuid") if entry else None
             return [ReferenceResult3(path=run_dir, uuid=uuid)]
 
         instances = self._list_instance_identities(run_dir)
@@ -2189,9 +2160,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         found = []
         for inst in matched:
             inst_dir = Nos(run_dir).join(inst)
-            uuid = self._read_json_field(
-                Nos(inst_dir).join("manifest.json"), "uuid"
-            )
+            entry = self.source.instance_manifest(inst_dir)
+            uuid = entry.get("uuid") if entry else None
             found.append(ReferenceResult3(path=inst_dir, uuid=uuid))
         return found
 
@@ -2653,8 +2623,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return False
         return True
 
-    @classmethod
-    def _list_instance_identities(cls, run_dir: str) -> list[str]:
+    def _list_instance_identities(self, run_dir: str) -> list[str]:
         """every csvpath statement's own result subdirectory within a
         run, named by that statement's identity, sorted into real
         DECLARATION order -- "_extra_data" is the one non-instance
@@ -2675,29 +2644,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         as this field regardless of whether the statement has an
         explicit identity). Sorting by it, rather than trusting listdir
         order, is the fix."""
-        names = [
-            name
-            for name in Nos(run_dir).listdir(dirs_only=True)
-            if name != "_extra_data"
-        ]
+        names = self.source.instance_dirs(run_dir)
 
         def _index(name: str) -> int:
-            inst_dir = Nos(run_dir).join(name)
-            idx = cls._read_json_field(
-                Nos(inst_dir).join("manifest.json"), "instance_index"
-            )
+            entry = self.source.instance_manifest(Nos(run_dir).join(name))
+            idx = entry.get("instance_index") if entry else None
             return int(idx) if idx is not None else 0
 
         return sorted(names, key=_index)
-
-    @classmethod
-    def _read_json_field(cls, path: str, field: str):
-        """reads one field from a small JSON file (a run's or an
-        instance's own manifest.json), tolerating absence -- None if the
-        file does not exist rather than raising or fabricating a
-        default. Built on the shared _read_well_known_json rather than
-        reusing ResultFileReader.json_file() -- that helper writes a
-        fresh empty JSON file when one is missing, a write side effect a
-        read-only reference query must never trigger."""
-        data = cls._read_well_known_json(path)
-        return data.get(field) if data else None
