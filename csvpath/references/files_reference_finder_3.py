@@ -139,7 +139,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # named-files registrations for orders that failed").
                 # No per-name filter at all here, unlike the literal-
                 # root case above -- every ledger entry is a candidate.
-                ledger = self.csvpaths.file_manager.files_root_manifest
+                ledger = self.source.files_ledger()
                 matched = self._filter_ledger_by_gate_chain(ledger, status_chain)
                 if reference.name_three is not None:
                     return self._pointer_into_status_matches(reference, matched)
@@ -171,7 +171,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # of dumping the whole thing.
                 home = self.csvpaths.config.inputs_files_path
                 path = Nos(home).join("manifest.json")
-                ledger = self.csvpaths.file_manager.files_root_manifest
+                ledger = self.source.files_ledger()
                 selected = self._apply_pointer(pointer_call, ledger)
                 if selected is None:
                     return ReferenceResults3(results=[])
@@ -234,7 +234,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # what status you were looking for... in many cases we
             # know those high risk files by name" -- confirmed just as
             # real a need as the '*' form below, built together.
-            ledger = self.csvpaths.file_manager.files_root_manifest
+            ledger = self.source.files_ledger()
             by_name = [e for e in ledger if e.get("named_file_name") == root_major]
             matched = self._filter_ledger_by_gate_chain(by_name, status_chain)
             if reference.name_three is not None:
@@ -354,7 +354,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "matched entry on its own; put the pointer first "
                     f"instead (e.g. ':last():{manifest_field_call.name}()')."
                 )
-            manifest = self.csvpaths.file_manager.get_manifest(root_major)
+            manifest = self.source.file_manifest(root_major)
             return ReferenceResults3(
                 results=[
                     ReferenceResult3(path=e["file"], uuid=e["uuid"]) for e in manifest
@@ -383,7 +383,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # because a pointer alongside it means "ordinal-index into
             # the one array the REST of the chain already identifies,"
             # not "match a wildcarded path."
-            manifest = self.csvpaths.file_manager.get_manifest(root_major)
+            manifest = self.source.file_manifest(root_major)
             selected = self._apply_pointer(pointer_call, manifest)
             if selected is None:
                 return ReferenceResults3(results=[])
@@ -499,7 +499,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
             function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
             key = function_cls.KEY.get(Reference3.FILES)
-            manifest = self.csvpaths.file_manager.get_manifest(root_major)
+            manifest = self.source.file_manifest(root_major)
             value = call.arg
             matched = [e for e in manifest if e.get(key) == value]
             return ReferenceResults3(
@@ -1181,7 +1181,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "version to select."
                 )
             names = self._matching_names(
-                self.csvpaths.file_manager.named_file_names, name_filter
+                self.source.file_names(), name_filter
             )
             if is_home:
                 names = [
@@ -1255,7 +1255,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "there is no version to select."
                 )
             names = self._matching_names(
-                self.csvpaths.file_manager.named_file_names, name_filter
+                self.source.file_names(), name_filter
             )
             if bare_field_call.arg is not None:
                 built = self._build(bare_field_call)
@@ -1298,13 +1298,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if is_grouped:
             candidates = []
             for name in self._matching_names(
-                self.csvpaths.file_manager.named_file_names, name_filter
+                self.source.file_names(), name_filter
             ):
                 candidates.extend(self._candidates_for_name(name, [Star3()]))
         elif is_flattened or is_deep_grouped:
             candidates = []
             for name in self._matching_names(
-                self.csvpaths.file_manager.named_file_names, name_filter
+                self.source.file_names(), name_filter
             ):
                 candidates.extend(self._all_candidates_for_name(name))
         elif is_home:
@@ -1335,7 +1335,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
             candidates = []
             for name in self._matching_names(
-                self.csvpaths.file_manager.named_file_names, name_filter
+                self.source.file_names(), name_filter
             ):
                 candidates.extend(self._candidates_for_name(name, []))
         elif self._bare_manifest_field_call(name_one) is not None:
@@ -1366,7 +1366,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "with name_three during '*' traversal -- it already "
                     "reads a field from every matched entry on its own."
                 )
-            ledger = self.csvpaths.file_manager.files_root_manifest
+            ledger = self.source.files_ledger()
             return ReferenceResults3(
                 results=[
                     ReferenceResult3(path=e["file_path"], uuid=e["uuid"])
@@ -1396,7 +1396,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             pattern = self._compile_path_pattern(name_one.path)
             candidates = []
             for name in self._matching_names(
-                self.csvpaths.file_manager.named_file_names, name_filter
+                self.source.file_names(), name_filter
             ):
                 candidates.extend(self._candidates_for_name(name, pattern))
 
@@ -1635,7 +1635,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         '*' traversal's pool mode, and both ':all()' branches (which
         also match this exact-one-level pattern, just with the results
         partitioned rather than pooled afterward)."""
-        manifest = self.csvpaths.file_manager.get_manifest(name)
+        manifest = self.source.file_manifest(name)
         home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
         return [entry for entry in manifest if self._matches(entry, home, pattern)]
 
@@ -1647,7 +1647,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         counterpart to _candidates_for_name's exact-length match, used
         by the ':flatten()/...' prefixed shape (any depth, THEN a fixed
         literal/'*'/:name(...) anchor at the end)."""
-        manifest = self.csvpaths.file_manager.get_manifest(name)
+        manifest = self.source.file_manifest(name)
         home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
         return [
             entry
@@ -1667,7 +1667,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         `suffix_pattern` still matches -- "prefix, then any depth, no
         further constraint" (a missing suffix, e.g. "2025/:flatten()"
         alone)."""
-        manifest = self.csvpaths.file_manager.get_manifest(name)
+        manifest = self.source.file_manifest(name)
         home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
         return [
             entry
@@ -1687,7 +1687,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         named-file only) -- ':groups()' differs from ':flatten()' only in
         what happens AFTER gathering (partitioned vs. pooled), not in
         which candidates are gathered."""
-        manifest = self.csvpaths.file_manager.get_manifest(name)
+        manifest = self.source.file_manifest(name)
         home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
         home_parts = pathu.parts(home)
         return [
@@ -2326,7 +2326,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # FIRST_PARTY and never reach the re-derive-by-uuid logic
             # the kind == METADATA_FILE block below uses for every
             # other shape that selects one manifest entry this way.
-            manifest = self.csvpaths.file_manager.get_manifest(reference.root_major)
+            manifest = self.source.file_manifest(reference.root_major)
             return self._find_manifest_entry_by_uuid(manifest, result.uuid)
         kind = reference.resolve_kind
         if kind == Reference3.FIRST_PARTY:
@@ -2391,7 +2391,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # matched; re-derive each one's own manifest entry by
                 # uuid, same pattern as every other METADATA_FILE
                 # branch here.
-                manifest = self.csvpaths.file_manager.get_manifest(
+                manifest = self.source.file_manifest(
                     reference.root_major
                 )
                 return self._find_manifest_entry_by_uuid(manifest, result.uuid)
@@ -2400,7 +2400,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # to one entry in query(); re-derive it the same way the
                 # per-entity branch below does, just against the ledger
                 # instead of a named-file's own manifest.
-                ledger = self.csvpaths.file_manager.files_root_manifest
+                ledger = self.source.files_ledger()
                 return self._find_manifest_entry_by_uuid(ledger, result.uuid)
             if (
                 not isinstance(reference.root_major, Star3)
@@ -2413,7 +2413,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # named-file's own manifest.json; re-derive it here by
                 # uuid, same pattern as every other METADATA_FILE branch
                 # in this method.
-                manifest = self.csvpaths.file_manager.get_manifest(
+                manifest = self.source.file_manifest(
                     reference.root_major
                 )
                 return self._find_manifest_entry_by_uuid(manifest, result.uuid)
@@ -2424,7 +2424,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # :manifest() riding alongside a real path/version match
                 # (a pointer, or none at all -- see query()) -- give the
                 # matched entry itself, not the whole raw file.
-                manifest = self.csvpaths.file_manager.get_manifest(
+                manifest = self.source.file_manifest(
                     reference.root_major
                 )
                 return self._find_manifest_entry_by_uuid(manifest, result.uuid)
@@ -2499,9 +2499,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     # unconditionally rejects '*' traversal in
                     # _query_star_traversal(), so this branch is never
                     # reached for that shape).
-                    manifest = self.csvpaths.file_manager.files_root_manifest
+                    manifest = self.source.files_ledger()
                 else:
-                    manifest = self.csvpaths.file_manager.get_manifest(
+                    manifest = self.source.file_manifest(
                         reference.root_major
                     )
                 entry = self._find_manifest_entry_by_uuid(manifest, result.uuid)
@@ -2511,7 +2511,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     function_cls=function_cls,
                     datatype=reference.datatype,
                     ledger_entry_getter=lambda: self._find_manifest_entry_by_uuid(
-                        self.csvpaths.file_manager.files_root_manifest, result.uuid
+                        self.source.files_ledger(), result.uuid
                     ),
                 )
         # confirmed unreachable via any real reference (not-yet-
