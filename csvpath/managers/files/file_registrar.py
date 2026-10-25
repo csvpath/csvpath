@@ -5,6 +5,7 @@ from csvpath.util.nos import Nos
 from csvpath.managers.registrar import Registrar
 from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
+from csvpath.managers.files.file_metadata import FileMetadata
 from csvpath.util.intermediary import Intermediary
 
 
@@ -49,15 +50,55 @@ class FileRegistrar(Registrar, Listener):
             self.intermediary.put_json(mpath, j)
         return j
 
-    def patch_named_file(self, *, name, patch, index=-1) -> None:
-        #
-        # TODO: distribute an metadata event to give metadata stores a
-        # chance to update their info re: the file
-        #
+    PATCH_KEYS = ["type", "file_name"]
+
+    def patch_named_file(self, *, name: str, patch: dict, index: int = -1) -> None:
+        """changes the type and/or file name of one entry in a named-file's
+        manifest; by default the latest. the patch is applied by
+        metadata_patch, via distribute_patch, so listeners that mirror the
+        manifest (e.g. SQL) can update their copy of the entry."""
+        if name is None:
+            raise ValueError("Name cannot be None")
+        if not isinstance(name, str):
+            raise TypeError(f"Name must be a str, not {type(name).__name__}")
+        if name.strip() == "":
+            raise ValueError("Name cannot be empty")
+        if patch is None:
+            raise ValueError("Patch cannot be None")
+        if not isinstance(patch, dict):
+            raise TypeError(f"Patch must be a dict, not {type(patch).__name__}")
+        if len(patch) == 0:
+            raise ValueError("Patch cannot be empty")
+        for k, v in patch.items():
+            if k not in self.PATCH_KEYS:
+                raise ValueError(
+                    f"Unknown patch key {k}. Allowed keys are: {self.PATCH_KEYS}"
+                )
+            if not isinstance(v, str):
+                raise TypeError(f"Patch {k} must be a str, not {type(v).__name__}")
+            if v.strip() == "":
+                raise ValueError(f"Patch {k} cannot be empty")
+        if isinstance(index, bool) or not isinstance(index, int):
+            raise TypeError(f"Index must be an int, not {type(index).__name__}")
+        mdata = FileMetadata(self.csvpaths.config)
+        mdata.named_file_name = name
+        mdata.patch = dict(patch)
+        mdata.patch_index = index
+        self.distribute_patch(mdata)
+
+    def metadata_patch(self, mdata: Metadata) -> None:
+        """applies mdata.patch to the manifest and sets mdata's fields,
+        including manifest_entry, from the patched entry."""
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
+        if mdata.patch is None:
+            raise ValueError("Metadata has no patch")
+        name = mdata.named_file_name
+        patch = mdata.patch
         home = self.csvpaths.file_manager.named_file_home(name)
         mp = self.manifest_path(home)
         mani = self.get_manifest(mp)
-        index = len(mani) - 1 if index == -1 else index
+        index = len(mani) - 1 if mdata.patch_index == -1 else mdata.patch_index
         if "type" in patch:
             #
             # obviously without a change in file_name the type is set in metadata only.
@@ -72,6 +113,14 @@ class FileRegistrar(Registrar, Listener):
             else:
                 self._patch_filesystem(mani, home=home, index=index, patch=patch)
         self.intermediary.put_json(mp, mani)
+        entry = mani[index]
+        mdata.uuid_string = entry["uuid"]
+        mdata.name_home = home
+        mdata.manifest_path = mp
+        mdata.type = entry["type"]
+        mdata.file_path = entry["file"]
+        mdata.file_home = entry["file_home"]
+        mdata.manifest_entry = entry
 
     def _patch_blob(self, mani: dict, index: int, patch: dict) -> None:
         old = mani[index]["file"]
@@ -82,7 +131,7 @@ class FileRegistrar(Registrar, Listener):
         new = f"{newhome}/{mani[index]['fingerprint']}.{mani[index]['type']}"
         nos = Nos(old)
         if not nos.exists():
-            raise ValueError("File not found: {old}")
+            raise ValueError(f"File not found: {old}")
         nos.rename(new)
         mani[index]["file"] = new
         mani[index]["file_home"] = newhome

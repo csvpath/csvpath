@@ -35,6 +35,15 @@ class Listener(ABC):
         RequiredListenerException, which do_i_raise(ex) always raises."""
         return False
 
+    def metadata_patch(self, mdata: Metadata) -> None:
+        """a change to an existing manifest entry, e.g. a named-file's type
+        or file name, rather than a new registration. Registrar.distribute_patch
+        calls the primary registrar first, which applies the patch and sets
+        mdata.manifest_entry to the patched entry; listeners that mirror
+        manifests then update their copy. the default is to ignore patches,
+        because most listeners report events and a patch is not one."""
+        return None
+
     @abstractmethod
     def metadata_update(self, mdata: Metadata) -> None:
         """any system that wants updates about a registrar or manager registers to

@@ -82,25 +82,63 @@ class Registrar(ABC):
             try:
                 lst.metadata_update(mdata)
             except Exception as ex:
+                self._listener_failed(lst=lst, ex=ex)
+
+    def distribute_patch(self, mdata: Metadata) -> None:
+        """a patch to an existing manifest entry. the registrar itself goes
+        first and applies the patch, setting mdata.manifest_entry to the
+        patched entry. then each listener with a metadata_patch method can
+        update its copy. unlike a registration, the registrar's own failure
+        always raises and stops the other listeners: a patch is a direct
+        request, and a failed one has nothing for them to mirror."""
+        if mdata is None:
+            raise InputException("Metadata cannot be None")
+        listeners = [self] + self._internal_listeners
+        if self.csvpaths is not None:
+            self.csvpaths.logger.info("Distributing a patch to listeners")
+            try:
+                self.load_additional_listeners(self.type_name, listeners)
+            except Exception as ex:
                 print(traceback.format_exc())
-                if self.csvpaths:
-                    self.csvpaths.logger.error(f"Error in distributing an update: {ex}")
-                #
-                # failures are logged, not raised, unless the listener asks for
-                # them to stop the flow. a required update (e.g. the SQL
-                # listeners when references rely on SQL) raises a type that
-                # do_i_raise(ex) always raises, so the error policy cannot
-                # absorb it. getattr because listeners are not required to
-                # subclass Listener.
-                #
-                req = getattr(lst, "update_is_required", None)
-                if req is not None and req() is True:
-                    raise RequiredListenerException(
-                        f"Required listener {type(lst).__name__} failed: {ex}"
-                    ) from ex
-                rou = getattr(lst, "raise_on_update_error", None)
-                if rou is not None and rou() is True:
+                self.csvpaths.logger.error(f"Error in loading listeners: {ex}")
+        for lst in listeners:
+            #
+            # getattr because listeners are not required to subclass Listener
+            #
+            patch = getattr(lst, "metadata_patch", None)
+            if patch is None:
+                continue
+            if self.csvpaths:
+                lst.csvpaths = self.csvpaths
+            try:
+                patch(mdata)
+            except Exception as ex:
+                if lst is self:
+                    if self.csvpaths:
+                        self.csvpaths.logger.error(f"Patch failed: {ex}")
                     raise
+                self._listener_failed(lst=lst, ex=ex)
+
+    def _listener_failed(self, *, lst, ex: Exception) -> None:
+        print(traceback.format_exc())
+        if self.csvpaths:
+            self.csvpaths.logger.error(f"Error in distributing an update: {ex}")
+        #
+        # failures are logged, not raised, unless the listener asks for
+        # them to stop the flow. a required update (e.g. the SQL
+        # listeners when references rely on SQL) raises a type that
+        # do_i_raise(ex) always raises, so the error policy cannot
+        # absorb it. getattr because listeners are not required to
+        # subclass Listener.
+        #
+        req = getattr(lst, "update_is_required", None)
+        if req is not None and req() is True:
+            raise RequiredListenerException(
+                f"Required listener {type(lst).__name__} failed: {ex}"
+            ) from ex
+        rou = getattr(lst, "raise_on_update_error", None)
+        if rou is not None and rou() is True:
+            raise ex
 
     def load_additional_listeners(
         self, listener_type_name: str, listeners: list

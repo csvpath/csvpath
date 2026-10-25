@@ -1,5 +1,5 @@
 import json
-from sqlalchemy import Table
+from sqlalchemy import Table, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
@@ -58,6 +58,54 @@ class SqlFileListener(SqlListener):
             "manifest_entry": json.dumps(mdata.manifest_entry),
         }
         self._upsert_named_file(named_file_data)
+
+    def metadata_patch(self, mdata: Metadata) -> None:
+        """updates the row of the patched manifest entry. an update, not an
+        upsert: a patch has too little to insert a row, and a missing row
+        (e.g. registered before SQL was on) is not backfilled."""
+        if not self.csvpaths:
+            raise RuntimeError("CsvPaths cannot be None")
+        entry = mdata.manifest_entry
+        if entry is None:
+            self.csvpaths.logger.info(
+                "No patched manifest entry for named-file %s; not writing to SQL",
+                mdata.named_file_name,
+            )
+            return
+        values = {
+            "type": entry.get("type"),
+            "file_path": entry.get("file"),
+            "file_home": entry.get("file_home"),
+            "manifest_entry": json.dumps(entry),
+        }
+        count = self._update_named_file(uuid=entry["uuid"], values=values)
+        if count == 0:
+            self.csvpaths.logger.warning(
+                "No SQL row for named-file %s entry %s; patch not written to SQL",
+                mdata.named_file_name,
+                entry["uuid"],
+            )
+
+    def _update_named_file(self, *, uuid: str, values: dict) -> int:
+        try:
+            return self._update_named_file_unreliably(uuid=uuid, values=values)
+        except Exception:
+            Updates(self.engine).do_updates()
+            return self._update_named_file_unreliably(uuid=uuid, values=values)
+
+    def _update_named_file_unreliably(self, *, uuid: str, values: dict) -> int:
+        with self.engine.connect() as conn:
+            self.csvpaths.logger.info(
+                "Updating patched named-file metadata in %s", conn.dialect.name
+            )
+            stmt = (
+                update(self.named_file)
+                .where(self.named_file.c.uuid == uuid)
+                .values(values)
+            )
+            result = conn.execute(stmt)
+            conn.commit()
+            return result.rowcount
 
     def _upsert_named_file(self, named_file_data: dict):
         try:
