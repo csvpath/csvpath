@@ -56,6 +56,7 @@ class SqlFileListener(SqlListener):
             "manifest_path": mdata.manifest_path,
             "template": mdata.template,
             "manifest_entry": json.dumps(mdata.manifest_entry),
+            "manifest_index": mdata.manifest_index,
         }
         self._upsert_named_file(named_file_data)
 
@@ -109,4 +110,5 @@ class SqlFileListener(SqlListener):
             if "template" in named_file_data
             else None,
             "manifest_entry": named_file_data.get("manifest_entry"),
+            "manifest_index": named_file_data.get("manifest_index"),
         }

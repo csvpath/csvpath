@@ -27,6 +27,12 @@ class ReferencesSqlCheck:
     }
     TABLES = ["named_file", "named_paths", "instance_run", "named_paths_group_run"]
     ENTRY_COLUMN = "manifest_entry"
+    #
+    # only the appended-list manifests have positions. see
+    # Metadata.manifest_index.
+    #
+    INDEX_COLUMN = "manifest_index"
+    INDEX_COLUMN_TABLES = ["named_file", "named_paths"]
 
     @classmethod
     def check(cls, *, csvpaths) -> None:
@@ -91,9 +97,10 @@ class ReferencesSqlCheck:
     def _table_problems(cls, *, config, engine) -> list[str]:
         #
         # a new database has no tables until the first write, and one from
-        # before manifest_entry lacks the column until the first failed
-        # insert. the listeners fix both the same way, so we do too before
-        # checking, rather than reporting a database that is simply unused.
+        # before manifest_entry, manifest_index or the indexes lacks them
+        # until the first failed insert. the listeners fix both the same
+        # way, so we do too before checking, rather than reporting a
+        # database that is simply unused.
         #
         Tables(config, engine=engine).assure_tables()
         if len(cls._missing(engine=engine)) > 0:
@@ -111,4 +118,10 @@ class ReferencesSqlCheck:
             cols = [c["name"] for c in insp.get_columns(table)]
             if cls.ENTRY_COLUMN not in cols:
                 missing.append(f"table {table} has no {cls.ENTRY_COLUMN} column")
+            if table in cls.INDEX_COLUMN_TABLES and cls.INDEX_COLUMN not in cols:
+                missing.append(f"table {table} has no {cls.INDEX_COLUMN} column")
+            indexes = [i["name"] for i in insp.get_indexes(table)]
+            for name in Tables.INDEXES[table]:
+                if name not in indexes:
+                    missing.append(f"table {table} has no index {name}")
         return missing

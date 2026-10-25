@@ -149,6 +149,7 @@ class FileRegistrar(Registrar, Listener):
         jdata.append(mani)
         self.intermediary.put_json(manifest_path, jdata)
         mdata.manifest_entry = mani
+        mdata.manifest_index = len(jdata) - 1
         #
         # drop update into an all-inputs/files record here?
         #

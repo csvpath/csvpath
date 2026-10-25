@@ -52,6 +52,7 @@ class SqlPathsListener(SqlListener):
             "manifest_path": mdata.manifest_path,
             "template": mdata.template,
             "manifest_entry": json.dumps(mdata.manifest_entry),
+            "manifest_index": mdata.manifest_index,
         }
         self._upsert_named_paths(named_paths_data)
 
@@ -101,4 +102,5 @@ class SqlPathsListener(SqlListener):
             "username": named_paths_data["username"],
             "template": named_paths_data.get("template"),
             "manifest_entry": named_paths_data.get("manifest_entry"),
+            "manifest_index": named_paths_data.get("manifest_index"),
         }
