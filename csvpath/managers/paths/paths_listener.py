@@ -73,3 +73,5 @@ class PathsListener(Listener):
             j = json.dumps(jdata, indent=2)
             file.sink.write(j)
             file.sink.flush()
+        mdata.ledger_entry = mani
+        mdata.ledger_index = len(jdata) - 1

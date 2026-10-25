@@ -1,8 +1,12 @@
-from sqlalchemy import Engine
+import json
+from sqlalchemy import Engine, Table
 from csvpath.managers.listener import Listener
+from csvpath.managers.metadata import Metadata
 from csvpath.util.config import ReferencesSql
 from .engine import Db
 from .tables import Tables
+from .updates import Updates
+from .sql_upsert_utility import SqlUpsertUtility as squt
 
 
 class SqlListener(Listener):
@@ -39,3 +43,62 @@ class SqlListener(Listener):
     @property
     def engine(self) -> Engine:
         return Db.get(self.config)
+
+    # =============
+    # root ledgers
+    # =============
+
+    def _ledger_row(
+        self,
+        *,
+        mdata: Metadata,
+        root_column: str,
+        root: str,
+        name_column: str,
+        name: str,
+    ) -> dict:
+        """the ledger-table row for mdata's ledger entry. every value comes
+        from mdata, as written by this update; nothing is read back."""
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
+        if mdata.ledger_entry is None or mdata.ledger_index is None:
+            raise ValueError("Metadata has no ledger entry")
+        for label, v in [
+            ("Root column", root_column),
+            ("Root", root),
+            ("Name column", name_column),
+            ("Name", name),
+        ]:
+            if v is None or not isinstance(v, str) or v.strip() == "":
+                raise ValueError(f"{label} must be a non-empty str")
+        entry = mdata.ledger_entry
+        version = mdata.manifest_entry
+        return {
+            "uuid": entry["uuid"],
+            "at": mdata.time,
+            root_column: root,
+            name_column: name,
+            "ledger_entry": json.dumps(entry),
+            "ledger_index": mdata.ledger_index,
+            "status": entry.get("status"),
+            "lifecycle": entry.get("lifecycle"),
+            "version_uuid": None if version is None else version["uuid"],
+        }
+
+    def _upsert_ledger_row(self, *, table: Table, row: dict) -> None:
+        try:
+            self._upsert_ledger_row_unreliably(table=table, row=row)
+        except Exception:
+            Updates(self.engine).do_updates()
+            self._upsert_ledger_row_unreliably(table=table, row=row)
+
+    def _upsert_ledger_row_unreliably(self, *, table: Table, row: dict) -> None:
+        with self.engine.connect() as conn:
+            dialect = conn.dialect.name
+            self.csvpaths.logger.info(
+                "Inserting %s entry %s into %s", table.name, row["uuid"], dialect
+            )
+            set_ = {k: v for k, v in row.items() if k != "uuid"}
+            stmt = squt.upsert(dialect=dialect, table=table, data=row, set_=set_)
+            conn.execute(stmt)
+            conn.commit()

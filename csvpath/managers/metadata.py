@@ -49,6 +49,15 @@ class Metadata(ABC):
         #
         self.manifest_index: int | None = None
         #
+        # the exact entry a root ledger writer (FilesListener,
+        # PathsListener) appended to its ledger for this update, and its
+        # position there. set only after a successful write; None means
+        # there is no root ledger for this update or the write failed. the
+        # SQL listeners mirror the ledgers from these.
+        #
+        self.ledger_entry: dict | None = None
+        self.ledger_index: int | None = None
+        #
         #
         #
         self._base_path = None
