@@ -5,8 +5,8 @@ ledger, and SqlFileListener / SqlPathsListener store that exact entry and
 its position in named_file_ledger / named_paths_ledger.
 
 A ledger has entries that are not versions: an unchanged named-paths
-reload adds a ledger entry but no manifest entry. Its ledger row has a
-NULL version_uuid. Marking it unchanged is a later change.
+reload adds a ledger entry but no manifest entry. The entry is marked
+unchanged and names the version it matched, which its ledger row links.
 
 Every test uses its own SQLite file and roots under pytest's tmp_path.
 The engine is cached in Box, so each test clears it before and after.
@@ -289,7 +289,10 @@ def test_an_unchanged_reload_has_a_ledger_row_but_no_version(paths, tmp_path):
     assert len(_paths_ledger(paths)) == 2
     assert [json.loads(r["ledger_entry"]) for r in rows] == _paths_ledger(paths)
     assert rows[0]["version_uuid"] == rows[0]["uuid"]
-    assert rows[1]["version_uuid"] is None
+    #
+    # the reload links the version it matched (PR 4)
+    #
+    assert rows[1]["version_uuid"] == rows[0]["uuid"]
     assert len(_rows(paths, sql="select uuid from named_paths")) == 1
 
 
@@ -417,6 +420,16 @@ def test_ledger_row_values(paths):
     mdata.manifest_entry = {"uuid": "v"}
     row = SqlFileListener(config=paths.config)._ledger_row(**_row_args(mdata))
     assert row["version_uuid"] == "v"
+
+
+def test_ledger_row_version_uuid_precedence(paths):
+    mdata = FileMetadata(paths.config)
+    mdata.ledger_entry = {"uuid": "u", "version_uuid": "m"}
+    mdata.ledger_index = 0
+    lst = SqlFileListener(config=paths.config)
+    assert lst._ledger_row(**_row_args(mdata))["version_uuid"] == "m"
+    mdata.manifest_entry = {"uuid": "v"}
+    assert lst._ledger_row(**_row_args(mdata))["version_uuid"] == "v"
 
 
 # ===================

@@ -15,6 +15,13 @@ class PathsMetadata(Metadata):
         self.source_path: str = None
         self.template: str = None
         #
+        # set only for an unchanged reload: status is
+        # PathsRegistrar.UNCHANGED and version_uuid is the version the
+        # load matched. both go into the root ledger entry.
+        #
+        self.status: str | None = None
+        self.version_uuid: str | None = None
+        #
         # TODO: make sure append is in manifests
         #
         self.append: bool = None

@@ -73,6 +73,14 @@ class SqlListener(Listener):
                 raise ValueError(f"{label} must be a non-empty str")
         entry = mdata.ledger_entry
         version = mdata.manifest_entry
+        #
+        # the version written by this update, else the version the entry
+        # itself names (an unchanged named-paths reload), else NULL
+        #
+        if version is None:
+            version_uuid = entry.get("version_uuid")
+        else:
+            version_uuid = version["uuid"]
         return {
             "uuid": entry["uuid"],
             "at": mdata.time,
@@ -82,7 +90,7 @@ class SqlListener(Listener):
             "ledger_index": mdata.ledger_index,
             "status": entry.get("status"),
             "lifecycle": entry.get("lifecycle"),
-            "version_uuid": None if version is None else version["uuid"],
+            "version_uuid": version_uuid,
         }
 
     def _upsert_ledger_row(self, *, table: Table, row: dict) -> None:

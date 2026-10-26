@@ -17,6 +17,12 @@ from ..registrar import Registrar
 class PathsRegistrar(Registrar, Listener):
     """@private"""
 
+    #
+    # the root ledger status of a load whose fingerprint matches the
+    # most recent version. the load is recorded, but it is not a version.
+    #
+    UNCHANGED = "unchanged"
+
     def __init__(self, csvpaths):
         Registrar.__init__(self, csvpaths)
         Listener.__init__(self, csvpaths.config)
@@ -156,6 +162,14 @@ class PathsRegistrar(Registrar, Listener):
             if mdata.source_path is not None:
                 self._copy_in_yaml_if(mdata)
         else:
+            #
+            # an unchanged reload. the root ledger still records the load,
+            # marked unchanged and linked to the version it matched. .get()
+            # because a missing uuid in an older manifest should not stop
+            # a load just to set a marker.
+            #
+            mdata.status = PathsRegistrar.UNCHANGED
+            mdata.version_uuid = jdata[len(jdata) - 1].get("uuid")
             #
             # leave as info so nobody has to dig to see why no update
             #
