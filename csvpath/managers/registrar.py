@@ -109,23 +109,7 @@ class Registrar(ABC):
         request, and a failed one has nothing for them to mirror."""
         if mdata is None:
             raise InputException("Metadata cannot be None")
-        listeners = [self] + self._built_in_listeners + self._internal_listeners
-        if self.csvpaths is not None:
-            self.csvpaths.logger.info("Distributing a patch to listeners")
-            try:
-                self.load_additional_listeners(self.type_name, listeners)
-            except Exception as ex:
-                print(traceback.format_exc())
-                self.csvpaths.logger.error(f"Error in loading listeners: {ex}")
-        for lst in listeners:
-            #
-            # getattr because listeners are not required to subclass Listener
-            #
-            patch = getattr(lst, "metadata_patch", None)
-            if patch is None:
-                continue
-            if self.csvpaths:
-                lst.csvpaths = self.csvpaths
+        for lst, patch in self._listeners_with(method="metadata_patch"):
             try:
                 patch(mdata)
             except Exception as ex:
@@ -134,6 +118,45 @@ class Registrar(ABC):
                         self.csvpaths.logger.error(f"Patch failed: {ex}")
                     raise
                 self._listener_failed(lst=lst, ex=ex)
+
+    def distribute_failure(self, mdata: Metadata) -> None:
+        """a failed registration. each listener with a metadata_failure
+        method can record it; the default is to ignore it. the registrar's
+        own is the default, so the per-entity manifest is not touched.
+        listener failures follow the same policy as updates."""
+        if mdata is None:
+            raise InputException("Metadata cannot be None")
+        for lst, failure in self._listeners_with(method="metadata_failure"):
+            try:
+                failure(mdata)
+            except Exception as ex:
+                self._listener_failed(lst=lst, ex=ex)
+
+    def _listeners_with(self, *, method: str) -> list[tuple]:
+        """(listener, bound method) for every listener, in distribution
+        order, that has the method"""
+        if method is None or not isinstance(method, str) or method.strip() == "":
+            raise ValueError("Method must be a non-empty str")
+        listeners = [self] + self._built_in_listeners + self._internal_listeners
+        if self.csvpaths is not None:
+            self.csvpaths.logger.info("Distributing %s to listeners", method)
+            try:
+                self.load_additional_listeners(self.type_name, listeners)
+            except Exception as ex:
+                print(traceback.format_exc())
+                self.csvpaths.logger.error(f"Error in loading listeners: {ex}")
+        found = []
+        for lst in listeners:
+            #
+            # getattr because listeners are not required to subclass Listener
+            #
+            m = getattr(lst, method, None)
+            if m is None:
+                continue
+            if self.csvpaths:
+                lst.csvpaths = self.csvpaths
+            found.append((lst, m))
+        return found
 
     def _listener_failed(self, *, lst, ex: Exception) -> None:
         print(traceback.format_exc())

@@ -19,7 +19,6 @@ from csvpath.util.path_util import PathUtility as pathu
 from csvpath.util.template_util import TemplateUtility as temu
 from .file_registrar import FileRegistrar
 from .lines_and_headers_cacher import LinesAndHeadersCacher
-from .files_listener import FilesListener
 from .file_metadata import FileMetadata
 from .file_describer import NamedFileDescriber
 from .file_activator import NamedFileActivator
@@ -963,20 +962,32 @@ class FileManager:
             if self.csvpaths.ecoms.do_i_raise(ex):
                 raise
 
+    #
+    # the name recorded for a failed registration that has none, e.g. one
+    # that failed before its name was checked
+    #
+    UNKNOWN_NAME = "<unknown>"
+
     def _registration_failed(self, data: dict[str, str]) -> None:
-        lst = FilesListener(csvpaths=self.csvpaths, config=self.csvpaths.config)
         mdata = FileMetadata(self.csvpaths.config)
         mdata.set_project_if(self.csvpaths)
-
-        mdata.named_file_name = data.get("name")
+        name = data.get("name")
+        if name is None or str(name).strip() == "":
+            name = self.UNKNOWN_NAME
+        mdata.named_file_name = str(name)
         mdata.origin_path = data.get("path")
         mdata.template = data.get("template") or ""
-        mdata.uuid_string = data.get("registration_uuid")
+        #
+        # the failure has its own uuid, from the metadata. the attempt's
+        # uuid may already be on an arrival entry, if the registration
+        # failed after the ledger was written.
+        #
+        mdata.registration_uuid = data.get("registration_uuid")
         mdata.status = "Registration failed"
         self.csvpaths.logger.warning(
             "[%s] Registration failed for %s", mdata.named_file_name, data
         )
-        lst.metadata_update(mdata)
+        self.registrar.distribute_failure(mdata)
 
     def _validate_xlsx_mark(self, path: str, mark: str) -> None:
         if not XlsxReaderHelper.is_xlsx(path):

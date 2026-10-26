@@ -68,7 +68,13 @@ class FilesListener(Listener):  # Registrar,
         mani["manifest_path"] = self.manifest_path()
         if hasattr(mdata, "status"):
             mani["status"] = mdata.status
+        if getattr(mdata, "registration_uuid", None) is not None:
+            mani["registration_uuid"] = mdata.registration_uuid
         return mani
+
+    def metadata_failure(self, mdata: Metadata) -> None:
+        """a failed registration is a ledger entry like any other"""
+        self.metadata_update(mdata)
 
     def metadata_update(self, mdata: Metadata) -> None:
         mani = self._prep_update(mdata)

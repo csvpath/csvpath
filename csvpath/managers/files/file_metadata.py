@@ -26,6 +26,12 @@ class FileMetadata(Metadata):
         self.template: str = None
         self.fingerprint: str = None
         #
+        # set only on a failed registration: the uuid of the attempt, which
+        # the failure's own uuid is not. links the failure to the
+        # attempt, and to its arrival entry if one was written.
+        #
+        self.registration_uuid: str | None = None
+        #
         # a requested change to an existing manifest entry. see
         # FileRegistrar.patch_named_file. None for a registration.
         #

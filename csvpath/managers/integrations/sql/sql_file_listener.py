@@ -41,20 +41,29 @@ class SqlFileListener(SqlListener):
             )
         else:
             self._write_named_file(mdata)
+        self._write_ledger(mdata)
+
+    def metadata_failure(self, mdata: Metadata) -> None:
+        """a failed registration has a ledger entry but no version"""
+        if not self.csvpaths:
+            raise RuntimeError("CsvPaths cannot be None")
+        self._write_ledger(mdata)
+
+    def _write_ledger(self, mdata: Metadata) -> None:
         if mdata.ledger_entry is None:
             self.csvpaths.logger.info(
                 "No ledger entry for named-file %s; not writing a ledger row to SQL",
                 mdata.named_file_name,
             )
-        else:
-            row = self._ledger_row(
-                mdata=mdata,
-                root_column="files_root",
-                root=mdata.named_files_root,
-                name_column="named_file_name",
-                name=mdata.named_file_name,
-            )
-            self._upsert_ledger_row(table=self.named_file_ledger, row=row)
+            return
+        row = self._ledger_row(
+            mdata=mdata,
+            root_column="files_root",
+            root=mdata.named_files_root,
+            name_column="named_file_name",
+            name=mdata.named_file_name,
+        )
+        self._upsert_ledger_row(table=self.named_file_ledger, row=row)
 
     def _write_named_file(self, mdata: Metadata) -> None:
         named_file_data = {
