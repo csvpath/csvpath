@@ -2,8 +2,10 @@ import json
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
+from csvpath.util.ledger_utility import LedgerUtility as leut
 from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
+from csvpath.managers.registrar import Registrar
 
 #
 # TODO: not using intermediary
@@ -72,6 +74,7 @@ class FilesListener(Listener):  # Registrar,
             mani["mark"] = mdata.mark
         mani["manifest_path"] = self.manifest_path()
         mani["status"] = mdata.status
+        mani["lifecycle"] = Registrar.ACTIVE
         if getattr(mdata, "registration_uuid", None) is not None:
             mani["registration_uuid"] = mdata.registration_uuid
         return mani
@@ -134,6 +137,29 @@ class FilesListener(Listener):  # Registrar,
             if e.get("uuid") == uuid and e.get("file_path") is not None:
                 return i
         return None
+
+    def metadata_delete(self, mdata: Metadata) -> None:
+        """marks every ledger entry for the deleted name, including
+        failures, in place. the ledger keeps them: it is the history."""
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
+        if mdata.change is None:
+            raise ValueError("Metadata has no delete change")
+        manifest_path = self.manifest_path()
+        jdata = self.get_manifest(manifest_path)
+        marked = leut.mark_deleted(
+            jdata=jdata,
+            name_key="named_file_name",
+            name=mdata.named_file_name,
+            change=mdata.change,
+            deleted=Registrar.DELETED,
+        )
+        if len(marked) > 0:
+            with DataFileWriter(path=manifest_path, mode="w") as writer:
+                j = json.dumps(jdata, indent=2)
+                writer.sink.write(j)
+                writer.sink.flush()
+        mdata.ledger_entries = marked
 
     def metadata_failure(self, mdata: Metadata) -> None:
         """a failed registration is a ledger entry like any other"""

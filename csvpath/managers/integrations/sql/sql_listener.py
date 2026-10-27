@@ -1,7 +1,8 @@
 import json
-from sqlalchemy import Engine, Table
+from sqlalchemy import Engine, Table, update
 from csvpath.managers.listener import Listener
 from csvpath.managers.metadata import Metadata
+from csvpath.managers.registrar import Registrar
 from csvpath.util.config import ReferencesSql
 from .engine import Db
 from .tables import Tables
@@ -92,6 +93,75 @@ class SqlListener(Listener):
             "lifecycle": entry.get("lifecycle"),
             "version_uuid": version_uuid,
         }
+
+    def _mark_deleted(
+        self, *, mdata: Metadata, version_table: Table, ledger_table: Table, name: str
+    ) -> None:
+        """marks the rows of a delete: each deleted version's row, and each
+        ledger row with its entry as the ledger writer marked it. updates,
+        not upserts, as for a patch: a missing row (e.g. written before SQL
+        was on) is not backfilled, and ledger rows keep at and
+        ledger_index."""
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
+        if version_table is None or ledger_table is None:
+            raise ValueError("Tables cannot be None")
+        for e in mdata.manifest_entries or []:
+            count = self._update_by_uuid(
+                table=version_table,
+                uuid=e["uuid"],
+                values={"lifecycle": Registrar.DELETED},
+            )
+            if count == 0:
+                self.csvpaths.logger.warning(
+                    "No SQL row for %s entry %s; delete not written to SQL",
+                    name,
+                    e["uuid"],
+                )
+        for e in mdata.ledger_entries or []:
+            values = {
+                "ledger_entry": json.dumps(e),
+                "status": e.get("status"),
+                "lifecycle": e.get("lifecycle"),
+            }
+            count = self._update_by_uuid(
+                table=ledger_table, uuid=e["uuid"], values=values
+            )
+            if count == 0:
+                self.csvpaths.logger.warning(
+                    "No SQL ledger row for %s entry %s; delete not written to SQL",
+                    name,
+                    e["uuid"],
+                )
+
+    def _update_by_uuid(self, *, table: Table, uuid: str, values: dict) -> int:
+        try:
+            return self._update_by_uuid_unreliably(
+                table=table, uuid=uuid, values=values
+            )
+        except Exception:
+            Updates(self.engine).do_updates()
+            return self._update_by_uuid_unreliably(
+                table=table, uuid=uuid, values=values
+            )
+
+    def _update_by_uuid_unreliably(
+        self, *, table: Table, uuid: str, values: dict
+    ) -> int:
+        if table is None:
+            raise ValueError("Table cannot be None")
+        if uuid is None or not isinstance(uuid, str) or uuid.strip() == "":
+            raise ValueError("Uuid must be a non-empty str")
+        if not isinstance(values, dict) or len(values) == 0:
+            raise ValueError("Values must be a non-empty dict")
+        with self.engine.connect() as conn:
+            self.csvpaths.logger.info(
+                "Updating %s entry %s in %s", table.name, uuid, conn.dialect.name
+            )
+            stmt = update(table).where(table.c.uuid == uuid).values(values)
+            result = conn.execute(stmt)
+            conn.commit()
+            return result.rowcount
 
     def _upsert_ledger_row(self, *, table: Table, row: dict) -> None:
         try:

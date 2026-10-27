@@ -302,7 +302,11 @@ def test_status_and_lifecycle_are_read_from_the_entry(paths, tmp_path):
     row = _ledger_rows(paths, table="named_file_ledger")[0]
     assert json.loads(row["ledger_entry"])["status"] == "complete"
     assert row["status"] == "complete"
-    assert row["lifecycle"] is None
+    #
+    # every new entry is active (PR 6; see test_delete_lifecycle_events.py)
+    #
+    assert json.loads(row["ledger_entry"])["lifecycle"] == "active"
+    assert row["lifecycle"] == "active"
 
 
 def test_no_ledger_entry_means_no_ledger_row(paths, tmp_path, monkeypatch):

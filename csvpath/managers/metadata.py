@@ -58,6 +58,19 @@ class Metadata(ABC):
         self.ledger_entry: dict | None = None
         self.ledger_index: int | None = None
         #
+        # a delete changes many entries at once. manifest_entries are the
+        # versions the primary registrar removed with the name's folder;
+        # ledger_entries are the root ledger entries the ledger writer
+        # marked deleted, as written. None means not set.
+        #
+        self.manifest_entries: list[dict] | None = None
+        self.ledger_entries: list[dict] | None = None
+        #
+        # the change a patch or delete made, as recorded in each changed
+        # entry's changes list: {"time", "change"}, and for a patch "from".
+        #
+        self.change: dict | None = None
+        #
         #
         #
         self._base_path = None

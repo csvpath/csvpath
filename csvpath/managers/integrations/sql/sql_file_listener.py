@@ -1,9 +1,10 @@
 import json
-from sqlalchemy import Table, update
+from sqlalchemy import Table
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from csvpath.managers.metadata import Metadata
+from csvpath.managers.registrar import Registrar
 from .sql_listener import SqlListener
 from .updates import Updates
 
@@ -91,6 +92,7 @@ class SqlFileListener(SqlListener):
             "template": mdata.template,
             "manifest_entry": json.dumps(mdata.manifest_entry),
             "manifest_index": mdata.manifest_index,
+            "lifecycle": Registrar.ACTIVE,
         }
         self._upsert_named_file(named_file_data)
 
@@ -127,6 +129,18 @@ class SqlFileListener(SqlListener):
             )
         self._patch_ledger_row(mdata)
 
+    def metadata_delete(self, mdata: Metadata) -> None:
+        """marks the deleted versions' rows and the marked ledger
+        entries' rows deleted"""
+        if not self.csvpaths:
+            raise RuntimeError("CsvPaths cannot be None")
+        self._mark_deleted(
+            mdata=mdata,
+            version_table=self.named_file,
+            ledger_table=self.named_file_ledger,
+            name=mdata.named_file_name,
+        )
+
     def _patch_ledger_row(self, mdata: Metadata) -> None:
         ledger_entry = mdata.ledger_entry
         if ledger_entry is None:
@@ -149,35 +163,6 @@ class SqlFileListener(SqlListener):
                 mdata.named_file_name,
                 ledger_entry["uuid"],
             )
-
-    def _update_by_uuid(self, *, table: Table, uuid: str, values: dict) -> int:
-        try:
-            return self._update_by_uuid_unreliably(
-                table=table, uuid=uuid, values=values
-            )
-        except Exception:
-            Updates(self.engine).do_updates()
-            return self._update_by_uuid_unreliably(
-                table=table, uuid=uuid, values=values
-            )
-
-    def _update_by_uuid_unreliably(
-        self, *, table: Table, uuid: str, values: dict
-    ) -> int:
-        if table is None:
-            raise ValueError("Table cannot be None")
-        if uuid is None or not isinstance(uuid, str) or uuid.strip() == "":
-            raise ValueError("Uuid must be a non-empty str")
-        if not isinstance(values, dict) or len(values) == 0:
-            raise ValueError("Values must be a non-empty dict")
-        with self.engine.connect() as conn:
-            self.csvpaths.logger.info(
-                "Updating patched named-file metadata in %s", conn.dialect.name
-            )
-            stmt = update(table).where(table.c.uuid == uuid).values(values)
-            result = conn.execute(stmt)
-            conn.commit()
-            return result.rowcount
 
     def _upsert_named_file(self, named_file_data: dict):
         try:
@@ -230,4 +215,5 @@ class SqlFileListener(SqlListener):
             else None,
             "manifest_entry": named_file_data.get("manifest_entry"),
             "manifest_index": named_file_data.get("manifest_index"),
+            "lifecycle": named_file_data.get("lifecycle"),
         }

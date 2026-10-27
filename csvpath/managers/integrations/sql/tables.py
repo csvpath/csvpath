@@ -144,6 +144,11 @@ class Tables:
             # Metadata.manifest_index.
             #
             Column("manifest_index", Integer, nullable=True),
+            #
+            # Registrar.ACTIVE when written, Registrar.DELETED once the
+            # group is removed. rows are marked, not deleted.
+            #
+            Column("lifecycle", String(20), nullable=True),
             *self._indexes("named_paths"),
         )
         self._named_paths = named_paths
@@ -181,6 +186,11 @@ class Tables:
             Column("template", String(250), nullable=True),
             Column("manifest_entry", Text, nullable=True),
             Column("manifest_index", Integer, nullable=True),
+            #
+            # Registrar.ACTIVE when written, Registrar.DELETED once the
+            # named-file is removed. rows are marked, not deleted.
+            #
+            Column("lifecycle", String(20), nullable=True),
             *self._indexes("named_file"),
         )
         self._named_file = named_file
@@ -192,8 +202,8 @@ class Tables:
     # inputs/named_paths/manifest.json, holding the exact entry and its
     # position. a ledger has entries that are not versions (e.g. an
     # unchanged named-paths reload), so these are not the version tables.
-    # status and lifecycle are read from the entry; NULL lifecycle means
-    # active, as an absent field does in the JSON. version_uuid is the
+    # status and lifecycle are read from the entry; neither is implied by
+    # NULL, which only older entries have. version_uuid is the
     # named_file / named_paths row written by the same update, if any.
     #
     @property

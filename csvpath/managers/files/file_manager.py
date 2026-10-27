@@ -465,7 +465,10 @@ class FileManager:
         p = Nos(self.named_files_dir).join(name)
         nos = Nos(p)
         if nos.dir_exists():
-            nos.remove()
+            #
+            # the registrar removes the folder and distributes the delete
+            #
+            self.registrar.delete_named_file(name=name)
             return True
         return False
 

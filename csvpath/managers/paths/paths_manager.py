@@ -765,9 +765,10 @@ class PathsManager:
             raise InputException(f"Named-paths name {name} not found")
         if not self.has_named_paths(name):
             return
-        home = self.named_paths_home(name)
-        nos = Nos(home)
-        nos.remove()
+        #
+        # the registrar removes the folder and distributes the delete
+        #
+        self.registrar.delete_named_paths(name=name)
 
     def remove_all_named_paths(self) -> None:
         """@private"""
