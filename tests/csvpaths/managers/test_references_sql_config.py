@@ -174,24 +174,26 @@ class TestReferencesSqlCheck:
         _set_mode(paths, "on")
         paths.config.add_to_config(section="listeners", key="groups", value="default")
         problems = ReferencesSqlCheck.problems(csvpaths=paths)
-        assert len(problems) == 4
+        assert len(problems) == len(ReferencesSqlCheck.LISTENERS) == 5
         for name in ReferencesSqlCheck.LISTENERS.values():
             assert any(name in p for p in problems), name
 
     def test_one_missing_sql_listener(self, paths):
         #
-        # a custom group that has three of the four
+        # a custom group that has all but SqlResultsListener
         #
         _set_mode(paths, "on")
         for t, name in [
             ("file", "SqlFileListener"),
             ("paths", "SqlPathsListener"),
             ("result", "SqlResultListener"),
+            ("run", "SqlRunListener"),
         ]:
             module = {
                 "file": "sql_file_listener",
                 "paths": "sql_paths_listener",
                 "result": "sql_result_listener",
+                "run": "sql_run_listener",
             }[t]
             paths.config.add_to_config(
                 section="listeners",

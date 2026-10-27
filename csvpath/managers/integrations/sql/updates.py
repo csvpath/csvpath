@@ -18,6 +18,9 @@ class Updates:
             text("ALTER TABLE named_paths ADD COLUMN manifest_index INTEGER"),
             text("ALTER TABLE named_file ADD COLUMN lifecycle varchar(20)"),
             text("ALTER TABLE named_paths ADD COLUMN lifecycle varchar(20)"),
+            text(
+                "ALTER TABLE named_paths_group_run ADD COLUMN archive_root varchar(250)"
+            ),
         ]
         #
         # MySQL has no CREATE INDEX IF NOT EXISTS, so these fail like the

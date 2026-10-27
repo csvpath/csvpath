@@ -52,9 +52,18 @@ class RunRegistrar(Registrar, Listener):
         m["named_paths_root"] = mdata.named_paths_root
         m["template"] = mdata.template or ""
         #
+        # the entry is written as the instance run starts. like every root
+        # ledger entry, it has a status and a lifecycle; neither is implied
+        # by absence.
         #
-        #
+        m["status"] = Registrar.STARTED
+        m["lifecycle"] = Registrar.ACTIVE
         mani = self.manifest
         mani.append(m)
         with DataFileWriter(path=mp) as file:
             json.dump(mani, file.sink, indent=2)
+        #
+        # for listeners that mirror the archive ledger (e.g. SQL)
+        #
+        mdata.ledger_entry = m
+        mdata.ledger_index = len(mani) - 1

@@ -16,6 +16,12 @@ class Registrar(ABC):
     COMPLETE = "complete"
     FAILED = "failed"
     #
+    # the archive ledger records an instance run when it starts; the
+    # run's own manifest says when it completes. the same string as
+    # ResultsRegistrar.STARTED.
+    #
+    STARTED = "started"
+    #
     # the root ledger lifecycle of an entry: what has happened to it since
     # it was written. every new entry is ACTIVE; like status, none is
     # implied by absence.
