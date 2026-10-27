@@ -56,6 +56,11 @@ class FileRegistrar(Registrar, Listener):
         return j
 
     PATCH_KEYS = ["type", "file_name"]
+    #
+    # the entry fields a patch can change. their prior values are kept in
+    # the entry's changes list.
+    #
+    PATCHED_FIELDS = ["type", "file", "file_home", "file_name"]
 
     def patch_named_file(self, *, name: str, patch: dict, index: int = -1) -> None:
         """changes the type and/or file name of one entry in a named-file's
@@ -93,7 +98,9 @@ class FileRegistrar(Registrar, Listener):
 
     def metadata_patch(self, mdata: Metadata) -> None:
         """applies mdata.patch to the manifest and sets mdata's fields,
-        including manifest_entry, from the patched entry."""
+        including manifest_entry, from the patched entry. the entry keeps
+        the prior values of what changed in its changes list, and the same
+        event is set as mdata.change for the root ledger writer."""
         if mdata is None:
             raise ValueError("Metadata cannot be None")
         if mdata.patch is None:
@@ -104,6 +111,7 @@ class FileRegistrar(Registrar, Listener):
         mp = self.manifest_path(home)
         mani = self.get_manifest(mp)
         index = len(mani) - 1 if mdata.patch_index == -1 else mdata.patch_index
+        before = {k: mani[index].get(k) for k in self.PATCHED_FIELDS}
         if "type" in patch:
             #
             # obviously without a change in file_name the type is set in metadata only.
@@ -117,6 +125,18 @@ class FileRegistrar(Registrar, Listener):
                 self._patch_blob(mani, index, patch)
             else:
                 self._patch_filesystem(mani, home=home, index=index, patch=patch)
+            mani[index]["file_name"] = patch["file_name"]
+        #
+        # the patch is in place, so the entry keeps what it replaced
+        #
+        change = {
+            "time": mdata.time_string,
+            "change": "patch",
+            "from": {
+                k: v for k, v in before.items() if mani[index].get(k) != v
+            },
+        }
+        mani[index].setdefault("changes", []).append(change)
         self.intermediary.put_json(mp, mani)
         entry = mani[index]
         mdata.uuid_string = entry["uuid"]
@@ -125,7 +145,9 @@ class FileRegistrar(Registrar, Listener):
         mdata.type = entry["type"]
         mdata.file_path = entry["file"]
         mdata.file_home = entry["file_home"]
+        mdata.file_name = entry.get("file_name")
         mdata.manifest_entry = entry
+        mdata.change = change
 
     def _patch_blob(self, mani: dict, index: int, patch: dict) -> None:
         old = mani[index]["file"]

@@ -10,7 +10,8 @@ Registrar.distribute_patch:
     with the manifest. Failures follow the same rules as distribute_update.
 
 A patch is not a registration: it adds no manifest entry and no root
-ledger entry.
+ledger entry. It patches the arrival's ledger entry in place; see
+test_patch_ledger_events.py.
 
 Every test uses its own SQLite file and roots under pytest's tmp_path.
 The engine is cached in Box, so each test clears it before and after.

@@ -95,9 +95,11 @@ class SqlFileListener(SqlListener):
         self._upsert_named_file(named_file_data)
 
     def metadata_patch(self, mdata: Metadata) -> None:
-        """updates the row of the patched manifest entry. an update, not an
-        upsert: a patch has too little to insert a row, and a missing row
-        (e.g. registered before SQL was on) is not backfilled."""
+        """updates the rows of the patched manifest entry and its ledger
+        entry. updates, not upserts: a patch has too little to insert a
+        row, and a missing row (e.g. registered before SQL was on) is not
+        backfilled. an update also keeps the ledger row's at and
+        ledger_index, which are the arrival's."""
         if not self.csvpaths:
             raise RuntimeError("CsvPaths cannot be None")
         entry = mdata.manifest_entry
@@ -111,33 +113,68 @@ class SqlFileListener(SqlListener):
             "type": entry.get("type"),
             "file_path": entry.get("file"),
             "file_home": entry.get("file_home"),
+            "file_name": entry.get("file_name"),
             "manifest_entry": json.dumps(entry),
         }
-        count = self._update_named_file(uuid=entry["uuid"], values=values)
+        count = self._update_by_uuid(
+            table=self.named_file, uuid=entry["uuid"], values=values
+        )
         if count == 0:
             self.csvpaths.logger.warning(
                 "No SQL row for named-file %s entry %s; patch not written to SQL",
                 mdata.named_file_name,
                 entry["uuid"],
             )
+        self._patch_ledger_row(mdata)
 
-    def _update_named_file(self, *, uuid: str, values: dict) -> int:
+    def _patch_ledger_row(self, mdata: Metadata) -> None:
+        ledger_entry = mdata.ledger_entry
+        if ledger_entry is None:
+            self.csvpaths.logger.info(
+                "No patched ledger entry for named-file %s; not writing a ledger row to SQL",
+                mdata.named_file_name,
+            )
+            return
+        values = {
+            "ledger_entry": json.dumps(ledger_entry),
+            "status": ledger_entry.get("status"),
+            "lifecycle": ledger_entry.get("lifecycle"),
+        }
+        count = self._update_by_uuid(
+            table=self.named_file_ledger, uuid=ledger_entry["uuid"], values=values
+        )
+        if count == 0:
+            self.csvpaths.logger.warning(
+                "No SQL ledger row for named-file %s entry %s; patch not written to SQL",
+                mdata.named_file_name,
+                ledger_entry["uuid"],
+            )
+
+    def _update_by_uuid(self, *, table: Table, uuid: str, values: dict) -> int:
         try:
-            return self._update_named_file_unreliably(uuid=uuid, values=values)
+            return self._update_by_uuid_unreliably(
+                table=table, uuid=uuid, values=values
+            )
         except Exception:
             Updates(self.engine).do_updates()
-            return self._update_named_file_unreliably(uuid=uuid, values=values)
+            return self._update_by_uuid_unreliably(
+                table=table, uuid=uuid, values=values
+            )
 
-    def _update_named_file_unreliably(self, *, uuid: str, values: dict) -> int:
+    def _update_by_uuid_unreliably(
+        self, *, table: Table, uuid: str, values: dict
+    ) -> int:
+        if table is None:
+            raise ValueError("Table cannot be None")
+        if uuid is None or not isinstance(uuid, str) or uuid.strip() == "":
+            raise ValueError("Uuid must be a non-empty str")
+        if not isinstance(values, dict) or len(values) == 0:
+            raise ValueError("Values must be a non-empty dict")
         with self.engine.connect() as conn:
             self.csvpaths.logger.info(
                 "Updating patched named-file metadata in %s", conn.dialect.name
             )
-            stmt = (
-                update(self.named_file)
-                .where(self.named_file.c.uuid == uuid)
-                .values(values)
-            )
+            stmt = update(table).where(table.c.uuid == uuid).values(values)
             result = conn.execute(stmt)
             conn.commit()
             return result.rowcount
