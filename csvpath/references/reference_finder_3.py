@@ -68,7 +68,15 @@ class ReferenceFinder3(ABC):
         """where manifests, ledgers, names and run homes are read from.
         every such read goes through here; see ReferenceSource."""
         if self._source is None:
-            self._source = FilesystemReferenceSource(csvpaths=self._csvpaths)
+            #
+            # a CsvPaths chooses its source by [references] sql. getattr
+            # because finders also run over duck-typed stand-ins (e.g. test
+            # fakes) that only have the managers; those read the filesystem.
+            #
+            source = getattr(self._csvpaths, "reference_source", None)
+            if source is None:
+                source = FilesystemReferenceSource(csvpaths=self._csvpaths)
+            self._source = source
         return self._source
 
     @property
