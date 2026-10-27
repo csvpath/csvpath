@@ -148,8 +148,8 @@ FILES = [
     '$*.files.:status("complete").:last()',
     "$*.files.:manifest()",
     #
-    # raises in both modes: a failed registration's ledger entry has no
-    # file_path (bucket list). kept so parity holds once that is fixed.
+    # the ledger holds a failed registration, which has no file_path and
+    # is skipped (see test_star_manifest_field_skips_failures.py)
     #
     "$*.files.:manifest():uuid()",
     "$*.files.:manifest():last()",

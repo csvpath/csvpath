@@ -1367,12 +1367,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "reads a field from every matched entry on its own."
                 )
             ledger = self.source.files_ledger()
+            #
+            # only arrivals have a file. a failed registration's entry has
+            # no file_path (None, or no key in ledgers from before the
+            # ledger writers were built in), whatever its status says.
+            #
             return ReferenceResults3(
                 results=[
                     ReferenceResult3(path=e["file_path"], uuid=e["uuid"])
                     for e in ledger
-                    if name_filter is None
-                    or re.search(name_filter, e["named_file_name"])
+                    if e.get("file_path")
+                    and (
+                        name_filter is None
+                        or re.search(name_filter, e["named_file_name"])
+                    )
                 ]
             )
         else:
