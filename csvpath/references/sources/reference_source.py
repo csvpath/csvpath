@@ -45,7 +45,7 @@ class ReferenceSource(ABC):
 
     @abstractmethod
     def file_names(self) -> list[str]:
-        """every named-file name"""
+        """every named-file name, sorted"""
 
     #
     # CSVPATHS
@@ -60,7 +60,7 @@ class ReferenceSource(ABC):
 
     @abstractmethod
     def paths_names(self) -> list[str]:
-        """every named-paths group name"""
+        """every named-paths group name, sorted"""
 
     #
     # RESULTS

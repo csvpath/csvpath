@@ -153,6 +153,12 @@ class CsvPaths(CsvPathsCoordinator, ErrorCollector):
         self._error_manager = None
         self._set_managers()
         #
+        # where references v3 reads manifests and ledgers from, and the
+        # [references] sql mode it was built for. see reference_source.
+        #
+        self._reference_source = None
+        self._reference_source_mode = None
+        #
         #
         #
         self.print_default = print_default
@@ -382,6 +388,43 @@ Cache: {cache}
     def ecoms(self) -> ErrorCommunications:
         """@private"""
         return self._ecoms
+
+    @property
+    def reference_source(self):
+        """@private
+        the ReferenceSource the v3 finders read manifests and ledgers
+        from: SQL when [references] sql = on, else the filesystem. built
+        once per mode; under on, ReferencesSqlCheck runs first, so a
+        configuration that cannot work raises before the first read."""
+        #
+        # imported here: the sources and the SQL integration import much
+        # that CsvPaths does not otherwise need
+        #
+        from csvpath.util.config import ReferencesSql
+        from csvpath.references.sources.filesystem_reference_source import (
+            FilesystemReferenceSource,
+        )
+
+        mode = self.config.references_sql
+        if self._reference_source is None or self._reference_source_mode != mode:
+            if mode == ReferencesSql.ON.value:
+                from csvpath.managers.integrations.sql.references_sql_check import (
+                    ReferencesSqlCheck,
+                )
+                from csvpath.references.sources.sql_reference_source import (
+                    SqlReferenceSource,
+                )
+
+                ReferencesSqlCheck.check(csvpaths=self)
+                source = SqlReferenceSource(csvpaths=self)
+            else:
+                #
+                # shadow reads the filesystem until step 5 compares
+                #
+                source = FilesystemReferenceSource(csvpaths=self)
+            self._reference_source = source
+            self._reference_source_mode = mode
+        return self._reference_source
 
     @ecoms.setter
     def ecoms(self, ec: ErrorCommunications) -> None:

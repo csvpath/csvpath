@@ -37,7 +37,11 @@ class FilesystemReferenceSource(ReferenceSource):
         return self.csvpaths.file_manager.files_root_manifest
 
     def file_names(self) -> list[str]:
-        return self.csvpaths.file_manager.named_file_names
+        #
+        # sorted: a directory listing has no order to rely on, and the SQL
+        # source returns the same order
+        #
+        return sorted(self.csvpaths.file_manager.named_file_names)
 
     #
     # CSVPATHS
@@ -50,7 +54,10 @@ class FilesystemReferenceSource(ReferenceSource):
         return self.csvpaths.paths_manager.paths_root_manifest
 
     def paths_names(self) -> list[str]:
-        return self.csvpaths.paths_manager.named_paths_names
+        #
+        # sorted, as file_names
+        #
+        return sorted(self.csvpaths.paths_manager.named_paths_names)
 
     #
     # RESULTS
