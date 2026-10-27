@@ -2,8 +2,10 @@ import json
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
+from csvpath.util.ledger_utility import LedgerUtility as leut
 from ..listener import Listener
 from ..metadata import Metadata
+from ..registrar import Registrar
 
 
 class PathsListener(Listener):
@@ -67,6 +69,7 @@ class PathsListener(Listener):
         if mdata.ip_address:
             mani["ip_address"] = mdata.ip_address
         mani["status"] = mdata.status
+        mani["lifecycle"] = Registrar.ACTIVE
         if getattr(mdata, "version_uuid", None) is not None:
             mani["version_uuid"] = mdata.version_uuid
         mani["paths_manifest"] = mdata.manifest_path
@@ -83,3 +86,26 @@ class PathsListener(Listener):
             file.sink.flush()
         mdata.ledger_entry = mani
         mdata.ledger_index = len(jdata) - 1
+
+    def metadata_delete(self, mdata: Metadata) -> None:
+        """marks every ledger entry for the deleted name, including
+        unchanged reloads, in place. the ledger keeps them: it is the
+        history."""
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
+        if mdata.change is None:
+            raise ValueError("Metadata has no delete change")
+        jdata = self.manifest
+        marked = leut.mark_deleted(
+            jdata=jdata,
+            name_key="named_paths_name",
+            name=mdata.named_paths_name,
+            change=mdata.change,
+            deleted=Registrar.DELETED,
+        )
+        if len(marked) > 0:
+            with DataFileWriter(path=self.manifest_path) as file:
+                j = json.dumps(jdata, indent=2)
+                file.sink.write(j)
+                file.sink.flush()
+        mdata.ledger_entries = marked

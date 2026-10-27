@@ -15,6 +15,13 @@ class Registrar(ABC):
     #
     COMPLETE = "complete"
     FAILED = "failed"
+    #
+    # the root ledger lifecycle of an entry: what has happened to it since
+    # it was written. every new entry is ACTIVE; like status, none is
+    # implied by absence.
+    #
+    ACTIVE = "active"
+    DELETED = "deleted"
 
     def __init__(self, csvpaths, result=None) -> None:
         #
@@ -116,15 +123,25 @@ class Registrar(ABC):
         update its copy. unlike a registration, the registrar's own failure
         always raises and stops the other listeners: a patch is a direct
         request, and a failed one has nothing for them to mirror."""
+        self._distribute_registrar_first(mdata=mdata, method="metadata_patch")
+
+    def distribute_delete(self, mdata: Metadata) -> None:
+        """the removal of a named-file or named-paths group. like a patch,
+        the registrar itself goes first: it records the deleted versions on
+        mdata and removes the name's folder. its failure always raises and
+        stops the other listeners."""
+        self._distribute_registrar_first(mdata=mdata, method="metadata_delete")
+
+    def _distribute_registrar_first(self, *, mdata: Metadata, method: str) -> None:
         if mdata is None:
             raise InputException("Metadata cannot be None")
-        for lst, patch in self._listeners_with(method="metadata_patch"):
+        for lst, m in self._listeners_with(method=method):
             try:
-                patch(mdata)
+                m(mdata)
             except Exception as ex:
                 if lst is self:
                     if self.csvpaths:
-                        self.csvpaths.logger.error(f"Patch failed: {ex}")
+                        self.csvpaths.logger.error(f"{method} failed: {ex}")
                     raise
                 self._listener_failed(lst=lst, ex=ex)
 

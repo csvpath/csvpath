@@ -149,6 +149,44 @@ class FileRegistrar(Registrar, Listener):
         mdata.manifest_entry = entry
         mdata.change = change
 
+    def delete_named_file(self, *, name: str) -> None:
+        """removes a named-file as a whole. the removal is done by
+        metadata_delete, via distribute_delete, so the root ledger and
+        listeners that mirror manifests (e.g. SQL) can mark their copies."""
+        if name is None:
+            raise ValueError("Name cannot be None")
+        if not isinstance(name, str):
+            raise TypeError(f"Name must be a str, not {type(name).__name__}")
+        if name.strip() == "":
+            raise ValueError("Name cannot be empty")
+        mdata = FileMetadata(self.csvpaths.config)
+        mdata.named_file_name = name
+        self.distribute_delete(mdata)
+
+    def metadata_delete(self, mdata: Metadata) -> None:
+        """sets mdata.manifest_entries to the named-file's versions and
+        mdata.change to the delete, then removes the named-file's folder,
+        its manifest with it"""
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
+        name = mdata.named_file_name
+        home = Nos(self.csvpaths.file_manager.named_files_dir).join(name)
+        nos = Nos(home)
+        if not nos.dir_exists():
+            raise InputException(f"Named-file {name} not found")
+        mp = Nos(home).join("manifest.json")
+        mdata.manifest_entries = []
+        if Nos(mp).exists():
+            mdata.manifest_entries = self.get_manifest(mp) or []
+            #
+            # the cached manifest goes with the folder
+            #
+            self.intermediary.clear(mp)
+        mdata.name_home = home
+        mdata.manifest_path = mp
+        mdata.change = {"time": mdata.time_string, "change": "delete"}
+        nos.remove()
+
     def _patch_blob(self, mani: dict, index: int, patch: dict) -> None:
         old = mani[index]["file"]
         newhome = f"{os.path.dirname(mani[index]['file_home'])}/{patch['file_name']}"

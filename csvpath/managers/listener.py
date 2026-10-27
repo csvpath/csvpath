@@ -44,6 +44,16 @@ class Listener(ABC):
         because most listeners report events and a patch is not one."""
         return None
 
+    def metadata_delete(self, mdata: Metadata) -> None:
+        """the removal of a named-file or named-paths group as a whole.
+        Registrar.distribute_delete calls the primary registrar first,
+        which sets mdata.manifest_entries to the deleted versions and
+        removes the name's folder; the root ledger writer then marks the
+        name's ledger entries deleted and sets mdata.ledger_entries, and
+        listeners that mirror manifests mark their copies. the default is
+        to ignore deletes."""
+        return None
+
     def metadata_failure(self, mdata: Metadata) -> None:
         """a registration that failed, e.g. a named-file whose path cannot
         be loaded. Registrar.distribute_failure sends it to listeners that

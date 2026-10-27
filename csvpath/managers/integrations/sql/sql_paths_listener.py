@@ -4,6 +4,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from csvpath.managers.metadata import Metadata
+from csvpath.managers.registrar import Registrar
 from .sql_listener import SqlListener
 from .updates import Updates
 
@@ -58,6 +59,18 @@ class SqlPathsListener(SqlListener):
             )
             self._upsert_ledger_row(table=self.named_paths_ledger, row=row)
 
+    def metadata_delete(self, mdata: Metadata) -> None:
+        """marks the deleted versions' rows and the marked ledger
+        entries' rows deleted"""
+        if not self.csvpaths:
+            raise RuntimeError("CsvPaths cannot be None")
+        self._mark_deleted(
+            mdata=mdata,
+            version_table=self.named_paths,
+            ledger_table=self.named_paths_ledger,
+            name=mdata.named_paths_name,
+        )
+
     def _write_named_paths(self, mdata: Metadata) -> None:
         named_paths_data = {
             "uuid": mdata.uuid_string,
@@ -79,6 +92,7 @@ class SqlPathsListener(SqlListener):
             "template": mdata.template,
             "manifest_entry": json.dumps(mdata.manifest_entry),
             "manifest_index": mdata.manifest_index,
+            "lifecycle": Registrar.ACTIVE,
         }
         self._upsert_named_paths(named_paths_data)
 
@@ -129,4 +143,5 @@ class SqlPathsListener(SqlListener):
             "template": named_paths_data.get("template"),
             "manifest_entry": named_paths_data.get("manifest_entry"),
             "manifest_index": named_paths_data.get("manifest_index"),
+            "lifecycle": named_paths_data.get("lifecycle"),
         }
