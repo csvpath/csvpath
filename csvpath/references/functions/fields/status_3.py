@@ -48,14 +48,20 @@ class Status3(Function3):
     # reads the global ledger directly rather than going through the
     # ordinary per-name-manifest candidate pipeline at all.
     #
+    # 2026-10-26 (harmonization, David): every FILES ledger entry now has
+    # a status -- "complete" (Registrar.COMPLETE, the same string as
+    # RESULTS) or "failed" (Registrar.FAILED, formerly "Registration
+    # failed"). none is implied by absence, so older entries with no
+    # status match neither. still ledger-only: LEDGER_KEY, not KEY.
+    #
     NAME = "status"
     SUMMARY = (
         "RESULTS: the lifecycle status of the resolved run -- "
-        "'started' or 'complete', bare only. FILES: a failure message "
-        "('Registration failed') recorded in the global arrivals "
-        "ledger -- always takes a string argument there, GATE-ing a "
-        "bare chain read directly from that ledger (e.g. ':status("
-        "\"Registration failed\"):named_file_name(\"orders\")')."
+        "'started' or 'complete', bare only. FILES: the status of a "
+        "registration recorded in the global arrivals ledger -- "
+        "'complete' or 'failed' -- always takes a string argument "
+        "there, GATE-ing a bare chain read directly from that ledger "
+        "(e.g. ':status(\"failed\"):named_file_name(\"orders\")')."
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.RESULTS, Reference3.FILES)

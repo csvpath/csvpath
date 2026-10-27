@@ -247,7 +247,7 @@ $acme.files.:uuid("ab37-fef3...")
 ### Names
 
 #### Select named-files registrations for `orders` that failed
-$*.files.:status("Registration failed"):named_file_name("orders")
+$*.files.:status("failed"):named_file_name("orders")
 
 #### Select the first run for each template for runs having the
 named-file name `orders`:

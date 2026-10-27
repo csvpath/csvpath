@@ -86,10 +86,12 @@ class TestCsvPathsManagersPathsManager(unittest.TestCase):
         mdata.source_path = "a/b/c"
         mdata.fingerprint = "123"
         mdata.manifest_path = os.path.join("root", "aname", "manifest.json")
+        mdata.status = "complete"
         #
         # check mdata to mani transfer
         #
         mani = reg._prep_update(mdata)
+        assert mani["status"] == "complete"
         assert mani["paths_manifest"] == os.path.join("root", "aname", "manifest.json")
         assert mani["manifest_path"] == os.path.join(
             paths.config.get(section="inputs", name="csvpaths"), "manifest.json"

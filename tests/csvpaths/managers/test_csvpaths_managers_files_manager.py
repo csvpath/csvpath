@@ -47,9 +47,18 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         mpath = paths.config.get(section="inputs", name="files")
         mpath = Nos(mpath).join("manifest.json")
 
-        self._find_in_mani(
-            paths, {"status": ["Registration failed", None], "template": [-9999]}
-        )
+        self._find_in_mani(paths, {"template": [-9999]})
+        assert self._last_in_mani(paths)["status"] == "failed"
+
+    def _last_in_mani(self, csvpaths) -> dict:
+        #
+        # the entry just written. the shared ledger may hold older entries
+        # written before every entry had a status
+        #
+        mpath = csvpaths.config.get(section="inputs", name="files")
+        mpath = Nos(mpath).join("manifest.json")
+        with DataFileReader(mpath) as file:
+            return json.load(file.source)[-1]
 
     def _find_in_mani(self, csvpaths, keys: dict[str, str]) -> list[bool]:
         mpath = csvpaths.config.get(section="inputs", name="files")
@@ -202,9 +211,8 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         #
         # check that we picked up a template key
         #
-        self._find_in_mani(
-            paths, {"status": ["Registration failed", None], "template": [-9999]}
-        )
+        self._find_in_mani(paths, {"template": [-9999]})
+        assert self._last_in_mani(paths)["status"] == "complete"
 
         #
         # clear what we just added
@@ -256,10 +264,12 @@ class TestCsvPathsManagersFileManager(unittest.TestCase):
         mdata.file_name = "version"
         mdata.mark = "#"
         mdata.type = "files"
+        mdata.status = "complete"
         #
         # check mdata to mani transfer
         #
         mani = reg._prep_update(mdata)
+        assert mani["status"] == "complete"
         #
         # this will have been reset from the file home to the root of files
         #

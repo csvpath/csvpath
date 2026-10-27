@@ -43,10 +43,10 @@ scenarios:
       - orders
     notes: >
       The attempted path is the empty string -- an agent that finds the raw
-      "Registration failed" ledger entry (in
+      "failed" ledger entry (in
       tests/corpus/data/inputs/named_files/manifest.json) should be able to
       report this; one that only tries a reference-expression query (e.g.
-      ":status(\"Registration failed\")") will currently hit a
+      ":status(\"failed\")") will currently hit a
       ReferenceException3 instead (see test_normative_examples.py's
       TestKnownGaps) and must fall back to reading the manifest directly to
       answer this scenario at all -- a deliberate test of resourcefulness,

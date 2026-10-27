@@ -154,6 +154,7 @@ class PathsRegistrar(Registrar, Listener):
             self.intermediary.put_json(mdata.manifest_path, jdata)
             mdata.manifest_entry = m
             mdata.manifest_index = len(jdata) - 1
+            mdata.status = Registrar.COMPLETE
             #
             # copy an ODCS contract into the group home only after the
             # manifest is written, so a failed copy cannot cost the group

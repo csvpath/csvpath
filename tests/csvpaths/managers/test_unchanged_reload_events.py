@@ -1,4 +1,5 @@
-"""Unchanged named-paths reloads are marked (harmonization PR 4).
+"""Unchanged named-paths reloads are marked (harmonization PR 4). Every
+other load is "complete" (PR 4.5).
 Loading a group whose fingerprint matches its most recent version writes
 no version, but the root ledger still records the load. That entry now
 has status "unchanged" and version_uuid, the uuid of the version it
@@ -21,6 +22,7 @@ from csvpath.managers.paths.paths_registrar import PathsRegistrar
 from csvpath.util.box import Box
 
 UNCHANGED = "unchanged"
+COMPLETE = "complete"
 
 
 def _clear_engine() -> None:
@@ -126,10 +128,10 @@ def test_the_unchanged_status(plain):
 # ===================
 
 
-def test_a_first_load_is_not_marked(plain, tmp_path):
+def test_a_first_load_is_complete(plain, tmp_path):
     _load(plain, tmp_path)
     entry = _ledger(plain)[0]
-    assert "status" not in entry
+    assert entry["status"] == COMPLETE
     assert "version_uuid" not in entry
 
 
@@ -143,7 +145,7 @@ def test_an_unchanged_reload_is_marked_and_names_its_version(plain, tmp_path):
     assert ledger[1]["status"] == UNCHANGED
     assert ledger[1]["version_uuid"] == versions[0]["uuid"]
     assert ledger[1]["uuid"] != versions[0]["uuid"]
-    assert "status" not in ledger[0]
+    assert ledger[0]["status"] == COMPLETE
 
 
 def test_repeated_reloads_all_name_the_same_version(plain, tmp_path):
@@ -151,17 +153,17 @@ def test_repeated_reloads_all_name_the_same_version(plain, tmp_path):
         _load(plain, tmp_path)
     ledger = _ledger(plain)
     u1 = _versions(plain)[0]["uuid"]
-    assert [e.get("status") for e in ledger] == [None, UNCHANGED, UNCHANGED]
+    assert [e["status"] for e in ledger] == [COMPLETE, UNCHANGED, UNCHANGED]
     assert [e.get("version_uuid") for e in ledger] == [None, u1, u1]
 
 
-def test_a_changed_reload_is_not_marked(plain, tmp_path):
+def test_a_changed_reload_is_complete(plain, tmp_path):
     _load(plain, tmp_path)
     _load(plain, tmp_path, statement="$[*][no()]")
     ledger = _ledger(plain)
     assert len(_versions(plain)) == 2
     for entry in ledger:
-        assert "status" not in entry
+        assert entry["status"] == COMPLETE
         assert "version_uuid" not in entry
 
 
@@ -173,7 +175,7 @@ def test_a_return_to_an_earlier_group_is_a_new_version(plain, tmp_path):
     _load(plain, tmp_path, statement="$[*][no()]")
     _load(plain, tmp_path)
     assert len(_versions(plain)) == 3
-    assert [e.get("status") for e in _ledger(plain)] == [None, None, None]
+    assert [e["status"] for e in _ledger(plain)] == [COMPLETE] * 3
 
 
 def test_a_reload_names_the_most_recent_version(plain, tmp_path):
@@ -203,7 +205,7 @@ def test_other_listeners_see_the_marked_metadata(plain, tmp_path):
     _load(plain, tmp_path)
     assert len(rec.updates) == 2
     first, second = rec.updates
-    assert first.status is None
+    assert first.status == COMPLETE
     assert first.version_uuid is None
     assert second.status == UNCHANGED
     assert second.version_uuid == _versions(plain)[0]["uuid"]
@@ -260,7 +262,7 @@ def test_sql_mirrors_an_unchanged_reload(sql, tmp_path):
     u1 = _versions(sql)[0]["uuid"]
     assert [json.loads(r["ledger_entry"]) for r in rows] == _ledger(sql)
     assert [r["ledger_index"] for r in rows] == [0, 1]
-    assert [r["status"] for r in rows] == [None, UNCHANGED]
+    assert [r["status"] for r in rows] == [COMPLETE, UNCHANGED]
     assert [r["version_uuid"] for r in rows] == [u1, u1]
     assert rows[0]["uuid"] == u1
     assert rows[1]["uuid"] == _ledger(sql)[1]["uuid"]
@@ -277,7 +279,7 @@ def test_sql_changed_reloads_link_their_own_versions(sql, tmp_path):
     _load(sql, tmp_path)
     _load(sql, tmp_path, statement="$[*][no()]")
     rows = _ledger_rows(sql)
-    assert [r["status"] for r in rows] == [None, None]
+    assert [r["status"] for r in rows] == [COMPLETE, COMPLETE]
     assert [r["version_uuid"] for r in rows] == [r["uuid"] for r in rows]
     assert len(_rows(sql, sql="select uuid from named_paths")) == 2
 

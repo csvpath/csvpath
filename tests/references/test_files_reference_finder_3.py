@@ -2134,20 +2134,20 @@ class TestTypeGate:
 STATUS_LEDGER = [
     {
         "named_file_name": "orders",
-        "status": "Registration failed",
+        "status": "failed",
         "uuid": "fail-1",
         "file_path": None,
         "origin_path": "/tmp/orders1.csv",
     },
     {
         "named_file_name": "orders",
-        "status": None,
+        "status": "complete",
         "uuid": "ok-1",
         "file_path": "inputs/named_files/orders/orders.csv/aaaa.csv",
     },
     {
         "named_file_name": "invoices",
-        "status": "Registration failed",
+        "status": "failed",
         "uuid": "fail-2",
         "file_path": None,
         "origin_path": "/tmp/invoices1.csv",
@@ -2159,11 +2159,11 @@ class TestStatusGate:
     # ':status()' widened 2026-10-18 to also cover FILES -- the global
     # arrivals ledger's own "status" field (a failure message),
     # confirmed live by tracing the real registration code
-    # (file_manager.py's own "mdata.status = 'Registration failed'",
+    # (file_manager.py's own "mdata.status = 'failed'",
     # written only to files_root_manifest, never a per-name manifest).
     # normative_reference_examples.txt's own worked example: "select
     # named-files registrations for orders that failed" --
-    # "$*.files.:status(\"Registration failed\"):named_file_name(
+    # "$*.files.:status(\"failed\"):named_file_name(
     # \"orders\")". Both the '*' form AND the literal-root form are
     # built -- David confirmed the literal form is at least as common
     # an operational need ("if you were inspecting a run that should
@@ -2171,7 +2171,7 @@ class TestStatusGate:
     # looking for... we know those high risk files by name").
     def test_star_root_matches_the_normative_example(self):
         results = _finder(
-            '$*.files.:status("Registration failed"):named_file_name("orders")',
+            '$*.files.:status("failed"):named_file_name("orders")',
             TYPE_HOME,
             [],
             ledger=STATUS_LEDGER,
@@ -2183,13 +2183,13 @@ class TestStatusGate:
 
     def test_star_root_bare_status_alone(self):
         results = _finder(
-            '$*.files.:status("Registration failed")', TYPE_HOME, [], ledger=STATUS_LEDGER
+            '$*.files.:status("failed")', TYPE_HOME, [], ledger=STATUS_LEDGER
         ).query()
         assert sorted(results.uuids) == ["fail-1", "fail-2"]
 
     def test_literal_root_is_just_as_real_a_need(self):
         results = _finder(
-            '$orders.files.:status("Registration failed")',
+            '$orders.files.:status("failed")',
             TYPE_HOME,
             [],
             ledger=STATUS_LEDGER,
@@ -2198,7 +2198,7 @@ class TestStatusGate:
 
     def test_literal_root_combined_with_named_file_name_chain(self):
         results = _finder(
-            '$orders.files.:status("Registration failed"):named_file_name("orders")',
+            '$orders.files.:status("failed"):named_file_name("orders")',
             TYPE_HOME,
             [],
             ledger=STATUS_LEDGER,
@@ -2210,7 +2210,7 @@ class TestStatusGate:
         # scoped to "orders" -- confirms the literal root genuinely
         # narrows, not just filters client-side afterward.
         results = _finder(
-            '$invoices.files.:status("Registration failed"):named_file_name("orders")',
+            '$invoices.files.:status("failed"):named_file_name("orders")',
             TYPE_HOME,
             [],
             ledger=STATUS_LEDGER,
@@ -2232,7 +2232,7 @@ class TestStatusGate:
         # at the selected entry (see _pointer_into_status_matches()'s
         # own docstring).
         results = _finder(
-            '$*.files.:status("Registration failed").:last()',
+            '$*.files.:status("failed").:last()',
             TYPE_HOME,
             [],
             ledger=STATUS_LEDGER,
@@ -2241,7 +2241,7 @@ class TestStatusGate:
 
     def test_name_three_pointer_literal_root(self):
         results = _finder(
-            '$orders.files.:status("Registration failed").:first()',
+            '$orders.files.:status("failed").:first()',
             TYPE_HOME,
             [],
             ledger=STATUS_LEDGER,
@@ -2250,7 +2250,7 @@ class TestStatusGate:
 
     def test_name_three_index_pointer(self):
         results = _finder(
-            '$*.files.:status("Registration failed").:index(1)',
+            '$*.files.:status("failed").:index(1)',
             TYPE_HOME,
             [],
             ledger=STATUS_LEDGER,
@@ -2259,7 +2259,7 @@ class TestStatusGate:
 
     def test_name_three_pointer_narrows_a_named_file_name_chain_too(self):
         results = _finder(
-            '$*.files.:status("Registration failed"):named_file_name("orders").:first()',
+            '$*.files.:status("failed"):named_file_name("orders").:first()',
             TYPE_HOME,
             [],
             ledger=STATUS_LEDGER,
@@ -2282,7 +2282,7 @@ class TestStatusGate:
         # pointer is supported.
         with pytest.raises(ReferenceException3):
             _finder(
-                '$*.files.:status("Registration failed").:last():uuid()',
+                '$*.files.:status("failed").:last():uuid()',
                 TYPE_HOME,
                 [],
                 ledger=STATUS_LEDGER,
@@ -2291,7 +2291,7 @@ class TestStatusGate:
     def test_name_three_literal_body_is_rejected(self):
         with pytest.raises(ReferenceException3):
             _finder(
-                '$orders.files.:status("Registration failed").some_fingerprint',
+                '$orders.files.:status("failed").some_fingerprint',
                 TYPE_HOME,
                 [],
                 ledger=STATUS_LEDGER,

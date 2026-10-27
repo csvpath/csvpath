@@ -232,6 +232,7 @@ def test_a_failed_ledger_write_leaves_the_fields_unset(no_sql, monkeypatch):
     monkeypatch.setattr(lst, "get_manifest", lambda mpath: [])
     mdata = FileMetadata(no_sql.config)
     mdata.named_file_name = "orders"
+    mdata.status = "complete"
     with pytest.raises(OSError):
         lst.metadata_update(mdata)
     assert mdata.ledger_entry is None
@@ -299,8 +300,8 @@ def test_an_unchanged_reload_has_a_ledger_row_but_no_version(paths, tmp_path):
 def test_status_and_lifecycle_are_read_from_the_entry(paths, tmp_path):
     _register(paths, tmp_path)
     row = _ledger_rows(paths, table="named_file_ledger")[0]
-    assert "status" not in json.loads(row["ledger_entry"])
-    assert row["status"] is None
+    assert json.loads(row["ledger_entry"])["status"] == "complete"
+    assert row["status"] == "complete"
     assert row["lifecycle"] is None
 
 
@@ -345,8 +346,8 @@ def test_a_failed_ledger_row_raises_required_under_on(paths, tmp_path, policy):
     #
     ledger = _files_ledger(paths)
     assert len(ledger) == 2
-    assert "status" not in ledger[0]
-    assert ledger[1]["status"] == "Registration failed"
+    assert ledger[0]["status"] == "complete"
+    assert ledger[1]["status"] == "failed"
     assert ledger[0]["uuid"] != ledger[1]["uuid"]
     assert ledger[1]["registration_uuid"] == ledger[0]["uuid"]
 
@@ -406,7 +407,7 @@ def test_ledger_row_rejects_bad_columns(paths, key, bad):
 
 def test_ledger_row_values(paths):
     mdata = FileMetadata(paths.config)
-    mdata.ledger_entry = {"uuid": "u", "status": "Registration failed"}
+    mdata.ledger_entry = {"uuid": "u", "status": "failed"}
     mdata.ledger_index = 4
     row = SqlFileListener(config=paths.config)._ledger_row(**_row_args(mdata))
     assert row["uuid"] == "u"
@@ -414,7 +415,7 @@ def test_ledger_row_values(paths):
     assert row["named_file_name"] == "orders"
     assert json.loads(row["ledger_entry"]) == mdata.ledger_entry
     assert row["ledger_index"] == 4
-    assert row["status"] == "Registration failed"
+    assert row["status"] == "failed"
     assert row["lifecycle"] is None
     assert row["version_uuid"] is None
     mdata.manifest_entry = {"uuid": "v"}

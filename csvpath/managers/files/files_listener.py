@@ -50,6 +50,11 @@ class FilesListener(Listener):  # Registrar,
         return mani
 
     def _prep_update(self, mdata: Metadata) -> dict:
+        #
+        # every ledger entry has a status; none is implied by absence
+        #
+        if mdata.status is None:
+            raise ValueError("A named-files ledger entry requires a status")
         mani = self._core_from_metadata(mdata)
         mani["type"] = mdata.type
         mani["time"] = mdata.time_string
@@ -66,8 +71,7 @@ class FilesListener(Listener):  # Registrar,
         if mdata.mark is not None:
             mani["mark"] = mdata.mark
         mani["manifest_path"] = self.manifest_path()
-        if hasattr(mdata, "status"):
-            mani["status"] = mdata.status
+        mani["status"] = mdata.status
         if getattr(mdata, "registration_uuid", None) is not None:
             mani["registration_uuid"] = mdata.registration_uuid
         return mani
