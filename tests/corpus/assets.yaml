@@ -88,7 +88,7 @@ named_files:
 # merely-nonexistent-but-plausible path does NOT trigger this -- can_load()
 # is a policy check, not an existence check, so it silently matches zero
 # files instead). The empty-path case raises AND, before raising, writes a
-# "Registration failed" entry to the global arrivals ledger -- exactly the
+# "failed" entry to the global arrivals ledger -- exactly the
 # shape FilesReferenceFinder3._bare_status_gate_chain() reads. generate.py
 # catches the expected ValueError so the generator script itself doesn't
 # crash.

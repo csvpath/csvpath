@@ -15,9 +15,10 @@ class PathsMetadata(Metadata):
         self.source_path: str = None
         self.template: str = None
         #
-        # set only for an unchanged reload: status is
-        # PathsRegistrar.UNCHANGED and version_uuid is the version the
-        # load matched. both go into the root ledger entry.
+        # status is the root ledger status: Registrar.COMPLETE for a new
+        # version, PathsRegistrar.UNCHANGED for an unchanged reload. set by
+        # the registrar; the ledger writer requires it. version_uuid is set
+        # only for an unchanged reload: the version the load matched.
         #
         self.status: str | None = None
         self.version_uuid: str | None = None

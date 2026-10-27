@@ -751,7 +751,7 @@ genuinely uncertain is marked below rather than guessed.
   FILES/CSVPATHS/RESULTS rows via each finder's own `query()` tests;
   Rule 1a/1b rows via the global-ledger test classes cited under
   5.6/5.7 above — including the FILES-ledger `origin_path` fallback
-  case caught live this week (a "Registration failed" entry has no
+  case caught live this week (a "failed" entry has no
   real `file_path`, confirmed by `TestStatusGate::test_star_root_matches_the_normative_example`).
 
 ---

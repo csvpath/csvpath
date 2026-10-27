@@ -33,7 +33,7 @@ class NamedFileName3(Function3):
     # LEDGER_KEY added 2026-10-18, alongside ':status()'s own FILES
     # build -- a SECOND, genuinely different FILES position: chained
     # onto a bare ':status(...)' GATE reading the global arrivals
-    # ledger directly (e.g. ":status(\"Registration failed\"):
+    # ledger directly (e.g. ":status(\"failed\"):
     # named_file_name(\"orders\")", normative_reference_examples.txt's
     # own worked example), this reads the real "named_file_name" field
     # the ledger already carries on every entry (confirmed live --

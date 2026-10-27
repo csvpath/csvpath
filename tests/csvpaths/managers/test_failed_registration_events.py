@@ -27,7 +27,8 @@ from csvpath.util.box import Box
 from csvpath.util.exceptions import RequiredListenerException
 
 NO_RAISE_POLICY = "collect, print"
-FAILED = "Registration failed"
+FAILED = "failed"
+COMPLETE = "complete"
 
 
 def _clear_engine() -> None:
@@ -212,7 +213,7 @@ def test_a_late_failure_does_not_reuse_the_arrival_uuid(plain, tmp_path):
         _register(plain, tmp_path)
     ledger = _ledger(plain)
     assert len(ledger) == 2
-    assert "status" not in ledger[0]
+    assert ledger[0]["status"] == COMPLETE
     assert ledger[1]["status"] == FAILED
     assert ledger[0]["uuid"] != ledger[1]["uuid"]
     assert ledger[1]["registration_uuid"] == ledger[0]["uuid"]
@@ -315,7 +316,7 @@ def test_sql_ledger_rows_equal_the_json_ledger_over_mixed_events(sql, tmp_path):
     rows = _rows(sql, sql="select * from named_file_ledger order by ledger_index")
     assert [json.loads(r["ledger_entry"]) for r in rows] == _ledger(sql)
     assert [r["ledger_index"] for r in rows] == [0, 1, 2]
-    assert [r["status"] for r in rows] == [None, FAILED, None]
+    assert [r["status"] for r in rows] == [COMPLETE, FAILED, COMPLETE]
     assert rows[1]["version_uuid"] is None
     assert rows[0]["version_uuid"] == rows[0]["uuid"]
 

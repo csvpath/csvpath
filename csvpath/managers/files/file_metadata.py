@@ -32,6 +32,11 @@ class FileMetadata(Metadata):
         #
         self.registration_uuid: str | None = None
         #
+        # the root ledger status: Registrar.COMPLETE or Registrar.FAILED.
+        # set by whoever distributes the event; the ledger writer requires it.
+        #
+        self.status: str | None = None
+        #
         # a requested change to an existing manifest entry. see
         # FileRegistrar.patch_named_file. None for a registration.
         #

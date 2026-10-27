@@ -47,6 +47,11 @@ class PathsListener(Listener):
         return mf
 
     def _prep_update(self, mdata: Metadata) -> dict:
+        #
+        # every ledger entry has a status; none is implied by absence
+        #
+        if mdata.status is None:
+            raise ValueError("A named-paths ledger entry requires a status")
         mani = {}
         mani["named_paths_name"] = mdata.named_paths_name
         mani["named_paths_home"] = mdata.named_paths_home
@@ -61,8 +66,7 @@ class PathsListener(Listener):
             mani["hostname"] = mdata.hostname
         if mdata.ip_address:
             mani["ip_address"] = mdata.ip_address
-        if getattr(mdata, "status", None) is not None:
-            mani["status"] = mdata.status
+        mani["status"] = mdata.status
         if getattr(mdata, "version_uuid", None) is not None:
             mani["version_uuid"] = mdata.version_uuid
         mani["paths_manifest"] = mdata.manifest_path

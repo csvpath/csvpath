@@ -160,7 +160,7 @@
     "name_home": null,
     "template": "",
     "manifest_path": "tests/corpus/data/inputs/named_files/manifest.json",
-    "status": "Registration failed"
+    "status": "failed"
   },
   {
     "time": "2026-09-06T19:17:06.872334+00:00",

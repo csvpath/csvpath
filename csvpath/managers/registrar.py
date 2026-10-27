@@ -7,6 +7,15 @@ from ..util.class_loader import ClassLoader
 
 
 class Registrar(ABC):
+    #
+    # the root ledger status of a registration or load that succeeded, or
+    # failed. every ledger entry has a status; none is implied by absence.
+    # COMPLETE is the same string as ResultsRegistrar.COMPLETE, so
+    # :status("complete") means the same thing for every datatype.
+    #
+    COMPLETE = "complete"
+    FAILED = "failed"
+
     def __init__(self, csvpaths, result=None) -> None:
         #
         # what was the thinking here? should we make this an

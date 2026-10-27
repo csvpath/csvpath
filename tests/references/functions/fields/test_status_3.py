@@ -37,14 +37,14 @@ def test_no_arg_is_valid():
 
 class TestArgument:
     # ARG_TYPES widened 2026-10-18 from () -- FILES' own worked example
-    # ("$*.files.:status(\"Registration failed\"):named_file_name(
+    # ("$*.files.:status(\"failed\"):named_file_name(
     # \"orders\")") always carries a string argument. A side effect,
     # confirmed consistent with every other such widening this
     # session: RESULTS' own already-generic field_call/_matches_field_
     # predicate GATE mechanism picks this up for free too (e.g.
     # ":status(\"started\")" as a RESULTS GATE), not just FILES.
     def test_string_arg_is_valid(self):
-        Status3(arg="Registration failed").check_valid()  # should not raise
+        Status3(arg="failed").check_valid()  # should not raise
 
     def test_int_arg_is_rejected(self):
         with pytest.raises(ReferenceException3):

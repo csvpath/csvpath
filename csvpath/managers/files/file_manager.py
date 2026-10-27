@@ -25,6 +25,7 @@ from .file_activator import NamedFileActivator
 from .file_names_rules import FileNamesRules as rules
 from .file_descriptor import Config
 from ..metadata import Metadata
+from ..registrar import Registrar
 
 from csvpath.util.xlsx.xlsx_reader_helper import XlsxReaderHelper
 
@@ -983,7 +984,7 @@ class FileManager:
         # failed after the ledger was written.
         #
         mdata.registration_uuid = data.get("registration_uuid")
-        mdata.status = "Registration failed"
+        mdata.status = Registrar.FAILED
         self.csvpaths.logger.warning(
             "[%s] Registration failed for %s", mdata.named_file_name, data
         )

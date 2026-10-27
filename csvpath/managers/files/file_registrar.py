@@ -275,6 +275,7 @@ class FileRegistrar(Registrar, Listener):
                     "File has already been registered: %s", mdata.name_home
                 )
                 return
+        mdata.status = Registrar.COMPLETE
         self.distribute_update(mdata)
 
     def type_of_file(self, home: str) -> str:

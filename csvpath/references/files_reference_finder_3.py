@@ -1853,8 +1853,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
         ':named_file_name("orders")'), each ALSO carrying its own
         argument -- or None if this shape does not apply. Added
         2026-10-18 for the normative doc's own "$*.files.:status(
-        \"Registration failed\"):named_file_name(\"orders\")" ("select
-        named-files registrations for orders that failed").
+        \"failed\"):named_file_name(\"orders\")" ("select named-files
+        registrations for orders that failed"; the status was
+        "Registration failed" until 2026-10-26).
 
         Named/narrow, matching `_bare_manifest_field_call()`'s own
         established style in this file, rather than the more generic
@@ -1906,8 +1907,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
     @staticmethod
     def _filter_ledger_by_gate_chain(ledger: list, chain: list) -> list:
         """every global-ledger entry matching ALL of `chain`'s own
-        GATE arguments (AND-combined) -- e.g. ':status("Registration
-        failed"):named_file_name("orders")' keeps only entries where
+        GATE arguments (AND-combined) -- e.g. ':status("failed"):
+        named_file_name("orders")' keeps only entries where
         BOTH match. Added 2026-10-18 alongside `_bare_status_gate_
         chain()`, the only current producer of `chain` -- reads each
         member's own value directly off the raw ledger dict via
@@ -1991,7 +1992,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         """the real path to use for a `ReferenceResult3` built from a
         raw global-ledger entry -- added 2026-10-18, caught live before
         shipping: `ReferenceResult3` itself forbids a None/empty path,
-        but a "Registration failed" entry's own "file_path" is always
+        but a "failed" entry's own "file_path" is always
         None (the registration never got that far -- confirmed against
         `file_manager.py`'s own `_registration_failed()`, which never
         sets `file_path`/`file_home`/`file_name` at all). Falls back to

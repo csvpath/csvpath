@@ -41,7 +41,7 @@ class TestCsvPathsExamplesOpenLineage(unittest.TestCase):
         mdata.origin_path = "x/y/z.json"
         mdata.template = ":0/:filename"
         mdata.uuid_string = str(uuid4())
-        mdata.status = "Registration failed"
+        mdata.status = "failed"
         mdata.file_path = "tmp/local/inputs/named_files/orders/x/z.json"
 
         sender = Sender()

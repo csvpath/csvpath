@@ -729,14 +729,14 @@ TYPE_MANIFEST = [
 STATUS_LEDGER = [
     {
         "named_file_name": "orders",
-        "status": "Registration failed",
+        "status": "failed",
         "uuid": "fail-1",
         "file_path": None,
         "origin_path": "/tmp/orders1.csv",
     },
     {
         "named_file_name": "invoices",
-        "status": "Registration failed",
+        "status": "failed",
         "uuid": "fail-2",
         "file_path": None,
         "origin_path": "/tmp/invoices1.csv",
@@ -769,10 +769,10 @@ class TestFunctionalTaxonomyGatesAndSelectors:
 
     def test_status_gate_combined_with_named_file_name(self):
         # doc: "Select named-files registrations for `orders` that
-        # failed" -- "$*.files.:status(\"Registration failed\"):
+        # failed" -- "$*.files.:status(\"failed\"):
         # named_file_name(\"orders\")".
         results = _finder(
-            '$*.files.:status("Registration failed"):named_file_name("orders")',
+            '$*.files.:status("failed"):named_file_name("orders")',
             ALPHA_HOME,
             [],
             ledger=STATUS_LEDGER,

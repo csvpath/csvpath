@@ -323,18 +323,18 @@ class TestStarTemplatePredicateFiltering:
 
 class TestStatusRegistrationFailed:
     """FilesReferenceFinder3._ledger_entry_result_path() previously raised
-    ReferenceException3 for a 'Registration failed' ledger entry whose
+    ReferenceException3 for a 'failed' ledger entry whose
     origin_path is the empty string -- the one input confirmed (by the
     real test_file_registration_failed test) to actually produce this
     status could never be reported back through
-    :status("Registration failed"). Fixed 2026-10-21: falls back to the
+    :status("failed"). Fixed 2026-10-21: falls back to the
     global arrivals ledger's own manifest.json when neither file_path nor
     a non-empty origin_path is available."""
 
     def test_status_registration_failed_is_selectable(self, csvpaths):
         r = _query(
             csvpaths, FilesReferenceFinder3,
-            '$orders.files.:status("Registration failed")',
+            '$orders.files.:status("failed")',
         )
         assert r.files == ["tests/corpus/data/inputs/named_files/manifest.json"]
 
