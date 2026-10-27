@@ -76,6 +76,65 @@ class FilesListener(Listener):  # Registrar,
             mani["registration_uuid"] = mdata.registration_uuid
         return mani
 
+    #
+    # the per-name entry's fields a patch changes, and the ledger's names
+    # for them
+    #
+    PATCHED_FIELDS = {
+        "type": "type",
+        "file": "file_path",
+        "file_home": "file_home",
+        "file_name": "file_name",
+    }
+
+    def metadata_patch(self, mdata: Metadata) -> None:
+        """applies a patch, already applied to the per-name entry, to the
+        arrival's ledger entry, in place. the entry records the change in
+        its own changes list, in its own field names. a ledger with no
+        arrival for the entry (e.g. one written before the ledger writer
+        was built in) is not backfilled."""
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
+        entry = mdata.manifest_entry
+        if entry is None or mdata.change is None:
+            raise ValueError("Metadata has no patched manifest entry")
+        manifest_path = self.manifest_path()
+        jdata = self.get_manifest(manifest_path)
+        index = self._arrival_index(jdata=jdata, uuid=entry["uuid"])
+        if index is None:
+            if self.csvpaths:
+                self.csvpaths.logger.warning(
+                    "No ledger entry for named-file %s entry %s; patch not written to the ledger",
+                    mdata.named_file_name,
+                    entry["uuid"],
+                )
+            return
+        ledger_entry = jdata[index]
+        prior = {}
+        for field, ledger_field in self.PATCHED_FIELDS.items():
+            if ledger_entry.get(ledger_field) != entry.get(field):
+                prior[ledger_field] = ledger_entry.get(ledger_field)
+                ledger_entry[ledger_field] = entry.get(field)
+        change = dict(mdata.change)
+        change["from"] = prior
+        ledger_entry.setdefault("changes", []).append(change)
+        with DataFileWriter(path=manifest_path, mode="w") as writer:
+            j = json.dumps(jdata, indent=2)
+            writer.sink.write(j)
+            writer.sink.flush()
+        mdata.ledger_entry = ledger_entry
+        mdata.ledger_index = index
+
+    def _arrival_index(self, *, jdata: list, uuid: str) -> int | None:
+        """the position of the arrival with uuid. ledgers from before
+        failures had their own uuid may also hold a failure with it."""
+        if uuid is None or not isinstance(uuid, str) or uuid.strip() == "":
+            raise ValueError("Uuid must be a non-empty str")
+        for i, e in enumerate(jdata):
+            if e.get("uuid") == uuid and e.get("file_path") is not None:
+                return i
+        return None
+
     def metadata_failure(self, mdata: Metadata) -> None:
         """a failed registration is a ledger entry like any other"""
         self.metadata_update(mdata)

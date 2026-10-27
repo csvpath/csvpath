@@ -249,15 +249,17 @@ def test_other_configured_listeners_still_load(tmp_path):
 # ===================
 
 
-def test_a_patch_leaves_the_files_ledger_alone(tmp_path):
+def test_a_patch_updates_the_files_ledger_in_place(tmp_path):
     #
-    # as before; patching the ledger entry is a later change
+    # the built-in writer patches the arrival's entry and adds none
+    # (harmonization PR 5; see test_patch_ledger_events.py)
     #
     p = _paths(tmp_path, groups="")
     _register(p, tmp_path)
-    before = json.dumps(_files_ledger(p))
     p.file_manager.registrar.patch_named_file(name="orders", patch={"type": "tsv"})
-    assert json.dumps(_files_ledger(p)) == before
+    ledger = _files_ledger(p)
+    assert len(ledger) == 1
+    assert ledger[0]["type"] == "tsv"
 
 
 # ===================

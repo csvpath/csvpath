@@ -44,6 +44,11 @@ class FileMetadata(Metadata):
         # the manifest position to patch. -1 is the latest entry.
         self.patch_index: int = -1
         #
+        # the change a patch made, as recorded in the entry's changes list:
+        # {"time", "change", "from"}. set by FileRegistrar.metadata_patch.
+        #
+        self.change: dict | None = None
+        #
         # named_file_ref is the most specific reference possible it is
         # in the form $name.files.fingerprint
         #
