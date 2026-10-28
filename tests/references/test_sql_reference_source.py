@@ -563,7 +563,7 @@ def test_duplicate_rows_raise(paths, tmp_path):
         "named_paths_uuid, named_paths_name, named_paths_home, "
         "named_file_uuid, named_file_name, named_file_home, named_file_path, "
         "named_file_size, named_file_last_change, named_file_fingerprint, "
-        "hostname, username, ip_address, manifest_path, manifest_entry "
+        "hostname, username, ip_address, manifest_path, manifest_entry, lifecycle "
         "from named_paths_group_run",
     )
     with pytest.raises(ValueError, match="2 SQL rows for run"):

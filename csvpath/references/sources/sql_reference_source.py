@@ -22,12 +22,15 @@ class SqlReferenceSource(FilesystemReferenceSource):
     by removing the folder; ledger reads keep deleted entries, as the
     JSON ledgers do.
 
-    a run's existence is still checked on the filesystem, as the
-    filesystem source does: SQL rows outlive a deleted run.
+    run and instance reads skip deleted rows, as the filesystem does by
+    removing the folder. a run's existence is still checked on the
+    filesystem too, as the filesystem source does (D4).
 
     on assumes SQL has mirrored the manifests from the start. rows from
-    before lifecycles (a NULL lifecycle), JSON ledger entries from before
-    the ledger mirrors, and runs from before manifest_entry are not seen.
+    before lifecycles (a NULL lifecycle, including every run and instance
+    row from before results deletes were events), JSON ledger entries from
+    before the ledger mirrors, and runs from before manifest_entry are not
+    seen.
     nothing is backfilled.
     """
 
@@ -197,6 +200,7 @@ class SqlReferenceSource(FilesystemReferenceSource):
             select(t.c.manifest_entry)
             .where(t.c.archive_root == self.csvpaths.config.archive_path)
             .where(t.c.run_home == run_dir)
+            .where(t.c.lifecycle == Registrar.ACTIVE)
         )
         return self._one(stmt, what="run", key=run_dir)
 
@@ -212,6 +216,7 @@ class SqlReferenceSource(FilesystemReferenceSource):
             .join(g, g.c.uuid == i.c.group_run_uuid)
             .where(g.c.archive_root == self.csvpaths.config.archive_path)
             .where(i.c.instance_home == instance_dir)
+            .where(i.c.lifecycle == Registrar.ACTIVE)
         )
         return self._one(stmt, what="instance", key=instance_dir)
 
@@ -224,6 +229,7 @@ class SqlReferenceSource(FilesystemReferenceSource):
             .join(g, g.c.uuid == i.c.group_run_uuid)
             .where(g.c.archive_root == self.csvpaths.config.archive_path)
             .where(g.c.run_home == run_dir)
+            .where(i.c.lifecycle == Registrar.ACTIVE)
         )
         #
         # an instance's directory is the last segment of its home

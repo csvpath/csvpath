@@ -2,9 +2,12 @@ import json
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
+from csvpath.util.exceptions import InputException
+from csvpath.util.ledger_utility import LedgerUtility as leut
 from ..listener import Listener
 from ..registrar import Registrar
 from ..metadata import Metadata
+from .run_metadata import RunMetadata
 
 
 class RunRegistrar(Registrar, Listener):
@@ -67,3 +70,47 @@ class RunRegistrar(Registrar, Listener):
         #
         mdata.ledger_entry = m
         mdata.ledger_index = len(mani) - 1
+
+    def delete_named_results(self, *, name: str) -> None:
+        """removes a named-results group's results, every run, as a whole.
+        the removal is done by metadata_delete, via distribute_delete, so
+        listeners that mirror the archive (e.g. SQL) can mark their
+        copies."""
+        if name is None:
+            raise ValueError("Name cannot be None")
+        if not isinstance(name, str):
+            raise TypeError(f"Name must be a str, not {type(name).__name__}")
+        if name.strip() == "":
+            raise ValueError("Name cannot be empty")
+        mdata = RunMetadata(self.csvpaths.config)
+        mdata.named_paths_name = name
+        self.distribute_delete(mdata)
+
+    def metadata_delete(self, mdata: Metadata) -> None:
+        """removes the group's results folder, then marks the group's
+        archive ledger entries deleted, in place, and sets
+        mdata.ledger_entries to them as written. the ledger keeps them: it
+        is the history. this registrar is also the archive ledger's
+        writer, so both happen here."""
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
+        name = mdata.named_paths_name
+        home = Nos(self.archive).join(name)
+        nos = Nos(home)
+        if not nos.dir_exists():
+            raise InputException(f"Named-results {name} not found")
+        mdata.run_home = home
+        mdata.change = {"time": mdata.time_string, "change": "delete"}
+        nos.remove()
+        mani = self.manifest
+        marked = leut.mark_deleted(
+            jdata=mani,
+            name_key="named_paths_name",
+            name=name,
+            change=mdata.change,
+            deleted=Registrar.DELETED,
+        )
+        if len(marked) > 0:
+            with DataFileWriter(path=self.manifest_path) as file:
+                json.dump(mani, file.sink, indent=2)
+        mdata.ledger_entries = marked

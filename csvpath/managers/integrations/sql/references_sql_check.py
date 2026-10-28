@@ -35,9 +35,10 @@ class ReferencesSqlCheck:
     INDEX_COLUMN = "manifest_index"
     INDEX_COLUMN_TABLES = ["named_file", "named_paths"]
     #
-    # the SQL reference source skips deleted versions by lifecycle
+    # the SQL reference source skips deleted versions and runs by lifecycle
     #
     LIFECYCLE_COLUMN = "lifecycle"
+    LIFECYCLE_COLUMN_TABLES = TABLES
     #
     # RESULTS reads are scoped by the archive root
     #
@@ -136,7 +137,10 @@ class ReferencesSqlCheck:
                 missing.append(f"table {table} has no {cls.ENTRY_COLUMN} column")
             if table in cls.INDEX_COLUMN_TABLES and cls.INDEX_COLUMN not in cols:
                 missing.append(f"table {table} has no {cls.INDEX_COLUMN} column")
-            if table in cls.INDEX_COLUMN_TABLES and cls.LIFECYCLE_COLUMN not in cols:
+            if (
+                table in cls.LIFECYCLE_COLUMN_TABLES
+                and cls.LIFECYCLE_COLUMN not in cols
+            ):
                 missing.append(f"table {table} has no {cls.LIFECYCLE_COLUMN} column")
             if (
                 table in cls.ARCHIVE_ROOT_COLUMN_TABLES

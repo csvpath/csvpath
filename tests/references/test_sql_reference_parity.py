@@ -100,6 +100,12 @@ def paths(tmp_path_factory):
     p.collect_paths(pathsname="acme", filename="orders")
     p.collect_paths(pathsname="beta", filename="people")
     p.collect_paths(pathsname="gamma", filename="orders")
+    #
+    # a results group run, then removed (4c-3)
+    #
+    _load(p, tmp, name="rgone", statements=[FIRST])
+    p.collect_paths(pathsname="rgone", filename="people")
+    p.results_manager.remove_named_results("rgone")
     yield p
     c.add_to_config(section="references", key="sql", value="off")
     _clear_engine()
@@ -261,6 +267,8 @@ RESULTS = [
     "$:regex(/^b/).results.:last()",
     "$:regex(/^g/).results.:flatten()",
     "$nope.results.:last()",
+    "$rgone.results.:last()",
+    "$rgone.results.:all()",
 ]
 
 
@@ -293,7 +301,11 @@ def test_most_references_resolve_to_something(paths):
 
 
 def test_deleted_names_are_gone_in_both_modes(paths):
-    for reference in ["$gone.files.:all()", "$xgone.csvpaths.:all()"]:
+    for reference in [
+        "$gone.files.:all()",
+        "$xgone.csvpaths.:all()",
+        "$rgone.results.:all()",
+    ]:
         off, on = _both(paths, reference)
         assert off == on
         assert off[0] == "raised" or len(off[1]) == 0

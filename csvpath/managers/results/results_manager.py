@@ -569,7 +569,15 @@ class ResultsManager:  # pylint: disable=C0115
             return
         nos = Nos(path)
         if nos.dir_exists():
-            nos.remove()
+            #
+            # the registrar removes the folder and distributes the delete.
+            # a reference name is resolved the way get_named_results_home
+            # resolves it.
+            #
+            if name[0:1] == "$":
+                name = ReferenceParser(name).root_major
+            rr = RunRegistrar(csvpaths=self.csvpaths, config=self.csvpaths.config)
+            rr.delete_named_results(name=name)
 
     #
     # @deprecated. use remove_named_results
