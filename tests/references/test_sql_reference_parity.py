@@ -6,11 +6,12 @@ templated named-file with several versions, a duplicate-bytes
 re-registration and a failed registration; a patched named-file; a
 named-file deleted and registered again; a deleted named-file; a
 named-paths group with several versions and an unchanged reload; a second
-group; a deleted group.
+group; a deleted group; runs of three groups, one of them templated and
+with an id-less statement.
 
 Each reference is then resolved twice on the same CsvPaths, once per mode,
 and the ReferenceResults3 must be equal, or both must raise the same
-exception type. RESULTS still read the filesystem in both modes (step 4c).
+exception type. Since 4c-2 RESULTS are read from SQL under on too.
 """
 
 import pytest
@@ -85,6 +86,20 @@ def paths(tmp_path_factory):
     _load(p, tmp, name="beta", statements=[FIRST])
     _load(p, tmp, name="xgone", statements=[FIRST])
     p.paths_manager.remove_named_paths("xgone")
+    #
+    # runs (4c-2): acme three times, two ways; beta once; gamma, templated,
+    # with an id-less statement
+    #
+    gamma = tmp / "gamma.csvpaths"
+    gamma.write_text(SEP.join([FIRST, "$[*][yes()]"]), encoding="utf-8")
+    p.paths_manager.add_named_paths_from_file(
+        name="gamma", file_path=str(gamma), template=":0/:run_dir"
+    )
+    p.collect_paths(pathsname="acme", filename="people")
+    p.fast_forward_paths(pathsname="acme", filename="people")
+    p.collect_paths(pathsname="acme", filename="orders")
+    p.collect_paths(pathsname="beta", filename="people")
+    p.collect_paths(pathsname="gamma", filename="orders")
     yield p
     c.add_to_config(section="references", key="sql", value="off")
     _clear_engine()
@@ -205,13 +220,60 @@ CSVPATHS = [
 ]
 
 
+RESULTS = [
+    "$acme.results.:all()",
+    "$acme.results.:first()",
+    "$acme.results.:last()",
+    "$acme.results.:all():last()",
+    "$acme.results.:first():named_file_uuid()",
+    "$acme.results.:first():named_paths_uuid()",
+    "$acme.results.:last():named_file_name()",
+    "$acme.results.:last():manifest()",
+    "$acme.results.:manifest()",
+    "$acme.results.:last().:all()",
+    "$acme.results.:last().:all():uuid()",
+    "$acme.results.:last().*",
+    "$acme.results.:last().:index(1)",
+    "$acme.results.:last().:from(1)",
+    "$acme.results.:last().first_id",
+    "$acme.results.:last().second_id",
+    "$acme.results.:last().first_id:data()",
+    "$acme.results.:last().first_id:vars()",
+    "$acme.results.:last().first_id:meta()",
+    "$acme.results.:last().:errors()",
+    "$acme.results.:flatten()",
+    "$acme.results.:flatten():last()",
+    "$acme.results.:flatten():before(:index(2))",
+    "$acme.results.:flatten():after(:index(0))",
+    "$beta.results.:last().first_id",
+    "$gamma.results.:flatten()",
+    "$gamma.results.:flatten():last().:all()",
+    "$gamma.results.:flatten():last().:index(1)",
+    "$*.results.:last()",
+    "$*.results.:last():manifest()",
+    "$*.results.:manifest()",
+    "$*.results.:manifest():last()",
+    "$*.results.:manifest():first():run_uuid()",
+    "$*.results.:manifest():archive_name()",
+    "$*.results.:flatten():first():uuid()",
+    "$*.results.:flatten():error_count(0)",
+    '$*.results.:groups():named_file_name("orders")',
+    "$:regex(/^b/).results.:last()",
+    "$:regex(/^g/).results.:flatten()",
+    "$nope.results.:last()",
+]
+
+
 def _with_ids(p: CsvPaths, reference: str) -> str:
     for var, value in _ids(p).items():
         reference = reference.replace(var, f'"{value}"')
     return reference
 
 
-@pytest.mark.parametrize("reference", FILES + CSVPATHS)
+ALL = FILES + CSVPATHS + RESULTS
+
+
+@pytest.mark.parametrize("reference", ALL)
 def test_off_and_on_agree(paths, reference):
     off, on = _both(paths, _with_ids(paths, reference))
     assert off == on
@@ -223,11 +285,11 @@ def test_most_references_resolve_to_something(paths):
     # references above must find something.
     #
     found = 0
-    for reference in FILES + CSVPATHS:
+    for reference in ALL:
         kind, value = _both(paths, _with_ids(paths, reference))[0]
         if kind == "ok" and len(value) > 0:
             found += 1
-    assert found >= 0.85 * len(FILES + CSVPATHS)
+    assert found >= 0.85 * len(ALL)
 
 
 def test_deleted_names_are_gone_in_both_modes(paths):

@@ -5,14 +5,16 @@ from sqlalchemy import Engine, Table, select
 from csvpath.managers.integrations.sql.engine import Db
 from csvpath.managers.integrations.sql.tables import Tables
 from csvpath.managers.registrar import Registrar
+from csvpath.util.nos import Nos
 
 from .filesystem_reference_source import FilesystemReferenceSource
 
 
 class SqlReferenceSource(FilesystemReferenceSource):
-    """reads FILES and CSVPATHS reference metadata from the SQL listeners'
-    tables, used when [references] sql = on. RESULTS reads are inherited
-    from the filesystem until the archive ledger is mirrored (step 4c).
+    """reads reference metadata from the SQL listeners' tables, used when
+    [references] sql = on: FILES and CSVPATHS manifests, ledgers and
+    names, and RESULTS' archive ledger, run and instance manifests and
+    instance directories.
 
     every value is an entry exactly as a registrar or ledger writer wrote
     it; nothing is derived. reads are scoped to the configured roots.
@@ -20,9 +22,13 @@ class SqlReferenceSource(FilesystemReferenceSource):
     by removing the folder; ledger reads keep deleted entries, as the
     JSON ledgers do.
 
+    a run's existence is still checked on the filesystem, as the
+    filesystem source does: SQL rows outlive a deleted run.
+
     on assumes SQL has mirrored the manifests from the start. rows from
-    before lifecycles (a NULL lifecycle) and JSON ledger entries from
-    before the ledger mirror are not seen. nothing is backfilled.
+    before lifecycles (a NULL lifecycle), JSON ledger entries from before
+    the ledger mirrors, and runs from before manifest_entry are not seen.
+    nothing is backfilled.
     """
 
     def __init__(self, *, csvpaths) -> None:
@@ -154,3 +160,73 @@ class SqlReferenceSource(FilesystemReferenceSource):
             root=self.csvpaths.config.inputs_csvpaths_path,
             name_column="paths_name",
         )
+
+    #
+    # RESULTS
+    #
+    def _one(self, stmt, *, what: str, key: str) -> dict | None:
+        """the one entry stmt selects, or None. more than one means the
+        database is wrong, not that either is the answer."""
+        entries = self._entries(stmt)
+        if len(entries) > 1:
+            raise ValueError(
+                f"{len(entries)} SQL rows for {what} {key}; expected one"
+            )
+        return entries[0] if len(entries) == 1 else None
+
+    def results_ledger(self) -> list:
+        return self._ledger(
+            table=self.tables.archive_ledger,
+            root_column="archive_root",
+            root=self.csvpaths.config.archive_path,
+        )
+
+    def run_homes(
+        self, *, root_major: str | None, name_filter: str | None
+    ) -> list[tuple[str, str]]:
+        return self._run_homes_from(
+            entries=self.results_ledger(),
+            root_major=root_major,
+            name_filter=name_filter,
+        )
+
+    def run_manifest(self, run_dir: str) -> dict | None:
+        self._check_name(run_dir, "Run dir")
+        t = self.tables.group_run
+        stmt = (
+            select(t.c.manifest_entry)
+            .where(t.c.archive_root == self.csvpaths.config.archive_path)
+            .where(t.c.run_home == run_dir)
+        )
+        return self._one(stmt, what="run", key=run_dir)
+
+    def instance_manifest(self, instance_dir: str) -> dict | None:
+        self._check_name(instance_dir, "Instance dir")
+        g = self.tables.group_run
+        i = self.tables.instance_run
+        #
+        # instance_run is scoped through its run (D5)
+        #
+        stmt = (
+            select(i.c.manifest_entry)
+            .join(g, g.c.uuid == i.c.group_run_uuid)
+            .where(g.c.archive_root == self.csvpaths.config.archive_path)
+            .where(i.c.instance_home == instance_dir)
+        )
+        return self._one(stmt, what="instance", key=instance_dir)
+
+    def instance_dirs(self, run_dir: str) -> list[str]:
+        self._check_name(run_dir, "Run dir")
+        g = self.tables.group_run
+        i = self.tables.instance_run
+        stmt = (
+            select(i.c.instance_home)
+            .join(g, g.c.uuid == i.c.group_run_uuid)
+            .where(g.c.archive_root == self.csvpaths.config.archive_path)
+            .where(g.c.run_home == run_dir)
+        )
+        #
+        # an instance's directory is the last segment of its home
+        #
+        sep = Nos(run_dir).sep
+        return [home[home.rfind(sep) + 1 :] for home in self._column(stmt)]

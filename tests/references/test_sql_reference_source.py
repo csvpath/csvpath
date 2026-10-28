@@ -13,6 +13,7 @@ Each test uses its own roots and SQLite file under pytest's tmp_path.
 """
 
 import json
+import shutil
 
 import pytest
 from sqlalchemy import text
@@ -115,12 +116,23 @@ def test_bad_names_raise(paths, method, bad, error):
 
 
 @pytest.mark.parametrize(
-    "method", ["results_ledger", "run_homes", "run_manifest", "instance_manifest", "instance_dirs"]
+    "method",
+    ["results_ledger", "run_homes", "run_manifest", "instance_manifest", "instance_dirs"],
 )
-def test_results_reads_are_the_filesystems(method):
-    assert getattr(SqlReferenceSource, method) is getattr(
+def test_results_reads_are_its_own(method):
+    #
+    # 4c-2; they were inherited from the filesystem source in 4b
+    #
+    assert getattr(SqlReferenceSource, method) is not getattr(
         FilesystemReferenceSource, method
     )
+
+
+@pytest.mark.parametrize("method", ["run_manifest", "instance_manifest", "instance_dirs"])
+@pytest.mark.parametrize("bad,error", [(None, ValueError), ("", ValueError), (1, TypeError)])
+def test_bad_results_dirs_raise(paths, method, bad, error):
+    with pytest.raises(error):
+        getattr(_sql(paths), method)(bad)
 
 
 # ===================
@@ -418,3 +430,148 @@ def test_check_requires_the_lifecycle_column(paths):
         conn.commit()
     problems = ReferencesSqlCheck._missing(engine=engine)
     assert problems == ["table named_file has no lifecycle column"]
+
+
+# ===================
+# RESULTS
+# ===================
+
+GROUP = """~ id: first ~ $[*][yes()]
+
+---- CSVPATH ----
+
+~ id: second ~ $[*][no()]
+
+---- CSVPATH ----
+
+$[*][yes()]"""
+
+
+def _run(p: CsvPaths, tmp_path, *, name: str = "orders") -> None:
+    data = tmp_path / f"{name}_run.csv"
+    data.write_text("id,amount\n1,10\n2,20\n", encoding="utf-8")
+    if not p.file_manager.has_named_file(name):
+        p.file_manager.add_named_file(name=name, path=str(data))
+    group = tmp_path / f"{name}_run.csvpaths"
+    group.write_text(GROUP, encoding="utf-8")
+    if not p.paths_manager.has_named_paths(name):
+        p.paths_manager.add_named_paths_from_file(name=name, file_path=str(group))
+    p.collect_paths(pathsname=name, filename=name)
+
+
+def _homes(source, name: str = "orders") -> list[str]:
+    return [h for h, _ in source.run_homes(root_major=name, name_filter=None)]
+
+
+def test_results_reads_equal_the_filesystem(paths, tmp_path):
+    _run(paths, tmp_path)
+    _run(paths, tmp_path)
+    _run(paths, tmp_path, name="beta")
+    sql, fs = _sql(paths), _fs(paths)
+    assert sql.results_ledger() == fs.results_ledger()
+    assert len(sql.results_ledger()) == 9
+    for args in [
+        {"root_major": None, "name_filter": None},
+        {"root_major": "orders", "name_filter": None},
+        {"root_major": None, "name_filter": "^b"},
+    ]:
+        assert sql.run_homes(**args) == fs.run_homes(**args)
+    homes = [h for h, _ in sql.run_homes(root_major=None, name_filter=None)]
+    assert len(homes) == 3
+    for home in homes:
+        assert sql.run_manifest(home) == fs.run_manifest(home)
+        assert sorted(sql.instance_dirs(home)) == sorted(fs.instance_dirs(home))
+        assert len(sql.instance_dirs(home)) == 3
+        for d in fs.instance_dirs(home):
+            inst = Nos(home).join(d)
+            assert sql.instance_manifest(inst) == fs.instance_manifest(inst)
+
+
+def test_results_reads_come_from_sql(paths, tmp_path):
+    _run(paths, tmp_path)
+    sql = _sql(paths)
+    home = _homes(sql)[0]
+    run = sql.run_manifest(home)
+    dirs = sorted(sql.instance_dirs(home))
+    inst = Nos(home).join(dirs[0])
+    instance = sql.instance_manifest(inst)
+    #
+    # remove the JSON; keep the run directory, which run_homes checks
+    #
+    Nos(Nos(home).join("manifest.json")).remove()
+    Nos(Nos(inst).join("manifest.json")).remove()
+    Nos(paths.results_manager.results_root_manifest_path).remove()
+    for d in dirs:
+        shutil.rmtree(Nos(home).join(d))
+    assert len(sql.results_ledger()) == 3
+    assert _homes(sql) == [home]
+    assert sql.run_manifest(home) == run
+    assert sql.instance_manifest(inst) == instance
+    assert sorted(sql.instance_dirs(home)) == dirs
+
+
+def test_a_deleted_run_is_dropped_by_the_existence_check(paths, tmp_path):
+    _run(paths, tmp_path)
+    _run(paths, tmp_path)
+    sql, fs = _sql(paths), _fs(paths)
+    first = _homes(sql)[0]
+    shutil.rmtree(first)
+    assert _homes(sql) == _homes(fs)
+    assert first not in _homes(sql)
+    assert len(_homes(sql)) == 1
+    #
+    # the ledger keeps the run's entries
+    #
+    assert len(sql.results_ledger()) == 6
+
+
+def test_unknown_runs_and_instances_are_none(paths, tmp_path):
+    _run(paths, tmp_path)
+    sql = _sql(paths)
+    home = _homes(sql)[0]
+    assert sql.run_manifest(home + "_nope") is None
+    assert sql.instance_manifest(Nos(home).join("nope")) is None
+    assert sql.instance_dirs(home + "_nope") == []
+    assert _homes(sql, "nope") == []
+
+
+def test_results_reads_are_scoped_by_archive_root(paths, tmp_path):
+    _run(paths, tmp_path)
+    other = _paths(tmp_path, root="b")
+    _run(other, tmp_path / "a")
+    mine, theirs = _sql(paths), _sql(other)
+    assert len(mine.results_ledger()) == 3
+    assert len(theirs.results_ledger()) == 3
+    their_home = _homes(theirs)[0]
+    assert mine.run_manifest(their_home) is None
+    assert mine.instance_dirs(their_home) == []
+    d = theirs.instance_dirs(their_home)[0]
+    assert mine.instance_manifest(Nos(their_home).join(d)) is None
+    assert theirs.instance_manifest(Nos(their_home).join(d)) is not None
+
+
+def test_duplicate_rows_raise(paths, tmp_path):
+    _run(paths, tmp_path)
+    sql = _sql(paths)
+    home = _homes(sql)[0]
+    _execute(
+        paths,
+        "insert into named_paths_group_run "
+        "select 'dup' as uuid, at, time_completed, status, by_line_run, "
+        "all_completed, all_valid, error_count, all_expected_files, "
+        "archive_name, archive_root, run_home, named_results_name, "
+        "named_paths_uuid, named_paths_name, named_paths_home, "
+        "named_file_uuid, named_file_name, named_file_home, named_file_path, "
+        "named_file_size, named_file_last_change, named_file_fingerprint, "
+        "hostname, username, ip_address, manifest_path, manifest_entry "
+        "from named_paths_group_run",
+    )
+    with pytest.raises(ValueError, match="2 SQL rows for run"):
+        sql.run_manifest(home)
+
+
+def test_run_homes_from_checks_its_entries():
+    with pytest.raises(TypeError):
+        FilesystemReferenceSource._run_homes_from(
+            entries=None, root_major=None, name_filter=None
+        )
