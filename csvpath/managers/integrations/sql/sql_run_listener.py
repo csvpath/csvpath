@@ -1,6 +1,7 @@
 import json
 from sqlalchemy import Table
 from csvpath.managers.metadata import Metadata
+from csvpath.managers.registrar import Registrar
 from .sql_listener import SqlListener
 
 
@@ -37,6 +38,48 @@ class SqlRunListener(SqlListener):
             return
         row = self._archive_ledger_row(mdata)
         self._upsert_ledger_row(table=self.archive_ledger, row=row)
+
+    def metadata_delete(self, mdata: Metadata) -> None:
+        """marks the rows of a named-results delete: each archive ledger
+        row with its entry as RunRegistrar marked it, and each entry's
+        instance_run row (its uuid) and named_paths_group_run row (its
+        run_uuid). updates, not upserts: a missing row (e.g. written
+        before SQL was on) is not backfilled."""
+        if not self.csvpaths:
+            raise RuntimeError("CsvPaths cannot be None")
+        if mdata is None:
+            raise ValueError("Metadata cannot be None")
+        runs = []
+        for e in mdata.ledger_entries or []:
+            values = {
+                "ledger_entry": json.dumps(e),
+                "status": e.get("status"),
+                "lifecycle": e.get("lifecycle"),
+            }
+            self._mark(table=self.archive_ledger, uuid=e["uuid"], values=values)
+            self._mark(
+                table=self.tables.instance_run,
+                uuid=e["uuid"],
+                values={"lifecycle": Registrar.DELETED},
+            )
+            run_uuid = e.get("run_uuid")
+            if run_uuid is not None and run_uuid not in runs:
+                runs.append(run_uuid)
+        for run_uuid in runs:
+            self._mark(
+                table=self.tables.group_run,
+                uuid=run_uuid,
+                values={"lifecycle": Registrar.DELETED},
+            )
+
+    def _mark(self, *, table: Table, uuid: str, values: dict) -> None:
+        count = self._update_by_uuid(table=table, uuid=uuid, values=values)
+        if count == 0:
+            self.csvpaths.logger.warning(
+                "No SQL row in %s for %s; delete not written to SQL",
+                table.name,
+                uuid,
+            )
 
     def _archive_ledger_row(self, mdata: Metadata) -> dict:
         """the archive_ledger row for mdata's ledger entry. every value

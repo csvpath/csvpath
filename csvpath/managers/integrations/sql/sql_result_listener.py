@@ -4,6 +4,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from csvpath.managers.metadata import Metadata
+from csvpath.managers.registrar import Registrar
 from .sql_listener import SqlListener
 from .updates import Updates
 
@@ -62,6 +63,11 @@ class SqlResultListener(SqlListener):
             "lines_matched": mdata.lines_matched,
             "manifest_path": mdata.manifest_path,
             "manifest_entry": json.dumps(mdata.manifest_entry),
+            #
+            # on insert only; the upsert does not set it, so a later
+            # update never makes a deleted row active again
+            #
+            "lifecycle": Registrar.ACTIVE,
         }
         self._upsert_instance_run(instance_run_data)
 

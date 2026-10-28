@@ -21,6 +21,8 @@ class Updates:
             text(
                 "ALTER TABLE named_paths_group_run ADD COLUMN archive_root varchar(250)"
             ),
+            text("ALTER TABLE named_paths_group_run ADD COLUMN lifecycle varchar(20)"),
+            text("ALTER TABLE instance_run ADD COLUMN lifecycle varchar(20)"),
         ]
         #
         # MySQL has no CREATE INDEX IF NOT EXISTS, so these fail like the

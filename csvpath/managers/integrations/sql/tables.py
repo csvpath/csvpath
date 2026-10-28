@@ -323,6 +323,10 @@ class Tables:
             Column("error_count", Integer, default=-1),
             Column("manifest_path", String(250), nullable=False),
             Column("manifest_entry", Text, nullable=True),
+            #
+            # as named_paths_group_run.lifecycle
+            #
+            Column("lifecycle", String(20), nullable=True),
             *self._indexes("instance_run"),
         )
         self._instance_run = instance_run
@@ -372,6 +376,11 @@ class Tables:
             Column("ip_address", String(40)),
             Column("manifest_path", String(250)),
             Column("manifest_entry", Text, nullable=True),
+            #
+            # Registrar.ACTIVE when written, Registrar.DELETED once the
+            # group's results are removed. rows are marked, not deleted.
+            #
+            Column("lifecycle", String(20), nullable=True),
             *self._indexes("named_paths_group_run"),
         )
         self._named_paths_group_run = group_run
