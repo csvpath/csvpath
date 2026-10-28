@@ -81,6 +81,19 @@ class FilesystemReferenceSource(ReferenceSource):
             return []
         with DataFileReader(manifest_path) as reader:
             entries = json.load(reader.source)
+        return self._run_homes_from(
+            entries=entries, root_major=root_major, name_filter=name_filter
+        )
+
+    @staticmethod
+    def _run_homes_from(
+        *, entries: list, root_major: str | None, name_filter: str | None
+    ) -> list[tuple[str, str]]:
+        """the distinct, still-existing (run_home, named_paths_name) pairs
+        in archive ledger entries, in ledger order. shared with the SQL
+        source, which passes the same entries from its mirror."""
+        if entries is None or not isinstance(entries, list):
+            raise TypeError("Entries must be a list")
         homes = []
         seen = set()
         for entry in entries:
