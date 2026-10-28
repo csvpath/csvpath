@@ -51,6 +51,7 @@ class SqlResultsListener(SqlListener):
             else "N",
             "error_count": mdata.error_count or 0,
             "archive_name": mdata.archive_name,
+            "archive_root": mdata.archive_path,
             "run_home": mdata.run_home,
             "named_results_name": mdata.named_results_name,
             "named_paths_uuid": mdata.named_paths_uuid_string,

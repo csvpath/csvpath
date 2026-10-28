@@ -32,6 +32,7 @@ class Tables:
         "named_paths_group_run": {
             "ix_named_paths_group_run_named_paths_name": "named_paths_name",
             "ix_named_paths_group_run_run_home": "run_home",
+            "ix_named_paths_group_run_archive_root": "archive_root",
         },
         "instance_run": {
             "ix_instance_run_group_run_uuid": "group_run_uuid",
@@ -48,6 +49,10 @@ class Tables:
             "ix_named_paths_ledger_root_index": ("paths_root", "ledger_index"),
             "ix_named_paths_ledger_root_name": ("paths_root", "paths_name"),
         },
+        "archive_ledger": {
+            "ix_archive_ledger_root_index": ("archive_root", "ledger_index"),
+            "ix_archive_ledger_root_name": ("archive_root", "named_paths_name"),
+        },
     }
 
     def __init__(self, config, *, engine=None):
@@ -60,6 +65,7 @@ class Tables:
         self._named_paths = None
         self._named_file_ledger = None
         self._named_paths_ledger = None
+        self._archive_ledger = None
 
     @property
     def metadata(self) -> MetaData:
@@ -74,6 +80,7 @@ class Tables:
         self._assure_table(self.named_paths)
         self._assure_table(self.named_file_ledger)
         self._assure_table(self.named_paths_ledger)
+        self._assure_table(self.archive_ledger)
 
     def _assure_table(self, table) -> None:
         if self.engine is None:
@@ -252,6 +259,35 @@ class Tables:
         )
         return self._named_paths_ledger
 
+    #
+    # the archive ledger: one row per entry RunRegistrar appended to the
+    # archive's manifest.json, one per instance run as it starts. like the
+    # other ledgers, it holds the exact entry and its position. run_uuid is
+    # the named_paths_group_run row of the run.
+    #
+    @property
+    def archive_ledger(self) -> Table:
+        if self._archive_ledger is not None:
+            return self._archive_ledger
+        mdata = self.metadata
+        if "archive_ledger" in mdata.tables:
+            return mdata.tables["archive_ledger"]
+        self._archive_ledger = Table(
+            "archive_ledger",
+            mdata,
+            Column("uuid", String(40), primary_key=True, nullable=False),
+            Column("at", DateTime, nullable=False),
+            Column("archive_root", String(250), nullable=False),
+            Column("named_paths_name", String(45), nullable=False),
+            Column("ledger_entry", Text, nullable=False),
+            Column("ledger_index", Integer, nullable=False),
+            Column("status", String(40), nullable=True),
+            Column("lifecycle", String(20), nullable=True),
+            Column("run_uuid", String(40), nullable=True),
+            *self._indexes("archive_ledger"),
+        )
+        return self._archive_ledger
+
     @property
     def instance_run(self) -> Table:
         if self._instance_run is not None:
@@ -312,6 +348,11 @@ class Tables:
             Column("error_count", Integer),
             Column("all_expected_files", String(1), default="N"),
             Column("archive_name", String(100)),
+            #
+            # [results] archive, the way files_root is [inputs] files.
+            # RESULTS reads are scoped by an exact match on it.
+            #
+            Column("archive_root", String(250), nullable=True),
             Column("run_home", String(250)),
             Column("named_results_name", String(45)),
             Column("named_paths_uuid", String(40), nullable=False),

@@ -24,6 +24,7 @@ class ReferencesSqlCheck:
         "paths": "SqlPathsListener",
         "result": "SqlResultListener",
         "results": "SqlResultsListener",
+        "run": "SqlRunListener",
     }
     TABLES = ["named_file", "named_paths", "instance_run", "named_paths_group_run"]
     ENTRY_COLUMN = "manifest_entry"
@@ -38,11 +39,16 @@ class ReferencesSqlCheck:
     #
     LIFECYCLE_COLUMN = "lifecycle"
     #
+    # RESULTS reads are scoped by the archive root
+    #
+    ARCHIVE_ROOT_COLUMN = "archive_root"
+    ARCHIVE_ROOT_COLUMN_TABLES = ["named_paths_group_run"]
+    #
     # the root-ledger mirrors. they hold ledger_entry, not manifest_entry,
     # and were created complete, so only their existence and indexes are
     # checked.
     #
-    LEDGER_TABLES = ["named_file_ledger", "named_paths_ledger"]
+    LEDGER_TABLES = ["named_file_ledger", "named_paths_ledger", "archive_ledger"]
 
     @classmethod
     def check(cls, *, csvpaths) -> None:
@@ -132,6 +138,13 @@ class ReferencesSqlCheck:
                 missing.append(f"table {table} has no {cls.INDEX_COLUMN} column")
             if table in cls.INDEX_COLUMN_TABLES and cls.LIFECYCLE_COLUMN not in cols:
                 missing.append(f"table {table} has no {cls.LIFECYCLE_COLUMN} column")
+            if (
+                table in cls.ARCHIVE_ROOT_COLUMN_TABLES
+                and cls.ARCHIVE_ROOT_COLUMN not in cols
+            ):
+                missing.append(
+                    f"table {table} has no {cls.ARCHIVE_ROOT_COLUMN} column"
+                )
             missing += cls._missing_indexes(insp=insp, table=table)
         for table in cls.LEDGER_TABLES:
             if not insp.has_table(table):

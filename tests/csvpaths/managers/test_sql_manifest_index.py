@@ -49,6 +49,10 @@ INDEXES = {
     "named_paths_group_run": {
         "ix_named_paths_group_run_named_paths_name": ["named_paths_name"],
         "ix_named_paths_group_run_run_home": ["run_home"],
+        #
+        # RESULTS scoping (4c; see test_archive_ledger_mirror.py)
+        #
+        "ix_named_paths_group_run_archive_root": ["archive_root"],
     },
     "instance_run": {
         "ix_instance_run_group_run_uuid": ["group_run_uuid"],

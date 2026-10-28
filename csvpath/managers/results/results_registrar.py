@@ -18,7 +18,7 @@ class ResultsRegistrar(Registrar, Listener):
     """@private"""
 
     COMPLETE = "complete"
-    STARTED = "started"
+    STARTED = Registrar.STARTED
     DYNAMIC = "dynamic"
 
     def __init__(
