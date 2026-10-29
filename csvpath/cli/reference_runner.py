@@ -6,6 +6,9 @@ from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_expression_3 import ReferenceExpression3
 from csvpath.references.reference_finder_factory_3 import ReferenceFinderFactory3
 from csvpath.references.reference_results_3 import ReferenceResults3
+from csvpath.references.sources.references_sql_coverage import (
+    ReferencesSqlCoverage,
+)
 from .asker import Asker
 from .selecter import Selecter
 from .const import Const
@@ -27,6 +30,11 @@ class ReferenceRunner:
     # single-line input box already handles fine; see
     # _parse_expression()'s own docstring for the actual mechanism.
     #
+    # "check SQL coverage" (step 6 of references v3 part 2) reports
+    # whether SQL holds everything the JSON root ledgers hold, i.e.
+    # whether [references] sql = on would see what off sees. see
+    # ReferencesSqlCoverage.
+    #
     MAX_RECENT = 10
     HISTORY_FILE_NAME = "cli_reference_history.json"
     #
@@ -42,7 +50,13 @@ class ReferenceRunner:
         self._cli = cli
 
     def menu(self) -> None:
-        choices = ["rerun recent", "new expression", "browse functions", Const.CANCEL2]
+        choices = [
+            "rerun recent",
+            "new expression",
+            "browse functions",
+            "check SQL coverage",
+            Const.CANCEL2,
+        ]
         t = self._cli.ask(choices)
         if t == "rerun recent":
             self._rerun_recent()
@@ -56,6 +70,29 @@ class ReferenceRunner:
             # not a one-shot action like "rerun recent"/"new expression".
             ReferenceFunctionLister(self._cli).list_functions()
             self.menu()
+        elif t == "check SQL coverage":
+            # back to this submenu, as browse functions: checking
+            # coverage usually comes before running references
+            self._check_sql_coverage()
+            self.menu()
+
+    def _check_sql_coverage(self) -> None:
+        self._cli.clear()
+        self._cli.action("Checking SQL coverage\n")
+        try:
+            coverage = ReferencesSqlCoverage(csvpaths=self._cli.csvpaths)
+            print(ReferencesSqlCoverage.format(report=coverage.report()))
+        except KeyboardInterrupt:
+            #
+            # as in _run(): reading the ledgers can be slow on a remote
+            # backend, and an uncaught ctrl-c would quit the whole CLI
+            #
+            print("\nCancelled.\n")
+            return
+        except Exception as e:
+            if not erut.handle(self._cli, e):
+                return
+        input("\nHit return to continue. ")
 
     def _rerun_recent(self) -> None:
         recent = self._load_history()
