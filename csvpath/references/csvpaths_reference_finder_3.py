@@ -172,7 +172,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # content name_one whose function name IS the JSON file's
             # own name (manifest.json/definition.json) -- see
             # _query_well_known_file() on the ABC.
-            home = self.csvpaths.paths_manager.named_paths_home(root_major)
+            home = self.csvpaths.paths_manager.named_paths_home(
+                root_major, assure=False
+            )
             filename = f"{name_one.path[0].name}.json"
             return self._query_well_known_file(home, filename)
 
@@ -181,7 +183,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # as :manifest()/:definition() above, but README.md is not
             # a ".json"-suffixed name, so it gets its own branch rather
             # than joining the generic f"{name}.json" construction.
-            home = self.csvpaths.paths_manager.named_paths_home(root_major)
+            home = self.csvpaths.paths_manager.named_paths_home(
+                root_major, assure=False
+            )
             return self._query_well_known_file(home, "README.md")
 
         if self._name_one_contains_function(name_one, "readme"):
@@ -895,7 +899,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     "traversal -- root_major must be a literal named-"
                     "paths group name."
                 )
-            return self.csvpaths.paths_manager.named_paths_home(reference.root_major)
+            return self.csvpaths.paths_manager.named_paths_home(
+                reference.root_major, assure=False
+            )
         raise ReferenceException3(
             f"CsvpathsReferenceFinder3 has no computed-field handling for :{name}()"
         )
