@@ -5,8 +5,8 @@ class ReferenceSource(ABC):
     """the metadata the v3 reference finders select from: manifests,
     root ledgers, names, run homes and instance directories. the finders
     delegate every such read to a source, so where the metadata comes
-    from (the filesystem today; SQL when [references] sql = on) is not
-    their concern.
+    from (the filesystem; SQL when [references] sql = on; both, compared,
+    when shadow) is not their concern.
 
     real data reads -- data files, errors.json, vars.json, definition.json,
     readmes, logs, and a bare :manifest()'s raw bytes -- are not part of
