@@ -133,18 +133,32 @@ class PathsManager:
             if ref.datatype != ref.CSVPATHS:
                 raise ValueError(f"Reference datatype is not valid: {ref.datatype}")
             name = ref.root_major
-        home = self.named_paths_home(name)
+        #
+        # a read: a missing or deleted group has no versions. creating its
+        # home here would make the group appear, and the cache would then
+        # write a [] manifest.json into it.
+        #
+        home = self.named_paths_home(name, assure=False)
+        if not Nos(home).dir_exists():
+            return []
         home = Nos(home).join("manifest.json")
         # home = os.path.join(home, "manifest.json")
         return self.registrar.get_manifest(home)
 
-    def named_paths_home(self, name: NamedPathsName) -> str:
-        """@private"""
+    def named_paths_home(self, name: NamedPathsName, *, assure: bool = True) -> str:
+        """@private
+        the group's home directory, created if it does not exist. readers
+        pass assure=False to get the same path without creating anything,
+        as FileManager.named_file_home does."""
         if name is None:
             raise ValueError("Named-paths group name cannot be None")
+        if not isinstance(assure, bool):
+            raise TypeError("Assure must be a bool")
         if name.strip().startswith("$"):
             name = ReferenceParser(name).root_major
         home = Nos(self.named_paths_dir).join(name)
+        if not assure:
+            return home
         nos = Nos(home)
         b = nos.dir_exists()
         if not b:

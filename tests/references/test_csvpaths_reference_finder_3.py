@@ -80,7 +80,7 @@ class _FakePathsManager:
             return self._by_name[name]
         return self._manifest
 
-    def named_paths_home(self, name):
+    def named_paths_home(self, name, *, assure=True):
         return self._home
 
     @property

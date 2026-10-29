@@ -26,7 +26,7 @@ class _FakePathsManager:
     def get_manifest_for_name(self, name):
         return []
 
-    def named_paths_home(self, name):
+    def named_paths_home(self, name, *, assure=True):
         return f"named_paths/{name}"
 
     @property
