@@ -26,6 +26,9 @@ from csvpath.references.sources.filesystem_reference_source import (
     FilesystemReferenceSource,
 )
 from csvpath.references.sources.reference_source import ReferenceSource
+from csvpath.references.sources.references_sql_coverage import (
+    ReferencesSqlCoverage,
+)
 from csvpath.references.sources.shadow_reference_source import (
     ShadowReferenceSource,
 )
@@ -262,6 +265,15 @@ def test_shadow_finds_no_differences(shadow_run):
         assert c["differences"] == 0, method
         assert c["sql_errors"] == 0, method
         assert c["matches"] == c["reads"], method
+
+
+def test_sql_covers_the_corpus(corpus):
+    report = ReferencesSqlCoverage(csvpaths=corpus).report()
+    print(ReferencesSqlCoverage.format(report=report))
+    assert report["covered"] is True, ReferencesSqlCoverage.format(report=report)
+    for datatype, ledger in report["ledgers"].items():
+        assert ledger["json"] > 0, datatype
+        assert ledger["both"] == ledger["json"] == ledger["sql"], datatype
 
 
 # ===================
