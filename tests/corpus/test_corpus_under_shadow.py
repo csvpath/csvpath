@@ -34,26 +34,13 @@ from csvpath.util.box import Box
 CORPUS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(CORPUS_DIR))
 
-_CONFIG_BEFORE_IMPORT = os.environ.get("CSVPATH_CONFIG_PATH")
-
+#
+# generate.py sets CSVPATH_CONFIG_PATH only in main(), never on import. the
+# corpus config names the committed tests/corpus/data/, and tests/conftest.py
+# refuses to wipe any folder outside its allowlist, so a config switched by
+# an import fails the run instead of deleting the corpus.
+#
 import generate  # noqa: E402
-
-#
-# importing generate.py must not choose a config. tests/conftest.py's
-# session fixture wipes every directory the active config names before the
-# first test, and the corpus config names the committed tests/corpus/data/.
-# collection runs before that fixture, so restoring the setting and raising
-# here stops the run with the corpus intact.
-#
-if os.environ.get("CSVPATH_CONFIG_PATH") != _CONFIG_BEFORE_IMPORT:
-    if _CONFIG_BEFORE_IMPORT is None:
-        os.environ.pop("CSVPATH_CONFIG_PATH", None)
-    else:
-        os.environ["CSVPATH_CONFIG_PATH"] = _CONFIG_BEFORE_IMPORT
-    raise RuntimeError(
-        "importing tests/corpus/generate.py changed CSVPATH_CONFIG_PATH; "
-        "it must only be set in generate.main()"
-    )
 
 ASSETS = yaml.safe_load((CORPUS_DIR / "assets.yaml").read_text())
 FILE_NAMES = [g["name"] for g in ASSETS["named_files"]]

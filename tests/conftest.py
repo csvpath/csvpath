@@ -92,15 +92,69 @@ def _wipe_local_test_artifacts():
         #
         "parquet",
     ]
+    _wipe_paths(paths=paths, root=REPO_ROOT, config_path=config.config_path)
+
+
+def _wipe_paths(*, paths: list, root: str, config_path) -> None:
+    #
+    # every path is checked before any is removed, so one bad path in the
+    # config means nothing is removed at all
+    #
+    local = _check_wipe_paths(paths=paths, root=root, config_path=config_path)
+    for p in local:
+        nos = Nos(p)
+        if nos.dir_exists():
+            nos.remove()
+
+
+#
+# the only folders the wipe may remove, relative to the repo root. the wipe
+# trusts the active config for what to remove, so without this a config
+# pointing at data worth keeping (tests/corpus/data/, or someone's real
+# named-files home) would have it deleted at the start of the run. cache,
+# archive, logs and parquet are test clutter in the repo root; issue #467
+# moves them under tmp, after which they can come off this list. adding a
+# folder here should be a deliberate choice.
+#
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WIPE_ALLOWED = ["tmp", "cache", "archive", "logs", "parquet"]
+
+
+def _check_wipe_paths(*, paths: list, root: str, config_path) -> list:
+    """returns the local paths the wipe may remove, or raises ValueError,
+    naming every refused path, if any local path is outside WIPE_ALLOWED.
+    remote (s3/azure/gcs/sftp) paths are never removed from here, so they
+    are dropped, as before."""
+    if not isinstance(paths, list):
+        raise TypeError("Paths must be a list")
+    if not isinstance(root, str) or root.strip() == "":
+        raise ValueError("Root must be a non-empty string")
+    real_root = os.path.realpath(root)
+    allowed = [os.path.join(real_root, a) for a in WIPE_ALLOWED]
+    local = []
+    refused = []
     for p in paths:
         if not p:
             continue
-        nos = Nos(p)
-        if not nos.is_local:
-            # never touch a remote (s3/azure/gcs/sftp) path from here
+        if not Nos(p).is_local:
             continue
-        if nos.dir_exists():
-            nos.remove()
+        #
+        # realpath, so neither .. nor a symlink can lead out of an allowed
+        # folder. relative paths resolve against the working directory, as
+        # they do for the removal itself
+        #
+        real = os.path.realpath(p)
+        if any(real == a or real.startswith(a + os.sep) for a in allowed):
+            local.append(p)
+        else:
+            refused.append(f"{p} ({real})")
+    if refused:
+        raise ValueError(
+            f"Refusing to wipe test artifacts: config {config_path} names "
+            f"local paths outside {WIPE_ALLOWED} under {real_root}: "
+            f"{refused}. Nothing was removed. See tests/conftest.py."
+        )
+    return local
 
 
 @pytest.fixture(scope="session", autouse=True)
