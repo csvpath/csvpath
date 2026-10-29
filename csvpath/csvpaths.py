@@ -393,9 +393,10 @@ Cache: {cache}
     def reference_source(self):
         """@private
         the ReferenceSource the v3 finders read manifests and ledgers
-        from: SQL when [references] sql = on, else the filesystem. built
-        once per mode; under on, ReferencesSqlCheck runs first, so a
-        configuration that cannot work raises before the first read."""
+        from: SQL when [references] sql = on, both compared when shadow,
+        else the filesystem. built once per mode; under on and shadow,
+        ReferencesSqlCheck runs first, so a configuration that cannot work
+        raises before the first read."""
         #
         # imported here: the sources and the SQL integration import much
         # that CsvPaths does not otherwise need
@@ -407,20 +408,23 @@ Cache: {cache}
 
         mode = self.config.references_sql
         if self._reference_source is None or self._reference_source_mode != mode:
-            if mode == ReferencesSql.ON.value:
+            if mode in [ReferencesSql.ON.value, ReferencesSql.SHADOW.value]:
                 from csvpath.managers.integrations.sql.references_sql_check import (
                     ReferencesSqlCheck,
                 )
                 from csvpath.references.sources.sql_reference_source import (
                     SqlReferenceSource,
                 )
+                from csvpath.references.sources.shadow_reference_source import (
+                    ShadowReferenceSource,
+                )
 
                 ReferencesSqlCheck.check(csvpaths=self)
-                source = SqlReferenceSource(csvpaths=self)
+                if mode == ReferencesSql.ON.value:
+                    source = SqlReferenceSource(csvpaths=self)
+                else:
+                    source = ShadowReferenceSource(csvpaths=self)
             else:
-                #
-                # shadow reads the filesystem until step 5 compares
-                #
                 source = FilesystemReferenceSource(csvpaths=self)
             self._reference_source = source
             self._reference_source_mode = mode

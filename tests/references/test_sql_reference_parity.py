@@ -11,7 +11,9 @@ with an id-less statement.
 
 Each reference is then resolved twice on the same CsvPaths, once per mode,
 and the ReferenceResults3 must be equal, or both must raise the same
-exception type. Since 4c-2 RESULTS are read from SQL under on too.
+exception type. Since 4c-2 RESULTS are read from SQL under on too. Under
+shadow (step 5) the same references must find no difference between the
+two sources.
 """
 
 import pytest
@@ -20,6 +22,10 @@ from csvpath import CsvPaths
 from csvpath.references.reference_finder_factory_3 import ReferenceFinderFactory3
 from csvpath.references.sources.filesystem_reference_source import (
     FilesystemReferenceSource,
+)
+from csvpath.references.sources.reference_source import ReferenceSource
+from csvpath.references.sources.shadow_reference_source import (
+    ShadowReferenceSource,
 )
 from csvpath.references.sources.sql_reference_source import SqlReferenceSource
 from csvpath.util.box import Box
@@ -319,3 +325,31 @@ def test_re_registered_name_is_the_new_version_in_both_modes(paths):
     # version B (again_1.csv), not the deleted A (again_0.csv)
     #
     assert off[1].files[0].endswith("again_1.csv")
+
+
+def test_shadow_finds_no_differences(paths):
+    #
+    # step 5: every reference resolved under shadow, on one source, equals
+    # off, and the source compared every read without a difference or a
+    # SQL error. all 11 reads are exercised.
+    #
+    references = [_with_ids(paths, r) for r in ALL]
+    _mode(paths, "off")
+    off = [_resolve(paths, r) for r in references]
+    _mode(paths, "shadow")
+    try:
+        source = paths.reference_source
+        assert isinstance(source, ShadowReferenceSource)
+        shadow = [_resolve(paths, r) for r in references]
+        assert paths.reference_source is source
+    finally:
+        _mode(paths, "off")
+    for reference, a, b in zip(references, off, shadow):
+        assert a == b, reference
+    counts = source.counts
+    assert sorted(counts) == sorted(ReferenceSource.__abstractmethods__)
+    for method, c in counts.items():
+        assert c["reads"] > 0, method
+        assert c["differences"] == 0, method
+        assert c["sql_errors"] == 0, method
+        assert c["matches"] == c["reads"], method

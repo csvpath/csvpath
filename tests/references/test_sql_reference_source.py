@@ -27,6 +27,9 @@ from csvpath.references.sources.filesystem_reference_source import (
     FilesystemReferenceSource,
 )
 from csvpath.references.sources.reference_source import ReferenceSource
+from csvpath.references.sources.shadow_reference_source import (
+    ShadowReferenceSource,
+)
 from csvpath.references.sources.sql_reference_source import SqlReferenceSource
 from csvpath.util.box import Box
 from csvpath.util.config_exception import ConfigurationException
@@ -333,11 +336,18 @@ def _mode(p: CsvPaths, mode: str) -> None:
     p.config.add_to_config(section="references", key="sql", value=mode)
 
 
-@pytest.mark.parametrize("mode", ["off", "shadow"])
-def test_off_and_shadow_read_the_filesystem(paths, mode):
-    _mode(paths, mode)
+def test_off_reads_the_filesystem(paths):
+    _mode(paths, "off")
     s = paths.reference_source
     assert type(s) is FilesystemReferenceSource
+
+
+def test_shadow_compares_the_filesystem_and_sql(paths):
+    _mode(paths, "shadow")
+    s = paths.reference_source
+    assert type(s) is ShadowReferenceSource
+    assert type(s.primary) is FilesystemReferenceSource
+    assert type(s.secondary) is SqlReferenceSource
 
 
 def test_on_reads_sql(paths):
@@ -358,7 +368,8 @@ def test_the_source_is_built_once_per_mode(paths):
     assert type(paths.reference_source) is SqlReferenceSource
 
 
-def test_on_checks_the_configuration_once(paths, monkeypatch):
+@pytest.mark.parametrize("mode", ["on", "shadow"])
+def test_on_and_shadow_check_the_configuration_once(paths, monkeypatch, mode):
     calls = []
     real = ReferencesSqlCheck.check
 
@@ -367,16 +378,17 @@ def test_on_checks_the_configuration_once(paths, monkeypatch):
         real(csvpaths=csvpaths)
 
     monkeypatch.setattr(ReferencesSqlCheck, "check", check)
-    _mode(paths, "on")
+    _mode(paths, mode)
     paths.reference_source
     paths.reference_source
     assert calls == [paths]
 
 
-def test_on_with_a_configuration_that_cannot_work_raises(tmp_path):
+@pytest.mark.parametrize("mode", ["on", "shadow"])
+def test_on_and_shadow_with_a_configuration_that_cannot_work_raise(tmp_path, mode):
     _clear_engine()
     p = _paths(tmp_path, groups="")
-    _mode(p, "on")
+    _mode(p, mode)
     try:
         with pytest.raises(ConfigurationException):
             p.reference_source
@@ -414,6 +426,105 @@ def test_finders_over_stand_ins_read_the_filesystem(paths):
         reference="$orders.files.:last()", csvpaths=StandIn(paths)
     )
     assert type(finder.source) is FilesystemReferenceSource
+
+
+# ===================
+# shadow over real sources
+# ===================
+
+
+class _Log:
+    """collects a CsvPaths logger's warnings and errors, passing them on"""
+
+    def __init__(self, logger):
+        self.logger = logger
+        self.warnings = []
+        self.errors = []
+
+    def warning(self, msg, *args, **kwargs):
+        self.warnings.append(msg)
+        self.logger.warning(msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        self.errors.append(msg)
+        self.logger.error(msg, *args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self.logger, name)
+
+
+def _shadow(p: CsvPaths) -> tuple:
+    log = _Log(p.logger)
+    p.logger = log
+    _mode(p, "shadow")
+    return p.reference_source, log
+
+
+def test_shadow_warns_once_that_it_is_on(paths):
+    s, log = _shadow(paths)
+    paths.reference_source
+    shadow = [w for w in log.warnings if "sql = shadow" in w]
+    assert len(shadow) == 1
+
+
+def test_shadow_agrees_with_sql_that_matches(paths, tmp_path):
+    _register(paths, tmp_path, n=0)
+    _register(paths, tmp_path, n=1)
+    _load(paths, tmp_path)
+    s, log = _shadow(paths)
+    assert s.file_manifest("orders") == _fs(paths).file_manifest("orders")
+    assert s.paths_manifest("orders") == _fs(paths).paths_manifest("orders")
+    assert s.files_ledger() == _fs(paths).files_ledger()
+    for method in ["file_manifest", "paths_manifest", "files_ledger"]:
+        assert s.counts[method]["matches"] == 1, method
+    assert not [w for w in log.warnings if w.startswith("shadow:")]
+
+
+def test_shadow_finds_a_tampered_row_and_returns_the_filesystem(paths, tmp_path):
+    _register(paths, tmp_path, n=0)
+    _register(paths, tmp_path, n=1)
+    before = _fs(paths).file_manifest("orders")
+    _execute(
+        paths,
+        "update named_file set manifest_entry = '{\"uuid\": \"tampered\"}'"
+        " where manifest_index = 1",
+    )
+    s, log = _shadow(paths)
+    assert s.file_manifest("orders") == before
+    diffs = [w for w in log.warnings if w.startswith("shadow:")]
+    assert len(diffs) == 1
+    assert diffs[0].startswith("shadow: file_manifest('orders') differs")
+    assert "first difference at index 1" in diffs[0]
+    assert s.counts["file_manifest"]["differences"] == 1
+
+
+def test_shadow_finds_a_lost_row(paths, tmp_path):
+    _register(paths, tmp_path, n=0)
+    _register(paths, tmp_path, n=1)
+    uuid = _fs(paths).file_manifest("orders")[1]["uuid"]
+    _execute(paths, "delete from named_file where manifest_index = 1")
+    s, log = _shadow(paths)
+    assert len(s.file_manifest("orders")) == 2
+    diffs = [w for w in log.warnings if w.startswith("shadow:")]
+    assert "lengths 2 vs 1" in diffs[0]
+    assert "(sql: missing)" in diffs[0]
+    assert f"uuid {uuid}" in diffs[0]
+
+
+def test_shadow_raises_a_sql_read_error(paths, tmp_path):
+    _register(paths, tmp_path)
+    s, log = _shadow(paths)
+    #
+    # the SQL source makes missing tables on first use, so use it first
+    #
+    s.secondary.tables
+    _execute(paths, "drop table named_file")
+    with pytest.raises(Exception) as e:
+        s.file_manifest("orders")
+    assert "no such table: named_file" in str(e.value)
+    assert len(log.errors) == 1
+    assert log.errors[0].startswith("shadow: SQL file_manifest('orders') raised")
+    assert s.counts["file_manifest"]["sql_errors"] == 1
 
 
 # ===================
