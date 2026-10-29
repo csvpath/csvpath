@@ -60,7 +60,11 @@ SCRATCH_DIR = CORPUS_DIR / ".scratch"
 ASSETS_PATH = CORPUS_DIR / "assets.yaml"
 CONFIG_PATH = CORPUS_DIR / "config" / "config.ini"
 
-os.environ["CSVPATH_CONFIG_PATH"] = str(CONFIG_PATH)
+#
+# the config is chosen in main(), not on import, so a test can import
+# build_events()/run_events() without switching its whole process to the
+# corpus config
+#
 sys.path.insert(0, str(REPO_ROOT))
 
 import yaml  # noqa: E402
@@ -140,7 +144,9 @@ def append_statement(marker: str) -> str:
     )
 
 
-def versioned_source(group_name: str, source_rel: str, use_counts: dict) -> Path:
+def versioned_source(
+    group_name: str, source_rel: str, use_counts: dict, *, scratch_dir: Path
+) -> Path:
     """returns the real source path for a named_files group's FIRST use of
     `source_rel`, or a mutated scratch copy -- under its OWN numbered
     subdirectory, with the ORIGINAL basename preserved -- for every
@@ -166,7 +172,7 @@ def versioned_source(group_name: str, source_rel: str, use_counts: dict) -> Path
     if count == 1:
         result = source
     else:
-        scratch_subdir = SCRATCH_DIR / f"{group_name}__{count}"
+        scratch_subdir = scratch_dir / f"{group_name}__{count}"
         scratch_subdir.mkdir(parents=True, exist_ok=True)
         mutated = scratch_subdir / source.name
         if source.suffix.lower() == ".csv":
@@ -228,13 +234,27 @@ def build_events(assets: dict) -> list[tuple[int, str, dict]]:
     return events
 
 
-def run_events(csvpaths: CsvPaths, events: list[tuple[int, str, dict]]) -> None:
+def run_events(
+    csvpaths: CsvPaths,
+    events: list[tuple[int, str, dict]],
+    *,
+    scratch_dir: Path = SCRATCH_DIR,
+) -> None:
+    """executes the events in order. scratch_dir holds the mutated copies
+    of repeat named-file sources; a test passes its own temp directory."""
+    if not isinstance(scratch_dir, Path):
+        raise TypeError("scratch_dir must be a Path")
     file_use_counts: dict = {}
     paths_use_counts: dict = {}
     for offset_days, kind, payload in events:
         set_now(offset_days)
         if kind == "file":
-            src = versioned_source(payload["name"], payload["source"], file_use_counts)
+            src = versioned_source(
+                payload["name"],
+                payload["source"],
+                file_use_counts,
+                scratch_dir=scratch_dir,
+            )
             csvpaths.file_manager.add_named_file(
                 name=payload["name"], path=str(src), template=payload["template"]
             )
@@ -281,6 +301,7 @@ def run_events(csvpaths: CsvPaths, events: list[tuple[int, str, dict]]) -> None:
 
 
 def main() -> None:
+    os.environ["CSVPATH_CONFIG_PATH"] = str(CONFIG_PATH)
     reset_data_dir()
     assets = yaml.safe_load(ASSETS_PATH.read_text())
     events = build_events(assets)
