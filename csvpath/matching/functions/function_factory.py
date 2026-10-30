@@ -2,6 +2,7 @@
 from csvpath.matching.productions.expression import Matchable
 from .function import Function
 from .function_finder import FunctionFinder
+from .internal_functions import InternalFunctions
 from .dates.now import Now
 from .dates.roll import Roll
 from .dates.part import DateFormat
@@ -265,6 +266,10 @@ class FunctionFactory:
         if f is None and name in cls.MY_FUNCTIONS:
             c = cls.MY_FUNCTIONS.get(name)
             f = c(matcher, name, child)
+        if f is None:
+            f = InternalFunctions.get_function(
+                matcher=matcher, name=name, child=child, builtins=cls.MY_FUNCTIONS
+            )
         if f is None and not find_external_functions:
             return None
         if f is None:

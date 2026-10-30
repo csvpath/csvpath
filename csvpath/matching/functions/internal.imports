@@ -1,0 +1,10 @@
+#
+# the Framework's own add-on functions, in the same format as a user's
+# [functions] imports file:
+#
+#   from module import Class as function_name
+#
+# InternalFunctions reads this file once per process, but imports a
+# function's module only when a csvpath first uses its name. external
+# functions and built-ins are found first.
+#
