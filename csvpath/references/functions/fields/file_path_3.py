@@ -10,10 +10,10 @@ class FilePath3(Function3):
     # purpose (File3 -- an arbitrary user-named RESULTS output file,
     # required string arg, no manifest read at all). Table 2's own
     # "file_path" key (the global arrivals ledger's spelling of the same
-    # concept) is deferred alongside the rest of the global-ledger batch
-    # -- same datatype constant (FILES) would need a different literal
-    # key depending on which manifest is actually in scope, not yet
-    # resolved.
+    # concept) is the LEDGER_KEY, so a '*' read (':manifest():
+    # file_path()'), which reads the ledger, finds it. a per-name
+    # manifest entry always has "file", so the fallback is never used
+    # there.
     #
     NAME = "file_path"
     SUMMARY = "The path to the resolved named-file version's own stored bytes."
@@ -24,5 +24,8 @@ class FilePath3(Function3):
     SOURCE = "manifest"
     KEY = {
         Reference3.FILES: "file",
+    }
+    LEDGER_KEY = {
+        Reference3.FILES: "file_path",
     }
     POSITIONS = {Reference3.FILES: (Reference3.NAME_THREE,)}

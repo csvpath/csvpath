@@ -15,6 +15,9 @@ class Origin3(Function3):
     # came from -- see manifest_field_functions_proposal.md's Part A
     # note on this function.
     #
+    # the global arrivals ledger spells the FILES key "origin_path";
+    # LEDGER_KEY lets a '*' read (':manifest():origin()') find it.
+    #
     NAME = "origin"
     SUMMARY = (
         "The original source path of the resolved entity's content, "
@@ -30,6 +33,9 @@ class Origin3(Function3):
     KEY = {
         Reference3.FILES: "from",
         Reference3.CSVPATHS: "source_path",
+    }
+    LEDGER_KEY = {
+        Reference3.FILES: "origin_path",
     }
     POSITIONS = {
         Reference3.FILES: (Reference3.NAME_THREE,),
