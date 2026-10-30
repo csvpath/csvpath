@@ -610,17 +610,21 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 for rh in candidates
                 if self._run_satisfies_having(rh, having_call)
             ]
-        name_one_field_call = self._find_field_function_call(
-            self._build_chain(calls)
+        name_one_field_calls = self._find_field_function_calls(
+            self._build_chain(calls), Reference3.RESULTS
         )
-        if name_one_field_call is not None and name_one_field_call.arg is not None:
-            # :error_count()'s own predicate-argument GATE (added
-            # 2026-10-18, e.g. ":error_count(:above(3))") -- same
-            # literal-root equivalent as _star_pool_and_reduce()'s/
-            # _star_group_and_reduce()'s own copy of this filter, see
-            # their shared comment for the full reasoning. A no-op
-            # whenever the field accessor carries no argument at all
-            # (an ordinary bare field read, e.g. ":uuid()").
+        for name_one_field_call in name_one_field_calls:
+            # every argued field accessor is its own GATE, wherever it
+            # sits in the chain (compendium 6.1) -- e.g.
+            # ":error_count(:above(3))". Same literal-root equivalent as
+            # _star_pool_and_reduce()'s/_star_group_and_reduce()'s own
+            # copy of this filter, see their shared comment for the
+            # full reasoning. Was first-match only until 2026-10-30, so
+            # ":last():run_uuid():status(\"failed\")" never filtered. A
+            # field accessor with no argument is an ordinary field read
+            # (e.g. ":uuid()"), not a gate, and is skipped.
+            if name_one_field_call.arg is None:
+                continue
             candidates = [
                 rh
                 for rh in candidates
@@ -1780,7 +1784,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # :manifest() in the same chain (e.g. the '*'-traversal
             # ":manifest():uuid(...):run_home()" shape -- see
             # _star_run_selector_chain()'s own 2026-10-18 comment).
-            manifest_field_call = self._last_field_function_call(name_one_calls)
+            # Only an unargued field competes (2026-10-30, see
+            # _last_value_field_call()); with none, resolve gives the
+            # whole entry, the same as a bare ':manifest()'.
+            manifest_field_call = self._last_value_field_call(name_one_calls)
             if manifest_field_call is not None:
                 # ':manifest():named_file_uuid()'-style -- added
                 # 2026-08-28, David's own worked example ("get all the
@@ -1821,7 +1828,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
         # last-wins (compendium 5.20b, added 2026-10-18) -- same reason
         # as manifest_field_call's own identical change just above.
-        run_field_call = self._last_field_function_call(name_one_calls)
+        # With only argued fields (filters) there is no value to read,
+        # so this falls through to "no default" below (compendium 5.21).
+        run_field_call = self._last_value_field_call(name_one_calls)
         if run_field_call is not None:
             # a registered field-accessor (e.g. :run_uuid()) riding
             # beside the run-selecting pointer in name_one, the same
@@ -1862,6 +1871,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 ),
             )
             return function_cls.transform_value(value)
+        if reference.name_three is None and self._find_field_function_calls(
+            name_one_calls, Reference3.RESULTS
+        ):
+            # every field accessor on name_one is argued -- filters
+            # only, already applied on query, so nothing supplies a
+            # value: "no default" (compendium 5.21). Without this the
+            # METADATA_FIELD kind below raised for a name_three
+            # accessor that isn't there (2026-10-30).
+            return None
 
         kind = reference.resolve_kind
         if kind in (Reference3.METADATA_FILE, Reference3.METADATA_FIELD):
@@ -1941,6 +1959,24 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # single unambiguous payload -- "no default", per "creating
         # references v3.txt"'s resolve table.
         return None
+
+    def _last_value_field_call(self, calls: list) -> "FunctionCall3 | None":
+        """the field accessor whose value resolve() returns: the last
+        one WITHOUT an argument. An argued field accessor is a filter
+        (compendium 6.40; :uuid(\"...\") is a pointer, 6.44) and was
+        already applied on query, so it never supplies the value -- a
+        filter doesn't return a value (David, 2026-10-29). Only the
+        unargued ones compete under 5.20b's last-wins, which is also
+        what decides whether its ambiguity warning fires. Every RESULTS
+        field argument is a filter: none uses its argument to pick a
+        key the way CSVPATHS' ':sources(\"email\")'-style fields do (see
+        _apply_key_arg()), so this lives here rather than in the shared
+        _last_field_function_call(). Returns None when every field
+        accessor in the chain is argued, or there are none."""
+        if calls is None:
+            raise ValueError("calls cannot be None")
+        unargued = [f for f in calls if f.arg is None]
+        return self._last_field_function_call(unargued)
 
     @staticmethod
     def _find_archive_ledger_entry(
