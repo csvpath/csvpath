@@ -5226,3 +5226,174 @@ class TestChoiceRootMajor:
             '$:choice("abba").results.:last()', choice_archive
         ).query()
         assert results.uuids == []
+
+
+class TestFilterNeverSuppliesTheResolveValue:
+    # Finding D of the :lifecycle() gate work (specs/references_v3/
+    # notes/v3_part_2_lifecycle_gate.md), added 2026-10-30. A field
+    # accessor with an argument is a filter (compendium 6.40), and a
+    # filter doesn't return a value (David, 2026-10-29): only unargued
+    # field accessors compete under 5.20b's last-wins. Functions are
+    # ANDed without regard for order (6.1), so swapping a filter and a
+    # value field never changes the answer. With only filters on
+    # name_one, resolve gives the run's manifest.json entry when
+    # ':manifest()' is present, and None ("no default") when it isn't
+    # (5.21). Also covers the literal-root query, which used to apply
+    # only the FIRST field accessor as a filter.
+    @pytest.fixture
+    def runs(self, tmp_path):
+        base = tmp_path / "acme"
+        ledger = []
+        for run_uuid, run_name, status in (
+            ("run-a", "2026-01-01_00-00-00", "complete"),
+            ("run-b", "2026-01-02_00-00-00", "started"),
+            ("run-c", "2026-01-03_00-00-00", "complete"),
+        ):
+            run_dir = base / run_name
+            _write_json(
+                run_dir / "manifest.json",
+                {
+                    "run_uuid": run_uuid,
+                    "named_paths_name": "acme",
+                    "status": status,
+                },
+            )
+            ledger.append(
+                {
+                    "named_paths_name": "acme",
+                    "run_home": str(run_dir),
+                    "run_uuid": run_uuid,
+                    "status": status,
+                }
+            )
+        _write_json(tmp_path / "manifest.json", ledger)
+        return str(tmp_path)
+
+    @staticmethod
+    def _data(reference: str, archive: str) -> list:
+        return [r.data for r in _finder(reference, archive).resolve().results]
+
+    @pytest.mark.parametrize(
+        "first, second",
+        [
+            (
+                '$*.results.:manifest():run_uuid():status("complete")',
+                '$*.results.:manifest():status("complete"):run_uuid()',
+            ),
+            (
+                '$*.results.:flatten():run_uuid():status("complete")',
+                '$*.results.:flatten():status("complete"):run_uuid()',
+            ),
+            (
+                '$acme.results.:last():run_uuid():status("complete")',
+                '$acme.results.:last():status("complete"):run_uuid()',
+            ),
+            (
+                '$acme.results.:last():manifest():run_uuid():status("complete")',
+                '$acme.results.:last():manifest():status("complete"):run_uuid()',
+            ),
+        ],
+    )
+    def test_order_does_not_change_the_value(self, runs, first, second):
+        assert self._data(first, runs) == self._data(second, runs)
+
+    def test_star_manifest_value_is_the_unargued_field(self, runs):
+        data = self._data(
+            '$*.results.:manifest():run_uuid():status("complete")', runs
+        )
+        assert sorted(data) == ["run-a", "run-c"]
+
+    def test_star_flatten_value_is_the_unargued_field(self, runs):
+        data = self._data(
+            '$*.results.:flatten():run_uuid():status("complete")', runs
+        )
+        assert sorted(data) == ["run-a", "run-c"]
+
+    def test_literal_value_is_the_unargued_field(self, runs):
+        data = self._data(
+            '$acme.results.:last():run_uuid():status("complete")', runs
+        )
+        assert data == ["run-c"]
+
+    def test_literal_manifest_value_is_the_unargued_field(self, runs):
+        data = self._data(
+            '$acme.results.:last():manifest():run_uuid():status("complete")', runs
+        )
+        assert data == ["run-c"]
+
+    def test_star_manifest_filter_only_resolves_the_entries(self, runs):
+        data = self._data('$*.results.:manifest():status("complete")', runs)
+        assert sorted(d["run_uuid"] for d in data) == ["run-a", "run-c"]
+
+    def test_literal_manifest_filter_only_resolves_the_entry(self, runs):
+        data = self._data(
+            '$acme.results.:last():manifest():status("complete")', runs
+        )
+        assert len(data) == 1
+        assert data[0]["run_uuid"] == "run-c"
+
+    def test_literal_filter_only_resolves_none(self, runs):
+        assert self._data('$acme.results.:last():status("complete")', runs) == [
+            None
+        ]
+
+    def test_star_filter_only_resolves_none(self, runs):
+        data = self._data('$*.results.:flatten():status("complete")', runs)
+        assert data == [None, None]
+
+    def test_unargued_field_alone_is_still_the_value(self, runs):
+        assert self._data('$acme.results.:last():status()', runs) == ["complete"]
+
+    def test_literal_second_filter_filters(self, runs):
+        # used to return run-c: only the first field accessor
+        # (:run_uuid(), unargued) was checked for a gate. Filters apply
+        # before the pointer picks, so this is the last started run.
+        results = _finder(
+            '$acme.results.:last():run_uuid():status("started")', runs
+        ).query()
+        assert results.uuids == ["run-b"]
+
+    def test_literal_second_filter_with_no_match_gives_empty(self, runs):
+        results = _finder(
+            '$acme.results.:last():run_uuid():status("failed")', runs
+        ).query()
+        assert results.results == []
+
+    def test_literal_second_filter_filters_before_the_pointer(self, runs):
+        results = _finder(
+            '$acme.results.:run_uuid():status("started"):last()', runs
+        ).query()
+        assert results.uuids == ["run-b"]
+
+    def test_literal_two_filters_are_anded(self, runs):
+        results = _finder(
+            '$acme.results.:flatten():status("complete"):run_uuid("run-a")', runs
+        ).query()
+        assert results.uuids == ["run-a"]
+        results = _finder(
+            '$acme.results.:flatten():status("started"):run_uuid("run-a")', runs
+        ).query()
+        assert results.results == []
+
+    def test_literal_two_filters_are_anded_either_order(self, runs):
+        results = _finder(
+            '$acme.results.:flatten():run_uuid("run-a"):status("started")', runs
+        ).query()
+        assert results.results == []
+
+    def test_no_warning_for_a_field_and_a_filter(self, runs):
+        finder = _finder(
+            '$*.results.:manifest():run_uuid():status("complete")', runs
+        )
+        finder.resolve()
+        assert finder.csvpaths.logger.warnings == []
+
+    def test_warning_for_two_unargued_fields(self, runs):
+        finder = _finder('$acme.results.:last():run_uuid():status()', runs)
+        assert [r.data for r in finder.resolve().results] == ["complete"]
+        assert len(finder.csvpaths.logger.warnings) == 1
+
+    def test_last_value_field_call_rejects_none(self, runs):
+        finder = _finder('$acme.results.:last()', runs)
+        with pytest.raises(ValueError):
+            finder._last_value_field_call(None)

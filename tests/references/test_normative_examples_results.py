@@ -668,9 +668,11 @@ class TestGateTrailingChain:
         assert len(results.results) == 1
         assert Path(results.results[0].data).name.endswith("00-00-00")
         assert results.results[0].uuid == "a381-run1"
-        # 2 qualifying field accessors (:uuid()/:run_home()) -> 5.20b's
-        # ambiguity warning fires exactly once.
-        assert len(finder.csvpaths.logger.warnings) == 1
+        # ':uuid("a381-run1")' is argued, so it is a filter (6.40; a
+        # pointer per 6.44) and never competes for the value -- only
+        # ':run_home()' does, so 5.20b's ambiguity warning does not
+        # fire. Was 1 until 2026-10-30, when a filter still counted.
+        assert len(finder.csvpaths.logger.warnings) == 0
 
     def test_manifest_named_paths_name_gate_then_bare_yesterday_window(
         self, acme_archive
