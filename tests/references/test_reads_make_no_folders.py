@@ -294,3 +294,90 @@ def test_get_manifest_for_name_of_a_group_reads_its_manifest(paths, tmp_path):
         on_disk = json.load(file)
     assert paths.paths_manager.get_manifest_for_name("acme") == on_disk
     assert len(on_disk) == 1
+
+
+# ===================
+# a half-made group: its folder exists, its manifest.json does not
+# ===================
+#
+# e.g. a load that was interrupted, or a manifest.json deleted by hand.
+# with the cache on, reading one used to write a [] manifest.json into it
+# (CacheIntermediary.get_json writes one on a miss).
+#
+HALF = "half"
+HALF_REFERENCES = [f"${HALF}.csvpaths.{shape}" for shape in SHAPES["csvpaths"]]
+
+
+@pytest.fixture(params=["yes", "no"], ids=["cache", "no_cache"])
+def half(request, tmp_path):
+    p = _paths(tmp_path, use_cache=request.param)
+    _build(p, tmp_path)
+    home = p.paths_manager.named_paths_home(HALF)
+    assert os.listdir(home) == []
+    return p
+
+
+def _half_home(p: CsvPaths) -> str:
+    return p.paths_manager.named_paths_home(HALF, assure=False)
+
+
+@pytest.mark.parametrize("reference", HALF_REFERENCES)
+def test_a_reference_to_a_half_made_group_writes_nothing(half, reference):
+    before = _tree(half)
+    _resolve(half, reference)
+    assert sorted(_tree(half) - before) == []
+    assert os.listdir(_half_home(half)) == []
+
+
+@pytest.mark.parametrize("shape", SHAPES["csvpaths"])
+def test_a_half_made_group_resolves_as_a_missing_group(half, shape):
+    h_kind, h_value = _resolve(half, f"${HALF}.csvpaths.{shape}")
+    m_kind, m_value = _resolve(half, f"$nope.csvpaths.{shape}")
+    assert h_kind == m_kind
+    if h_kind == "ok":
+        assert len(h_value) == len(m_value)
+        for result in h_value:
+            assert not os.path.exists(result.path), shape
+
+
+def test_get_manifest_for_name_of_a_half_made_group_is_empty_and_writes_nothing(
+    half,
+):
+    before = _tree(half)
+    assert half.paths_manager.get_manifest_for_name(HALF) == []
+    assert half.paths_manager.get_manifest_for_name(f"${HALF}.csvpaths.first") == []
+    assert _tree(half) == before
+
+
+def test_a_half_made_group_reads_as_empty_more_than_once(half):
+    #
+    # a second read must not find something the first one left behind
+    #
+    for _ in range(3):
+        assert half.paths_manager.get_manifest_for_name(HALF) == []
+    assert os.listdir(_half_home(half)) == []
+
+
+def test_loading_into_a_half_made_group_still_makes_its_manifest(half, tmp_path):
+    f = tmp_path / "half.csvpaths"
+    f.write_text("~ id: first ~ $[*][yes()]", encoding="utf-8")
+    half.paths_manager.add_named_paths_from_file(name=HALF, file_path=str(f))
+    manifest = os.path.join(_half_home(half), "manifest.json")
+    assert os.path.isfile(manifest)
+    with open(manifest, encoding="utf-8") as file:
+        on_disk = json.load(file)
+    assert len(on_disk) == 1
+    assert half.paths_manager.get_manifest_for_name(HALF) == on_disk
+    kind, value = _resolve(half, f"${HALF}.csvpaths.:all()")
+    assert kind == "ok" and len(value) == 1
+
+
+def test_a_read_then_a_load_of_a_half_made_group(half, tmp_path):
+    #
+    # the read used to cache []; the load must still be seen afterwards
+    #
+    assert half.paths_manager.get_manifest_for_name(HALF) == []
+    f = tmp_path / "half.csvpaths"
+    f.write_text("~ id: first ~ $[*][yes()]", encoding="utf-8")
+    half.paths_manager.add_named_paths_from_file(name=HALF, file_path=str(f))
+    assert len(half.paths_manager.get_manifest_for_name(HALF)) == 1
