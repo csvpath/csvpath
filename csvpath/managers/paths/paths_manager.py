@@ -136,13 +136,17 @@ class PathsManager:
         #
         # a read: a missing or deleted group has no versions. creating its
         # home here would make the group appear, and the cache would then
-        # write a [] manifest.json into it.
+        # write a [] manifest.json into it. the same goes for a group whose
+        # folder exists without a manifest.json (an interrupted load, or one
+        # deleted by hand): no versions, and nothing written.
         #
         home = self.named_paths_home(name, assure=False)
         if not Nos(home).dir_exists():
             return []
         home = Nos(home).join("manifest.json")
         # home = os.path.join(home, "manifest.json")
+        if not Nos(home).exists():
+            return []
         return self.registrar.get_manifest(home)
 
     def named_paths_home(self, name: NamedPathsName, *, assure: bool = True) -> str:
