@@ -974,6 +974,203 @@ class TestManifestFieldReadsTheManifest:
         assert data["named_paths_group"] == "g"
 
 
+#
+# for the ':manifest():<field>(arg)' gate. alpha has two registrations
+# with different types and templates; beta has one, and a failed
+# registration with no file_path, which a '*' read never lists.
+#
+GATE_LEDGER = [
+    {
+        "named_file_name": "alpha",
+        "uuid": "u-a1",
+        "file_path": "inputs/named_files/alpha/one.csv/a1.csv",
+        "status": "complete",
+        "type": "csv",
+        "template": "",
+        "fingerprint": "f-a1",
+    },
+    {
+        "named_file_name": "alpha",
+        "uuid": "u-a2",
+        "file_path": "inputs/named_files/alpha/one.csv/a2.xlsx",
+        "status": "complete",
+        "type": "xlsx",
+        "template": ":0/:filename",
+        "fingerprint": "f-a2",
+    },
+    {
+        "named_file_name": "beta",
+        "uuid": "u-b1",
+        "file_path": "inputs/named_files/beta/two.csv/b1.csv",
+        "status": "complete",
+        "type": "csv",
+        "template": "",
+        "fingerprint": "f-b1",
+    },
+    {
+        "named_file_name": "beta",
+        "uuid": "u-b2",
+        "file_path": None,
+        "status": "failed",
+        "type": None,
+        "template": None,
+        "fingerprint": None,
+    },
+]
+GATE_MANIFEST = [
+    {
+        "file": "inputs/named_files/alpha/one.csv/a1.csv",
+        "file_home": "inputs/named_files/alpha/one.csv",
+        "type": "csv",
+        "template": "",
+        "fingerprint": "f-a1",
+        "uuid": "u-a1",
+    },
+    {
+        "file": "inputs/named_files/alpha/one.csv/a2.xlsx",
+        "file_home": "inputs/named_files/alpha/one.csv",
+        "type": "xlsx",
+        "template": ":0/:filename",
+        "fingerprint": "f-a2",
+        "uuid": "u-a2",
+    },
+]
+
+
+def _gate_finder(reference: str) -> FilesReferenceFinder3:
+    return _finder(
+        reference,
+        ALPHA_HOME,
+        GATE_MANIFEST,
+        definition={"template": "current-default"},
+        inputs_files_path="inputs/named_files",
+        ledger=GATE_LEDGER,
+    )
+
+
+def _gate_uuids(reference: str) -> list:
+    return _gate_finder(reference).query().uuids
+
+
+class TestManifestChainGate:
+    # a field with an argument after ':manifest()' filters the entries
+    # the chain maps over. it used to be silently ignored, so every
+    # entry came back whatever the argument said.
+    @pytest.mark.parametrize(
+        "gate, star, literal",
+        [
+            ('type("csv")', ["u-a1", "u-b1"], ["u-a1"]),
+            ('type("xlsx")', ["u-a2"], ["u-a2"]),
+            ('type("json")', [], []),
+            ('template(:empty())', ["u-a1", "u-b1"], ["u-a1"]),
+            ('template(:not_empty())', ["u-a2"], ["u-a2"]),
+            ('uuid("u-a2")', ["u-a2"], ["u-a2"]),
+            ('uuid("nope")', [], []),
+            ('fingerprint("f-b1")', ["u-b1"], []),
+            ('named_file_name("beta")', ["u-b1"], []),
+            ('named_file_name("alpha")', ["u-a1", "u-a2"], ["u-a1", "u-a2"]),
+        ],
+    )
+    def test_gate_filters_both_roots(self, gate, star, literal):
+        assert _gate_uuids(f"$*.files.:manifest():{gate}") == star
+        assert _gate_uuids(f"$alpha.files.:manifest():{gate}") == literal
+
+    def test_status_gate_matches_the_ledger_status(self):
+        # status is ledger-only; a literal root reads it through the
+        # ledger fallback.
+        assert _gate_uuids('$*.files.:manifest():status("complete")') == [
+            "u-a1",
+            "u-a2",
+            "u-b1",
+        ]
+        assert _gate_uuids('$alpha.files.:manifest():status("complete")') == [
+            "u-a1",
+            "u-a2",
+        ]
+
+    def test_status_failed_matches_nothing_listed(self):
+        # the failed entry has no file_path, so ':manifest()' never lists
+        # it -- the gate does not bring it back.
+        assert _gate_uuids('$*.files.:manifest():status("failed")') == []
+        assert _gate_uuids('$alpha.files.:manifest():status("failed")') == []
+
+    def test_gate_composes_with_a_regex_root(self):
+        assert _gate_uuids('$:regex(/^be/).files.:manifest():type("csv")') == [
+            "u-b1"
+        ]
+
+    def test_query_paths_are_the_matching_files(self):
+        assert _gate_finder('$*.files.:manifest():type("xlsx")').query().files == [
+            "inputs/named_files/alpha/one.csv/a2.xlsx"
+        ]
+        assert _gate_finder(
+            '$alpha.files.:manifest():type("xlsx")'
+        ).query().files == ["inputs/named_files/alpha/one.csv/a2.xlsx"]
+
+    def test_star_resolve_gives_the_matching_ledger_entries(self):
+        # a filter supplies no value (compendium 5.20b/6.40), so resolve
+        # gives the matching manifest entries (5.21, a file pointer).
+        data = [
+            r.data
+            for r in _gate_finder('$*.files.:manifest():type("csv")').resolve().results
+        ]
+        assert data == [GATE_LEDGER[0], GATE_LEDGER[2]]
+
+    def test_literal_resolve_gives_the_matching_manifest_entries(self):
+        data = [
+            r.data
+            for r in _gate_finder('$alpha.files.:manifest():type("csv")')
+            .resolve()
+            .results
+        ]
+        assert data == [GATE_MANIFEST[0]]
+
+    def test_resolve_with_no_match_is_empty(self):
+        assert _gate_finder('$*.files.:manifest():type("json")').resolve().results == []
+
+    @pytest.mark.parametrize("root", ["$*", "$alpha"])
+    @pytest.mark.parametrize("field", ["type", "uuid", "named_file_name"])
+    def test_without_an_argument_the_field_is_still_the_value(self, root, field):
+        finder = _gate_finder(f"{root}.files.:manifest():{field}()")
+        assert len(finder.query().results) == (3 if root == "$*" else 2)
+        values = [r.data for r in finder.resolve().results]
+        assert all(not isinstance(v, dict) for v in values)
+
+    @pytest.mark.parametrize("root", ["$*", "$alpha"])
+    @pytest.mark.parametrize(
+        "gate", ['file_name("one.csv")', "time(:not_none())", 'host("h")']
+    )
+    def test_a_field_that_takes_no_argument_raises(self, root, gate):
+        # these do not filter yet. they raise instead of being ignored.
+        with pytest.raises(ReferenceException3) as error:
+            _gate_finder(f"{root}.files.:manifest():{gate}").query()
+        assert "does not take an argument" in str(error.value)
+
+    def test_literal_name_gate_does_not_need_the_ledger(self):
+        # with a literal root the name is the root itself, so an entry
+        # missing from the global ledger still matches.
+        finder = _finder(
+            '$alpha.files.:manifest():named_file_name("alpha")',
+            ALPHA_HOME,
+            GATE_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=[],
+        )
+        assert finder.query().uuids == ["u-a1", "u-a2"]
+
+    def test_bare_type_gate_is_unchanged(self):
+        # the bare form reads each named-file's own manifest, not the
+        # ledger, and gives the matching file home; not touched here.
+        finder = _finder(
+            '$alpha.files.:type("xlsx")',
+            ALPHA_HOME,
+            GATE_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=GATE_LEDGER,
+        )
+        assert finder.query().files == ["inputs/named_files/alpha/one.csv"]
+
+
 class TestStarTraversalGroup:
     # bare ':all()' as name_one's entire content partitions every
     # named-file's EXACTLY-one-level matches (corrected 2026-08-12 to

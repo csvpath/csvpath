@@ -355,6 +355,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     f"instead (e.g. ':last():{manifest_field_call.name}()')."
                 )
             manifest = self.source.file_manifest(root_major)
+            manifest = self._filter_by_manifest_chain_gate(
+                reference=reference, call=manifest_field_call, entries=manifest
+            )
             return ReferenceResults3(
                 results=[
                     ReferenceResult3(path=e["file"], uuid=e["uuid"]) for e in manifest
@@ -1290,7 +1293,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # branch below), and the same universal post-candidate filter
         # (applied once, after this whole if/elif/else chain, regardless
         # of which branch built `candidates`) as query()'s own (line 631).
-        field_call = self._extract_gate_field_call(name_one)
+        # a gate on ':manifest()' (e.g. ':manifest():type("csv")') is
+        # left in place for the ':manifest()' branch below to apply to
+        # the ledger, as query() does for a literal root.
+        field_call = None
+        if self._bare_manifest_field_call(name_one) is None:
+            field_call = self._extract_gate_field_call(name_one)
         is_grouped = self._is_bare_all_reference(name_one)
         is_flattened = self._is_bare_flatten_reference(name_one)
         is_deep_grouped = self._is_bare_groups_reference(name_one)
@@ -1372,15 +1380,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # no file_path (None, or no key in ledgers from before the
             # ledger writers were built in), whatever its status says.
             #
+            entries = [
+                e
+                for e in ledger
+                if e.get("file_path")
+                and (
+                    name_filter is None
+                    or re.search(name_filter, e["named_file_name"])
+                )
+            ]
+            entries = self._filter_by_manifest_chain_gate(
+                reference=reference, call=manifest_field_call, entries=entries
+            )
             return ReferenceResults3(
                 results=[
                     ReferenceResult3(path=e["file_path"], uuid=e["uuid"])
-                    for e in ledger
-                    if e.get("file_path")
-                    and (
-                        name_filter is None
-                        or re.search(name_filter, e["named_file_name"])
-                    )
+                    for e in entries
                 ]
             )
         else:
@@ -2254,6 +2269,57 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         return call
 
+    def _manifest_chain_field_value(
+        self, *, reference: Reference3, function_cls: type, entry: dict | None
+    ) -> object:
+        """the value of a ':manifest():<field>()' field on one manifest
+        entry: a ledger entry under '*', the named-file's own manifest
+        entry for a literal root. Shared by resolve() and by the gate in
+        query(), so a gate always matches on the value resolve() would
+        show."""
+        if function_cls.NAME == "named_file_name" and not isinstance(
+            reference.root_major, Star3
+        ):
+            # at FILES scope the name is the literal root itself.
+            return reference.root_major
+        return self._extract_field_value_with_ledger_fallback(
+            entry=entry,
+            key_path=function_cls.KEY.get(Reference3.FILES),
+            function_cls=function_cls,
+            datatype=Reference3.FILES,
+            ledger_entry_getter=lambda: self._find_manifest_entry_by_uuid(
+                self.source.files_ledger(), None if entry is None else entry["uuid"]
+            ),
+        )
+
+    def _filter_by_manifest_chain_gate(
+        self, *, reference: Reference3, call: FunctionCall3, entries: list
+    ) -> list:
+        """the entries whose field matches `call`'s argument, for a
+        ':manifest():<field>(arg)' gate, e.g. ':manifest():status("failed")'.
+        Without an argument, every entry. The argument is built first, so
+        a field that does not take one raises instead of being silently
+        ignored, which is what used to happen here."""
+        if call.arg is None:
+            return entries
+        function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+        if function_cls.SOURCE != "manifest":
+            raise ReferenceException3(
+                f"':{call.name}()' cannot filter a manifest -- only a "
+                "manifest.json field can be used as a gate on ':manifest()'."
+            )
+        built = self._build(call)
+        return [
+            e
+            for e in entries
+            if self._matches_field_predicate(
+                self._manifest_chain_field_value(
+                    reference=reference, function_cls=function_cls, entry=e
+                ),
+                built.arg,
+            )
+        ]
+
     @staticmethod
     def _bare_definition_field_call(name_one) -> "FunctionCall3 | None":
         """returns the field-accessor FunctionCall3 when name_one's
@@ -2490,6 +2556,23 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     field_call.name
                 )
+                if is_manifest_chain and function_cls.SOURCE == "manifest":
+                    if isinstance(reference.root_major, Star3):
+                        manifest = self.source.files_ledger()
+                    else:
+                        manifest = self.source.file_manifest(reference.root_major)
+                    entry = self._find_manifest_entry_by_uuid(manifest, result.uuid)
+                    if field_call.arg is not None:
+                        #
+                        # a field with an argument is a filter. it was
+                        # applied in query() and supplies no value, so
+                        # the result is the matching manifest entry itself
+                        # (compendium 5.21, name_one with a file pointer).
+                        #
+                        return entry
+                    return self._manifest_chain_field_value(
+                        reference=reference, function_cls=function_cls, entry=entry
+                    )
                 if function_cls.SOURCE == "computed":
                     # never stored -- comes straight from the already-
                     # resolved reference, no manifest/definition read at
