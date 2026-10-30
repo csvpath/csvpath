@@ -1109,8 +1109,12 @@ class TestStarTraversalPoolNoPointerIsOptional:
                 }
             ],
         }
+        # a field with no pointer is a ledger read (2026-10-30), so the
+        # ledger has to hold the same versions as the groups.
         results = _finder(
-            "$*.csvpaths.:named_paths_name()", by_name=by_name
+            "$*.csvpaths.:named_paths_name()",
+            by_name=by_name,
+            ledger=by_name["alpha"] + by_name["beta"],
         ).resolve()
         assert sorted((r.uuid, r.data) for r in results.results) == [
             ("a-v1", "alpha"),
@@ -1229,8 +1233,12 @@ class TestStarTraversalFieldAccessor:
                 }
             ],
         }
+        # with ':manifest()' this is a ledger read (2026-10-30), so the
+        # ledger has to hold the same versions as the groups.
         results = _finder(
-            "$*.csvpaths.:last():named_paths_name():manifest()", by_name=by_name
+            "$*.csvpaths.:last():named_paths_name():manifest()",
+            by_name=by_name,
+            ledger=by_name["alpha"] + by_name["beta"],
         ).resolve()
         assert len(results.results) == 1
         assert results.results[0].uuid == "b-v1"
@@ -2308,3 +2316,215 @@ class TestChoiceRootMajor:
             '$:choice("abba").csvpaths.:last()', by_name=REGEX_BY_NAME
         ).query()
         assert results.uuids == []
+
+
+#
+# a root ledger with a deleted group ("gone": no per-name manifest, no
+# definition) and an unchanged reload of keep (its own uuid, linked to
+# the version it matched by version_uuid). the ledger spells some keys
+# differently from a per-name entry, and its own "manifest_path" is the
+# ledger itself, so reading the wrong source shows.
+#
+_C1_LEDGER_PATH = "named_paths/manifest.json"
+_C1_KEEP = {
+    "named_paths_name": "keep",
+    "group_file_path": "named_paths/keep/group.csvpaths",
+    "uuid": "keep-v1",
+    "fingerprint": "fp-keep",
+    "time": "2026-01-01T00:00:00+00:00",
+    "named_paths_identities": ["s"],
+    "manifest_path": "named_paths/keep/manifest.json",
+}
+_C1_ALSO = {
+    "named_paths_name": "also",
+    "group_file_path": "named_paths/also/group.csvpaths",
+    "uuid": "also-v1",
+    "fingerprint": "fp-also",
+    "time": "2026-01-02T00:00:00+00:00",
+    "named_paths_identities": ["t"],
+    "manifest_path": "named_paths/also/manifest.json",
+}
+
+
+def _c1_ledger_entry(
+    *, name: str, uuid: str, fingerprint: str, time: str, lifecycle: str, **extra
+) -> dict:
+    entry = {
+        "named_paths_name": name,
+        "group_file_path": f"named_paths/{name}/group.csvpaths",
+        "uuid": uuid,
+        "fingerprint": fingerprint,
+        "time": time,
+        "hostname": f"host-{name}",
+        "status": "complete",
+        "lifecycle": lifecycle,
+        "paths_manifest": f"named_paths/{name}/manifest.json",
+        "manifest_path": _C1_LEDGER_PATH,
+    }
+    entry.update(extra)
+    return entry
+
+
+_C1_LEDGER = [
+    _c1_ledger_entry(
+        name="keep",
+        uuid="keep-v1",
+        fingerprint="fp-keep",
+        time="2026-01-01T00:00:00+00:00",
+        lifecycle="active",
+    ),
+    _c1_ledger_entry(
+        name="also",
+        uuid="also-v1",
+        fingerprint="fp-also",
+        time="2026-01-02T00:00:00+00:00",
+        lifecycle="active",
+    ),
+    _c1_ledger_entry(
+        name="gone",
+        uuid="gone-v1",
+        fingerprint="fp-gone",
+        time="2026-01-03T00:00:00+00:00",
+        lifecycle="deleted",
+    ),
+    _c1_ledger_entry(
+        name="keep",
+        uuid="keep-reload",
+        fingerprint="fp-keep",
+        time="2026-01-04T00:00:00+00:00",
+        lifecycle="active",
+        status="unchanged",
+        version_uuid="keep-v1",
+    ),
+]
+_C1_LEDGER_UUIDS = ["keep-v1", "also-v1", "gone-v1", "keep-reload"]
+
+
+class TestStarLedgerReadKeepsDeletedEntries:
+    # finding C1 of the :lifecycle() gate work (specs/references_v3/
+    # notes/v3_part_2_lifecycle_gate.md), added 2026-10-30. Under '*', a
+    # ':manifest()' chain, or a field with no pointer, reads the root
+    # ledger, deleted entries included (David: "a ledger read returns the
+    # whole ledger"; the compendium's bare and ':manifest()' forms both
+    # "search the ledger manifest"). Entries are first-class. A live
+    # version reads its per-name entry first; a deleted one, or an
+    # unchanged reload, has only its ledger entry. A bare pointer
+    # without ':manifest()', and ':all()', still walk the live groups.
+    @staticmethod
+    def _c1_finder(reference: str) -> CsvpathsReferenceFinder3:
+        return _finder(
+            reference,
+            by_name={"keep": [dict(_C1_KEEP)], "also": [dict(_C1_ALSO)]},
+            ledger=[dict(e) for e in _C1_LEDGER],
+            definitions_by_name={
+                "keep": {"scripts": {"on_complete_all": "keep.py"}},
+                "also": {"scripts": {"on_complete_all": "also.py"}},
+            },
+            inputs_csvpaths_path="named_paths",
+        )
+
+    def _data(self, reference: str) -> list:
+        return [r.data for r in self._c1_finder(reference).resolve().results]
+
+    def test_bare_field_lists_every_ledger_entry(self):
+        results = self._c1_finder("$*.csvpaths.:uuid()").query()
+        assert results.uuids == _C1_LEDGER_UUIDS
+
+    def test_manifest_field_lists_every_ledger_entry(self):
+        results = self._c1_finder("$*.csvpaths.:manifest():uuid()").query()
+        assert results.uuids == _C1_LEDGER_UUIDS
+
+    def test_deleted_entry_path_is_its_group_file(self):
+        results = self._c1_finder("$*.csvpaths.:manifest():uuid()").query()
+        assert results.results[2].path == "named_paths/gone/group.csvpaths"
+
+    def test_bare_field_values_include_the_deleted_entry(self):
+        assert self._data("$*.csvpaths.:uuid()") == _C1_LEDGER_UUIDS
+
+    def test_manifest_last_with_a_field_is_the_last_ledger_entry(self):
+        assert self._data("$*.csvpaths.:manifest():last():uuid()") == ["keep-reload"]
+
+    def test_a_field_does_not_change_which_entry_last_picks(self):
+        plain = self._c1_finder("$*.csvpaths.:manifest():last()").query()
+        with_field = self._c1_finder("$*.csvpaths.:manifest():last():uuid()").query()
+        assert plain.uuids == with_field.uuids
+
+    def test_manifest_index_picks_the_deleted_entry(self):
+        assert self._data("$*.csvpaths.:manifest():index(2):uuid()") == ["gone-v1"]
+
+    def test_manifest_first_is_unchanged(self):
+        assert self._data("$*.csvpaths.:manifest():first():uuid()") == ["keep-v1"]
+
+    def test_deleted_entry_values_come_from_its_ledger_entry(self):
+        assert self._data("$*.csvpaths.:manifest():index(2):fingerprint()") == [
+            "fp-gone"
+        ]
+        assert self._data("$*.csvpaths.:manifest():index(2):time()") == [
+            "2026-01-03T00:00:00+00:00"
+        ]
+        assert self._data("$*.csvpaths.:manifest():index(2):named_paths_name()") == [
+            "gone"
+        ]
+
+    def test_per_version_data_is_none_for_the_deleted_entry(self):
+        assert self._data("$*.csvpaths.:manifest():named_paths_identities()") == [
+            ["s"],
+            ["t"],
+            None,
+            None,
+        ]
+
+    def test_definition_field_is_none_for_the_deleted_entry(self):
+        # gone has no definition: reading one would raise KeyError in
+        # the fake describer.
+        assert self._data("$*.csvpaths.:manifest():scripts()") == [
+            {"on_complete_all": "keep.py"},
+            {"on_complete_all": "also.py"},
+            None,
+            {"on_complete_all": "keep.py"},
+        ]
+
+    def test_having_drops_the_deleted_entry(self):
+        results = self._c1_finder('$*.csvpaths.:manifest():having("s"):uuid()').query()
+        assert results.uuids == ["keep-v1"]
+
+    def test_manifest_path_is_the_per_name_manifest_for_every_entry(self):
+        assert self._data("$*.csvpaths.:manifest():manifest_path()") == [
+            "named_paths/keep/manifest.json",
+            "named_paths/also/manifest.json",
+            "named_paths/gone/manifest.json",
+            "named_paths/keep/manifest.json",
+        ]
+
+    def test_ledger_only_field_for_every_entry(self):
+        assert self._data("$*.csvpaths.:manifest():host()") == [
+            "host-keep",
+            "host-also",
+            "host-gone",
+            "host-keep",
+        ]
+
+    def test_unchanged_reload_is_its_own_entry(self):
+        results = self._c1_finder("$*.csvpaths.:manifest():uuid()").query()
+        assert results.uuids.count("keep-reload") == 1
+        assert results.uuids.count("keep-v1") == 1
+
+    def test_regex_root_filters_the_ledger(self):
+        results = self._c1_finder(
+            '$:regex("^(keep|gone)$").csvpaths.:manifest():uuid()'
+        ).query()
+        assert results.uuids == ["keep-v1", "gone-v1", "keep-reload"]
+
+    def test_bare_pointer_still_reads_the_live_groups(self):
+        assert self._data("$*.csvpaths.:last():uuid()") == ["also-v1"]
+
+    def test_grouped_shape_still_reads_the_live_groups(self):
+        results = self._c1_finder("$*.csvpaths.:all():uuid()").query()
+        assert sorted(results.uuids) == ["also-v1", "keep-v1"]
+
+    def test_ledger_entry_rejects_none(self):
+        with pytest.raises(ValueError):
+            self._c1_finder("$*.csvpaths.:uuid()")._ledger_entry(None)
+
+    def test_ledger_entry_of_an_unknown_uuid_is_none(self):
+        assert self._c1_finder("$*.csvpaths.:uuid()")._ledger_entry("nope") is None

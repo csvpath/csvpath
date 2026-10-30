@@ -26,6 +26,14 @@ class ManifestPath3(Function3):
         Reference3.RESULTS: "manifest_path",
         Reference3.RESULT: "manifest_path",
     }
+    #
+    # the CSVPATHS root ledger spells it "paths_manifest": its own
+    # "manifest_path" is the ledger itself. read for a deleted version,
+    # which has no per-name entry (2026-10-30).
+    #
+    LEDGER_KEY = {
+        Reference3.CSVPATHS: "paths_manifest",
+    }
     POSITIONS = {
         Reference3.CSVPATHS: (Reference3.NAME_ONE,),
         Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE),

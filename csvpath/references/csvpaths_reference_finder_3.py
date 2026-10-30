@@ -657,16 +657,27 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # permanent design choice) since nothing about pooling itself
             # needs a pointer to be meaningful, same as GROUP mode already
             # proved.
-            pooled = []
-            for name in self._matching_names(
-                self.source.paths_names(), name_filter
-            ):
-                pooled.extend(
-                    _having_filtered(
-                        self.source.paths_manifest(name)
-                    )
+            if manifest_call is not None or (not pointers and field_call is not None):
+                # a ledger read (David, 2026-10-30): under '*', ':manifest()'
+                # or a field with no pointer maps over the root ledger,
+                # deleted entries included, as FILES does -- see
+                # _ledger_versions(). In ledger order, the same order
+                # Rule 1b's ':manifest():last()' already uses, so adding
+                # a field never changes which entry a pointer picks.
+                pooled = _having_filtered(
+                    self._ledger_versions(name_filter=name_filter)
                 )
-            pooled.sort(key=lambda e: e["time"])
+            else:
+                pooled = []
+                for name in self._matching_names(
+                    self.source.paths_names(), name_filter
+                ):
+                    pooled.extend(
+                        _having_filtered(
+                            self.source.paths_manifest(name)
+                        )
+                    )
+                pooled.sort(key=lambda e: e["time"])
             if pointers:
                 selected = self._apply_pointer(pointers[0], pooled)
                 selected_versions = [selected] if selected is not None else []
@@ -799,6 +810,18 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     group_name, _ = self._group_manifest_entry(
                         reference.root_major, result.uuid
                     )
+                    if group_name is None and self._is_traversal_root(
+                        reference.root_major
+                    ):
+                        # an entry from a '*' ledger read with no per-name
+                        # entry (2026-10-30): an unchanged reload's group
+                        # still has its definition.json; a deleted
+                        # group's went with its folder.
+                        ledger_entry = self._ledger_entry(result.uuid) or {}
+                        name = ledger_entry.get("named_paths_name")
+                        if name not in self.source.paths_names():
+                            return None
+                        group_name = name
                     config = self.csvpaths.paths_manager.describer.get_config(
                         group_name
                     )
@@ -807,6 +830,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 _, entry = self._group_manifest_entry(
                     reference.root_major, result.uuid
                 )
+                if entry is None and self._is_traversal_root(reference.root_major):
+                    # a deleted version (or an unchanged reload) from a
+                    # '*' ledger read has no per-name entry: read its
+                    # ledger entry, by the ledger's spelling of the key
+                    # where it has its own (2026-10-30, the source is an
+                    # implementation detail -- David).
+                    ledger_key = function_cls.LEDGER_KEY.get(reference.datatype)
+                    return self._extract_field_value(
+                        self._ledger_entry(result.uuid),
+                        ledger_key if ledger_key is not None else key_path,
+                    )
                 return self._extract_field_value_with_ledger_fallback(
                     entry=entry,
                     key_path=key_path,
@@ -905,6 +939,38 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         raise ReferenceException3(
             f"CsvpathsReferenceFinder3 has no computed-field handling for :{name}()"
         )
+
+    def _ledger_versions(self, *, name_filter: "str | None") -> list:
+        """every root ledger entry, in ledger order, deleted ones
+        included -- the candidate pool for a '*' ledger read (David,
+        2026-10-30: a ledger read returns the whole ledger, and its
+        entries are first-class). Where a version still exists, its
+        ledger entry is swapped for its own per-name manifest entry, the
+        best source for per-version data the ledger never holds
+        (named_paths_identities for ':having()' and name_three,
+        named_paths, ...). A deleted version, or an unchanged reload
+        (its own uuid, linked by version_uuid), stays its ledger entry.
+        `name_filter` is a :regex()/:choice() pattern, as
+        _matching_names() applies it."""
+        names = self._matching_names(self.source.paths_names(), name_filter)
+        live = {}
+        for name in names:
+            for entry in self.source.paths_manifest(name):
+                live[entry.get("uuid")] = entry
+        versions = []
+        for entry in self.source.paths_ledger():
+            name = entry.get("named_paths_name") or ""
+            if not self._matching_names([name], name_filter):
+                continue
+            versions.append(live.get(entry.get("uuid"), entry))
+        return versions
+
+    def _ledger_entry(self, uuid: str) -> dict | None:
+        """the root ledger entry for `uuid`, or None if the ledger has
+        none."""
+        if uuid is None:
+            raise ValueError("uuid cannot be None")
+        return self._find_manifest_entry_by_uuid(self.source.paths_ledger(), uuid)
 
     def _group_manifest_entry(self, root_major, uuid: str) -> tuple:
         """returns (group_name, manifest_entry) for the version matching

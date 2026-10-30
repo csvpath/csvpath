@@ -224,6 +224,10 @@ CSVPATHS = [
     "$*.csvpaths.:last():manifest()",
     "$*.csvpaths.:manifest()",
     "$*.csvpaths.:manifest():last()",
+    "$*.csvpaths.:uuid()",
+    "$*.csvpaths.:manifest():uuid()",
+    "$*.csvpaths.:manifest():last():uuid()",
+    "$*.csvpaths.:manifest():fingerprint()",
     "$:regex(/^a/).csvpaths.:last()",
     "$:regex(/^z/).csvpaths.:last()",
     "$beta.csvpaths.:all()",
@@ -315,6 +319,18 @@ def test_deleted_names_are_gone_in_both_modes(paths):
         off, on = _both(paths, reference)
         assert off == on
         assert off[0] == "raised" or len(off[1]) == 0
+
+
+def test_star_ledger_read_keeps_the_deleted_group_in_both_modes(paths):
+    #
+    # under '*', a field reads the root ledger, deleted entries included
+    # (2026-10-30). the SQL ledger read keeps deleted rows, as the JSON
+    # ledger does, so both modes see xgone.
+    #
+    for reference in ["$*.csvpaths.:uuid()", "$*.csvpaths.:manifest():uuid()"]:
+        off, on = _both(paths, reference)
+        assert off == on
+        assert any("xgone" in f for f in off[1].files)
 
 
 def test_re_registered_name_is_the_new_version_in_both_modes(paths):
