@@ -2225,7 +2225,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
         Requires exactly one chained function -- picking one field per
         entry from more than one chained accessor at once is not a
         shape any worked example has asked for yet, so left unbuilt
-        rather than guessed at."""
+        rather than guessed at.
+
+        The chained field must be one read from manifest.json. A
+        definition.json field (e.g. ':manifest():on_arrival()') raises
+        here: it has nothing to read in a manifest entry, and under '*'
+        it used to crash in resolve()."""
         if (
             len(name_one.path) != 1
             or not isinstance(name_one.path[0], FunctionCall3)
@@ -2241,6 +2246,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
         function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
         if function_cls is None or function_cls.SOURCE is None:
             return None
+        if function_cls.SOURCE == "definition":
+            raise ReferenceException3(
+                f"':{call.name}()' reads definition.json, not manifest.json, "
+                "so it is not supported on ':manifest()' -- use "
+                f"':{call.name}()' on its own."
+            )
         return call
 
     @staticmethod
@@ -2439,6 +2450,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 return self._find_manifest_entry_by_uuid(manifest, result.uuid)
         if kind == Reference3.METADATA_FIELD:
             is_bare_field_call = reference.name_three is None
+            #
+            # true for ':manifest():<field>()'. such a field is read from
+            # the manifest entry, even one like ':template()' that reads
+            # definition.json when it stands alone.
+            #
+            is_manifest_chain = False
             if not is_bare_field_call:
                 field_call = self._find_field_function_call(
                     reference.name_three.functions
@@ -2468,6 +2485,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     field_call = self._bare_manifest_field_call(
                         reference.name_one
                     )
+                    is_manifest_chain = field_call is not None
             if field_call is not None:
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     field_call.name
@@ -2477,17 +2495,23 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     # resolved reference, no manifest/definition read at
                     # all. see function_3.py's SOURCE comment.
                     return self._compute_field(field_call.name, reference)
-                if field_call.name == "named_file_name":
+                if field_call.name == "named_file_name" and not isinstance(
+                    reference.root_major, Star3
+                ):
                     # a real, stored field at RESULTS/RESULT scope, but at
                     # FILES scope this is just the already-known resolved
                     # name -- reading it back from the manifest would be
                     # redundant, so it is computed here instead, same
                     # reasoning as the "computed" SOURCE branch above.
+                    # under '*' root_major is the '*' itself, not a name,
+                    # so the name is read from each ledger entry below.
                     return reference.root_major
                 key_path = function_cls.KEY.get(reference.datatype)
                 key_path = self._apply_key_arg(key_path, field_call.arg)
                 use_definition = function_cls.SOURCE == "definition" or (
-                    is_bare_field_call and function_cls.BARE_SOURCE == "definition"
+                    is_bare_field_call
+                    and not is_manifest_chain
+                    and function_cls.BARE_SOURCE == "definition"
                 )
                 if use_definition:
                     config = self.csvpaths.file_manager.describer.get_config(

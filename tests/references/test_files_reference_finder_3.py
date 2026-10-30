@@ -844,6 +844,136 @@ class TestStarBareManifestFieldAccessor:
             ).query()
 
 
+#
+# the global ledger and a per-name manifest spell some keys differently:
+# "file_path"/"origin_path" in the ledger, "file"/"from" per name. the
+# definition's template differs from every stored one, so a read of the
+# wrong source shows.
+#
+FIELD_SOURCE_LEDGER = [
+    {
+        "named_file_name": "alpha",
+        "uuid": "u-alpha-1",
+        "file_path": "inputs/named_files/alpha/one.csv/aaa.csv",
+        "origin_path": "/landing/alpha/one.csv",
+        "template": "alpha-stored",
+    },
+    {
+        "named_file_name": "beta",
+        "uuid": "u-beta-1",
+        "file_path": "inputs/named_files/beta/two.csv/bbb.csv",
+        "origin_path": "/landing/beta/two.csv",
+        "template": "beta-stored",
+    },
+]
+FIELD_SOURCE_MANIFEST = [
+    {
+        "file": "inputs/named_files/alpha/one.csv/aaa.csv",
+        "file_home": "inputs/named_files/alpha/one.csv",
+        "from": "/landing/alpha/one.csv",
+        "template": "alpha-stored",
+        "uuid": "u-alpha-1",
+    },
+]
+FIELD_SOURCE_DEFINITION = {"template": "current-default"}
+
+
+def _field_source_finder(reference: str) -> FilesReferenceFinder3:
+    return _finder(
+        reference,
+        ALPHA_HOME,
+        FIELD_SOURCE_MANIFEST,
+        definition=FIELD_SOURCE_DEFINITION,
+        inputs_files_path="inputs/named_files",
+        ledger=FIELD_SOURCE_LEDGER,
+    )
+
+
+def _resolved(reference: str) -> list:
+    return [r.data for r in _field_source_finder(reference).resolve().results]
+
+
+class TestManifestFieldReadsTheManifest:
+    # ':manifest():<field>()' reads each field from the manifest entries
+    # it maps over: the global ledger under '*', the named-file's own
+    # manifest for a literal root. Under '*' these five used to give
+    # None, '*', or crash.
+    def test_star_file_path_reads_the_ledger_spelling(self):
+        assert _resolved("$*.files.:manifest():file_path()") == [
+            "inputs/named_files/alpha/one.csv/aaa.csv",
+            "inputs/named_files/beta/two.csv/bbb.csv",
+        ]
+
+    def test_star_origin_reads_the_ledger_spelling(self):
+        assert _resolved("$*.files.:manifest():origin()") == [
+            "/landing/alpha/one.csv",
+            "/landing/beta/two.csv",
+        ]
+
+    def test_star_named_file_name_is_each_entrys_own_name(self):
+        assert _resolved("$*.files.:manifest():named_file_name()") == [
+            "alpha",
+            "beta",
+        ]
+
+    def test_star_template_is_each_entrys_stored_template(self):
+        assert _resolved("$*.files.:manifest():template()") == [
+            "alpha-stored",
+            "beta-stored",
+        ]
+
+    def test_literal_file_path_is_unchanged(self):
+        assert _resolved("$alpha.files.:manifest():file_path()") == [
+            "inputs/named_files/alpha/one.csv/aaa.csv"
+        ]
+
+    def test_literal_origin_is_unchanged(self):
+        assert _resolved("$alpha.files.:manifest():origin()") == [
+            "/landing/alpha/one.csv"
+        ]
+
+    def test_literal_named_file_name_is_unchanged(self):
+        assert _resolved("$alpha.files.:manifest():named_file_name()") == ["alpha"]
+
+    def test_literal_template_is_the_stored_template_not_the_definition(self):
+        # changed: this used to read definition.json's current default.
+        # a per-entry read gives each version's own stored snapshot, as
+        # ':name("one.csv").:first():template()' already does.
+        assert _resolved("$alpha.files.:manifest():template()") == ["alpha-stored"]
+
+    def test_pointer_template_agrees_with_the_manifest_chain(self):
+        assert _resolved('$alpha.files.:name("one.csv").:first():template()') == [
+            "alpha-stored"
+        ]
+
+    def test_bare_template_still_reads_the_definition(self):
+        assert _resolved("$alpha.files.:template()") == ["current-default"]
+
+    @pytest.mark.parametrize("root", ["$*", "$alpha"])
+    @pytest.mark.parametrize("field", ["on_arrival", "sources", "run_method"])
+    def test_a_definition_field_on_manifest_raises_and_names_it(self, root, field):
+        with pytest.raises(ReferenceException3) as error:
+            _field_source_finder(f"{root}.files.:manifest():{field}()").query()
+        message = str(error.value)
+        assert f"':{field}()' reads definition.json" in message
+        assert "not supported on ':manifest()'" in message
+
+    def test_bare_definition_field_still_reads_the_definition(self):
+        finder = _finder(
+            "$alpha.files.:on_arrival()",
+            ALPHA_HOME,
+            FIELD_SOURCE_MANIFEST,
+            definition={
+                "on_arrival": {
+                    "named_paths_group": "g",
+                    "run_method": "collect_paths",
+                }
+            },
+        )
+        data = finder.resolve().results[0].data
+        assert data["named_paths_group"] == "g"
+
+
 class TestStarTraversalGroup:
     # bare ':all()' as name_one's entire content partitions every
     # named-file's EXACTLY-one-level matches (corrected 2026-08-12 to
