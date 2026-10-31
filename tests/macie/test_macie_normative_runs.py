@@ -1,7 +1,9 @@
-"""Runs each normative pair's expected csvpath, through real CVL, against
-the pair's data and checks every output: the matched lines, the "macie"
-print stream, the collected errors, and the macie_findings variable.
-test_macie_pair_semantics checks the same expectations without CVL."""
+"""For each normative pair: the converter must produce the pair's expected
+csvpath exactly, and both the expected csvpath and the converter's output
+must, through real CVL against the pair's data, give every expected output:
+the matched lines, the "macie" print stream, the collected errors, and the
+macie_findings variable. test_macie_pair_semantics checks the same
+expectations without CVL."""
 
 import csv
 import json
@@ -11,6 +13,8 @@ import pytest
 import yaml
 
 from csvpath import CsvPath
+from csvpath.macie.macie_converter import MacieConverter
+from csvpath.macie.macie_wrapper_loader import MacieWrapperLoader
 from csvpath.util.printer import Printer
 
 NORMATIVE = os.path.join("tests", "macie", "test_resources", "normative")
@@ -39,15 +43,29 @@ class StreamPrinter(Printer):
         self.streams.setdefault(name or "default", []).append(string)
 
 
-def _runs() -> list[tuple[str, dict]]:
+def _pairs() -> list[str]:
+    return sorted(
+        os.path.join(NORMATIVE, d)
+        for d in os.listdir(NORMATIVE)
+        if os.path.isdir(os.path.join(NORMATIVE, d))
+    )
+
+
+def _expected(pair: str) -> dict:
+    with open(os.path.join(pair, "expected.yaml"), encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+def _runs() -> list[tuple[str, dict, str]]:
+    #
+    # each run twice: the hand-checked expected csvpath, and the converter's
+    # output for the pair's wrapper run stand-alone against the data
+    #
     runs = []
-    for d in sorted(os.listdir(NORMATIVE)):
-        pair = os.path.join(NORMATIVE, d)
-        if not os.path.isdir(pair):
-            continue
-        with open(os.path.join(pair, "expected.yaml"), encoding="utf-8") as f:
-            for run in yaml.safe_load(f)["runs"]:
-                runs.append((pair, run))
+    for pair in _pairs():
+        for run in _expected(pair)["runs"]:
+            for source in ["expected", "converted"]:
+                runs.append((pair, run, source))
     return runs
 
 
@@ -57,24 +75,46 @@ def _run_id(param) -> str:
     return os.path.basename(param)
 
 
+def _convert(*, pair: str, path: str | None = None) -> str:
+    names = [n for n in os.listdir(pair) if MacieWrapperLoader.is_wrapper_path(path=n)]
+    assert len(names) == 1
+    wrapper = MacieWrapperLoader.from_path(path=os.path.join(pair, names[0]))
+    args = _expected(pair).get("conversion") or {}
+    return MacieConverter(wrapper=wrapper).convert(path=path, **args).csvpath
+
+
 def _with_data_path(*, csvpath: str, data_path: str) -> str:
     #
-    # expected csvpaths have no filename in their root, as the transpiler's
-    # output will not
+    # expected csvpaths have no filename in their root, as the converter's
+    # output for a named-paths group does not
     #
     assert csvpath.count("$[1*]") == 1
     return csvpath.replace("$[1*]", f"${data_path}[1*]", 1)
 
 
-@pytest.mark.parametrize("pair,run", _runs(), ids=_run_id)
-def test_macie_normative_run(pair: str, run: dict) -> None:
-    with open(os.path.join(pair, "expected", run["csvpath"]), encoding="utf-8") as f:
-        csvpath = f.read()
+@pytest.mark.parametrize("pair", _pairs(), ids=_run_id)
+def test_macie_converter_produces_expected_csvpath(pair: str) -> None:
+    for run in _expected(pair)["runs"]:
+        with open(
+            os.path.join(pair, "expected", run["csvpath"]), encoding="utf-8"
+        ) as f:
+            assert _convert(pair=pair) == f.read()
+
+
+@pytest.mark.parametrize("pair,run,source", _runs(), ids=_run_id)
+def test_macie_normative_run(pair: str, run: dict, source: str) -> None:
     data_path = os.path.join(pair, "data", run["data"])
+    if source == "expected":
+        with open(
+            os.path.join(pair, "expected", run["csvpath"]), encoding="utf-8"
+        ) as f:
+            csvpath = _with_data_path(csvpath=f.read(), data_path=data_path)
+    else:
+        csvpath = _convert(pair=pair, path=data_path)
     path = CsvPath()
     printer = StreamPrinter()
     path.set_printers([printer])
-    matched = path.collect(_with_data_path(csvpath=csvpath, data_path=data_path))
+    matched = path.collect(csvpath)
 
     with open(data_path, encoding="utf-8", newline="") as f:
         lines = list(csv.reader(f))
