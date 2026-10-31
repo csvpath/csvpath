@@ -15,8 +15,14 @@ Layout of a pair:
     expected/findings.json   the run's macie_findings variable, in Macie's
                              detections shape
     data/*.csv               sample data
-    expected.yaml            per run: data file, finding_lines, and why
+    expected.yaml            conversion: the MacieConverter.convert()
+                             arguments that produce expected/<name>.csvpath;
+                             per run: data file, finding_lines, and why
                              each line does or doesn't have a finding
+
+The tests check that MacieConverter produces the expected csvpath
+exactly, and that both the expected csvpath and the converter's output
+give every expected result in a real run.
 
 Design decisions are in `specs/macie/transpile-design.md`.
 

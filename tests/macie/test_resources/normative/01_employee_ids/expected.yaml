@@ -1,7 +1,8 @@
 #
 # What the expected csvpath must do against the data file.
 #
-#   csvpath:        file in expected/ to run
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
 #   finding_lines:  0-based physical line numbers (header is line 0) that
 #                   must match, i.e. lines with at least one finding.
 #                   Every other data line must not match.
@@ -15,6 +16,12 @@
 # Macie numbering in findings: row = line + 1 (header is row 1), column is
 # 1-based.
 #
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 3
 runs:
   - csvpath: hr-employee-ids.csvpath
     data: employees.csv
