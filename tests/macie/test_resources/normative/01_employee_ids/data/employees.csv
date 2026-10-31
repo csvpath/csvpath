@@ -1,0 +1,12 @@
+row_id,full_name,employee_id,manager_note,email
+1,Akua Mansa,EMP-123456,,akua@acme.com
+2,John Doe,EMP-000000,,john@acme.com
+3,Martha Rivera,EMP-900001,,martha@acme.com
+4,Li Wei,EMP-12345,,li@acme.com
+5,Ana Silva,EMP-234567,emp id EMP-345678 transferred,ana@acme.com
+6,Omar Haddad,EMP-456789,ref EMP-567890,omar@acme.com
+7,Sara Lund,,"Employee ID: EMP-678901, EMP-789012",sara@acme.com
+8,Ken Ito,,"emp id is in the HR system, see the onboarding packet for details EMP-890123",ken@acme.com
+9,Ola Berg,EMP-901234 EMP-012345,,ola@acme.com
+10,Mia Chen,emp-112233,,mia@acme.com
+11,Tom Ruiz,XEMP-223344,,tom@acme.com
