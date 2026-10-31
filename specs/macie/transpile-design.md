@@ -241,8 +241,49 @@ macie: stopped at line 18450 after 10000 occurrences (max 10000); results are pa
 
 ## Code so far
 
+The transpiler is `MacieConverter`, named like the ODCS package's
+`OdcsConverter`, and it reuses that package's `ConversionReport` and
+`CsvPathTextUtility`:
+
+```python
+wrapper = MacieWrapperLoader.from_path(path="hr-employee-ids.macie.json")
+conversion = MacieConverter(wrapper=wrapper).convert(max_detail=3)
+conversion.name             # "hr-employee-ids": the job's name, or name=...
+conversion.csvpath          # the csvpath text, root $[1*]
+conversion.report.skipped   # what was not translated
+```
+
+- **Translated:** custom data identifiers (`macie_cdi`) and regex allow
+  lists (`macie_allow_regex`).
+- **Reported, not translated:** managed identifiers (not yet), text allow
+  lists (need `load_list()`, #470), findings filters (they act on findings
+  after detection), and every wrapper warning.
+- **Fails the conversion:** a value CVL can't express, such as a
+  keyword, ignore word or name with a double quote, or a keyword or ignore
+  word with `|`. Skipping part of an identifier would silently change what
+  it detects, so we don't. A regex that doesn't translate and compile as
+  `macie_cdi()` will compile it also fails, as does a malformed ARN, a
+  name that can't be a csvpath id and group name, or a wrapper with no
+  custom identifiers.
+
+  This is stricter than the ODCS converter, which reports what it skips,
+  and on purpose. A wrong ODCS translation is a data validation error. A
+  wrong Macie translation can miss sensitive data, which can become a
+  legal problem. So the Macie side fails loudly wherever a silent
+  shortfall could change what is detected. (David, 2026-10-31.)
+- **Name:** the job's or template's name. A handcrafted wrapper, or a
+  Macie name with other characters, needs `name=`. Names are letters,
+  digits, `.`, `_` and `-`.
+- **Limits:** `max_findings` and `max_detail` are arguments. The caller
+  (named-paths registration, later) will supply them from the rulesbase
+  and config.ini. The defaults are 10000 and 15.
+- **Regex literals** hold the Macie pattern as written, with `/` escaped
+  so the literal ends where it should. Grammar characters such as `]`,
+  `(` and `,` need no escaping; tests run each through real CVL.
+
 | Class | Job |
 |---|---|
+| `MacieConverter` | the transpiler: wrapper -> one csvpath, plus a report of what was not translated |
 | `MacieWrapperLoader` | load and check a `*.macie.json` |
 | `RegexUtility` (`reut`) | Macie regex -> compiled Python regex |
 | `KeywordUtility` (`keut`) | keyword variants, header and in-cell checks |
