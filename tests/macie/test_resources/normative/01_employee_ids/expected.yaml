@@ -1,0 +1,53 @@
+#
+# What the expected csvpath must do against the data file.
+#
+#   csvpath:        file in expected/ to run
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence, so the
+#                   detail cap applies here too
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+runs:
+  - csvpath: hr-employee-ids.csvpath
+    data: employees.csv
+    finding_lines: [1, 5, 6, 7, 9, 11]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie EmployeeId: occurrence 1, line 1 (row 2), column 3 employee_id" }
+      - { line: 5, message: "macie EmployeeId: occurrence 2, line 5 (row 6), column 3 employee_id" }
+      - { line: 5, message: "macie EmployeeId: occurrence 3, line 5 (row 6), column 4 manager_note" }
+    findings: findings.json
+    #
+    # the 8 occurrences, in file order:
+    #   line 1  employee_id   EMP-123456  header has keyword (employee_id ~ "employee id")
+    #   line 5  employee_id   EMP-234567  header keyword
+    #   line 5  manager_note  EMP-345678  "emp id" 11 chars before the match end (<= 50)
+    #   line 6  employee_id   EMP-456789  header keyword
+    #   line 7  manager_note  EMP-678901  "Employee ID" (case-insensitive), distance 12
+    #   line 7  manager_note  EMP-789012  same keyword, distance 24: 2 occurrences, 1 cell
+    #   line 9  employee_id   EMP-012345  (EMP-901234 in the same cell is allow-listed)
+    #   line 11 employee_id   EMP-223344  inside XEMP-223344: no implicit word boundary
+    #
+    # why each other line has no finding:
+    #   2  EMP-000000 contains the ignore word EMP-000000
+    #   3  EMP-900001 fully matches the allow-list regex EMP-9\d{5}
+    #   4  EMP-12345 has five digits: no regex match
+    #   6  (has a finding) but its manager_note "ref EMP-567890" does not
+    #      count: no keyword in that header or before the match
+    #   8  "emp id" is 70 chars before the match end (> 50)
+    #   10 emp-112233: regex is case-sensitive
+    #
+    # 8 occurrences: LOW at 1, MEDIUM at 5, HIGH at 10 -> MEDIUM.
+    # macie-max-detail is 3, so 3 detail printouts (and 3 errors) then the
+    # summary printout. The default print stream gets nothing.
+    # findings.json keeps all 8 cells (cells cap is 15, as in Macie).
+    # Matched values are never printed or stored: only their locations.

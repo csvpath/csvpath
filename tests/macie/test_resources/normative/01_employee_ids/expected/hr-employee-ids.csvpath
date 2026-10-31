@@ -1,0 +1,27 @@
+~
+  id: hr-employee-ids
+  macie-origin: job
+  macie-job-id: 5d0c4a1e8b7f6e5d4c3b2a1f0e9d8c7b
+  macie-account: 123456789012
+  macie-region: us-east-1
+  macie-source-arn: arn|aws|macie2|us-east-1|123456789012|classification-job/5d0c4a1e8b7f6e5d4c3b2a1f0e9d8c7b
+  macie-downloaded-at: 20261029T174000Z
+  macie-max-findings: 10000
+  macie-max-detail: 3
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_allow_regex.nocontrib("training-accounts", /EMP-9\d{5}/)
+    macie_cdi(
+        "EmployeeId",
+        "arn:aws:macie2:us-east-1:123456789012:custom-data-identifier/2a1b7e4c-5d3f-4e8a-9b0c-1d2e3f4a5b6c",
+        /EMP-\d{6}/,
+        "employee id|emp id",
+        "EMP-000000",
+        50,
+        "1:LOW 5:MEDIUM 10:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

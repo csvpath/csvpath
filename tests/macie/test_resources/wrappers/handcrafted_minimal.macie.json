@@ -1,0 +1,33 @@
+{
+  "csvpath_macie": 1,
+  "source": { "origin": "handcrafted" },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": ["CREDIT_CARD_NUMBER"],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": ["employee-id"],
+    "allowListIds": ["test-cards"]
+  },
+  "managedDataIdentifiers": {
+    "resolved": ["CREDIT_CARD_NUMBER"],
+    "resolution": { "method": "selector", "recommended_list": null }
+  },
+  "customDataIdentifiers": [
+    {
+      "id": "employee-id",
+      "name": "EmployeeId",
+      "regex": "EMP-\\d{6}",
+      "keywords": ["employee id"],
+      "maximumMatchDistance": 50
+    }
+  ],
+  "allowLists": [
+    {
+      "settings": {
+        "id": "test-cards",
+        "name": "test-cards",
+        "criteria": { "regex": "4111[ -]?1111[ -]?1111[ -]?1111" }
+      }
+    }
+  ]
+}

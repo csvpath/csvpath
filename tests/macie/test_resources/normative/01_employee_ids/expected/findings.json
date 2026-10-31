@@ -1,0 +1,73 @@
+{
+  "customDataIdentifiers": {
+    "detections": [
+      {
+        "arn": "arn:aws:macie2:us-east-1:123456789012:custom-data-identifier/2a1b7e4c-5d3f-4e8a-9b0c-1d2e3f4a5b6c",
+        "name": "EmployeeId",
+        "count": 8,
+        "severity": "MEDIUM",
+        "occurrences": {
+          "cells": [
+            {
+              "cellReference": null,
+              "column": 3,
+              "columnName": "employee_id",
+              "row": 2
+            },
+            {
+              "cellReference": null,
+              "column": 3,
+              "columnName": "employee_id",
+              "row": 6
+            },
+            {
+              "cellReference": null,
+              "column": 4,
+              "columnName": "manager_note",
+              "row": 6
+            },
+            {
+              "cellReference": null,
+              "column": 3,
+              "columnName": "employee_id",
+              "row": 7
+            },
+            {
+              "cellReference": null,
+              "column": 4,
+              "columnName": "manager_note",
+              "row": 8
+            },
+            {
+              "cellReference": null,
+              "column": 4,
+              "columnName": "manager_note",
+              "row": 8
+            },
+            {
+              "cellReference": null,
+              "column": 3,
+              "columnName": "employee_id",
+              "row": 10
+            },
+            {
+              "cellReference": null,
+              "column": 3,
+              "columnName": "employee_id",
+              "row": 12
+            }
+          ]
+        }
+      }
+    ],
+    "totalCount": 8
+  },
+  "sensitiveData": [],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:us-east-1:123456789012:classification-job/5d0c4a1e8b7f6e5d4c3b2a1f0e9d8c7b",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 3
+  }
+}

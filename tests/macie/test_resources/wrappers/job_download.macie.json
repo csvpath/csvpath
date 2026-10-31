@@ -1,0 +1,175 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "us-east-1",
+    "downloaded_at": "2026-10-29T17:40:00Z",
+    "job_id": "3ce05dbb7ec5505def334104bf1b3bca"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": ["CREDIT_CARD_NUMBER", "USA_SOCIAL_SECURITY_NUMBER", "NAME"],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [
+      "2a1b7e4c-5d3f-4e8a-9b0c-1d2e3f4a5b6c",
+      "7f6e5d4c-3b2a-4190-8e7f-6a5b4c3d2e1f"
+    ],
+    "allowListIds": ["k3m9p2q8r5t1v7w4x6y0za", "b8c2d4f6h1j3l5n7p9r0sa"]
+  },
+  "managedDataIdentifiers": {
+    "resolved": ["CREDIT_CARD_NUMBER", "USA_SOCIAL_SECURITY_NUMBER", "NAME"],
+    "resolution": { "method": "selector", "recommended_list": null },
+    "available": [
+      { "category": "FINANCIAL_INFORMATION", "id": "CREDIT_CARD_NUMBER" },
+      { "category": "PERSONAL_INFORMATION", "id": "USA_SOCIAL_SECURITY_NUMBER" },
+      { "category": "PERSONAL_INFORMATION", "id": "NAME" },
+      { "category": "CREDENTIALS", "id": "AWS_CREDENTIALS" }
+    ]
+  },
+  "customDataIdentifiers": [
+    {
+      "arn": "arn:aws:macie2:us-east-1:123456789012:custom-data-identifier/2a1b7e4c-5d3f-4e8a-9b0c-1d2e3f4a5b6c",
+      "createdAt": "2026-03-02T15:20:11Z",
+      "deleted": false,
+      "description": "Acme employee IDs",
+      "id": "2a1b7e4c-5d3f-4e8a-9b0c-1d2e3f4a5b6c",
+      "ignoreWords": ["EMP-000000"],
+      "keywords": ["employee id", "emp id"],
+      "maximumMatchDistance": 50,
+      "name": "EmployeeId",
+      "regex": "EMP-\\d{6}",
+      "severityLevels": [
+        { "occurrencesThreshold": 1, "severity": "LOW" },
+        { "occurrencesThreshold": 50, "severity": "HIGH" }
+      ],
+      "tags": { "owner": "hr-data" }
+    },
+    {
+      "arn": "arn:aws:macie2:us-east-1:123456789012:custom-data-identifier/7f6e5d4c-3b2a-4190-8e7f-6a5b4c3d2e1f",
+      "createdAt": "2025-11-14T09:02:45Z",
+      "deleted": true,
+      "description": "Legacy customer account numbers",
+      "id": "7f6e5d4c-3b2a-4190-8e7f-6a5b4c3d2e1f",
+      "ignoreWords": [],
+      "keywords": [],
+      "maximumMatchDistance": 50,
+      "name": "LegacyAccount",
+      "regex": "ACCT[0-9]{8}",
+      "severityLevels": [
+        { "occurrencesThreshold": 1, "severity": "MEDIUM" }
+      ],
+      "tags": {}
+    }
+  ],
+  "allowLists": [
+    {
+      "settings": {
+        "arn": "arn:aws:macie2:us-east-1:123456789012:allow-list/k3m9p2q8r5t1v7w4x6y0za",
+        "createdAt": "2026-04-10T12:00:00Z",
+        "criteria": { "regex": "[a-zA-Z0-9_.+\\-]+@acme\\.com" },
+        "description": "Company email addresses are not sensitive",
+        "id": "k3m9p2q8r5t1v7w4x6y0za",
+        "name": "acme-emails",
+        "status": { "code": "OK" },
+        "tags": {},
+        "updatedAt": "2026-04-10T12:00:00Z"
+      }
+    },
+    {
+      "settings": {
+        "arn": "arn:aws:macie2:us-east-1:123456789012:allow-list/b8c2d4f6h1j3l5n7p9r0sa",
+        "createdAt": "2026-04-11T08:30:00Z",
+        "criteria": {
+          "s3WordsList": { "bucketName": "acme-macie-lists", "objectKey": "public-names.txt" }
+        },
+        "description": "Names of public spokespeople",
+        "id": "b8c2d4f6h1j3l5n7p9r0sa",
+        "name": "public-names",
+        "status": { "code": "OK" },
+        "tags": {},
+        "updatedAt": "2026-06-01T10:15:00Z"
+      },
+      "contents": {
+        "status": "ACCESS_DENIED",
+        "entries": [],
+        "sha256": null,
+        "error": "s3:GetObject denied on s3://acme-macie-lists/public-names.txt"
+      }
+    }
+  ],
+  "findingsFilters": [
+    {
+      "action": "ARCHIVE",
+      "arn": "arn:aws:macie2:us-east-1:123456789012:findings-filter/9d8c7b6a-5f4e-4d3c-2b1a-0f9e8d7c6b5a",
+      "description": "Low-severity employee ID findings are noise",
+      "findingCriteria": {
+        "criterion": {
+          "customDataIdentifiers.detections.name": { "eq": ["EmployeeId"] },
+          "severity.description": { "eq": ["Low"] }
+        }
+      },
+      "id": "9d8c7b6a-5f4e-4d3c-2b1a-0f9e8d7c6b5a",
+      "name": "suppress-low-employee-ids",
+      "position": 1,
+      "tags": {}
+    },
+    {
+      "action": "ARCHIVE",
+      "arn": "arn:aws:macie2:us-east-1:123456789012:findings-filter/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+      "description": "The test bucket is synthetic data",
+      "findingCriteria": {
+        "criterion": {
+          "resourcesAffected.s3Bucket.name": { "eq": ["acme-test-data"] }
+        }
+      },
+      "id": "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+      "name": "suppress-test-bucket",
+      "position": 2,
+      "tags": {}
+    }
+  ],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": ["k3m9p2q8r5t1v7w4x6y0za", "b8c2d4f6h1j3l5n7p9r0sa"],
+      "createdAt": "2026-06-02T14:00:00Z",
+      "customDataIdentifierIds": [
+        "2a1b7e4c-5d3f-4e8a-9b0c-1d2e3f4a5b6c",
+        "7f6e5d4c-3b2a-4190-8e7f-6a5b4c3d2e1f"
+      ],
+      "description": "Weekly scan of HR exports",
+      "jobArn": "arn:aws:macie2:us-east-1:123456789012:classification-job/3ce05dbb7ec5505def334104bf1b3bca",
+      "jobId": "3ce05dbb7ec5505def334104bf1b3bca",
+      "jobStatus": "IDLE",
+      "jobType": "SCHEDULED",
+      "managedDataIdentifierIds": ["CREDIT_CARD_NUMBER", "USA_SOCIAL_SECURITY_NUMBER", "NAME"],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "hr-exports-weekly",
+      "s3JobDefinition": {
+        "bucketDefinitions": [ { "accountId": "123456789012", "buckets": ["acme-hr-exports"] } ],
+        "scoping": {
+          "includes": {
+            "and": [
+              { "simpleScopeTerm": { "comparator": "EQ", "key": "OBJECT_EXTENSION", "values": ["csv"] } }
+            ]
+          }
+        }
+      },
+      "samplingPercentage": 100,
+      "scheduleFrequency": { "weeklySchedule": { "dayOfWeek": "MONDAY" } },
+      "tags": {}
+    }
+  },
+  "warnings": [
+    {
+      "code": "ALLOW_LIST_UNREADABLE",
+      "subject": "b8c2d4f6h1j3l5n7p9r0sa",
+      "message": "s3:GetObject denied on s3://acme-macie-lists/public-names.txt"
+    },
+    {
+      "code": "CDI_DELETED_BUT_SELECTED",
+      "subject": "7f6e5d4c-3b2a-4190-8e7f-6a5b4c3d2e1f",
+      "message": "Custom data identifier LegacyAccount is soft-deleted but the job still uses it"
+    }
+  ]
+}
