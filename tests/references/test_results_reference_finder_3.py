@@ -90,8 +90,27 @@ def _make_run(base, run_name: str, run_uuid: str, instances: dict) -> str:
     return str(run_dir)
 
 
+def _ledger_entry(group: str, run_home: str) -> dict:
+    """one archive ledger entry for a run. A real ledger has one entry per
+    instance, each with its own uuid and its run's run_uuid; one per run
+    is enough here. run_uuid is the run manifest's, when _make_run() has
+    written one, so the logical manifest set (compendium 6.13b) groups
+    the entry under the right run."""
+    run_manifest = Path(run_home) / "manifest.json"
+    run_uuid = None
+    if run_manifest.exists():
+        run_uuid = json.loads(run_manifest.read_text()).get("run_uuid")
+    run_uuid = run_uuid or f"{Path(run_home).name}-run"
+    return {
+        "named_paths_name": group,
+        "run_home": run_home,
+        "run_uuid": run_uuid,
+        "uuid": f"{run_uuid}-instance",
+    }
+
+
 def _write_archive_manifest(archive, group: str, run_homes: list[str]) -> None:
-    entries = [{"named_paths_name": group, "run_home": rh} for rh in run_homes]
+    entries = [_ledger_entry(group, rh) for rh in run_homes]
     _write_json(archive / "manifest.json", entries)
 
 
@@ -102,7 +121,7 @@ def _write_archive_manifest_multi(archive, groups: dict) -> None:
     than appends. groups: {group_name: [run_home, ...]}."""
     entries = []
     for group, run_homes in groups.items():
-        entries.extend({"named_paths_name": group, "run_home": rh} for rh in run_homes)
+        entries.extend(_ledger_entry(group, rh) for rh in run_homes)
     _write_json(archive / "manifest.json", entries)
 
 
@@ -3884,11 +3903,16 @@ class TestGlobalArchiveLedger:
         assert results.files == [pathu.resep(f"{acme_archive}/manifest.json")]
         assert results.results[0].uuid is None
 
-    def test_resolve_reads_the_global_ledger_as_parsed_json(self, acme_archive):
+    def test_resolve_reads_the_global_ledger_as_run_records(self, acme_archive):
+        # the whole logical manifest set (compendium 6.13b), one record
+        # per run holding its instance entries -- not the ledger file's
+        # own flat list (2026-10-31)
         results = _finder("$*.results.:manifest()", acme_archive).resolve()
         data = results.results[0].data
         assert isinstance(data, list)
-        assert {e["named_paths_name"] for e in data} == {"acme"}
+        assert [r["run_uuid"] for r in data] == ["run1-uuid", "run2-uuid"]
+        assert {r["named_paths_name"] for r in data} == {"acme"}
+        assert all(len(r["instances"]) == 1 for r in data)
 
     def test_star_with_a_bare_pointer_is_supported(self, tmp_path):
         # '*' traversal is supported now for the bare-pointer case (see
@@ -3939,17 +3963,20 @@ class TestGlobalArchiveLedger:
 
 
 class TestGlobalArchiveLedgerOrdinalIndexing:
-    # Rule 1b: a pointer (:first()/:last()/:index(n)) riding before the
-    # bare :manifest() selects one entry out of the ledger by ordinal
-    # position, instead of dumping the whole thing. The archive ledger
-    # has no "uuid" key of its own (only "run_uuid"), unlike the files/
-    # csvpaths ledgers -- a separate, minimal fixture is used here rather
-    # than the shared acme_archive fixture, which does not write
-    # "run_uuid" into its entries at all.
+    # Rule 1b: a pointer (:first()/:last()/:index(n)) riding beside the
+    # bare :manifest() selects one RUN RECORD out of the logical
+    # manifest set by its position (compendium 6.13b, 2026-10-31) --
+    # until then it selected one ledger entry, one per instance. One
+    # entry per run here; TestStarManifestSetRunRecords covers runs
+    # with several instances.
     LEDGER = [
-        {"named_paths_name": "acme", "run_uuid": "run-1"},
-        {"named_paths_name": "acme", "run_uuid": "run-2"},
-        {"named_paths_name": "acme", "run_uuid": "run-3"},
+        {
+            "named_paths_name": "acme",
+            "run_uuid": f"run-{i}",
+            "uuid": f"run-{i}-s",
+            "run_home": f"/archive/acme/2026-01-0{i}_00-00-00",
+        }
+        for i in (1, 2, 3)
     ]
 
     def _archive(self, tmp_path) -> str:
@@ -3959,12 +3986,14 @@ class TestGlobalArchiveLedgerOrdinalIndexing:
     def test_last_gives_the_most_recent_run(self, tmp_path):
         archive = self._archive(tmp_path)
         results = _finder("$*.results.:last():manifest()", archive).resolve()
-        assert results.results[0].data == self.LEDGER[-1]
+        assert results.results[0].data["run_uuid"] == "run-3"
+        assert results.results[0].data["instances"] == [self.LEDGER[-1]]
 
     def test_index_gives_the_nth_run(self, tmp_path):
         archive = self._archive(tmp_path)
         results = _finder("$*.results.:index(1):manifest()", archive).resolve()
-        assert results.results[0].data == self.LEDGER[1]
+        assert results.results[0].data["run_uuid"] == "run-2"
+        assert results.results[0].data["instances"] == [self.LEDGER[1]]
 
     def test_out_of_range_index_gives_no_results(self, tmp_path):
         archive = self._archive(tmp_path)
@@ -5263,6 +5292,7 @@ class TestFilterNeverSuppliesTheResolveValue:
                     "named_paths_name": "acme",
                     "run_home": str(run_dir),
                     "run_uuid": run_uuid,
+                    "uuid": f"{run_uuid}-s",
                     "status": status,
                 }
             )
@@ -5397,3 +5427,308 @@ class TestFilterNeverSuppliesTheResolveValue:
         finder = _finder('$acme.results.:last()', runs)
         with pytest.raises(ValueError):
             finder._last_value_field_call(None)
+
+
+class TestStarManifestSetRunRecords:
+    # C2a of the :lifecycle() gate work (specs/references_v3/notes/
+    # v3_part_2_lifecycle_gate.md), added 2026-10-31. Under '*' (or a
+    # :regex()/:choice() root), :manifest() in name_one with no depth or
+    # grouping selector reaches the logical RESULTS manifest set
+    # (compendium 6.13b): one run record per run, every depth, deleted
+    # runs included, in order of each run's first instance's arrival.
+    # A field reads the run manifest first, so outcomes come from there
+    # and a deleted run has None for them. With :flatten()/:all() the
+    # reference walks run dirs instead, unchanged.
+    #
+    # Five runs, two instances each (s, t), in this arrival order:
+    #   k1 keep, g1 gone (deleted: in the ledger only), a1 also,
+    #   k2 keep under the "tpl/" template, k3 keep (still "started").
+    # The ledger interleaves the first two runs' instances, so a run's
+    # position is not its first entry's position: entry 2 is k1's t.
+    RUNS = (
+        ("k1", "keep", "keep/2026-01-01_00-00-00", "complete", ""),
+        ("g1", "gone", "gone/2026-01-02_00-00-00", None, ""),
+        ("a1", "also", "also/2026-01-03_00-00-00", "complete", ""),
+        ("k2", "keep", "keep/tpl/2026-01-04_00-00-00", "complete", "tpl/:run_dir"),
+        ("k3", "keep", "keep/2026-01-05_00-00-00", "started", ""),
+    )
+
+    @pytest.fixture
+    def archive(self, tmp_path):
+        entries = {}
+        for run_uuid, name, rel, status, template in self.RUNS:
+            run_home = str(tmp_path / rel)
+            for n, identity in enumerate(("s", "t")):
+                entries.setdefault(run_uuid, []).append(
+                    {
+                        "time": f"{rel[-19:-9]} 00:00:0{n}+00:00",
+                        "run_uuid": run_uuid,
+                        "run_home": run_home,
+                        "identity": identity,
+                        "uuid": f"{run_uuid}-{identity}",
+                        "named_paths_name": name,
+                        "named_file_name": name,
+                        "manifest_path": str(tmp_path / "manifest.json"),
+                        "archive_name": "archive",
+                        "template": template,
+                        "status": "started",
+                        "lifecycle": "deleted" if status is None else "active",
+                    }
+                )
+            if status is None:
+                continue
+            _write_json(
+                Path(run_home) / "manifest.json",
+                {
+                    "time": f"{rel[-19:-9]} 00:00:00+00:00",
+                    "run_uuid": run_uuid,
+                    "run_home": run_home,
+                    "named_paths_name": name,
+                    "status": status,
+                    "template": template,
+                    "manifest_path": str(Path(run_home) / "manifest.json"),
+                },
+            )
+            for identity in ("s", "t"):
+                _write_json(
+                    Path(run_home) / identity / "manifest.json",
+                    {"uuid": f"{run_uuid}-{identity}", "instance_identity": identity},
+                )
+        k1, g1, a1, k2, k3 = (entries[r[0]] for r in self.RUNS)
+        ledger = [k1[0], g1[0], k1[1], g1[1], *a1, *k2, *k3]
+        _write_json(tmp_path / "manifest.json", ledger)
+        return str(tmp_path)
+
+    @staticmethod
+    def _data(reference: str, archive: str) -> list:
+        return [r.data for r in _finder(reference, archive).resolve().results]
+
+    @staticmethod
+    def _uuids(reference: str, archive: str) -> list:
+        return _finder(reference, archive).query().uuids
+
+    def test_whole_set_query_is_the_ledger_path_with_no_uuid(self, archive):
+        results = _finder("$*.results.:manifest()", archive).query()
+        assert results.files == [pathu.resep(f"{archive}/manifest.json")]
+        assert results.uuids == [None]
+
+    def test_whole_set_resolves_to_run_records_in_arrival_order(self, archive):
+        (runs,) = self._data("$*.results.:manifest()", archive)
+        assert [r["run_uuid"] for r in runs] == ["k1", "g1", "a1", "k2", "k3"]
+        assert [e["uuid"] for e in runs[0]["instances"]] == ["k1-s", "k1-t"]
+        assert all(len(r["instances"]) == 2 for r in runs)
+
+    def test_a_run_record_holds_its_run_level_ledger_facts(self, archive):
+        (runs,) = self._data("$*.results.:manifest()", archive)
+        gone = runs[1]
+        assert gone["named_paths_name"] == "gone"
+        assert gone["archive_name"] == "archive"
+        assert gone["lifecycle"] == "deleted"
+        assert gone["time"] == "2026-01-02 00:00:00+00:00"
+        # the run's own manifest, not the ledger's own path
+        assert gone["manifest_path"] == pathu.resep(
+            f"{archive}/gone/2026-01-02_00-00-00/manifest.json"
+        )
+        # outcomes come through field reads, from the run manifest
+        assert "status" not in gone
+
+    def test_pointers_count_runs_not_instances(self, archive):
+        assert self._uuids("$*.results.:manifest():first()", archive) == ["k1"]
+        assert self._uuids("$*.results.:manifest():index(1)", archive) == ["g1"]
+        assert self._uuids("$*.results.:manifest():index(2)", archive) == ["a1"]
+        assert self._uuids("$*.results.:manifest():last()", archive) == ["k3"]
+
+    def test_pointer_query_is_the_ledger_path_with_the_run_uuid(self, archive):
+        results = _finder("$*.results.:manifest():index(2)", archive).query()
+        assert results.files == [pathu.resep(f"{archive}/manifest.json")]
+
+    def test_pointer_resolves_to_the_run_record(self, archive):
+        (record,) = self._data("$*.results.:manifest():index(2)", archive)
+        assert record["run_uuid"] == "a1"
+        assert [e["uuid"] for e in record["instances"]] == ["a1-s", "a1-t"]
+
+    def test_pointer_before_manifest_is_the_same(self, archive):
+        assert self._uuids("$*.results.:index(1):manifest()", archive) == ["g1"]
+
+    def test_out_of_range_pointer_gives_nothing(self, archive):
+        assert self._uuids("$*.results.:manifest():index(9)", archive) == []
+
+    def test_a_field_does_not_change_which_run_a_pointer_picks(self, archive):
+        data = self._data("$*.results.:manifest():index(2):run_uuid()", archive)
+        assert data == ["a1"]
+
+    def test_a_field_reads_every_run_deleted_and_templated_included(self, archive):
+        data = self._data("$*.results.:manifest():run_uuid()", archive)
+        assert data == ["k1", "g1", "a1", "k2", "k3"]
+
+    def test_status_comes_from_the_run_manifest_none_for_a_deleted_run(
+        self, archive
+    ):
+        # never the ledger's own always-"started"
+        data = self._data("$*.results.:manifest():status()", archive)
+        assert data == ["complete", None, "complete", "complete", "started"]
+
+    def test_a_ledger_only_field_reads_the_record(self, archive):
+        data = self._data("$*.results.:manifest():archive()", archive)
+        assert data == ["archive"] * 5
+
+    def test_template_reads_every_run(self, archive):
+        data = self._data("$*.results.:manifest():template()", archive)
+        assert data == ["", "", "", "tpl/:run_dir", ""]
+
+    def test_manifest_path_is_each_runs_own_deleted_included(self, archive):
+        data = self._data("$*.results.:manifest():manifest_path()", archive)
+        assert [pathu.parts(d)[-3:] for d in data] == [
+            ["keep", "2026-01-01_00-00-00", "manifest.json"],
+            ["gone", "2026-01-02_00-00-00", "manifest.json"],
+            ["also", "2026-01-03_00-00-00", "manifest.json"],
+            ["tpl", "2026-01-04_00-00-00", "manifest.json"],
+            ["keep", "2026-01-05_00-00-00", "manifest.json"],
+        ]
+
+    def test_a_filter_can_select_a_deleted_run(self, archive):
+        uuids = self._uuids(
+            '$*.results.:manifest():named_paths_name("gone")', archive
+        )
+        assert uuids == ["g1"]
+
+    def test_filters_are_anded_in_either_order(self, archive):
+        first = self._data(
+            '$*.results.:manifest():run_uuid():status("complete")', archive
+        )
+        second = self._data(
+            '$*.results.:manifest():status("complete"):run_uuid()', archive
+        )
+        assert first == second == ["k1", "a1", "k2"]
+
+    def test_a_filter_with_no_field_resolves_the_records(self, archive):
+        data = self._data('$*.results.:manifest():status("started")', archive)
+        assert [r["run_uuid"] for r in data] == ["k3"]
+
+    def test_having_an_identity_reads_the_instance_records(self, archive):
+        uuids = self._uuids('$*.results.:manifest():having("t")', archive)
+        assert uuids == ["k1", "g1", "a1", "k2", "k3"]
+        assert self._uuids('$*.results.:manifest():having("x")', archive) == []
+
+    def test_having_an_instance_field_matches_a_deleted_run(self, archive):
+        # g1 has no instance manifests left; its ledger entries match
+        uuids = self._uuids(
+            '$*.results.:manifest():having(:uuid("g1-t")):run_uuid()', archive
+        )
+        assert uuids == ["g1"]
+
+    def test_having_an_instance_field_matches_a_live_run(self, archive):
+        data = self._data(
+            '$*.results.:manifest():having(:uuid("a1-t")):run_home()', archive
+        )
+        assert [pathu.parts(d)[-1] for d in data] == ["2026-01-03_00-00-00"]
+
+    def test_an_index_range_counts_in_arrival_order(self, archive):
+        uuids = self._uuids("$*.results.:manifest():from(1):to(2)", archive)
+        assert uuids == ["g1", "a1"]
+
+    def test_a_date_range_reads_the_run_dir_datetime(self, archive):
+        uuids = self._uuids(
+            '$*.results.:manifest():from("2026-01-03")', archive
+        )
+        assert uuids == ["a1", "k2", "k3"]
+
+    def test_a_bare_time_window_filters(self, archive):
+        assert self._uuids("$*.results.:manifest():today()", archive) == []
+
+    def test_a_clock_function_alone_resolves_the_records_not_a_value(
+        self, tmp_path
+    ):
+        # :today() has SOURCE "clock", like a field, but is a filter: the
+        # value is the record, not None
+        run_dir = daut.now().strftime("%Y-%m-%d_00-00-00")
+        home = str(tmp_path / "a" / run_dir)
+        ledger = [
+            {"uuid": "r-s", "run_uuid": "r", "run_home": home, "identity": "s"}
+        ]
+        _write_json(tmp_path / "manifest.json", ledger)
+        data = self._data("$*.results.:manifest():today()", str(tmp_path))
+        assert [r["run_uuid"] for r in data] == ["r"]
+
+    def test_order_is_first_instance_arrival_not_run_dir_time(self, tmp_path):
+        # concurrent runs: "early" started first (its run dir time) but
+        # "late" wrote its first instance first, so "late" is first in
+        # the set (6.13b(ii)). Pointers and index ranges count this way.
+        early = str(tmp_path / "a" / "2026-01-01_10-00-00")
+        late = str(tmp_path / "a" / "2026-01-01_10-00-02")
+        ledger = [
+            {"uuid": f"{run}-{i}", "run_uuid": run, "run_home": home,
+             "named_paths_name": "a", "identity": i}
+            for run, home, i in (
+                ("late", late, "s"),
+                ("early", early, "s"),
+                ("late", late, "t"),
+            )
+        ]
+        _write_json(tmp_path / "manifest.json", ledger)
+        archive = str(tmp_path)
+        assert self._uuids("$*.results.:manifest():first()", archive) == ["late"]
+        (runs,) = self._data("$*.results.:manifest()", archive)
+        assert [r["run_uuid"] for r in runs] == ["late", "early"]
+
+    def test_a_regex_root_filters_the_set_by_name(self, archive):
+        results = _finder("$:regex(/^k/).results.:manifest()", archive)
+        assert results.query().uuids == [None]
+        (runs,) = [r.data for r in results.resolve().results]
+        assert [r["run_uuid"] for r in runs] == ["k1", "k2", "k3"]
+        uuids = self._uuids("$:regex(/^k/).results.:manifest():last()", archive)
+        assert uuids == ["k3"]
+
+    def test_a_choice_root_filters_the_set_by_name(self, archive):
+        data = self._data(
+            '$:choice("keep|gone").results.:manifest():run_uuid()', archive
+        )
+        assert data == ["k1", "g1", "k2", "k3"]
+
+    def test_flatten_manifest_still_walks_the_live_run_dirs(self, archive):
+        # Q1 (David, 2026-10-31): a depth selector means run dirs, and
+        # :manifest() is each selected run's own manifest
+        results = _finder("$*.results.:flatten():manifest()", archive).query()
+        assert results.uuids == ["k1", "a1", "k2", "k3"]
+        assert all(not f.endswith("manifest.json") for f in results.files)
+
+    def test_all_manifest_still_walks_the_live_zero_level_run_dirs(self, archive):
+        uuids = self._uuids("$*.results.:all():manifest()", archive)
+        assert uuids == ["k1", "a1", "k3"]
+
+    def test_bare_star_field_is_still_direct_access(self, archive):
+        # 6.13b(iv): no :manifest(), so each live name's 0-level runs
+        data = self._data("$*.results.:run_uuid()", archive)
+        assert data == ["k1", "a1", "k3"]
+
+    @pytest.mark.parametrize("key", ["uuid", "run_uuid", "run_home"])
+    def test_a_ledger_entry_missing_a_key_raises(self, tmp_path, key):
+        entry = {
+            "uuid": "u",
+            "run_uuid": "r",
+            "run_home": str(tmp_path / "a" / "2026-01-01_00-00-00"),
+            "named_paths_name": "a",
+        }
+        del entry[key]
+        _write_json(tmp_path / "manifest.json", [entry])
+        with pytest.raises(ValueError):
+            _finder("$*.results.:manifest()", str(tmp_path)).resolve()
+
+    def test_run_record_field_value_rejects_bad_input(self, archive):
+        finder = _finder("$*.results.:manifest()", archive)
+        with pytest.raises(TypeError):
+            finder._run_record_field_value(record=None, field_call=object())
+        with pytest.raises(ValueError):
+            finder._run_record_field_value(record={}, field_call=None)
+
+    def test_run_record_having_rejects_bad_input(self, archive):
+        finder = _finder("$*.results.:manifest()", archive)
+        with pytest.raises(TypeError):
+            finder._run_record_satisfies_having(record=None, having_call=object())
+        with pytest.raises(ValueError):
+            finder._run_record_satisfies_having(record={}, having_call=None)
+
+    def test_root_name_filter_rejects_none(self, archive):
+        finder = _finder("$*.results.:manifest()", archive)
+        with pytest.raises(ValueError):
+            finder._root_name_filter(None)

@@ -173,8 +173,27 @@ def _make_run(base, run_name: str, run_uuid: str, instances: dict) -> str:
     return str(run_dir)
 
 
+def _ledger_entry(group: str, run_home: str) -> dict:
+    """one archive ledger entry for a run. A real ledger has one entry per
+    instance, each with its own uuid and its run's run_uuid; one per run
+    is enough here. run_uuid is the run manifest's, when _make_run() has
+    written one, so the logical manifest set (compendium 6.13b) groups
+    the entry under the right run."""
+    run_manifest = Path(run_home) / "manifest.json"
+    run_uuid = None
+    if run_manifest.exists():
+        run_uuid = json.loads(run_manifest.read_text()).get("run_uuid")
+    run_uuid = run_uuid or f"{Path(run_home).name}-run"
+    return {
+        "named_paths_name": group,
+        "run_home": run_home,
+        "run_uuid": run_uuid,
+        "uuid": f"{run_uuid}-instance",
+    }
+
+
 def _write_archive_manifest(archive, group: str, run_homes: list) -> None:
-    entries = [{"named_paths_name": group, "run_home": rh} for rh in run_homes]
+    entries = [_ledger_entry(group, rh) for rh in run_homes]
     _write_json(archive / "manifest.json", entries)
 
 
@@ -280,17 +299,21 @@ class TestFindingTheLastRun:
         assert results.results[0].data["run_uuid"] == "flat-2"
 
     def test_line_38_global_manifest_is_unrestricted(self, tmp_path):
-        # $*.results.:manifest():last() >> manifest entry of the most
-        # recent run, period -- reads the archive-wide ledger directly,
+        # $*.results.:manifest():last() >> the record of the most
+        # recent run in the logical manifest set (compendium 6.13b),
         # bypassing the zero-level restriction entirely (Rule 1b is
-        # checked before the zero-level logic ever runs). The archive
-        # ledger's own entries carry "run_uuid" (not "uuid"), unlike
-        # alpha_archive's fixture -- a dedicated, minimal ledger is used
-        # here rather than _write_archive_manifest, same as the ordinal-
-        # indexing tests in test_results_reference_finder_3.py.
+        # checked before the zero-level logic ever runs). A dedicated,
+        # minimal ledger is used here rather than _write_archive_manifest,
+        # same as the ordinal-indexing tests in
+        # test_results_reference_finder_3.py.
         ledger = [
-            {"named_paths_name": "alpha", "run_uuid": "run-1"},
-            {"named_paths_name": "alpha", "run_uuid": "run-2"},
+            {
+                "named_paths_name": "alpha",
+                "run_uuid": f"run-{i}",
+                "uuid": f"run-{i}-s",
+                "run_home": f"/archive/alpha/2026-01-0{i}_00-00-00",
+            }
+            for i in (1, 2)
         ]
         _write_json(tmp_path / "manifest.json", ledger)
         results = _finder("$*.results.:manifest():last()", str(tmp_path)).resolve()

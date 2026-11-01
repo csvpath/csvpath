@@ -181,22 +181,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return self._query_well_known_file(archive, "manifest.json")
             pointer_call = self._pointer_before_manifest(reference, "manifest")
             if pointer_call is not None:
-                # Rule 1b -- a pointer riding before the bare :manifest()
-                # (e.g. "$*.results.:last():manifest()") selects one
-                # entry out of the global ledger by ordinal position,
-                # instead of dumping the whole thing. the archive ledger
-                # has no "uuid" key of its own (only "run_uuid" -- see
-                # RunRegistrar.metadata_update()), so run_uuid is used as
-                # the locator instead of the usual uuid.
-                archive = self.csvpaths.config.get(section="results", name="archive")
-                path = Nos(archive).join("manifest.json")
-                ledger = self.source.results_ledger()
-                selected = self._apply_pointer(pointer_call, ledger)
-                if selected is None:
-                    return ReferenceResults3(results=[])
-                return ReferenceResults3(
-                    results=[ReferenceResult3(path=path, uuid=selected["run_uuid"])]
-                )
+                # Rule 1b -- a pointer riding beside the bare :manifest()
+                # (e.g. "$*.results.:manifest():last()") selects one run
+                # record out of the logical manifest set by its position
+                # (compendium 6.13b). Until 2026-10-31 it selected a
+                # ledger ENTRY, one per instance, so ":index(1)" gave the
+                # first run's second instance, not the second run.
+                return self._manifest_set_query(pointer=pointer_call)
             return self._query_star_traversal(reference)
 
         if isinstance(root_major, FunctionCall3):
@@ -863,6 +854,41 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 lower_call,
                 upper_call,
             ) = self._star_run_selector_chain(calls)
+            if (
+                reference.name_three is None
+                and all_call is None
+                and flatten_call is None
+                and groups_call is None
+                and any(f.name == "manifest" for f in self._build_chain(calls))
+            ):
+                # the logical manifest set (compendium 6.13b, David
+                # 2026-10-31): :manifest() in name_one under '*' or a
+                # :regex()/:choice() root, with no depth or grouping
+                # selector. With one (":flatten():manifest()") we are
+                # walking run dirs instead, and :manifest() is each
+                # selected run's own manifest -- handled below.
+                if (
+                    pointer is None
+                    and having_call is None
+                    and not field_calls
+                    and bare_time_window is None
+                    and lower_call is None
+                    and upper_call is None
+                ):
+                    # the whole set: the ledger's path, uuid None (5.5)
+                    ledger_path = self._results_ledger_path()
+                    return ReferenceResults3(
+                        results=[ReferenceResult3(path=ledger_path, uuid=None)]
+                    )
+                return self._manifest_set_query(
+                    pointer=pointer,
+                    having_call=having_call,
+                    field_calls=field_calls,
+                    bare_time_window=bare_time_window,
+                    lower_call=lower_call,
+                    upper_call=upper_call,
+                    name_filter=name_filter,
+                )
             if all_call is not None:
                 # zero-level, degenerate -- the SAME [] restriction bare
                 # ':all()' already applies for one literal group (see the
@@ -1538,6 +1564,215 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             ambiguous_content_read=accessor is not None and len(results) > 1,
         )
 
+    #
+    # the run-level keys a run record copies from its first ledger entry.
+    # every entry of one run carries the same values for these (written
+    # once per run by RunRegistrar).
+    #
+    _RUN_RECORD_KEYS = (
+        "run_uuid",
+        "run_home",
+        "named_paths_name",
+        "named_file_name",
+        "template",
+        "archive_name",
+        "archive_path",
+        "named_files_root",
+        "named_paths_root",
+        "lifecycle",
+    )
+
+    def _results_ledger_path(self) -> str:
+        """the archive ledger's own path, the path every result from the
+        logical manifest set carries (compendium 5.5)."""
+        archive = self.csvpaths.config.get(section="results", name="archive")
+        return Nos(archive).join("manifest.json")
+
+    def _root_name_filter(self, reference: Reference3) -> str | None:
+        """the name pattern a :regex()/:choice() root_major filters by,
+        or None for '*'."""
+        if reference is None:
+            raise ValueError("Reference cannot be None")
+        if isinstance(reference.root_major, FunctionCall3):
+            return self._build(reference.root_major).pattern
+        return None
+
+    def _manifest_set_runs(self, *, name_filter: str | None) -> list[dict]:
+        """the RESULTS logical manifest set's run records (compendium
+        6.13b, David 2026-10-31), in arrival order: one record per run,
+        at every template depth, deleted runs included. Built from the
+        archive ledger, which holds one entry per instance, grouped by
+        run_uuid; a run's position is its first instance's arrival.
+
+        A record holds the run-level keys its entries share
+        (_RUN_RECORD_KEYS), `time` (its first instance's arrival, which
+        is also its ordering key), `manifest_path` (the run's own
+        manifest, settled 2026-10-31 -- not the ledger's own path, which
+        is what the ledger entries hold) and `instances`, its ledger
+        entries in arrival order. Outcome fields (status, valid, error
+        counts) are not copied in: a field read gets them from the run
+        manifest, see _run_record_field_value(). A field read of :time()
+        on a live run therefore reads the run manifest's start, which is
+        milliseconds before the record's own `time`; the two are the
+        same value under 6.13b(v).
+
+        An entry missing `uuid`, `run_uuid` or `run_home` raises: there
+        should be none (David, 2026-10-31, for `uuid`), a run can't be
+        grouped without `run_uuid`, and a record can't be placed in time
+        or given its manifest without `run_home`. `name_filter` is a
+        :regex()/:choice() root's pattern, matched against each run's
+        named_paths_name the same way _discover_run_homes() matches it."""
+        runs = {}
+        for entry in self.source.results_ledger():
+            for key in ("uuid", "run_uuid", "run_home"):
+                if entry.get(key) is None:
+                    msg = f"A results ledger entry has no {key}: {entry}"
+                    self.csvpaths.logger.error(msg)
+                    raise ValueError(msg)
+            name = entry.get("named_paths_name")
+            if name_filter is not None and not re.search(name_filter, name or ""):
+                continue
+            record = runs.get(entry["run_uuid"])
+            if record is None:
+                record = {key: entry.get(key) for key in self._RUN_RECORD_KEYS}
+                record["time"] = entry.get("time")
+                record["manifest_path"] = Nos(entry["run_home"]).join("manifest.json")
+                record["instances"] = []
+                runs[entry["run_uuid"]] = record
+            record["instances"].append(entry)
+        return list(runs.values())
+
+    def _manifest_set_query(
+        self,
+        *,
+        pointer,
+        having_call=None,
+        field_calls: list | None = None,
+        bare_time_window=None,
+        lower_call=None,
+        upper_call=None,
+        name_filter: str | None = None,
+    ) -> ReferenceResults3:
+        """query() for a :manifest() in name_one that reaches the logical
+        manifest set (compendium 6.13b): the run records the reference
+        selects, each as the ledger's path plus the run's run_uuid (5.5).
+        Filters are ANDed in any order (6.1), the same set of them, with
+        the same meanings, _star_pool_and_reduce() applies to run dirs:
+        :having() tests a run's instance records, an argued field is a
+        filter (6.40), and a time window or range bounds the run's own
+        run dir datetime. Ranges and pointers count in arrival order
+        (6.13b(ii)), not run dir order."""
+        records = self._manifest_set_runs(name_filter=name_filter)
+        if having_call is not None:
+            records = [
+                r
+                for r in records
+                if self._run_record_satisfies_having(record=r, having_call=having_call)
+            ]
+        for field_call in field_calls or []:
+            if field_call.arg is not None:
+                records = [
+                    r
+                    for r in records
+                    if self._matches_field_predicate(
+                        self._run_record_field_value(record=r, field_call=field_call),
+                        field_call.arg,
+                    )
+                ]
+        has_range = lower_call is not None or upper_call is not None
+        if bare_time_window is not None or has_range:
+            by_home = {r["run_home"]: r for r in records}
+            run_homes = [r["run_home"] for r in records]
+            if bare_time_window is not None:
+                run_homes = self._apply_bare_time_window(run_homes, bare_time_window)
+            if has_range:
+                run_homes = self._apply_run_level_range(
+                    run_homes, lower_call, upper_call
+                )
+            records = [by_home[rh] for rh in run_homes]
+        if pointer is not None:
+            selected = self._apply_pointer(pointer, records)
+            records = [] if selected is None else [selected]
+        ledger_path = self._results_ledger_path()
+        return ReferenceResults3(
+            results=[
+                ReferenceResult3(path=ledger_path, uuid=r["run_uuid"])
+                for r in records
+            ]
+        )
+
+    def _run_record_field_value(self, *, record: dict, field_call):
+        """the value a run-level field accessor gives for one run record
+        of the logical manifest set. 6.13b(v): the user never chooses the
+        source, and where two manifests hold a field the named-entity
+        manifest wins for details and outcomes. So the run's own
+        manifest is read first; a field it doesn't hold, or a run whose
+        manifest is gone (a deleted run), reads the record, by the
+        field's LEDGER_KEY if it has one, else its KEY. A deleted run
+        therefore has its ledger facts (uuid, home, names, template,
+        archive, roots, manifest_path) and None for its outcomes."""
+        if record is None or not isinstance(record, dict):
+            raise TypeError("Record must be a dict")
+        if field_call is None:
+            raise ValueError("Field call cannot be None")
+        function_cls = ReferenceFunctionFactory.get_registered_class(field_call.name)
+        key_path = function_cls.KEY.get(Reference3.RESULTS)
+        entry = self.source.run_manifest(record["run_home"])
+        value = self._extract_field_value(entry, key_path)
+        if value is None:
+            record_key = function_cls.LEDGER_KEY.get(Reference3.RESULTS) or key_path
+            value = self._extract_field_value(record, record_key)
+        return function_cls.transform_value(value)
+
+    def _run_record_satisfies_having(self, *, record: dict, having_call) -> bool:
+        """:having() for a run record of the logical manifest set -- the
+        same three argument shapes _run_satisfies_having() takes for a
+        run dir, tested against the record's instance records rather
+        than the run dir's listing, so a deleted run can match too. An
+        identity is the ledger entry's own `identity`. A nested field
+        (":having(:uuid(\\"...\\"))") reads the instance's own manifest
+        first and the ledger entry when that is gone, the same order
+        _run_record_field_value() uses one level up."""
+        if record is None or not isinstance(record, dict):
+            raise TypeError("Record must be a dict")
+        if having_call is None:
+            raise ValueError("Having call cannot be None")
+        arg = having_call.arg
+        if isinstance(arg, Function3):
+            return self._any_instance_record_matches_field(
+                record=record, field_call=arg
+            )
+        identities = [e.get("identity") for e in record["instances"]]
+        if isinstance(arg, list):
+            return any(identity in identities for identity in arg)
+        return arg in identities
+
+    def _any_instance_record_matches_field(self, *, record: dict, field_call) -> bool:
+        """true if any of a run record's instance records has a field
+        matching `field_call`'s argument -- the logical-set counterpart of
+        _any_instance_matches_field(), which walks a run dir on disk."""
+        function_cls = ReferenceFunctionFactory.get_registered_class(field_call.name)
+        key_path = function_cls.KEY.get(Reference3.RESULT)
+        if key_path is None:
+            raise ReferenceException3(
+                f":having() cannot match by :{field_call.name}() -- it has "
+                "no per-instance (name_three) field to read."
+            )
+        ledger_key_path = function_cls.LEDGER_KEY.get(Reference3.RESULT) or key_path
+        for entry in record["instances"]:
+            identity = entry.get("identity")
+            instance = None
+            if identity is not None:
+                instance_dir = Nos(record["run_home"]).join(identity)
+                instance = self.source.instance_manifest(instance_dir)
+            value = self._extract_field_value(instance, key_path)
+            if value is None:
+                value = self._extract_field_value(entry, ledger_key_path)
+            value = function_cls.transform_value(value)
+            if self._matches_field_predicate(value, field_call.arg):
+                return True
+        return False
+
     def _star_group_and_reduce(
         self,
         partitioned: list,
@@ -1711,7 +1946,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             for seg in name_one_calls
             if isinstance(seg, FunctionCall3)
         )
-        if isinstance(reference.root_major, Star3) and has_manifest:
+        is_set_root = isinstance(reference.root_major, (Star3, FunctionCall3))
+        if is_set_root and has_manifest:
             # Rule 1a/1b vs. a genuine traversal-selected run both reach
             # here now (fixed 2026-08-26) -- both carry a real, non-None
             # uuid once _query_star_traversal supports :manifest()
@@ -1724,26 +1960,31 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # result.path to the archive-root manifest.json itself,
             # never a run directory, so this is a reliable, structural
             # test rather than a data-dependent guess.
-            archive = self.csvpaths.config.get(section="results", name="archive")
-            ledger_path = Nos(archive).join("manifest.json")
-            if result.path == ledger_path:
-                if result.uuid is not None:
-                    # Rule 1b -- a pointer already reduced the global
-                    # ledger to one entry in query(); re-derive it by
-                    # run_uuid (the archive ledger's own locator -- see
-                    # query()).
-                    ledger = self.source.results_ledger()
-                    return next(
-                        (e for e in ledger if e["run_uuid"] == result.uuid), None
-                    )
-                # global-ledger case (Rule 1a) -- query()'s
-                # _query_well_known_file() branch already pointed
-                # result.path at the archive-root manifest.json itself,
-                # so read it directly rather than joining "manifest.json"
-                # onto it again (the ordinary, per-group has_manifest
-                # branch below does that join, but only because it deals
-                # with a run directory, not a file).
-                return self._read_well_known_json(result.path)
+            if result.path == self._results_ledger_path():
+                # the logical manifest set (compendium 6.13b). A uuid
+                # is a run record's run_uuid; with none, the result is
+                # the whole set, every run record holding its instances
+                # -- not the ledger file's own flat list of instances.
+                runs = self._manifest_set_runs(
+                    name_filter=self._root_name_filter(reference)
+                )
+                if result.uuid is None:
+                    return runs
+                record = next(
+                    (r for r in runs if r["run_uuid"] == result.uuid), None
+                )
+                if record is None:
+                    return None
+                # built, so a bare time window (":today()") is excluded
+                # as the filter it is, not taken for a value field
+                field_call = self._last_value_field_call(
+                    self._build_chain(name_one_calls)
+                )
+                if field_call is None:
+                    return record
+                return self._run_record_field_value(
+                    record=record, field_call=field_call
+                )
             # a genuine traversal-selected run (result.path is that run's
             # own directory, not the ledger) -- fall through to the
             # ordinary has_manifest branch immediately below, which
