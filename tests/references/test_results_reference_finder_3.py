@@ -5690,7 +5690,11 @@ class TestStarManifestSetRunRecords:
         # :manifest() is each selected run's own manifest
         results = _finder("$*.results.:flatten():manifest()", archive).query()
         assert results.uuids == ["k1", "a1", "k2", "k3"]
-        assert all(not f.endswith("manifest.json") for f in results.files)
+        # each run's own manifest.json, never the ledger's (query paths
+        # name the file since 2026-11-01)
+        ledger = pathu.resep(f"{archive}/manifest.json")
+        assert ledger not in results.files
+        assert all(f.endswith("manifest.json") for f in results.files)
 
     def test_all_manifest_still_walks_the_live_zero_level_run_dirs(self, archive):
         uuids = self._uuids("$*.results.:all():manifest()", archive)
@@ -6084,3 +6088,191 @@ class TestStarManifestSetInstanceRecords:
             ResultsReferenceFinder3._accessor_file_path(
                 instance_dir="x", accessor=None
             )
+
+
+class TestQueryPathsNameTheFile:
+    # added 2026-11-01 (David agreed the rule during C2b): a reference
+    # that names a file gives that file's path on query() (compendium
+    # 6.9, 6.40, 6.41); one that names a record or a value gives its
+    # container. Before, every run-dir branch gave the instance or run
+    # dir. resolve() reads the same content as before. Uses the C2b
+    # fixture: runs k1, g1 (deleted), a1, k2 (tpl/), k3, instances s, t.
+    RUNS = TestStarManifestSetInstanceRecords.RUNS
+    archive = TestStarManifestSetInstanceRecords.archive
+    K3 = "keep/2026-01-05_00-00-00"
+
+    @staticmethod
+    def _files(reference: str, archive: str) -> list:
+        return _finder(reference, archive).query().files
+
+    @staticmethod
+    def _path(archive: str, *parts: str) -> str:
+        return pathu.resep("/".join([archive, *parts]))
+
+    @pytest.mark.parametrize(
+        "accessor, name",
+        [
+            ("errors()", "errors.json"),
+            ("vars()", "vars.json"),
+            ("meta()", "meta.json"),
+            ("data()", "data.csv"),
+            ("unmatched()", "unmatched.csv"),
+            ("printouts()", "printouts.txt"),
+            ('printouts("greetings")', "greetings.txt"),
+            ('file("orders.parquet")', "orders.parquet"),
+            ("original()", "original"),
+        ],
+    )
+    def test_a_content_accessor_queries_to_its_file(self, archive, accessor, name):
+        files = self._files(f"$keep.results.:last().t:{accessor}", archive)
+        assert files == [self._path(archive, self.K3, "t", name)]
+
+    def test_original_queries_to_the_file_that_is_there(self, archive):
+        (Path(archive) / self.K3 / "t" / "original.xlsx").write_text("x")
+        files = self._files("$keep.results.:last().t:original()", archive)
+        assert files == [self._path(archive, self.K3, "t", "original.xlsx")]
+
+    def test_every_selected_instance_lists_its_file(self, archive):
+        files = self._files("$keep.results.:last().:all():errors()", archive)
+        assert sorted(files) == [
+            self._path(archive, self.K3, "s", "errors.json"),
+            self._path(archive, self.K3, "t", "errors.json"),
+        ]
+        with pytest.raises(ReferenceException3, match="more than one match"):
+            _finder("$keep.results.:last().:all():errors()", archive).resolve()
+
+    def test_an_instance_pointer_or_range_queries_to_the_file(self, archive):
+        for ref in [
+            "$keep.results.:last().:last():errors()",
+            "$keep.results.:last().:from(1):errors()",
+        ]:
+            (path,) = self._files(ref, archive)
+            assert path.endswith("errors.json")
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$*.results.:flatten():last().t:errors()", ["keep/2026-01-05_00-00-00"]),
+            ("$*.results.:last().t:errors()", ["keep/2026-01-05_00-00-00"]),
+            (
+                "$*.results.:all():last().t:errors()",
+                ["also/2026-01-03_00-00-00", "keep/2026-01-05_00-00-00"],
+            ),
+            (
+                "$*.results.:groups():last().t:errors()",
+                [
+                    "also/2026-01-03_00-00-00",
+                    "keep/2026-01-05_00-00-00",
+                    "keep/tpl/2026-01-04_00-00-00",
+                ],
+            ),
+            ("$keep.results.tpl/*:last().t:errors()", ["keep/tpl/2026-01-04_00-00-00"]),
+        ],
+    )
+    def test_every_run_dir_branch_queries_to_the_file(
+        self, archive, reference, expected
+    ):
+        files = self._files(reference, archive)
+        assert sorted(files) == [
+            self._path(archive, run, "t", "errors.json") for run in expected
+        ]
+
+    @pytest.mark.parametrize(
+        "reference, runs",
+        [
+            ("$keep.results.:last():manifest()", ["keep/2026-01-05_00-00-00"]),
+            ("$keep.results.:first():manifest()", ["keep/2026-01-01_00-00-00"]),
+            (
+                "$keep.results.tpl/*:last():manifest()",
+                ["keep/tpl/2026-01-04_00-00-00"],
+            ),
+            (
+                "$*.results.:flatten():last():manifest()",
+                ["keep/2026-01-05_00-00-00"],
+            ),
+            # the last run of each group
+            (
+                "$*.results.:all():last():manifest()",
+                ["also/2026-01-03_00-00-00", "keep/2026-01-05_00-00-00"],
+            ),
+        ],
+    )
+    def test_a_run_manifest_queries_to_its_file(self, archive, reference, runs):
+        files = self._files(reference, archive)
+        assert sorted(files) == [
+            self._path(archive, run, "manifest.json") for run in runs
+        ]
+
+    def test_several_run_manifests_are_listed(self, archive):
+        files = self._files("$keep.results.:all():manifest()", archive)
+        assert files == [
+            self._path(archive, "keep/2026-01-01_00-00-00", "manifest.json"),
+            self._path(archive, self.K3, "manifest.json"),
+        ]
+
+    def test_a_field_beside_the_run_manifest_still_names_the_file(self, archive):
+        results = _finder("$keep.results.:last():manifest():run_uuid()", archive)
+        assert results.query().files == [self._path(archive, self.K3, "manifest.json")]
+        assert [r.data for r in results.resolve().results] == ["k3"]
+
+    @pytest.mark.parametrize(
+        "reference, parts",
+        [
+            ("$keep.results.:last()", ()),
+            ("$keep.results.:last():run_uuid()", ()),
+            ("$keep.results.:last().t", ("t",)),
+            ("$keep.results.:last().t:time()", ("t",)),
+            ("$keep.results.:last().t:uuid()", ("t",)),
+        ],
+    )
+    def test_a_record_or_value_queries_to_its_container(
+        self, archive, reference, parts
+    ):
+        files = self._files(reference, archive)
+        assert files == [self._path(archive, self.K3, *parts)]
+
+    # --- resolve reads the same content as before
+
+    def test_a_run_manifest_resolves_from_its_file(self, archive):
+        (manifest,) = [
+            r.data
+            for r in _finder("$keep.results.:last():manifest()", archive)
+            .resolve()
+            .results
+        ]
+        assert manifest["run_uuid"] == "k3"
+        assert manifest["status"] == "started"
+
+    def test_a_content_accessor_resolves_from_its_file(self, archive):
+        data = [
+            r.data
+            for r in _finder("$keep.results.:last().t:errors()", archive)
+            .resolve()
+            .results
+        ]
+        assert data == [[{"message": "k3-t"}, {"message": "k3-t"}]]
+
+    def test_a_gate_after_errors_still_applies(self, archive):
+        ref = '$keep.results.:last().t:errors():idchain("add[0]")'
+        assert [r.data for r in _finder(ref, archive).resolve().results] == [None]
+
+    def test_a_missing_file_still_resolves_to_none(self, archive):
+        data = [
+            r.data
+            for r in _finder("$keep.results.:last().t:vars()", archive)
+            .resolve()
+            .results
+        ]
+        assert data == [None]
+
+    def test_names_run_manifest(self, archive):
+        finder = _finder("$keep.results.:last():manifest()", archive)
+        assert finder._names_run_manifest()
+        assert not _finder("$keep.results.:last()", archive)._names_run_manifest()
+        assert not _finder(
+            "$keep.results.:last().t:errors()", archive
+        )._names_run_manifest()
+        # with a name_three, a name_one :manifest() names no run file
+        assert not _finder(
+            "$keep.results.:last():manifest().t", archive
+        )._names_run_manifest()

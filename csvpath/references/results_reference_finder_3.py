@@ -2305,7 +2305,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     "the run's own manifest on its own, without a "
                     "further instance selector."
                 )
-            entry = self.source.run_manifest(result.path)
+            # result.path is the run's manifest.json (_results_for_run())
+            entry = self.source.run_manifest(pathu.dir_name(result.path))
             # last-wins (compendium 5.20b, added 2026-10-18) -- was
             # _find_field_function_call() (first match), confirmed wrong
             # the moment a second field accessor could ride alongside
@@ -2430,7 +2431,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 reference.name_three
             )
             if accessor is not None:
-                data = self._read_accessor(result.path, accessor)
+                # result.path is the accessor's own file, directly in the
+                # instance dir (:file() refuses '/' and '..')
+                data = self._read_accessor(pathu.dir_name(result.path), accessor)
                 if gate_call is not None:
                     # GATE half of "position decides meaning" (David,
                     # 2026-08-21; settled compendium 4.13/4.14) -- a
@@ -2679,7 +2682,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         ):
             entry = self.source.run_manifest(run_dir)
             uuid = entry.get("run_uuid") if entry else None
-            return [ReferenceResult3(path=run_dir, uuid=uuid)]
+            path = run_dir
+            if self._names_run_manifest():
+                # a reference that names a file gives that file's path
+                # (compendium 6.9, 6.40, 6.41; David 2026-11-01)
+                path = Nos(run_dir).join("manifest.json")
+            return [ReferenceResult3(path=path, uuid=uuid)]
 
         instances = self._list_instance_identities(run_dir)
         if match_all:
@@ -2726,8 +2734,28 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             inst_dir = Nos(run_dir).join(inst)
             entry = self.source.instance_manifest(inst_dir)
             uuid = entry.get("uuid") if entry else None
-            found.append(ReferenceResult3(path=inst_dir, uuid=uuid))
+            path = inst_dir
+            if accessor is not None:
+                # the accessor's own file, as for the run manifest above
+                path = self._accessor_file_path(
+                    instance_dir=inst_dir, accessor=accessor
+                )
+            found.append(ReferenceResult3(path=path, uuid=uuid))
         return found
+
+    def _names_run_manifest(self) -> bool:
+        """true when this reference's name_one names the run's own
+        manifest.json: a :manifest() in name_one with no name_three.
+        _results_for_run() then gives that file's path on query, and
+        _extract_data() reads it from there."""
+        reference = self.ref.parsed
+        if reference.name_three is not None:
+            return False
+        return any(
+            seg.contains_function_named("manifest")
+            for seg in self._combined_name_one_calls(reference.name_one)
+            if isinstance(seg, FunctionCall3)
+        )
 
     @classmethod
     def _combined_name_one_calls(cls, name_one) -> list:
