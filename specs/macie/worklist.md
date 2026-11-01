@@ -8,11 +8,24 @@ last. Add an item the moment something is deferred.
 1. ~~**Transpiler: wrapper -> CVL.**~~ Done: `MacieConverter`. Pair 1 is
    reproduced exactly. Not in it yet: per-identifier detail caps from the
    rulesbase (`macie_cdi`'s optional 8th argument).
-2. **Named-paths registration of `.macie.json`.** `add_named_paths_from_file`
-   (the suffix filter in `paths_manager.py` and an `_is_odcs_path`-style
-   check). Core change: agree the exact lines first. The full wrapper goes
-   in the group's `_extra_data`.
+2. ~~**Loading `.macie.json` into named-paths groups.**~~ Done:
+   `add_named_paths_from_file` and `add_named_paths_from_dir` load
+   wrappers like ODCS contracts. The wrapper is copied into the group home
+   with `<file>.report.json` beside it. A Macie csvpath's id must be
+   unique in its group (David, 2026-10-31).
 3. **Pair 03_breaker.** A normative pair that trips the global breaker.
+
+## Design questions to revisit
+
+- **Should findings ever make a run invalid?** A Macie csvpath stays
+  `is_valid` even with HIGH findings, so a group can look valid while it
+  holds sensitive data.
+- **A csvpath after a Macie csvpath with `source-mode: preceding`** gets
+  only the lines with findings. That could be a feature (e.g. redaction)
+  or a surprise.
+- **Limits are fixed when the group is loaded**: changing `[macie]` in config.ini
+  takes effect when the group is reloaded. David is not worried about this
+  for now (2026-10-31).
 
 ## After that
 
@@ -28,6 +41,15 @@ last. Add an item the moment something is deferred.
    confirm the three interpretations in transpile-design.md.
 
 ## Clean-ups (not blockers)
+
+- **Stale source copies in group homes (Macie and ODCS).** Reloading a
+  group without append rewrites `group.csvpaths` but leaves the wrapper and
+  contract copies, and their `.report.json` files, from earlier loads. The
+  group home can then describe rules it no longer runs. Cleanup should be
+  automatic (David, 2026-10-31).
+- **Directory loads under a name** refuse Macie wrappers, as they refuse
+  ODCS contracts. Appending with `add_named_paths_from_file(append=True)`
+  works for both.
 
 - **Header handling (#479).** The generated scan `$[1*]` assumes the
   header is line 0. Headerless files, leading blank lines, prolegomena

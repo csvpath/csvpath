@@ -33,6 +33,7 @@ Identity = NewType("Identity", str)
 
 class PathsManager:
     MARKER: str = "---- CSVPATH ----"
+    MACIE_SUFFIX: str = ".macie.json"
     SCRIPT_TYPES: list[str] = [
         "on_complete_all_script",
         "on_complete_errors_script",
@@ -276,19 +277,27 @@ class PathsManager:
                         section="extensions", name="csvpath_files"
                     )
                     #
-                    # ODCS contracts load along with csvpath files, one
-                    # named-paths group per contract
+                    # ODCS contracts and Macie wrappers load along with
+                    # csvpath files, one named-paths group per contract or
+                    # wrapper
                     #
                     odcs = self._is_odcs_path(p)
-                    if ext not in csvpathexts and not odcs:
+                    macie = self._is_macie_path(p)
+                    if ext not in csvpathexts and not odcs and not macie:
                         continue
                     path = Nos(base).join(p)
                     # path = os.path.join(base, p)
                     if name is None:
                         #
-                        # add files one by one under their own names
+                        # add files one by one under their own names. a
+                        # wrapper's name drops the whole .macie.json: a dot
+                        # in a group name would break references to it
                         #
-                        aname = self._name_from_name_part(p)
+                        aname = (
+                            p[: -len(self.MACIE_SUFFIX)]
+                            if macie
+                            else self._name_from_name_part(p)
+                        )
                         ref = self.add_named_paths_from_file(
                             name=aname, file_path=path, template=template
                         )
@@ -297,12 +306,13 @@ class PathsManager:
                         #
                         # if a name, aggregate all the files
                         #
-                        if odcs:
+                        if odcs or macie:
+                            kind = "ODCS contract" if odcs else "Macie wrapper"
                             raise InputException(
-                                f"Cannot aggregate ODCS contract {path} into named-paths "
-                                f"group {name}: aggregating ODCS contracts is not yet "
+                                f"Cannot aggregate {kind} {path} into named-paths "
+                                f"group {name}: aggregating {kind}s is not yet "
                                 "supported. Load the directory without a name to load "
-                                "each contract as its own named-paths group"
+                                f"each {kind} as its own named-paths group"
                             )
                         _ = self._get_csvpaths_from_file(path)
                         #
@@ -360,6 +370,12 @@ class PathsManager:
                 # odcs path
                 #
                 paths, report = self._get_csvpaths_from_odcs(file_path)
+            elif self._is_macie_path(file_path):
+                #
+                # macie wrapper. like an ODCS contract: copied into the group
+                # home, with its conversion report next to it
+                #
+                paths, report = self._get_csvpaths_from_macie(file_path)
             else:
                 #
                 # regular path
@@ -374,7 +390,9 @@ class PathsManager:
                 return_metadata=return_metadata,
             )
             if report is not None and ref is not None:
-                self._write_odcs_report(name=name, file_path=file_path, report=report)
+                self._write_conversion_report(
+                    name=name, file_path=file_path, report=report
+                )
             #
             # absolute ref to the named-paths group in its present form.
             #
@@ -527,6 +545,7 @@ class PathsManager:
         try:
             for _ in paths:
                 self.csvpaths.logger.debug("Adding %s to %s", _, name)
+            self._refuse_shared_macie_ids(name=name, paths=paths, append=append)
             s = self._str_from_list(paths)
             group_file_path = self._copy_in(name, s, append=append)
             #
@@ -926,6 +945,50 @@ class PathsManager:
             raise ValueError("Path cannot be None")
         return path.endswith(".yml") or path.endswith(".yaml")
 
+    @classmethod
+    def _is_macie_path(cls, path: str) -> bool:
+        if path is None:
+            raise ValueError("Path cannot be None")
+        return path.endswith(cls.MACIE_SUFFIX)
+
+    def _get_csvpaths_from_macie(self, file_path: str) -> tuple[list[Csvpath], dict]:
+        #
+        # returns the csvpath and the conversion report. one wrapper is one
+        # csvpath. imported here so that loading CsvPaths does not load the
+        # Macie package unless needed.
+        #
+        if file_path is None or str(file_path).strip() == "":
+            raise ValueError("Macie wrapper file path cannot be None or empty")
+        from csvpath.macie.macie_group_loader import MacieGroupLoader
+
+        return MacieGroupLoader.convert_file(
+            path=file_path, config=self.csvpaths.config
+        )
+
+    def _refuse_shared_macie_ids(
+        self, *, name: NamedPathsName, paths: list[Csvpath], append: bool
+    ) -> None:
+        #
+        # a Macie csvpath's id must be unique in its group. we check before
+        # anything is written. the Macie package is only imported if some
+        # id is used more than once.
+        #
+        everything = list(paths)
+        if append is True and self.has_named_paths(name):
+            existing = self.get_named_paths(name)
+            everything = (existing or []) + everything
+        found = []
+        for path in everything:
+            c = CsvPath()
+            MetadataParser(c).extract_metadata(instance=c, csvpath=path)
+            found.append((c.identity, c.metadata or {}))
+        ids = [i for i, _ in found if i is not None]
+        if len(ids) == len(set(ids)):
+            return
+        from csvpath.macie.macie_group_loader import MacieGroupLoader
+
+        MacieGroupLoader.refuse_shared_ids(group=name, paths=found)
+
     def _get_csvpaths_from_odcs(self, file_path: str) -> tuple[list[Csvpath], dict]:
         #
         # returns the csvpath and the conversion report. one ODCS contract is
@@ -975,20 +1038,21 @@ class PathsManager:
         )
         return (paths, report)
 
-    def _write_odcs_report(
+    def _write_conversion_report(
         self, *, name: NamedPathsName, file_path: str, report: dict
     ) -> str:
         #
-        # the report goes in the named-paths group home, named for the
-        # contract file, next to the copy of the contract the paths
-        # registrar makes. returns the report path.
+        # the report of an ODCS contract or Macie wrapper conversion goes
+        # in the named-paths group home, named for the source file, next to
+        # the copy of the source the paths registrar makes. returns the
+        # report path.
         #
         if name is None or str(name).strip() == "":
             raise ValueError("Named-paths group name cannot be None or empty")
         if file_path is None or str(file_path).strip() == "":
-            raise ValueError("ODCS file path cannot be None or empty")
+            raise ValueError("Source file path cannot be None or empty")
         if not isinstance(report, dict):
-            raise TypeError("ODCS conversion report must be a dict")
+            raise TypeError("Conversion report must be a dict")
         home = self.named_paths_home(name)
         path = Nos(home).join(f"{Path(file_path).name}.report.json")
         with DataFileWriter(path=path, mode="w") as writer:
