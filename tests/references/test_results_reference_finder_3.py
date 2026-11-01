@@ -5732,3 +5732,355 @@ class TestStarManifestSetRunRecords:
         finder = _finder("$*.results.:manifest()", archive)
         with pytest.raises(ValueError):
             finder._root_name_filter(None)
+
+
+class TestStarManifestSetInstanceRecords:
+    # C2b of the :lifecycle() gate work (specs/references_v3/notes/
+    # v3_part_2_lifecycle_gate.md), added 2026-11-01. Under the logical
+    # RESULTS manifest set (compendium 6.13b), name_three holds the
+    # instance records of the runs name_one selects, in arrival order.
+    # A bare instance resolves to its record (its ledger entry); a field
+    # reads the instance manifest first, then the entry; a name_three
+    # :manifest() is the instance's own manifest.json. A reference that
+    # names a file gives that file's path on query (6.9, 6.40, 6.41).
+    #
+    # The same five runs as TestStarManifestSetRunRecords (k1, g1
+    # deleted, a1, k2 templated, k3), each with instances s and t. A
+    # live instance's manifest has its own time, half a second after
+    # its ledger entry's, so a test can tell which one was read; s has
+    # no errors and t has two, each with an errors.json.
+    RUNS = TestStarManifestSetRunRecords.RUNS
+
+    @pytest.fixture
+    def archive(self, tmp_path):
+        entries = {}
+        for run_uuid, name, rel, status, template in self.RUNS:
+            run_home = str(tmp_path / rel)
+            day = rel[-19:-9]
+            for n, identity in enumerate(("s", "t")):
+                entries.setdefault(run_uuid, []).append(
+                    {
+                        "time": f"{day} 00:00:0{n}+00:00",
+                        "run_uuid": run_uuid,
+                        "run_home": run_home,
+                        "identity": identity,
+                        "uuid": f"{run_uuid}-{identity}",
+                        "named_paths_name": name,
+                        "named_file_name": name,
+                        "manifest_path": str(tmp_path / "manifest.json"),
+                        "archive_name": "archive",
+                        "template": template,
+                        "status": "started",
+                    }
+                )
+            if status is None:
+                continue
+            _write_json(
+                Path(run_home) / "manifest.json",
+                {"run_uuid": run_uuid, "run_home": run_home, "status": status},
+            )
+            for n, identity in enumerate(("s", "t")):
+                _write_json(
+                    Path(run_home) / identity / "manifest.json",
+                    {
+                        "uuid": f"{run_uuid}-{identity}",
+                        "instance_identity": identity,
+                        "time": f"{day} 00:00:0{n}.5+00:00",
+                        "error_count": 2 * n,
+                        "valid": n == 0,
+                    },
+                )
+                _write_json(
+                    Path(run_home) / identity / "errors.json",
+                    [{"message": f"{run_uuid}-{identity}"}] * (2 * n),
+                )
+        k1, g1, a1, k2, k3 = (entries[r[0]] for r in self.RUNS)
+        ledger = [k1[0], g1[0], k1[1], g1[1], *a1, *k2, *k3]
+        _write_json(tmp_path / "manifest.json", ledger)
+        return str(tmp_path)
+
+    @staticmethod
+    def _data(reference: str, archive: str) -> list:
+        return [r.data for r in _finder(reference, archive).resolve().results]
+
+    @staticmethod
+    def _uuids(reference: str, archive: str) -> list:
+        return _finder(reference, archive).query().uuids
+
+    @staticmethod
+    def _path(archive: str, *parts: str) -> str:
+        return pathu.resep("/".join([archive, *parts]))
+
+    # --- selecting instances
+
+    def test_every_instance_record_of_every_run_in_arrival_order(self, archive):
+        # grouped by run, so k1-t comes before g1-s though it arrived later
+        assert self._uuids("$*.results.:manifest().*", archive) == [
+            "k1-s",
+            "k1-t",
+            "g1-s",
+            "g1-t",
+            "a1-s",
+            "a1-t",
+            "k2-s",
+            "k2-t",
+            "k3-s",
+            "k3-t",
+        ]
+
+    def test_a_deleted_run_has_its_instance_records(self, archive):
+        uuids = self._uuids("$*.results.:manifest():index(1).*", archive)
+        assert uuids == ["g1-s", "g1-t"]
+
+    def test_all_is_the_same_as_star(self, archive):
+        uuids = self._uuids("$*.results.:manifest():index(1).:all()", archive)
+        assert uuids == ["g1-s", "g1-t"]
+
+    def test_pointers_count_instances_in_arrival_order(self, archive):
+        ref = "$*.results.:manifest():last()."
+        assert self._uuids(ref + ":first()", archive) == ["k3-s"]
+        assert self._uuids(ref + ":last()", archive) == ["k3-t"]
+        assert self._uuids(ref + ":index(1)", archive) == ["k3-t"]
+        assert self._uuids(ref + ":index(5)", archive) == []
+
+    def test_an_instance_pointer_applies_in_every_selected_run(self, archive):
+        uuids = self._uuids("$*.results.:manifest().:last()", archive)
+        assert uuids == ["k1-t", "g1-t", "a1-t", "k2-t", "k3-t"]
+
+    def test_an_index_range_selects_instances(self, archive):
+        uuids = self._uuids("$*.results.:manifest():last().:from(1)", archive)
+        assert uuids == ["k3-t"]
+        uuids = self._uuids("$*.results.:manifest():last().:to(0)", archive)
+        assert uuids == ["k3-s"]
+
+    def test_an_identity_selects_one_instance(self, archive):
+        assert self._uuids("$*.results.:manifest():last().t", archive) == ["k3-t"]
+        assert self._uuids("$*.results.:manifest():last().nope", archive) == []
+
+    def test_name_one_filters_pick_the_runs_first(self, archive):
+        # the templated run k2 is in the set too
+        ref = '$*.results.:manifest():named_paths_name("keep").s'
+        uuids = self._uuids(ref, archive)
+        assert uuids == ["k1-s", "k2-s", "k3-s"]
+
+    def test_having_picks_the_run_then_name_three_its_instance(self, archive):
+        ref = '$*.results.:manifest():having(:uuid("a1-t")).s'
+        assert self._uuids(ref, archive) == ["a1-s"]
+
+    def test_a_regex_root_filters_the_runs(self, archive):
+        uuids = self._uuids("$:regex(/^k/).results.:manifest().:first()", archive)
+        assert uuids == ["k1-s", "k2-s", "k3-s"]
+
+    def test_an_argued_field_filters_instances(self, archive):
+        # the deleted run's instances have no error_count to match. An
+        # exact match, since :above() on a missing value raises TypeError
+        # in every branch today (follow-up in the lifecycle note)
+        ref = "$*.results.:manifest().:all():error_count(2)"
+        assert self._uuids(ref, archive) == ["k1-t", "a1-t", "k2-t", "k3-t"]
+
+    def test_an_argued_field_filters_before_the_pointer(self, archive):
+        ref = "$*.results.:manifest():last().:error_count(0):last()"
+        assert self._uuids(ref, archive) == ["k3-s"]
+
+    def test_a_filter_and_a_value_field_in_either_order(self, archive):
+        ref = '$*.results.:manifest().:all():uuid("a1-t"):time()'
+        assert self._data(ref, archive) == ["2026-01-03 00:00:01.5+00:00"]
+        ref = '$*.results.:manifest().:all():time():uuid("a1-t")'
+        assert self._data(ref, archive) == ["2026-01-03 00:00:01.5+00:00"]
+
+    # --- query paths
+
+    def test_an_instance_record_queries_to_the_ledger_path(self, archive):
+        results = _finder("$*.results.:manifest():last().*", archive).query()
+        assert results.files == [self._path(archive, "manifest.json")] * 2
+
+    def test_a_field_queries_to_the_ledger_path(self, archive):
+        results = _finder("$*.results.:manifest():last().t:time()", archive).query()
+        assert results.files == [self._path(archive, "manifest.json")]
+
+    def test_a_name_three_manifest_queries_to_the_instance_manifest(self, archive):
+        results = _finder("$*.results.:manifest():last().t:manifest()", archive).query()
+        assert results.files == [
+            self._path(archive, "keep/2026-01-05_00-00-00/t/manifest.json")
+        ]
+        assert results.uuids == ["k3-t"]
+
+    def test_a_content_accessor_queries_to_its_file(self, archive):
+        results = _finder("$*.results.:manifest():last().t:errors()", archive).query()
+        assert results.files == [
+            self._path(archive, "keep/2026-01-05_00-00-00/t/errors.json")
+        ]
+
+    def test_several_files_are_all_listed_on_query(self, archive):
+        # compendium 6.9: a list of errors.json paths to inspect
+        results = _finder("$*.results.:manifest():last().*:errors()", archive).query()
+        assert results.files == [
+            self._path(archive, "keep/2026-01-05_00-00-00/s/errors.json"),
+            self._path(archive, "keep/2026-01-05_00-00-00/t/errors.json"),
+        ]
+
+    def test_a_deleted_runs_file_paths_are_still_given(self, archive):
+        ref = "$*.results.:manifest():index(1).t:manifest()"
+        results = _finder(ref, archive).query()
+        assert results.files == [
+            self._path(archive, "gone/2026-01-02_00-00-00/t/manifest.json")
+        ]
+
+    # --- resolve
+
+    def test_a_bare_instance_resolves_to_its_record(self, archive):
+        (entry,) = self._data("$*.results.:manifest():index(1).t", archive)
+        assert entry["uuid"] == "g1-t"
+        assert entry["identity"] == "t"
+        assert entry["run_uuid"] == "g1"
+
+    def test_several_instance_records_resolve_together(self, archive):
+        # records, not files (5.6)
+        data = self._data("$*.results.:manifest():last().*", archive)
+        assert [e["uuid"] for e in data] == ["k3-s", "k3-t"]
+
+    def test_a_field_reads_the_instance_manifest_first(self, archive):
+        data = self._data("$*.results.:manifest():last().t:time()", archive)
+        assert data == ["2026-01-05 00:00:01.5+00:00"]
+
+    def test_a_deleted_runs_field_reads_its_ledger_entry(self, archive):
+        data = self._data("$*.results.:manifest():index(1).t:time()", archive)
+        assert data == ["2026-01-02 00:00:01+00:00"]
+        data = self._data("$*.results.:manifest():index(1).t:error_count()", archive)
+        assert data == [None]
+
+    def test_a_name_three_manifest_resolves_to_the_instance_manifest(self, archive):
+        ref = "$*.results.:manifest():last().:last():manifest()"
+        (manifest,) = self._data(ref, archive)
+        assert manifest["uuid"] == "k3-t"
+        assert manifest["error_count"] == 2
+
+    def test_a_deleted_runs_name_three_manifest_resolves_to_none(self, archive):
+        data = self._data("$*.results.:manifest():index(1).t:manifest()", archive)
+        assert data == [None]
+
+    def test_several_name_three_manifests_raise_on_resolve(self, archive):
+        ref = "$*.results.:manifest():last().:all():manifest()"
+        assert len(self._uuids(ref, archive)) == 2
+        with pytest.raises(ReferenceException3, match="more than one match"):
+            _finder(ref, archive).resolve()
+
+    def test_one_name_three_manifest_does_not_raise(self, archive):
+        ref = "$*.results.:manifest():last().:from(1):manifest()"
+        assert len(self._data(ref, archive)) == 1
+
+    def test_a_field_beside_a_name_three_manifest_gives_its_value(self, archive):
+        # compendium 6.13b, revised 2026-11-01
+        ref = "$*.results.:manifest():last().:last():manifest():valid()"
+        assert self._data(ref, archive) == [False]
+        ref = "$*.results.:manifest():last().t:manifest():time()"
+        assert self._data(ref, archive) == ["2026-01-05 00:00:01.5+00:00"]
+
+    def test_a_field_beside_several_manifests_gives_each_value(self, archive):
+        ref = "$*.results.:manifest():last().:all():manifest():error_count()"
+        assert self._data(ref, archive) == [0, 2]
+
+    def test_a_content_accessor_resolves_to_its_file(self, archive):
+        data = self._data("$*.results.:manifest():last().t:errors()", archive)
+        assert data == [[{"message": "k3-t"}, {"message": "k3-t"}]]
+
+    def test_a_gate_after_errors_applies(self, archive):
+        # no error has an "add[0]" source, so the gate gives None
+        ref = '$*.results.:manifest():last().t:errors():idchain("add[0]")'
+        assert self._data(ref, archive) == [None]
+
+    def test_a_content_accessor_wins_over_a_field(self, archive):
+        # the same order as the run-dir branch: the file is read
+        ref = "$*.results.:manifest():last().t:errors():error_count()"
+        assert self._data(ref, archive) == [
+            [{"message": "k3-t"}, {"message": "k3-t"}]
+        ]
+
+    def test_a_deleted_runs_content_accessor_resolves_to_none(self, archive):
+        data = self._data("$*.results.:manifest():index(1).t:errors()", archive)
+        assert data == [None]
+
+    def test_several_content_files_raise_on_resolve(self, archive):
+        with pytest.raises(ReferenceException3, match="more than one match"):
+            _finder("$*.results.:manifest():last().*:errors()", archive).resolve()
+
+    def test_a_field_does_not_lift_the_one_file_rule_for_an_accessor(self, archive):
+        ref = "$*.results.:manifest():last().*:errors():error_count()"
+        with pytest.raises(ReferenceException3, match="more than one match"):
+            _finder(ref, archive).resolve()
+
+    # --- raises
+
+    def test_manifest_with_a_content_accessor_raises(self, archive):
+        ref = "$*.results.:manifest():last().:last():manifest():errors()"
+        with pytest.raises(ReferenceException3, match="different file"):
+            _finder(ref, archive).query()
+
+    def test_a_run_level_value_field_with_name_three_raises(self, archive):
+        ref = "$*.results.:manifest():last():run_home().t"
+        with pytest.raises(ReferenceException3, match="run-level field"):
+            _finder(ref, archive).query()
+
+    def test_a_ledger_entry_with_no_identity_raises_for_a_file_path(self, tmp_path):
+        _write_json(
+            tmp_path / "manifest.json",
+            [{"uuid": "u", "run_uuid": "r", "run_home": str(tmp_path / "x")}],
+        )
+        with pytest.raises(ValueError, match="no identity"):
+            _finder("$*.results.:manifest().*:errors()", str(tmp_path)).query()
+
+    # --- the run-dir branches are unchanged
+
+    def test_a_depth_selector_still_walks_run_dirs(self, archive):
+        # instance dirs, in declaration order (none is declared here)
+        results = _finder("$*.results.:flatten():last().*", archive).query()
+        assert sorted(results.files) == [
+            self._path(archive, "keep/2026-01-05_00-00-00/s"),
+            self._path(archive, "keep/2026-01-05_00-00-00/t"),
+        ]
+
+    def test_a_run_dir_name_three_manifest_still_raises(self, archive):
+        with pytest.raises(ReferenceException3, match="name_three function"):
+            _finder("$keep.results.:last().t:manifest()", archive).query()
+
+    # --- helpers
+
+    def test_instance_record_field_value_rejects_bad_input(self, archive):
+        finder = _finder("$*.results.:manifest()", archive)
+        with pytest.raises(TypeError):
+            finder._instance_record_field_value(
+                record=None, entry={}, field_call=object()
+            )
+        with pytest.raises(TypeError):
+            finder._instance_record_field_value(
+                record={}, entry=None, field_call=object()
+            )
+        with pytest.raises(ValueError):
+            finder._instance_record_field_value(record={}, entry={}, field_call=None)
+
+    def test_instance_selector_helpers_reject_bad_input(self, archive):
+        finder = _finder("$*.results.:manifest()", archive)
+        with pytest.raises(ValueError):
+            finder._manifest_set_instance_selector(None)
+        with pytest.raises(TypeError):
+            finder._manifest_set_select_instances(record=None, selector={})
+        with pytest.raises(TypeError):
+            finder._manifest_set_select_instances(record={}, selector=None)
+        with pytest.raises(TypeError):
+            finder._manifest_set_instance_path(record={}, entry={}, selector=None)
+        with pytest.raises(ValueError):
+            finder._manifest_set_instance_results(records=None, name_three=object())
+        with pytest.raises(ValueError):
+            finder._manifest_set_instance_data(result=None, reference=object())
+        with pytest.raises(ValueError):
+            finder._manifest_set_chain(None)
+
+    def test_accessor_file_path_rejects_bad_input(self, archive):
+        with pytest.raises(ValueError):
+            ResultsReferenceFinder3._accessor_file_path(
+                instance_dir="", accessor=object()
+            )
+        with pytest.raises(ValueError):
+            ResultsReferenceFinder3._accessor_file_path(
+                instance_dir="x", accessor=None
+            )
