@@ -810,6 +810,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "ResultsReferenceFinder3 does not support the '#worksheet' "
                 "marker (name_two) -- it is files-only."
             )
+        set_chain = self._manifest_set_chain(reference)
+        if set_chain is not None:
+            # the logical manifest set (compendium 6.13b), checked before
+            # the run-dir name_three rules below, which do not apply to
+            # it: a set name_three may hold :manifest(), and :all() with
+            # a content accessor lists every file on query (6.9).
+            return self._query_manifest_set(
+                reference=reference, chain=set_chain, name_filter=name_filter
+            )
         (
             identity,
             match_all,
@@ -854,41 +863,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 lower_call,
                 upper_call,
             ) = self._star_run_selector_chain(calls)
-            if (
-                reference.name_three is None
-                and all_call is None
-                and flatten_call is None
-                and groups_call is None
-                and any(f.name == "manifest" for f in self._build_chain(calls))
-            ):
-                # the logical manifest set (compendium 6.13b, David
-                # 2026-10-31): :manifest() in name_one under '*' or a
-                # :regex()/:choice() root, with no depth or grouping
-                # selector. With one (":flatten():manifest()") we are
-                # walking run dirs instead, and :manifest() is each
-                # selected run's own manifest -- handled below.
-                if (
-                    pointer is None
-                    and having_call is None
-                    and not field_calls
-                    and bare_time_window is None
-                    and lower_call is None
-                    and upper_call is None
-                ):
-                    # the whole set: the ledger's path, uuid None (5.5)
-                    ledger_path = self._results_ledger_path()
-                    return ReferenceResults3(
-                        results=[ReferenceResult3(path=ledger_path, uuid=None)]
-                    )
-                return self._manifest_set_query(
-                    pointer=pointer,
-                    having_call=having_call,
-                    field_calls=field_calls,
-                    bare_time_window=bare_time_window,
-                    lower_call=lower_call,
-                    upper_call=upper_call,
-                    name_filter=name_filter,
-                )
             if all_call is not None:
                 # zero-level, degenerate -- the SAME [] restriction bare
                 # ':all()' already applies for one literal group (see the
@@ -1597,6 +1571,88 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             return self._build(reference.root_major).pattern
         return None
 
+    def _manifest_set_chain(self, reference: Reference3) -> tuple | None:
+        """name_one's run selector chain, as _star_run_selector_chain()
+        gives it, when `reference` reaches the logical manifest set
+        (compendium 6.13b, David 2026-10-31): :manifest() in a function-
+        only name_one under '*' or a :regex()/:choice() root, with no
+        depth or grouping selector. None otherwise. With one
+        (":flatten():manifest()") the reference walks run dirs instead,
+        and :manifest() is each selected run's own manifest."""
+        if reference is None:
+            raise ValueError("Reference cannot be None")
+        if not isinstance(reference.root_major, (Star3, FunctionCall3)):
+            return None
+        if not self._is_bare_function_only(reference.name_one):
+            return None
+        calls = self._combined_name_one_calls(reference.name_one)
+        if not any(f.name == "manifest" for f in self._build_chain(calls)):
+            return None
+        chain = self._star_run_selector_chain(calls)
+        _, all_call, flatten_call, _, _, groups_call, _, _, _ = chain
+        if all_call is not None or flatten_call is not None:
+            return None
+        if groups_call is not None:
+            return None
+        return chain
+
+    def _query_manifest_set(
+        self, *, reference: Reference3, chain: tuple, name_filter: str | None
+    ) -> ReferenceResults3:
+        """query() for a reference that reaches the logical manifest set.
+        `chain` is _manifest_set_chain()'s. A :manifest() with nothing
+        else in name_one and no name_three is the whole set: the
+        ledger's path, uuid None (5.5). Otherwise run records, or with a
+        name_three their instance records, see _manifest_set_query()."""
+        if reference is None:
+            raise ValueError("Reference cannot be None")
+        if chain is None:
+            raise ValueError("Chain cannot be None")
+        (
+            pointer,
+            _,
+            _,
+            having_call,
+            field_calls,
+            _,
+            bare_time_window,
+            lower_call,
+            upper_call,
+        ) = chain
+        if reference.name_three is not None and any(
+            f.arg is None for f in field_calls
+        ):
+            # the same rule the run-dir branches apply in _extract_data()
+            raise ReferenceException3(
+                "ResultsReferenceFinder3 does not support combining a "
+                "run-level field accessor on name_one with name_three -- "
+                "resolve the run's own field on its own, without a "
+                "further instance selector."
+            )
+        if (
+            reference.name_three is None
+            and pointer is None
+            and having_call is None
+            and not field_calls
+            and bare_time_window is None
+            and lower_call is None
+            and upper_call is None
+        ):
+            ledger_path = self._results_ledger_path()
+            return ReferenceResults3(
+                results=[ReferenceResult3(path=ledger_path, uuid=None)]
+            )
+        return self._manifest_set_query(
+            pointer=pointer,
+            having_call=having_call,
+            field_calls=field_calls,
+            bare_time_window=bare_time_window,
+            lower_call=lower_call,
+            upper_call=upper_call,
+            name_filter=name_filter,
+            name_three=reference.name_three,
+        )
+
     def _manifest_set_runs(self, *, name_filter: str | None) -> list[dict]:
         """the RESULTS logical manifest set's run records (compendium
         6.13b, David 2026-10-31), in arrival order: one record per run,
@@ -1652,6 +1708,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         lower_call=None,
         upper_call=None,
         name_filter: str | None = None,
+        name_three=None,
     ) -> ReferenceResults3:
         """query() for a :manifest() in name_one that reaches the logical
         manifest set (compendium 6.13b): the run records the reference
@@ -1661,7 +1718,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         :having() tests a run's instance records, an argued field is a
         filter (6.40), and a time window or range bounds the run's own
         run dir datetime. Ranges and pointers count in arrival order
-        (6.13b(ii)), not run dir order."""
+        (6.13b(ii)), not run dir order. With a `name_three`, the selected
+        runs' instance records instead, see
+        _manifest_set_instance_results()."""
         records = self._manifest_set_runs(name_filter=name_filter)
         if having_call is not None:
             records = [
@@ -1693,6 +1752,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if pointer is not None:
             selected = self._apply_pointer(pointer, records)
             records = [] if selected is None else [selected]
+        if name_three is not None:
+            return self._manifest_set_instance_results(
+                records=records, name_three=name_three
+            )
         ledger_path = self._results_ledger_path()
         return ReferenceResults3(
             results=[
@@ -1751,27 +1814,242 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         """true if any of a run record's instance records has a field
         matching `field_call`'s argument -- the logical-set counterpart of
         _any_instance_matches_field(), which walks a run dir on disk."""
+        for entry in record["instances"]:
+            value = self._instance_record_field_value(
+                record=record, entry=entry, field_call=field_call
+            )
+            if self._matches_field_predicate(value, field_call.arg):
+                return True
+        return False
+
+    def _instance_record_field_value(
+        self, *, record: dict, entry: dict, field_call
+    ):
+        """the value an instance-level (name_three) field accessor gives
+        for one instance record of the logical manifest set: the
+        instance's own manifest first, then its ledger entry, by the
+        field's LEDGER_KEY if it has one, else its KEY -- the same order
+        _run_record_field_value() uses one level up (6.13b(v)). A
+        deleted run's instance therefore has its ledger facts and None
+        for its outcomes."""
+        if record is None or not isinstance(record, dict):
+            raise TypeError("Record must be a dict")
+        if entry is None or not isinstance(entry, dict):
+            raise TypeError("Entry must be a dict")
+        if field_call is None:
+            raise ValueError("Field call cannot be None")
         function_cls = ReferenceFunctionFactory.get_registered_class(field_call.name)
         key_path = function_cls.KEY.get(Reference3.RESULT)
         if key_path is None:
             raise ReferenceException3(
-                f":having() cannot match by :{field_call.name}() -- it has "
-                "no per-instance (name_three) field to read."
+                f":{field_call.name}() has no per-instance (name_three) "
+                "field to read."
             )
-        ledger_key_path = function_cls.LEDGER_KEY.get(Reference3.RESULT) or key_path
-        for entry in record["instances"]:
-            identity = entry.get("identity")
-            instance = None
-            if identity is not None:
-                instance_dir = Nos(record["run_home"]).join(identity)
-                instance = self.source.instance_manifest(instance_dir)
-            value = self._extract_field_value(instance, key_path)
-            if value is None:
-                value = self._extract_field_value(entry, ledger_key_path)
-            value = function_cls.transform_value(value)
-            if self._matches_field_predicate(value, field_call.arg):
-                return True
-        return False
+        instance = None
+        if entry.get("identity") is not None:
+            instance_dir = Nos(record["run_home"]).join(entry["identity"])
+            instance = self.source.instance_manifest(instance_dir)
+        value = self._extract_field_value(instance, key_path)
+        if value is None:
+            ledger_key_path = function_cls.LEDGER_KEY.get(Reference3.RESULT) or key_path
+            value = self._extract_field_value(entry, ledger_key_path)
+        return function_cls.transform_value(value)
+
+    def _manifest_set_instance_selector(self, name_three) -> dict:
+        """the parts of a name_three under the logical manifest set
+        (compendium 6.13b): how it selects instances (the same identity,
+        '*'/:all(), pointer and range rules as a run dir's name_three,
+        see _name_three_selector()), its argued fields, which are
+        filters (6.40), the unargued field that supplies the value
+        (5.20b), and the :manifest() or content accessor that names a
+        file. :manifest() and a content accessor together raise: two
+        files in one context (6.13b)."""
+        if name_three is None:
+            raise ValueError("Name three cannot be None")
+        (
+            identity,
+            match_all,
+            accessor,
+            _,
+            range_bounds,
+            gate_call,
+            pointer,
+        ) = self._name_three_selector(name_three, for_manifest_set=True)
+        built = self._build_chain(name_three.functions) if name_three.functions else []
+        manifest_call = next((f for f in built if f.name == "manifest"), None)
+        if manifest_call is not None and accessor is not None:
+            raise ReferenceException3(
+                f"A name_three :manifest() cannot be combined with "
+                f":{accessor.name}() -- each names a different file of "
+                "the instance."
+            )
+        fields = self._find_field_function_calls(built, self.ref.parsed.datatype)
+        return {
+            "identity": identity,
+            "match_all": match_all,
+            "pointer": pointer,
+            "range_bounds": range_bounds,
+            "filters": [f for f in fields if f.arg is not None],
+            "value_field": self._last_value_field_call(built),
+            "manifest_call": manifest_call,
+            "accessor": accessor,
+            "gate_call": gate_call,
+        }
+
+    def _manifest_set_select_instances(
+        self, *, record: dict, selector: dict
+    ) -> list[dict]:
+        """the instance records of one run record that a name_three
+        selects, in arrival order (6.13b(ii)): argued fields filter
+        first, then an identity, pointer or range picks, the same way
+        filters come before the pointer in name_one."""
+        if record is None or not isinstance(record, dict):
+            raise TypeError("Record must be a dict")
+        if selector is None or not isinstance(selector, dict):
+            raise TypeError("Selector must be a dict")
+        entries = record["instances"]
+        for field_call in selector["filters"]:
+            entries = [
+                e
+                for e in entries
+                if self._matches_field_predicate(
+                    self._instance_record_field_value(
+                        record=record, entry=e, field_call=field_call
+                    ),
+                    field_call.arg,
+                )
+            ]
+        if selector["pointer"] is not None:
+            selected = self._apply_pointer(selector["pointer"], entries)
+            return [] if selected is None else [selected]
+        if selector["range_bounds"] is not None:
+            lower_call, upper_call = selector["range_bounds"]
+            return self._apply_range(entries, lower_call, upper_call)
+        if selector["identity"] is not None:
+            return [e for e in entries if e.get("identity") == selector["identity"]]
+        return entries
+
+    def _manifest_set_instance_path(
+        self, *, record: dict, entry: dict, selector: dict
+    ) -> str:
+        """the path query() gives for one selected instance record. A
+        reference that names a file gives that file's path (compendium
+        6.9, 6.40, 6.41): a name_three :manifest() its manifest.json, a
+        content accessor its file. One that names a record or a value
+        gives the ledger's path (5.7). A deleted run's file paths are
+        still given, since query() always succeeds (5.3); resolve()
+        gives None for them."""
+        if selector is None or not isinstance(selector, dict):
+            raise TypeError("Selector must be a dict")
+        if selector["manifest_call"] is None and selector["accessor"] is None:
+            return self._results_ledger_path()
+        identity = entry.get("identity")
+        if identity is None:
+            msg = f"A results ledger entry has no identity: {entry}"
+            self.csvpaths.logger.error(msg)
+            raise ValueError(msg)
+        instance_dir = Nos(record["run_home"]).join(identity)
+        if selector["manifest_call"] is not None:
+            return Nos(instance_dir).join("manifest.json")
+        return self._accessor_file_path(
+            instance_dir=instance_dir, accessor=selector["accessor"]
+        )
+
+    @classmethod
+    def _accessor_file_path(cls, *, instance_dir: str, accessor) -> str:
+        """the path of the file a content accessor reads in an instance
+        dir -- the same names _read_accessor() reads. :original()'s
+        extension varies, so it is found by listing the dir; with no such
+        file (or no dir) the path is the bare "original" name."""
+        if instance_dir is None or instance_dir == "":
+            raise ValueError("Instance dir cannot be None or empty")
+        if accessor is None:
+            raise ValueError("Accessor cannot be None")
+        if accessor.name in cls._JSON_ACCESSOR_FILES:
+            return Nos(instance_dir).join(cls._JSON_ACCESSOR_FILES[accessor.name])
+        if accessor.name == "printouts" and accessor.arg:
+            return Nos(instance_dir).join(f"{accessor.arg}.txt")
+        if accessor.name == "original":
+            nos = Nos(instance_dir)
+            if nos.dir_exists():
+                for name in nos.listdir(files_only=True):
+                    if name.startswith(f"{orut.NAME}.") or name == orut.NAME:
+                        return Nos(instance_dir).join(name)
+            return Nos(instance_dir).join(orut.NAME)
+        if accessor.name in cls._BYTES_ACCESSOR_FILES:
+            return Nos(instance_dir).join(cls._BYTES_ACCESSOR_FILES[accessor.name])
+        return Nos(instance_dir).join(accessor.arg)
+
+    def _manifest_set_instance_results(
+        self, *, records: list, name_three
+    ) -> ReferenceResults3:
+        """query() for a name_three under the logical manifest set: each
+        selected instance record of each selected run, as
+        _manifest_set_instance_path()'s path plus the instance's own
+        uuid. More than one file selected with no field to supply the
+        value is flagged, so resolve() raises: one file's content at a
+        time (5.6). A content accessor always reads its file, so it is
+        flagged with or without a field, as in the run-dir branches."""
+        if records is None:
+            raise ValueError("Records cannot be None")
+        selector = self._manifest_set_instance_selector(name_three)
+        results = []
+        for record in records:
+            for entry in self._manifest_set_select_instances(
+                record=record, selector=selector
+            ):
+                path = self._manifest_set_instance_path(
+                    record=record, entry=entry, selector=selector
+                )
+                results.append(ReferenceResult3(path=path, uuid=entry["uuid"]))
+        reads_a_file = selector["accessor"] is not None or (
+            selector["manifest_call"] is not None and selector["value_field"] is None
+        )
+        return ReferenceResults3(
+            results=results, ambiguous_content_read=reads_a_file and len(results) > 1
+        )
+
+    def _manifest_set_instance_data(self, *, result: ReferenceResult3, reference):
+        """resolve() for one instance record of the logical manifest set,
+        found by its uuid. A content accessor gives its file's content
+        (and a gate after :errors() applies, as in the run-dir branch);
+        else an unargued field gives its value, with or without a
+        :manifest() beside it (6.13b); else a :manifest() gives the
+        instance's own manifest.json, None if it is gone (a deleted
+        run); else the instance record itself, its ledger entry."""
+        if result is None:
+            raise ValueError("Result cannot be None")
+        if reference is None:
+            raise ValueError("Reference cannot be None")
+        selector = self._manifest_set_instance_selector(reference.name_three)
+        runs = self._manifest_set_runs(name_filter=self._root_name_filter(reference))
+        found = next(
+            (
+                (record, entry)
+                for record in runs
+                for entry in record["instances"]
+                if entry["uuid"] == result.uuid
+            ),
+            None,
+        )
+        if found is None:
+            return None
+        record, entry = found
+        accessor = selector["accessor"]
+        if accessor is not None:
+            instance_dir = Nos(record["run_home"]).join(entry["identity"])
+            data = self._read_accessor(instance_dir, accessor)
+            if selector["gate_call"] is not None:
+                return self._apply_errors_gate(data, selector["gate_call"])
+            return data
+        if selector["value_field"] is not None:
+            return self._instance_record_field_value(
+                record=record, entry=entry, field_call=selector["value_field"]
+            )
+        if selector["manifest_call"] is not None:
+            instance_dir = Nos(record["run_home"]).join(entry["identity"])
+            return self.source.instance_manifest(instance_dir)
+        return entry
 
     def _star_group_and_reduce(
         self,
@@ -1960,6 +2238,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # result.path to the archive-root manifest.json itself,
             # never a run directory, so this is a reliable, structural
             # test rather than a data-dependent guess.
+            if (
+                reference.name_three is not None
+                and self._manifest_set_chain(reference) is not None
+            ):
+                # an instance record of the logical manifest set; its
+                # path may be a file of the instance, not the ledger
+                return self._manifest_set_instance_data(
+                    result=result, reference=reference
+                )
             if result.path == self._results_ledger_path():
                 # the logical manifest set (compendium 6.13b). A uuid
                 # is a run record's run_uuid; with none, the result is
@@ -2632,6 +2919,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     def _name_three_selector(
         self,
         name_three,
+        *,
+        for_manifest_set: bool = False,
     ) -> tuple[str | None, bool, object, object, tuple, object, object]:
         """returns (identity, match_all, accessor, field_call,
         range_bounds, gate_call, pointer_call) for name_three -- identity is a literal statement-
@@ -2680,7 +2969,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         :manifest()). Instance method (not a staticmethod, since
         2026-08-27), same reason as _pointer_from_calls()'s own
         docstring: self._build_chain() needs this finder's own
-        registered variables."""
+        registered variables. `for_manifest_set` lets a :manifest() and
+        every field accessor through unreturned, for the logical manifest
+        set's name_three (compendium 6.13b), whose caller,
+        _manifest_set_instance_selector(), reads them itself; a run dir's
+        name_three still rejects :manifest()."""
         if name_three is None:
             return None, False, None, None, None, None, None
 
@@ -2691,8 +2984,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         from_call = None
         to_call = None
         pointer_call = None
+        set_fields = []
         if name_three.functions:
             built = self._build_chain(name_three.functions)
+            if for_manifest_set:
+                set_fields = self._find_field_function_calls(
+                    built, self.ref.parsed.datatype
+                )
             # last-wins (compendium 5.20b, added 2026-10-18) -- same
             # reason as manifest_field_call's own identical change in
             # _extract_data(). Instance call (not the class-qualified
@@ -2717,6 +3015,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 elif f.name in ResultsReferenceFinder3._ACCESSOR_NAMES:
                     accessor = f
                 elif f is field_call:
+                    continue
+                elif for_manifest_set and f.name == "manifest":
+                    continue
+                elif any(f is s for s in set_fields):
                     continue
                 elif isinstance(f, Idchain3):
                     # the GATE shape (e.g. ":errors():idchain(...)") --

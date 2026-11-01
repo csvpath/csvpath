@@ -276,6 +276,11 @@ RESULTS = [
     '$*.results.:manifest():having("first_id")',
     '$*.results.:manifest():named_paths_name("rgone")',
     "$:regex(/^r/).results.:manifest():last()",
+    "$*.results.:manifest():last().*",
+    "$*.results.:manifest():last().:last():time()",
+    '$*.results.:manifest():named_paths_name("rgone").*',
+    '$*.results.:manifest():having("first_id"):last().first_id:manifest()',
+    '$*.results.:manifest():having("first_id"):last().first_id:vars()',
     "$*.results.:flatten():first():uuid()",
     "$*.results.:flatten():error_count(0)",
     '$*.results.:groups():named_file_name("orders")',
@@ -357,10 +362,14 @@ def test_star_manifest_set_keeps_the_deleted_run_in_both_modes(paths):
 
     reference = '$*.results.:manifest():named_paths_name("rgone"):status()'
     assert _resolved("off", reference) == _resolved("on", reference) == [None]
+    # C2b, 2026-11-01: rgone's instance manifest is gone too
+    reference = '$*.results.:manifest():named_paths_name("rgone").first_id:manifest()'
+    assert _resolved("off", reference) == _resolved("on", reference) == [None]
     for reference in [
         "$*.results.:manifest():run_uuid()",
         "$*.results.:manifest():status()",
         "$*.results.:manifest()",
+        '$*.results.:manifest():named_paths_name("rgone").*:uuid()',
     ]:
         assert _resolved("off", reference) == _resolved("on", reference), reference
 

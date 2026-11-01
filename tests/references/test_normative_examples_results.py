@@ -66,6 +66,8 @@ setter like `:yesterday()`) raised "does not yet support <fn>()
 combined with '*' traversal." Three of the doc's own worked examples
 hit this directly:
   - `$*.results.:manifest():uuid("a381..."):run_home()` (line ~681,
+    since rewritten as `:having(:uuid("a381..."))`, NRE 698, with the
+    fixture's instance renamed to match, 2026-11-01;
     "two ways to get the run dir of a run containing a csvpath
     instance with a certain UUID" -- the archive-ledger route; the
     paired `:having()` route on line ~682 already worked, covered by
@@ -651,11 +653,15 @@ class TestGateTrailingChain:
         yesterday = (daut.now() - timedelta(days=1)).strftime(
             "%Y-%m-%d_00-00-00"
         )
-        r1 = _make_run(base, yesterday, "a381-run1", {})
+        # "a381-inst" is an instance uuid, as in NRE 698 (renamed
+        # 2026-11-01: under the logical manifest set, name_one's
+        # :uuid() is a run's own uuid, so the NRE now reaches an
+        # instance through :having())
+        r1 = _make_run(base, yesterday, "orders-run1", {"orders": "a381-inst"})
         _write_json(
             Path(r1) / "manifest.json",
             {
-                "run_uuid": "a381-run1",
+                "run_uuid": "orders-run1",
                 "run_home": r1,
                 "named_paths_name": "orders",
                 "template": "orders-template",
@@ -671,31 +677,46 @@ class TestGateTrailingChain:
                 "template": "invoices-template",
             },
         )
-        _write_archive_manifest(tmp_path, "acme", [r1, r2])
+        # r1's entry is its one instance's own, so :having() can find
+        # the instance by its uuid
+        orders_entry = _ledger_entry("acme", r1)
+        orders_entry.update({"identity": "orders", "uuid": "a381-inst"})
+        _write_json(
+            tmp_path / "manifest.json", [orders_entry, _ledger_entry("acme", r2)]
+        )
         return str(tmp_path)
 
-    def test_manifest_uuid_gate_then_run_home_resolve_target(
+    def test_manifest_having_uuid_then_run_home_resolve_target(
         self, acme_archive
     ):
-        # doc line ~681: "two ways to get the run dir of a run
-        # containing a csvpath instance with a certain UUID" -- the
-        # archive-ledger route. ':uuid("a381-run1")' GATEs the pooled
-        # candidate list down to the one matching run; ':run_home()',
-        # the LAST field accessor in the chain, is the resolve target
-        # (compendium 5.20b) -- used to raise outright before this fix.
+        # NRE 698: "two ways to get the run dir of a run containing a
+        # csvpath instance with a certain UUID" -- the archive-ledger
+        # route. :having(:uuid("a381-inst")) tests the instance records
+        # and selects the run; ':run_home()', the LAST field accessor
+        # in the chain, is the resolve target (compendium 5.20b). Was
+        # ':uuid("a381-run1")' on a run uuid until 2026-11-01.
         finder = _finder(
-            '$*.results.:manifest():uuid("a381-run1"):run_home()',
+            '$*.results.:manifest():having(:uuid("a381-inst")):run_home()',
             acme_archive,
         )
         results = finder.resolve()
         assert len(results.results) == 1
         assert Path(results.results[0].data).name.endswith("00-00-00")
-        assert results.results[0].uuid == "a381-run1"
-        # ':uuid("a381-run1")' is argued, so it is a filter (6.40; a
-        # pointer per 6.44) and never competes for the value -- only
-        # ':run_home()' does, so 5.20b's ambiguity warning does not
-        # fire. Was 1 until 2026-10-30, when a filter still counted.
+        assert results.results[0].uuid == "orders-run1"
+        # nothing but ':run_home()' competes for the value, so 5.20b's
+        # ambiguity warning does not fire
         assert len(finder.csvpaths.logger.warnings) == 0
+
+    def test_manifest_uuid_in_name_one_is_the_runs_own(self, acme_archive):
+        # under the logical manifest set, name_one's argued :uuid() is
+        # a run's uuid (6.13b), so the instance uuid matches no run
+        assert _finder(
+            '$*.results.:manifest():uuid("a381-inst"):run_home()', acme_archive
+        ).query().uuids == []
+        assert _finder(
+            '$*.results.:manifest():uuid("orders-run1"):run_home()',
+            acme_archive,
+        ).query().uuids == ["orders-run1"]
 
     def test_manifest_named_paths_name_gate_then_bare_yesterday_window(
         self, acme_archive
@@ -710,7 +731,7 @@ class TestGateTrailingChain:
             '$*.results.:manifest():named_paths_name("orders"):yesterday()',
             acme_archive,
         ).query()
-        assert results.uuids == ["a381-run1"]
+        assert results.uuids == ["orders-run1"]
 
     def test_manifest_run_uuid_gate_then_template_resolve_target(
         self, acme_archive
@@ -746,3 +767,161 @@ class TestGateTrailingChain:
         results = finder.resolve()
         assert len(results.results) == 2
         assert finder.csvpaths.logger.warnings == []
+
+
+class TestGlobalArchiveLedgerSection:
+    # NRE "Global archive ledger" (676-725), rewritten for the logical
+    # manifest set (compendium 6.13b, review item 23), added 2026-11-01
+    # with C2b. Each pair's two forms should agree on this fixture, where
+    # arrival order, run dir order and declaration order are the same.
+    #
+    # Three runs, in arrival order:
+    #   inv-run   invoices, 0-level, 2020-01-01, instances a, b
+    #   789a-run  orders, under the "tpl/" template, 2020-01-02, a, b
+    #   ord-run   orders, 0-level, yesterday, instances first, second
+    #             (second's uuid is "a381-inst")
+    @pytest.fixture
+    def archive(self, tmp_path):
+        from csvpath.util.date_util import DateUtility as daut
+        from datetime import timedelta
+
+        yesterday = (daut.now() - timedelta(days=1)).strftime("%Y-%m-%d_00-00-00")
+        runs = (
+            ("inv-run", "invoices", "invoices/2020-01-01_00-00-00", "", "a", "b"),
+            (
+                "789a-run",
+                "orders",
+                "orders/tpl/2020-01-02_00-00-00",
+                "tpl/:run_dir",
+                "a",
+                "b",
+            ),
+            ("ord-run", "orders", f"orders/{yesterday}", "", "first", "second"),
+        )
+        ledger = []
+        for run_uuid, name, rel, template, *identities in runs:
+            run_home = str(tmp_path / rel)
+            _write_json(
+                Path(run_home) / "manifest.json",
+                {
+                    "run_uuid": run_uuid,
+                    "run_home": run_home,
+                    "named_paths_name": name,
+                    "named_file_name": name,
+                    "template": template,
+                },
+            )
+            for index, identity in enumerate(identities):
+                uuid = f"{run_uuid}-{identity}"
+                if identity == "second":
+                    uuid = "a381-inst"
+                _write_json(
+                    Path(run_home) / identity / "manifest.json",
+                    {
+                        "uuid": uuid,
+                        "instance_identity": identity,
+                        "instance_index": index,
+                        "time": f"{rel[-19:-9]} 00:00:0{index}.5+00:00",
+                    },
+                )
+                ledger.append(
+                    {
+                        "time": f"{rel[-19:-9]} 00:00:0{index}+00:00",
+                        "uuid": uuid,
+                        "run_uuid": run_uuid,
+                        "run_home": run_home,
+                        "identity": identity,
+                        "named_paths_name": name,
+                        "named_file_name": name,
+                        "archive_name": "archive",
+                        "template": template,
+                    }
+                )
+        _write_json(tmp_path / "manifest.json", ledger)
+        return str(tmp_path)
+
+    @staticmethod
+    def _data(reference: str, archive: str) -> list:
+        return [r.data for r in _finder(reference, archive).resolve().results]
+
+    @staticmethod
+    def _uuids(reference: str, archive: str) -> list:
+        return _finder(reference, archive).query().uuids
+
+    def test_678_the_whole_set(self, archive):
+        results = _finder("$*.results.:manifest()", archive).query()
+        assert results.uuids == [None]
+        (runs,) = self._data("$*.results.:manifest()", archive)
+        assert [r["run_uuid"] for r in runs] == ["inv-run", "789a-run", "ord-run"]
+        assert [e["identity"] for e in runs[2]["instances"]] == ["first", "second"]
+
+    def test_681_every_run_across_every_named_results(self, archive):
+        uuids = self._uuids("$*.results.:flatten():manifest()", archive)
+        assert sorted(uuids) == ["789a-run", "inv-run", "ord-run"]
+
+    def test_686_687_the_last_instance_start_of_the_last_run(self, archive):
+        expected = [f"{_yesterday_day(archive)} 00:00:01.5+00:00"]
+        ref = "$*.results.:manifest():last().:last():time()"
+        assert self._data(ref, archive) == expected
+        ref = "$*.results.:flatten():last().:last():time()"
+        assert self._data(ref, archive) == expected
+
+    def test_691_692_the_first_known_run(self, archive):
+        ref = "$*.results.:manifest():first():run_uuid()"
+        assert self._data(ref, archive) == ["inv-run"]
+        ref = "$*.results.:flatten():first():uuid()"
+        assert self._data(ref, archive) == ["inv-run"]
+
+    def test_698_699_the_run_dir_of_the_run_holding_an_instance(self, archive):
+        ref = '$*.results.:manifest():having(:uuid("a381-inst")):run_home()'
+        (by_set,) = self._data(ref, archive)
+        ref = '$*.results.:flatten():having(:uuid("a381-inst")):run_home()'
+        (by_dir,) = self._data(ref, archive)
+        assert by_set == by_dir
+        assert Path(by_set).parent.name == "orders"
+
+    def test_702_the_last_instance_run_yesterday(self, archive):
+        ref = "$*.results.:manifest():yesterday():last().:last():identity()"
+        assert self._data(ref, archive) == ["second"]
+
+    @pytest.mark.xfail(
+        strict=True,
+        raises=ReferenceException3,
+        reason="run-dir branch takes a bare :yesterday() for a run-level "
+        "field (lifecycle note, clock-field follow-up)",
+    )
+    def test_703_the_last_instance_run_yesterday_by_direct_access(self, archive):
+        ref = "$*.results.:yesterday():last().:last():identity()"
+        assert self._data(ref, archive) == ["second"]
+
+    def test_707_708_instances_of_orders_runs_yesterday(self, archive):
+        expected = ["ord-run-first", "a381-inst"]
+        ref = '$*.results.:manifest():named_paths_name("orders"):yesterday().*'
+        assert self._uuids(ref, archive) == expected
+        ref = "$orders.results.:flatten():yesterday().*"
+        assert self._uuids(ref, archive) == expected
+
+    def test_712_713_instances_of_orders_file_runs_yesterday(self, archive):
+        expected = ["ord-run-first", "a381-inst"]
+        ref = '$*.results.:manifest():named_file_name("orders"):yesterday().*'
+        assert self._uuids(ref, archive) == expected
+        ref = '$*.results.:flatten():yesterday():named_file_name("orders").*'
+        assert self._uuids(ref, archive) == expected
+
+    def test_721_the_archive_name(self, archive):
+        data = self._data("$*.results.:manifest():archive()", archive)
+        assert data == ["archive"] * 3
+
+    def test_724_725_the_template_of_a_run(self, archive):
+        ref = '$*.results.:manifest():run_uuid("789a-run"):template()'
+        assert self._data(ref, archive) == ["tpl/:run_dir"]
+        ref = '$*.results.:flatten():run_uuid("789a-run"):template()'
+        assert self._data(ref, archive) == ["tpl/:run_dir"]
+
+
+def _yesterday_day(archive: str) -> str:
+    """the yesterday run's date, as its ledger and manifests write it"""
+    (name,) = [
+        p.name for p in (Path(archive) / "orders").iterdir() if p.name != "tpl"
+    ]
+    return name[:10]
