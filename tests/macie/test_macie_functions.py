@@ -164,10 +164,10 @@ def test_macie_functions_breaker_stops_and_reports(tmp_path) -> None:
     data = _write(tmp_path, *[f"{i},EMP-11111{i}," for i in range(1, 8)])
     path, macie, matched = _run(_csvpath(data=data, body=_cdi(), max_findings=3))
     #
-    # stop() ends the run on the line that reaches the max; that line isn't
-    # matched because the matcher returns as soon as it sees the stop
+    # stop() ends the run on the line that reaches the max, and returns that
+    # line (#483): every line with a recorded finding is matched
     #
-    assert matched == ["1", "2"]
+    assert matched == ["1", "2", "3"]
     assert path.stopped is True
     assert macie[-2:] == [
         "macie EmployeeId: 3 occurrences, severity MEDIUM, detail shown for all 3",

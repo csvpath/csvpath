@@ -49,7 +49,11 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
             i += 1
         cs.results_manager.get_named_results("stopping2")
         vs = cs.results_manager.get_variables("stopping2")
-        assert i == 3
+        #
+        # one calls stop_all() on line 3 and returns it (#483): lines 0-3.
+        # two never sees line 3, and neither push() runs on it.
+        #
+        assert i == 4
         assert vs["one"] == [0, 1, 2]
         assert vs["two"] == [0, 1, 2]
 
@@ -62,7 +66,11 @@ class TestCsvPathsCoordinatorFunctions(unittest.TestCase):
             i += 1
         cs.results_manager.get_named_results("stopping2")
         vs = cs.results_manager.get_variables("stopping2")
-        assert i == 3
+        #
+        # one calls stop_all() on line 3 and returns it (#483): lines 0-3.
+        # two does not run.
+        #
+        assert i == 4
         assert vs["one"] == [0, 1, 2]
 
     """ """

@@ -180,7 +180,11 @@ class TestCsvPathsNewCsvPaths(unittest.TestCase):
             i += 1
         cs.results_manager.get_named_results("stopping")
         vs = cs.results_manager.get_variables("stopping")
-        assert i == 7
+        #
+        # two stops on line 7 and returns it (#483): lines 0-7. its push()
+        # after the stop doesn't run on line 7.
+        #
+        assert i == 8
         assert vs["one"] == [0, 1, 2]
         assert vs["two"] == [0, 1, 2, 3, 4, 5, 6]
 

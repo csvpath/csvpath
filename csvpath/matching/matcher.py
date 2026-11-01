@@ -1,4 +1,4 @@
-""" Matching is the core of CsvPath. """
+"""Matching is the core of CsvPath."""
 
 from typing import Any, List
 from .productions import Equality, Matchable
@@ -319,12 +319,19 @@ class Matcher:  # pylint: disable=R0902
                 #
                 # stopped is like a system halt. this csvpath is calling it
                 # quits on this CSV file. we don't continue to match the row
-                # so we may miss out on some side effects. we just return
-                # because the function already let the CsvPath know to stop.
+                # so we may miss out on some side effects.
+                #
+                # if the stop happened on this line, the line is decided by
+                # the components that already ran, as when stop() is the
+                # last component: stop() returns the line it stops on
+                # (#483). a csvpath already stopped before this line's first
+                # component doesn't match it.
                 #
                 pln = self.csvpath.line_monitor.physical_line_number
                 self.csvpath.logger.debug("Stopped at line %s", pln)
-                return False
+                if i == 0:
+                    return False
+                break
             if self.skip is True:
                 #
                 # skip is like the continue statement in a python loop
