@@ -10,6 +10,7 @@ from .arn_utility import ArnUtility as arut
 from .custom_identifier import CustomIdentifier
 from .macie_exceptions import MacieException
 from .macie_wrapper_loader import MacieWrapperLoader
+from .managed_catalog import ManagedCatalog
 from .regex_utility import RegexUtility as reut
 
 
@@ -38,10 +39,11 @@ class MacieConverter:
         conversion.csvpath           # csvpath text
         conversion.report.skipped    # what was not translated
 
-    Translated today: custom data identifiers (macie_cdi) and regex allow
-    lists (macie_allow_regex). Reported as skipped: managed identifiers,
-    text allow lists (they need load_list(), #470) and findings filters,
-    which act on findings after detection.
+    Translated today: custom data identifiers (macie_cdi), managed data
+    identifiers we have a stand-in for in the catalog (macie_mdi), and
+    regex allow lists (macie_allow_regex). Reported as skipped: other
+    managed identifiers, text allow lists (they need load_list(), #470)
+    and findings filters, which act on findings after detection.
 
     A value the csvpath can't express, e.g. a keyword containing a double
     quote or "|", fails the conversion: skipping part of an identifier
@@ -64,10 +66,15 @@ class MacieConverter:
     #
     NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 
-    def __init__(self, *, wrapper: dict) -> None:
+    def __init__(self, *, wrapper: dict, catalog: ManagedCatalog | None = None) -> None:
+        """catalog holds our managed identifier stand-ins; None means the
+        packaged one"""
         if wrapper is None:
             raise ValueError("wrapper cannot be None")
+        if catalog is not None and not isinstance(catalog, ManagedCatalog):
+            raise TypeError(f"catalog must be a ManagedCatalog, not {type(catalog)}")
         self.wrapper = MacieWrapperLoader.validate(wrapper=wrapper)
+        self.catalog = ManagedCatalog.load() if catalog is None else catalog
 
     @property
     def logger(self) -> logging.Logger:
@@ -96,11 +103,12 @@ class MacieConverter:
         body = []
         body += self._allow_lists(name=name, report=report)
         body += self._custom_identifiers()
-        if not any(b.startswith("macie_cdi(") for b in body):
+        body += self._managed_identifiers(name=name, report=report)
+        if not any(b.startswith(("macie_cdi(", "macie_mdi(")) for b in body):
             self._fail(
-                f"Macie wrapper for {name} has no custom data identifiers to convert"
+                f"Macie wrapper for {name} has no custom or supported managed data "
+                "identifiers to convert"
             )
-        self._skip_managed(name=name, report=report)
         self._skip_findings_filters(name=name, report=report)
         self._report_warnings(name=name, report=report)
         body.append("last.nocontrib() -> macie_report()")
@@ -219,15 +227,33 @@ class MacieConverter:
             out.append(f"macie_cdi(\n        {lines}\n    )")
         return out
 
-    def _skip_managed(self, *, name: str, report: ConversionReport) -> None:
+    def _managed_identifiers(self, *, name: str, report: ConversionReport) -> list[str]:
+        """macie_mdi() for each resolved managed identifier we have a
+        stand-in for; the rest are reported"""
+        out = []
         managed = self.wrapper.get("managedDataIdentifiers") or {}
         for i, mdi in enumerate(managed.get("resolved") or []):
-            report.skip(
-                obj=name,
-                location=f"managedDataIdentifiers.resolved[{i}]",
-                feature="managedDataIdentifier",
-                reason=f"Managed data identifier {mdi} is not translated yet",
-            )
+            if not self.catalog.has(name=mdi):
+                report.skip(
+                    obj=name,
+                    location=f"managedDataIdentifiers.resolved[{i}]",
+                    feature="managedDataIdentifier",
+                    reason=f"Managed data identifier {mdi} is not translated yet",
+                )
+                continue
+            e = self.catalog.identifier(name=mdi)
+            args = [
+                self._string(value=mdi),
+                self._string(value=e["category"]),
+                self._string(value=e["detector"]),
+                self._string(value=e["keyword_mode"]),
+                self._entries(name=mdi, kind="keyword", entries=e["keywords"]),
+                f"{e['distance']}",
+                self._string(value=e["severity"]),
+            ]
+            lines = ",\n        ".join(args)
+            out.append(f"macie_mdi(\n        {lines}\n    )")
+        return out
 
     def _skip_findings_filters(self, *, name: str, report: ConversionReport) -> None:
         for i, f in enumerate(self.wrapper.get("findingsFilters") or []):

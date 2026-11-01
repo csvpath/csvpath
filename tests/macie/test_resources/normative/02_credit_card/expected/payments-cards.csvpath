@@ -1,0 +1,36 @@
+~
+  id: payments-cards
+  macie-origin: job
+  macie-job-id: 1f2e3d4c5b6a79881f2e3d4c5b6a7988
+  macie-account: 123456789012
+  macie-region: us-east-1
+  macie-source-arn: arn|aws|macie2|us-east-1|123456789012|classification-job/1f2e3d4c5b6a79881f2e3d4c5b6a7988
+  macie-downloaded-at: 20261101T140500Z
+  macie-max-findings: 10000
+  macie-max-detail: 3
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_allow_regex.nocontrib("merchant-test-card", /5425[ -]?7777[ -]?7777[ -]?7771/)
+    macie_mdi(
+        "CREDIT_CARD_NUMBER",
+        "FINANCIAL_INFORMATION",
+        "credit_card",
+        "required",
+        "account number|american express|amex|bank card|c card|card|cc #|ccn|check card|cred card|credit|credit card|credit cards|credit no|credit num|dankort|debit|debit card|debit no|debit num|diners club|discover|electron|japanese card bureau|jcb|mastercard|mc|pan|payment account number|payment card number|pcn|pmnt #|pmnt card|pmnt no|pmnt number|union pay|visa",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "CREDIT_CARD_NUMBER_(NO_KEYWORD)",
+        "FINANCIAL_INFORMATION",
+        "credit_card",
+        "absent",
+        "account number|american express|amex|bank card|c card|card|cc #|ccn|check card|cred card|credit|credit card|credit cards|credit no|credit num|dankort|debit|debit card|debit no|debit num|diners club|discover|electron|japanese card bureau|jcb|mastercard|mc|pan|payment account number|payment card number|pcn|pmnt #|pmnt card|pmnt no|pmnt number|union pay|visa",
+        30,
+        "1:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]
