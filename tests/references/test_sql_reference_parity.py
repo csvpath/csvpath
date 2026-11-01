@@ -271,6 +271,11 @@ RESULTS = [
     "$*.results.:manifest():last()",
     "$*.results.:manifest():first():run_uuid()",
     "$*.results.:manifest():archive_name()",
+    "$*.results.:manifest():index(1)",
+    "$*.results.:manifest():run_uuid()",
+    '$*.results.:manifest():having("first_id")',
+    '$*.results.:manifest():named_paths_name("rgone")',
+    "$:regex(/^r/).results.:manifest():last()",
     "$*.results.:flatten():first():uuid()",
     "$*.results.:flatten():error_count(0)",
     '$*.results.:groups():named_file_name("orders")',
@@ -331,6 +336,33 @@ def test_star_ledger_read_keeps_the_deleted_group_in_both_modes(paths):
         off, on = _both(paths, reference)
         assert off == on
         assert any("xgone" in f for f in off[1].files)
+
+
+def test_star_manifest_set_keeps_the_deleted_run_in_both_modes(paths):
+    #
+    # the logical RESULTS manifest set (compendium 6.13b, C2a,
+    # 2026-10-31) is built from the ledger, deleted runs included, so
+    # both modes see rgone's run and resolve the same values; rgone's
+    # run manifest is gone in both, so its status is None in both.
+    #
+    def _resolved(mode: str, reference: str) -> list:
+        _mode(paths, mode)
+        try:
+            finder = ReferenceFinderFactory3.for_reference(
+                reference=reference, csvpaths=paths
+            )
+            return [r.data for r in finder.resolve().results]
+        finally:
+            _mode(paths, "off")
+
+    reference = '$*.results.:manifest():named_paths_name("rgone"):status()'
+    assert _resolved("off", reference) == _resolved("on", reference) == [None]
+    for reference in [
+        "$*.results.:manifest():run_uuid()",
+        "$*.results.:manifest():status()",
+        "$*.results.:manifest()",
+    ]:
+        assert _resolved("off", reference) == _resolved("on", reference), reference
 
 
 def test_re_registered_name_is_the_new_version_in_both_modes(paths):
