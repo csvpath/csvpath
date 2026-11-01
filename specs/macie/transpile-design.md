@@ -275,7 +275,7 @@ conversion.report.skipped   # what was not translated
   Macie name with other characters, needs `name=`. Names are letters,
   digits, `.`, `_` and `-`.
 - **Limits:** `max_findings` and `max_detail` are arguments. The caller
-  (named-paths registration, later) will supply them from the rulesbase
+  (loading into a named-paths group, later) will supply them from the rulesbase
   and config.ini. The defaults are 10000 and 15.
 - **Regex literals** hold the Macie pattern as written, with `/` escaped
   so the literal ends where it should. Grammar characters such as `]`,
@@ -308,12 +308,12 @@ csvpath through real CVL. Not yet written: `macie_mdi`,
 data through these classes, without CVL, and checks the pair's expected
 findings, finding lines, errors and printouts.
 
-## Named-paths registration
+## Loading into a named-paths group
 
 `PathsManager.add_named_paths_from_file()` loads a `.macie.json` wrapper as
 a named-paths group, as it loads ODCS contracts:
 
-- `MacieRegistration.convert_file()` does the Macie part: load, convert
+- `MacieGroupLoader.convert_file()` does the Macie part: load, convert
   with `[macie] max_findings` / `max_detail` from config.ini (or the
   defaults), name the csvpath, and build the report. The paths manager
   imports the Macie package only when it loads a wrapper.

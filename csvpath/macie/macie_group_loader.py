@@ -7,15 +7,16 @@ from .macie_exceptions import MacieException
 from .macie_wrapper_loader import MacieWrapperLoader
 
 
-class MacieRegistration:
-    """what PathsManager needs to load a .macie.json wrapper as a
-    named-paths group, kept here so the paths manager stays a few lines:
+class MacieGroupLoader:
+    """the Macie side of loading a .macie.json wrapper into a named-paths
+    group, kept here so the paths manager stays a few lines. (The wrapper
+    file itself is read by MacieWrapperLoader.)
 
-        paths, report = MacieRegistration.convert_file(path=p, config=config)
+        paths, report = MacieGroupLoader.convert_file(path=p, config=config)
 
-    and the one rule Macie adds to a group: a Macie csvpath's id is never
-    shared with another csvpath in the group, since two csvpaths with one
-    id would scan twice and blur whose findings are whose."""
+    It also holds the one rule Macie adds to a group: a Macie csvpath's id
+    is never shared with another csvpath in the group, since two csvpaths
+    with one id would scan twice and blur whose findings are whose."""
 
     #
     # every csvpath MacieConverter writes has this metadata key

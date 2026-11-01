@@ -8,7 +8,7 @@ last. Add an item the moment something is deferred.
 1. ~~**Transpiler: wrapper -> CVL.**~~ Done: `MacieConverter`. Pair 1 is
    reproduced exactly. Not in it yet: per-identifier detail caps from the
    rulesbase (`macie_cdi`'s optional 8th argument).
-2. ~~**Named-paths registration of `.macie.json`.**~~ Done:
+2. ~~**Loading `.macie.json` into named-paths groups.**~~ Done:
    `add_named_paths_from_file` and `add_named_paths_from_dir` load
    wrappers like ODCS contracts. The wrapper is copied into the group home
    with `<file>.report.json` beside it. A Macie csvpath's id must be
@@ -23,7 +23,7 @@ last. Add an item the moment something is deferred.
 - **A csvpath after a Macie csvpath with `source-mode: preceding`** gets
   only the lines with findings. That could be a feature (e.g. redaction)
   or a surprise.
-- **Limits are fixed at registration**: changing `[macie]` in config.ini
+- **Limits are fixed when the group is loaded**: changing `[macie]` in config.ini
   takes effect when the group is reloaded. David is not worried about this
   for now (2026-10-31).
 

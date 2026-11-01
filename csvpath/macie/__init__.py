@@ -5,7 +5,7 @@ into a csvpath of CsvPath Validation Language. See specs/macie/ for the
 wrapper format and the transpile design, and
 tests/macie/test_resources/normative/README.md for the normative pairs.
 PathsManager loads a wrapper as a named-paths group through
-MacieRegistration.
+MacieGroupLoader.
 """
 
 from .macie_converter import MacieConversion, MacieConverter

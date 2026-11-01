@@ -959,9 +959,9 @@ class PathsManager:
         #
         if file_path is None or str(file_path).strip() == "":
             raise ValueError("Macie wrapper file path cannot be None or empty")
-        from csvpath.macie.macie_registration import MacieRegistration
+        from csvpath.macie.macie_group_loader import MacieGroupLoader
 
-        return MacieRegistration.convert_file(
+        return MacieGroupLoader.convert_file(
             path=file_path, config=self.csvpaths.config
         )
 
@@ -985,9 +985,9 @@ class PathsManager:
         ids = [i for i, _ in found if i is not None]
         if len(ids) == len(set(ids)):
             return
-        from csvpath.macie.macie_registration import MacieRegistration
+        from csvpath.macie.macie_group_loader import MacieGroupLoader
 
-        MacieRegistration.refuse_shared_ids(group=name, paths=found)
+        MacieGroupLoader.refuse_shared_ids(group=name, paths=found)
 
     def _get_csvpaths_from_odcs(self, file_path: str) -> tuple[list[Csvpath], dict]:
         #
