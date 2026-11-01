@@ -1,0 +1,6 @@
+macie EmployeeId: occurrence 1, line 1 (row 2), column 2 employee
+macie BadgeId: occurrence 1, line 1 (row 2), column 3 badge
+macie EmployeeId: occurrence 2, line 2 (row 3), column 2 employee
+macie EmployeeId: 4 occurrences, severity MEDIUM, detail shown for first 2
+macie BadgeId: 1 occurrence, severity MEDIUM, detail shown for all 1
+macie: stopped at line 4 after 5 occurrences (max 5); results are partial and severities are at least as shown

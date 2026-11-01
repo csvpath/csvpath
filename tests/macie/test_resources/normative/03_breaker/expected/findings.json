@@ -1,0 +1,65 @@
+{
+  "customDataIdentifiers": {
+    "detections": [
+      {
+        "arn": "arn:aws:macie2:us-east-1:123456789012:custom-data-identifier/2a1b7e4c-5d3f-4e8a-9b0c-1d2e3f4a5b6c",
+        "name": "EmployeeId",
+        "count": 4,
+        "severity": "MEDIUM",
+        "occurrences": {
+          "cells": [
+            {
+              "cellReference": null,
+              "column": 2,
+              "columnName": "employee",
+              "row": 2
+            },
+            {
+              "cellReference": null,
+              "column": 2,
+              "columnName": "employee",
+              "row": 3
+            },
+            {
+              "cellReference": null,
+              "column": 2,
+              "columnName": "employee",
+              "row": 5
+            },
+            {
+              "cellReference": null,
+              "column": 2,
+              "columnName": "employee",
+              "row": 5
+            }
+          ]
+        }
+      },
+      {
+        "arn": "arn:aws:macie2:us-east-1:123456789012:custom-data-identifier/4c3b2a1f-0e9d-4c8b-7a6f-5e4d3c2b1a0f",
+        "name": "BadgeId",
+        "count": 1,
+        "severity": "MEDIUM",
+        "occurrences": {
+          "cells": [
+            {
+              "cellReference": null,
+              "column": 3,
+              "columnName": "badge",
+              "row": 2
+            }
+          ]
+        }
+      }
+    ],
+    "totalCount": 5
+  },
+  "sensitiveData": [],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:us-east-1:123456789012:classification-job/9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b",
+    "stopped": true,
+    "stopped_at_line": 4,
+    "max_findings": 5,
+    "max_detail": 2
+  }
+}

@@ -31,9 +31,13 @@ Design decisions are in `specs/macie/transpile-design.md`.
 - `01_employee_ids`: one custom data identifier (keywords in headers and
   in cells, maximum match distance, ignore word, severity thresholds), one
   regex allow list, a detail cap of 3. No managed identifiers.
+- `03_breaker`: two custom identifiers, `max_findings` 5 and a detail cap
+  of 2. The global breaker trips between two occurrences in one cell; the
+  second identifier is not applied on that line; the run stops, and the
+  stopping line still matches (#483). The summary and the stopped message
+  print at the trip, and findings record `stopped_at_line`.
 
 Planned:
 
 - `02_credit_card`: `CREDIT_CARD_NUMBER` stand-in (Luhn, issuer prefixes,
   keywords optional), plus a text allow list via `load_list()`.
-- `03_breaker`: the global breaker trips, `stop()`, partial report.

@@ -71,10 +71,19 @@ def _run(*, wrapper: dict, data: str, max_findings: int, max_detail: int) -> dic
         rows = list(csv.reader(f))
     headers = rows[0]
     for line, row in enumerate(rows[1:], start=1):
+        #
+        # the breaker stops the run on the line where the total reaches the
+        # max. later lines are not read, and nothing more is recorded on
+        # this line, but the line itself still counts as a finding line
+        #
+        if tally.tripped:
+            break
         for cdi in cdis:
             for i, cell in enumerate(row):
                 n = cdi.occurrences(cell=cell, header=headers[i], allow_lists=allow)
                 for _ in range(n):
+                    if tally.tripped:
+                        break
                     lines.add(line)
                     if tally.record(
                         name=cdi.name,
@@ -91,6 +100,8 @@ def _run(*, wrapper: dict, data: str, max_findings: int, max_detail: int) -> dic
                         )
                         errors.append({"line": line, "message": msg})
                         printouts.append(msg)
+                    if tally.tripped:
+                        tally.stopped_at_line = line
     printouts.extend(tally.summary_messages())
     return {
         "findings": tally.to_findings(),

@@ -13,7 +13,8 @@ last. Add an item the moment something is deferred.
    wrappers like ODCS contracts. The wrapper is copied into the group home
    with `<file>.report.json` beside it. A Macie csvpath's id must be
    unique in its group (David, 2026-10-31).
-3. **Pair 03_breaker.** A normative pair that trips the global breaker.
+3. ~~**Pair 03_breaker.**~~ Done. It needed the `stop()` fix (#483, PR
+   #484) so the line that trips the breaker is matched.
 
 ## Design questions to revisit
 

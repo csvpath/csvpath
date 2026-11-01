@@ -1,0 +1,35 @@
+~
+  id: hr-badges
+  macie-origin: job
+  macie-job-id: 9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b
+  macie-account: 123456789012
+  macie-region: us-east-1
+  macie-source-arn: arn|aws|macie2|us-east-1|123456789012|classification-job/9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b
+  macie-downloaded-at: 20261101T091500Z
+  macie-max-findings: 5
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_cdi(
+        "EmployeeId",
+        "arn:aws:macie2:us-east-1:123456789012:custom-data-identifier/2a1b7e4c-5d3f-4e8a-9b0c-1d2e3f4a5b6c",
+        /EMP-\d{6}/,
+        "",
+        "",
+        50,
+        "1:LOW 3:MEDIUM 5:HIGH"
+    )
+    macie_cdi(
+        "BadgeId",
+        "arn:aws:macie2:us-east-1:123456789012:custom-data-identifier/4c3b2a1f-0e9d-4c8b-7a6f-5e4d3c2b1a0f",
+        /BDG-\d{4}/,
+        "",
+        "",
+        50,
+        "1:MEDIUM"
+    )
+    last.nocontrib() -> macie_report()
+]
