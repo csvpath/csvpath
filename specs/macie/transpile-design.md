@@ -308,6 +308,34 @@ csvpath through real CVL. Not yet written: `macie_mdi`,
 data through these classes, without CVL, and checks the pair's expected
 findings, finding lines, errors and printouts.
 
+## Named-paths registration
+
+`PathsManager.add_named_paths_from_file()` loads a `.macie.json` wrapper as
+a named-paths group, as it loads ODCS contracts:
+
+- `MacieRegistration.convert_file()` does the Macie part: load, convert
+  with `[macie] max_findings` / `max_detail` from config.ini (or the
+  defaults), name the csvpath, and build the report. The paths manager
+  imports the Macie package only when it loads a wrapper.
+- The csvpath's id is the job's or template's name, or the wrapper's file
+  name when that name can't be an id (e.g. handcrafted wrappers).
+- The wrapper is copied byte for byte into the group home, with
+  `<file>.report.json` beside it (the same writer as ODCS reports).
+- `add_named_paths_from_dir()` loads each wrapper as its own group, named
+  for the file without `.macie.json`: a dot in a group name would break
+  references to it. Combining a directory into one named group refuses
+  wrappers, as it refuses ODCS contracts.
+- Only the full `.macie.json` suffix is a wrapper. Other `.json` files keep
+  their meaning (group definitions).
+
+**A Macie csvpath's id is unique in its group.** Appending is fine: Macie,
+ODCS and plain csvpaths can share a group. But an append that would give a
+Macie csvpath's id to a second csvpath is refused before anything is
+written. Two csvpaths with one id would scan twice and blur whose findings
+are whose. Duplicate ids among non-Macie csvpaths are still allowed: there
+they are housekeeping, and teams reuse building-block csvpaths across
+groups. (David, 2026-10-31.)
+
 ## Decided 2026-10-30 (David)
 
 - One printout (and one error) per occurrence, up to the detail cap.

@@ -320,11 +320,13 @@ def test_odcs_get_csvpaths_from_odcs_bad_path(paths, bad) -> None:
 def test_odcs_write_report_bad_args(paths) -> None:
     pm = paths.paths_manager
     with pytest.raises(ValueError):
-        pm._write_odcs_report(name=None, file_path="c.yaml", report={})
+        pm._write_conversion_report(name=None, file_path="c.yaml", report={})
     with pytest.raises(ValueError):
-        pm._write_odcs_report(name="odcs_test_orders", file_path="", report={})
+        pm._write_conversion_report(name="odcs_test_orders", file_path="", report={})
     with pytest.raises(TypeError):
-        pm._write_odcs_report(name="odcs_test_orders", file_path="c.yaml", report=[])
+        pm._write_conversion_report(
+            name="odcs_test_orders", file_path="c.yaml", report=[]
+        )
 
 
 def test_odcs_package_is_imported_lazily() -> None:

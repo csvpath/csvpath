@@ -105,7 +105,15 @@ class PathsRegistrar(Registrar, Listener):
         if mdata.named_paths_home is None:
             raise ValueError("Metadata must have a named-paths group home")
         path = mdata.source_path
-        if path.endswith(".yml") or path.endswith(".yaml"):
+        #
+        # ODCS contracts and Macie wrappers are kept beside the csvpaths
+        # converted from them
+        #
+        if (
+            path.endswith(".yml")
+            or path.endswith(".yaml")
+            or path.endswith(".macie.json")
+        ):
             if not Nos(path).exists():
                 raise ValueError(f"There is no file at {path}")
             dest = Nos(mdata.named_paths_home).join(Path(path).name)

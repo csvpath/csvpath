@@ -4,7 +4,8 @@ MacieWrapperLoader loads a .macie.json wrapper; MacieConverter turns it
 into a csvpath of CsvPath Validation Language. See specs/macie/ for the
 wrapper format and the transpile design, and
 tests/macie/test_resources/normative/README.md for the normative pairs.
-Not yet wired into named-paths registration.
+PathsManager loads a wrapper as a named-paths group through
+MacieRegistration.
 """
 
 from .macie_converter import MacieConversion, MacieConverter
