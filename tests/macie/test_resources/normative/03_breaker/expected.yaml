@@ -1,0 +1,66 @@
+#
+# The global breaker trips part way through a cell and stops the run.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one recorded
+#                   finding. Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_findings: 5
+  max_detail: 2
+runs:
+  - csvpath: hr-badges.csvpath
+    data: badges.csv
+    finding_lines: [1, 2, 4]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie EmployeeId: occurrence 1, line 1 (row 2), column 2 employee" }
+      - { line: 1, message: "macie BadgeId: occurrence 1, line 1 (row 2), column 3 badge" }
+      - { line: 2, message: "macie EmployeeId: occurrence 2, line 2 (row 3), column 2 employee" }
+    findings: findings.json
+    #
+    # Both identifiers have no keywords, so every regex match counts. On
+    # each line EmployeeId is applied to every cell, then BadgeId: the
+    # order they appear in the csvpath.
+    #
+    #   line  identifier  cell      total  detail (cap 2 each)
+    #   1     EmployeeId  employee  1      yes: EmployeeId occurrence 1
+    #   1     BadgeId     badge     2      yes: BadgeId occurrence 1
+    #   2     EmployeeId  employee  3      yes: EmployeeId occurrence 2
+    #   3     (clean)
+    #   4     EmployeeId  employee  4      no: EmployeeId's cap of 2 is used
+    #   4     EmployeeId  employee  5      no; the total reaches max_findings
+    #                                      (5), so the breaker trips here,
+    #                                      between two occurrences in one cell
+    #   4     BadgeId     badge     -      BDG-0002 is not recorded: the
+    #                                      breaker has tripped
+    #   5, 6  not read: the run stopped on line 4
+    #
+    # Line 4 matches: stop() returns the line it stops on (#483), so every
+    # line with a recorded finding is matched.
+    #
+    # Severity: EmployeeId has 4 occurrences against 1:LOW 3:MEDIUM 5:HIGH,
+    # so MEDIUM, "at least" since the run stopped. BadgeId has no
+    # severityLevels, so Macie's default 1:MEDIUM applies: 1 occurrence is
+    # MEDIUM.
+    #
+    # The summary prints when the breaker trips, because stop() ends the
+    # run before last() and macie_report() get their turn, followed by the
+    # stopped line. findings.json keeps all 5 cells, two of them in the
+    # same cell (row 5, column 2), and records stopped_at_line 4.
+    #

@@ -1,0 +1,7 @@
+row_id,employee,badge,notes
+1,EMP-100001,BDG-0001,
+2,EMP-100002,,
+3,,,clean
+4,EMP-100003 EMP-100004,BDG-0002,
+5,EMP-100005,BDG-0003,
+6,EMP-100006,,

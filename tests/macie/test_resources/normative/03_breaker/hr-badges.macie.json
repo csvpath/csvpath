@@ -1,0 +1,82 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "us-east-1",
+    "downloaded_at": "2026-11-01T09:15:00Z",
+    "job_id": "9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "NONE",
+    "managedDataIdentifierIds": [],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [
+      "2a1b7e4c-5d3f-4e8a-9b0c-1d2e3f4a5b6c",
+      "4c3b2a1f-0e9d-4c8b-7a6f-5e4d3c2b1a0f"
+    ],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [],
+    "resolution": { "method": "selector", "recommended_list": null },
+    "available": [
+      { "category": "PERSONAL_INFORMATION", "id": "USA_SOCIAL_SECURITY_NUMBER" }
+    ]
+  },
+  "customDataIdentifiers": [
+    {
+      "arn": "arn:aws:macie2:us-east-1:123456789012:custom-data-identifier/2a1b7e4c-5d3f-4e8a-9b0c-1d2e3f4a5b6c",
+      "createdAt": "2026-03-02T15:20:11Z",
+      "deleted": false,
+      "description": "Acme employee IDs",
+      "id": "2a1b7e4c-5d3f-4e8a-9b0c-1d2e3f4a5b6c",
+      "ignoreWords": [],
+      "keywords": [],
+      "maximumMatchDistance": 50,
+      "name": "EmployeeId",
+      "regex": "EMP-\\d{6}",
+      "severityLevels": [
+        { "occurrencesThreshold": 1, "severity": "LOW" },
+        { "occurrencesThreshold": 3, "severity": "MEDIUM" },
+        { "occurrencesThreshold": 5, "severity": "HIGH" }
+      ],
+      "tags": {}
+    },
+    {
+      "arn": "arn:aws:macie2:us-east-1:123456789012:custom-data-identifier/4c3b2a1f-0e9d-4c8b-7a6f-5e4d3c2b1a0f",
+      "createdAt": "2026-05-12T10:02:40Z",
+      "deleted": false,
+      "description": "Building badge numbers",
+      "id": "4c3b2a1f-0e9d-4c8b-7a6f-5e4d3c2b1a0f",
+      "name": "BadgeId",
+      "regex": "BDG-\\d{4}",
+      "tags": {}
+    }
+  ],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-10-20T08:00:00Z",
+      "customDataIdentifierIds": [
+        "2a1b7e4c-5d3f-4e8a-9b0c-1d2e3f4a5b6c",
+        "4c3b2a1f-0e9d-4c8b-7a6f-5e4d3c2b1a0f"
+      ],
+      "description": "Badge exports, custom identifiers only",
+      "jobArn": "arn:aws:macie2:us-east-1:123456789012:classification-job/9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b",
+      "jobId": "9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierSelector": "NONE",
+      "name": "hr-badges",
+      "s3JobDefinition": {
+        "bucketDefinitions": [ { "accountId": "123456789012", "buckets": ["acme-badge-exports"] } ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}
