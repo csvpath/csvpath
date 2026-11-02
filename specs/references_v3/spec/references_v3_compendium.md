@@ -1390,6 +1390,15 @@ Examples:
   could each, in some reference, act as the end of the range; however, when used together
   like this the :to() is a directional whereas the :last() is an anchor, so the :to()
   participates in the range and the anchor, :last(), selects from within the range.
+- Directionals are used in creating a range before a filter or value function, whatever
+  the written order. For e.g.,
+  `$acme.files.:name("orders.csv").:from(0):to(2):type("csv")` selects the CSV
+  versions among the 1st through 3rd versions of `orders.csv`, not the first three
+  CSV versions. This only matters for an index range: a date range or time window
+  is itself a match on the `time` field, so it gives the same answer either way.
+  A pointer then selects from what the range and filters leave, e.g.
+  `:from(0):to(2):type("csv"):last()` is the last CSV version among the first three.
+
 
 #### 6.28b
 Note that `:before()`, `:after()`, `:from()`, `:to()` are aliased with
