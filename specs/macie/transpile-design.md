@@ -295,7 +295,8 @@ conversion.report.skipped   # what was not translated
 | `ManagedCatalog` | our managed identifier stand-ins, from `csvpath/macie/rulesbase/managed_identifiers.json`, checked on load |
 | `ManagedIdentifier` | occurrences of one managed identifier in one cell: detector, keyword mode, allow lists |
 | `CreditCardDetector` | 13-19 digits (or grouped), Luhn, issuer prefix and length, less issuer test numbers |
-| `GroupedDigitsDetector` | fixed-length digits printed in groups, with a named check digit: SIN (Luhn), NHS (mod 11) |
+| `GroupedDigitsDetector` | fixed-length digits, printed in groups or fixed formats, with a named check digit: SIN, NHS, CPF, CNPJ, SUBE |
+| `ClRutDetector` | Chile RUT and RUN: 7 or 8 digits and a check character, 0-9 or K |
 | `VinDetector` | 17-character VINs; no check digit required |
 | `IbanDetector` | one country's IBANs: length, printed layout, ISO 13616 mod 97 |
 | `UsSsnDetector`, `UsNpiDetector` | SSA's SSN rules; CMS's NPI check digit (Luhn over 80840) |
@@ -439,6 +440,32 @@ standards.
   then MEDIUM from 100 occurrences, per Macie.
 - All three are PERSONAL_INFORMATION and require a keyword.
 
+**Brazil CPF and CNPJ, Chile RUT and Argentina SUBE**: all four are
+PERSONAL_INFORMATION and require a keyword.
+- **`BRAZIL_CPF_NUMBER`** and **`BRAZIL_CNPJ_NUMBER`.** Macie publishes
+  only their keywords, as one shared Brazil list, so a `cpf` or `cnpj`
+  header serves both. The formats are Receita Federal's:
+  - CPF: 11 digits, printed `###.###.###-##` or contiguous, two mod 11
+    check digits (`chut.cpf_mod11`).
+  - CNPJ: 14 digits, printed `##.###.###/####-##` or contiguous
+    (`chut.cnpj_mod11`).
+  - For both, one digit repeated (e.g. 111.111.111-11) passes the check
+    but is never issued, so it is rejected.
+  - Both are HIGH. Brazil issues alphanumeric CNPJs from July 2026; ours
+    are numeric only, so the converter reports CNPJ as partially
+    translated.
+- **`CHILE_RUT_NUMBER`.** Macie says it detects RUN and RUT numbers, and
+  never reports numbers whose digits are all zeroes. The format is ours:
+  a 7 or 8 digit body, optional thousands dots, an optional hyphen, and
+  a check character 0-9 or K (`chut.rut_check`, mod 11). HIGH.
+- **`ARGENTINA_TARJETA_SUBE`.** Macie documents it fully: 16 digits
+  starting 6061, Luhn, with spaces, hyphens or no separator. MEDIUM, then
+  HIGH from 100.
+
+`GroupedDigitsDetector` gained printed `formats` with fixed separators
+(`#` for a digit), `prefixes` and `reject_repeated`, so CPF, CNPJ and
+SUBE are catalog data on the same class as SIN and NHS.
+
 Each managed identifier is a catalog entry plus a detector in
 `csvpath/macie/detectors/`, named in `DETECTORS`. One class may serve
 several detector names. A test checks that
@@ -464,6 +491,9 @@ every detector the catalog names exists, and every detector is used.
 7. VINs: does Macie require the North American check digit for
    North American VINs? We never require it. SIN and NHS formats and
    layouts are the issuers', as for SSN and NPI.
+8. CPF, CNPJ and RUT formats are the issuers'. Does Macie accept a RUT
+   with no hyphen (`123456785`), as we do? Does it reject repeated-digit
+   CPFs and CNPJs?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

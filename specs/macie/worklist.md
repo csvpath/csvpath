@@ -34,10 +34,11 @@ last. Add an item the moment something is deferred.
    `macie_mdi`, the packaged catalog, `CreditCardDetector`, Luhn, and pair
    02_credit_card. Second batch done: US SSN and NPI, pair 04_us_ids.
    Third batch done: IBANs, all 52 countries, pair 05_iban. Fourth batch
-   done: Canada SIN, UK NHS, VIN, pair 06_sin_nhs_vin. More group A
-   identifiers next (e.g. Brazil CPF/CNPJ mod 11, Spain DNI/NIE check
-   letter, India Aadhaar Verhoeff, Chile RUT, Argentina SUBE), each a
-   catalog entry plus a detector.
+   done: Canada SIN, UK NHS, VIN, pair 06_sin_nhs_vin. Fifth batch done:
+   Brazil CPF and CNPJ, Chile RUT, Argentina SUBE, pair 07_latam. More
+   group A identifiers next (e.g. Spain DNI/NIE check letter, India
+   Aadhaar Verhoeff, Italy Codice Fiscale, France INSEE, Mexico CURP),
+   each a catalog entry plus a detector.
 4b. **BBANs for France, Germany, Italy, Spain and the UK** (keyword
    required), plus UK domestic sort code and account numbers. **Required
    before the MVP release** (David, 2026-11-02). Until then the converter
@@ -55,7 +56,17 @@ last. Add an item the moment something is deferred.
    permissions agreed with David first.
 8. **One-time fidelity scan against real Macie** (billed; ask first) to
    confirm the interpretations in transpile-design.md: three for custom
-   identifiers, seven for managed ones.
+   identifiers, eight for managed ones.
+
+## Decide at release planning
+
+- **Alphanumeric CNPJs** (Brazil, issued from July 2026). Needs the
+  check-digit rule for letters confirmed from Receita Federal before it
+  is built. Until then the converter reports BRAZIL_CNPJ_NUMBER as
+  partially translated. Not an MVP blocker for now: Brazil is not a
+  target market, and the users most exposed to the gap would be unlikely
+  to rely on the MVP for such sensitive use. A gap to close, with a final
+  decision when deciding on a first release (David, 2026-11-02).
 
 ## Clean-ups (not blockers)
 

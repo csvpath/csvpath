@@ -1,0 +1,88 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "sa-east-1",
+    "downloaded_at": "2026-11-02T16:20:00Z",
+    "job_id": "2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "BRAZIL_CPF_NUMBER",
+      "BRAZIL_CNPJ_NUMBER",
+      "CHILE_RUT_NUMBER",
+      "ARGENTINA_TARJETA_SUBE"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "BRAZIL_CPF_NUMBER",
+      "BRAZIL_CNPJ_NUMBER",
+      "CHILE_RUT_NUMBER",
+      "ARGENTINA_TARJETA_SUBE"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "BRAZIL_CPF_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "BRAZIL_CNPJ_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "CHILE_RUT_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "ARGENTINA_TARJETA_SUBE"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-01T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "South American client records",
+      "jobArn": "arn:aws:macie2:sa-east-1:123456789012:classification-job/2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b",
+      "jobId": "2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "BRAZIL_CPF_NUMBER",
+        "BRAZIL_CNPJ_NUMBER",
+        "CHILE_RUT_NUMBER",
+        "ARGENTINA_TARJETA_SUBE"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "latam-clients",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-latam-clients"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}
