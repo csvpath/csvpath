@@ -275,6 +275,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
             home = self.csvpaths.file_manager.named_file_home(root_major)
             return self._query_well_known_file(home, "README.md")
 
+        manifest_chain = self._manifest_chain(name_one=name_one)
+        if manifest_chain is not None:
+            # a general chain on ':manifest()', e.g.
+            # ':manifest():last():uuid()' -- finding E, 2026-11-02. Ahead
+            # of the #410 branch below, which used to take
+            # ':status("complete"):manifest()' for a path and ignore the
+            # gate.
+            return self._query_manifest_chain(
+                reference=reference, chain=manifest_chain, name_filter=None
+            )
+
         bare_field_call = self._bare_definition_field_call(name_one)
         if bare_field_call is not None:
             # ":on_arrival()"/":sources()"/":template()" bare -- settled
@@ -1183,6 +1194,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "FilesReferenceFinder3 does not support the '#worksheet' "
                 "marker (name_two) during '*' traversal -- it only applies "
                 "to a literal named-file path."
+            )
+        manifest_chain = self._manifest_chain(name_one=name_one)
+        if manifest_chain is not None:
+            # a general chain on ':manifest()' over the ledger set --
+            # finding E, 2026-11-02.
+            return self._query_manifest_chain(
+                reference=reference, chain=manifest_chain, name_filter=name_filter
             )
         is_home = self._is_home_prefixed_reference(name_one)
         is_bare_definition = self._is_bare_definition_reference(name_one)
@@ -2361,6 +2379,126 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         return call
 
+    @staticmethod
+    def _manifest_chain(*, name_one) -> "dict | None":
+        """the parts of a general chain on a bare ':manifest()' in
+        name_one, e.g. ':manifest():last():uuid()' or
+        ':manifest():status("failed"):named_file_name("orders")' (finding
+        E, 2026-11-02): {"pointer": the one pointer or None, "gates": the
+        argued fields, "values": the unargued fields}. The functions are
+        ANDed in any order (compendium 6.1).
+
+        Returns None for any other shape, including the two-function
+        shapes that have their own branches: ':manifest():<field>()'
+        (_bare_manifest_field_call) and a pointer with ':manifest()' in
+        either order (_pointer_before_manifest). Only pointers and field
+        functions are claimed; a chain with anything else, e.g.
+        ':name()', ':from()' or ':yesterday()', keeps its old handling.
+        A field that does not read manifest.json raises."""
+        if name_one is None:
+            raise ValueError("name_one cannot be None")
+        if len(name_one.path) != 1:
+            return None
+        calls = [name_one.path[0], *name_one.functions]
+        if not all(isinstance(c, FunctionCall3) for c in calls):
+            return None
+        manifests = [c for c in calls if c.name == "manifest" and c.arg is None]
+        if len(manifests) != 1:
+            return None
+        others = [c for c in calls if c is not manifests[0]]
+        if not others:
+            return None
+        pointer_names = ("first", "last", "index")
+        if len(others) == 1 and (
+            calls[0] is manifests[0] or others[0].name in pointer_names
+        ):
+            return None
+        pointers = []
+        fields = []
+        for call in others:
+            if call.name in pointer_names:
+                pointers.append(call)
+                continue
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            if function_cls is None or function_cls.SOURCE not in (
+                "manifest",
+                "definition",
+                "computed",
+            ):
+                return None
+            fields.append((call, function_cls))
+        if len(pointers) > 1:
+            raise ReferenceException3(
+                "A ':manifest()' chain can have at most one pointer "
+                "(:first()/:last()/:index(n)), not "
+                + ", ".join(f":{p.name}()" for p in pointers)
+                + "."
+            )
+        for call, function_cls in fields:
+            if (
+                function_cls.SOURCE != "manifest"
+                or Reference3.FILES not in function_cls.DATATYPES
+            ):
+                raise ReferenceException3(
+                    f"':{call.name}()' does not read a named-file's "
+                    "manifest.json, so it is not supported in a "
+                    "':manifest()' chain."
+                )
+        return {
+            "pointer": pointers[0] if pointers else None,
+            "gates": [call for call, _ in fields if call.arg is not None],
+            "values": [call for call, _ in fields if call.arg is None],
+        }
+
+    def _query_manifest_chain(
+        self, *, reference: Reference3, chain: dict, name_filter: "str | None"
+    ) -> ReferenceResults3:
+        """query() for a general ':manifest()' chain (_manifest_chain()).
+        The pool is the named-file's own manifest for a literal root, and
+        the ledger set for '*', ':regex()' or ':choice()', failures
+        included. Every gate filters first, then the pointer picks, so
+        the written order does not matter. Each result is the entry's
+        uuid with the manifest.json that holds it (compendium 5.7)."""
+        if chain is None:
+            raise ValueError("chain cannot be None")
+        if reference.name_three is not None:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not support combining a "
+                "':manifest()' chain with name_three -- put the pointer in "
+                "the chain instead (e.g. ':manifest():last():uuid()')."
+            )
+        root_major = reference.root_major
+        if isinstance(root_major, str):
+            entries = self.source.file_manifest(root_major)
+            path = self._root_manifest_path(root_major)
+        else:
+            entries = [
+                e
+                for e in self.source.files_ledger()
+                if name_filter is None
+                or re.search(name_filter, e.get("named_file_name") or "")
+            ]
+            path = self._files_ledger_path()
+        for gate in chain["gates"]:
+            entries = self._filter_by_manifest_chain_gate(
+                reference=reference, call=gate, entries=entries
+            )
+        if chain["pointer"] is not None:
+            selected = self._apply_pointer(chain["pointer"], entries)
+            entries = [] if selected is None else [selected]
+        values = chain["values"]
+        if len(values) > 1:
+            self.csvpaths.logger.warning(
+                "Reference resolves to the value of the last field-accessor "
+                "function in its chain (:%s()) -- :%s() earlier in the same "
+                "chain could also have provided a value; see compendium 5.20b.",
+                values[-1].name,
+                "(), :".join(f.name for f in values[:-1]),
+            )
+        return ReferenceResults3(
+            results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in entries]
+        )
+
     def _manifest_chain_field_value(
         self, *, reference: Reference3, function_cls: type, entry: dict | None
     ) -> object:
@@ -2369,10 +2507,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
         entry for a literal root. Shared by resolve() and by the gate in
         query(), so a gate always matches on the value resolve() would
         show."""
-        if function_cls.NAME == "named_file_name" and not isinstance(
-            reference.root_major, Star3
+        if function_cls.NAME == "named_file_name" and isinstance(
+            reference.root_major, str
         ):
-            # at FILES scope the name is the literal root itself.
+            # at FILES scope the name is the literal root itself. under
+            # '*', ':regex()' or ':choice()' it is read from each entry.
             return reference.root_major
         return self._extract_field_value_with_ledger_fallback(
             entry=entry,
@@ -2452,6 +2591,28 @@ class FilesReferenceFinder3(ReferenceFinder3):
         log_call = self._bare_log_call(reference)
         if log_call is not None:
             return self._read_log_file(result.path, log_call.arg)
+        manifest_chain = None
+        if reference.name_three is None:
+            manifest_chain = self._manifest_chain(name_one=reference.name_one)
+        if manifest_chain is not None:
+            # a general ':manifest()' chain (finding E): the entry query()
+            # matched, or the last unargued field's value on it. a gate
+            # only filters, it supplies no value (finding D).
+            if isinstance(reference.root_major, str):
+                entries = self.source.file_manifest(reference.root_major)
+            else:
+                entries = self.source.files_ledger()
+            entry = self._find_manifest_entry_by_uuid(entries, result.uuid)
+            values = manifest_chain["values"]
+            if not values:
+                return entry
+            return self._manifest_chain_field_value(
+                reference=reference,
+                function_cls=ReferenceFunctionFactory.get_registered_class(
+                    values[-1].name
+                ),
+                entry=entry,
+            )
         if (
             reference.name_three is None
             and self._chained_definition_call(reference.name_one) is not None
