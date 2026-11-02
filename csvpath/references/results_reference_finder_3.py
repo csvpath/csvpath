@@ -642,12 +642,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             _,
             instance_pointer,
         ) = self._name_three_selector(reference.name_three)
-        has_manifest = any(
-            seg.contains_function_named("manifest")
-            for seg in calls
-            if isinstance(seg, FunctionCall3)
-        )
-        wants_full_content = has_manifest or accessor is not None
+        wants_full_content = self._reads_whole_file(accessor=accessor)
         # partition-aware fix, added 2026-10-20, widened 2026-10-21 (not-
         # yet-supported sweep #7 and its own follow-up): this used to be
         # an unconditional rejection here -- "ResultsReferenceFinder3
@@ -1520,7 +1515,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             return ReferenceResults3(
                 results=results,
-                ambiguous_content_read=accessor is not None and len(results) > 1,
+                ambiguous_content_read=self._reads_whole_file(accessor=accessor)
+                and len(results) > 1,
             )
         selected = self._apply_pointer(pointer, run_homes)
         if selected is None:
@@ -1535,7 +1531,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # alongside the ':count()' worked example, same reasoning as
             # the no-pointer branch above (previously unreachable, since
             # match_all+accessor was blocked outright before this fix).
-            ambiguous_content_read=accessor is not None and len(results) > 1,
+            ambiguous_content_read=self._reads_whole_file(accessor=accessor)
+            and len(results) > 1,
         )
 
     #
@@ -1862,8 +1859,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         see _name_three_selector()), its argued fields, which are
         filters (6.40), the unargued field that supplies the value
         (5.20b), and the :manifest() or content accessor that names a
-        file. :manifest() and a content accessor together raise: two
-        files in one context (6.13b)."""
+        file. :manifest() and a content accessor together raise in
+        _name_three_selector(): two files in one context (6.13b)."""
         if name_three is None:
             raise ValueError("Name three cannot be None")
         (
@@ -1876,13 +1873,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             pointer,
         ) = self._name_three_selector(name_three, for_manifest_set=True)
         built = self._build_chain(name_three.functions) if name_three.functions else []
-        manifest_call = next((f for f in built if f.name == "manifest"), None)
-        if manifest_call is not None and accessor is not None:
-            raise ReferenceException3(
-                f"A name_three :manifest() cannot be combined with "
-                f":{accessor.name}() -- each names a different file of "
-                "the instance."
-            )
+        manifest_call = self._name_three_manifest_call(name_three)
         fields = self._find_field_function_calls(built, self.ref.parsed.datatype)
         return {
             "identity": identity,
@@ -2199,7 +2190,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
         return ReferenceResults3(
             results=results,
-            ambiguous_content_read=accessor is not None and len(results) > 1,
+            ambiguous_content_read=self._reads_whole_file(accessor=accessor)
+            and len(results) > 1,
         )
 
     _JSON_ACCESSOR_FILES = {
@@ -2410,6 +2402,19 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # accessor that isn't there (2026-10-30).
             return None
 
+        if reference.name_three is not None and self._names_instance_manifest():
+            # a name_three :manifest() (compendium 6.14): result.path is
+            # the instance's manifest.json. A field beside it gives its
+            # value (6.13b), the same value it gives without :manifest().
+            instance_dir = pathu.dir_name(result.path)
+            built = self._build_chain(reference.name_three.functions)
+            value_field = self._last_value_field_call(built)
+            if value_field is not None:
+                return self._instance_dir_field_value(
+                    instance_dir=instance_dir, field_call=value_field
+                )
+            return self.source.instance_manifest(instance_dir)
+
         kind = reference.resolve_kind
         if kind in (Reference3.METADATA_FILE, Reference3.METADATA_FIELD):
             # both land here: :errors() alone classifies as METADATA_FILE,
@@ -2451,23 +2456,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # :errors() etc. ride in -- extracts one key from the
                 # matched instance's own manifest.json instead of a
                 # well-known file.
-                function_cls = ReferenceFunctionFactory.get_registered_class(
-                    field_call.name
+                return self._instance_dir_field_value(
+                    instance_dir=result.path, field_call=field_call
                 )
-                entry = self.source.instance_manifest(result.path)
-                key_path = function_cls.KEY.get(Reference3.RESULT)
-                value = self._extract_field_value_with_ledger_fallback(
-                    entry=entry,
-                    key_path=key_path,
-                    function_cls=function_cls,
-                    datatype=Reference3.RESULT,
-                    ledger_entry_getter=lambda: self._find_archive_ledger_entry(
-                        ledger=self.source.results_ledger(),
-                        run_uuid=entry.get("run_uuid") if entry else None,
-                        identity=entry.get("instance_identity") if entry else None,
-                    ),
-                )
-                return function_cls.transform_value(value)
         if kind != Reference3.FIRST_PARTY:
             # confirmed unreachable via any real reference (not-yet-
             # supported sweep #10), not a pending gap: by the time
@@ -2490,6 +2481,31 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # single unambiguous payload -- "no default", per "creating
         # references v3.txt"'s resolve table.
         return None
+
+    def _instance_dir_field_value(self, *, instance_dir: str, field_call):
+        """the value an instance-level field accessor gives for one
+        instance dir: its manifest.json, then its archive ledger entry
+        (LEDGER_KEY), the run-dir counterpart of
+        _instance_record_field_value()."""
+        if instance_dir is None or instance_dir == "":
+            raise ValueError("Instance dir cannot be None or empty")
+        if field_call is None:
+            raise ValueError("Field call cannot be None")
+        function_cls = ReferenceFunctionFactory.get_registered_class(field_call.name)
+        entry = self.source.instance_manifest(instance_dir)
+        key_path = function_cls.KEY.get(Reference3.RESULT)
+        value = self._extract_field_value_with_ledger_fallback(
+            entry=entry,
+            key_path=key_path,
+            function_cls=function_cls,
+            datatype=Reference3.RESULT,
+            ledger_entry_getter=lambda: self._find_archive_ledger_entry(
+                ledger=self.source.results_ledger(),
+                run_uuid=entry.get("run_uuid") if entry else None,
+                identity=entry.get("instance_identity") if entry else None,
+            ),
+        )
+        return function_cls.transform_value(value)
 
     def _last_value_field_call(self, calls: list) -> "FunctionCall3 | None":
         """the field accessor whose value resolve() returns: the last
@@ -2740,6 +2756,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 path = self._accessor_file_path(
                     instance_dir=inst_dir, accessor=accessor
                 )
+            elif self._names_instance_manifest():
+                path = Nos(inst_dir).join("manifest.json")
             found.append(ReferenceResult3(path=path, uuid=uuid))
         return found
 
@@ -2756,6 +2774,55 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             for seg in self._combined_name_one_calls(reference.name_one)
             if isinstance(seg, FunctionCall3)
         )
+
+    def _names_instance_manifest(self) -> bool:
+        """true when this reference's name_three names the instance's
+        own manifest.json: a :manifest() in name_three (compendium 6.14)."""
+        name_three = self.ref.parsed.name_three
+        if name_three is None:
+            return False
+        return self._name_three_manifest_call(name_three) is not None
+
+    def _name_three_manifest_call(self, name_three) -> "FunctionCall3 | None":
+        """the :manifest() in a name_three's chain, built, or None"""
+        if name_three is None:
+            raise ValueError("Name three cannot be None")
+        if not name_three.functions:
+            return None
+        built = self._build_chain(name_three.functions)
+        return next((f for f in built if f.name == "manifest"), None)
+
+    def _has_unargued_field(self, calls: list) -> bool:
+        """true when a built chain has a field accessor with no argument,
+        one that supplies a value (5.20b); an argued one is a filter
+        (6.40). Unlike _last_value_field_call(), it logs no 5.20b
+        warning, so it can be asked more than once per reference."""
+        if calls is None:
+            raise ValueError("Calls cannot be None")
+        fields = self._find_field_function_calls(calls, self.ref.parsed.datatype)
+        return any(f.arg is None for f in fields)
+
+    def _reads_whole_file(self, *, accessor) -> bool:
+        """true when resolve() reads each result's whole file, so more
+        than one result cannot be resolved at once (compendium 5.3, 5.6):
+        a content accessor, or a :manifest() with no unargued field
+        beside it at its own level. A field beside :manifest() gives its
+        value (6.13b), one per result, so it is not a whole-file read.
+        Shared by the literal-root and '*' branches, which used to decide
+        this differently (2026-11-01): the literal root counted any
+        name_one :manifest(), even with a field; '*' counted none."""
+        if accessor is not None:
+            return True
+        reference = self.ref.parsed
+        if reference.name_three is not None:
+            if self._name_three_manifest_call(reference.name_three) is None:
+                return False
+            built = self._build_chain(reference.name_three.functions)
+            return not self._has_unargued_field(built)
+        if not self._names_run_manifest():
+            return False
+        calls = self._combined_name_one_calls(reference.name_one)
+        return not self._has_unargued_field(self._build_chain(calls))
 
     @classmethod
     def _combined_name_one_calls(cls, name_one) -> list:
@@ -2997,11 +3064,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         :manifest()). Instance method (not a staticmethod, since
         2026-08-27), same reason as _pointer_from_calls()'s own
         docstring: self._build_chain() needs this finder's own
-        registered variables. `for_manifest_set` lets a :manifest() and
-        every field accessor through unreturned, for the logical manifest
-        set's name_three (compendium 6.13b), whose caller,
-        _manifest_set_instance_selector(), reads them itself; a run dir's
-        name_three still rejects :manifest()."""
+        registered variables. `for_manifest_set` lets every field
+        accessor through unreturned, for the logical manifest set's
+        name_three (compendium 6.13b), whose caller,
+        _manifest_set_instance_selector(), reads them itself. A
+        :manifest() names the instance's own manifest.json (6.14) and is
+        not returned either, see _name_three_manifest_call(); with a
+        content accessor beside it, it raises: two files in one context
+        (6.13b)."""
         if name_three is None:
             return None, False, None, None, None, None, None
 
@@ -3012,6 +3082,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         from_call = None
         to_call = None
         pointer_call = None
+        manifest_call = None
         set_fields = []
         if name_three.functions:
             built = self._build_chain(name_three.functions)
@@ -3044,8 +3115,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     accessor = f
                 elif f is field_call:
                     continue
-                elif for_manifest_set and f.name == "manifest":
-                    continue
+                elif f.name == "manifest":
+                    # the instance's own manifest.json (compendium 6.14,
+                    # 6.13b); see _name_three_manifest_call()
+                    manifest_call = f
                 elif any(f is s for s in set_fields):
                     continue
                 elif isinstance(f, Idchain3):
@@ -3080,6 +3153,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         f"ResultsReferenceFinder3 does not support "
                         f":{f.name}() as a name_three function."
                     )
+        if manifest_call is not None and accessor is not None:
+            raise ReferenceException3(
+                f"A name_three :manifest() cannot be combined with "
+                f":{accessor.name}() -- each names a different file of "
+                "the instance."
+            )
         if gate_call is not None and accessor is None:
             raise ReferenceException3(
                 "ResultsReferenceFinder3's ':idchain()' only means "
