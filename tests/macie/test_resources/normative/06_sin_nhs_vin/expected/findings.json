@@ -1,0 +1,96 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "PERSONAL_INFORMATION",
+      "detections": [
+        {
+          "type": "CANADA_SOCIAL_INSURANCE_NUMBER",
+          "count": 3,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "sin",
+                "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 11
+              },
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 12
+              }
+            ]
+          }
+        },
+        {
+          "type": "UK_NHS_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "nhs_number",
+                "row": 5
+              },
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 12
+              }
+            ]
+          }
+        },
+        {
+          "type": "VEHICLE_IDENTIFICATION_NUMBER",
+          "count": 3,
+          "severity": "LOW",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "vin",
+                "row": 7
+              },
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "vin",
+                "row": 8
+              },
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 9
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 8
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:ca-central-1:123456789012:classification-job/7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}

@@ -1,0 +1,44 @@
+~
+  id: member-records
+  macie-origin: job
+  macie-job-id: 7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a
+  macie-account: 123456789012
+  macie-region: ca-central-1
+  macie-source-arn: arn|aws|macie2|ca-central-1|123456789012|classification-job/7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a
+  macie-downloaded-at: 20261102T114500Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "CANADA_SOCIAL_INSURANCE_NUMBER",
+        "PERSONAL_INFORMATION",
+        "ca_sin",
+        "required",
+        "canadian id|numéro d'assurance sociale|sin|social insurance number",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "UK_NHS_NUMBER",
+        "PERSONAL_INFORMATION",
+        "uk_nhs",
+        "required",
+        "national health service|nhs",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "VEHICLE_IDENTIFICATION_NUMBER",
+        "PERSONAL_INFORMATION",
+        "vin",
+        "required",
+        "fahrgestellnummer|niv|numarul de identificare|numarul seriei de sasiu|numer vin|número de identificação do veículo|número de identificación de automóviles|numéro d'identification du véhicule|vehicle identification number|vin|vin numeris",
+        30,
+        "1:LOW 100:MEDIUM"
+    )
+    last.nocontrib() -> macie_report()
+]

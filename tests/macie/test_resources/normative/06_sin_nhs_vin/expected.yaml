@@ -1,0 +1,74 @@
+#
+# Canada Social Insurance Numbers, UK NHS numbers and vehicle
+# identification numbers: Macie's CANADA_SOCIAL_INSURANCE_NUMBER,
+# UK_NHS_NUMBER and VEHICLE_IDENTIFICATION_NUMBER, as our stand-ins. All
+# three require a keyword. Macie publishes only the keywords for SIN and
+# NHS; their formats are the issuers'.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: member-records.csvpath
+    data: records.csv
+    finding_lines: [1, 4, 6, 7, 8, 10, 11]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie CANADA_SOCIAL_INSURANCE_NUMBER: occurrence 1, line 1 (row 2), column 2 sin" }
+      - { line: 4, message: "macie UK_NHS_NUMBER: occurrence 1, line 4 (row 5), column 3 nhs_number" }
+      - { line: 6, message: "macie VEHICLE_IDENTIFICATION_NUMBER: occurrence 1, line 6 (row 7), column 4 vin" }
+      - { line: 7, message: "macie VEHICLE_IDENTIFICATION_NUMBER: occurrence 2, line 7 (row 8), column 4 vin" }
+      - { line: 10, message: "macie CANADA_SOCIAL_INSURANCE_NUMBER: occurrence 2, line 10 (row 11), column 5 notes" }
+      - { line: 11, message: "macie UK_NHS_NUMBER: occurrence 2, line 11 (row 12), column 5 notes" }
+    findings: findings.json
+    #
+    # Headers: "sin", "nhs_number" and "vin" each hold their identifier's
+    # keyword; "id" and "notes" hold none.
+    #
+    #   line  cell                                     reported as
+    #   1     sin "130 692 544"                        SIN: header keyword, Luhn, 3-3-3
+    #   2     sin "046 454 286"                        nothing: the Government of
+    #                                                  Canada example, excluded (it
+    #                                                  also starts with 0)
+    #   3     sin "130 692 545"                        nothing: fails Luhn
+    #   4     nhs_number "943 476 5919"                NHS: header keyword, mod 11,
+    #                                                  3-3-4
+    #   5     nhs_number 9434765918                    nothing: fails mod 11
+    #   6     vin 1HGCM82633A004352                    VIN: header keyword
+    #   7     vin WVWZZZ1KZ6W612305                    VIN: a European VIN, which has
+    #                                                  no North American check digit;
+    #                                                  not required
+    #   8     notes "vin 1HGCM82633A004352"            VIN: "vin" one character before
+    #   9     notes 1HGCM82633A004352                  nothing: no keyword
+    #   10    notes "social insurance number 193 456   SIN: in-cell keyword one
+    #         787"                                     character before
+    #   11    notes "NHS 401 023 2137 and SIN          SIN ("sin" before) and NHS
+    #         130-692-544"                             ("NHS" before), one cell
+    #   12    vin 1HGCM82O33A004352                    nothing: the letter O is never
+    #                                                  used in a VIN
+    #
+    # On each line SIN is applied first, then NHS, then VIN: the wrapper's
+    # resolved order, so on line 11 SIN's occurrence 3 (past its cap of 2)
+    # comes before NHS's occurrence 2. Totals: SIN 3, NHS 2, VIN 3. Macie
+    # scores SIN and NHS numbers HIGH from one occurrence, and VINs LOW
+    # until 100 occurrences. All three are PERSONAL_INFORMATION:
+    # totalCount 8.
+    #

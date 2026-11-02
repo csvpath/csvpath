@@ -23,6 +23,31 @@ class ChecksumUtility:
         return total % 10 == 0
 
     @classmethod
+    def nhs_mod11(cls, *, digits: str) -> bool:
+        """True if 10 ASCII digits pass the UK NHS number check: weight the
+        first nine digits 10 down to 2, and 11 minus the sum's remainder
+        mod 11 (11 becomes 0) must equal the tenth digit. A result of 10
+        means the number is never issued."""
+        if not isinstance(digits, str):
+            raise TypeError(f"digits must be a str, not {type(digits)}")
+        if len(digits) != 10 or not (digits.isascii() and digits.isdigit()):
+            raise ValueError(f"digits must be 10 ASCII digits, not {digits!r}")
+        total = sum(int(c) * w for c, w in zip(digits[:9], range(10, 1, -1)))
+        check = 11 - total % 11
+        if check == 11:
+            check = 0
+        return check != 10 and check == int(digits[9])
+
+    CHECKS = {"luhn": "luhn", "nhs_mod11": "nhs_mod11"}
+
+    @classmethod
+    def check(cls, *, name: str, digits: str) -> bool:
+        """runs a digit check by its catalog name"""
+        if name not in cls.CHECKS:
+            raise ValueError(f"No digit check named {name!r}")
+        return getattr(cls, cls.CHECKS[name])(digits=digits)
+
+    @classmethod
     def iban_mod97(cls, *, iban: str) -> bool:
         """True if an IBAN, without separators, passes the ISO 7064
         MOD 97-10 check of ISO 13616: move the first four characters to
