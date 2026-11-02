@@ -352,6 +352,10 @@ namespacing includes a datetime-derived path segment. Separate from the path,
 datetime information is also carried in `name_one`, allowing the use of datetime
 functions.
 
+Note that in the `results` named-entity data type name_one must include a
+run dir form-name or a wild card that would match a run dir-form name. the
+absence of a run dir or a wild card allowing for a run dir name is an error.
+
 
 #### 3.11 Example finding a file registration by arrival time
 Given a named-file `acme`, to find the first registration in any location
@@ -1022,6 +1026,116 @@ A manifest is:
 - Named-results run's instance: dict of run values for the csvpath statement
   instance
 
+#### 6.13b
+Logical manifest sets
+
+There is one logical ledger manifest set per datatype. It is reached
+only by :manifest() in name_one, with `*` in root_major, or with a
+:regex() or :choice() root_major, which filters the set by name. The
+set is defined by what it contains, not by which file holds the data:
+a reference into it never tells the user where a value was read from.
+
+Purpose
+- The lifecycle and status of every named-entity record
+  (:lifecycle(), and :status() where it means a lifecycle state).
+- Complete context, e.g. the archive name and roots, which run
+  manifests do not repeat.
+- An overview of activity across the whole datatype.
+
+Records
+- FILES: one record per registration.
+- CSVPATHS: one record per load.
+- RESULTS: a two-level tree.
+  - name_one holds run records, one per run.
+  - name_three holds instance records: the csvpath statement
+    instances within the run selected in name_one.
+  - A field at either level takes its value from wherever that
+    value is held (see Fields). The user does not choose the
+    source (ledger, run, or instance manifest).
+  - A :manifest() in name_one with nothing else in name_one --
+    no pointer, filter, range or field -- is the WHOLE logical
+    manifest set:
+    - query() returns one result: the path of the datatype's
+      ledger manifest file, with uuid None (compendium 5.5).
+    - resolve() returns every record in the set. For RESULTS
+      that is every run record, each holding its ledger-level
+      instance records. As of this writing, it is the same
+      information as the ledger file, arranged as runs with
+      their instances, not the file's own flat list of
+      instances.
+    For example, $*.results.:manifest() returns the entire set.
+    - A :manifest() in name_one with a pointer, filter or range, and
+      no field after it, resolves to the selected run record(s),
+      e.g. $*.results.:manifest():last() is the last run record.
+    - An instance selected in name_three, when name_one refers to
+      the ledger manifest, with no field and no :manifest(),
+      resolves to its instance record in the ledger set.
+    - A :manifest() in name_three resolves to the selected
+      instance's own manifest.json, the file in that instance's
+      directory. It is NOT the run's manifest: the run's manifest
+      belongs to name_one, and name_three is always about
+      instances.
+    - Alongside a :manifest() in name_three, name_three may hold
+      functions that:
+      - select instances, such as:
+        - an identity, e.g. .header_checks:manifest()
+        - a pointer, e.g. .:last():manifest()
+        - a range, e.g. .:from(2):manifest()
+        - :all() or *, e.g. .:all():manifest()
+      - act as a filter, e.g. .:all():manifest():valid(:false())
+      - return a value, e.g. .:last():manifest():time()
+    - Multiple file/set accessors in name_three are not possible.
+      For example, .:last():manifest():errors() raises an exception
+      because it points at both the instance's own manifest.json
+      and its errors.json file.
+    - If more than one instance is selected and no field supplies
+      a value, query() returns all instances and resolve() raises
+      because only one file's content can be resolved at a time
+      (compendium 5.6).
+    - If the instance's own manifest no longer exists (e.g. a
+      deleted run), a name_three :manifest() resolves to None.
+
+#### 6.13b(i)
+Membership
+- Every record ever written, including deleted ones
+  (:lifecycle() tells them apart), at every template depth.
+
+#### 6.13b(ii)
+Order
+- Arrival order. Pointers and index ranges count in it. For
+  RESULTS run records, a run's position is that of its first
+  instance's manifest record arrival.
+
+#### 6.13b(iii)
+Named-entity home manifests
+- Details, outcomes, version information.
+- Identification of inputs that are not the entity's own versions
+  (e.g. the source data file for a run).
+
+#### 6.13b(iv)
+Access
+- A `*` in root_major WITHOUT :manifest() means the same reference
+  for every live name: $*.results.:run_uuid() is
+  $name.results.:run_uuid() for each live name. Deleted names are
+  not included, and depth follows the reference
+  (0-level unless :flatten(), a path, etc. say otherwise).
+- Only :manifest() in name_one, with `*` (or :regex()/:choice())
+  in root_major, reaches the logical manifest set.
+- Indexing into manifests that contain lists of entries using
+  ordinals is allowed
+
+#### 6.13b(v)
+Fields
+- A field has one meaning at each level (name_one, name_three).
+  Where the same key exists at two levels with different meanings
+  (time = run start in name_one, instance start in name_three),
+  the level of the segment decides.
+- Where two manifests hold the same field at the same level, it is
+  the same value, and the reference user need not know which one
+  was read. If they disagree, the named-entity manifest wins for
+  details and outcomes, and the manifest set wins for lifecycle.
+
+
 #### 6.14
 The `:manifest()` function's behavior is context-aware. It says: "get
 whatever manifest data is currently in scope". It resolves three ways:
@@ -1063,7 +1177,7 @@ reference the source file using the `:definition()` function.
 
 #### 6.19 Examples
 
-The following two references both searches the `acme` manifest for a
+The following two references both search the `acme` manifest for a
 registration with the given fingerprint, returning the path+uuid to that
 version, if found.
 - `$acme.files.:fingerprint("a28b1105c...")`
@@ -1074,9 +1188,11 @@ fingerprints found in `acme`.
 `$acme.files.:fingerprint()`
 `$acme.files.:manifest():fingerprint()`
 
-The following two references search the ledger manifest for the given
-fingerprint across all named-files, returning the path+uuid to that version,
-if found.
+The following two references search for the given fingerprint across all
+named-files, returning the path+uuid to each matching version. The first
+searches each live named-file in turn (6.13b(iv)). The second searches the
+ledger manifest set, which also holds the versions of deleted named-files
+(6.13b(i)).
 `$*.files.:fingerprint("a28b1105c...")`
 `$*.files.:manifest():fingerprint("a28b1105c...")`
 
@@ -1269,6 +1385,11 @@ Examples:
 - When two directions create a range, the directions may be anchored
   by dissimilar functions. For example,
   `:from(:index(5)):to(:yesterday())` is legal and sensible.
+- Directionals are used in creating a range before an anchor is. For e.g.,
+  `$acme.results.customers/*:from(-6):to(-2):last()` In this example :to(-2) and :last()
+  could each, in some reference, act as the end of the range; however, when used together
+  like this the :to() is a directional whereas the :last() is an anchor, so the :to()
+  participates in the range and the anchor, :last(), selects from within the range.
 
 #### 6.28b
 Note that `:before()`, `:after()`, `:from()`, `:to()` are aliased with

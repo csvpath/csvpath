@@ -1182,6 +1182,209 @@ class TestManifestChainGate:
         assert finder.query().files == ["inputs/named_files/alpha/one.csv"]
 
 
+class _FakeLogger:
+    def __init__(self):
+        self.warnings = []
+
+    def warning(self, message, *args):
+        self.warnings.append(message % args)
+
+
+def _chain_values(reference: str) -> list:
+    return [r.data for r in _gate_finder(reference).resolve().results]
+
+
+class TestManifestChainParts:
+    # _manifest_chain() sorts a general ':manifest()' chain into its
+    # parts, and leaves every other shape to its own branch (finding E).
+    def _parts(self, reference: str):
+        name_one = _gate_finder(reference).ref.parsed.name_one
+        return FilesReferenceFinder3._manifest_chain(name_one=name_one)
+
+    def test_none_raises(self):
+        with pytest.raises(ValueError):
+            FilesReferenceFinder3._manifest_chain(name_one=None)
+
+    def test_the_parts_of_a_chain(self):
+        parts = self._parts(
+            '$*.files.:manifest():status("failed"):last():uuid():type("csv")'
+        )
+        assert parts["pointer"].name == "last"
+        assert [g.name for g in parts["gates"]] == ["status", "type"]
+        assert [v.name for v in parts["values"]] == ["uuid"]
+
+    def test_the_parts_when_manifest_is_not_first(self):
+        parts = self._parts('$alpha.files.:type("csv"):manifest()')
+        assert parts["pointer"] is None
+        assert [g.name for g in parts["gates"]] == ["type"]
+        assert parts["values"] == []
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$alpha.files.:manifest()",
+            "$alpha.files.:manifest():uuid()",
+            '$alpha.files.:manifest():type("csv")',
+            "$alpha.files.:manifest():last()",
+            "$alpha.files.:last():manifest()",
+            '$alpha.files.:name("one.csv"):manifest()',
+            '$alpha.files.:name("one.csv"):last():manifest()',
+            "$alpha.files.:manifest():last():from(1)",
+            "$alpha.files.:manifest():last():yesterday()",
+            "$alpha.files.:last():uuid()",
+        ],
+    )
+    def test_other_shapes_are_not_claimed(self, reference):
+        assert self._parts(reference) is None
+
+    def test_two_pointers_raise(self):
+        with pytest.raises(ReferenceException3) as error:
+            self._parts("$alpha.files.:manifest():first():last()")
+        assert "at most one pointer" in str(error.value)
+
+    @pytest.mark.parametrize(
+        "field", ["on_arrival()", "run_method()", "named_file_home()"]
+    )
+    def test_a_field_not_read_from_the_manifest_raises(self, field):
+        with pytest.raises(ReferenceException3) as error:
+            self._parts(f"$alpha.files.:manifest():last():{field}")
+        assert "does not read a named-file's manifest.json" in str(error.value)
+
+
+class TestManifestGeneralChain:
+    # finding E (2026-11-02): FILES takes a general chain after
+    # ':manifest()', as CSVPATHS and RESULTS do. Every gate filters, the
+    # pointer picks after, in any written order (compendium 6.1), and the
+    # last unargued field supplies the value (5.20b). These all raised
+    # "functions attached directly to name_one" before.
+    @pytest.mark.parametrize(
+        "chain",
+        [
+            ":manifest():last():uuid()",
+            ":manifest():uuid():last()",
+            ":last():manifest():uuid()",
+            ":uuid():last():manifest()",
+        ],
+    )
+    def test_pointer_and_field_in_any_order(self, chain):
+        assert _gate_uuids(f"$*.files.{chain}") == ["u-b2"]
+        assert _chain_values(f"$*.files.{chain}") == ["u-b2"]
+        assert _gate_uuids(f"$alpha.files.{chain}") == ["u-a2"]
+        assert _chain_values(f"$alpha.files.{chain}") == ["u-a2"]
+
+    def test_first_and_index_pointers(self):
+        assert _chain_values("$*.files.:manifest():first():uuid()") == ["u-a1"]
+        assert _chain_values("$*.files.:manifest():index(2):uuid()") == ["u-b1"]
+        assert _chain_values("$*.files.:manifest():index(9):uuid()") == []
+
+    def test_a_gate_with_a_field(self):
+        reference = '$*.files.:manifest():type("csv"):uuid()'
+        assert _gate_uuids(reference) == ["u-a1", "u-b1"]
+        assert _chain_values(reference) == ["u-a1", "u-b1"]
+        reference = '$alpha.files.:manifest():type("csv"):fingerprint()'
+        assert _chain_values(reference) == ["f-a1"]
+
+    @pytest.mark.parametrize(
+        "chain", [':manifest():type("csv"):last()', ':manifest():last():type("csv")']
+    )
+    def test_gates_filter_before_the_pointer_picks(self, chain):
+        # pointer first would pick the failed u-b2, which is not a csv.
+        assert _gate_uuids(f"$*.files.{chain}") == ["u-b1"]
+        assert _chain_values(f"$*.files.{chain}") == [GATE_LEDGER[2]]
+        assert _gate_uuids(f"$alpha.files.{chain}") == ["u-a1"]
+        assert _chain_values(f"$alpha.files.{chain}") == [GATE_MANIFEST[0]]
+
+    def test_two_gates_are_anded(self):
+        assert _gate_uuids(
+            '$*.files.:manifest():status("failed"):named_file_name("beta")'
+        ) == ["u-b2"]
+        reference = '$*.files.:manifest():status("failed"):named_file_name("alpha")'
+        assert _gate_uuids(reference) == []
+        assert _gate_uuids(
+            '$alpha.files.:manifest():status("complete"):type("xlsx")'
+        ) == ["u-a2"]
+
+    def test_gates_a_pointer_and_a_field(self):
+        reference = (
+            '$*.files.:manifest():status("complete"):type("csv"):first():fingerprint()'
+        )
+        assert _gate_uuids(reference) == ["u-a1"]
+        assert _chain_values(reference) == ["f-a1"]
+
+    def test_no_match_is_empty(self):
+        reference = '$*.files.:manifest():type("json"):last():uuid()'
+        assert _gate_uuids(reference) == []
+        assert _chain_values(reference) == []
+
+    def test_the_last_value_field_wins_with_a_warning(self):
+        finder = _gate_finder("$alpha.files.:manifest():last():uuid():fingerprint()")
+        logger = _FakeLogger()
+        finder.csvpaths.logger = logger
+        assert [r.data for r in finder.resolve().results] == ["f-a2"]
+        assert len(logger.warnings) == 1
+        assert ":fingerprint()" in logger.warnings[0]
+
+    def test_one_value_field_does_not_warn(self):
+        finder = _gate_finder('$alpha.files.:manifest():type("csv"):uuid()')
+        logger = _FakeLogger()
+        finder.csvpaths.logger = logger
+        finder.query()
+        assert logger.warnings == []
+
+    def test_a_gate_before_manifest_filters(self):
+        # ':status("complete"):manifest()' used to query every version,
+        # the gate ignored, and then raise on resolve.
+        assert _gate_uuids('$alpha.files.:type("xlsx"):manifest()') == ["u-a2"]
+        assert _gate_uuids('$alpha.files.:status("failed"):manifest()') == []
+        assert _gate_uuids('$*.files.:status("failed"):manifest()') == ["u-b2"]
+        assert _chain_values('$alpha.files.:type("xlsx"):manifest()') == [
+            GATE_MANIFEST[1]
+        ]
+
+    def test_a_field_before_manifest_is_the_value(self):
+        # used to query every version, then raise on resolve.
+        assert _chain_values("$alpha.files.:uuid():manifest()") == ["u-a1", "u-a2"]
+
+    def test_query_paths_are_the_manifests_holding_the_entries(self):
+        results = _gate_finder("$*.files.:manifest():last():uuid()").query()
+        assert results.files == ["inputs/named_files/manifest.json"]
+        results = _gate_finder("$alpha.files.:manifest():last():uuid()").query()
+        assert results.files == ["inputs/named_files/alpha/manifest.json"]
+
+    def test_a_regex_root_reads_the_ledger_set(self):
+        reference = "$:regex(/^be/).files.:manifest():last():named_file_name()"
+        assert _gate_uuids(reference) == ["u-b2"]
+        assert _chain_values(reference) == ["beta"]
+
+    def test_a_regex_root_filters_the_ledger_set_by_name(self):
+        # the ledger's last record is beta's, so only the filter makes
+        # ':last()' pick alpha's.
+        reference = "$:regex(/^al/).files.:manifest():last():uuid()"
+        assert _chain_values(reference) == ["u-a2"]
+
+    def test_a_regex_root_name_gate_reads_each_entry(self):
+        # the name is read from each entry, not taken from the root,
+        # which under ':regex()' is not a name.
+        reference = '$:regex(/^a/).files.:manifest():named_file_name("alpha"):first()'
+        assert _gate_uuids(reference) == ["u-a1"]
+
+    def test_name_three_raises(self):
+        with pytest.raises(ReferenceException3) as error:
+            _gate_uuids("$alpha.files.:manifest():last():uuid().:first()")
+        assert "':manifest()' chain with name_three" in str(error.value)
+
+    def test_the_two_function_shapes_are_unchanged(self):
+        assert _gate_uuids("$alpha.files.:manifest():last()") == _gate_uuids(
+            "$alpha.files.:last():manifest()"
+        )
+        assert _chain_values("$alpha.files.:manifest():uuid()") == _chain_values(
+            "$alpha.files.:uuid():manifest()"
+        )
+        assert _gate_uuids('$*.files.:manifest():type("csv")') == _gate_uuids(
+            '$*.files.:type("csv"):manifest()'
+        )
+
+
 class TestStarTraversalGroup:
     # bare ':all()' as name_one's entire content partitions every
     # named-file's EXACTLY-one-level matches (corrected 2026-08-12 to
@@ -2577,10 +2780,6 @@ class TestStatusGate:
         assert results.uuids == ["fail-1", "fail-2"]
         assert results.files == ["inputs/named_files/manifest.json"] * 2
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="finding E: FILES takes one function after :manifest()",
-    )
     def test_the_new_normative_example_finds_the_orders_failure(self):
         results = self._status_finder(
             '$*.files.:manifest():status("failed"):named_file_name("orders")'
@@ -2790,15 +2989,22 @@ class TestBareManifestFieldAccessor:
                 "$alpha.files.:manifest():uuid().:last()", ALPHA_HOME, ALPHA_MANIFEST
             ).query()
 
-    def test_more_than_one_chained_function_is_not_recognized_here(self):
-        # falls through to the ordinary "functions attached directly to
-        # name_one" rejection -- picking one field per entry from more
-        # than one chained accessor at once is not a shape any worked
-        # example has asked for.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$alpha.files.:manifest():uuid():time()", ALPHA_HOME, ALPHA_MANIFEST
-            ).query()
+    def test_more_than_one_chained_function_is_a_general_chain(self):
+        # changed 2026-11-02 (finding E, was: raises "functions attached
+        # directly to name_one"). Two value fields are a general
+        # ':manifest()' chain: the last one supplies the value, with a
+        # warning (compendium 5.20b).
+        finder = _finder(
+            "$alpha.files.:manifest():time():uuid()", ALPHA_HOME, ALPHA_MANIFEST
+        )
+        logger = _FakeLogger()
+        finder.csvpaths.logger = logger
+        assert [r.data for r in finder.resolve().results] == [
+            "u-zero-1",
+            "u-one-1",
+            "u-one-2",
+        ]
+        assert len(logger.warnings) == 1
 
     def test_chaining_a_pointer_is_not_recognized_here(self):
         # ':last()' is a POINTER, not a registered field accessor

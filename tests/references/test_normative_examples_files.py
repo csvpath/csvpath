@@ -781,10 +781,6 @@ class TestFunctionalTaxonomyGatesAndSelectors:
         ).query()
         assert results.results == []
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="finding E: FILES takes one function after :manifest()",
-    )
     def test_status_gate_combined_with_named_file_name(self):
         results = _finder(
             '$*.files.:manifest():status("failed"):named_file_name("orders")',

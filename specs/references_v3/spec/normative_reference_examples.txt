@@ -156,13 +156,13 @@ Evaluated at 6:15 pm yields a path of `orders/15/*`.
 
 ### :true()
 Get the path+uuid to the manifest of any no-template `acme` runs where
-the run method is in `collect_paths()` or `fast_forward_paths()`, the
-serial run methods.
+the run method is `collect_paths()`, `fast_forward_paths()`, or another
+serial run method.
 $acme.results.:manifest():serial(:true())
 
 Get the path+uuid to the run home dir of any no-template `acme` runs
-where the run method is in `collect_paths()` or `fast_forward_paths()`,
-the serial run methods.
+where the run method is `collect_paths()`, `fast_forward_paths()`,
+or another serial run method.
 $acme.results.:serial(:true())
 
 ### :false()
@@ -171,10 +171,9 @@ where the run method is in `collect_by_line()` or
 `fast_forward_by_line()`, the breadth-first run methods.
 $acme.results.:serial(:false())
 
-### :none()
-Provides the `None` value for use in metadata predicates. Find all the
-`acme` run results with 0-level templates that are still in progress.
-$acme.results.*:completed(:none())
+### :none() Provides the `None` value for use in metadata predicates. Find all
+the `acme` run results with no host.
+$acme.results.*:host(:none())
 
 ### :not_none()
 Select the name home paths+uuid of all named-files that have an arrival
@@ -182,15 +181,19 @@ activation set.
 $*.files.:on_arrival(:not_none())
 
 ### :empty()
-Empty and none are for the most part synonymous. In a few cases there are distinctions. A field that defaulted to an empty list matches `:empty()` not `:none()`. A JSON file that serialized None as null does not match `:empty()`. A key that is not present matches `:none()`, but not `:empty()`.
+Empty and none are for the most part synonymous. In a few cases there are
+distinctions. A field that defaulted to an empty list matches `:empty()` not
+`:none()`. A JSON file that serialized None as null does not match `:empty()`. A
+key that is not present matches `:none()`, but not `:empty()`.
 
 | Function | Matches |
 |----------|---------|
 | `:empty()` | `''`, `[]`, `{}` |
 | `:none()`  | `''`, `null`, No such field |
 
-Find the name homes where `status` doesn't exist in the manifest entry (indicating a successful registration) and there was no template.
-$*.files.:status(:none()):template(:empty())
+Find the name homes where `status` indicates a successful registration and there
+was no template.
+$*.files.:status("complete"):template(:empty())
 
 ### :not_empty()
 Get a list of all templates used in registrations
@@ -246,8 +249,20 @@ $acme.files.:uuid("ab37-fef3...")
 
 ### Names
 
+
 #### Select named-files registrations for `orders` that failed
+A failed registration is tracked only in the named-files ledger manifest,
+not in a named-file's own manifest. Say an attempt is made to register
+data that doesn't exist. The registration code, FileManager, knows the
+attempt failed, but the named-file never saw it: there was nothing to
+register, so nothing went into its manifest. A reference must therefore
+target the ledger manifest explicitly:
+$*.files.:manifest():status("failed"):named_file_name("orders")
+Without `:manifest()`, `*` searches each live named-file in turn, so this
+reference is legal but never returns results:
 $*.files.:status("failed"):named_file_name("orders")
+
+
 
 #### Select the first run for each template for runs having the
 named-file name `orders`:
@@ -261,9 +276,14 @@ $acme.files.:fingerprint("4fd50acf4b5da0c2bcb8cb6c66a753a27c62280d0848824a622464
 #### Select all runs that used a specific version of a named-file
 $*.results.:flatten():named_file_fingerprint("4fd50acf4b5da0c2bcb8cb6c66a753a27c62280d0848824a6224647a5650ff3a")
 
-#### Two ways of retrieving all `acme` fingerprints
-$acme.files.:flatten():fingerprint()
-$*.files.:fingerprint():named_file_name("acme")
+#### Four ways of retrieving all `acme` fingerprints. the 2nd and 3rd are unusual as written, but
+would make sense using a variable that happened to have the value `acme`, as shown in the fourth
+example. Also note that as written the third would return any deleted records that otherwise
+matched because deletes remain visible in the ledger manifest.
+- $acme.files.:flatten():fingerprint()
+- $*.files.:flatten():fingerprint():named_file_name("acme")
+- $*.files.:manifest():fingerprint():named_file_name("acme")
+- $*.files.:manifest():fingerprint():named_file_name(@acompany)
 
 ### Type
 
@@ -328,8 +348,7 @@ $acme.files.:on_arrival()
 #### Query-only when multiple definitions selected
 In keeping with the limitation that references can only retrieve the contents
 of a single file at a time, querying across named-entities for path+uuid is
-possible, but then resolving the reference would raise an exception. This
-reference is not legal:
+possible, but then resolving the reference would raise an exception.
 $*.files.:definition()
 
 ---
@@ -358,8 +377,10 @@ applied, so the combination is impractical and for clarity it is illegal.
 In contrast to `:flatten()/*`, `:groups()/*` is legal. It says group in all names
 except wildcard the last one. Where there are not multiple levels, the `*` controls.
 
-Given the following name homes, each with 10 versions (not shown, named
-<version-number-N>.csv where N is the arrival index):
+Given the following name homes, each with 10 versions. the versions themselves are not
+shown. the files shown are ordered by arrival, and named such that
+<version-number-N>.csv where N represents the arrival index):
+
 <named_files>/acme/jan.csv
 <named_files>/acme/feb.csv
 <named_files>/acme/invoices/jan/invoice1.csv
@@ -369,7 +390,7 @@ Given the following name homes, each with 10 versions (not shown, named
 <named_files>/acme/shipments/feb/week1.csv
 <named_files>/acme/shipments/feb/week2.csv
 
-- $acme.files.:groups()/*.:last() returns:
+- $acme.files.:groups()/*.:last() returns the last version in each group:
 <named_files>/acme/feb.csv/<version-number-10>.csv
 <named_files>/acme/invoices/jan/invoice2.csv/<version-number-10>.csv
 <named_files>/acme/shipments/jan/week2.csv/<version-number-10>.csv
@@ -459,15 +480,15 @@ $alpha.results.beta/:flatten():last()
 #### Last run of all runs w/1-level template starting `beta/`
 $alpha.results.beta/:all():last()
 Note that :all() does not group by :run_dir so this is better written
-as `$alpha.results.beta/*`
+as `$alpha.results.beta/*:last()`
 
 #### A run of all 1-level templates starting `beta/`
 $alpha.results.beta/*:last()
 
-#### A manifest entry of the most recent run with no template
+#### The manifest of the most recent run
 $alpha.results.:manifest():last()
 
-#### A manifest entry of the most recent run, period, across every named-result
+#### The record of the most recent run in the results ledger manifest set
 $*.results.:manifest():last()
 
 #### Runs for every template and non-template run dir
@@ -519,16 +540,12 @@ $alpha.results.:flatten():first().:last():manifest()
 #### Error count of all statements of first alpha results
 $alpha.results.:flatten():first().:all():error_count()
 
-#### Error counts for all statements of the 5th 0-level alpha results
+#### Error counts for all statements of the 6th 0-level alpha results
 $alpha.results.:all():index(5).:all():error_count()
 
 #### Whether each statement of the first alpha results has any errors at all
-Added 2026-10-18: :has_errors() mirrors Result.has_errors() -- a plain
-bool, not a count, so a caller does not have to write their own
-"error_count() with boolean logic." Legal at the same two positions as
-:error_count() (confirmed against result_registrar.py: the same
-"error_count" field is written at BOTH run and instance scope, a real,
-previously-undetected gap -- see the Required Manifest Functions doc).
+:has_errors() mirrors Result.has_errors() -- a plain bool, not a count, so a
+caller does not have to write their own "error_count() with boolean logic."
 $alpha.results.:flatten():first():has_errors()
 $alpha.results.:flatten():first().:all():has_errors()
 
@@ -536,7 +553,8 @@ $alpha.results.:flatten():first().:all():has_errors()
 
 ### Run directories must be represented in `name_one`
 
-#### Error: there is no run dir called `beta`. No exception, but never returns results.
+#### Error: there can be no run dir called `beta`. No exception, but never
+returns results.
 $acme.results.beta
 
 #### Corrected
@@ -563,12 +581,14 @@ $acme.results.*/2025/:first().invoices
 $acme.results.*/*/2025/:first().invoices
 
 #### `invoices` in 1st run w/2-level template starting with `M` and ending `2025/:run_dir`
-$acme.results.:name(/^M.*/)/2025/:first().invoices
+$acme.results.:regex(/^M.*/)/2025/:first().invoices
 
-#### `invoices` from 1st run w/template ending `2025/:run_dir`, beginning with `acme`, `star`, or `general`
+#### `invoices` from 1st run w/template ending `2025/:run_dir`, beginning with `acme`, `star`,
+or `general`
 $acme.results.:choice("acme|star|general")/2025/:first().invoices
 
-#### `invoices` from 1st run w/2-level template ending with `2025/:run_dir` w/source data CSV
+#### `invoices` from 1st run w/2-level template ending with `2025/:run_dir` where the file home
+ends in a .csv extension (or in some other future way was judged to be a csv file).
 $acme.results.*/2025/:first():type("csv").invoices
 
 #### Two ways to get manifest of first run with 1-level template `customers/:run_dir`
@@ -579,40 +599,53 @@ $acme.results.customers/:first():manifest()
 
 ### `vars.json`, `data.json`, `meta.json`, `errors.json`, `printouts.txt` and `unmatched.json`
 
-### the data.csv output of the `invoices` csvpath statement in the first run with a 2-level template `customers/2025/:run_dir`
+### the data.csv output of the `invoices` csvpath statement in the first run with a 2-level
+template `customers/2025/:run_dir`
 $acme.results.customers/2025/:first().invoices:data()
 
-#### the vars.json output of the `invoices` csvpath statement in the first run with a 2-level template `customers/2025/:run_dir`
+#### the vars.json output of the `invoices` csvpath statement in the first run with a 2-level
+template `customers/2025/:run_dir`
 $acme.results.customers/2025/:first().invoices:vars()
 
-#### the meta.json output of the `invoices` csvpath statement in the first run with a 2-level template `customers/2025/:run_dir`
+#### the meta.json output of the `invoices` csvpath statement in the first run with a 2-level
+template `customers/2025/:run_dir`
 $acme.results.customers/2025/:first().invoices:meta()
 
-#### unmatched.csv output of the 3rd through last csvpath statements in the first run with a 2-level template `customers/2025/:run_dir`. calling `resolve()` on finder will error.
+#### unmatched.csv output of the 3rd through last csvpath statements in the first run with a
+2-level template `customers/2025/:run_dir`. calling `resolve()` on finder will error.
 $acme.results.customers/2025/:first().:from(2):unmatched()
 
-#### unmatched.csv output of the 3rd through last csvpath statements in the first run with a 2-level template `customers/2026/:run_dir`, where the current year == 2026
+#### unmatched.csv output of the 3rd through last csvpath statements in the first run with a
+2-level template `customers/2026/:run_dir`, where the current year == 2026. calling `resolve()`
+on finder will error.
 $acme.results.customers/:name(:year())/:first().:from(2):unmatched()
 
-#### unmatched.csv output of the 3rd through last csvpath statements in the first run with a 1-level template `customers/:run_dir` where the date of arrival was 2025-01-01
+#### unmatched.csv output of the 3rd through last csvpath statements in the first run
+with a 1-level template `customers/:run_dir` where the date of arrival was 2025-01-01.
+Without an anchor, :date("2025-01-01") is acting as a range, in the same way
+:yesterday() does. calling `resolve()` on finder will error.
 $acme.results.customers/:date("2025-01-01"):first().:from(2):unmatched()
 
-#### unmatched.csv output of the 3rd through last csvpath statements in each run with a 1-level template `customers/:run_dir` where the date of arrival was 2025-01-01 or newer
+#### unmatched.csv output of the 3rd through last csvpath statements in each run with
+a 1-level template `customers/:run_dir` where the date of arrival was 2025-01-01 or newer.
+calling `resolve()` on finder will error.
 $acme.results.customers/:from(:date("2025-01-01")).:from(2):unmatched()
 
-#### unmatched.csv of the 3rd through last statements in last three runs with template `customers/:run_dir`
+#### unmatched.csv of the 3rd through last statements in last three runs with template
+`customers/:run_dir`. calling `resolve()` on finder will error.
 $acme.results.customers/:from(:index(-3)).:from(2):unmatched()
 
-#### errors file from the header_checks statement of a 0-length template run of `alpha`
+#### errors file from the header_checks statement of a 0-level template run of `alpha`
 $alpha.results.2026-01-01_01-01-01.header_checks:errors()
 
 #### Two ways to get all errors files from no-template alpha runs with header_checks statements
 $alpha.results.*.header_checks:errors()
 $alpha.results.:all().header_checks:errors()
 
-#### Two equivalent ways to get errors files from no-template alpha runs with header_checks statements that were run on 1/1/2026
+#### Two equivalent ways to get errors files from no-template alpha runs with header_checks
+statements that were run on 1/1/2026
 $alpha.results.:regex("2026-01-01_").header_checks:errors()
-$alpha.results.:from("2026-01-01").before("2026-01-02").:header_checks:errors()
+$alpha.results.:from("2026-01-01"):before("2026-01-02").header_checks:errors()
 
 #### Get an errors file using a regex in `name_one`. And a similar regex in `files` for comparison.
 $alpha.results.orders/:regex("202[6789]")/EMEA:last().header_checks:errors()
@@ -626,13 +659,17 @@ $acme.results.:flatten():last().:printouts()
 
 ### Arbitrary files from printouts and Parquet
 
-#### `report.txt` (a print-mode printout file) within the `invoices` csvpath statement in the first run with a 2-level template starting with the value of @myname and ending in `2025/:run_dir`
+#### `report.txt` (a print-mode printout file) within the `invoices` csvpath statement in the
+first run with a 2-level template starting with the value of @myname and ending in `2025/:run_dir`
 $acme.results.:name(@myname)/2025/:first().invoices:file("report.txt")
 
-#### `report.txt` (a print-mode printout file) within the `invoices` csvpath statement in the first run with a 2-level template ending in `2025/:run_dir`
+#### `report.txt` (a print-mode printout file) within the `invoices` csvpath statement in the
+first run with a 2-level template ending in `2025/:run_dir`
 $acme.results.*/2025/:first().invoices:file("report.txt")
 
-#### all parquet files output of all of the csvpath statements in the last three runs with a 1-level template `customers/:run_dir`
+#### all parquet files output of all of the csvpath statements in the last three runs with a
+1-level template `customers/:run_dir`. Parquet files (ending in .parquet) are created with
+the `parquet()` function.
 $acme.results.customers/:from(:index(-3)).*:type("parquet")
 
 #### Get a printouts file named for its stream
@@ -648,60 +685,43 @@ $acme.results.:flatten():last().:file("greetings.txt")
 
 ### Global archive ledger
 
-#### Manifest path+uuid for very run across every named-results group
+#### The path+None of the results ledger manifest on query(); resolve() provides
+all entries, as run records holding their instance records.
 $*.results.:manifest()
 
-### Error: incorrect ways to find the last item in the global ledger
-$*.results.:last():manifest()
-$*.results.:manifest():last()
-
-Note that when we have information available without using a manifest we
-must get it that way. Practically all cases are covered by
-non-through-manifest means. Explicit uses of :manifest() should be used
-only to find the path to the file or retrieve the full contents of the
-manifest file or entry.
+#### Manifest path+uuid for every run across every named-results run
+$*.results.:flatten():manifest()
 
 #### Two ways to get the moment a csvpath statement within a named-paths group
 begins to run. The first by archive ledger manifest, the second by direct
-access. Note that these two references are not functionally identical. Due to
-variable run times, threading races, etc. the second reference time could be
-earlier than the time found by the first reference.
-$*.results.:manifest():last():time()
+access of the results.
+$*.results.:manifest():last().:last():time()
 $*.results.:flatten():last().:last():time()
 
 #### Two ways to get the UUID of the first known run. First by archive
-manifest, second by direct access. Unlike the above references focused on the
-last activity, these two references are functionally identical.
+manifest, second by direct access.
 $*.results.:manifest():first():run_uuid()
 $*.results.:flatten():first():uuid()
 
 #### Two ways to get the run dir of a run containing a csvpath instance
 with a certain UUID. First by archive ledger manifest, second by direct
-access.
-$*.results.:manifest():uuid("a381..."):run_home()
+access. Note that :having(...) tests the child and selects the parent; in this
+case, it selects the run whose instance has the UUID.
+$*.results.:manifest():having(:uuid("a381...")):run_home()
 $*.results.:flatten():having(:uuid("a381...")):run_home()
 
-#### Two ways to get the last instance run yesterday. Note that these may
-not return the same identity due to timing effects and the difference in
-what last tracks in `name_one` (i.e. run start time) vs. in the global
-manifest (i.e. instance start times within runs).
-$*.results.:manifest():yesterday():last():identity()
+#### Two ways to get the last instance run yesterday.
+$*.results.:manifest():yesterday():last().:last():identity()
 $*.results.:yesterday():last().:last():identity()
 
 #### Two ways to find all the instances in runs with the named_paths group
-`orders` that happened yesterday. Note that the first finds the start times
-of instances within runs whereas the second finds the start times of runs.
-This difference means that the resulting lists of instances are not
-guaranteed to match.
-$*.results.:manifest():named_paths_name("orders"):yesterday()
+`orders` that happened yesterday.
+$*.results.:manifest():named_paths_name("orders"):yesterday().*
 $orders.results.:flatten():yesterday().*
 
 #### Two ways to find all the instances in runs with the named_file
-`orders` that happened yesterday. As with other time based references of
-this type, the difference between the tracking the run time vs. the
-instance start time within the run makes this pair of reference return
-result that are not always going to be the same.
-$*.results.:manifest():named_file_name("orders"):yesterday()
+`orders` that happened yesterday.
+$*.results.:manifest():named_file_name("orders"):yesterday().*
 $*.results.:flatten():yesterday():named_file_name("orders").*
 
 #### Archives can provide a kind of multi-project namespacing, in that
@@ -710,7 +730,7 @@ different archive names with the potential for identical internal paths.
 The archive name. archive path, `named_files_root`, and
 `named_paths_root` values will be entirely consistent for all references
 because references are context-bounded to an archive.
-$*.results.:manifest():archive_name()
+$*.results.:manifest():archive()
 
 #### Two ways of finding the template used by a run
 $*.results.:manifest():run_uuid("789a..."):template()
@@ -722,8 +742,8 @@ $*.results.:flatten():run_uuid("789a..."):template()
 
 #### All pull field values from the run manifest
 $widgets.results.:first():serial()
-$widgets.results.:first():all_valid()
-$widgets.results.:first():all_completed()
+$widgets.results.:first():valid()
+$widgets.results.:first():completed()
 $widgets.results.:first():status()
 $widgets.results.:first():method()
 $widgets.results.:first():host()
@@ -743,16 +763,19 @@ $widgets.results.:first().company_names:uuid()
 $widgets.results.:first().company_names:run_uuid()
 $widgets.results.:first().company_names:valid()
 $widgets.results.:first().company_names:completed()
-$widgets.results.:first().company_names:files_complete()
 $widgets.results.:first().company_names:serial()
 $widgets.results.:first().company_names:identity()
 $widgets.results.:first().company_names:actual_data_file()
 $widgets.results.:first().company_names:origin_data_file()
-$widgets.results.:first().company_names:fingerprints()
+$widgets.results.:first().company_names:file_fingerprints()
 $widgets.results.:first().company_names:source_mode_preceding()
 $widgets.results.:first().company_names:preceding_instance_identity()
 $widgets.results.:first().company_names:manifest_path()
 $widgets.results.:first().company_names:named_file_name()
+
+#### Note: this proposed function, files_complete, relates to existing but incorrect/imperfect
+functionality and it should not be made available
+$widgets.results.:first().company_names:files_complete()
 
 ---
 ### All in name three and name one
@@ -765,31 +788,36 @@ $acme.results.:last().:all():uuid()
 ### Directions and ranges
 
 #### Two ways to get last three runs with template `customers`
-$acme.results.customers:from(:index(-3))
-$acme.results.customers:from(-3)
+$acme.results.customers/*:from(:index(-3))
+$acme.results.customers/*:from(-3)
 
 #### the 2nd through 4th runs with template `customers`
-$acme.results.customers:from(1):to(3)
+$acme.results.customers/*:from(1):to(3)
 
 #### Two ways to range on a date
-$acme.results.customers:from(:date("2025-01-01"))
-$acme.results.customers:from("2025-01-01")
+$acme.results.customers/*:from(:date("2025-01-01"))
+$acme.results.customers/*:from("2025-01-01")
 
 #### runs between 2025-01-01 and 2025-01-31, both dates inclusive
-$acme.results.customers:from(:date("2025-01-01")):to(:date("2025-01-31"))
+$acme.results.customers/*:from(:date("2025-01-01")):to(:date("2025-01-31"))
 
 #### mixing index-mode and date-mode bounds in the same range is possible
-$alpha.results.*:from(2):to(:date("2026-01-10_8-00-00"))
-Note that the instruction is to find a range of results, identify the 3rd result in the range, collect from 3rd through the last result that happened before Jan 10 at 8am.
+$alpha.results.*:from(2):to(:date("2026-01-10_08-00-00"))
+Note that the instruction is to find a range of results, identify the 3rd result in the range,
+collect from 3rd through the last result that happened before Jan 10 at 8am.
 
 #### Two ways to find the remaining items from a pointer
-$acme.results.customers:from(-3):last()
-$acme.results.customers:from(-3)
+$acme.results.customers/*:from(-3):last()
+$acme.results.customers/*:from(-3)
 
 
-#### A pointer alongside a range selects within the range
-$acme.results.customers:from(-6):to(-2):last()
+#### A pointer that is not a directional alongside a range of two directionals selects within the range
+$acme.results.customers/*:from(-6):to(-2):last()
 Note that the pointer picks from items found by the range, not the larger set of items the range draws from.
+Note also: directionals are used in a range before an anchor is. In this example :to(-2) and :last()
+could each, in some reference, act as the end of the range; however, when used together like this the :to()
+is a directional whereas the :last() is an anchor, so the :to() participates in the range and the anchor,
+:last(), selects from within the range.
 
 #### 3rd->last csvpath instances in first run with template `customers/2025/:run_dir`
 $acme.results.customers/2025/:first().:from(2)
@@ -856,8 +884,8 @@ $alpha.files.:name("orders.csv").:all()
 #### Get the first version of `alpha` registered file `orders.csv`
 $alpha.files.:name("orders.csv").:first()
 
-Note that file homes do not have UUID but since both references point
-to the first version, both return a path+uuid
+Note that file homes do not have UUID but since the reference points
+to the first version, it returns a path+uuid
 
 ---
 
@@ -876,8 +904,8 @@ $alpha.files.:name("orders.csv").:index(1)
 $acme.files.*.:yesterday():first()
 Note that `:yesterday()` is dynamic shorthand for a datetime
 
-#### Find the last `acme` version created after the 4th of July home. Note
-$acme.files.:flatten():after(:date("{:year()}-07-04_23:59:59")).:last()
+#### Find the last `acme` version created after the 4th of July
+$acme.files.:flatten():after(:date("{:year()}-07-04_23-59-59")).:last()
 
 Note that the `name_three` pointer provides the actual version file
 path+uuid and, on `resolve()` bytes.
@@ -906,7 +934,7 @@ $alpha.files.:name("orders.csv").:from("2026-01-01"):to("2026-01-31")
 
 ### Templates
 
-#### every registration with no template
+#### every file home with no template
 $alpha.files.*
 Note this returns:
 - named_files/alpha/one.csv
@@ -952,7 +980,7 @@ $alpha.files.:groups().:last()
 #### The first registration for every file home
 $alpha.files.:groups().:first()
 
-### The version's own manifest entry, either order
+### The last version's own manifest entry; either function order works
 $alpha.files.:name("orders.csv").:last():manifest()
 $alpha.files.:name("orders.csv").:manifest():last()
 
@@ -980,17 +1008,15 @@ $alpha.files.:source_address("local_server")
 #### Retrieve the `alpha` manifest path and content
 $alpha.files.:manifest()
 
-#### Retrieving the full manifest entry of the last no-template registration
+#### Retrieving the full manifest entry of the last registration. Note that when
+root_major names a specific named-file :manifest() refers to the named-file
+manifest, not the ledger manifest, which has all registrations regardless of
+any template.
 $alpha.files.:manifest():last()
-
-Note that we require references to use the field accessor, ranges, pointers, dates, etc. without going through the named-file's manifest, unless there is some corner case where the manifest is the only recourse. However, we allow retrieving the full contents of the manifest or manifest entry.
 
 #### Retrieve the named-file datatype's arrivals ledger
 $*.files.:manifest()
 
-#### Ordinal indexing into the global ledger disallowed, instead use references like:
-$*.files.:flatten():last()
-$*.files.:flatten().:last()
 
 #### grouping file homes across all named-files to find all last registrations
 $*.files.:groups().:last()
@@ -1010,7 +1036,7 @@ through `name_two` (`#worksheet`).
 ### Find a named-file registered version by fingerprint.
 $alpha.files.:fingerprint("a711df7d2846e8ba46125d3f7adb7aea0ede50eb20a6550fca2358628a05425b")
 
-Note that this returns the first matching registered fingerprint. Multiple
+Note that this returns every matching registered file fingerprint. Multiple
 versions may have the same fingerprint if registered under different file homes.
 
 Note that we use the `:fingerprint()` accessor as a query predicate by passing in
@@ -1181,9 +1207,6 @@ $acme.csvpaths.:destinations()
 #### Global group loads ledger including every named-paths group
 $*.csvpaths.:manifest()
 
-#### Ordinal indexing into the global ledger, either order works
-$*.csvpaths.:last():manifest()
-$*.csvpaths.:manifest():last()
 
 #### Find the last loaded version of every named-paths group
 $*.csvpaths.:last()

@@ -210,6 +210,17 @@ FILES = [
     '$orders.files.:status("complete")',
     '$*.files.:manifest():status("failed")',
     '$*.files.:manifest():status("complete")',
+    #
+    # finding E (2026-11-02): a general chain after ':manifest()'
+    #
+    "$orders.files.:manifest():last():uuid()",
+    "$orders.files.:manifest():first():fingerprint()",
+    '$orders.files.:manifest():status("complete"):last()',
+    '$people.files.:type("tsv"):manifest()',
+    "$*.files.:manifest():last():named_file_name()",
+    '$*.files.:manifest():status("failed"):named_file_name("orders")',
+    '$*.files.:manifest():status("complete"):type("csv"):first():uuid()',
+    '$:regex(/^o/).files.:manifest():named_file_name("orders"):last()',
 ]
 
 CSVPATHS = [
@@ -516,3 +527,53 @@ def test_bare_star_reads_live_named_files_and_manifest_reads_the_ledger(paths):
     assert set(gone) <= set(_uuids('$*.files.:manifest():status("complete")'))
     assert not set(xgone) & set(_uuids("$*.csvpaths.:uuid()"))
     assert set(xgone) <= set(_uuids("$*.csvpaths.:manifest():uuid()"))
+
+
+def test_a_general_manifest_chain_on_a_real_filesystem(paths):
+    #
+    # finding E (2026-11-02): FILES takes a general chain after
+    # ':manifest()'. the new NRE 253 finds the failed orders registration
+    # in the ledger set, and a gate filters before the pointer picks. on
+    # a real filesystem, in both modes.
+    #
+    _mode(paths, "off")
+    ledger = paths.reference_source.files_ledger()
+    orders = paths.file_manager.get_manifest("orders")
+    failed = [
+        e["uuid"]
+        for e in ledger
+        if e.get("status") == "failed" and e.get("named_file_name") == "orders"
+    ]
+    assert failed
+
+    def _resolved(reference: str) -> list:
+        off, on = _both(paths, reference)
+        assert off == on
+        assert off[0] == "ok"
+        _mode(paths, "off")
+        finder = ReferenceFinderFactory3.for_reference(
+            reference=reference, csvpaths=paths
+        )
+        return finder.query().uuids, [r.data for r in finder.resolve().results]
+
+    uuids, _ = _resolved(
+        '$*.files.:manifest():status("failed"):named_file_name("orders")'
+    )
+    assert uuids == failed
+    uuids, values = _resolved("$orders.files.:manifest():last():uuid()")
+    assert values == [orders[-1]["uuid"]]
+    uuids, values = _resolved("$orders.files.:manifest():uuid():first()")
+    assert values == [orders[0]["uuid"]]
+    #
+    # the ledger's last record is not an orders record, so the name gate
+    # must filter before ':last()' picks.
+    #
+    assert ledger[-1].get("named_file_name") != "orders"
+    uuids, values = _resolved(
+        '$*.files.:manifest():last():named_file_name("orders"):file_path()'
+    )
+    orders_records = [
+        e for e in ledger if e.get("named_file_name") == "orders"
+    ]
+    assert uuids == [orders_records[-1]["uuid"]]
+    assert values == [orders_records[-1]["file_path"]]

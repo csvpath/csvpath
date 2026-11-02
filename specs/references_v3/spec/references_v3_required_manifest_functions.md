@@ -23,11 +23,12 @@ There are seven manifest schemas.
 | Named-file | The named-file's home dir | One entry per registered file |
 | Named-paths groups ledger | Named-paths root | One entry per load of a named-paths group |
 | Named-paths group | The named-paths group home dir | One entry per load of the group |
-| Named-results ledger | Archive root | One entry per individual csvpath run |
+| Named-results ledger | Archive root | One entry per csvpath statement instance in a run |
 | Named-results | The named-results run home dir | One file with one entry |
 | Named-results csvpath | A csvpath's home dir within the run dir | One file with one entry |
 
-Each table below lists every key that schema actually writes, in write order.
+Each table below lists every key that schema actually writes, in write order,
+except for rows added 2026-10-31, which are at the end of their tables.
 The Optional column marks a key that is only written under some condition,
 not on every entry, and is blank otherwise. The `References v3 Function` column
 names whatever v3 function gives the most specific access to that key's value.
@@ -71,6 +72,9 @@ It is one flat, append-only array per named-file, one entry per registered versi
 | from |  | :origin() | The source path of the original data file that is registered and copied into the named-file. This is the path segments data that the named-file's default template, or a template provided by the user at registration-time, uses to construct the path within the named-file. |
 | mark | optional | :mark() | The name of a worksheet in an Excel file. Selecting which worksheet to query still goes through `name_two`; `:mark()` is a separate field accessor that retrieves the mark value of an already-matched result, the same selector/value-accessor duality already used elsewhere (e.g. `:uuid()`, `:fingerprint()`). |
 | template |  | :template() | This function returns the actual template used in a registration. A string with braces-bracketed replacement tokens that determines the path within the named-file of the file home, where a registered file is stored. The replacement tokens are of two kinds: 1. the indexes of the path segments found in the origin path. E.g. :0 for the first directory below the root, :1 for the next path segment, and so on, and 2. tokens for elements of the current datetime, e.g. :day, :month, :year, etc. |
+| file_name |  | :file_name() | The name of the original physical file that was registered. This is the same name as the file home directory. |
+| username | optional | :username() | If available, the username owning the process that registered this version. |
+| hostname | optional | :host() | If available, the hostname of the registering process. |
 
 ---
 
@@ -87,7 +91,7 @@ named-file.
 | file_manifest |  | :file_manifest() | A fully qualified pointer to the named-file's manifest. |
 | username | optional | :username() | If we can know the username, it is captured here. In some cases, the username is not available. And for multi-project systems like FlightPath Server the user will always be the account that owns the long running process serving multiple projects, making the username less helpful. |
 | hostname | optional | :host() | The hostname of the registering process. In the case of a long-running process serving multiple projects, this field will be less useful in tracing than a process that is one of many interacting with the staging area. |
-| ip_address |  | N/A | Do not use. |
+| ip_address |  | N/A | No longer written. Do not use. |
 | type |  | :type() | File extension. E.g. `csv`, `xlsx`, etc. |
 | named_file_name |  | :named_file_name() | This is the named-file. |
 | origin_path |  | :origin() | The source path of the original data file that is registered and copied into the named-file. This is the path segments data that the named-file's default template, or a template provided by the user at registration-time, uses to construct the path within the named-file. |
@@ -95,12 +99,14 @@ named-file.
 | reference |  | :reference() | A complete unique reference to a version of a registered file. This is as exact as providing the UUID for the purpose of obtaining the registered bytes. However, because it is the fingerprint of the bytes, and we allow the same bytes to be registered at different paths within the named file, the reference is not necessarily to the same registration event as produced the fingerprint. In practice this distinction rarely make a difference. And the benefit of using the fingerprint is that the fingerprint can be constructed using the bytes, even if it is not certain where those bytes may have been registered within the named-file. In general, be confident that you will get the correct bytes, but mindful that those bytes may be registered multiple times if, and only if, the registrations happened under different paths within the named-file. |
 | file_path |  | :file_path() | The fully qualified path to the version that was registered. |
 | file_home |  | :file_home() | The path to the directory representing the original physical file registered and named by the same name, including extension. This directory holds the version files. The path is constructed using the [inputs] files key in config.ini. That means in some contexts, for e.g. FlightPath Server, it will always be fully qualified to the filesystem root. File homes are derived using a template, if one is provided in the registration method call or a default is configured for the named-file. |
-| file_name |  | :file_name() | The named of the original physical file that was registered. This is the same name as the file home directory. |
-| name_home |  | :named_file_home() | The named-file's root directory. It is named by the named-paths name and contains all the template-driven and non-template filesystem paths within the named-file. |
+| file_name |  | :file_name() | The name of the original physical file that was registered. This is the same name as the file home directory. |
+| name_home |  | :named_file_home() | The named-file's root directory. It is named by the named-file name and contains all the template-driven and non-template filesystem paths within the named-file. |
 | template | optional | :template() | This function returns the actual template used in a registration. A string with braces-bracketed replacement tokens that determines the path within the named-file of the file home, where a registered file is stored. The replacement tokens are of two kinds: 1. the indexes of the path segments found in the origin path. E.g. :0 for the first directory below the root, :1 for the next path segment, and so on, and 2. tokens for elements of the current datetime, e.g. :day, :month, :year, etc. |
 | mark | optional | :mark() | The name of a worksheet in an Excel file. Selecting which worksheet to query still goes through `name_two`; `:mark()` is a separate field accessor that retrieves the mark value of an already-matched result, the same selector/value-accessor duality already used elsewhere (e.g. `:uuid()`, `:fingerprint()`). |
 | manifest_path |  | :manifest_path()  | The path to the file holding this entry. |
-| status | optional | :status() | Contains a message if registration failed for some reason. E.g. if HTTP files are disallowed, an attempt to register an http://... URL will fail and a message will appear in this field. |
+| status | optional | :status() | `complete` on a successful registration, `failed` if registration failed for some reason. E.g. if HTTP files are disallowed, an attempt to register an http://... URL will fail. |
+| lifecycle | optional | :lifecycle() (planned) | `active` when written, `deleted` once the entry's named-entity is deleted. Entries written before lifecycles existed have none. |
+| changes | optional | N/A | A list of the changes made to this entry after it was written, e.g. the delete that set `lifecycle` to `deleted`. |
 
 ---
 
@@ -113,7 +119,7 @@ of the whole group.
 | Field | Optional | References v3 Function | Description |
 |---|---|---|---|
 | archive_name |  | :archive() | The `[results] archive` value from `config.ini` at the time the current version of the named-paths group was loaded. |
-| named_paths_name |  | :named_paths_name() | The named of this named-paths group. |
+| named_paths_name |  | :named_paths_name() | The name of this named-paths group. |
 | named_paths_home |  | :group_home() | The path to the root directory of this named-paths group. The `[inputs] csvpaths` value from `config.ini`, the path to the root of all named-paths groups, is used to construct this path. |
 | group_file_path |  | :group_file() | The path to the `group.csvpaths` file that contains all the csvpath statements in the group. Every named-paths group has this file. |
 | source_path | optional | :origin() | The path to the file or directory that housed the csvpath statements that make up the contents of the version of this named-paths group this entry represents. |
@@ -159,9 +165,12 @@ at once.
 | uuid |  | :uuid() | The unique identifier for the version of the named-paths group this entry represents. |
 | username | optional | :username() | If available, the username owning the process that loaded the version of the named-paths group this entry represents. |
 | hostname | optional | :host() | If available, the host where the process that loaded the version of the named-paths group this entry represents was located. |
-| ip_address |  | N/A | Do not use. |
+| ip_address |  | N/A | No longer written. Do not use. |
 | paths_manifest |  | :group_manifest() | The path to the `manifest.json` of the named-paths group, constructed using `[inputs] csvpaths` from `config.ini`. |
 | manifest_path |  | :manifest_path() | The path to this `manifest.json`, constructed using `[inputs] csvpaths` from `config.ini`. |
+| status |  | :status() | `complete` for a load that created a new version, `unchanged` for a reload whose contents matched an existing version. |
+| lifecycle | optional | :lifecycle() (planned) | `active` when written, `deleted` once the entry's named-entity is deleted. Entries written before lifecycles existed have none. |
+| changes | optional | N/A | A list of the changes made to this entry after it was written, e.g. the delete that set `lifecycle` to `deleted`. |
 
 ---
 
@@ -180,7 +189,7 @@ dict inside each run's own directory.
 | all_completed | optional | :completed() | True if all csvpath statements considered all lines to be scanned. `:completed()` is shared with the Result Instance Manifest's own `completed` field (table 6) -- run scope reads `all_completed`, instance scope reads `completed`, by position (name_one vs. name_three). |
 | all_valid | optional | :valid() | True if all csvpath statements report they are valid. I.e. none were failed with `fail()` or due to a build-in validation error combined with a validation-mode setting of `fail`. `:valid()` is shared with the Result Instance Manifest's own `valid` field (table 6), the same run-scope/instance-scope split as `:completed()` above. |
 | error_count | optional | :error_count(), :has_errors() | The number of errors from all csvpath statements in the run. `:has_errors()` (added 2026-10-18) reads this same field, reduced to a bool -- `true` if `error_count > 0`. |
-| all_expected_files | optional | N/A | True if all the files expected by files-mode in all the csvpaths in the named-paths group are present. This field is suspect and will likely be revised in the registrar. Until then it should be avoided. |
+| all_expected_files | optional | N/A | Do not create a function. This field is suspect and will likely be revised in the registrar. Until then it should be avoided. |
 | status |  | :status() | The literal string `started` when the run begins, overwritten with the literal string `complete` (not `completed`) when it finishes. See `ResultsRegistrar.STARTED`/`ResultsRegistrar.COMPLETE` in `results_registrar.py`. |
 | run_home |  | :run_home() | The run dir. I.e. the top level directory containing all the runs assets, which is named by the timestamp (disambiguated) of the moment it was run. |
 | named_results_name |  | :named_results_name() | The name of the results this manifest describes. Usually the same as `named_paths_name`, but not guaranteed: if the run is invoked with a `$`-reference as the paths name, `complete_run()` in `results_manager.py` strips it down to `ReferenceParser(pathsname).root_major` for `named_results_name`, while `named_paths_name` keeps the raw reference string. The two can genuinely differ in that case. |
@@ -199,6 +208,7 @@ dict inside each run's own directory.
 | method |  | :method() | The run method is one of collect_paths, fast_forward_paths, next_paths, collect_by_line, fast_forward_by_line, next_by_line. Methods that include the suffix `_paths` run the csvpaths in the named-paths group serially one following the other, each starting from the top of the data. The methods with the suffix `_by_line` have each csvpath statement in the named-paths group consider each line before they all start again with the next line. The difference is usually not significant, but in some cases the difference in processing order allows for different desired outcomes. |
 | template |  | :template() | The run template, if any; otherwise, blank but present. |
 | manifest_path |  | :manifest_path() | The path to this manifest. |
+| named_paths_fingerprint |  | :named_paths_fingerprint() | The fingerprint of the named-paths group version that generated the run. |
 
 ---
 
@@ -217,7 +227,7 @@ named-paths group used by the run).
 | uuid |  | :uuid()  | The unique identifier of this csvpath statement's results in this run. |
 | serial |  | :serial()  | True if the run completes csvpath statements serially, rather than completing a pass through all of them as each line is processed. |
 | archive_name |  | :archive() | The archive dir name at the time this result was generated. |
-| named_results_name |  | :named_results_name()  | The named-results name of the run that includes this result. This is the same name as the named-paths group name. |
+| named_results_name |  | :named_results_name()  | The named-results name of the run that includes this result. Usually the same as the named-paths group name, but not guaranteed; see `named_results_name` in table 5. |
 | named_paths_uuid |  | :named_paths_uuid() | The unique reference to the version of the named-paths group that created the run this csvpath statement result is a member of. |
 | run |  | :run_dir() | The run dir name. A timestamp with disambiguation, if needed. `run_dir` is the commonly used name, not `run`. |
 | run_uuid |  | :run_uuid() | The unique identifier of the run this csvpath statment's result is a part of |
@@ -238,6 +248,7 @@ named-paths group used by the run).
 | origin_data_file |  | :origin_data_file() | Not the pre-registration source path (that is `from`/`origin_path` in the Named-File manifests above). This is the named-file's own resolved path via the same bare-name lookup used elsewhere (`get_named_file(self.file_name)` in `Result.origin_data_file`), independent of source-mode. It exists as the contrast to `actual_data_file`: the two differ specifically when `source-mode: preceding` substitutes the previous csvpath's data.csv as the real input, in which case `actual_data_file` reflects that substitution and `origin_data_file` still points at the named-file. |
 | named_file_name |  | :named_file_name() | The named-file name. |
 | transfers | optional | :transfers() | Lists the paths this csvpath statement is transferring result files to. This does not include any transfers set in the definition.json of the named-paths group. It only includes the local `transfer-mode` transfers. See issue #224. |
+| method |  | N/A | The run method of the run this csvpath statement result is part of. The same value as `method` in table 5; use `:method()` on the run. |
 
 ---
 
@@ -252,17 +263,20 @@ named-paths group.
 | time |  | :time() | The moment a csvpath statement within a named-paths group begins to run. |
 | run_uuid |  | :run_uuid() | Uniquely identifies the run that the csvpath statement run this entry represents is a part of. |
 | run_home |  | :run_home() | The run dir of the run this csvpath statement's output is a part of |
-| uuid |  | :uuid() | Uniquely identifies this csvpath statement in the run. |
+| uuid |  | :uuid() | Uniquely identifies this csvpath statement in the run. Reached at name_three, e.g. `$*.results.:manifest():last().:last():uuid()`; in name_one, `:uuid()` is the run's `run_uuid`. |
 | identity |  | :identity() | The ID or index of this csvpath statement in the named-paths group that is driving this run. |
 | named_paths_name |  | :named_paths_name() | The named-paths group driving the run. |
 | named_file_name |  | :named_file_name() | The named-file name of the version bytes this run is applying its named-paths group to |
 | manifest_path |  | :manifest_path() | The path to this manifest. |
 | archive_name |  | :archive() | The name of the archive dir at the time this run occurred. |
 | archive_path |  | :archive_path() | The path to the archive dir at the time this run occurred. |
-| base_path |  | N/A | Deprecated. Do not use. See issue #225. |
+| base_path |  | N/A | Deprecated and no longer written. Do not use. See issue #225. |
 | named_files_root |  | :named_files_root() | The location of the named-files. It is the `[inputs] files` value from `config.ini`. |
 | named_paths_root |  | :named_paths_root() | The location of the named-paths. It is the `[inputs] csvpaths` value from `config.ini`. |
 | template | optional | :template() | The template in use for the run this csvpath statement is part of. The template determines where the run dir is located within the named-results area in the archive. |
+| status |  | N/A | Written as `started` and not updated. `:status()` on a run reports the run's own status. |
+| lifecycle | optional | :lifecycle() (planned) | `active` when written, `deleted` once the entry's named-entity is deleted. Entries written before lifecycles existed have none. |
+| changes | optional | N/A | A list of the changes made to this entry after it was written, e.g. the delete that set `lifecycle` to `deleted`. |
 
 ---
 
