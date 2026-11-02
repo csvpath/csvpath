@@ -1,0 +1,53 @@
+~
+  id: latam-clients
+  macie-origin: job
+  macie-job-id: 2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b
+  macie-account: 123456789012
+  macie-region: sa-east-1
+  macie-source-arn: arn|aws|macie2|sa-east-1|123456789012|classification-job/2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b
+  macie-downloaded-at: 20261102T162000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "BRAZIL_CPF_NUMBER",
+        "PERSONAL_INFORMATION",
+        "br_cpf",
+        "required",
+        "cadastro de pessoa física|cadastro de pessoa fisica|cadastro de pessoas físicas|cadastro de pessoas fisicas|cadastro nacional da pessoa jurídica|cadastro nacional da pessoa juridica|cnpj|cpf",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "BRAZIL_CNPJ_NUMBER",
+        "PERSONAL_INFORMATION",
+        "br_cnpj",
+        "required",
+        "cadastro de pessoa física|cadastro de pessoa fisica|cadastro de pessoas físicas|cadastro de pessoas fisicas|cadastro nacional da pessoa jurídica|cadastro nacional da pessoa juridica|cnpj|cpf",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "CHILE_RUT_NUMBER",
+        "PERSONAL_INFORMATION",
+        "cl_rut",
+        "required",
+        "identidad número|nacional identidad|national unique role|nationaluniqueroleID#|número identificación|rol único nacional|rol único tributario|run|run#|r.u.n.|rut|rut#|r.u.t.|unique national number|unique national role|unique tax registry|unique tax role|unique tributary number|unique tributary role",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "ARGENTINA_TARJETA_SUBE",
+        "PERSONAL_INFORMATION",
+        "ar_sube",
+        "required",
+        "sistema único de boleto electrónico|sube",
+        30,
+        "1:MEDIUM 100:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

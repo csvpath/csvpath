@@ -160,7 +160,12 @@ def test_macie_iban_catalog_entries(catalog) -> None:
         assert country in lengths
     uk = catalog.identifier(name="UK_BANK_ACCOUNT_NUMBER")
     assert uk["detector"] == "iban:GB"
-    partial = [n for n in catalog.names if catalog.identifier(name=n).get("partial")]
+    partial = [
+        n
+        for n in catalog.names
+        if n.endswith("_BANK_ACCOUNT_NUMBER")
+        and catalog.identifier(name=n).get("partial")
+    ]
     assert partial == [
         "FRANCE_BANK_ACCOUNT_NUMBER",
         "GERMANY_BANK_ACCOUNT_NUMBER",

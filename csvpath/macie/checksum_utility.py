@@ -38,7 +38,70 @@ class ChecksumUtility:
             check = 0
         return check != 10 and check == int(digits[9])
 
-    CHECKS = {"luhn": "luhn", "nhs_mod11": "nhs_mod11"}
+    @classmethod
+    def cpf_mod11(cls, *, digits: str) -> bool:
+        """True if 11 ASCII digits are a valid Brazil CPF: two mod 11 check
+        digits, the first over nine digits weighted 10 down to 2, the
+        second over ten weighted 11 down to 2; a result of 10 is 0"""
+        cls._digits(digits=digits, length=11)
+        for k in (9, 10):
+            total = sum(int(digits[i]) * (k + 1 - i) for i in range(k))
+            d = (total * 10) % 11
+            if d == 10:
+                d = 0
+            if d != int(digits[k]):
+                return False
+        return True
+
+    CNPJ_WEIGHTS = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+
+    @classmethod
+    def cnpj_mod11(cls, *, digits: str) -> bool:
+        """True if 14 ASCII digits are a valid Brazil CNPJ: two mod 11 check
+        digits over the first twelve, then thirteen, digits; a remainder
+        under 2 gives 0, otherwise 11 minus the remainder"""
+        cls._digits(digits=digits, length=14)
+        for k, weights in ((12, cls.CNPJ_WEIGHTS), (13, [6] + cls.CNPJ_WEIGHTS)):
+            r = sum(int(digits[i]) * weights[i] for i in range(k)) % 11
+            d = 0 if r < 2 else 11 - r
+            if d != int(digits[k]):
+                return False
+        return True
+
+    @classmethod
+    def rut_check(cls, *, body: str) -> str:
+        """the check character of a Chile RUT or RUN body: weights 2 to 7
+        repeating from the right, 11 minus the remainder mod 11; 11 is "0"
+        and 10 is "K" """
+        if not isinstance(body, str):
+            raise TypeError(f"body must be a str, not {type(body)}")
+        if body == "" or not (body.isascii() and body.isdigit()):
+            raise ValueError(f"body must be one or more ASCII digits, not {body!r}")
+        total = 0
+        weight = 2
+        for c in reversed(body):
+            total += int(c) * weight
+            weight = weight + 1 if weight < 7 else 2
+        r = 11 - total % 11
+        if r == 11:
+            return "0"
+        if r == 10:
+            return "K"
+        return f"{r}"
+
+    @classmethod
+    def _digits(cls, *, digits: str, length: int) -> None:
+        if not isinstance(digits, str):
+            raise TypeError(f"digits must be a str, not {type(digits)}")
+        if len(digits) != length or not (digits.isascii() and digits.isdigit()):
+            raise ValueError(f"digits must be {length} ASCII digits, not {digits!r}")
+
+    CHECKS = {
+        "luhn": "luhn",
+        "nhs_mod11": "nhs_mod11",
+        "cpf_mod11": "cpf_mod11",
+        "cnpj_mod11": "cnpj_mod11",
+    }
 
     @classmethod
     def check(cls, *, name: str, digits: str) -> bool:

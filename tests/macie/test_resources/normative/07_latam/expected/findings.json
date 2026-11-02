@@ -1,0 +1,105 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "PERSONAL_INFORMATION",
+      "detections": [
+        {
+          "type": "BRAZIL_CPF_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "cpf",
+                "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 12
+              }
+            ]
+          }
+        },
+        {
+          "type": "BRAZIL_CNPJ_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "cnpj",
+                "row": 5
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "cnpj",
+                "row": 6
+              }
+            ]
+          }
+        },
+        {
+          "type": "CHILE_RUT_NUMBER",
+          "count": 3,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "rut",
+                "row": 7
+              },
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "rut",
+                "row": 8
+              },
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 12
+              }
+            ]
+          }
+        },
+        {
+          "type": "ARGENTINA_TARJETA_SUBE",
+          "count": 1,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 10
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 8
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:sa-east-1:123456789012:classification-job/2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}

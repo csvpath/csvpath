@@ -1,0 +1,72 @@
+#
+# Brazil CPF and CNPJ numbers, Chile RUT numbers and Argentina SUBE cards:
+# Macie's BRAZIL_CPF_NUMBER, BRAZIL_CNPJ_NUMBER, CHILE_RUT_NUMBER and
+# ARGENTINA_TARJETA_SUBE, as our stand-ins. All four require a keyword.
+# Macie documents SUBE fully; for the others the formats are the issuers'.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: latam-clients.csvpath
+    data: clients.csv
+    finding_lines: [1, 4, 5, 6, 7, 9, 11]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie BRAZIL_CPF_NUMBER: occurrence 1, line 1 (row 2), column 2 cpf" }
+      - { line: 4, message: "macie BRAZIL_CNPJ_NUMBER: occurrence 1, line 4 (row 5), column 3 cnpj" }
+      - { line: 5, message: "macie BRAZIL_CNPJ_NUMBER: occurrence 2, line 5 (row 6), column 3 cnpj" }
+      - { line: 6, message: "macie CHILE_RUT_NUMBER: occurrence 1, line 6 (row 7), column 4 rut" }
+      - { line: 7, message: "macie CHILE_RUT_NUMBER: occurrence 2, line 7 (row 8), column 4 rut" }
+      - { line: 9, message: "macie ARGENTINA_TARJETA_SUBE: occurrence 1, line 9 (row 10), column 5 notes" }
+      - { line: 11, message: "macie BRAZIL_CPF_NUMBER: occurrence 2, line 11 (row 12), column 5 notes" }
+    findings: findings.json
+    #
+    # Headers: "cpf" and "cnpj" hold Brazil keywords (CPF and CNPJ share
+    # Macie's Brazil list, so either header serves both); "rut" holds a
+    # Chile keyword; "id" and "notes" hold none.
+    #
+    #   line  cell                                    reported as
+    #   1     cpf 529.982.247-25                      CPF: header keyword, mod 11
+    #   2     cpf 111.111.111-11                      nothing: passes mod 11, but one
+    #                                                 repeated digit is never issued
+    #   3     cpf 52998224724                         nothing: bad check digit
+    #   4     cnpj 11.222.333/0001-81                 CNPJ: printed form
+    #   5     cnpj 04252011000110                     CNPJ: contiguous
+    #   6     rut 12.345.678-5                        RUT: dots and hyphen
+    #   7     rut 10.000.013-K                        RUT: check character K
+    #   8     rut 00.000.000-0                        nothing: passes mod 11, but
+    #                                                 Macie never reports all zeroes
+    #   9     notes "tarjeta sube 6061 1234 5678      SUBE: "sube" before, 6061 and
+    #         9018"                                   Luhn, groups of four
+    #   10    notes 6061123456789018                  nothing: no keyword
+    #   11    notes "rut 7654321-6 y cpf              RUT ("rut" before, a 7 digit
+    #         111.444.777-35"                         body) and CPF ("cpf" before),
+    #                                                 one cell
+    #   12    notes "cnpj 11.222.333/0001-80"         nothing: bad check digits
+    #
+    # On each line CPF, then CNPJ, then RUT, then SUBE: the wrapper's
+    # resolved order, so on line 11 CPF's occurrence 2 is reported and
+    # RUT's occurrence 3 (past its cap of 2) is not. Totals: CPF 2, CNPJ 2,
+    # RUT 3, SUBE 1. Macie scores CPF, CNPJ and RUT HIGH from one
+    # occurrence, and SUBE MEDIUM until 100. All four are
+    # PERSONAL_INFORMATION: totalCount 8.
+    #

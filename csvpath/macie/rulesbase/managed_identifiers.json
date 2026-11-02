@@ -103,6 +103,53 @@
         "vin",
         "vin numeris"
       ]
+    },
+    "brazil_tax": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-02",
+      "keywords": [
+        "cadastro de pessoa física",
+        "cadastro de pessoa fisica",
+        "cadastro de pessoas físicas",
+        "cadastro de pessoas fisicas",
+        "cadastro nacional da pessoa jurídica",
+        "cadastro nacional da pessoa juridica",
+        "cnpj",
+        "cpf"
+      ]
+    },
+    "chile_rut": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-02",
+      "keywords": [
+        "identidad número",
+        "nacional identidad",
+        "national unique role",
+        "nationaluniqueroleID#",
+        "número identificación",
+        "rol único nacional",
+        "rol único tributario",
+        "run",
+        "run#",
+        "r.u.n.",
+        "rut",
+        "rut#",
+        "r.u.t.",
+        "unique national number",
+        "unique national role",
+        "unique tax registry",
+        "unique tax role",
+        "unique tributary number",
+        "unique tributary role"
+      ]
+    },
+    "ar_sube": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-02",
+      "keywords": [
+        "sistema único de boleto electrónico",
+        "sube"
+      ]
     }
   },
   "identifiers": {
@@ -759,6 +806,51 @@
       "fidelity": "B",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
       "retrieved": "2026-11-02"
+    },
+    "BRAZIL_CPF_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "br_cpf",
+      "keyword_mode": "required",
+      "keywords_from": "brazil_tax",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-02"
+    },
+    "BRAZIL_CNPJ_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "br_cnpj",
+      "keyword_mode": "required",
+      "keywords_from": "brazil_tax",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-02",
+      "partial": "Brazil issues alphanumeric CNPJs from July 2026; only numeric CNPJs are detected"
+    },
+    "CHILE_RUT_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "cl_rut",
+      "keyword_mode": "required",
+      "keywords_from": "chile_rut",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-02"
+    },
+    "ARGENTINA_TARJETA_SUBE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "ar_sube",
+      "keyword_mode": "required",
+      "keywords_from": "ar_sube",
+      "distance": 30,
+      "severity": "1:MEDIUM 100:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-02"
     }
   },
   "detectors": {
@@ -1060,6 +1152,56 @@
         "Macie: a 17-character sequence that adheres to ISO 3779 and 3780, designed for worldwide use. Keyword required.",
         "Ours: the VIN alphabet (no I, O or Q), a model-year character in position 10 (not U, Z or 0), letters and digits mixed. The North American check digit is not required: VINs from elsewhere don't have one. Fidelity B for that reason."
       ]
+    },
+    "br_cpf": {
+      "notes": [
+        "Macie publishes only the keywords for BRAZIL_CPF_NUMBER. The format is ours, from Receita Federal: 11 digits, ###.###.###-## or contiguous, two mod 11 check digits. One digit repeated (e.g. 111.111.111-11) passes the check but is never issued."
+      ],
+      "length": 11,
+      "formats": [
+        "###.###.###-##"
+      ],
+      "check": "cpf_mod11",
+      "reject_repeated": true,
+      "exclusions": []
+    },
+    "br_cnpj": {
+      "notes": [
+        "Macie publishes only the keywords for BRAZIL_CNPJ_NUMBER. The format is ours, from Receita Federal: 14 digits, ##.###.###/####-## or contiguous, two mod 11 check digits. One digit repeated is never issued.",
+        "Numeric CNPJs only. Alphanumeric CNPJs, issued from July 2026, are not detected yet."
+      ],
+      "length": 14,
+      "formats": [
+        "##.###.###/####-##"
+      ],
+      "check": "cnpj_mod11",
+      "reject_repeated": true,
+      "exclusions": []
+    },
+    "cl_rut": {
+      "notes": [
+        "Macie: CHILE_RUT_NUMBER detects RUN and RUT numbers and never reports numbers whose digits are all zeroes, e.g. 00000000-K.",
+        "The format is ours, from Chile's Servicio de Registro Civil: a 7 or 8 digit body, optional thousands dots, an optional hyphen, and a check character 0-9 or K by mod 11."
+      ]
+    },
+    "ar_sube": {
+      "notes": [
+        "Macie: 16-digit SUBE card numbers that begin with 6061 and pass Luhn, with spaces, hyphens or no separator."
+      ],
+      "length": 16,
+      "layouts": [
+        [
+          4,
+          4,
+          4,
+          4
+        ]
+      ],
+      "check": "luhn",
+      "prefixes": [
+        "6061"
+      ],
+      "exclusions": []
     }
   }
 }

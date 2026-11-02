@@ -57,3 +57,8 @@ Design decisions are in `specs/macie/transpile-design.md`.
   keywords, no keyword, the SIN example number, bad Luhn and mod 11 check
   digits, a European VIN with no check digit, a VIN with the letter O, and
   an NHS number and a SIN in the same cell.
+- `07_latam`: Brazil CPF and CNPJ, Chile RUT and Argentina SUBE. Printed
+  and contiguous forms, a RUT with check character K, a repeated-digit CPF
+  and an all-zero RUT (both pass the check, neither is reported), bad
+  check digits, SUBE with and without a keyword, and a RUT and a CPF in
+  the same cell.
