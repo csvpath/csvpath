@@ -12,6 +12,11 @@ class LoadList(ValueProducer):
     """loads a value-per-line text list, once, as a list value"""
 
     def check_valid(self) -> None:
+        #
+        # listed so the generated docs show it: lists can be large, and tmp
+        # keeps them out of vars.json
+        #
+        self.value_qualifiers.append("tmp")
         self.description = [
             self._cap_name(),
             self.wrap(

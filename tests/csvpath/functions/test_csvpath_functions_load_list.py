@@ -111,3 +111,12 @@ def test_load_list_needs_a_literal_name(data: str) -> None:
         _collect(data, '@n = "x" in(#id, load_list(@n))')
     with pytest.raises(Exception):
         _collect(data, "in(#id, load_list())")
+
+
+def test_load_list_lists_tmp_as_a_value_qualifier(data: str) -> None:
+    #
+    # the generated function docs show value_qualifiers
+    #
+    path, matched = _collect(data, f'@l = load_list("{LETTERS}") yes()')
+    f = path.matcher.expressions[0][0].children[0].right
+    assert "tmp" in f.value_qualifiers
