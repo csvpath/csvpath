@@ -221,6 +221,16 @@ FILES = [
     '$*.files.:manifest():status("failed"):named_file_name("orders")',
     '$*.files.:manifest():status("complete"):type("csv"):first():uuid()',
     '$:regex(/^o/).files.:manifest():named_file_name("orders"):last()',
+    #
+    # finding G (2026-11-02): name_three gates, range before gate, the last
+    # value field wins
+    #
+    '$people.files.:flatten().:type("tsv"):uuid()',
+    '$people.files.:flatten().:type("csv"):last()',
+    '$orders.files.:flatten().:from(0):to(1):type("csv"):uuid()',
+    "$orders.files.:flatten().:last():fingerprint():template()",
+    '$*.files.:flatten().:type("tsv"):last():uuid()',
+    '$*.files.:all().:last():type("csv")',
 ]
 
 CSVPATHS = [
@@ -577,3 +587,34 @@ def test_a_general_manifest_chain_on_a_real_filesystem(paths):
     ]
     assert uuids == [orders_records[-1]["uuid"]]
     assert values == [orders_records[-1]["file_path"]]
+
+
+def test_name_three_gates_on_a_real_filesystem(paths):
+    #
+    # finding G (2026-11-02): a name_three gate filters before the pointer
+    # picks, supplies no value, and with no value field the reference
+    # resolves to the version bytes. on a real filesystem, in both modes.
+    #
+    _mode(paths, "off")
+    people = paths.file_manager.get_manifest("people")
+    tsv = [e["uuid"] for e in people if e.get("type") == "tsv"]
+    csv = [e for e in people if e.get("type") == "csv"]
+    assert tsv and csv
+
+    def _finder(reference: str):
+        off, on = _both(paths, reference)
+        assert off == on
+        assert off[0] == "ok"
+        _mode(paths, "off")
+        return ReferenceFinderFactory3.for_reference(
+            reference=reference, csvpaths=paths
+        )
+
+    finder = _finder('$people.files.:flatten().:type("tsv"):uuid()')
+    assert [r.data for r in finder.resolve().results] == tsv
+    finder = _finder('$people.files.:flatten().:last():type("csv")')
+    assert finder.query().uuids == [csv[-1]["uuid"]]
+    with open(csv[-1]["file"], "rb") as f:
+        assert finder.resolve().results[0].data == f.read()
+    finder = _finder("$people.files.:flatten().:last():fingerprint():template()")
+    assert [r.data for r in finder.resolve().results] == [people[-1]["template"]]

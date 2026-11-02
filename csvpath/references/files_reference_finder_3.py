@@ -820,6 +820,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # own docstring.
             self._reject_selector_arg_outside_its_bare_form(f)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
+        gates = [f for f in built if self._is_name_three_gate(f)]
         if name_one.name_two is not None and not pointers:
             raise ReferenceException3(
                 "FilesReferenceFinder3 requires a version-selecting "
@@ -828,7 +829,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "version to read a worksheet from otherwise."
             )
         has_manifest = any(f.name == "manifest" for f in built)
-        has_field_function = self._find_field_function_call(built) is not None
+        #
+        # a gate supplies no value (finding D), so only an unargued field
+        # makes a ':manifest()' read a field read.
+        #
+        has_field_function = any(
+            self._find_field_function_call([f]) is not None
+            and not self._is_name_three_gate(f)
+            for f in built
+        )
         has_all = any(f.name == "all" for f in built)
         lower_call, upper_call = self._range_calls_from_built(built)
         has_range = lower_call is not None or upper_call is not None
@@ -963,17 +972,25 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # it. Called once on the whole pooled `candidates` list in
             # POOL mode, and once per distinct file_home's own candidate
             # list in GROUP mode -- see the two call sites below.
+            #
+            # then the gates (finding G, 2026-11-02): a range comes before
+            # a filter, whatever the written order (compendium 6.28), and
+            # the pointer picks from what is left.
+            #
             if bare_time_window is not None:
-                return self._apply_bare_time_window_to_manifest(
+                cands = self._apply_bare_time_window_to_manifest(
                     cands, bare_time_window
                 )
-            if has_range:
+            elif has_range:
                 if from_is_date or to_is_date:
-                    return self._apply_manifest_date_range(
+                    cands = self._apply_manifest_date_range(
                         cands, lower_call, upper_call
                     )
-                return self._apply_range(cands, lower_call, upper_call)
-            return cands
+                else:
+                    cands = self._apply_range(cands, lower_call, upper_call)
+            return self._filter_by_gates(
+                reference=reference, gates=gates, candidates=cands
+            )
 
         if partitioned:
             # one independent reduction per distinct file_home, not one
@@ -1516,8 +1533,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         built = self._build_chain(name_three.functions)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
+        gates = [f for f in built if self._is_name_three_gate(f)]
         has_manifest = any(f.name == "manifest" for f in built)
         field_call = self._find_field_function_call(built)
+        #
+        # a gate supplies no value (finding D), so only an unargued field
+        # makes a ':manifest()' read a field read.
+        #
+        has_value_field = any(
+            self._find_field_function_call([f]) is not None
+            and not self._is_name_three_gate(f)
+            for f in built
+        )
         # ':from()'/':to()' and a bare time-component function, now
         # supported during '*' traversal too (built 2026-10-21, closing
         # a real gap this method never had at all -- unlike query()'s
@@ -1563,17 +1590,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
 
         def _narrow(cands: list) -> list:
+            # the range or time window, then the gates (finding G,
+            # compendium 6.28); the pointer picks from what is left.
             if bare_time_window is not None:
-                return self._apply_bare_time_window_to_manifest(
+                cands = self._apply_bare_time_window_to_manifest(
                     cands, bare_time_window
                 )
-            if has_range:
+            elif has_range:
                 if from_is_date or to_is_date:
-                    return self._apply_manifest_date_range(
+                    cands = self._apply_manifest_date_range(
                         cands, lower_call, upper_call
                     )
-                return self._apply_range(cands, lower_call, upper_call)
-            return cands
+                else:
+                    cands = self._apply_range(cands, lower_call, upper_call)
+            return self._filter_by_gates(
+                reference=reference, gates=gates, candidates=cands
+            )
 
         def _result_path(candidate: dict) -> str:
             # an explicit ':manifest()' names the version's entry in its
@@ -1617,7 +1649,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "exactly one pointer function (:first()/:last()/:index(n)) "
                     "when traversing every named-file with '*'."
                 )
-            if has_range or bare_time_window is not None:
+            if has_range or bare_time_window is not None or gates:
                 if partitioned:
                     by_file_home = {}
                     for entry in candidates:
@@ -1633,7 +1665,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     for c in candidates
                 ],
                 ambiguous_content_read=(
-                    has_manifest and field_call is None and len(candidates) > 1
+                    has_manifest and not has_value_field and len(candidates) > 1
                 ),
             )
         pointer = pointers[0]
@@ -1689,7 +1721,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # alongside `partitioned`.
             ambiguous_content_read=(
                 has_manifest
-                and field_call is None
+                and not has_value_field
                 and len(selected_candidates) > 1
                 and not partitioned
             ),
@@ -2552,6 +2584,53 @@ class FilesReferenceFinder3(ReferenceFinder3):
         ]
 
     @staticmethod
+    def _is_name_three_gate(function) -> bool:
+        """true when `function` is a field with an argument that filters
+        the versions it rides with in name_three, e.g. ':type("csv")'
+        in '.:last():type("csv")' (finding G, 2026-11-02). Only a
+        manifest.json field with a FILES key can filter. A definition.json
+        field is not a gate; some of those use the argument to pick a key
+        (':source_port("email")'). Argued ':uuid()'/':fingerprint()' never
+        get here; they are rejected in name_three."""
+        if function is None:
+            raise ValueError("function cannot be None")
+        if function.arg is None or isinstance(function, TimeWindowFunction3):
+            return False
+        function_cls = ReferenceFunctionFactory.get_registered_class(function.name)
+        if function_cls is None or function_cls.SOURCE != "manifest":
+            return False
+        if Reference3.FILES not in function_cls.DATATYPES:
+            return False
+        key = function_cls.KEY.get(Reference3.FILES) or function_cls.LEDGER_KEY.get(
+            Reference3.FILES
+        )
+        return key is not None
+
+    def _filter_by_gates(
+        self, *, reference: Reference3, gates: list, candidates: list
+    ) -> list:
+        """the candidates matching every gate (AND), each field read the
+        way resolve() reads it, so ':status()' works through the ledger
+        fallback. `gates` are built functions (_is_name_three_gate())."""
+        if gates is None:
+            raise ValueError("gates cannot be None")
+        if candidates is None:
+            raise ValueError("candidates cannot be None")
+        for gate in gates:
+            function_cls = ReferenceFunctionFactory.get_registered_class(gate.name)
+            candidates = [
+                c
+                for c in candidates
+                if self._matches_field_predicate(
+                    self._manifest_chain_field_value(
+                        reference=reference, function_cls=function_cls, entry=c
+                    ),
+                    gate.arg,
+                )
+            ]
+        return candidates
+
+    @staticmethod
     def _bare_definition_field_call(name_one) -> "FunctionCall3 | None":
         """returns the field-accessor FunctionCall3 when name_one's
         entire content is a single function whose registered class is
@@ -2668,6 +2747,21 @@ class FilesReferenceFinder3(ReferenceFinder3):
             manifest = self.source.file_manifest(reference.root_major)
             return self._find_manifest_entry_by_uuid(manifest, result.uuid)
         kind = reference.resolve_kind
+        if kind == Reference3.METADATA_FIELD and reference.name_three is not None:
+            #
+            # when every field in name_three is a gate, nothing supplies a
+            # value (finding D), so the reference resolves as it would
+            # without them: the version's bytes, or its manifest entry
+            # beside ':manifest()' (finding G, 2026-11-02).
+            #
+            built = self._build_chain(reference.name_three.functions)
+            fields = [f for f in built if self._find_field_function_call([f])]
+            if fields and all(self._is_name_three_gate(f) for f in fields):
+                kind = (
+                    Reference3.METADATA_FILE
+                    if any(f.name == "manifest" for f in built)
+                    else Reference3.FIRST_PARTY
+                )
         if kind == Reference3.FIRST_PARTY:
             if reference.name_three is None:
                 # name_one-terminal (prefix search) result: result.path
@@ -2790,8 +2884,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
             #
             is_manifest_chain = False
             if not is_bare_field_call:
-                field_call = self._find_field_function_call(
-                    reference.name_three.functions
+                #
+                # the last field that is not a gate supplies the value,
+                # with a warning when there are two (compendium 5.20b). it
+                # was the first field, a gate included, until 2026-11-02.
+                #
+                field_call = self._last_field_function_call(
+                    [
+                        f
+                        for f in self._build_chain(reference.name_three.functions)
+                        if not self._is_name_three_gate(f)
+                    ]
                 )
             else:
                 # a bare, SOURCE == "definition" field accessor occupying

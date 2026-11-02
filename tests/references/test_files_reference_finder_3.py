@@ -1385,6 +1385,250 @@ class TestManifestGeneralChain:
         )
 
 
+#
+# finding G (2026-11-02): FILES name_three field chains. orders has two
+# file homes: orders.csv with four versions (csv, xlsx, csv, csv) and
+# other.csv with two (xlsx, csv). The version files are real, so a read
+# of a version's bytes can be checked.
+#
+G_TYPES = {
+    "g0": ("orders.csv", "csv", ""),
+    "g1": ("orders.csv", "xlsx", ""),
+    "g2": ("orders.csv", "csv", ":0/:filename"),
+    "g3": ("orders.csv", "csv", ""),
+    "h0": ("other.csv", "xlsx", ""),
+    "h1": ("other.csv", "csv", ""),
+}
+
+
+def _g_manifest(root) -> list:
+    entries = []
+    for n, (uuid, (file_name, file_type, template)) in enumerate(G_TYPES.items()):
+        file_home = os.path.join(str(root), "orders", file_name)
+        os.makedirs(file_home, exist_ok=True)
+        path = os.path.join(file_home, f"{uuid}.{file_type}")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(f"id\n{uuid}\n")
+        entries.append(
+            {
+                "file": path,
+                "file_home": file_home,
+                "type": file_type,
+                "template": template,
+                "fingerprint": f"f-{uuid}",
+                "uuid": uuid,
+                "time": f"2026-01-0{n + 1}T00:00:00+00:00",
+            }
+        )
+    return entries
+
+
+def _g_finder(reference: str, root, *, star: bool = False) -> FilesReferenceFinder3:
+    manifest = _g_manifest(root)
+    home = os.path.join(str(root), "orders")
+    return _finder(
+        reference,
+        home,
+        manifest,
+        inputs_files_path=str(root),
+        # under '*' a field value is read from the ledger, which holds
+        # every arrival, as a real one does
+        ledger=manifest if star else [],
+        by_name={"orders": (home, manifest)} if star else None,
+    )
+
+
+def _g_uuids(reference: str, root, *, star: bool = False) -> list:
+    return _g_finder(reference, root, star=star).query().uuids
+
+
+def _g_values(reference: str, root, *, star: bool = False) -> list:
+    finder = _g_finder(reference, root, star=star)
+    finder.csvpaths.logger = _FakeLogger()
+    return [r.data for r in finder.resolve().results]
+
+
+ORDERS = '$orders.files.:name("orders.csv")'
+
+
+class TestNameThreeGateParts:
+    def _built(self, reference: str, tmp_path) -> list:
+        finder = _g_finder(reference, tmp_path)
+        return finder._build_chain(finder.ref.parsed.name_three.functions)
+
+    def test_none_raises(self):
+        with pytest.raises(ValueError):
+            FilesReferenceFinder3._is_name_three_gate(None)
+
+    def test_which_functions_are_gates(self, tmp_path):
+        built = self._built(
+            f'{ORDERS}.:last():type("csv"):uuid():template(:empty())', tmp_path
+        )
+        assert [FilesReferenceFinder3._is_name_three_gate(f) for f in built] == [
+            False,
+            True,
+            False,
+            True,
+        ]
+
+    @pytest.mark.parametrize(
+        "field", ['source_port("email")', "on_arrival(:not_none())"]
+    )
+    def test_a_definition_field_is_not_a_gate(self, field, tmp_path):
+        # its argument picks a key or filters definition.json, never the
+        # versions, so the last version still comes back
+        reference = f"{ORDERS}.:last():{field}"
+        built = self._built(reference, tmp_path)
+        assert not FilesReferenceFinder3._is_name_three_gate(built[1])
+        assert _g_uuids(reference, tmp_path) == ["g3"]
+
+    def test_a_time_window_is_not_a_gate(self, tmp_path):
+        built = self._built(f"{ORDERS}.:yesterday()", tmp_path)
+        assert not FilesReferenceFinder3._is_name_three_gate(built[0])
+
+    def test_filter_by_gates_rejects_none(self, tmp_path):
+        finder = _g_finder(f"{ORDERS}.:last()", tmp_path)
+        with pytest.raises(ValueError):
+            finder._filter_by_gates(
+                reference=finder.ref.parsed, gates=None, candidates=[]
+            )
+        with pytest.raises(ValueError):
+            finder._filter_by_gates(
+                reference=finder.ref.parsed, gates=[], candidates=None
+            )
+
+
+class TestNameThreeGates:
+    # an argued manifest.json field in name_three filters the versions.
+    # it was never applied on query, and on resolve the first field won,
+    # the gate's own value included.
+    def test_a_gate_filters(self, tmp_path):
+        assert _g_uuids(f'{ORDERS}.:type("xlsx"):uuid()', tmp_path) == ["g1"]
+        assert _g_uuids(f'{ORDERS}.:type("json"):uuid()', tmp_path) == []
+
+    def test_a_gate_supplies_no_value(self, tmp_path):
+        assert _g_values(f'{ORDERS}.:type("csv"):uuid()', tmp_path) == [
+            "g0",
+            "g2",
+            "g3",
+        ]
+        assert _g_values(f'{ORDERS}.:last():uuid():type("csv")', tmp_path) == ["g3"]
+
+    @pytest.mark.parametrize(
+        "chain", [':last():type("xlsx")', ':type("xlsx"):last()']
+    )
+    def test_the_pointer_picks_from_what_the_gate_leaves(self, chain, tmp_path):
+        # the last version is a csv, so a pointer before the gate would
+        # find nothing; the last xlsx is g1.
+        assert _g_uuids(f"{ORDERS}.{chain}", tmp_path) == ["g1"]
+
+    def test_first_after_a_gate(self, tmp_path):
+        assert _g_uuids(f'{ORDERS}.:first():type("xlsx")', tmp_path) == ["g1"]
+
+    @pytest.mark.parametrize(
+        "chain",
+        [':from(0):to(1):type("csv"):uuid()', ':type("csv"):from(0):to(1):uuid()'],
+    )
+    def test_the_range_comes_before_the_gate(self, chain, tmp_path):
+        # compendium 6.28 (2026-11-02): the csv versions among the first
+        # two, not the first two csv versions (that would be g0, g2).
+        assert _g_values(f"{ORDERS}.{chain}", tmp_path) == ["g0"]
+
+    def test_range_then_gate_then_pointer(self, tmp_path):
+        reference = f'{ORDERS}.:from(0):to(2):type("csv"):last():uuid()'
+        assert _g_values(reference, tmp_path) == ["g2"]
+
+    def test_two_gates_are_anded(self, tmp_path):
+        reference = f'{ORDERS}.:type("csv"):template(:empty()):uuid()'
+        assert _g_values(reference, tmp_path) == ["g0", "g3"]
+
+    def test_with_only_a_gate_resolve_gives_the_version_bytes(self, tmp_path):
+        # as '.:last()' does without the gate: name_three always points.
+        finder = _g_finder(f'{ORDERS}.:last():type("csv")', tmp_path)
+        assert finder.query().uuids == ["g3"]
+        assert finder.resolve().results[0].data == b"id\ng3\n"
+
+    def test_with_only_a_gate_beside_manifest_resolve_gives_the_entry(self, tmp_path):
+        finder = _g_finder(f'{ORDERS}.:last():manifest():type("xlsx")', tmp_path)
+        results = finder.resolve().results
+        assert [r.data["uuid"] for r in results] == ["g1"]
+        assert results[0].path == os.path.join(str(tmp_path), "orders", "manifest.json")
+
+    def test_a_gate_beside_manifest_is_still_a_whole_entry_read(self, tmp_path):
+        # several whole entries at once: flagged, as without the gate
+        results = _g_finder(f'{ORDERS}.:manifest():type("csv")', tmp_path).query()
+        assert results.uuids == ["g0", "g2", "g3"]
+        assert results.ambiguous_content_read
+        reference = f'{ORDERS}.:manifest():type("csv"):uuid()'
+        results = _g_finder(reference, tmp_path).query()
+        assert not results.ambiguous_content_read
+
+    def test_gates_apply_in_each_file_home(self, tmp_path):
+        reference = '$orders.files.:all().:last():type("xlsx")'
+        assert _g_uuids(reference, tmp_path) == ["g1", "h0"]
+
+    def test_gates_apply_in_each_file_home_with_a_range(self, tmp_path):
+        reference = '$orders.files.:all().:from(0):to(1):type("csv"):uuid()'
+        assert _g_values(reference, tmp_path) == ["g0", "h1"]
+
+
+class TestNameThreeValueField:
+    # compendium 5.20b: the last value field wins, with a warning.
+    def test_the_last_field_wins(self, tmp_path):
+        assert _g_values(f"{ORDERS}.:last():fingerprint():template()", tmp_path) == [
+            ""
+        ]
+        assert _g_values(f"{ORDERS}.:last():template():fingerprint()", tmp_path) == [
+            "f-g3"
+        ]
+
+    def test_two_value_fields_warn(self, tmp_path):
+        finder = _g_finder(f"{ORDERS}.:last():fingerprint():uuid()", tmp_path)
+        logger = _FakeLogger()
+        finder.csvpaths.logger = logger
+        assert [r.data for r in finder.resolve().results] == ["g3"]
+        assert len(logger.warnings) == 1
+
+    def test_a_gate_does_not_count_toward_the_warning(self, tmp_path):
+        finder = _g_finder(f'{ORDERS}.:last():type("csv"):uuid()', tmp_path)
+        logger = _FakeLogger()
+        finder.csvpaths.logger = logger
+        assert [r.data for r in finder.resolve().results] == ["g3"]
+        assert logger.warnings == []
+
+
+class TestStarNameThreeGates:
+    # the same rules under '*' traversal.
+    def test_a_gate_filters_the_pool(self, tmp_path):
+        reference = '$*.files.:name("orders.csv").:type("xlsx"):uuid()'
+        assert _g_values(reference, tmp_path, star=True) == ["g1"]
+
+    def test_a_gate_with_no_pointer(self, tmp_path):
+        reference = '$*.files.*.:type("xlsx")'
+        assert _g_uuids(reference, tmp_path, star=True) == ["g1", "h0"]
+
+    def test_the_pointer_picks_from_what_the_gate_leaves(self, tmp_path):
+        # h1 (other.csv) is the latest arrival, and a csv
+        reference = '$*.files.*.:type("xlsx"):last():uuid()'
+        assert _g_values(reference, tmp_path, star=True) == ["h0"]
+
+    def test_gates_apply_in_each_file_home(self, tmp_path):
+        reference = '$*.files.:all().:last():type("xlsx")'
+        assert _g_uuids(reference, tmp_path, star=True) == ["g1", "h0"]
+
+    def test_the_range_comes_before_the_gate(self, tmp_path):
+        reference = '$*.files.:name("orders.csv").:from(0):to(1):type("csv"):uuid()'
+        assert _g_values(reference, tmp_path, star=True) == ["g0"]
+
+    def test_the_last_field_wins(self, tmp_path):
+        reference = '$*.files.:name("orders.csv").:last():fingerprint():template()'
+        assert _g_values(reference, tmp_path, star=True) == [""]
+
+    def test_with_only_a_gate_resolve_gives_the_version_bytes(self, tmp_path):
+        finder = _g_finder('$*.files.*.:type("xlsx"):last()', tmp_path, star=True)
+        assert finder.resolve().results[0].data == b"id\nh0\n"
+
+
 class TestStarTraversalGroup:
     # bare ':all()' as name_one's entire content partitions every
     # named-file's EXACTLY-one-level matches (corrected 2026-08-12 to
