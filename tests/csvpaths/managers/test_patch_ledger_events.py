@@ -109,9 +109,9 @@ def _rows(paths: CsvPaths, *, sql: str) -> list[dict]:
         return [dict(r._mapping) for r in conn.execute(text(sql))]
 
 
-def _query(paths: CsvPaths, reference: str):
+def _finder(paths: CsvPaths, reference: str) -> FilesReferenceFinder3:
     ref = ReferenceParser3(string=reference, csvpaths=paths)
-    return FilesReferenceFinder3(csvpaths=paths, ref=ref).query()
+    return FilesReferenceFinder3(csvpaths=paths, ref=ref)
 
 
 # ===================
@@ -282,9 +282,16 @@ def test_a_star_read_returns_the_patched_path(plain, tmp_path):
     _register(plain, tmp_path)
     old = _ledger(plain)[0]["file_path"]
     _patch(plain, patch={"type": "tsv", "file_name": "orders_v2"})
-    r = _query(plain, "$*.files.:manifest():uuid()")
-    assert r.files == [_manifest(plain)[0]["file"]]
-    assert old not in r.files
+    #
+    # the query path of a ledger record is the ledger itself (compendium
+    # 5.7, 2026-11-01), so the patched path is read as the record's
+    # :file_path() value.
+    #
+    r = _finder(plain, "$*.files.:manifest():file_path()").resolve()
+    values = [x.data for x in r.results]
+    assert values == [_manifest(plain)[0]["file"]]
+    assert old not in values
+    assert r.files == [FilesListener(csvpaths=plain).manifest_path()]
 
 
 # ===================

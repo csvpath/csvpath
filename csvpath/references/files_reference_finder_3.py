@@ -358,10 +358,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
             manifest = self._filter_by_manifest_chain_gate(
                 reference=reference, call=manifest_field_call, entries=manifest
             )
+            path = self._root_manifest_path(root_major)
             return ReferenceResults3(
-                results=[
-                    ReferenceResult3(path=e["file"], uuid=e["uuid"]) for e in manifest
-                ]
+                results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in manifest]
             )
 
         pointer_call = self._pointer_before_manifest(reference, "manifest")
@@ -390,8 +389,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
             selected = self._apply_pointer(pointer_call, manifest)
             if selected is None:
                 return ReferenceResults3(results=[])
+            path = self._root_manifest_path(root_major)
             return ReferenceResults3(
-                results=[ReferenceResult3(path=selected["file"], uuid=selected["uuid"])]
+                results=[ReferenceResult3(path=path, uuid=selected["uuid"])]
             )
 
         field_call = self._extract_gate_field_call(name_one)
@@ -697,9 +697,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # candidate that prefix matched, analogous to
                 # _bare_manifest_field_call()'s own "map a field over
                 # every entry" shape but with no field to drill into.
+                path = self._root_manifest_path(root_major)
                 return ReferenceResults3(
                     results=[
-                        ReferenceResult3(path=c["file"], uuid=c["uuid"])
+                        ReferenceResult3(path=path, uuid=c["uuid"])
                         for c in candidates
                     ]
                 )
@@ -1006,10 +1007,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # same as before.
                 selected_candidates = candidates
 
+        #
+        # an explicit ':manifest()' names each version's manifest entry,
+        # so query() gives the named-file's manifest.json (compendium 5.7).
+        #
+        manifest_path = self._root_manifest_path(root_major) if has_manifest else None
         return ReferenceResults3(
             results=[
                 ReferenceResult3(
-                    path=c["file"], uuid=c["uuid"], identity=name_one.name_two
+                    path=manifest_path or c["file"],
+                    uuid=c["uuid"],
+                    identity=name_one.name_two,
                 )
                 for c in selected_candidates
             ],
@@ -1392,11 +1400,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
             entries = self._filter_by_manifest_chain_gate(
                 reference=reference, call=manifest_field_call, entries=entries
             )
+            #
+            # ledger records: query() gives the ledger's own path
+            # (compendium 5.7).
+            #
+            path = self._files_ledger_path()
             return ReferenceResults3(
-                results=[
-                    ReferenceResult3(path=e["file_path"], uuid=e["uuid"])
-                    for e in entries
-                ]
+                results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in entries]
             )
         else:
             # issue #438: mirrors query()'s own identical normalization
@@ -1540,6 +1550,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 return self._apply_range(cands, lower_call, upper_call)
             return cands
 
+        def _result_path(candidate: dict) -> str:
+            # an explicit ':manifest()' names the version's entry in its
+            # own named-file's manifest.json (compendium 5.7, 6.13b(iv)).
+            if has_manifest:
+                return self._named_file_manifest_path(
+                    entry=candidate, names=self.source.file_names()
+                )
+            return candidate["file"]
+
         if not pointers:
             # a field accessor alone (no pointer) is legal here too --
             # added 2026-09-25, matching the literal-root query()'s own
@@ -1585,7 +1604,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     candidates = _narrow(sorted(candidates, key=lambda e: e["time"]))
             return ReferenceResults3(
                 results=[
-                    ReferenceResult3(path=c["file"], uuid=c["uuid"])
+                    ReferenceResult3(path=_result_path(c), uuid=c["uuid"])
                     for c in candidates
                 ],
                 ambiguous_content_read=(
@@ -1611,7 +1630,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
         return ReferenceResults3(
             results=[
-                ReferenceResult3(path=c["file"], uuid=c["uuid"])
+                ReferenceResult3(path=_result_path(c), uuid=c["uuid"])
                 for c in selected_candidates
             ],
             # ':manifest()' (whole-resource, no field riding alongside
@@ -2035,9 +2054,61 @@ class FilesReferenceFinder3(ReferenceFinder3):
         path(...), so no call site changes."""
         path = entry.get("file_path") or entry.get("origin_path")
         if not path:
-            home = self.csvpaths.config.inputs_files_path
-            return Nos(home).join("manifest.json")
+            return self._files_ledger_path()
         return path
+
+    def _files_ledger_path(self) -> str:
+        """the global arrivals ledger's own manifest.json."""
+        return Nos(self.csvpaths.config.inputs_files_path).join("manifest.json")
+
+    def _live_manifest_entry_by_uuid(self, uuid: str) -> "dict | None":
+        """the entry for `uuid` in whichever live named-file's own
+        manifest holds it, or None."""
+        if not uuid:
+            raise ValueError("uuid cannot be None or empty")
+        for name in self.source.file_names():
+            entry = self._find_manifest_entry_by_uuid(
+                self.source.file_manifest(name), uuid
+            )
+            if entry is not None:
+                return entry
+        return None
+
+    def _root_manifest_path(self, name: str) -> str:
+        """the manifest.json of the one named-file a literal root_major
+        names. See _named_file_manifest_path() for why a reference that
+        names a manifest entry gives this path on query()."""
+        if not isinstance(name, str) or not name:
+            raise ValueError("name must be a non-empty string")
+        home = self.csvpaths.file_manager.named_file_home(name)
+        return Nos(home).join("manifest.json")
+
+    def _named_file_manifest_path(self, *, entry: dict, names: list) -> str:
+        """the manifest.json of the named-file that holds `entry`. A
+        reference that names a manifest entry (an explicit ':manifest()')
+        gives this path on query(), with the entry's own uuid: the file
+        the entry is read from (compendium 5.7's pattern, agreed with
+        David 2026-11-01). `names` are the named-files the entry can
+        belong to: root_major's one name, or every name '*' traversal
+        read. The entry's file_home sits under its named-file's home,
+        the same placement _matches() relies on."""
+        if not isinstance(entry, dict):
+            raise TypeError("entry must be a dict")
+        if not names:
+            raise ValueError("names cannot be None or empty")
+        file_home = entry.get("file_home")
+        if not file_home:
+            raise ValueError(f"manifest entry {entry.get('uuid')!r} has no file_home")
+        file_parts = pathu.parts(file_home)
+        for name in names:
+            home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
+            home_parts = pathu.parts(home)
+            if file_parts[: len(home_parts)] == home_parts:
+                return Nos(home).join("manifest.json")
+        raise ReferenceException3(
+            f"FilesReferenceFinder3 found no named-file holding the manifest "
+            f"entry {entry.get('uuid')!r} (file_home {file_home!r})."
+        )
 
     @staticmethod
     def _is_bare_all_reference(name_one) -> bool:
@@ -2481,13 +2552,27 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     reference.root_major
                 )
                 return self._find_manifest_entry_by_uuid(manifest, result.uuid)
-            if isinstance(reference.root_major, Star3) and result.uuid is not None:
+            if (
+                isinstance(reference.root_major, Star3)
+                and result.uuid is not None
+                and self._pointer_before_manifest(reference, "manifest") is not None
+            ):
                 # Rule 1b -- a pointer already reduced the global ledger
                 # to one entry in query(); re-derive it the same way the
                 # per-entity branch below does, just against the ledger
                 # instead of a named-file's own manifest.
                 ledger = self.source.files_ledger()
                 return self._find_manifest_entry_by_uuid(ledger, result.uuid)
+            if (
+                isinstance(reference.root_major, Star3)
+                and result.uuid is not None
+                and reference.name_three is not None
+            ):
+                # '*' traversal selected a live version from one
+                # named-file (6.13b(iv)); its entry is in that
+                # named-file's own manifest, the path query() gave. Was
+                # read from the ledger before 2026-11-01.
+                return self._live_manifest_entry_by_uuid(result.uuid)
             if (
                 not isinstance(reference.root_major, Star3)
                 and self._pointer_before_manifest(reference, "manifest") is not None

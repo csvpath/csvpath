@@ -1099,13 +1099,17 @@ class TestManifestChainGate:
             "u-b1"
         ]
 
-    def test_query_paths_are_the_matching_files(self):
-        assert _gate_finder('$*.files.:manifest():type("xlsx")').query().files == [
-            "inputs/named_files/alpha/one.csv/a2.xlsx"
-        ]
-        assert _gate_finder(
-            '$alpha.files.:manifest():type("xlsx")'
-        ).query().files == ["inputs/named_files/alpha/one.csv/a2.xlsx"]
+    def test_query_paths_are_the_manifests_holding_the_matches(self):
+        # changed 2026-11-01 (was: the matching version files). The
+        # entries are manifest records, so query() gives the manifest
+        # each is read from (compendium 5.7): the ledger under '*', the
+        # named-file's own manifest at a literal root.
+        results = _gate_finder('$*.files.:manifest():type("xlsx")').query()
+        assert results.files == ["inputs/named_files/manifest.json"]
+        assert results.uuids == ["u-a2"]
+        results = _gate_finder('$alpha.files.:manifest():type("xlsx")').query()
+        assert results.files == ["inputs/named_files/alpha/manifest.json"]
+        assert results.uuids == ["u-a2"]
 
     def test_star_resolve_gives_the_matching_ledger_entries(self):
         # a filter supplies no value (compendium 5.20b/6.40), so resolve
@@ -2934,16 +2938,16 @@ class TestManifestPointerSymmetry:
         ).resolve()
         assert results.results[0].data == ALPHA_MANIFEST[-1]
 
-    def test_query_gives_the_selected_versions_own_path_and_uuid(self):
-        # unlike the global ledger case (Rule 1b, which points at
-        # manifest.json itself since the ledger has no other home), this
-        # points at the selected VERSION's own file, since that is what
-        # this named-file's own manifest entries describe.
+    def test_query_gives_the_named_files_manifest_and_the_entry_uuid(self):
+        # changed 2026-11-01 (was: the selected version's own file). The
+        # reference names a manifest entry, so query() gives the
+        # manifest.json it is read from, as the global ledger case
+        # (Rule 1b) always has (compendium 5.7).
         results = _finder(
             "$alpha.files.:manifest():last()", ALPHA_HOME, ALPHA_MANIFEST
         ).query()
         assert results.results[0].uuid == "u-one-2"
-        assert results.results[0].path == ALPHA_MANIFEST[-1]["file"]
+        assert results.results[0].path == "inputs/named_files/alpha/manifest.json"
 
     def test_templated_single_entry_manifest_works_the_same_way(self):
         results = _finder(
@@ -4467,3 +4471,253 @@ class TestChoiceAsNameOnePathSegment:
         # -- proving :choice() was correctly recognized as path-
         # building, same as :name()/:regex().
         assert "requires a version-selecting pointer" in str(exc_info.value)
+
+
+def _entry_star_finder(reference: str) -> FilesReferenceFinder3:
+    return _finder(
+        reference,
+        STAR_ALPHA_HOME,
+        STAR_ALPHA_MANIFEST,
+        by_name=STAR_BY_NAME,
+        ledger=STAR_LEDGER,
+        inputs_files_path="inputs/named_files",
+    )
+
+
+ALPHA_MANIFEST_JSON = "inputs/named_files/alpha/manifest.json"
+BETA_MANIFEST_JSON = "inputs/named_files/beta/manifest.json"
+LEDGER_MANIFEST_JSON = "inputs/named_files/manifest.json"
+
+
+class TestManifestEntryQueryPaths:
+    # added 2026-11-01. A reference with an explicit ':manifest()' names
+    # a manifest entry, a record, so query() gives the manifest.json the
+    # entry is read from, with the entry's uuid (compendium 5.7; agreed
+    # with David 2026-11-01): the named-file's own manifest, or the
+    # global ledger for a '*' ledger read. These used to give the
+    # version's own data file. Forms without ':manifest()' name the
+    # version and keep its file. resolve() is unchanged except under '*'
+    # traversal, which now reads the live named-file's entry.
+
+    @staticmethod
+    def _alpha(reference: str):
+        return _finder(reference, ALPHA_HOME, ALPHA_MANIFEST).query()
+
+    @pytest.mark.parametrize(
+        "reference,uuids",
+        [
+            ("$alpha.files.:last():manifest()", ["u-one-2"]),
+            ("$alpha.files.:manifest():last()", ["u-one-2"]),
+            ("$alpha.files.:index(0):manifest()", ["u-zero-1"]),
+            ('$alpha.files.:name("one.csv").:first():manifest()', ["u-one-1"]),
+            ('$alpha.files.:name("one.csv").:last():manifest()', ["u-one-2"]),
+            ('$alpha.files.:name("one.csv").:manifest()', ["u-one-1", "u-one-2"]),
+            ('$alpha.files.:name("one.csv"):manifest()', ["u-one-1", "u-one-2"]),
+            ("$alpha.files.*.:last():manifest()", ["u-one-2"]),
+            ("$alpha.files.:all().:last():manifest()", ["u-one-2", "u-zero-1"]),
+            ("$alpha.files.:flatten().:last():manifest()", ["u-one-2"]),
+            ("$alpha.files.:manifest():uuid()", ["u-zero-1", "u-one-1", "u-one-2"]),
+            ('$alpha.files.:name("one.csv").:first():manifest():uuid()', ["u-one-1"]),
+        ],
+    )
+    def test_literal_root_gives_the_named_files_manifest(self, reference, uuids):
+        results = self._alpha(reference)
+        assert results.uuids == uuids
+        assert results.files == [ALPHA_MANIFEST_JSON] * len(uuids)
+
+    def test_a_gate_beside_manifest_gives_the_named_files_manifest(self):
+        results = _gate_finder('$alpha.files.:manifest():status("complete")').query()
+        assert results.uuids == ["u-a1", "u-a2"]
+        assert results.files == [ALPHA_MANIFEST_JSON] * 2
+
+    def test_a_templated_named_file_gives_its_own_manifest(self):
+        results = _finder(
+            "$acme.files.:manifest():last()", TEMPLATED_HOME, TEMPLATED_MANIFEST
+        ).query()
+        assert results.files == ["inputs/named_files/acme/manifest.json"]
+        assert results.uuids == ["u-q2-1"]
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            '$alpha.files.:name("one.csv").:first()',
+            '$alpha.files.:name("one.csv").:first():uuid()',
+            "$alpha.files.:first()",
+            "$alpha.files.*.:last()",
+        ],
+    )
+    def test_without_manifest_the_version_keeps_its_file(self, reference):
+        for result in self._alpha(reference).results:
+            assert result.path.endswith(".csv")
+
+    def test_bare_manifest_is_still_the_whole_file(self):
+        results = self._alpha("$alpha.files.:manifest()")
+        assert results.files == [ALPHA_MANIFEST_JSON]
+        assert results.uuids == [None]
+
+    def test_literal_resolve_still_gives_the_entry(self):
+        results = _finder(
+            '$alpha.files.:name("one.csv").:first():manifest()',
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+        ).resolve()
+        assert results.results[0].data == ALPHA_MANIFEST[1]
+
+    def test_literal_field_resolve_is_unchanged(self):
+        results = _finder(
+            "$alpha.files.:manifest():uuid()", ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert [r.data for r in results.results] == ["u-zero-1", "u-one-1", "u-one-2"]
+
+    @pytest.mark.parametrize(
+        "reference,expected",
+        [
+            ("$*.files.*.:last():manifest()", [(BETA_MANIFEST_JSON, "u-two-2")]),
+            (
+                "$*.files.:flatten().:last():manifest()",
+                [(BETA_MANIFEST_JSON, "u-two-2")],
+            ),
+            ("$*.files.*.bbb:manifest()", [(ALPHA_MANIFEST_JSON, "u-one-1")]),
+            (
+                "$*.files.:all().:last():manifest()",
+                [
+                    (ALPHA_MANIFEST_JSON, "u-one-2"),
+                    (ALPHA_MANIFEST_JSON, "u-zero-1"),
+                    (BETA_MANIFEST_JSON, "u-two-2"),
+                ],
+            ),
+            (
+                "$*.files.:groups().:last():manifest()",
+                [
+                    (ALPHA_MANIFEST_JSON, "u-one-2"),
+                    (ALPHA_MANIFEST_JSON, "u-zero-1"),
+                    (BETA_MANIFEST_JSON, "u-two-2"),
+                ],
+            ),
+        ],
+    )
+    def test_star_traversal_gives_each_entrys_own_named_file(self, reference, expected):
+        results = _entry_star_finder(reference).query()
+        assert [(r.path, r.uuid) for r in results.results] == expected
+
+    def test_star_traversal_without_a_pointer_lists_every_entry(self):
+        results = _entry_star_finder("$*.files.*.:manifest()").query()
+        assert [(r.path, r.uuid) for r in results.results] == [
+            (ALPHA_MANIFEST_JSON, "u-zero-1"),
+            (ALPHA_MANIFEST_JSON, "u-one-1"),
+            (ALPHA_MANIFEST_JSON, "u-one-2"),
+            (BETA_MANIFEST_JSON, "u-two-1"),
+            (BETA_MANIFEST_JSON, "u-two-2"),
+        ]
+
+    def test_star_traversal_without_manifest_keeps_the_version_file(self):
+        results = _entry_star_finder("$*.files.*.:last()").query()
+        assert results.files == ["inputs/named_files/beta/two.csv/eee.csv"]
+
+    def test_star_traversal_resolve_reads_the_named_files_entry(self):
+        # R1, fixed 2026-11-01: it read the ledger entry. STAR_LEDGER's
+        # entries hold only uuid and fingerprint, so a "file" key shows
+        # the named-file's own entry was read.
+        results = _entry_star_finder("$*.files.*.bbb:manifest()").resolve()
+        assert results.results[0].data == STAR_ALPHA_MANIFEST[1]
+
+    def test_star_group_resolve_reads_each_named_files_entry(self):
+        results = _entry_star_finder("$*.files.:all().:last():manifest()").resolve()
+        assert [r.data["file"] for r in results.results] == [
+            "inputs/named_files/alpha/one.csv/ccc.csv",
+            "inputs/named_files/alpha/zero.csv/aaa.csv",
+            "inputs/named_files/beta/two.csv/eee.csv",
+        ]
+
+    def test_rule_1b_still_gives_and_reads_the_ledger(self):
+        finder = _entry_star_finder("$*.files.:last():manifest()")
+        results = finder.query()
+        assert [(r.path, r.uuid) for r in results.results] == [
+            (LEDGER_MANIFEST_JSON, "u-two-2")
+        ]
+        data = _entry_star_finder("$*.files.:last():manifest()").resolve()
+        assert data.results[0].data == {"uuid": "u-two-2", "fingerprint": "eee"}
+
+    def test_a_star_ledger_field_read_gives_the_ledger(self):
+        finder = _finder(
+            "$*.files.:manifest():uuid()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=MANIFEST_FIELD_LEDGER,
+        )
+        results = finder.query()
+        assert results.files == [LEDGER_MANIFEST_JSON] * 2
+        assert results.uuids == ["u-ledger-1", "u-ledger-2"]
+
+    def test_a_star_ledger_gate_gives_the_ledger(self):
+        results = _gate_finder('$*.files.:manifest():status("complete")').query()
+        assert results.files == [LEDGER_MANIFEST_JSON] * 3
+        assert results.uuids == ["u-a1", "u-a2", "u-b1"]
+
+    def test_a_bare_star_gate_keeps_the_version_files(self):
+        # no ':manifest()': Group 3, unchanged here (the C1 bare-half
+        # revert will move it off the ledger).
+        results = _gate_finder('$*.files.:status("complete")').query()
+        assert all(f.endswith((".csv", ".xlsx")) for f in results.files)
+
+
+class TestNamedFileManifestPathHelpers:
+    # the helpers behind TestManifestEntryQueryPaths.
+
+    @staticmethod
+    def _star():
+        return _entry_star_finder("$*.files.*.:last():manifest()")
+
+    def test_finds_the_named_file_holding_the_entry(self):
+        entry = STAR_BY_NAME["beta"][1][0]
+        path = self._star()._named_file_manifest_path(
+            entry=entry, names=["alpha", "beta"]
+        )
+        assert path == BETA_MANIFEST_JSON
+
+    def test_a_name_that_prefixes_another_is_not_confused(self):
+        by_name = {
+            "alpha": ("inputs/named_files/alpha", []),
+            "alphabet": ("inputs/named_files/alphabet", []),
+        }
+        finder = _finder(
+            "$*.files.*.:last():manifest()", ALPHA_HOME, [], by_name=by_name
+        )
+        entry = {"file_home": "inputs/named_files/alphabet/x.csv", "uuid": "u"}
+        path = finder._named_file_manifest_path(
+            entry=entry, names=["alpha", "alphabet"]
+        )
+        assert path == "inputs/named_files/alphabet/manifest.json"
+
+    def test_an_entry_in_no_named_file_raises(self):
+        entry = {"file_home": "elsewhere/x.csv", "uuid": "u"}
+        with pytest.raises(ReferenceException3):
+            self._star()._named_file_manifest_path(entry=entry, names=["alpha"])
+
+    def test_bad_arguments_raise(self):
+        finder = self._star()
+        with pytest.raises(TypeError):
+            finder._named_file_manifest_path(entry=None, names=["alpha"])
+        with pytest.raises(ValueError):
+            finder._named_file_manifest_path(entry={"file_home": "x"}, names=[])
+        with pytest.raises(ValueError, match="has no file_home"):
+            finder._named_file_manifest_path(entry={"uuid": "u"}, names=["alpha"])
+
+    def test_root_manifest_path(self):
+        finder = _finder("$alpha.files.:manifest()", ALPHA_HOME, ALPHA_MANIFEST)
+        assert finder._root_manifest_path("alpha") == ALPHA_MANIFEST_JSON
+        with pytest.raises(ValueError):
+            finder._root_manifest_path("")
+        with pytest.raises(ValueError):
+            finder._root_manifest_path(None)
+
+    def test_files_ledger_path(self):
+        assert self._star()._files_ledger_path() == LEDGER_MANIFEST_JSON
+
+    def test_live_manifest_entry_by_uuid(self):
+        finder = self._star()
+        assert finder._live_manifest_entry_by_uuid("u-two-1") == STAR_BETA_MANIFEST[0]
+        assert finder._live_manifest_entry_by_uuid("nope") is None
+        with pytest.raises(ValueError):
+            finder._live_manifest_entry_by_uuid("")

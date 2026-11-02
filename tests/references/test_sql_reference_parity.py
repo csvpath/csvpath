@@ -29,6 +29,7 @@ from csvpath.references.sources.shadow_reference_source import (
 )
 from csvpath.references.sources.sql_reference_source import SqlReferenceSource
 from csvpath.util.box import Box
+from csvpath.util.nos import Nos
 
 FIRST = "~ id: first_id ~ $[*][yes()]"
 SECOND = "~ id: second_id ~ $[*][no()]"
@@ -193,6 +194,15 @@ FILES = [
     "$again.files.:flatten().:first()",
     "$gone.files.:all()",
     "$nope.files.:all()",
+    #
+    # an explicit ':manifest()' gives the manifest holding the entry on
+    # query (compendium 5.7, 2026-11-01)
+    #
+    "$orders.files.:manifest():first()",
+    "$orders.files.:manifest():uuid()",
+    "$orders.files.:flatten().:last():manifest()",
+    "$*.files.:flatten().:last():manifest()",
+    "$*.files.:all().:last():manifest()",
 ]
 
 CSVPATHS = [
@@ -233,6 +243,9 @@ CSVPATHS = [
     "$beta.csvpaths.:all()",
     "$xgone.csvpaths.:all()",
     "$nope.csvpaths.:all()",
+    "$acme.csvpaths.:all():manifest()",
+    "$*.csvpaths.:all():last():manifest()",
+    "$*.csvpaths.:manifest():first()",
 ]
 
 
@@ -341,12 +354,19 @@ def test_star_ledger_read_keeps_the_deleted_group_in_both_modes(paths):
     #
     # under '*', a field reads the root ledger, deleted entries included
     # (2026-10-30). the SQL ledger read keeps deleted rows, as the JSON
-    # ledger does, so both modes see xgone.
+    # ledger does, so both modes see xgone. with ':manifest()' each
+    # record's path is the ledger (compendium 5.7, 2026-11-01), so xgone
+    # is found by its uuid there.
     #
-    for reference in ["$*.csvpaths.:uuid()", "$*.csvpaths.:manifest():uuid()"]:
-        off, on = _both(paths, reference)
-        assert off == on
-        assert any("xgone" in f for f in off[1].files)
+    off, on = _both(paths, "$*.csvpaths.:uuid()")
+    assert off == on
+    assert any("xgone" in f for f in off[1].files)
+    bare_uuids = off[1].uuids
+    off, on = _both(paths, "$*.csvpaths.:manifest():uuid()")
+    assert off == on
+    assert off[1].uuids == bare_uuids
+    ledger = Nos(paths.config.inputs_csvpaths_path).join("manifest.json")
+    assert set(off[1].files) == {ledger}
 
 
 def test_star_manifest_set_keeps_the_deleted_run_in_both_modes(paths):
@@ -416,3 +436,33 @@ def test_shadow_finds_no_differences(paths):
         assert c["differences"] == 0, method
         assert c["sql_errors"] == 0, method
         assert c["matches"] == c["reads"], method
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        "$orders.files.:manifest():first()",
+        "$orders.files.:manifest():uuid()",
+        "$orders.files.:flatten().:last():manifest()",
+        "$*.files.:flatten().:last():manifest()",
+        "$*.files.:all().:last():manifest()",
+        "$*.files.:manifest():uuid()",
+        "$acme.csvpaths.:all():manifest()",
+        "$*.csvpaths.:all():last():manifest()",
+        "$*.csvpaths.:manifest():first()",
+        "$*.csvpaths.:manifest():uuid()",
+    ],
+)
+def test_a_manifest_entry_query_path_is_a_real_manifest(paths, reference):
+    #
+    # an explicit ':manifest()' gives the manifest.json holding each
+    # entry (compendium 5.7, 2026-11-01). each path is a real file on
+    # disk, in both modes.
+    #
+    off, on = _both(paths, reference)
+    assert off == on
+    assert off[0] == "ok"
+    assert off[1].results
+    for path in off[1].files:
+        assert path.endswith("manifest.json")
+        assert Nos(path).exists(), path
