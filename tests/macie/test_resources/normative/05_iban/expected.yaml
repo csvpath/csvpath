@@ -1,7 +1,8 @@
 #
 # IBANs: three of Macie's 52 <COUNTRY>_BANK_ACCOUNT_NUMBER identifiers, as
-# our stand-ins. One detector, iban, takes the country as its parameter
-# (iban:GB, iban:DE, iban:NL). No keyword is required.
+# our stand-ins. The iban detector takes the country as its parameter
+# (iban:NL). UK and Germany also detect BBANs, so they use the bank
+# detector (bank:GB, bank:DE), where IBANs need no keyword and BBANs do.
 #
 #   conversion:     MacieConverter.convert() arguments (see below)
 #   csvpath:        file in expected/ to run; the converter's exact output
@@ -50,11 +51,11 @@ runs:
     #   7     notes "GB29NWBK... / DE8937..."            UK and Germany: two
     #                                                    countries in one cell
     #   8     account "60-16-13 31926819"                nothing: a UK domestic sort
-    #                                                    code and account. Macie's
-    #                                                    UK_BANK_ACCOUNT_NUMBER would
-    #                                                    report it; ours doesn't yet,
-    #                                                    and the converter reports
-    #                                                    UK as partially translated
+    #                                                    code and account is detected
+    #                                                    only near a keyword, and the
+    #                                                    header "account" is not one
+    #                                                    ("account number" is). See
+    #                                                    pair 08_bban
     #   9     account FR1420041010050500013M02606        nothing: a valid French IBAN,
     #                                                    but France is not selected
     #   10    notes "gb29-nwbk-6016-1331-9268-19"        UK: lower case, hyphens

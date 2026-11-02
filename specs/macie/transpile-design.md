@@ -298,6 +298,7 @@ conversion.report.skipped   # what was not translated
 | `GroupedDigitsDetector` | fixed-length digits, printed in groups or fixed formats, with a named check digit: SIN, NHS, CPF, CNPJ, SUBE |
 | `ClRutDetector` | Chile RUT and RUN: 7 or 8 digits and a check character, 0-9 or K |
 | `VinDetector` | 17-character VINs; no check digit required |
+| `BankAccountDetector` | FR, DE, IT, ES, UK: IBANs (no keyword) and BBANs (keyword), plus UK sort code and account |
 | `IbanDetector` | one country's IBANs: length, printed layout, ISO 13616 mod 97 |
 | `UsSsnDetector`, `UsNpiDetector` | SSA's SSN rules; CMS's NPI check digit (Luhn over 80840) |
 | `ChecksumUtility` (`chut`) | check-digit algorithms (Luhn so far) |
@@ -411,13 +412,30 @@ standards.
     separator throughout;
   - letters in either case.
 - **Severity.** FINANCIAL_INFORMATION, HIGH from one occurrence.
-- **Partial translations.** Macie's France, Germany, Italy, Spain and UK
-  identifiers also detect national Basic Bank Account Numbers (BBANs) near
-  a keyword, and the UK one also detects domestic sort code and account
-  numbers (`60-16-13 31926819`). For now we translate only their IBAN
-  part. Their catalog entries carry a `partial` note, and the converter
-  reports each one as `managedDataIdentifier.partial`, so the gap is never
-  silent. BBANs are a worklist item.
+- **BBANs.** Macie's France, Germany, Italy, Spain and UK identifiers
+  also detect national Basic Bank Account Numbers near a keyword, and the
+  UK one also detects domestic sort code and account numbers
+  (`60-16-13 31926819`). Those five use the `bank` detector (`bank:GB`,
+  ...): IBANs as above, which need no keyword, plus the country's BBAN,
+  which needs one from Macie's per-country list. The detector marks IBAN
+  matches `keyword_exempt`, and `ManagedIdentifier` skips the keyword
+  rule for exempt matches when the mode is `required`. A BBAN inside an
+  IBAN is part of the IBAN, not a second account.
+
+  | Country | BBAN shape | Printed layouts | Check |
+  |---|---|---|---|
+  | France | 10 digits, 11 letters or digits, 2 digits | groups of 4; 5-5-11-2 | RIB key (`chut.fr_rib_key`) |
+  | Spain | 20 digits | groups of 4; 4-4-2-10 | two check digits (`chut.es_bban`) |
+  | Italy | letter, 10 digits, 12 letters or digits | groups of 4; 1-5-5-12 | none: the CIN letter is not checked |
+  | Germany | 18 digits | groups of 4; 8-10 | none |
+  | UK | 4 letters, 14 digits; plus sort code and account | groups of 4; 4-6-8; `##-##-## ########` and `## ## ## ########` | none |
+
+  The French RIB key and the Spanish check digits were confirmed against
+  the BBANs inside published IBANs that pass mod 97. Italy's CIN rule
+  could not be confirmed from an authoritative source, and a wrong rule
+  would miss real accounts, so it is not enforced. Germany and the UK
+  have no generic BBAN check, because account checks there are
+  bank-specific. The layouts are ours.
 
 **Canada SIN, UK NHS numbers and VINs**:
 - **`CANADA_SOCIAL_INSURANCE_NUMBER`** and **`UK_NHS_NUMBER`.** Macie
@@ -494,6 +512,9 @@ every detector the catalog names exists, and every detector is used.
 8. CPF, CNPJ and RUT formats are the issuers'. Does Macie accept a RUT
    with no hyphen (`123456785`), as we do? Does it reject repeated-digit
    CPFs and CNPJs?
+9. BBANs: does Macie check Italy's CIN letter, or anything for German
+   and UK BBANs? Which printed layouts does it accept? (Macie's examples
+   are only contiguous and groups of four.)
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

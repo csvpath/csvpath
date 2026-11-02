@@ -103,6 +103,7 @@ def test_macie_catalog_packaged(catalog) -> None:
     assert len(catalog.detector(name="credit_card")["exclusions"]) == 55
     assert set(DETECTORS) == {
         "ar_sube",
+        "bank",
         "br_cnpj",
         "br_cpf",
         "ca_sin",

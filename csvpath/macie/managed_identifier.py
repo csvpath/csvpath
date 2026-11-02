@@ -108,6 +108,17 @@ class ManagedIdentifier:
     ) -> bool:
         if self.keyword_mode == "none":
             return True
+        #
+        # a detector may say a match needs no keyword, e.g. the bank
+        # detector's IBANs, where only its BBANs need one
+        #
+        exempt = getattr(self.detector, "keyword_exempt", None)
+        if (
+            self.keyword_mode == "required"
+            and exempt is not None
+            and exempt(cell=cell, start=start, end=end)
+        ):
+            return True
         found = self._keyword_in_header(header=header) or keut.near(
             cell=cell,
             match_start=start,

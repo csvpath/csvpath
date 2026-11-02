@@ -148,31 +148,28 @@ def test_macie_iban_bad_config(catalog) -> None:
 def test_macie_iban_catalog_entries(catalog) -> None:
     lengths = catalog.detector(name="iban")["lengths"]
     assert len(lengths) == 52
+    #
+    # these five also detect BBANs, with a keyword: the bank detector
+    #
+    bank = {"FRANCE": "FR", "GERMANY": "DE", "ITALY": "IT", "SPAIN": "ES", "UK": "GB"}
     for name in catalog.names:
         if not name.endswith("_BANK_ACCOUNT_NUMBER"):
             continue
         e = catalog.identifier(name=name)
         assert e["category"] == "FINANCIAL_INFORMATION"
-        assert e["keyword_mode"] == "none"
-        assert e["keywords"] == []
         assert e["severity"] == "1:HIGH"
-        _, country = ManagedCatalog.detector_parts(detector=e["detector"])
+        assert e.get("partial") is None
+        detector, country = ManagedCatalog.detector_parts(detector=e["detector"])
         assert country in lengths
-    uk = catalog.identifier(name="UK_BANK_ACCOUNT_NUMBER")
-    assert uk["detector"] == "iban:GB"
-    partial = [
-        n
-        for n in catalog.names
-        if n.endswith("_BANK_ACCOUNT_NUMBER")
-        and catalog.identifier(name=n).get("partial")
-    ]
-    assert partial == [
-        "FRANCE_BANK_ACCOUNT_NUMBER",
-        "GERMANY_BANK_ACCOUNT_NUMBER",
-        "ITALY_BANK_ACCOUNT_NUMBER",
-        "SPAIN_BANK_ACCOUNT_NUMBER",
-        "UK_BANK_ACCOUNT_NUMBER",
-    ]
+        prefix = name[: -len("_BANK_ACCOUNT_NUMBER")]
+        if prefix in bank:
+            assert e["detector"] == f"bank:{bank[prefix]}"
+            assert e["keyword_mode"] == "required"
+            assert "account number" in e["keywords"]
+        else:
+            assert detector == "iban"
+            assert e["keyword_mode"] == "none"
+            assert e["keywords"] == []
 
 
 def _mdi(catalog, name: str) -> ManagedIdentifier:
@@ -233,7 +230,7 @@ def test_macie_catalog_keywords_from_must_be_set_unless_mode_none(tmp_path) -> N
 # =============
 
 
-def test_macie_iban_converter_reports_partial_translation() -> None:
+def test_macie_iban_converter_bank_and_iban_detectors() -> None:
     w = MacieWrapperLoader.from_path(
         path="tests/macie/test_resources/wrappers/handcrafted_minimal.macie.json"
     )
@@ -241,9 +238,11 @@ def test_macie_iban_converter_reports_partial_translation() -> None:
     w["selection"]["managedDataIdentifierIds"] = ids
     w["managedDataIdentifiers"]["resolved"] = ids
     conversion = MacieConverter(wrapper=w).convert(name="t")
-    assert '        "iban:GB",\n        "none",\n        "",\n' in conversion.csvpath
-    assert '        "iban:NL",\n' in conversion.csvpath
-    assert [(s.location, s.feature) for s in conversion.report.skipped] == [
-        ("managedDataIdentifiers.resolved[0]", "managedDataIdentifier.partial")
-    ]
-    assert "BBAN" in conversion.report.skipped[0].reason
+    assert '        "bank:GB",\n        "required",\n        "account code|' in (
+        conversion.csvpath
+    )
+    assert '        "iban:NL",\n        "none",\n        "",\n' in conversion.csvpath
+    #
+    # nothing is partial any more: BBANs are translated
+    #
+    assert conversion.report.skipped == []
