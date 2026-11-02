@@ -1,0 +1,9 @@
+macie CANADA_SOCIAL_INSURANCE_NUMBER: occurrence 1, line 1 (row 2), column 2 sin
+macie UK_NHS_NUMBER: occurrence 1, line 4 (row 5), column 3 nhs_number
+macie VEHICLE_IDENTIFICATION_NUMBER: occurrence 1, line 6 (row 7), column 4 vin
+macie VEHICLE_IDENTIFICATION_NUMBER: occurrence 2, line 7 (row 8), column 4 vin
+macie CANADA_SOCIAL_INSURANCE_NUMBER: occurrence 2, line 10 (row 11), column 5 notes
+macie UK_NHS_NUMBER: occurrence 2, line 11 (row 12), column 5 notes
+macie CANADA_SOCIAL_INSURANCE_NUMBER: 3 occurrences, severity HIGH, detail shown for first 2
+macie UK_NHS_NUMBER: 2 occurrences, severity HIGH, detail shown for all 2
+macie VEHICLE_IDENTIFICATION_NUMBER: 3 occurrences, severity LOW, detail shown for first 2

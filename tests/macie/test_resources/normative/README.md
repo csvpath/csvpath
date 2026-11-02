@@ -53,3 +53,7 @@ Design decisions are in `specs/macie/transpile-design.md`.
   digits, mixed separators, an unselected country, and a UK domestic sort
   code and account, which Macie would report and we don't yet (reported as
   partially translated).
+- `06_sin_nhs_vin`: Canada SIN, UK NHS number and VIN. Header and in-cell
+  keywords, no keyword, the SIN example number, bad Luhn and mod 11 check
+  digits, a European VIN with no check digit, a VIN with the letter O, and
+  an NHS number and a SIN in the same cell.

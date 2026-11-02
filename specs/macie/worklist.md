@@ -33,9 +33,11 @@ last. Add an item the moment something is deferred.
 4. ~~**Managed identifiers, group A, first batch: credit cards.**~~ Done:
    `macie_mdi`, the packaged catalog, `CreditCardDetector`, Luhn, and pair
    02_credit_card. Second batch done: US SSN and NPI, pair 04_us_ids.
-   Third batch done: IBANs, all 52 countries, pair 05_iban. More group A
-   identifiers next (Canada SIN, UK NHS mod-11, VIN, ...), each a catalog
-   entry plus a detector.
+   Third batch done: IBANs, all 52 countries, pair 05_iban. Fourth batch
+   done: Canada SIN, UK NHS, VIN, pair 06_sin_nhs_vin. More group A
+   identifiers next (e.g. Brazil CPF/CNPJ mod 11, Spain DNI/NIE check
+   letter, India Aadhaar Verhoeff, Chile RUT, Argentina SUBE), each a
+   catalog entry plus a detector.
 4b. **BBANs for France, Germany, Italy, Spain and the UK** (keyword
    required), plus UK domestic sort code and account numbers. **Required
    before the MVP release** (David, 2026-11-02). Until then the converter
@@ -53,7 +55,7 @@ last. Add an item the moment something is deferred.
    permissions agreed with David first.
 8. **One-time fidelity scan against real Macie** (billed; ask first) to
    confirm the interpretations in transpile-design.md: three for custom
-   identifiers, six for managed ones.
+   identifiers, seven for managed ones.
 
 ## Clean-ups (not blockers)
 

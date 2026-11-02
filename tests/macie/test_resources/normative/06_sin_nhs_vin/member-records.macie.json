@@ -1,0 +1,81 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "ca-central-1",
+    "downloaded_at": "2026-11-02T11:45:00Z",
+    "job_id": "7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "CANADA_SOCIAL_INSURANCE_NUMBER",
+      "UK_NHS_NUMBER",
+      "VEHICLE_IDENTIFICATION_NUMBER"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "CANADA_SOCIAL_INSURANCE_NUMBER",
+      "UK_NHS_NUMBER",
+      "VEHICLE_IDENTIFICATION_NUMBER"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "CANADA_SOCIAL_INSURANCE_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "UK_NHS_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "VEHICLE_IDENTIFICATION_NUMBER"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-10-31T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Member records, Canada and UK",
+      "jobArn": "arn:aws:macie2:ca-central-1:123456789012:classification-job/7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a",
+      "jobId": "7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "CANADA_SOCIAL_INSURANCE_NUMBER",
+        "UK_NHS_NUMBER",
+        "VEHICLE_IDENTIFICATION_NUMBER"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "member-records",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-member-records"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

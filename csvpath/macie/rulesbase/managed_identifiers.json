@@ -68,6 +68,41 @@
         "national provider",
         "npi"
       ]
+    },
+    "ca_sin": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-02",
+      "keywords": [
+        "canadian id",
+        "numéro d'assurance sociale",
+        "sin",
+        "social insurance number"
+      ]
+    },
+    "uk_nhs": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-02",
+      "keywords": [
+        "national health service",
+        "nhs"
+      ]
+    },
+    "vin": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-02",
+      "keywords": [
+        "fahrgestellnummer",
+        "niv",
+        "numarul de identificare",
+        "numarul seriei de sasiu",
+        "numer vin",
+        "número de identificação do veículo",
+        "número de identificación de automóviles",
+        "numéro d'identification du véhicule",
+        "vehicle identification number",
+        "vin",
+        "vin numeris"
+      ]
     }
   },
   "identifiers": {
@@ -691,6 +726,39 @@
       "fidelity": "A",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
       "retrieved": "2026-11-01"
+    },
+    "CANADA_SOCIAL_INSURANCE_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "ca_sin",
+      "keyword_mode": "required",
+      "keywords_from": "ca_sin",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-02"
+    },
+    "UK_NHS_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "uk_nhs",
+      "keyword_mode": "required",
+      "keywords_from": "uk_nhs",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-02"
+    },
+    "VEHICLE_IDENTIFICATION_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "vin",
+      "keyword_mode": "required",
+      "keywords_from": "vin",
+      "distance": 30,
+      "severity": "1:LOW 100:MEDIUM",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-02"
     }
   },
   "detectors": {
@@ -949,6 +1017,49 @@
         "AE": 23,
         "VG": 24
       }
+    },
+    "ca_sin": {
+      "notes": [
+        "Macie publishes only the keywords for CANADA_SOCIAL_INSURANCE_NUMBER. The format is ours, from the Government of Canada: 9 digits, Luhn, printed 3-3-3; never starting with 0 or 8.",
+        "exclusions are ours: the number used as the example in Government of Canada publications."
+      ],
+      "length": 9,
+      "layouts": [
+        [
+          3,
+          3,
+          3
+        ]
+      ],
+      "check": "luhn",
+      "first_digit_not": [
+        "0",
+        "8"
+      ],
+      "exclusions": [
+        "046454286"
+      ]
+    },
+    "uk_nhs": {
+      "notes": [
+        "Macie publishes only the keywords for UK_NHS_NUMBER. The format is ours, from NHS England: 10 digits, mod 11 check digit, printed 3-3-4."
+      ],
+      "length": 10,
+      "layouts": [
+        [
+          3,
+          3,
+          4
+        ]
+      ],
+      "check": "nhs_mod11",
+      "exclusions": []
+    },
+    "vin": {
+      "notes": [
+        "Macie: a 17-character sequence that adheres to ISO 3779 and 3780, designed for worldwide use. Keyword required.",
+        "Ours: the VIN alphabet (no I, O or Q), a model-year character in position 10 (not U, Z or 0), letters and digits mixed. The North American check digit is not required: VINs from elsewhere don't have one. Fidelity B for that reason."
+      ]
     }
   }
 }

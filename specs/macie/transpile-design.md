@@ -295,6 +295,8 @@ conversion.report.skipped   # what was not translated
 | `ManagedCatalog` | our managed identifier stand-ins, from `csvpath/macie/rulesbase/managed_identifiers.json`, checked on load |
 | `ManagedIdentifier` | occurrences of one managed identifier in one cell: detector, keyword mode, allow lists |
 | `CreditCardDetector` | 13-19 digits (or grouped), Luhn, issuer prefix and length, less issuer test numbers |
+| `GroupedDigitsDetector` | fixed-length digits printed in groups, with a named check digit: SIN (Luhn), NHS (mod 11) |
+| `VinDetector` | 17-character VINs; no check digit required |
 | `IbanDetector` | one country's IBANs: length, printed layout, ISO 13616 mod 97 |
 | `UsSsnDetector`, `UsNpiDetector` | SSA's SSN rules; CMS's NPI check digit (Luhn over 80840) |
 | `ChecksumUtility` (`chut`) | check-digit algorithms (Luhn so far) |
@@ -416,8 +418,30 @@ standards.
   reports each one as `managedDataIdentifier.partial`, so the gap is never
   silent. BBANs are a worklist item.
 
+**Canada SIN, UK NHS numbers and VINs**:
+- **`CANADA_SOCIAL_INSURANCE_NUMBER`** and **`UK_NHS_NUMBER`.** Macie
+  publishes only their keywords. Both are "grouped digits with a check
+  digit", so one class, `GroupedDigitsDetector`, serves two detector
+  names, each with its own catalog data:
+  - SIN: 9 digits, Luhn, printed 3-3-3, never starting with 0 or 8. The
+    Government of Canada example number is excluded.
+  - NHS: 10 digits, mod 11 (`chut.nhs_mod11`: weights 10 down to 2; a
+    check of 10 is never issued), printed 3-3-4.
+  - Both are HIGH from one occurrence.
+- **`VEHICLE_IDENTIFICATION_NUMBER`.** Macie: 17 characters, ISO 3779 and
+  3780, "designed for worldwide use". Ours:
+  - the VIN alphabet (no I, O or Q);
+  - a model-year character in position 10 (not U, Z or 0);
+  - letters and digits mixed.
+
+  The North American check digit is **not** required, because VINs from
+  elsewhere don't have one, so the fidelity tier is B. Severity is LOW,
+  then MEDIUM from 100 occurrences, per Macie.
+- All three are PERSONAL_INFORMATION and require a keyword.
+
 Each managed identifier is a catalog entry plus a detector in
-`csvpath/macie/detectors/`, named in `DETECTORS`. A test checks that
+`csvpath/macie/detectors/`, named in `DETECTORS`. One class may serve
+several detector names. A test checks that
 every detector the catalog names exists, and every detector is used.
 
 **Interpretations to confirm** in the fidelity scan:
@@ -437,6 +461,9 @@ every detector the catalog names exists, and every detector is used.
    published), e.g. whether Macie accepts SSNs with spaces or none.
 6. IBANs: does Macie accept separators anywhere, or only in groups of
    four as we do? Does it accept lower case?
+7. VINs: does Macie require the North American check digit for
+   North American VINs? We never require it. SIN and NHS formats and
+   layouts are the issuers', as for SSN and NPI.
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later
