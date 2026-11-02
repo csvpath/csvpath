@@ -415,9 +415,9 @@ def test_macie_converter_report() -> None:
     assert [(s.location, s.feature) for s in skipped] == [
         ("allowLists[1]", "allowList.s3WordsList"),
         #
-        # resolved[0] is CREDIT_CARD_NUMBER, which is translated
+        # resolved[0] and [1], CREDIT_CARD_NUMBER and
+        # USA_SOCIAL_SECURITY_NUMBER, are translated. NAME is not
         #
-        ("managedDataIdentifiers.resolved[1]", "managedDataIdentifier"),
         ("managedDataIdentifiers.resolved[2]", "managedDataIdentifier"),
         ("findingsFilters[0]", "findingsFilter"),
         ("findingsFilters[1]", "findingsFilter"),
@@ -427,8 +427,7 @@ def test_macie_converter_report() -> None:
     assert {s.object for s in skipped} == {"hr-exports-weekly"}
     assert "public-names" in skipped[0].reason
     assert "#470" in skipped[0].reason
-    assert "USA_SOCIAL_SECURITY_NUMBER" in skipped[1].reason
-    assert "NAME" in skipped[2].reason
+    assert "NAME" in skipped[1].reason
 
 
 def test_macie_converter_text_allow_list_is_not_in_the_csvpath() -> None:

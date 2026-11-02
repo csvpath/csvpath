@@ -42,3 +42,8 @@ Design decisions are in `specs/macie/transpile-design.md`.
   second identifier is not applied on that line; the run stops, and the
   stopping line still matches (#483). The summary and the stopped message
   print at the trip, and findings record `stopped_at_line`.
+- `04_us_ids`: the managed identifiers `USA_SOCIAL_SECURITY_NUMBER` and
+  `USA_NATIONAL_PROVIDER_IDENTIFIER`. Header and in-cell keywords, no
+  keyword, the three SSN layouts, a never-issued area, an excluded
+  example SSN, a bad NPI check digit, two SSNs in one cell, and an SSN and
+  an NPI in the same cell.

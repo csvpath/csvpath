@@ -1,0 +1,49 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "us-east-1",
+    "downloaded_at": "2026-11-01T20:30:00Z",
+    "job_id": "6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": ["USA_SOCIAL_SECURITY_NUMBER", "USA_NATIONAL_PROVIDER_IDENTIFIER"],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": ["USA_SOCIAL_SECURITY_NUMBER", "USA_NATIONAL_PROVIDER_IDENTIFIER"],
+    "resolution": { "method": "selector", "recommended_list": null },
+    "available": [
+      { "category": "PERSONAL_INFORMATION", "id": "USA_NATIONAL_PROVIDER_IDENTIFIER" },
+      { "category": "PERSONAL_INFORMATION", "id": "USA_SOCIAL_SECURITY_NUMBER" }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-10-28T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Clinic staff exports, US identifiers",
+      "jobArn": "arn:aws:macie2:us-east-1:123456789012:classification-job/6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d",
+      "jobId": "6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": ["USA_SOCIAL_SECURITY_NUMBER", "USA_NATIONAL_PROVIDER_IDENTIFIER"],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "clinic-staff",
+      "s3JobDefinition": {
+        "bucketDefinitions": [ { "accountId": "123456789012", "buckets": ["acme-clinic-exports"] } ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

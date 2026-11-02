@@ -295,6 +295,7 @@ conversion.report.skipped   # what was not translated
 | `ManagedCatalog` | our managed identifier stand-ins, from `csvpath/macie/rulesbase/managed_identifiers.json`, checked on load |
 | `ManagedIdentifier` | occurrences of one managed identifier in one cell: detector, keyword mode, allow lists |
 | `CreditCardDetector` | 13-19 digits (or grouped), Luhn, issuer prefix and length, less issuer test numbers |
+| `UsSsnDetector`, `UsNpiDetector` | SSA's SSN rules; CMS's NPI check digit (Luhn over 80840) |
 | `ChecksumUtility` (`chut`) | check-digit algorithms (Luhn so far) |
 | `MacieMdi` (`macie_mdi`) | applies a managed identifier to every cell |
 | `MacieRun` | one run's shared state (allow lists, tally) and outputs; limits from metadata, config, defaults; noisy setup failure |
@@ -377,16 +378,39 @@ accepted, using one separator throughout, in the common layouts (4-4-4-4,
 sequences; we would rather over-detect than miss. This may be a place
 users want to customize toward Macie (David, 2026-11-01).
 
+**US Social Security numbers** (`USA_SOCIAL_SECURITY_NUMBER`) and
+**National Provider Identifiers** (`USA_NATIONAL_PROVIDER_IDENTIFIER`):
+Macie publishes only their keywords, so the formats come from the issuing
+standards.
+- **SSN:** AAA-GG-SSSS with hyphens, spaces (one separator throughout) or
+  no separator. It must not be one SSA never issues: area 000, 666 or
+  900-999, group 00, serial 0000. Three widely published example numbers
+  are excluded (ours).
+- **NPI:** 10 digits starting with 1 or 2, where the check digit is the
+  Luhn check digit over `80840` followed by the first nine digits (CMS).
+  No separators.
+- Both require a keyword, are PERSONAL_INFORMATION, and are HIGH from one
+  occurrence.
+
+Each managed identifier is a catalog entry plus a detector in
+`csvpath/macie/detectors/`, named in `DETECTORS`. A test checks that
+every detector the catalog names exists, and every detector is used.
+
 **Interpretations to confirm** in the fidelity scan:
 1. In-cell keywords count before or after the occurrence, within 30
    characters of the gap.
-2. Grouped card numbers: does Macie detect them?
+2. Grouped card numbers: does Macie detect them? Its docs explicitly
+   allow spaces and hyphens for the Argentina SUBE card ("can be
+   separated by spaces or hyphens") but say only "digit sequence" for
+   credit cards, which suggests Macie may not.
 3. Keywords match as substrings, as for custom identifiers, so the short
    ones (`mc`, `pan`, `card`) match inside longer words, e.g. a header
    `discard_reason`. That over-reports keyword presence. A value must
    still pass Luhn and the prefix table.
 4. Macie "in certain cases" expands or abbreviates keywords. It does not
    say how, so we don't.
+5. SSN and NPI formats are the issuers' rules, not Macie's (which are not
+   published), e.g. whether Macie accepts SSNs with spaces or none.
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

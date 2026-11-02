@@ -1,0 +1,69 @@
+#
+# US Social Security numbers and National Provider Identifiers: Macie's
+# USA_SOCIAL_SECURITY_NUMBER and USA_NATIONAL_PROVIDER_IDENTIFIER, as our
+# stand-ins. Macie publishes only their keywords; the formats are SSA's and
+# CMS's.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: clinic-staff.csvpath
+    data: staff.csv
+    finding_lines: [1, 2, 3, 7, 9, 11, 12]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie USA_SOCIAL_SECURITY_NUMBER: occurrence 1, line 1 (row 2), column 2 ssn" }
+      - { line: 2, message: "macie USA_SOCIAL_SECURITY_NUMBER: occurrence 2, line 2 (row 3), column 2 ssn" }
+      - { line: 7, message: "macie USA_NATIONAL_PROVIDER_IDENTIFIER: occurrence 1, line 7 (row 8), column 3 provider_npi" }
+      - { line: 9, message: "macie USA_NATIONAL_PROVIDER_IDENTIFIER: occurrence 2, line 9 (row 10), column 4 notes" }
+    findings: findings.json
+    #
+    # Headers: "ssn" holds an SSN keyword; "provider_npi" holds an NPI
+    # keyword ("npi"); "id" and "notes" hold none. Both identifiers require
+    # a keyword.
+    #
+    #   line  cell                                   reported as
+    #   1     ssn 123-45-6789                        SSN: header keyword, hyphens
+    #   2     ssn 123456789                          SSN: header keyword, no separator
+    #   3     notes "SS# 234 56 7890"                SSN: "ss#" one character before,
+    #                                                spaces
+    #   4     notes "234-56-7890"                    nothing: no keyword
+    #   5     ssn 666-12-3456                        nothing: area 666 is never issued
+    #   6     ssn 078-05-1120                        nothing: a widely published
+    #                                                example, excluded
+    #   7     provider_npi 1234567893                NPI: header keyword; Luhn over
+    #                                                80840 + the first nine digits
+    #   8     provider_npi 1234567890                nothing: bad check digit
+    #   9     notes "npi 2987654326 (hipaa)"         NPI: keywords before and after
+    #   10    notes "2987654326"                     nothing: no keyword, and 10 digits
+    #                                                is not an SSN
+    #   11    ssn, two SSNs                          SSN twice
+    #   12    notes "national provider 1234567893    NPI ("national provider" before)
+    #         ssn 345 67 8901"                       and SSN ("ssn" before), both in
+    #                                                one cell
+    #
+    # On each line SSN is applied first, then NPI: the wrapper's resolved
+    # order. Totals: SSN 6, NPI 3; the first 2 of each are detailed
+    # (max_detail 2). Macie scores both HIGH from one occurrence. Both are
+    # PERSONAL_INFORMATION, so they share one sensitiveData entry with
+    # totalCount 9.
+    #

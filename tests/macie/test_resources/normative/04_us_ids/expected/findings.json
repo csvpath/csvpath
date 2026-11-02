@@ -1,0 +1,48 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "PERSONAL_INFORMATION",
+      "detections": [
+        {
+          "type": "USA_SOCIAL_SECURITY_NUMBER",
+          "count": 6,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              { "cellReference": null, "column": 2, "columnName": "ssn", "row": 2 },
+              { "cellReference": null, "column": 2, "columnName": "ssn", "row": 3 },
+              { "cellReference": null, "column": 4, "columnName": "notes", "row": 4 },
+              { "cellReference": null, "column": 2, "columnName": "ssn", "row": 12 },
+              { "cellReference": null, "column": 2, "columnName": "ssn", "row": 12 },
+              { "cellReference": null, "column": 4, "columnName": "notes", "row": 13 }
+            ]
+          }
+        },
+        {
+          "type": "USA_NATIONAL_PROVIDER_IDENTIFIER",
+          "count": 3,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              { "cellReference": null, "column": 3, "columnName": "provider_npi", "row": 8 },
+              { "cellReference": null, "column": 4, "columnName": "notes", "row": 10 },
+              { "cellReference": null, "column": 4, "columnName": "notes", "row": 13 }
+            ]
+          }
+        }
+      ],
+      "totalCount": 9
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:us-east-1:123456789012:classification-job/6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}

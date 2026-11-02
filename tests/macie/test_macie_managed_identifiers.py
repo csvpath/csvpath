@@ -79,7 +79,12 @@ def test_macie_luhn_bad_input(bad: str) -> None:
 
 
 def test_macie_catalog_packaged(catalog) -> None:
-    assert catalog.names == ["CREDIT_CARD_NUMBER", "CREDIT_CARD_NUMBER_(NO_KEYWORD)"]
+    assert catalog.names == [
+        "CREDIT_CARD_NUMBER",
+        "CREDIT_CARD_NUMBER_(NO_KEYWORD)",
+        "USA_SOCIAL_SECURITY_NUMBER",
+        "USA_NATIONAL_PROVIDER_IDENTIFIER",
+    ]
     cc = catalog.identifier(name="CREDIT_CARD_NUMBER")
     assert cc["category"] == "FINANCIAL_INFORMATION"
     assert cc["keyword_mode"] == "required"
@@ -90,13 +95,21 @@ def test_macie_catalog_packaged(catalog) -> None:
     assert nk["keyword_mode"] == "absent"
     assert nk["keywords"] == cc["keywords"]
     assert len(catalog.detector(name="credit_card")["exclusions"]) == 55
-    assert set(DETECTORS) == {"credit_card"}
+    assert set(DETECTORS) == {"credit_card", "us_ssn", "us_npi"}
+    #
+    # every detector the catalog names exists, and every detector is used
+    #
+    used = {catalog.identifier(name=n)["detector"] for n in catalog.names}
+    assert used == set(DETECTORS)
 
 
 def test_macie_catalog_unknown_names(catalog) -> None:
-    assert catalog.has(name="USA_SOCIAL_SECURITY_NUMBER") is False
+    #
+    # NAME is machine-learning based in Macie: no stand-in
+    #
+    assert catalog.has(name="NAME") is False
     with pytest.raises(MacieException):
-        catalog.identifier(name="USA_SOCIAL_SECURITY_NUMBER")
+        catalog.identifier(name="NAME")
     with pytest.raises(MacieException):
         catalog.detector(name="ssn")
 

@@ -1,0 +1,35 @@
+~
+  id: clinic-staff
+  macie-origin: job
+  macie-job-id: 6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d
+  macie-account: 123456789012
+  macie-region: us-east-1
+  macie-source-arn: arn|aws|macie2|us-east-1|123456789012|classification-job/6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d
+  macie-downloaded-at: 20261101T203000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "USA_SOCIAL_SECURITY_NUMBER",
+        "PERSONAL_INFORMATION",
+        "us_ssn",
+        "required",
+        "social security|ss#|ssn",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "USA_NATIONAL_PROVIDER_IDENTIFIER",
+        "PERSONAL_INFORMATION",
+        "us_npi",
+        "required",
+        "hipaa|n.p.i|national provider|npi",
+        30,
+        "1:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]
