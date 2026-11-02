@@ -107,6 +107,7 @@ from .misc.importf import Import
 from .misc.fingerprint import LineFingerprint, StoreFingerprint, FileFingerprint
 from .misc.parquet import Parquet
 from .misc.collect_original import CollectOriginal
+from .misc.load_list import LoadList
 from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack, Log
 from .validity.line import Line
 from .validity.failed import Failed
@@ -533,6 +534,7 @@ class FunctionFactory:
         fs["empty"] = Empty
         fs["jsonpath"] = JsonPath
         fs["jsonschema"] = JsonSchema
+        fs["load_list"] = LoadList
         fs["advance"] = Advance
         fs["advance_all"] = AdvanceAll
         fs["collect"] = Collect
