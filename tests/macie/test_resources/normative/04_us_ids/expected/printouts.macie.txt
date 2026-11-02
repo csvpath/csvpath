@@ -1,0 +1,6 @@
+macie USA_SOCIAL_SECURITY_NUMBER: occurrence 1, line 1 (row 2), column 2 ssn
+macie USA_SOCIAL_SECURITY_NUMBER: occurrence 2, line 2 (row 3), column 2 ssn
+macie USA_NATIONAL_PROVIDER_IDENTIFIER: occurrence 1, line 7 (row 8), column 3 provider_npi
+macie USA_NATIONAL_PROVIDER_IDENTIFIER: occurrence 2, line 9 (row 10), column 4 notes
+macie USA_SOCIAL_SECURITY_NUMBER: 6 occurrences, severity HIGH, detail shown for first 2
+macie USA_NATIONAL_PROVIDER_IDENTIFIER: 3 occurrences, severity HIGH, detail shown for first 2
