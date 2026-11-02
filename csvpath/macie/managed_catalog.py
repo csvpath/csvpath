@@ -73,12 +73,27 @@ class ManagedCatalog:
         if not self.has(name=name):
             self._fail(f"No managed identifier {name!r} in {self.path}")
         entry = dict(self.catalog["identifiers"][name])
-        entry["keywords"] = list(
-            self.catalog["keyword_lists"][entry["keywords_from"]]["keywords"]
+        source = entry["keywords_from"]
+        entry["keywords"] = (
+            []
+            if source is None
+            else list(self.catalog["keyword_lists"][source]["keywords"])
         )
         return entry
 
+    @classmethod
+    def detector_parts(cls, *, detector: str) -> tuple[str, str | None]:
+        """a detector reference's name and parameter: "iban:GB" is detector
+        iban with parameter GB; "credit_card" has no parameter"""
+        if not isinstance(detector, str) or detector.strip() == "":
+            raise ValueError("detector must be a non-empty str")
+        name, sep, parameter = detector.partition(":")
+        if sep and parameter == "":
+            raise MacieException(f"Detector {detector!r} has an empty parameter")
+        return name, parameter if sep else None
+
     def detector(self, *, name: str) -> dict:
+        """a detector's data, by name without any parameter"""
         detectors = self.catalog["detectors"]
         if name not in detectors:
             self._fail(f"No detector {name!r} in {self.path}")
@@ -115,10 +130,22 @@ class ManagedCatalog:
             cls._fail(f"{where} is missing {', '.join(sorted(missing))}")
         if entry["keyword_mode"] not in cls.KEYWORD_MODES:
             cls._fail(f"{where} has keyword_mode {entry['keyword_mode']!r}")
-        if entry["keywords_from"] not in catalog["keyword_lists"]:
-            cls._fail(f"{where} names keyword list {entry['keywords_from']!r}")
-        if entry["detector"] not in catalog["detectors"]:
+        source = entry["keywords_from"]
+        if source is None:
+            if entry["keyword_mode"] != "none":
+                cls._fail(
+                    f"{where} needs keywords_from for keyword_mode {entry['keyword_mode']}"
+                )
+        elif source not in catalog["keyword_lists"]:
+            cls._fail(f"{where} names keyword list {source!r}")
+        name_part, _ = cls.detector_parts(detector=entry["detector"])
+        if name_part not in catalog["detectors"]:
             cls._fail(f"{where} names detector {entry['detector']!r}")
+        partial = entry.get("partial")
+        if partial is not None and (
+            not isinstance(partial, str) or partial.strip() == ""
+        ):
+            cls._fail(f"{where} partial must be a non-empty str when present")
         d = entry["distance"]
         if not isinstance(d, int) or isinstance(d, bool) or not 1 <= d <= 300:
             cls._fail(f"{where} distance must be an int from 1 to 300, not {d!r}")

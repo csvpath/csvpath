@@ -242,6 +242,16 @@ class MacieConverter:
                 )
                 continue
             e = self.catalog.identifier(name=mdi)
+            if e.get("partial"):
+                #
+                # translated, but not all of what Macie detects: say so
+                #
+                report.skip(
+                    obj=name,
+                    location=f"managedDataIdentifiers.resolved[{i}]",
+                    feature="managedDataIdentifier.partial",
+                    reason=e["partial"],
+                )
             args = [
                 self._string(value=mdi),
                 self._string(value=e["category"]),

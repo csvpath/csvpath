@@ -1,0 +1,44 @@
+~
+  id: eu-accounts
+  macie-origin: job
+  macie-job-id: 0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e
+  macie-account: 123456789012
+  macie-region: eu-west-1
+  macie-source-arn: arn|aws|macie2|eu-west-1|123456789012|classification-job/0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e
+  macie-downloaded-at: 20261102T090000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "UK_BANK_ACCOUNT_NUMBER",
+        "FINANCIAL_INFORMATION",
+        "iban:GB",
+        "none",
+        "",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "GERMANY_BANK_ACCOUNT_NUMBER",
+        "FINANCIAL_INFORMATION",
+        "iban:DE",
+        "none",
+        "",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "NETHERLANDS_BANK_ACCOUNT_NUMBER",
+        "FINANCIAL_INFORMATION",
+        "iban:NL",
+        "none",
+        "",
+        30,
+        "1:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

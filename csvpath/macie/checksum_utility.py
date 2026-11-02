@@ -21,3 +21,22 @@ class ChecksumUtility:
                     d = d - 9
             total += d
         return total % 10 == 0
+
+    @classmethod
+    def iban_mod97(cls, *, iban: str) -> bool:
+        """True if an IBAN, without separators, passes the ISO 7064
+        MOD 97-10 check of ISO 13616: move the first four characters to
+        the end, replace each letter with two digits (A=10 ... Z=35), and
+        the number must leave a remainder of 1 when divided by 97"""
+        if not isinstance(iban, str):
+            raise TypeError(f"iban must be a str, not {type(iban)}")
+        text = iban.upper()
+        if len(text) < 5 or not (text.isascii() and text.isalnum()):
+            raise ValueError(
+                f"iban must be at least five ASCII letters and digits, not {iban!r}"
+            )
+        rearranged = text[4:] + text[:4]
+        digits = "".join(
+            c if c.isdigit() else f"{ord(c) - ord('A') + 10}" for c in rearranged
+        )
+        return int(digits) % 97 == 1
