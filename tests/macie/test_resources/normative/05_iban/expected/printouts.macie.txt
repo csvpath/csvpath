@@ -1,0 +1,8 @@
+macie UK_BANK_ACCOUNT_NUMBER: occurrence 1, line 1 (row 2), column 2 account
+macie UK_BANK_ACCOUNT_NUMBER: occurrence 2, line 2 (row 3), column 2 account
+macie GERMANY_BANK_ACCOUNT_NUMBER: occurrence 1, line 3 (row 4), column 2 account
+macie NETHERLANDS_BANK_ACCOUNT_NUMBER: occurrence 1, line 4 (row 5), column 3 notes
+macie GERMANY_BANK_ACCOUNT_NUMBER: occurrence 2, line 7 (row 8), column 3 notes
+macie UK_BANK_ACCOUNT_NUMBER: 4 occurrences, severity HIGH, detail shown for first 2
+macie GERMANY_BANK_ACCOUNT_NUMBER: 2 occurrences, severity HIGH, detail shown for all 2
+macie NETHERLANDS_BANK_ACCOUNT_NUMBER: 1 occurrence, severity HIGH, detail shown for all 1

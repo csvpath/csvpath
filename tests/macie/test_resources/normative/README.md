@@ -47,3 +47,9 @@ Design decisions are in `specs/macie/transpile-design.md`.
   keyword, the three SSN layouts, a never-issued area, an excluded
   example SSN, a bad NPI check digit, two SSNs in one cell, and an SSN and
   an NPI in the same cell.
+- `05_iban`: three of the 52 IBAN identifiers (UK, Germany, Netherlands),
+  using one parameterized detector. Contiguous, printed in groups of four,
+  lower case with hyphens, in text, two countries in one cell; bad check
+  digits, mixed separators, an unselected country, and a UK domestic sort
+  code and account, which Macie would report and we don't yet (reported as
+  partially translated).

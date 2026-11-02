@@ -79,12 +79,18 @@ def test_macie_luhn_bad_input(bad: str) -> None:
 
 
 def test_macie_catalog_packaged(catalog) -> None:
-    assert catalog.names == [
+    assert catalog.names[:4] == [
         "CREDIT_CARD_NUMBER",
         "CREDIT_CARD_NUMBER_(NO_KEYWORD)",
         "USA_SOCIAL_SECURITY_NUMBER",
         "USA_NATIONAL_PROVIDER_IDENTIFIER",
     ]
+    #
+    # the 52 IBAN identifiers Macie lists
+    #
+    banks = [n for n in catalog.names if n.endswith("_BANK_ACCOUNT_NUMBER")]
+    assert len(banks) == 52
+    assert len(catalog.names) == 56
     cc = catalog.identifier(name="CREDIT_CARD_NUMBER")
     assert cc["category"] == "FINANCIAL_INFORMATION"
     assert cc["keyword_mode"] == "required"
@@ -95,11 +101,16 @@ def test_macie_catalog_packaged(catalog) -> None:
     assert nk["keyword_mode"] == "absent"
     assert nk["keywords"] == cc["keywords"]
     assert len(catalog.detector(name="credit_card")["exclusions"]) == 55
-    assert set(DETECTORS) == {"credit_card", "us_ssn", "us_npi"}
+    assert set(DETECTORS) == {"credit_card", "iban", "us_ssn", "us_npi"}
     #
     # every detector the catalog names exists, and every detector is used
     #
-    used = {catalog.identifier(name=n)["detector"] for n in catalog.names}
+    used = {
+        ManagedCatalog.detector_parts(detector=catalog.identifier(name=n)["detector"])[
+            0
+        ]
+        for n in catalog.names
+    }
     assert used == set(DETECTORS)
 
 

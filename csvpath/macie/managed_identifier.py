@@ -54,12 +54,27 @@ class ManagedIdentifier:
             raise TypeError(f"severity must be SeverityLevels, not {type(severity)}")
         if not isinstance(catalog, ManagedCatalog):
             raise TypeError(f"catalog must be a ManagedCatalog, not {type(catalog)}")
-        if detector not in DETECTORS:
+        base, parameter = ManagedCatalog.detector_parts(detector=detector)
+        if base not in DETECTORS:
             raise MacieException(f"No detector named {detector!r} for {name}")
+        takes = getattr(DETECTORS[base], "TAKES_PARAMETER", False)
+        if takes and parameter is None:
+            raise MacieException(
+                f"Detector {base} for {name} needs a parameter, e.g. {base}:XX"
+            )
+        if not takes and parameter is not None:
+            raise MacieException(
+                f"Detector {base} for {name} takes no parameter, not {parameter!r}"
+            )
         self.name = name
         self.category = category
         self.detector_name = detector
-        self.detector = DETECTORS[detector](config=catalog.detector(name=detector))
+        config = catalog.detector(name=base)
+        self.detector = (
+            DETECTORS[base](config=config, parameter=parameter)
+            if takes
+            else DETECTORS[base](config=config)
+        )
         self.keyword_mode = keyword_mode
         self.keywords = keywords
         self.variants = keut.all_variants(keywords=keywords)

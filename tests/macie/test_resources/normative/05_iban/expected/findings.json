@@ -1,0 +1,55 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "FINANCIAL_INFORMATION",
+      "detections": [
+        {
+          "type": "UK_BANK_ACCOUNT_NUMBER",
+          "count": 4,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              { "cellReference": null, "column": 2, "columnName": "account", "row": 2 },
+              { "cellReference": null, "column": 2, "columnName": "account", "row": 3 },
+              { "cellReference": null, "column": 3, "columnName": "notes", "row": 8 },
+              { "cellReference": null, "column": 3, "columnName": "notes", "row": 11 }
+            ]
+          }
+        },
+        {
+          "type": "GERMANY_BANK_ACCOUNT_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              { "cellReference": null, "column": 2, "columnName": "account", "row": 4 },
+              { "cellReference": null, "column": 3, "columnName": "notes", "row": 8 }
+            ]
+          }
+        },
+        {
+          "type": "NETHERLANDS_BANK_ACCOUNT_NUMBER",
+          "count": 1,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              { "cellReference": null, "column": 3, "columnName": "notes", "row": 5 }
+            ]
+          }
+        }
+      ],
+      "totalCount": 7
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:eu-west-1:123456789012:classification-job/0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}

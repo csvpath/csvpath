@@ -1,0 +1,69 @@
+#
+# IBANs: three of Macie's 52 <COUNTRY>_BANK_ACCOUNT_NUMBER identifiers, as
+# our stand-ins. One detector, iban, takes the country as its parameter
+# (iban:GB, iban:DE, iban:NL). No keyword is required.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: eu-accounts.csvpath
+    data: accounts.csv
+    finding_lines: [1, 2, 3, 4, 7, 10]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie UK_BANK_ACCOUNT_NUMBER: occurrence 1, line 1 (row 2), column 2 account" }
+      - { line: 2, message: "macie UK_BANK_ACCOUNT_NUMBER: occurrence 2, line 2 (row 3), column 2 account" }
+      - { line: 3, message: "macie GERMANY_BANK_ACCOUNT_NUMBER: occurrence 1, line 3 (row 4), column 2 account" }
+      - { line: 4, message: "macie NETHERLANDS_BANK_ACCOUNT_NUMBER: occurrence 1, line 4 (row 5), column 3 notes" }
+      - { line: 7, message: "macie GERMANY_BANK_ACCOUNT_NUMBER: occurrence 2, line 7 (row 8), column 3 notes" }
+    findings: findings.json
+    #
+    # Every IBAN reported has its country's length (GB 22, DE 22, NL 18)
+    # and passes ISO 13616's mod 97.
+    #
+    #   line  cell                                      reported as
+    #   1     account GB29NWBK60161331926819             UK
+    #   2     account "GB29 NWBK 6016 1331 9268 19"      UK: printed in groups of four
+    #   3     account "DE89 3704 0044 0532 0130 00"      Germany: groups of four
+    #   4     notes "pay NL91ABNA0417164300 today"       Netherlands: in text
+    #   5     account GB28NWBK60161331926819             nothing: bad check digits
+    #   6     account DE89370400440532013001             nothing: fails mod 97
+    #   7     notes "GB29NWBK... / DE8937..."            UK and Germany: two
+    #                                                    countries in one cell
+    #   8     account "60-16-13 31926819"                nothing: a UK domestic sort
+    #                                                    code and account. Macie's
+    #                                                    UK_BANK_ACCOUNT_NUMBER would
+    #                                                    report it; ours doesn't yet,
+    #                                                    and the converter reports
+    #                                                    UK as partially translated
+    #   9     account FR1420041010050500013M02606        nothing: a valid French IBAN,
+    #                                                    but France is not selected
+    #   10    notes "gb29-nwbk-6016-1331-9268-19"        UK: lower case, hyphens
+    #   11    account "GB29 NWBK-6016 1331 9268 19"      nothing: mixed separators
+    #
+    # On each line UK is applied first, then Germany, then Netherlands: the
+    # wrapper's resolved order. On line 7 that makes UK's occurrence 3
+    # (past its detail cap of 2) come before Germany's occurrence 2. Totals:
+    # UK 4, Germany 2, Netherlands 1. Macie scores bank account numbers
+    # HIGH from one occurrence. All three are FINANCIAL_INFORMATION:
+    # totalCount 7.
+    #

@@ -295,6 +295,7 @@ conversion.report.skipped   # what was not translated
 | `ManagedCatalog` | our managed identifier stand-ins, from `csvpath/macie/rulesbase/managed_identifiers.json`, checked on load |
 | `ManagedIdentifier` | occurrences of one managed identifier in one cell: detector, keyword mode, allow lists |
 | `CreditCardDetector` | 13-19 digits (or grouped), Luhn, issuer prefix and length, less issuer test numbers |
+| `IbanDetector` | one country's IBANs: length, printed layout, ISO 13616 mod 97 |
 | `UsSsnDetector`, `UsNpiDetector` | SSA's SSN rules; CMS's NPI check digit (Luhn over 80840) |
 | `ChecksumUtility` (`chut`) | check-digit algorithms (Luhn so far) |
 | `MacieMdi` (`macie_mdi`) | applies a managed identifier to every cell |
@@ -392,6 +393,29 @@ standards.
 - Both require a keyword, are PERSONAL_INFORMATION, and are HIGH from one
   occurrence.
 
+**IBANs**: Macie's 52 `<COUNTRY>_BANK_ACCOUNT_NUMBER` identifiers.
+- **One detector with a parameter.** `iban` takes the ISO 3166 country
+  code, written `"iban:GB"` in the catalog and in the csvpath, so each
+  identifier stays one readable `macie_mdi(...)`. A detector declares
+  `TAKES_PARAMETER`. A detector that takes a parameter must be given one,
+  and one that doesn't must not be; either mistake fails.
+- **Detection.** Macie: up to 34 alphanumeric characters, ISO 13616, with
+  no separator or with space or hyphen separators, validated by Modulus
+  97 (`chut.iban_mod97`), and no keyword. Ours:
+  - the country's IBAN length, from the SWIFT IBAN registry, which Macie
+    does not publish;
+  - separators only in the printed layout of groups of four, one
+    separator throughout;
+  - letters in either case.
+- **Severity.** FINANCIAL_INFORMATION, HIGH from one occurrence.
+- **Partial translations.** Macie's France, Germany, Italy, Spain and UK
+  identifiers also detect national Basic Bank Account Numbers (BBANs) near
+  a keyword, and the UK one also detects domestic sort code and account
+  numbers (`60-16-13 31926819`). For now we translate only their IBAN
+  part. Their catalog entries carry a `partial` note, and the converter
+  reports each one as `managedDataIdentifier.partial`, so the gap is never
+  silent. BBANs are a worklist item.
+
 Each managed identifier is a catalog entry plus a detector in
 `csvpath/macie/detectors/`, named in `DETECTORS`. A test checks that
 every detector the catalog names exists, and every detector is used.
@@ -411,6 +435,8 @@ every detector the catalog names exists, and every detector is used.
    say how, so we don't.
 5. SSN and NPI formats are the issuers' rules, not Macie's (which are not
    published), e.g. whether Macie accepts SSNs with spaces or none.
+6. IBANs: does Macie accept separators anywhere, or only in groups of
+   four as we do? Does it accept lower case?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

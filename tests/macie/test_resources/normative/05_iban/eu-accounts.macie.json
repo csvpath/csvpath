@@ -1,0 +1,63 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "eu-west-1",
+    "downloaded_at": "2026-11-02T09:00:00Z",
+    "job_id": "0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "UK_BANK_ACCOUNT_NUMBER",
+      "GERMANY_BANK_ACCOUNT_NUMBER",
+      "NETHERLANDS_BANK_ACCOUNT_NUMBER"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "UK_BANK_ACCOUNT_NUMBER",
+      "GERMANY_BANK_ACCOUNT_NUMBER",
+      "NETHERLANDS_BANK_ACCOUNT_NUMBER"
+    ],
+    "resolution": { "method": "selector", "recommended_list": null },
+    "available": [
+      { "category": "FINANCIAL_INFORMATION", "id": "FRANCE_BANK_ACCOUNT_NUMBER" },
+      { "category": "FINANCIAL_INFORMATION", "id": "GERMANY_BANK_ACCOUNT_NUMBER" },
+      { "category": "FINANCIAL_INFORMATION", "id": "NETHERLANDS_BANK_ACCOUNT_NUMBER" },
+      { "category": "FINANCIAL_INFORMATION", "id": "UK_BANK_ACCOUNT_NUMBER" }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-10-30T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "EU payment accounts",
+      "jobArn": "arn:aws:macie2:eu-west-1:123456789012:classification-job/0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e",
+      "jobId": "0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "UK_BANK_ACCOUNT_NUMBER",
+        "GERMANY_BANK_ACCOUNT_NUMBER",
+        "NETHERLANDS_BANK_ACCOUNT_NUMBER"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "eu-accounts",
+      "s3JobDefinition": {
+        "bucketDefinitions": [ { "accountId": "123456789012", "buckets": ["acme-eu-payments"] } ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}
