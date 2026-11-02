@@ -1629,6 +1629,77 @@ class TestStarNameThreeGates:
         assert finder.resolve().results[0].data == b"id\nh0\n"
 
 
+class TestAttachedFieldFunctionsMessage:
+    # E2, option C (David, 2026-11-02): a field chain attached to name_one
+    # with no '.' still raises, and the message now gives the reference
+    # with the dot, since name_one picks the file and name_three picks the
+    # version and reads its fields.
+    FIELD_ERROR = "does not support field functions attached directly to name_one"
+
+    def test_none_raises(self):
+        with pytest.raises(ValueError):
+            FilesReferenceFinder3._attached_functions_message(
+                name_one=None, star_traversal=False
+            )
+
+    @pytest.mark.parametrize(
+        "reference, suggestion",
+        [
+            (
+                '$alpha.files.:name("one.csv"):fingerprint():template()',
+                ':name("one.csv").:fingerprint():template()',
+            ),
+            (
+                '$alpha.files.:name("one.csv"):last():uuid()',
+                ':name("one.csv").:last():uuid()',
+            ),
+            ("$alpha.files.*:uuid()", "*.:uuid()"),
+        ],
+    )
+    def test_a_literal_root_gives_the_dot_form(self, reference, suggestion):
+        with pytest.raises(ReferenceException3) as error:
+            _finder(reference, ALPHA_HOME, ALPHA_MANIFEST).query()
+        assert self.FIELD_ERROR in str(error.value)
+        assert f"'{suggestion}'" in str(error.value)
+
+    def test_star_traversal_gives_the_dot_form(self):
+        with pytest.raises(ReferenceException3) as error:
+            _star_finder('$*.files.:name("one.csv"):uuid()').query()
+        assert self.FIELD_ERROR in str(error.value)
+        assert "':name(\"one.csv\").:uuid()'" in str(error.value)
+
+    def test_the_suggestion_is_a_working_reference(self):
+        results = _finder(
+            '$alpha.files.:name("one.csv").:last():uuid()', ALPHA_HOME, ALPHA_MANIFEST
+        ).resolve()
+        assert [r.data for r in results.results] == ["u-one-2"]
+
+    def test_without_a_field_the_message_is_unchanged(self):
+        with pytest.raises(ReferenceException3) as error:
+            _finder(
+                '$alpha.files.:name("one.csv"):from(1)', ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+        assert str(error.value) == (
+            "FilesReferenceFinder3 does not support functions attached "
+            "directly to name_one -- put the version-selecting function in "
+            "name_three instead."
+        )
+        with pytest.raises(ReferenceException3) as error:
+            _star_finder('$*.files.:name("one.csv"):from(1)').query()
+        assert "for '*' traversal" in str(error.value)
+        assert self.FIELD_ERROR not in str(error.value)
+
+    def test_a_lone_pointer_and_a_lone_gate_still_work(self):
+        finder = _finder(
+            '$alpha.files.:name("one.csv"):last()', ALPHA_HOME, ALPHA_MANIFEST
+        )
+        assert finder.query().uuids == ["u-one-2"]
+        finder = _finder(
+            '$alpha.files.:name("one.csv"):manifest()', ALPHA_HOME, ALPHA_MANIFEST
+        )
+        assert finder.query().uuids == ["u-one-1", "u-one-2"]
+
+
 class TestStarTraversalGroup:
     # bare ':all()' as name_one's entire content partitions every
     # named-file's EXACTLY-one-level matches (corrected 2026-08-12 to

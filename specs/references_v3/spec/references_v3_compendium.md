@@ -821,7 +821,7 @@ the last value-producing function wins and provides its value on resolve.
 This limited case is the only exception to the order indeterminacy of
 functions.
 
-For example, in `$a.files.:name("orders.csv"):fingerprint():template()` the
+For example, in `$a.files.:name("orders.csv").:fingerprint():template()` the
 value returned on resolve() is the template string. Implementations should
 log a warning when this situation occurs, but should not raise an error.
 
@@ -829,7 +829,7 @@ The full resolve matrix by termination point and pointer kind:
 #### 5.21
 | | name_one, no pointer | name_three, no pointer | name_one, file pointer | name_three, file pointer | name_one, field pointer | name_three, field pointer |
 |---|---|---|---|---|---|---|
-| **files** | no default → `None` | version file bytes (name_three always points) | contents of `manifest.json`/`definition.json` | version file bytes | field from `manifest.json`/`definition.json` | not possible |
+| **files** | no default → `None` | version file bytes (name_three always points) | contents of `manifest.json`/`definition.json` | version file bytes | field from `manifest.json`/`definition.json` | field from the version's `manifest.json` entry |
 | **csvpaths** | no default | no default | contents of `manifest.json`/`definition.json` | no default (needs `:uuid(...)` + instance name/index for csvpath bytes) | requires `:uuid(...)`; returns a field, or (if only `:uuid(...)`) the version's bytes | requires `:uuid(...)` + instance name/index to get a field |
 | **results** | no default | no default | contents of `manifest.json` | any standard run-result file, or a user-named parquet/jinja/text file, via e.g. `:file("orders.parquet")` | field from `manifest.json` | field from any standard JSON run-result file (`errors.json`, `meta.json`, etc.) |
 
