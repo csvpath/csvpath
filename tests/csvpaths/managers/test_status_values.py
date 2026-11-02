@@ -226,11 +226,18 @@ def test_status_complete_selects_arrivals(plain, tmp_path):
     assert r.files == [ledger[0]["file_path"], ledger[2]["file_path"]]
 
 
-def test_status_failed_selects_failures(plain, tmp_path):
+def test_status_failed_selects_failures_in_the_ledger_set(plain, tmp_path):
+    #
+    # changed 2026-11-01 (was the bare form). a failure is tracked only in
+    # the ledger, so ':manifest()' reaches it; a bare '*' read searches
+    # the live named-files and never finds one.
+    #
     _register(plain, tmp_path)
     _fail(plain)
-    r = _query(plain, '$*.files.:status("failed")')
-    assert len(r.files) == 1
+    failed = _files_ledger(plain)[1]["uuid"]
+    r = _query(plain, '$*.files.:manifest():status("failed")')
+    assert r.uuids == [failed]
+    assert len(_query(plain, '$*.files.:status("failed")').files) == 0
 
 
 def test_an_entry_without_a_status_matches_neither(plain, tmp_path):
@@ -247,6 +254,10 @@ def test_an_entry_without_a_status_matches_neither(plain, tmp_path):
     mpath = FilesListener(csvpaths=plain).manifest_path()
     with open(mpath, "w", encoding="utf-8") as file:
         json.dump(ledger, file, indent=2)
-    complete = _query(plain, '$*.files.:status("complete")')
-    assert complete.files == [ledger[1]["file_path"]]
-    assert len(_query(plain, '$*.files.:status("failed")').files) == 0
+    #
+    # through the ledger set (2026-11-01): a bare '*' read would drop
+    # old-1 anyway, as it is in no live manifest
+    #
+    complete = _query(plain, '$*.files.:manifest():status("complete")')
+    assert complete.uuids == [ledger[1]["uuid"]]
+    assert _query(plain, '$*.files.:manifest():status("failed")').uuids == []

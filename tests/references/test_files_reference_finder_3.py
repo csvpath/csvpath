@@ -1063,11 +1063,13 @@ class TestManifestChainGate:
             ('type("xlsx")', ["u-a2"], ["u-a2"]),
             ('type("json")', [], []),
             ('template(:empty())', ["u-a1", "u-b1"], ["u-a1"]),
-            ('template(:not_empty())', ["u-a2"], ["u-a2"]),
+            # the ledger set lists the failed u-b2 since 2026-11-01, and
+            # :not_empty() matches its missing (None) template
+            ('template(:not_empty())', ["u-a2", "u-b2"], ["u-a2"]),
             ('uuid("u-a2")', ["u-a2"], ["u-a2"]),
             ('uuid("nope")', [], []),
             ('fingerprint("f-b1")', ["u-b1"], []),
-            ('named_file_name("beta")', ["u-b1"], []),
+            ('named_file_name("beta")', ["u-b1", "u-b2"], []),
             ('named_file_name("alpha")', ["u-a1", "u-a2"], ["u-a1", "u-a2"]),
         ],
     )
@@ -1088,10 +1090,14 @@ class TestManifestChainGate:
             "u-a2",
         ]
 
-    def test_status_failed_matches_nothing_listed(self):
-        # the failed entry has no file_path, so ':manifest()' never lists
-        # it -- the gate does not bring it back.
-        assert _gate_uuids('$*.files.:manifest():status("failed")') == []
+    def test_status_failed_finds_the_failure_in_the_ledger_set(self):
+        # changed 2026-11-01 (was: matches nothing, because the ledger set
+        # skipped entries with no file_path). A failure is a ledger record;
+        # its query path is the ledger. A named-file's own manifest never
+        # holds a failure, so the literal root still finds none.
+        results = _gate_finder('$*.files.:manifest():status("failed")').query()
+        assert results.uuids == ["u-b2"]
+        assert results.files == ["inputs/named_files/manifest.json"]
         assert _gate_uuids('$alpha.files.:manifest():status("failed")') == []
 
     def test_gate_composes_with_a_regex_root(self):
@@ -1136,7 +1142,8 @@ class TestManifestChainGate:
     @pytest.mark.parametrize("field", ["type", "uuid", "named_file_name"])
     def test_without_an_argument_the_field_is_still_the_value(self, root, field):
         finder = _gate_finder(f"{root}.files.:manifest():{field}()")
-        assert len(finder.query().results) == (3 if root == "$*" else 2)
+        # the ledger set includes the failed u-b2 (2026-11-01)
+        assert len(finder.query().results) == (4 if root == "$*" else 2)
         values = [r.data for r in finder.resolve().results]
         assert all(not isinstance(v, dict) for v in values)
 
@@ -2485,6 +2492,27 @@ STATUS_LEDGER = [
     },
 ]
 
+# a deleted version: in the ledger, "complete", but in no live manifest
+STATUS_GONE = {
+    "named_file_name": "orders",
+    "status": "complete",
+    "uuid": "gone-1",
+    "file_path": "inputs/named_files/orders/orders.csv/gone.csv",
+}
+STATUS_BY_NAME = {
+    "orders": (
+        "inputs/named_files/orders",
+        [
+            {
+                "file": "inputs/named_files/orders/orders.csv/aaaa.csv",
+                "file_home": "inputs/named_files/orders/orders.csv",
+                "uuid": "ok-1",
+            }
+        ],
+    ),
+    "invoices": ("inputs/named_files/invoices", []),
+}
+
 
 class TestStatusGate:
     # ':status()' widened 2026-10-18 to also cover FILES -- the global
@@ -2500,110 +2528,96 @@ class TestStatusGate:
     # an operational need ("if you were inspecting a run that should
     # have happened overnight you would know what status you were
     # looking for... we know those high risk files by name").
-    def test_star_root_matches_the_normative_example(self):
-        results = _finder(
-            '$*.files.:status("failed"):named_file_name("orders")',
+    # changed 2026-11-01 (C1 bare-half revert, agreed with David): a
+    # bare ':status()' gates the live versions only, at '*' and at a
+    # literal root; each version's status is read from its ledger entry.
+    # A failure is never a live version, so it is reached only through
+    # the ledger set, ':manifest():status("failed")' (NRE 253, rewritten
+    # by David). These tests used to select the failures directly.
+    @staticmethod
+    def _status_finder(reference: str) -> FilesReferenceFinder3:
+        return _finder(
+            reference,
             TYPE_HOME,
             [],
-            ledger=STATUS_LEDGER,
-        ).query()
-        assert results.uuids == ["fail-1"]
-        # a failed registration never got a real file_path -- falls
-        # back to origin_path, the one real path it does carry.
-        assert results.files == ["/tmp/orders1.csv"]
+            ledger=STATUS_LEDGER + [STATUS_GONE],
+            by_name=STATUS_BY_NAME,
+            inputs_files_path="inputs/named_files",
+        )
 
-    def test_star_root_bare_status_alone(self):
-        results = _finder(
-            '$*.files.:status("failed")', TYPE_HOME, [], ledger=STATUS_LEDGER
+    def test_the_old_normative_example_is_legal_but_finds_nothing(self):
+        results = self._status_finder(
+            '$*.files.:status("failed"):named_file_name("orders")'
         ).query()
-        assert sorted(results.uuids) == ["fail-1", "fail-2"]
+        assert results.results == []
 
-    def test_literal_root_is_just_as_real_a_need(self):
-        results = _finder(
-            '$orders.files.:status("failed")',
-            TYPE_HOME,
-            [],
-            ledger=STATUS_LEDGER,
-        ).query()
-        assert results.uuids == ["fail-1"]
+    def test_star_root_bare_status_finds_no_failure(self):
+        assert self._status_finder('$*.files.:status("failed")').query().results == []
+
+    def test_star_root_bare_status_gates_the_live_versions(self):
+        # gone-1 is "complete" in the ledger, but deleted, so it drops out
+        results = self._status_finder('$*.files.:status("complete")').query()
+        assert results.uuids == ["ok-1"]
+        assert results.files == ["inputs/named_files/orders/orders.csv/aaaa.csv"]
+
+    def test_literal_root_bare_status_gates_its_live_versions(self):
+        finder = self._status_finder('$orders.files.:status("failed")')
+        assert finder.query().results == []
+        results = self._status_finder('$orders.files.:status("complete")').query()
+        assert results.uuids == ["ok-1"]
 
     def test_literal_root_combined_with_named_file_name_chain(self):
-        results = _finder(
-            '$orders.files.:status("failed"):named_file_name("orders")',
-            TYPE_HOME,
-            [],
-            ledger=STATUS_LEDGER,
+        results = self._status_finder(
+            '$orders.files.:status("complete"):named_file_name("orders")'
+        ).query()
+        assert results.uuids == ["ok-1"]
+
+    def test_the_ledger_set_finds_the_failures(self):
+        results = self._status_finder('$*.files.:manifest():status("failed")').query()
+        assert results.uuids == ["fail-1", "fail-2"]
+        assert results.files == ["inputs/named_files/manifest.json"] * 2
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason="finding E: FILES takes one function after :manifest()",
+    )
+    def test_the_new_normative_example_finds_the_orders_failure(self):
+        results = self._status_finder(
+            '$*.files.:manifest():status("failed"):named_file_name("orders")'
         ).query()
         assert results.uuids == ["fail-1"]
 
-    def test_literal_root_excludes_other_names(self):
-        # "invoices" also has a failed registration, but this query is
-        # scoped to "orders" -- confirms the literal root genuinely
-        # narrows, not just filters client-side afterward.
-        results = _finder(
-            '$invoices.files.:status("failed"):named_file_name("orders")',
-            TYPE_HOME,
-            [],
-            ledger=STATUS_LEDGER,
-        ).query()
-        assert results.results == []
-
     def test_no_match_gives_empty(self):
-        results = _finder(
-            '$*.files.:status("nope")', TYPE_HOME, [], ledger=STATUS_LEDGER
-        ).query()
-        assert results.results == []
+        assert self._status_finder('$*.files.:status("nope")').query().results == []
 
     def test_name_three_pointer_star_root(self):
         # not-yet-supported sweep #2, 2026-10-20: a lone version-
-        # selecting pointer in name_three now reduces the status-
-        # filtered ledger matches to one, same as every other pointer-
-        # reduced FILES reference -- no _extract_data() changes needed,
-        # since the returned result's path/uuid already point straight
-        # at the selected entry (see _pointer_into_status_matches()'s
-        # own docstring).
-        results = _finder(
-            '$*.files.:status("failed").:last()',
-            TYPE_HOME,
-            [],
-            ledger=STATUS_LEDGER,
-        ).query()
-        assert results.uuids == ["fail-2"]
+        # selecting pointer in name_three reduces the status-filtered
+        # matches to one (see _pointer_into_status_matches()).
+        results = self._status_finder('$*.files.:status("complete").:last()').query()
+        assert results.uuids == ["ok-1"]
 
     def test_name_three_pointer_literal_root(self):
-        results = _finder(
-            '$orders.files.:status("failed").:first()',
-            TYPE_HOME,
-            [],
-            ledger=STATUS_LEDGER,
+        results = self._status_finder(
+            '$orders.files.:status("complete").:first()'
         ).query()
-        assert results.uuids == ["fail-1"]
+        assert results.uuids == ["ok-1"]
 
     def test_name_three_index_pointer(self):
-        results = _finder(
-            '$*.files.:status("failed").:index(1)',
-            TYPE_HOME,
-            [],
-            ledger=STATUS_LEDGER,
-        ).query()
-        assert results.uuids == ["fail-2"]
+        results = self._status_finder('$*.files.:status("complete").:index(0)').query()
+        assert results.uuids == ["ok-1"]
+        assert self._status_finder(
+            '$*.files.:status("complete").:index(1)'
+        ).query().results == []
 
     def test_name_three_pointer_narrows_a_named_file_name_chain_too(self):
-        results = _finder(
-            '$*.files.:status("failed"):named_file_name("orders").:first()',
-            TYPE_HOME,
-            [],
-            ledger=STATUS_LEDGER,
+        results = self._status_finder(
+            '$*.files.:status("complete"):named_file_name("orders").:first()'
         ).query()
-        assert results.uuids == ["fail-1"]
+        assert results.uuids == ["ok-1"]
 
     def test_name_three_pointer_no_match_gives_empty(self):
-        results = _finder(
-            '$*.files.:status("nope").:last()',
-            TYPE_HOME,
-            [],
-            ledger=STATUS_LEDGER,
-        ).query()
+        results = self._status_finder('$*.files.:status("nope").:last()').query()
         assert results.results == []
 
     def test_name_three_field_accessor_is_rejected(self):
@@ -4721,3 +4735,71 @@ class TestNamedFileManifestPathHelpers:
         assert finder._live_manifest_entry_by_uuid("nope") is None
         with pytest.raises(ValueError):
             finder._live_manifest_entry_by_uuid("")
+
+
+class TestLiveLedgerEntries:
+    # the helper behind the bare ':status()' gate since the C1 bare-half
+    # revert (2026-11-01): the ledger entries of live versions only.
+    @staticmethod
+    def _finder():
+        return TestStatusGate._status_finder('$*.files.:status("complete")')
+
+    def test_keeps_only_live_versions_in_ledger_order(self):
+        entries = self._finder()._live_ledger_entries(names=["orders", "invoices"])
+        assert [e["uuid"] for e in entries] == ["ok-1"]
+
+    def test_scoped_to_the_names_given(self):
+        assert self._finder()._live_ledger_entries(names=["invoices"]) == []
+
+    def test_no_names_gives_no_entries(self):
+        assert self._finder()._live_ledger_entries(names=[]) == []
+
+    def test_none_raises(self):
+        with pytest.raises(ValueError):
+            self._finder()._live_ledger_entries(names=None)
+
+    def test_a_live_version_with_no_ledger_entry_is_absent(self):
+        # a manifest from before the ledger: the bare gate has nothing to
+        # read its status from, as before
+        by_name = {
+            "orders": (
+                "inputs/named_files/orders",
+                [{"file_home": "inputs/named_files/orders/x", "uuid": "pre-ledger"}],
+            )
+        }
+        finder = _finder(
+            '$*.files.:status("complete")',
+            TYPE_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+            by_name=by_name,
+        )
+        assert finder._live_ledger_entries(names=["orders"]) == []
+        assert finder.query().results == []
+
+
+class TestLedgerSetListsFailures:
+    # since 2026-11-01 the '*' ledger set lists failed registrations (a
+    # failure is tracked only in the ledger; each result's path is the
+    # ledger). A failure may carry no named_file_name at all.
+    LEDGER = MANIFEST_FIELD_LEDGER + [
+        {"uuid": "nameless-failure", "status": "failed", "file_path": None}
+    ]
+
+    def _query(self, reference: str):
+        return _finder(
+            reference,
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=self.LEDGER,
+        ).query()
+
+    def test_a_nameless_failure_is_listed_under_star(self):
+        results = self._query("$*.files.:manifest():uuid()")
+        assert results.uuids == ["u-ledger-1", "u-ledger-2", "nameless-failure"]
+        assert results.files == ["inputs/named_files/manifest.json"] * 3
+
+    def test_a_name_filter_passes_over_a_nameless_failure(self):
+        results = self._query("$:regex(/^al/).files.:manifest():uuid()")
+        assert results.uuids == ["u-ledger-1"]

@@ -2427,9 +2427,17 @@ class TestStarLedgerReadKeepsDeletedEntries:
     def _data(self, reference: str) -> list:
         return [r.data for r in self._c1_finder(reference).resolve().results]
 
-    def test_bare_field_lists_every_ledger_entry(self):
+    def test_bare_field_lists_the_live_versions_only(self):
+        # changed 2026-11-01 (C1 bare-half revert, agreed with David; was:
+        # every ledger entry). A bare '*' field reads each live group in
+        # turn, sorted by time; only ':manifest()' reaches the ledger, so
+        # the deleted gone-v1 and the unchanged reload keep-reload drop out.
         results = self._c1_finder("$*.csvpaths.:uuid()").query()
-        assert results.uuids == _C1_LEDGER_UUIDS
+        assert results.uuids == ["keep-v1", "also-v1"]
+        assert results.files == [
+            "named_paths/keep/group.csvpaths",
+            "named_paths/also/group.csvpaths",
+        ]
 
     def test_manifest_field_lists_every_ledger_entry(self):
         results = self._c1_finder("$*.csvpaths.:manifest():uuid()").query()
@@ -2442,8 +2450,10 @@ class TestStarLedgerReadKeepsDeletedEntries:
         assert results.results[2].uuid == "gone-v1"
         assert results.results[2].path == "named_paths/manifest.json"
 
-    def test_bare_field_values_include_the_deleted_entry(self):
-        assert self._data("$*.csvpaths.:uuid()") == _C1_LEDGER_UUIDS
+    def test_bare_field_values_are_the_live_versions(self):
+        # changed 2026-11-01 (was: include the deleted entry)
+        assert self._data("$*.csvpaths.:uuid()") == ["keep-v1", "also-v1"]
+        assert self._data("$*.csvpaths.:fingerprint()") == ["fp-keep", "fp-also"]
 
     def test_manifest_last_with_a_field_is_the_last_ledger_entry(self):
         assert self._data("$*.csvpaths.:manifest():last():uuid()") == ["keep-reload"]
@@ -2685,3 +2695,43 @@ class TestVersionResultPath:
         # checked up front, even with no versions to give a path to
         with pytest.raises(ValueError):
             finder._apply_name_three_to_versions([], None, manifest_source="elsewhere")
+
+
+class TestBareStarFieldReadsLiveGroups:
+    # C1 bare-half revert (2026-11-01, agreed with David; compendium 6.19):
+    # a bare '*' field with no pointer reads each live group in turn,
+    # sorted by time. Only ':manifest()' reaches the ledger set.
+    @staticmethod
+    def _c1(reference: str):
+        return TestStarLedgerReadKeepsDeletedEntries._c1_finder(reference)
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$*.csvpaths.:uuid()",
+            '$:regex("^(keep|also|gone)$").csvpaths.:uuid()',
+            '$:choice("keep|also|gone").csvpaths.:uuid()',
+        ],
+    )
+    def test_live_groups_only(self, reference):
+        assert self._c1(reference).query().uuids == ["keep-v1", "also-v1"]
+
+    def test_a_name_filter_still_narrows(self):
+        results = self._c1('$:regex("^keep$").csvpaths.:uuid()').query()
+        assert results.uuids == ["keep-v1"]
+
+    def test_the_manifest_set_still_reads_the_ledger(self):
+        results = self._c1("$*.csvpaths.:manifest():uuid()").query()
+        assert results.uuids == _C1_LEDGER_UUIDS
+
+    def test_a_bare_field_resolves_from_the_live_entry(self):
+        data = [
+            r.data
+            for r in self._c1("$*.csvpaths.:named_paths_identities()").resolve().results
+        ]
+        assert data == [["s"], ["t"]]
+
+    def test_a_pointer_is_unchanged(self):
+        # a bare pointer under '*' already walked the live groups (finding
+        # I, still to come, makes it one result per group)
+        assert self._c1("$*.csvpaths.:last()").query().uuids == ["also-v1"]
