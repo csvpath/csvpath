@@ -150,6 +150,99 @@
         "sistema único de boleto electrónico",
         "sube"
       ]
+    },
+    "bban_fr": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
+      "retrieved": "2026-11-02",
+      "keywords": [
+        "account code",
+        "account number",
+        "accountno#",
+        "accountnumber#",
+        "bban",
+        "code bancaire",
+        "compte bancaire",
+        "customer account id",
+        "customer account number",
+        "customer bank account id",
+        "iban",
+        "numéro de compte"
+      ]
+    },
+    "bban_de": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
+      "retrieved": "2026-11-02",
+      "keywords": [
+        "account code",
+        "account number",
+        "accountno#",
+        "accountnumber#",
+        "bankleitzahl",
+        "bban",
+        "customer account id",
+        "customer account number",
+        "customer bank account id",
+        "geheimzahl",
+        "iban",
+        "kartennummer",
+        "kontonummer",
+        "kreditkartennummer",
+        "sepa"
+      ]
+    },
+    "bban_it": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
+      "retrieved": "2026-11-02",
+      "keywords": [
+        "account code",
+        "account number",
+        "accountno#",
+        "accountnumber#",
+        "bban",
+        "codice bancario",
+        "conto bancario",
+        "customer account id",
+        "customer account number",
+        "customer bank account id",
+        "iban",
+        "numero di conto"
+      ]
+    },
+    "bban_es": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
+      "retrieved": "2026-11-02",
+      "keywords": [
+        "account code",
+        "account number",
+        "accountno#",
+        "accountnumber#",
+        "bban",
+        "código cuenta",
+        "código cuenta bancaria",
+        "cuenta cliente id",
+        "customer account ID",
+        "customer account number",
+        "customer bank account id",
+        "iban",
+        "número cuenta bancaria cliente",
+        "número cuenta cliente"
+      ]
+    },
+    "bban_gb": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
+      "retrieved": "2026-11-02",
+      "keywords": [
+        "account code",
+        "account number",
+        "accountno#",
+        "accountnumber#",
+        "bban",
+        "customer account id",
+        "customer account number",
+        "customer bank account id",
+        "iban",
+        "sepa"
+      ]
     }
   },
   "identifiers": {
@@ -364,15 +457,14 @@
     },
     "FRANCE_BANK_ACCOUNT_NUMBER": {
       "category": "FINANCIAL_INFORMATION",
-      "detector": "iban:FR",
-      "keyword_mode": "none",
-      "keywords_from": null,
+      "detector": "bank:FR",
+      "keyword_mode": "required",
+      "keywords_from": "bban_fr",
       "distance": 30,
       "severity": "1:HIGH",
       "fidelity": "A",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
-      "retrieved": "2026-11-01",
-      "partial": "Macie's FRANCE_BANK_ACCOUNT_NUMBER also detects France Basic Bank Account Numbers (BBANs) near a keyword; only the IBAN part is translated"
+      "retrieved": "2026-11-01"
     },
     "GEORGIA_BANK_ACCOUNT_NUMBER": {
       "category": "FINANCIAL_INFORMATION",
@@ -387,15 +479,14 @@
     },
     "GERMANY_BANK_ACCOUNT_NUMBER": {
       "category": "FINANCIAL_INFORMATION",
-      "detector": "iban:DE",
-      "keyword_mode": "none",
-      "keywords_from": null,
+      "detector": "bank:DE",
+      "keyword_mode": "required",
+      "keywords_from": "bban_de",
       "distance": 30,
       "severity": "1:HIGH",
       "fidelity": "A",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
-      "retrieved": "2026-11-01",
-      "partial": "Macie's GERMANY_BANK_ACCOUNT_NUMBER also detects Germany Basic Bank Account Numbers (BBANs) near a keyword; only the IBAN part is translated"
+      "retrieved": "2026-11-01"
     },
     "GREECE_BANK_ACCOUNT_NUMBER": {
       "category": "FINANCIAL_INFORMATION",
@@ -454,15 +545,14 @@
     },
     "ITALY_BANK_ACCOUNT_NUMBER": {
       "category": "FINANCIAL_INFORMATION",
-      "detector": "iban:IT",
-      "keyword_mode": "none",
-      "keywords_from": null,
+      "detector": "bank:IT",
+      "keyword_mode": "required",
+      "keywords_from": "bban_it",
       "distance": 30,
       "severity": "1:HIGH",
       "fidelity": "A",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
-      "retrieved": "2026-11-01",
-      "partial": "Macie's ITALY_BANK_ACCOUNT_NUMBER also detects Italy Basic Bank Account Numbers (BBANs) near a keyword; only the IBAN part is translated"
+      "retrieved": "2026-11-01"
     },
     "JORDAN_BANK_ACCOUNT_NUMBER": {
       "category": "FINANCIAL_INFORMATION",
@@ -664,15 +754,14 @@
     },
     "SPAIN_BANK_ACCOUNT_NUMBER": {
       "category": "FINANCIAL_INFORMATION",
-      "detector": "iban:ES",
-      "keyword_mode": "none",
-      "keywords_from": null,
+      "detector": "bank:ES",
+      "keyword_mode": "required",
+      "keywords_from": "bban_es",
       "distance": 30,
       "severity": "1:HIGH",
       "fidelity": "A",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
-      "retrieved": "2026-11-01",
-      "partial": "Macie's SPAIN_BANK_ACCOUNT_NUMBER also detects Spain Basic Bank Account Numbers (BBANs) near a keyword; only the IBAN part is translated"
+      "retrieved": "2026-11-01"
     },
     "SWEDEN_BANK_ACCOUNT_NUMBER": {
       "category": "FINANCIAL_INFORMATION",
@@ -731,15 +820,14 @@
     },
     "UK_BANK_ACCOUNT_NUMBER": {
       "category": "FINANCIAL_INFORMATION",
-      "detector": "iban:GB",
-      "keyword_mode": "none",
-      "keywords_from": null,
+      "detector": "bank:GB",
+      "keyword_mode": "required",
+      "keywords_from": "bban_gb",
       "distance": 30,
       "severity": "1:HIGH",
       "fidelity": "A",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
-      "retrieved": "2026-11-01",
-      "partial": "Macie's UK_BANK_ACCOUNT_NUMBER also detects UK Basic Bank Account Numbers (BBANs) near a keyword, and domestic sort code and account numbers such as 60-16-13 31926819; only the IBAN part is translated"
+      "retrieved": "2026-11-01"
     },
     "UKRAINE_BANK_ACCOUNT_NUMBER": {
       "category": "FINANCIAL_INFORMATION",
@@ -1202,6 +1290,120 @@
         "6061"
       ],
       "exclusions": []
+    },
+    "bank": {
+      "notes": [
+        "Macie's FRANCE_, GERMANY_, ITALY_, SPAIN_ and UK_BANK_ACCOUNT_NUMBER detect IBANs, which need no keyword, and the country's BBANs (ISO 13616), which need one. The UK one also detects domestic sort code and account numbers.",
+        "iban_lengths must match the iban detector's lengths; a test checks it.",
+        "BBAN shapes and layouts are ours, from the SWIFT IBAN registry and national practice. Checks: France's RIB key and Spain's two check digits. Italy's CIN letter is not checked: its rule is not confirmed from an authoritative source, and a wrong rule would miss real accounts. Germany and the UK have no generic BBAN check (account checks are bank-specific)."
+      ],
+      "iban_lengths": {
+        "FR": 27,
+        "DE": 22,
+        "IT": 27,
+        "ES": 24,
+        "GB": 22
+      },
+      "bban": {
+        "FR": {
+          "shape": "##########CCCCCCCCCCC##",
+          "layouts": [
+            [
+              4,
+              4,
+              4,
+              4,
+              4,
+              3
+            ],
+            [
+              5,
+              5,
+              11,
+              2
+            ]
+          ],
+          "check": "fr_rib_key"
+        },
+        "DE": {
+          "shape": "##################",
+          "layouts": [
+            [
+              4,
+              4,
+              4,
+              4,
+              2
+            ],
+            [
+              8,
+              10
+            ]
+          ],
+          "check": null
+        },
+        "IT": {
+          "shape": "A##########CCCCCCCCCCCC",
+          "layouts": [
+            [
+              4,
+              4,
+              4,
+              4,
+              4,
+              3
+            ],
+            [
+              1,
+              5,
+              5,
+              12
+            ]
+          ],
+          "check": null
+        },
+        "ES": {
+          "shape": "####################",
+          "layouts": [
+            [
+              4,
+              4,
+              4,
+              4,
+              4
+            ],
+            [
+              4,
+              4,
+              2,
+              10
+            ]
+          ],
+          "check": "es_bban"
+        },
+        "GB": {
+          "shape": "AAAA##############",
+          "layouts": [
+            [
+              4,
+              4,
+              4,
+              4,
+              2
+            ],
+            [
+              4,
+              6,
+              8
+            ]
+          ],
+          "check": null,
+          "domestic_formats": [
+            "##-##-## ########",
+            "## ## ## ########"
+          ]
+        }
+      }
     }
   }
 }

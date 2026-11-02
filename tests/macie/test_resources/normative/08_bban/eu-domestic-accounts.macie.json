@@ -1,0 +1,95 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "eu-west-1",
+    "downloaded_at": "2026-11-02T19:10:00Z",
+    "job_id": "5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "UK_BANK_ACCOUNT_NUMBER",
+      "GERMANY_BANK_ACCOUNT_NUMBER",
+      "FRANCE_BANK_ACCOUNT_NUMBER",
+      "SPAIN_BANK_ACCOUNT_NUMBER",
+      "ITALY_BANK_ACCOUNT_NUMBER"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "UK_BANK_ACCOUNT_NUMBER",
+      "GERMANY_BANK_ACCOUNT_NUMBER",
+      "FRANCE_BANK_ACCOUNT_NUMBER",
+      "SPAIN_BANK_ACCOUNT_NUMBER",
+      "ITALY_BANK_ACCOUNT_NUMBER"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "FINANCIAL_INFORMATION",
+        "id": "UK_BANK_ACCOUNT_NUMBER"
+      },
+      {
+        "category": "FINANCIAL_INFORMATION",
+        "id": "GERMANY_BANK_ACCOUNT_NUMBER"
+      },
+      {
+        "category": "FINANCIAL_INFORMATION",
+        "id": "FRANCE_BANK_ACCOUNT_NUMBER"
+      },
+      {
+        "category": "FINANCIAL_INFORMATION",
+        "id": "SPAIN_BANK_ACCOUNT_NUMBER"
+      },
+      {
+        "category": "FINANCIAL_INFORMATION",
+        "id": "ITALY_BANK_ACCOUNT_NUMBER"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "EU domestic bank accounts",
+      "jobArn": "arn:aws:macie2:eu-west-1:123456789012:classification-job/5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c",
+      "jobId": "5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "UK_BANK_ACCOUNT_NUMBER",
+        "GERMANY_BANK_ACCOUNT_NUMBER",
+        "FRANCE_BANK_ACCOUNT_NUMBER",
+        "SPAIN_BANK_ACCOUNT_NUMBER",
+        "ITALY_BANK_ACCOUNT_NUMBER"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "eu-domestic-accounts",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-eu-domestic"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

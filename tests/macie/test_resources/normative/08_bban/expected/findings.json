@@ -1,0 +1,126 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "FINANCIAL_INFORMATION",
+      "detections": [
+        {
+          "type": "UK_BANK_ACCOUNT_NUMBER",
+          "count": 4,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "account_number",
+                "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "account_number",
+                "row": 3
+              },
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "account_number",
+                "row": 11
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 12
+              }
+            ]
+          }
+        },
+        {
+          "type": "GERMANY_BANK_ACCOUNT_NUMBER",
+          "count": 3,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 5
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 13
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 13
+              }
+            ]
+          }
+        },
+        {
+          "type": "FRANCE_BANK_ACCOUNT_NUMBER",
+          "count": 1,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "account_number",
+                "row": 6
+              }
+            ]
+          }
+        },
+        {
+          "type": "SPAIN_BANK_ACCOUNT_NUMBER",
+          "count": 1,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "account_number",
+                "row": 8
+              }
+            ]
+          }
+        },
+        {
+          "type": "ITALY_BANK_ACCOUNT_NUMBER",
+          "count": 1,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 10
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 10
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:eu-west-1:123456789012:classification-job/5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}

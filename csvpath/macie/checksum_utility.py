@@ -89,6 +89,57 @@ class ChecksumUtility:
             return "K"
         return f"{r}"
 
+    #
+    # letters in a French account number count as digits for the RIB key
+    #
+    FR_RIB_LETTERS = {
+        **dict.fromkeys("AJ", "1"),
+        **dict.fromkeys("BKS", "2"),
+        **dict.fromkeys("CLT", "3"),
+        **dict.fromkeys("DMU", "4"),
+        **dict.fromkeys("ENV", "5"),
+        **dict.fromkeys("FOW", "6"),
+        **dict.fromkeys("GPX", "7"),
+        **dict.fromkeys("HQY", "8"),
+        **dict.fromkeys("IRZ", "9"),
+    }
+
+    @classmethod
+    def fr_rib_key(cls, *, bban: str) -> bool:
+        """True if a 23-character French BBAN (bank 5, branch 5, account
+        11, key 2) has the right RIB key: 97 minus (89 x bank + 15 x branch
+        + 3 x account) mod 97, with the account's letters counted as
+        digits"""
+        if not isinstance(bban, str):
+            raise TypeError(f"bban must be a str, not {type(bban)}")
+        text = bban.upper()
+        if (
+            len(text) != 23
+            or not (text[:10].isascii() and text[:10].isdigit())
+            or not (text[21:].isascii() and text[21:].isdigit())
+            or not (text[10:21].isascii() and text[10:21].isalnum())
+        ):
+            raise ValueError(f"bban must be a 23-character French BBAN, not {bban!r}")
+        account = "".join(cls.FR_RIB_LETTERS.get(c, c) for c in text[10:21])
+        total = 89 * int(text[:5]) + 15 * int(text[5:10]) + 3 * int(account)
+        return 97 - total % 97 == int(text[21:])
+
+    ES_WEIGHTS = [1, 2, 4, 8, 5, 10, 9, 7, 3, 6]
+
+    @classmethod
+    def es_bban(cls, *, bban: str) -> bool:
+        """True if a 20-digit Spanish BBAN (bank 4, branch 4, check 2,
+        account 10) has the right check digits: the first over 00 + bank +
+        branch, the second over the account, each 11 minus the weighted sum
+        mod 11, where 11 is 0 and 10 is 1"""
+        cls._digits(digits=bban, length=20)
+
+        def digit(part: str) -> int:
+            d = 11 - sum(int(c) * w for c, w in zip(part, cls.ES_WEIGHTS)) % 11
+            return 0 if d == 11 else 1 if d == 10 else d
+
+        return f"{digit('00' + bban[:8])}{digit(bban[10:])}" == bban[8:10]
+
     @classmethod
     def _digits(cls, *, digits: str, length: int) -> None:
         if not isinstance(digits, str):

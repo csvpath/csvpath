@@ -1,0 +1,75 @@
+#
+# Basic Bank Account Numbers: Macie's FRANCE_, GERMANY_, ITALY_, SPAIN_ and
+# UK_BANK_ACCOUNT_NUMBER, as our stand-ins. Each detects IBANs, which need
+# no keyword, and the country's BBANs, which need one from the country's
+# list; the UK one also detects domestic sort code and account numbers.
+# The bank detector does both (bank:GB, ...).
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: eu-domestic-accounts.csvpath
+    data: accounts.csv
+    finding_lines: [1, 2, 4, 5, 7, 9, 10, 11, 12]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie UK_BANK_ACCOUNT_NUMBER: occurrence 1, line 1 (row 2), column 2 account_number" }
+      - { line: 2, message: "macie UK_BANK_ACCOUNT_NUMBER: occurrence 2, line 2 (row 3), column 2 account_number" }
+      - { line: 4, message: "macie GERMANY_BANK_ACCOUNT_NUMBER: occurrence 1, line 4 (row 5), column 3 notes" }
+      - { line: 5, message: "macie FRANCE_BANK_ACCOUNT_NUMBER: occurrence 1, line 5 (row 6), column 2 account_number" }
+      - { line: 7, message: "macie SPAIN_BANK_ACCOUNT_NUMBER: occurrence 1, line 7 (row 8), column 2 account_number" }
+      - { line: 9, message: "macie ITALY_BANK_ACCOUNT_NUMBER: occurrence 1, line 9 (row 10), column 3 notes" }
+      - { line: 12, message: "macie GERMANY_BANK_ACCOUNT_NUMBER: occurrence 2, line 12 (row 13), column 3 notes" }
+    findings: findings.json
+    #
+    # The header "account_number" is a keyword for every country (each
+    # list has "account number"); "notes" is not.
+    #
+    #   line  cell                                      reported as
+    #   1     account_number NWBK60161331926819          UK: BBAN, header keyword
+    #   2     account_number "60-16-13 31926819"         UK: domestic sort code and
+    #                                                    account, header keyword
+    #   3     notes NWBK60161331926819                   nothing: a BBAN needs a
+    #                                                    keyword
+    #   4     notes "Kontonummer 370400440532013000"     Germany: BBAN, German keyword
+    #   5     account_number "20041 01005 0500013M026    France: BBAN in its printed
+    #         06"                                        RIB layout, RIB key checked
+    #   6     account_number 20041010050500013M02607     nothing: bad RIB key
+    #   7     account_number "2100 0418 45 0200051332"   Spain: BBAN, both check
+    #                                                    digits right
+    #   8     account_number 21000418460200051332        nothing: bad check digits
+    #   9     notes "conto bancario X 05428 11101        Italy: BBAN in the CIN-ABI-
+    #         000000123456"                              CAB-account layout, Italian
+    #                                                    keyword (the CIN letter is
+    #                                                    not checked)
+    #   10    account_number GB29NWBK60161331926819      UK: an IBAN
+    #   11    notes GB29NWBK60161331926819               UK: an IBAN needs no keyword
+    #   12    notes "iban DE89370400440532013000 bban    Germany twice: the IBAN, and
+    #         370400440532013000"                        the BBAN with "bban" before it
+    #
+    # On each line UK, then Germany, France, Spain and Italy: the wrapper's
+    # resolved order. On line 12 Germany's IBAN comes first in the cell, so
+    # it is occurrence 2 (detailed) and the BBAN is occurrence 3 (past the
+    # cap of 2). Totals: UK 4, Germany 3, France 1, Spain 1, Italy 1. Macie
+    # scores bank account numbers HIGH from one occurrence. All are
+    # FINANCIAL_INFORMATION: totalCount 10.
+    #

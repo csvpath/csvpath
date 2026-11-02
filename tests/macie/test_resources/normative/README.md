@@ -51,8 +51,7 @@ Design decisions are in `specs/macie/transpile-design.md`.
   using one parameterized detector. Contiguous, printed in groups of four,
   lower case with hyphens, in text, two countries in one cell; bad check
   digits, mixed separators, an unselected country, and a UK domestic sort
-  code and account, which Macie would report and we don't yet (reported as
-  partially translated).
+  code and account with no keyword nearby, which is not reported.
 - `06_sin_nhs_vin`: Canada SIN, UK NHS number and VIN. Header and in-cell
   keywords, no keyword, the SIN example number, bad Luhn and mod 11 check
   digits, a European VIN with no check digit, a VIN with the letter O, and
@@ -62,3 +61,8 @@ Design decisions are in `specs/macie/transpile-design.md`.
   and an all-zero RUT (both pass the check, neither is reported), bad
   check digits, SUBE with and without a keyword, and a RUT and a CPF in
   the same cell.
+- `08_bban`: the BBANs of France, Germany, Italy, Spain and the UK, with
+  keywords in the header and in the cell; a BBAN with no keyword (not
+  reported); the UK sort code and account; a bad RIB key and bad Spanish
+  check digits; IBANs with and without a keyword (always reported); and a
+  German IBAN and BBAN in one cell.

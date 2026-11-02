@@ -39,10 +39,10 @@ last. Add an item the moment something is deferred.
    group A identifiers next (e.g. Spain DNI/NIE check letter, India
    Aadhaar Verhoeff, Italy Codice Fiscale, France INSEE, Mexico CURP),
    each a catalog entry plus a detector.
-4b. **BBANs for France, Germany, Italy, Spain and the UK** (keyword
-   required), plus UK domestic sort code and account numbers. **Required
-   before the MVP release** (David, 2026-11-02). Until then the converter
-   reports those five identifiers as partially translated.
+4b. ~~**BBANs for France, Germany, Italy, Spain and the UK**~~ Done: the
+   bank detector, pair 08_bban. The five identifiers are no longer
+   partially translated. Italy's CIN letter is not checked (rule not
+   confirmed from an authoritative source); if it is confirmed, add it.
 4a. **Project rulesbase for the stand-ins.** Copy the packaged catalog into
    the project on load, never overwrite it, resolve a hierarchy (project,
    then Framework, then a `common.json` shared with other rule systems).
@@ -56,7 +56,7 @@ last. Add an item the moment something is deferred.
    permissions agreed with David first.
 8. **One-time fidelity scan against real Macie** (billed; ask first) to
    confirm the interpretations in transpile-design.md: three for custom
-   identifiers, eight for managed ones.
+   identifiers, nine for managed ones.
 
 ## Decide at release planning
 

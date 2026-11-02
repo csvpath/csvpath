@@ -1,0 +1,12 @@
+macie UK_BANK_ACCOUNT_NUMBER: occurrence 1, line 1 (row 2), column 2 account_number
+macie UK_BANK_ACCOUNT_NUMBER: occurrence 2, line 2 (row 3), column 2 account_number
+macie GERMANY_BANK_ACCOUNT_NUMBER: occurrence 1, line 4 (row 5), column 3 notes
+macie FRANCE_BANK_ACCOUNT_NUMBER: occurrence 1, line 5 (row 6), column 2 account_number
+macie SPAIN_BANK_ACCOUNT_NUMBER: occurrence 1, line 7 (row 8), column 2 account_number
+macie ITALY_BANK_ACCOUNT_NUMBER: occurrence 1, line 9 (row 10), column 3 notes
+macie GERMANY_BANK_ACCOUNT_NUMBER: occurrence 2, line 12 (row 13), column 3 notes
+macie UK_BANK_ACCOUNT_NUMBER: 4 occurrences, severity HIGH, detail shown for first 2
+macie GERMANY_BANK_ACCOUNT_NUMBER: 3 occurrences, severity HIGH, detail shown for first 2
+macie FRANCE_BANK_ACCOUNT_NUMBER: 1 occurrence, severity HIGH, detail shown for all 1
+macie SPAIN_BANK_ACCOUNT_NUMBER: 1 occurrence, severity HIGH, detail shown for all 1
+macie ITALY_BANK_ACCOUNT_NUMBER: 1 occurrence, severity HIGH, detail shown for all 1
