@@ -5032,11 +5032,19 @@ class TestScopeLimits:
         _write_archive_manifest_multi(
             tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
         )
-        results = _finder(
-            "$*.results.:all():last():manifest()", str(tmp_path)
-        ).resolve()
-        assert len(results.results) == 2
-        data_by_uuid = {r.uuid: r.data for r in results.results}
+        # REVISED 2026-11-01: two groups' winners are two run manifest
+        # files, so resolve() raises, one file at a time (compendium
+        # 5.3), as the literal root always did. Each one, resolved on
+        # its own, is still that run's own manifest, not the ledger.
+        finder = _finder("$*.results.:all():last():manifest()", str(tmp_path))
+        results = finder.query()
+        assert sorted(results.uuids) == ["acme-east", "widgets-east"]
+        with pytest.raises(ReferenceException3, match="more than one match"):
+            finder.resolve()
+        data_by_uuid = {
+            uuid: finder.resolve_from([uuid]).results[0].data
+            for uuid in results.uuids
+        }
         assert data_by_uuid == {
             "acme-east": {"run_uuid": "acme-east"},
             "widgets-east": {"run_uuid": "widgets-east"},
@@ -5117,16 +5125,19 @@ class TestScopeLimits:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_manifest_function_on_name_three_not_yet_supported(self, acme_archive):
-        # :manifest() is registered, but not meaningful as a name_three
-        # function for results in this pass -- only :all() and the
-        # well-known-file accessors are accepted there.
+    def test_manifest_function_on_name_three_is_the_instance_manifest(
+        self, acme_archive
+    ):
+        # was "not yet supported" until 2026-11-01: a name_three
+        # :manifest() is the instance's own manifest.json (compendium
+        # 6.14); see TestRunDirNameThreeManifest
         finder = _finder(
             "$acme.results.customers/2025:first().company_names:manifest()",
             acme_archive,
         )
-        with pytest.raises(ReferenceException3):
-            finder.query()
+        (path,) = finder.query().files
+        assert path.endswith(pathu.resep("company_names/manifest.json"))
+        assert finder.resolve().results[0].data == {"uuid": "inst1-uuid"}
 
     def test_unsupported_function_valued_path_segment(self, acme_archive):
         finder = _finder("$acme.results.:quarter()/2025:last()", acme_archive)
@@ -6043,9 +6054,11 @@ class TestStarManifestSetInstanceRecords:
             self._path(archive, "keep/2026-01-05_00-00-00/t"),
         ]
 
-    def test_a_run_dir_name_three_manifest_still_raises(self, archive):
-        with pytest.raises(ReferenceException3, match="name_three function"):
-            _finder("$keep.results.:last().t:manifest()", archive).query()
+    def test_a_run_dir_name_three_manifest_is_its_own_branch(self, archive):
+        # without the set, the run-dir branch reads the live instance's
+        # own manifest (2026-11-01, see TestRunDirNameThreeManifest)
+        results = _finder("$keep.results.:last().t:manifest()", archive).resolve()
+        assert results.results[0].data["uuid"] == "k3-t"
 
     # --- helpers
 
@@ -6276,3 +6289,250 @@ class TestQueryPathsNameTheFile:
         assert not _finder(
             "$keep.results.:last():manifest().t", archive
         )._names_run_manifest()
+
+
+class TestRunDirNameThreeManifest:
+    # added 2026-11-01. In the run-dir branches, a name_three :manifest()
+    # is the selected instance's own manifest.json (compendium 6.14),
+    # with the 6.13b rules C2b built for the manifest set: it may sit
+    # beside an identity, pointer, range or '*'/:all(); a field beside
+    # it gives its value; a content accessor beside it raises (two
+    # files); more than one selected with no field raises on resolve
+    # (5.3, 5.6). Also here: the "whole file" flag is the same in the
+    # literal-root and '*' branches (_reads_whole_file()).
+    #
+    # Runs, each with instances s (declared first, no errors) and t
+    # (declared second, two errors): keep r1 and r2, also a1.
+    RUNS = (
+        ("r1", "keep", "keep/2026-01-01_00-00-00"),
+        ("r2", "keep", "keep/2026-01-02_00-00-00"),
+        ("a1", "also", "also/2026-01-03_00-00-00"),
+    )
+    R2 = "keep/2026-01-02_00-00-00"
+
+    @pytest.fixture
+    def archive(self, tmp_path):
+        ledger = []
+        for run_uuid, name, rel in self.RUNS:
+            run_home = str(tmp_path / rel)
+            _write_json(
+                Path(run_home) / "manifest.json",
+                {"run_uuid": run_uuid, "run_home": run_home},
+            )
+            for index, identity in enumerate(("s", "t")):
+                uuid = f"{run_uuid}-{identity}"
+                _write_json(
+                    Path(run_home) / identity / "manifest.json",
+                    {
+                        "uuid": uuid,
+                        "instance_identity": identity,
+                        "instance_index": index,
+                        "error_count": 2 * index,
+                        "valid": index == 0,
+                    },
+                )
+                _write_json(
+                    Path(run_home) / identity / "errors.json",
+                    [{"message": uuid}] * (2 * index),
+                )
+                ledger.append(
+                    {
+                        "uuid": uuid,
+                        "run_uuid": run_uuid,
+                        "run_home": run_home,
+                        "identity": identity,
+                        "named_paths_name": name,
+                    }
+                )
+        _write_json(tmp_path / "manifest.json", ledger)
+        return str(tmp_path)
+
+    @staticmethod
+    def _query(reference: str, archive: str):
+        return _finder(reference, archive).query()
+
+    @staticmethod
+    def _data(reference: str, archive: str) -> list:
+        return [r.data for r in _finder(reference, archive).resolve().results]
+
+    @staticmethod
+    def _path(archive: str, *parts: str) -> str:
+        return pathu.resep("/".join([archive, *parts]))
+
+    # --- selecting the instance
+
+    @pytest.mark.parametrize(
+        "name_three, identity",
+        [
+            ("t:manifest()", "t"),
+            (":first():manifest()", "s"),
+            (":last():manifest()", "t"),
+            (":index(1):manifest()", "t"),
+            (":from(1):manifest()", "t"),
+            (":to(0):manifest()", "s"),
+        ],
+    )
+    def test_one_instance_queries_and_resolves_to_its_manifest(
+        self, archive, name_three, identity
+    ):
+        ref = f"$keep.results.:last().{name_three}"
+        results = self._query(ref, archive)
+        assert results.files == [
+            self._path(archive, self.R2, identity, "manifest.json")
+        ]
+        assert results.uuids == [f"r2-{identity}"]
+        (manifest,) = self._data(ref, archive)
+        assert manifest["uuid"] == f"r2-{identity}"
+        assert manifest["instance_index"] == (0 if identity == "s" else 1)
+
+    @pytest.mark.parametrize(
+        "name_three", [":all():manifest()", "*:manifest()", ":manifest()"]
+    )
+    def test_every_instance_is_listed_and_resolve_raises(self, archive, name_three):
+        ref = f"$keep.results.:last().{name_three}"
+        assert self._query(ref, archive).files == [
+            self._path(archive, self.R2, "s", "manifest.json"),
+            self._path(archive, self.R2, "t", "manifest.json"),
+        ]
+        with pytest.raises(ReferenceException3, match="more than one match"):
+            _finder(ref, archive).resolve()
+
+    def test_a_missing_instance_manifest_resolves_to_none(self, archive):
+        os.remove(os.path.join(archive, self.R2, "t", "manifest.json"))
+        assert self._data("$keep.results.:last().t:manifest()", archive) == [None]
+
+    # --- a field beside :manifest()
+
+    def test_a_field_beside_it_gives_its_value(self, archive):
+        assert self._data("$keep.results.:last().t:manifest():valid()", archive) == [
+            False
+        ]
+        ref = "$keep.results.:last().t:manifest():error_count()"
+        assert self._data(ref, archive) == [2]
+
+    def test_the_value_is_the_same_as_without_manifest(self, archive):
+        with_manifest = self._data("$keep.results.:last().t:manifest():uuid()", archive)
+        without = self._data("$keep.results.:last().t:uuid()", archive)
+        assert with_manifest == without == ["r2-t"]
+
+    def test_a_field_beside_it_gives_one_value_per_instance(self, archive):
+        ref = "$keep.results.:last().:all():manifest():error_count()"
+        assert self._data(ref, archive) == [0, 2]
+
+    def test_a_field_beside_it_still_names_the_file_on_query(self, archive):
+        files = self._query("$keep.results.:last().t:manifest():valid()", archive).files
+        assert files == [self._path(archive, self.R2, "t", "manifest.json")]
+
+    # --- raises
+
+    def test_a_content_accessor_beside_it_raises(self, archive):
+        with pytest.raises(ReferenceException3, match="different file"):
+            self._query("$keep.results.:last().t:manifest():errors()", archive)
+
+    def test_name_one_manifest_with_a_name_three_still_raises(self, archive):
+        ref = "$keep.results.:last():manifest().t:manifest()"
+        with pytest.raises(ReferenceException3, match="on name_one with name_three"):
+            _finder(ref, archive).resolve()
+
+    # --- every run-dir branch
+
+    @pytest.mark.parametrize(
+        "reference, runs",
+        [
+            ("$*.results.:flatten():last().t:manifest()", ["also/2026-01-03_00-00-00"]),
+            ("$*.results.:last().t:manifest()", ["also/2026-01-03_00-00-00"]),
+            (
+                "$*.results.:all():last().t:manifest()",
+                ["also/2026-01-03_00-00-00", "keep/2026-01-02_00-00-00"],
+            ),
+            (
+                "$*.results.:groups():last().t:manifest()",
+                ["also/2026-01-03_00-00-00", "keep/2026-01-02_00-00-00"],
+            ),
+            (
+                "$keep.results.:all().t:manifest()",
+                ["keep/2026-01-01_00-00-00", "keep/2026-01-02_00-00-00"],
+            ),
+        ],
+    )
+    def test_every_branch_queries_to_the_instance_manifest(
+        self, archive, reference, runs
+    ):
+        files = self._query(reference, archive).files
+        assert sorted(files) == [
+            self._path(archive, run, "t", "manifest.json") for run in runs
+        ]
+        if len(runs) > 1:
+            with pytest.raises(ReferenceException3, match="more than one match"):
+                _finder(reference, archive).resolve()
+        else:
+            (manifest,) = self._data(reference, archive)
+            assert manifest["instance_identity"] == "t"
+
+    # --- the whole-file flag is the same in every branch
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$keep.results.:all():manifest()",
+            "$*.results.:flatten():manifest()",
+            "$*.results.:groups():manifest()",
+            "$*.results.:all():last():manifest()",
+        ],
+    )
+    def test_several_run_manifests_raise_on_resolve_in_every_branch(
+        self, archive, reference
+    ):
+        # was: the '*' forms resolved every run manifest at once
+        assert len(self._query(reference, archive).files) > 1
+        with pytest.raises(ReferenceException3, match="more than one match"):
+            _finder(reference, archive).resolve()
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$keep.results.:all():manifest():run_uuid()", ["r1", "r2"]),
+            ("$*.results.:flatten():manifest():run_uuid()", ["r1", "r2", "a1"]),
+        ],
+    )
+    def test_a_field_beside_a_run_manifest_gives_values_in_every_branch(
+        self, archive, reference, expected
+    ):
+        # was: the literal root raised, though it asks for values
+        assert self._data(reference, archive) == expected
+
+    def test_several_bare_instances_are_not_a_whole_file(self, archive):
+        # no file named, so several resolve together ("no default", None)
+        assert self._data("$keep.results.:last().*", archive) == [None, None]
+
+    def test_an_argued_field_beside_it_is_still_a_whole_file(self, archive):
+        ref = '$keep.results.:all():manifest():run_uuid("r1")'
+        assert _finder(ref, archive)._reads_whole_file(accessor=None)
+
+    def test_a_clock_function_beside_it_is_not_a_value_field(self, archive):
+        ref = "$*.results.:flatten():manifest():today()"
+        assert _finder(ref, archive)._reads_whole_file(accessor=None)
+
+    # --- helpers
+
+    def test_names_instance_manifest(self, archive):
+        assert _finder(
+            "$keep.results.:last().t:manifest()", archive
+        )._names_instance_manifest()
+        assert not _finder(
+            "$keep.results.:last().t:errors()", archive
+        )._names_instance_manifest()
+        assert not _finder(
+            "$keep.results.:last():manifest()", archive
+        )._names_instance_manifest()
+
+    def test_helpers_reject_bad_input(self, archive):
+        finder = _finder("$keep.results.:last()", archive)
+        with pytest.raises(ValueError):
+            finder._name_three_manifest_call(None)
+        with pytest.raises(ValueError):
+            finder._has_unargued_field(None)
+        with pytest.raises(ValueError):
+            finder._instance_dir_field_value(instance_dir="", field_call=object())
+        with pytest.raises(ValueError):
+            finder._instance_dir_field_value(instance_dir="x", field_call=None)
