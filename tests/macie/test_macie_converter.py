@@ -254,12 +254,83 @@ def test_macie_converter_missing_data_path() -> None:
         MacieConverter(wrapper=_job()).convert(path="no/such/file.csv")
 
 
-def test_macie_converter_needs_a_custom_identifier() -> None:
-    w = _handcrafted()
+def _no_custom(w: dict) -> dict:
     w["customDataIdentifiers"] = []
     w["selection"]["customDataIdentifierIds"] = []
+    return w
+
+
+def test_macie_converter_needs_an_identifier_to_convert() -> None:
+    #
+    # no custom identifiers, and no managed ones we have a stand-in for
+    #
+    w = _no_custom(_handcrafted())
+    w["selection"]["managedDataIdentifierIds"] = ["NAME"]
+    w["managedDataIdentifiers"]["resolved"] = ["NAME"]
     with pytest.raises(MacieException):
         MacieConverter(wrapper=w).convert(name="t")
+
+
+def test_macie_converter_managed_only() -> None:
+    #
+    # the handcrafted wrapper resolves CREDIT_CARD_NUMBER
+    #
+    csvpath = (
+        MacieConverter(wrapper=_no_custom(_handcrafted())).convert(name="t").csvpath
+    )
+    assert "macie_cdi(" not in csvpath
+    assert '    macie_mdi(\n        "CREDIT_CARD_NUMBER",\n' in csvpath
+
+
+def test_macie_converter_managed_arguments() -> None:
+    csvpath = MacieConverter(wrapper=_handcrafted()).convert(name="t").csvpath
+    body = csvpath.split("~")[2]
+    assert body.index("macie_cdi(") < body.index("macie_mdi(")
+    assert (
+        "    macie_mdi(\n"
+        '        "CREDIT_CARD_NUMBER",\n'
+        '        "FINANCIAL_INFORMATION",\n'
+        '        "credit_card",\n'
+        '        "required",\n'
+        '        "account number|american express|amex|'
+    ) in csvpath
+    assert '|visa",\n        30,\n        "1:HIGH"\n    )' in csvpath
+
+
+def test_macie_converter_managed_order_follows_the_wrapper() -> None:
+    w = _handcrafted()
+    resolved = ["CREDIT_CARD_NUMBER_(NO_KEYWORD)", "NAME", "CREDIT_CARD_NUMBER"]
+    w["selection"]["managedDataIdentifierIds"] = resolved
+    w["managedDataIdentifiers"]["resolved"] = resolved
+    conversion = MacieConverter(wrapper=w).convert(name="t")
+    body = conversion.csvpath.split("~")[2]
+    assert body.index('"CREDIT_CARD_NUMBER_(NO_KEYWORD)"') < body.index(
+        '"CREDIT_CARD_NUMBER",'
+    )
+    assert [s.location for s in conversion.report.skipped] == [
+        "managedDataIdentifiers.resolved[1]"
+    ]
+
+
+def test_macie_converter_uses_the_catalog_given(tmp_path) -> None:
+    import json as _json
+
+    from csvpath.macie.managed_catalog import ManagedCatalog
+
+    with open(ManagedCatalog.DEFAULT, encoding="utf-8") as f:
+        c = _json.load(f)
+    c["identifiers"]["CREDIT_CARD_NUMBER"]["distance"] = 12
+    p = tmp_path / "catalog.json"
+    p.write_text(_json.dumps(c), encoding="utf-8")
+    catalog = ManagedCatalog.load(path=str(p))
+    csvpath = (
+        MacieConverter(wrapper=_handcrafted(), catalog=catalog)
+        .convert(name="t")
+        .csvpath
+    )
+    assert '|visa",\n        12,\n' in csvpath
+    with pytest.raises(TypeError):
+        MacieConverter(wrapper=_handcrafted(), catalog={})
 
 
 @pytest.mark.parametrize(
@@ -343,7 +414,9 @@ def test_macie_converter_report() -> None:
     skipped = MacieConverter(wrapper=_job()).convert().report.skipped
     assert [(s.location, s.feature) for s in skipped] == [
         ("allowLists[1]", "allowList.s3WordsList"),
-        ("managedDataIdentifiers.resolved[0]", "managedDataIdentifier"),
+        #
+        # resolved[0] is CREDIT_CARD_NUMBER, which is translated
+        #
         ("managedDataIdentifiers.resolved[1]", "managedDataIdentifier"),
         ("managedDataIdentifiers.resolved[2]", "managedDataIdentifier"),
         ("findingsFilters[0]", "findingsFilter"),
@@ -354,7 +427,8 @@ def test_macie_converter_report() -> None:
     assert {s.object for s in skipped} == {"hr-exports-weekly"}
     assert "public-names" in skipped[0].reason
     assert "#470" in skipped[0].reason
-    assert "CREDIT_CARD_NUMBER" in skipped[1].reason
+    assert "USA_SOCIAL_SECURITY_NUMBER" in skipped[1].reason
+    assert "NAME" in skipped[2].reason
 
 
 def test_macie_converter_text_allow_list_is_not_in_the_csvpath() -> None:

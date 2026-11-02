@@ -1,0 +1,76 @@
+#
+# Credit card numbers: Macie's CREDIT_CARD_NUMBER (a keyword is required)
+# and CREDIT_CARD_NUMBER_(NO_KEYWORD) (reported only when no keyword is
+# there), as our stand-ins from csvpath/macie/rulesbase/
+# managed_identifiers.json.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 3
+runs:
+  - csvpath: payments-cards.csvpath
+    data: payments.csv
+    finding_lines: [1, 2, 3, 4, 5, 10, 11]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie CREDIT_CARD_NUMBER: occurrence 1, line 1 (row 2), column 2 card_number" }
+      - { line: 2, message: "macie CREDIT_CARD_NUMBER: occurrence 2, line 2 (row 3), column 2 card_number" }
+      - { line: 3, message: "macie CREDIT_CARD_NUMBER: occurrence 3, line 3 (row 4), column 3 notes" }
+      - { line: 5, message: "macie CREDIT_CARD_NUMBER_(NO_KEYWORD): occurrence 1, line 5 (row 6), column 3 notes" }
+      - { line: 10, message: "macie CREDIT_CARD_NUMBER_(NO_KEYWORD): occurrence 2, line 10 (row 11), column 3 notes" }
+    findings: findings.json
+    #
+    # Only the card_number header holds a keyword ("card"). Every number
+    # below that is reported passes Luhn and has a brand prefix and length.
+    # Each number is reported by exactly one of the two identifiers.
+    #
+    #   line  cell                                    reported as
+    #   1     card_number 4532777777777774            CREDIT_CARD_NUMBER: header keyword
+    #   2     card_number 4532 7777 7777 7774         CREDIT_CARD_NUMBER: grouped 4-4-4-4
+    #                                                 (ours: Macie only documents digit
+    #                                                 sequences)
+    #   3     notes "visa 3530777777777778"           CREDIT_CARD_NUMBER: JCB, "visa" one
+    #                                                 character before
+    #   4     notes "ref 6011777777777779 (discover)" CREDIT_CARD_NUMBER: Discover,
+    #                                                 "discover" two characters after
+    #   5     notes "6250777777777779"                NO_KEYWORD: UnionPay, no keyword
+    #   6     card_number 4532777777777775            nothing: bad check digit
+    #   7     payment_ref 1234567812345670            nothing: passes Luhn, but no brand
+    #                                                 starts with 12
+    #   8     card_number 4111111111111111            nothing: an issuer test number
+    #                                                 Macie never reports
+    #   9     card_number 5425777777777771            nothing: allow list
+    #                                                 merchant-test-card
+    #   10    notes "visa holder since 2019 see the   NO_KEYWORD: Amex, 39 characters
+    #         signup form 371477777777773"            between "visa" and the number,
+    #                                                 more than 30
+    #   11    card_number, two cards                  CREDIT_CARD_NUMBER twice: Visa and
+    #                                                 a Mastercard 2-series
+    #   12    notes 45327777777777740000              nothing: 20 digits is not a 13-19
+    #                                                 digit sequence
+    #
+    # On each line CREDIT_CARD_NUMBER is applied first, then NO_KEYWORD:
+    # the wrapper's resolved order. Totals: CREDIT_CARD_NUMBER 6 (first 3
+    # detailed, max_detail 3), NO_KEYWORD 2 (both detailed). Macie scores
+    # credit card numbers HIGH from one occurrence, with or without a
+    # keyword. Both are FINANCIAL_INFORMATION, so they share one
+    # sensitiveData entry with totalCount 8.
+    #

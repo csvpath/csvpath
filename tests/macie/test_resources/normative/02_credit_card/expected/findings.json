@@ -1,0 +1,47 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "FINANCIAL_INFORMATION",
+      "detections": [
+        {
+          "type": "CREDIT_CARD_NUMBER",
+          "count": 6,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              { "cellReference": null, "column": 2, "columnName": "card_number", "row": 2 },
+              { "cellReference": null, "column": 2, "columnName": "card_number", "row": 3 },
+              { "cellReference": null, "column": 3, "columnName": "notes", "row": 4 },
+              { "cellReference": null, "column": 3, "columnName": "notes", "row": 5 },
+              { "cellReference": null, "column": 2, "columnName": "card_number", "row": 12 },
+              { "cellReference": null, "column": 2, "columnName": "card_number", "row": 12 }
+            ]
+          }
+        },
+        {
+          "type": "CREDIT_CARD_NUMBER_(NO_KEYWORD)",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              { "cellReference": null, "column": 3, "columnName": "notes", "row": 6 },
+              { "cellReference": null, "column": 3, "columnName": "notes", "row": 11 }
+            ]
+          }
+        }
+      ],
+      "totalCount": 8
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:us-east-1:123456789012:classification-job/1f2e3d4c5b6a79881f2e3d4c5b6a7988",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 3
+  }
+}

@@ -88,26 +88,4 @@ class MacieCdi(MatchDecider):
 
     def _decide_match(self, skip=None) -> None:
         run = MacieRun.for_matcher(matcher=self.matcher)
-        csvpath = self.matcher.csvpath
-        line = csvpath.line_monitor.physical_line_number
-        headers = csvpath.headers
-        found = False
-        for i, cell in enumerate(self.matcher.line):
-            if run.tally.tripped:
-                break
-            header = headers[i] if i < len(headers) else ""
-            n = self.identifier.occurrences(
-                cell=f"{cell}", header=f"{header}", allow_lists=run.allow_lists
-            )
-            for _ in range(n):
-                if run.tally.tripped:
-                    break
-                found = True
-                run.record(
-                    source=self,
-                    name=self.identifier.name,
-                    line=line,
-                    column=i + 1,
-                    column_name=f"{header}",
-                )
-        self.match = found
+        self.match = run.scan(source=self, identifier=self.identifier)

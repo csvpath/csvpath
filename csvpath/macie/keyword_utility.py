@@ -87,3 +87,45 @@ class KeywordUtility:
                 if match_end - m.end(1) <= distance:
                     return True
         return False
+
+    @classmethod
+    def near(
+        cls,
+        *,
+        cell: str,
+        match_start: int,
+        match_end: int,
+        patterns: list[re.Pattern],
+        distance: int,
+    ) -> bool:
+        """the managed identifier rule: True if a complete keyword is before
+        or after the match, not overlapping it, with at most distance
+        characters between them. Macie: "in proximity", "typically within
+        30 characters (inclusively)" (to confirm in the fidelity scan)."""
+        if not isinstance(cell, str):
+            raise TypeError(f"cell must be a str, not {type(cell)}")
+        if not isinstance(patterns, list):
+            raise TypeError(f"patterns must be a list, not {type(patterns)}")
+        if not isinstance(distance, int) or isinstance(distance, bool) or distance < 1:
+            raise ValueError(f"distance must be a positive int, not {distance!r}")
+        if not 0 <= match_start <= match_end <= len(cell):
+            raise ValueError(
+                f"Bad match span {match_start}..{match_end} for a cell of length {len(cell)}"
+            )
+        for p in patterns:
+            #
+            # before: the keyword ends at or before match_start. endpos keeps
+            # it from running into the match
+            #
+            pos = max(0, match_start - distance - 2 * len(p.pattern))
+            for m in p.finditer(cell, pos, match_start):
+                if match_start - m.end(1) <= distance:
+                    return True
+            #
+            # after: the keyword starts at or after match_end
+            #
+            endpos = min(len(cell), match_end + distance + 2 * len(p.pattern))
+            for m in p.finditer(cell, match_end, endpos):
+                if m.start(1) - match_end <= distance:
+                    return True
+        return False

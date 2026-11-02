@@ -1,0 +1,64 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "us-east-1",
+    "downloaded_at": "2026-11-01T14:05:00Z",
+    "job_id": "1f2e3d4c5b6a79881f2e3d4c5b6a7988"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": ["CREDIT_CARD_NUMBER", "CREDIT_CARD_NUMBER_(NO_KEYWORD)"],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": ["q8w2e4r6t1y3u5i7o9p0as"]
+  },
+  "managedDataIdentifiers": {
+    "resolved": ["CREDIT_CARD_NUMBER", "CREDIT_CARD_NUMBER_(NO_KEYWORD)"],
+    "resolution": { "method": "selector", "recommended_list": null },
+    "available": [
+      { "category": "FINANCIAL_INFORMATION", "id": "CREDIT_CARD_NUMBER" },
+      { "category": "FINANCIAL_INFORMATION", "id": "CREDIT_CARD_NUMBER_(NO_KEYWORD)" },
+      { "category": "PERSONAL_INFORMATION", "id": "USA_SOCIAL_SECURITY_NUMBER" }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [
+    {
+      "settings": {
+        "arn": "arn:aws:macie2:us-east-1:123456789012:allow-list/q8w2e4r6t1y3u5i7o9p0as",
+        "createdAt": "2026-09-01T12:00:00Z",
+        "criteria": { "regex": "5425[ -]?7777[ -]?7777[ -]?7771" },
+        "description": "Our own merchant test card",
+        "id": "q8w2e4r6t1y3u5i7o9p0as",
+        "name": "merchant-test-card",
+        "status": { "code": "OK" },
+        "tags": {},
+        "updatedAt": "2026-09-01T12:00:00Z"
+      }
+    }
+  ],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": ["q8w2e4r6t1y3u5i7o9p0as"],
+      "createdAt": "2026-10-25T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Payment exports, credit card numbers",
+      "jobArn": "arn:aws:macie2:us-east-1:123456789012:classification-job/1f2e3d4c5b6a79881f2e3d4c5b6a7988",
+      "jobId": "1f2e3d4c5b6a79881f2e3d4c5b6a7988",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": ["CREDIT_CARD_NUMBER", "CREDIT_CARD_NUMBER_(NO_KEYWORD)"],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "payments-cards",
+      "s3JobDefinition": {
+        "bucketDefinitions": [ { "accountId": "123456789012", "buckets": ["acme-payment-exports"] } ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

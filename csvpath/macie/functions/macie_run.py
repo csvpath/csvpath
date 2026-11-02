@@ -4,6 +4,7 @@ import weakref
 from ..allow_list_set import AllowListSet
 from ..arn_utility import ArnUtility as arut
 from ..findings_tally import FindingsTally, IdentifierTally
+from ..managed_catalog import ManagedCatalog
 
 
 class MacieRun:
@@ -43,6 +44,42 @@ class MacieRun:
             source_arn=self._source_arn(),
         )
         self.reported = False
+        self._catalog = None
+
+    @property
+    def catalog(self) -> ManagedCatalog:
+        """the managed identifier catalog, read once per run"""
+        if self._catalog is None:
+            self._catalog = ManagedCatalog.load()
+        return self._catalog
+
+    def scan(self, *, source, identifier) -> bool:
+        """applies a custom or managed identifier to every cell of the
+        current line and records each occurrence. True if the line had at
+        least one. Stops recording when the breaker trips."""
+        csvpath = self.matcher.csvpath
+        line = csvpath.line_monitor.physical_line_number
+        headers = csvpath.headers
+        found = False
+        for i, cell in enumerate(self.matcher.line):
+            if self.tally.tripped:
+                break
+            header = headers[i] if i < len(headers) else ""
+            n = identifier.occurrences(
+                cell=f"{cell}", header=f"{header}", allow_lists=self.allow_lists
+            )
+            for _ in range(n):
+                if self.tally.tripped:
+                    break
+                found = True
+                self.record(
+                    source=source,
+                    name=identifier.name,
+                    line=line,
+                    column=i + 1,
+                    column_name=f"{header}",
+                )
+        return found
 
     @classmethod
     def logger(cls) -> logging.Logger:

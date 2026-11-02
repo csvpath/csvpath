@@ -1,7 +1,7 @@
 """Runs each normative pair's data through the pure-Python matching core,
 without CVL, and checks it produces the pair's expected findings, finding
-lines, errors, and printouts. When the Macie CVL functions exist, the
-normative-pair tests will check the same expectations through a real run."""
+lines, errors, and printouts. test_macie_normative_runs checks the same
+expectations through real CVL runs."""
 
 import csv
 import json
@@ -14,6 +14,9 @@ from csvpath.macie.allow_list_set import AllowListSet
 from csvpath.macie.custom_identifier import CustomIdentifier
 from csvpath.macie.findings_tally import FindingsTally, IdentifierTally
 from csvpath.macie.macie_wrapper_loader import MacieWrapperLoader
+from csvpath.macie.managed_catalog import ManagedCatalog
+from csvpath.macie.managed_identifier import ManagedIdentifier
+from csvpath.macie.severity_levels import SeverityLevels
 
 NORMATIVE = os.path.join("tests", "macie", "test_resources", "normative")
 PAIRS = sorted(
@@ -46,7 +49,7 @@ def _run(*, wrapper: dict, data: str, max_findings: int, max_detail: int) -> dic
             allow.add_regex(name=s["name"], pattern=s["criteria"]["regex"])
         else:
             allow.add_words(name=s["name"], entries=a["contents"]["entries"])
-    cdis = []
+    identifiers = []
     aws = wrapper.get("aws", {})
     source = aws.get("classificationJob") or aws.get("sensitivityInspectionTemplate")
     source_arn = None
@@ -57,13 +60,41 @@ def _run(*, wrapper: dict, data: str, max_findings: int, max_detail: int) -> dic
     )
     for c in wrapper.get("customDataIdentifiers", []):
         cdi = CustomIdentifier.from_aws(cdi=c)
-        cdis.append(cdi)
+        identifiers.append(cdi)
         tally.add(
             tally=IdentifierTally(
                 name=cdi.name,
                 severity=cdi.severity,
                 max_detail=max_detail,
                 arn=c.get("arn"),
+            )
+        )
+    #
+    # managed identifiers come after the custom ones, in the wrapper's
+    # resolved order, as the converter writes them
+    #
+    catalog = ManagedCatalog.load()
+    for name in (wrapper.get("managedDataIdentifiers") or {}).get("resolved") or []:
+        if not catalog.has(name=name):
+            continue
+        e = catalog.identifier(name=name)
+        mdi = ManagedIdentifier(
+            name=name,
+            category=e["category"],
+            detector=e["detector"],
+            keyword_mode=e["keyword_mode"],
+            keywords=e["keywords"],
+            distance=e["distance"],
+            severity=SeverityLevels.parse(text=e["severity"]),
+            catalog=catalog,
+        )
+        identifiers.append(mdi)
+        tally.add(
+            tally=IdentifierTally(
+                name=name,
+                severity=mdi.severity,
+                max_detail=max_detail,
+                category=mdi.category,
             )
         )
     errors, printouts, lines = [], [], set()
@@ -78,22 +109,24 @@ def _run(*, wrapper: dict, data: str, max_findings: int, max_detail: int) -> dic
         #
         if tally.tripped:
             break
-        for cdi in cdis:
+        for identifier in identifiers:
             for i, cell in enumerate(row):
-                n = cdi.occurrences(cell=cell, header=headers[i], allow_lists=allow)
+                n = identifier.occurrences(
+                    cell=cell, header=headers[i], allow_lists=allow
+                )
                 for _ in range(n):
                     if tally.tripped:
                         break
                     lines.add(line)
                     if tally.record(
-                        name=cdi.name,
+                        name=identifier.name,
                         row=line + 1,
                         column=i + 1,
                         column_name=headers[i],
                     ):
                         msg = FindingsTally.detail_message(
-                            name=cdi.name,
-                            occurrence=tally.tallies[cdi.name].count,
+                            name=identifier.name,
+                            occurrence=tally.tallies[identifier.name].count,
                             line=line,
                             column=i + 1,
                             column_name=headers[i],

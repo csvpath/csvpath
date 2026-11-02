@@ -292,6 +292,11 @@ conversion.report.skipped   # what was not translated
 | `CustomIdentifier` | occurrences of one custom identifier in one cell |
 | `IdentifierTally`, `FindingsTally` | counts, cells, detail cap, breaker, messages, findings |
 | `ArnUtility` (`arut`) | checks Macie ARNs; `:` <-> `|` for metadata |
+| `ManagedCatalog` | our managed identifier stand-ins, from `csvpath/macie/rulesbase/managed_identifiers.json`, checked on load |
+| `ManagedIdentifier` | occurrences of one managed identifier in one cell: detector, keyword mode, allow lists |
+| `CreditCardDetector` | 13-19 digits (or grouped), Luhn, issuer prefix and length, less issuer test numbers |
+| `ChecksumUtility` (`chut`) | check-digit algorithms (Luhn so far) |
+| `MacieMdi` (`macie_mdi`) | applies a managed identifier to every cell |
 | `MacieRun` | one run's shared state (allow lists, tally) and outputs; limits from metadata, config, defaults; noisy setup failure |
 | `MacieAllowRegex` (`macie_allow_regex`) | registers a regex allow list before any line is read |
 | `MacieCdi` (`macie_cdi`) | applies a custom identifier to every cell; matches lines with an occurrence |
@@ -301,12 +306,91 @@ The CVL functions are listed in
 `csvpath/matching/functions/internal.imports` and imported on first use.
 `tests/macie/test_macie_functions.py` covers them one behavior at a time;
 `tests/macie/test_macie_normative_runs.py` runs each pair's expected
-csvpath through real CVL. Not yet written: `macie_mdi`,
-`macie_allow_words`.
+csvpath through real CVL. Not yet written: `macie_allow_words`.
 
 `tests/macie/test_macie_pair_semantics.py` runs every normative pair's
 data through these classes, without CVL, and checks the pair's expected
 findings, finding lines, errors and printouts.
+
+## Managed data identifiers
+
+Macie publishes each managed identifier's keywords, and some of its rules,
+but not its implementation. Ours are **stand-ins**, kept as data in a
+packaged catalog, `csvpath/macie/rulesbase/managed_identifiers.json`.
+`ManagedCatalog` checks the catalog when it loads.
+- **Each entry has:** category, detector, keyword mode, keyword list,
+  distance, severity, a fidelity tier, the source page and the date it
+  was retrieved.
+- **Each detector** has its own data, e.g. the card prefix table and
+  the issuer test numbers.
+
+The converter writes one `macie_mdi(...)` for each resolved managed
+identifier that has a stand-in. They go after the custom identifiers, in
+the wrapper's resolved order. Identifiers with no stand-in are still
+reported as not translated. The keywords and the severity are written out
+in the csvpath, so they are fixed when the group is loaded, as the limits
+are. The detector's data is looked up by detector name when the csvpath
+runs. (David, 2026-11-01: a middle path between writing everything out
+and referencing everything; more indirection can come later if it helps.)
+
+```
+macie_mdi(
+    "CREDIT_CARD_NUMBER",
+    "FINANCIAL_INFORMATION",
+    "credit_card",
+    "required",
+    "account number|american express|amex|...|visa",
+    30,
+    "1:HIGH"
+)
+```
+
+**Keyword modes:**
+- `required`: a keyword must be in the column name, or near the
+  occurrence in the cell.
+- `absent`: reported only when there is no keyword there. Macie's
+  `CREDIT_CARD_NUMBER_(NO_KEYWORD)` reports card numbers that *aren't* near
+  a keyword, so with both selected each card is counted once.
+- `none`: keywords are not considered.
+
+**"Near" for managed identifiers** differs from custom identifiers. Macie
+says a keyword must be "in proximity", "typically within 30 characters
+(inclusively)". For CSV it must be "part of the same value or in the name
+of the column". We take that as: in the same cell, **before or after** the
+occurrence, with at most 30 characters between them.
+
+**Severity** follows Macie's published table for the identifier's type.
+Credit card numbers are HIGH from one occurrence, with or without a
+keyword (`1:HIGH`).
+
+**Credit cards** (`CREDIT_CARD_NUMBER`, `CREDIT_CARD_NUMBER_(NO_KEYWORD)`):
+- a 13-19 digit sequence that passes Luhn;
+- a brand prefix and length from our table, for American Express,
+  Dankort, Diners Club, Discover, Electron, JCB, Mastercard, UnionPay and
+  Visa (Macie does not publish its table);
+- not one of the 55 issuer test numbers Macie lists;
+- not touching other digits.
+
+**Ours, not Macie's:** grouped numbers with spaces or hyphens are also
+accepted, using one separator throughout, in the common layouts (4-4-4-4,
+4-4-4-4-3, Amex 4-6-5, Diners 4-6-4). Macie only documents digit
+sequences; we would rather over-detect than miss. This may be a place
+users want to customize toward Macie (David, 2026-11-01).
+
+**Interpretations to confirm** in the fidelity scan:
+1. In-cell keywords count before or after the occurrence, within 30
+   characters of the gap.
+2. Grouped card numbers: does Macie detect them?
+3. Keywords match as substrings, as for custom identifiers, so the short
+   ones (`mc`, `pan`, `card`) match inside longer words, e.g. a header
+   `discard_reason`. That over-reports keyword presence. A value must
+   still pass Luhn and the prefix table.
+4. Macie "in certain cases" expands or abbreviates keywords. It does not
+   say how, so we don't.
+
+**Customizing the stand-ins**, via a project `rulesbase` copied in on load
+and never overwritten, with a hierarchy and `common.json`, is a later
+worklist item. For now the converter takes a `catalog=` argument.
 
 ## Loading into a named-paths group
 

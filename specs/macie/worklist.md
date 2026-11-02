@@ -30,8 +30,15 @@ last. Add an item the moment something is deferred.
 
 ## After that
 
-4. **Managed identifiers, group A** (format plus checksum, e.g. credit
-   cards with Luhn): `macie_mdi`, with pair 02_credit_card.
+4. ~~**Managed identifiers, group A, first batch: credit cards.**~~ Done:
+   `macie_mdi`, the packaged catalog, `CreditCardDetector`, Luhn, and pair
+   02_credit_card. More group A identifiers next (SSN, IBAN mod-97, NPI,
+   ...), each a catalog entry plus a detector.
+4a. **Project rulesbase for the stand-ins.** Copy the packaged catalog into
+   the project on load, never overwrite it, resolve a hierarchy (project,
+   then Framework, then a `common.json` shared with other rule systems).
+   From David's notes; deferred until there is more than one identifier
+   to customize (David, 2026-11-01).
 5. **Text allow lists**: `macie_allow_words` via `load_list()` (#470).
    #470 is a general function: message the refs-v3 session (csvpath-35)
    before starting it.
@@ -39,7 +46,8 @@ last. Add an item the moment something is deferred.
 7. **boto3 download** into a wrapper. Needs an AWS account, region and
    permissions agreed with David first.
 8. **One-time fidelity scan against real Macie** (billed; ask first) to
-   confirm the three interpretations in transpile-design.md.
+   confirm the interpretations in transpile-design.md: three for custom
+   identifiers, four for managed ones.
 
 ## Clean-ups (not blockers)
 

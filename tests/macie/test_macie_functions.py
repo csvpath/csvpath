@@ -356,3 +356,74 @@ def test_macie_functions_bad_source_arn_cannot_run(tmp_path) -> None:
         "  id: test", "  id: test\n  macie-source-arn: arn|aws|s3|||bucket"
     )
     _assert_cannot_run(*_run(text), "Not a Macie ARN: 'arn:aws:s3:::bucket'")
+
+
+#
+# macie_mdi
+#
+
+VISA = "4532777777777774"
+
+
+def _mdi(*, mode: str = "required", detector: str = "credit_card") -> str:
+    keywords = "" if mode == "none" else "card|visa"
+    return (
+        f'macie_mdi("CREDIT_CARD_NUMBER", "FINANCIAL_INFORMATION", "{detector}", '
+        f'"{mode}", "{keywords}", 30, "1:HIGH")'
+    )
+
+
+def test_macie_mdi_finds_cards(tmp_path) -> None:
+    data = _write(tmp_path, f"1,{VISA},", "2,x,", f"3,,visa {VISA}", f"4,,{VISA}")
+    path, macie, matched = _run(_csvpath(data=data, body=_mdi()))
+    #
+    # the employee_id header has no keyword: line 4's card has none near it
+    #
+    assert matched == ["3"]
+    sd = path.variables["macie_findings"]["sensitiveData"]
+    assert sd[0]["category"] == "FINANCIAL_INFORMATION"
+    assert sd[0]["detections"][0]["type"] == "CREDIT_CARD_NUMBER"
+    assert sd[0]["detections"][0]["count"] == 1
+
+
+def test_macie_mdi_keyword_modes(tmp_path) -> None:
+    data = _write(tmp_path, f"1,,visa {VISA}", f"2,,{VISA}")
+    for mode, expected in [
+        ("required", ["1"]),
+        ("absent", ["2"]),
+        ("none", ["1", "2"]),
+    ]:
+        path, macie, matched = _run(_csvpath(data=data, body=_mdi(mode=mode)))
+        assert matched == expected, mode
+
+
+def test_macie_mdi_and_cdi_share_the_breaker(tmp_path) -> None:
+    data = _write(tmp_path, f"1,EMP-111111,visa {VISA}", f"2,EMP-222222,visa {VISA}")
+    body = f"{_cdi()}\n    {_mdi()}"
+    path, macie, matched = _run(_csvpath(data=data, body=body, max_findings=3))
+    findings = path.variables["macie_findings"]
+    assert findings["customDataIdentifiers"]["totalCount"] == 2
+    assert findings["sensitiveData"][0]["totalCount"] == 1
+    assert findings["csvpath"]["stopped_at_line"] == 2
+
+
+@pytest.mark.parametrize(
+    "body, message",
+    [
+        (_mdi(detector="ssn"), "No detector named 'ssn' for CREDIT_CARD_NUMBER"),
+        (_mdi(mode="maybe"), "keyword_mode must be one of"),
+        (
+            'macie_mdi("CREDIT_CARD_NUMBER", "FINANCIAL_INFORMATION", "credit_card", '
+            '"required", "", 30, "1:HIGH")',
+            "has keyword_mode required but no keywords",
+        ),
+    ],
+)
+def test_macie_mdi_bad_arguments_cannot_run(tmp_path, body: str, message: str) -> None:
+    data = _write(tmp_path, f"1,{VISA},")
+    path, macie, matched = _run(_csvpath(data=data, body=body))
+    assert matched == []
+    assert path.is_valid is False
+    assert path.stopped is True
+    assert macie[0].startswith("macie: cannot run: ")
+    assert message in macie[0]

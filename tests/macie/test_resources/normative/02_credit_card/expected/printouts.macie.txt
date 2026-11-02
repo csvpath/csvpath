@@ -1,0 +1,7 @@
+macie CREDIT_CARD_NUMBER: occurrence 1, line 1 (row 2), column 2 card_number
+macie CREDIT_CARD_NUMBER: occurrence 2, line 2 (row 3), column 2 card_number
+macie CREDIT_CARD_NUMBER: occurrence 3, line 3 (row 4), column 3 notes
+macie CREDIT_CARD_NUMBER_(NO_KEYWORD): occurrence 1, line 5 (row 6), column 3 notes
+macie CREDIT_CARD_NUMBER_(NO_KEYWORD): occurrence 2, line 10 (row 11), column 3 notes
+macie CREDIT_CARD_NUMBER: 6 occurrences, severity HIGH, detail shown for first 3
+macie CREDIT_CARD_NUMBER_(NO_KEYWORD): 2 occurrences, severity HIGH, detail shown for all 2
