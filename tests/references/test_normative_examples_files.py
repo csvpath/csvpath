@@ -767,15 +767,31 @@ class TestFunctionalTaxonomyGatesAndSelectors:
         ).query()
         assert results.files == ["inputs/named_files/alpha/data.xlsx"]
 
-    def test_status_gate_combined_with_named_file_name(self):
-        # doc: "Select named-files registrations for `orders` that
-        # failed" -- "$*.files.:status(\"failed\"):
-        # named_file_name(\"orders\")".
+    # NRE "Select named-files registrations for `orders` that failed",
+    # rewritten by David 2026-11-01: a failure is tracked only in the
+    # ledger manifest, so the reference must say ':manifest()'. Without
+    # it, '*' searches each live named-file, and the reference is legal
+    # but never returns results.
+    def test_status_gate_without_manifest_never_returns_results(self):
         results = _finder(
             '$*.files.:status("failed"):named_file_name("orders")',
             ALPHA_HOME,
             [],
             ledger=STATUS_LEDGER,
         ).query()
+        assert results.results == []
+
+    @pytest.mark.xfail(
+        strict=True,
+        reason="finding E: FILES takes one function after :manifest()",
+    )
+    def test_status_gate_combined_with_named_file_name(self):
+        results = _finder(
+            '$*.files.:manifest():status("failed"):named_file_name("orders")',
+            ALPHA_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+            inputs_files_path="inputs/named_files",
+        ).query()
         assert results.uuids == ["fail-1"]
-        assert results.files == ["/tmp/orders1.csv"]
+        assert results.files == ["inputs/named_files/manifest.json"]

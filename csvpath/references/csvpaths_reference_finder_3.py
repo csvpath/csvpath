@@ -680,13 +680,15 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # permanent design choice) since nothing about pooling itself
             # needs a pointer to be meaningful, same as GROUP mode already
             # proved.
-            if manifest_call is not None or (not pointers and field_call is not None):
+            if manifest_call is not None:
                 # a ledger read (David, 2026-10-30): under '*', ':manifest()'
-                # or a field with no pointer maps over the root ledger,
-                # deleted entries included, as FILES does -- see
+                # maps over the root ledger, deleted entries included -- see
                 # _ledger_versions(). In ledger order, the same order
                 # Rule 1b's ':manifest():last()' already uses, so adding
-                # a field never changes which entry a pointer picks.
+                # a field never changes which entry a pointer picks. A bare
+                # field with no pointer read the ledger too until
+                # 2026-11-01; it now reads each live group in turn, like
+                # every bare '*' read (compendium 6.19, agreed with David).
                 pooled = _having_filtered(
                     self._ledger_versions(name_filter=name_filter)
                 )

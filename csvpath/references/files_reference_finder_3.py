@@ -138,8 +138,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # normative doc's own exact worked example ("select
                 # named-files registrations for orders that failed").
                 # No per-name filter at all here, unlike the literal-
-                # root case above -- every ledger entry is a candidate.
-                ledger = self.source.files_ledger()
+                # root case above. Since 2026-11-01 only the ledger
+                # entries of live versions are candidates: a bare '*'
+                # read searches each live named-file in turn, and only
+                # ':manifest()' reaches the whole ledger, failures and
+                # deleted versions included (compendium 6.19, agreed
+                # with David). status itself is read from the ledger,
+                # the only place it is written.
+                ledger = self._live_ledger_entries(names=self.source.file_names())
                 matched = self._filter_ledger_by_gate_chain(ledger, status_chain)
                 if reference.name_three is not None:
                     return self._pointer_into_status_matches(reference, matched)
@@ -233,8 +239,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # a run that should have happened overnight you would know
             # what status you were looking for... in many cases we
             # know those high risk files by name" -- confirmed just as
-            # real a need as the '*' form below, built together.
-            ledger = self.source.files_ledger()
+            # real a need as the '*' form below, built together. Only
+            # the ledger entries of this named-file's live versions are
+            # candidates (2026-11-01, as for '*' above).
+            ledger = self._live_ledger_entries(names=[root_major])
             by_name = [e for e in ledger if e.get("named_file_name") == root_major]
             matched = self._filter_ledger_by_gate_chain(by_name, status_chain)
             if reference.name_three is not None:
@@ -1384,18 +1392,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
             ledger = self.source.files_ledger()
             #
-            # only arrivals have a file. a failed registration's entry has
-            # no file_path (None, or no key in ledgers from before the
-            # ledger writers were built in), whatever its status says.
+            # every ledger record, a failed registration included: a
+            # failure is tracked only here, and each result's path is the
+            # ledger itself, so a failure needs no file. Failures were
+            # skipped until 2026-11-01 (agreed with David), when the path
+            # was still each arrival's file_path.
             #
             entries = [
                 e
                 for e in ledger
-                if e.get("file_path")
-                and (
-                    name_filter is None
-                    or re.search(name_filter, e["named_file_name"])
-                )
+                if name_filter is None
+                or re.search(name_filter, e.get("named_file_name") or "")
             ]
             entries = self._filter_by_manifest_chain_gate(
                 reference=reference, call=manifest_field_call, entries=entries
@@ -2060,6 +2067,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
     def _files_ledger_path(self) -> str:
         """the global arrivals ledger's own manifest.json."""
         return Nos(self.csvpaths.config.inputs_files_path).join("manifest.json")
+
+    def _live_ledger_entries(self, *, names: list) -> list:
+        """the files ledger entries of the live versions of `names`, in
+        ledger order: an entry whose uuid is in one of those named-files'
+        own manifests. A failed registration, or a deleted version, has
+        no such entry, and neither does a live version with no ledger
+        entry (a manifest from before the ledger). No names, no entries:
+        '*' over a files root that has no named-files."""
+        if names is None:
+            raise ValueError("names cannot be None")
+        live = set()
+        for name in names:
+            live.update(e.get("uuid") for e in self.source.file_manifest(name))
+        return [e for e in self.source.files_ledger() if e.get("uuid") in live]
 
     def _live_manifest_entry_by_uuid(self, uuid: str) -> "dict | None":
         """the entry for `uuid` in whichever live named-file's own

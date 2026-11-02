@@ -332,11 +332,20 @@ class TestStatusRegistrationFailed:
     a non-empty origin_path is available."""
 
     def test_status_registration_failed_is_selectable(self, csvpaths):
+        # changed 2026-11-01 (C1 bare-half revert, agreed with David): a
+        # failure is tracked only in the ledger, so it is selected
+        # through the ledger set, ':manifest()'. The bare form searches
+        # the named-file's live versions and never finds a failure.
         r = _query(
+            csvpaths, FilesReferenceFinder3,
+            '$*.files.:manifest():status("failed")',
+        )
+        assert r.files == ["tests/corpus/data/inputs/named_files/manifest.json"]
+        bare = _query(
             csvpaths, FilesReferenceFinder3,
             '$orders.files.:status("failed")',
         )
-        assert r.files == ["tests/corpus/data/inputs/named_files/manifest.json"]
+        assert bare.results == []
 
 
 class TestStarTypeGate:

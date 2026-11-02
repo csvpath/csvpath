@@ -1,11 +1,15 @@
-"""`$*.files.:manifest():<field>()` returns every arrival in the named-files
-root ledger. Each result's path is the ledger's own manifest.json, with the
-entry's uuid (compendium 5.7; it was the arrival's file_path before
-2026-11-01). A failed registration is in the ledger too,
-but has no file: its file_path is None, or missing altogether in ledgers
-from before the ledger writers were built in. Those entries are skipped,
-whatever their status says. They used to raise a ValueError from
-ReferenceResult3.
+"""`$*.files.:manifest():<field>()` returns every record in the named-files
+root ledger, a failed registration included. Each result's path is the
+ledger's own manifest.json, with the entry's uuid (compendium 5.7; it was
+the arrival's file_path before 2026-11-01).
+
+A failed registration has no file: its file_path is None, or missing
+altogether in ledgers from before the ledger writers were built in. While
+the query path was the file_path, such an entry raised a ValueError from
+ReferenceResult3, so failures were skipped (2026-10-27). With the ledger as
+the path a failure needs no file, and the ledger set is the only place a
+failure is tracked, so it is listed (2026-11-01, agreed with David; the
+file was test_star_manifest_field_skips_failures.py).
 
 Every test uses its own roots under pytest's tmp_path.
 """
@@ -81,27 +85,39 @@ def _ledger_path(p: CsvPaths) -> str:
     return FilesListener(csvpaths=p).manifest_path()
 
 
-def _arrivals(p: CsvPaths) -> list[tuple]:
+def _records(p: CsvPaths) -> list[tuple]:
     path = _ledger_path(p)
-    return [(path, e["uuid"]) for e in _ledger(p) if e.get("file_path")]
+    return [(path, e["uuid"]) for e in _ledger(p)]
 
 
 def _results(r) -> list[tuple]:
     return [(x.path, x.uuid) for x in r.results]
 
 
-def test_a_failure_is_skipped(paths, tmp_path):
+def test_a_failure_is_listed(paths, tmp_path):
     _register(paths, tmp_path, n=0)
     _fail(paths)
     _register(paths, tmp_path, n=1)
     assert [e["status"] for e in _ledger(paths)] == ["complete", "failed", "complete"]
     assert _ledger(paths)[1]["file_path"] is None
     r = _query(paths)
-    assert len(r) == 2
-    assert _results(r) == _arrivals(paths)
+    assert len(r) == 3
+    assert _results(r) == _records(paths)
 
 
-def test_an_old_failure_with_no_file_path_key_is_skipped(paths, tmp_path):
+def test_a_failures_fields_resolve(paths, tmp_path):
+    _register(paths, tmp_path)
+    _fail(paths)
+    for reference, expected in [
+        ("$*.files.:manifest():status()", ["complete", "failed"]),
+        ("$*.files.:manifest():uuid()", [e["uuid"] for e in _ledger(paths)]),
+    ]:
+        ref = ReferenceParser3(string=reference, csvpaths=paths)
+        r = FilesReferenceFinder3(csvpaths=paths, ref=ref).resolve()
+        assert [x.data for x in r.results] == expected, reference
+
+
+def test_an_old_failure_with_no_file_path_key_is_listed(paths, tmp_path):
     _register(paths, tmp_path)
     ledger = _ledger(paths)
     ledger.append(
@@ -114,21 +130,26 @@ def test_an_old_failure_with_no_file_path_key_is_skipped(paths, tmp_path):
     )
     _write_ledger(paths, ledger)
     r = _query(paths)
-    assert _results(r) == [(_ledger_path(paths), ledger[0]["uuid"])]
+    assert _results(r) == [
+        (_ledger_path(paths), ledger[0]["uuid"]),
+        (_ledger_path(paths), "old-failure"),
+    ]
 
 
-def test_an_empty_file_path_is_skipped(paths, tmp_path):
+def test_an_empty_file_path_is_listed(paths, tmp_path):
     _register(paths, tmp_path)
     ledger = _ledger(paths)
     ledger.append(dict(ledger[0], uuid="empty", file_path=""))
     _write_ledger(paths, ledger)
-    assert [x.uuid for x in _query(paths).results] == [ledger[0]["uuid"]]
+    assert [x.uuid for x in _query(paths).results] == [ledger[0]["uuid"], "empty"]
 
 
-def test_a_ledger_of_only_failures_is_empty(paths):
+def test_a_ledger_of_only_failures_lists_them(paths):
     _fail(paths)
     _fail(paths, name="people")
-    assert len(_query(paths)) == 0
+    r = _query(paths)
+    assert len(r) == 2
+    assert _results(r) == _records(paths)
 
 
 def test_the_name_filter_still_applies(paths, tmp_path):
@@ -136,7 +157,8 @@ def test_the_name_filter_still_applies(paths, tmp_path):
     _register(paths, tmp_path, name="people")
     _fail(paths, name="orders")
     r = _query(paths, "$:regex(/^o/).files.:manifest():uuid()")
-    assert [x.uuid for x in r.results] == [_ledger(paths)[0]["uuid"]]
+    ledger = _ledger(paths)
+    assert [x.uuid for x in r.results] == [ledger[0]["uuid"], ledger[2]["uuid"]]
 
 
 def test_deleted_arrivals_are_still_returned(paths, tmp_path):
@@ -146,11 +168,11 @@ def test_deleted_arrivals_are_still_returned(paths, tmp_path):
     _register(paths, tmp_path)
     _fail(paths)
     paths.file_manager.remove_named_file("orders")
-    assert _results(_query(paths)) == _arrivals(paths)
-    assert len(_query(paths)) == 1
+    assert _results(_query(paths)) == _records(paths)
+    assert len(_query(paths)) == 2
 
 
-def test_sql_on_skips_failures_the_same_way(tmp_path):
+def test_sql_on_lists_failures_the_same_way(tmp_path):
     _clear_engine()
     p = _paths(tmp_path, groups="sql")
     try:
@@ -159,7 +181,7 @@ def test_sql_on_skips_failures_the_same_way(tmp_path):
         off = _query(p)
         p.config.add_to_config(section="references", key="sql", value="on")
         on = _query(p)
-        assert len(on) == 1
+        assert len(on) == 2
         assert on == off
     finally:
         p.config.add_to_config(section="references", key="sql", value="off")

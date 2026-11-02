@@ -203,6 +203,13 @@ FILES = [
     "$orders.files.:flatten().:last():manifest()",
     "$*.files.:flatten().:last():manifest()",
     "$*.files.:all().:last():manifest()",
+    #
+    # C1 bare-half revert (2026-11-01): bare '*' reads the live
+    # named-files; ':manifest()' the whole ledger, failures included
+    #
+    '$orders.files.:status("complete")',
+    '$*.files.:manifest():status("failed")',
+    '$*.files.:manifest():status("complete")',
 ]
 
 CSVPATHS = [
@@ -246,6 +253,8 @@ CSVPATHS = [
     "$acme.csvpaths.:all():manifest()",
     "$*.csvpaths.:all():last():manifest()",
     "$*.csvpaths.:manifest():first()",
+    '$:regex(/^a/).csvpaths.:uuid()',
+    "$*.csvpaths.:named_paths_name()",
 ]
 
 
@@ -352,21 +361,31 @@ def test_deleted_names_are_gone_in_both_modes(paths):
 
 def test_star_ledger_read_keeps_the_deleted_group_in_both_modes(paths):
     #
-    # under '*', a field reads the root ledger, deleted entries included
-    # (2026-10-30). the SQL ledger read keeps deleted rows, as the JSON
-    # ledger does, so both modes see xgone. with ':manifest()' each
-    # record's path is the ledger (compendium 5.7, 2026-11-01), so xgone
-    # is found by its uuid there.
+    # under '*', ':manifest()' reads the root ledger, deleted entries
+    # included (2026-10-30). the SQL ledger read keeps deleted rows, as the
+    # JSON ledger does, so both modes see xgone, by its uuid: each record's
+    # path is the ledger (compendium 5.7, 2026-11-01). a bare field reads
+    # the live groups (C1 bare-half revert, 2026-11-01), so neither mode
+    # sees xgone there.
     #
     off, on = _both(paths, "$*.csvpaths.:uuid()")
     assert off == on
-    assert any("xgone" in f for f in off[1].files)
+    assert not any("xgone" in f for f in off[1].files)
     bare_uuids = off[1].uuids
     off, on = _both(paths, "$*.csvpaths.:manifest():uuid()")
     assert off == on
-    assert off[1].uuids == bare_uuids
+    assert set(bare_uuids) < set(off[1].uuids)
     ledger = Nos(paths.config.inputs_csvpaths_path).join("manifest.json")
     assert set(off[1].files) == {ledger}
+    _mode(paths, "off")
+    xgone = [
+        e["uuid"]
+        for e in paths.reference_source.paths_ledger()
+        if e.get("named_paths_name") == "xgone"
+    ]
+    assert xgone
+    assert set(xgone) <= set(off[1].uuids)
+    assert not set(xgone) & set(bare_uuids)
 
 
 def test_star_manifest_set_keeps_the_deleted_run_in_both_modes(paths):
@@ -466,3 +485,34 @@ def test_a_manifest_entry_query_path_is_a_real_manifest(paths, reference):
     for path in off[1].files:
         assert path.endswith("manifest.json")
         assert Nos(path).exists(), path
+
+
+def test_bare_star_reads_live_named_files_and_manifest_reads_the_ledger(paths):
+    #
+    # C1 bare-half revert (2026-11-01, agreed with David; compendium 6.19,
+    # NRE 253): a bare '*' read searches each live named-file or group,
+    # and ':manifest()' reaches the whole ledger. on a real filesystem,
+    # in both modes.
+    #
+    _mode(paths, "off")
+    files_ledger = paths.reference_source.files_ledger()
+    paths_ledger = paths.reference_source.paths_ledger()
+    failed = [e["uuid"] for e in files_ledger if e.get("status") == "failed"]
+    gone = [e["uuid"] for e in files_ledger if e.get("named_file_name") == "gone"]
+    xgone = [e["uuid"] for e in paths_ledger if e.get("named_paths_name") == "xgone"]
+    assert failed and gone and xgone
+
+    def _uuids(reference: str) -> list:
+        off, on = _both(paths, reference)
+        assert off == on
+        assert off[0] == "ok"
+        return off[1].uuids
+
+    complete = _uuids('$*.files.:status("complete")')
+    assert complete
+    assert not set(gone) & set(complete)
+    assert _uuids('$*.files.:status("failed")') == []
+    assert _uuids('$*.files.:manifest():status("failed")') == failed
+    assert set(gone) <= set(_uuids('$*.files.:manifest():status("complete")'))
+    assert not set(xgone) & set(_uuids("$*.csvpaths.:uuid()"))
+    assert set(xgone) <= set(_uuids("$*.csvpaths.:manifest():uuid()"))
