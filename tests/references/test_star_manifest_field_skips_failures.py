@@ -1,5 +1,7 @@
-"""`$*.files.:manifest():<field>()` returns the file_path of every arrival in
-the named-files root ledger. A failed registration is in the ledger too,
+"""`$*.files.:manifest():<field>()` returns every arrival in the named-files
+root ledger. Each result's path is the ledger's own manifest.json, with the
+entry's uuid (compendium 5.7; it was the arrival's file_path before
+2026-11-01). A failed registration is in the ledger too,
 but has no file: its file_path is None, or missing altogether in ledgers
 from before the ledger writers were built in. Those entries are skipped,
 whatever their status says. They used to raise a ValueError from
@@ -75,8 +77,13 @@ def _query(p: CsvPaths, reference: str = STAR):
     return FilesReferenceFinder3(csvpaths=p, ref=ref).query()
 
 
+def _ledger_path(p: CsvPaths) -> str:
+    return FilesListener(csvpaths=p).manifest_path()
+
+
 def _arrivals(p: CsvPaths) -> list[tuple]:
-    return [(e["file_path"], e["uuid"]) for e in _ledger(p) if e.get("file_path")]
+    path = _ledger_path(p)
+    return [(path, e["uuid"]) for e in _ledger(p) if e.get("file_path")]
 
 
 def _results(r) -> list[tuple]:
@@ -107,7 +114,7 @@ def test_an_old_failure_with_no_file_path_key_is_skipped(paths, tmp_path):
     )
     _write_ledger(paths, ledger)
     r = _query(paths)
-    assert _results(r) == [(ledger[0]["file_path"], ledger[0]["uuid"])]
+    assert _results(r) == [(_ledger_path(paths), ledger[0]["uuid"])]
 
 
 def test_an_empty_file_path_is_skipped(paths, tmp_path):

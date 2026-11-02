@@ -1,4 +1,5 @@
 from csvpath.util.nos import Nos
+from csvpath.util.path_util import PathUtility as pathu
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
@@ -10,6 +11,11 @@ from .reference_results_3 import ReferenceResult3, ReferenceResults3
 
 
 class CsvpathsReferenceFinder3(ReferenceFinder3):
+    # where an explicit ':manifest()' entry is read from, for its query()
+    # path -- see _apply_name_three_to_versions().
+    GROUP_MANIFEST = "group"
+    LEDGER_MANIFEST = "ledger"
+
     #
     # first pass, deliberately narrow, mirroring FilesReferenceFinder3's
     # scoping approach -- but note the roles of name_one/name_three are
@@ -266,7 +272,10 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         ambiguous_content_read = has_manifest and len(selected_versions) > 1
 
         return self._apply_name_three_to_versions(
-            selected_versions, reference.name_three, ambiguous_content_read
+            selected_versions,
+            reference.name_three,
+            ambiguous_content_read,
+            manifest_source=self.GROUP_MANIFEST if has_manifest else None,
         )
 
     def _apply_name_three_to_versions(
@@ -274,6 +283,8 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         selected_versions: list,
         name_three,
         ambiguous_content_read: bool = False,
+        *,
+        manifest_source: "str | None" = None,
     ) -> ReferenceResults3:
         """applies name_three's own identity/range semantics to each
         already-selected version generically -- shared between query()'s
@@ -285,7 +296,14 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         matching group's own, pooled or partitioned) -- each entry's own
         shape (group_file_path/uuid/named_paths_identities) is identical
         either way, confirmed by both call sites reading from the same
-        PathsManager.get_manifest_for_name() source."""
+        PathsManager.get_manifest_for_name() source.
+
+        `manifest_source` is set when the reference has an explicit
+        ':manifest()': each version is then a manifest entry, and with
+        no name_three its query() path is the manifest.json it is read
+        from (compendium 5.7, agreed with David 2026-11-01).
+        GROUP_MANIFEST is the group's own manifest, LEDGER_MANIFEST the
+        root ledger (the '*' manifest set). None keeps the group file."""
         from_call = to_call = None
         if name_three is not None:
             if name_three.functions:
@@ -344,12 +362,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     "literal statement identity/index, or ':from()'/':to()'."
                 )
 
+        if manifest_source not in (None, self.GROUP_MANIFEST, self.LEDGER_MANIFEST):
+            raise ValueError(f"manifest_source cannot be {manifest_source!r}")
         results = []
         for selected in selected_versions:
             if name_three is None:
                 results.append(
                     ReferenceResult3(
-                        path=selected["group_file_path"], uuid=selected["uuid"]
+                        path=self._version_result_path(
+                            version=selected, manifest_source=manifest_source
+                        ),
+                        uuid=selected["uuid"],
                     )
                 )
                 continue
@@ -684,8 +707,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             else:
                 selected_versions = pooled
 
+        manifest_source = None
+        if manifest_call is not None:
+            manifest_source = (
+                self.GROUP_MANIFEST if is_grouped else self.LEDGER_MANIFEST
+            )
         return self._apply_name_three_to_versions(
-            selected_versions, reference.name_three
+            selected_versions, reference.name_three, manifest_source=manifest_source
         )
 
     def _extract_data(self, result: ReferenceResult3):
@@ -728,11 +756,20 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 ledger_path = Nos(home).join("manifest.json")
                 if result.path == ledger_path:
                     if result.uuid is not None:
-                        # Rule 1b -- a pointer already reduced the global
-                        # ledger to one entry in query(); re-derive it
-                        # the same way the per-group branch below does,
-                        # just against the ledger instead of a named-
-                        # paths group's own manifest.
+                        # one record of the '*' manifest set: Rule 1b's
+                        # pointer, or (since 2026-11-01, when query()
+                        # began giving every set record the ledger's
+                        # path) the C1 ':manifest()' set read. A live
+                        # version reads its group's own entry first, a
+                        # deleted one or an unchanged reload its ledger
+                        # entry -- the same preference _ledger_versions()
+                        # applies in query(). Rule 1b read only the
+                        # ledger entry before that.
+                        _, entry = self._group_manifest_entry(
+                            reference.root_major, result.uuid
+                        )
+                        if entry is not None:
+                            return entry
                         ledger = self.source.paths_ledger()
                         return self._find_manifest_entry_by_uuid(
                             ledger, result.uuid
@@ -964,6 +1001,31 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 continue
             versions.append(live.get(entry.get("uuid"), entry))
         return versions
+
+    def _version_result_path(
+        self, *, version: dict, manifest_source: "str | None"
+    ) -> str:
+        """the query() path for one selected version: its group file,
+        or, when `manifest_source` is set, the manifest.json its entry
+        is read from. group_file_path is always
+        <named_paths_home>/group.csvpaths (PathsManager), so the group's
+        own manifest.json sits beside it."""
+        if not isinstance(version, dict):
+            raise TypeError("version must be a dict")
+        group_file_path = version.get("group_file_path")
+        if not group_file_path:
+            raise ValueError(f"version {version.get('uuid')!r} has no group_file_path")
+        if manifest_source is None:
+            return group_file_path
+        if manifest_source == self.GROUP_MANIFEST:
+            return Nos(pathu.dir_name(group_file_path)).join("manifest.json")
+        if manifest_source == self.LEDGER_MANIFEST:
+            return self._paths_ledger_path()
+        raise ValueError(f"manifest_source cannot be {manifest_source!r}")
+
+    def _paths_ledger_path(self) -> str:
+        """the root named-paths ledger's own manifest.json."""
+        return Nos(self.csvpaths.config.inputs_csvpaths_path).join("manifest.json")
 
     def _ledger_entry(self, uuid: str) -> dict | None:
         """the root ledger entry for `uuid`, or None if the ledger has

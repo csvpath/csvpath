@@ -1239,6 +1239,7 @@ class TestStarTraversalFieldAccessor:
             "$*.csvpaths.:last():named_paths_name():manifest()",
             by_name=by_name,
             ledger=by_name["alpha"] + by_name["beta"],
+            inputs_csvpaths_path="named_paths",
         ).resolve()
         assert len(results.results) == 1
         assert results.results[0].uuid == "b-v1"
@@ -2434,9 +2435,12 @@ class TestStarLedgerReadKeepsDeletedEntries:
         results = self._c1_finder("$*.csvpaths.:manifest():uuid()").query()
         assert results.uuids == _C1_LEDGER_UUIDS
 
-    def test_deleted_entry_path_is_its_group_file(self):
+    def test_deleted_entry_path_is_the_ledger(self):
+        # changed 2026-11-01 (was: its group file). Every record of the
+        # '*' manifest set gives the ledger's path (compendium 5.7).
         results = self._c1_finder("$*.csvpaths.:manifest():uuid()").query()
-        assert results.results[2].path == "named_paths/gone/group.csvpaths"
+        assert results.results[2].uuid == "gone-v1"
+        assert results.results[2].path == "named_paths/manifest.json"
 
     def test_bare_field_values_include_the_deleted_entry(self):
         assert self._data("$*.csvpaths.:uuid()") == _C1_LEDGER_UUIDS
@@ -2528,3 +2532,156 @@ class TestStarLedgerReadKeepsDeletedEntries:
 
     def test_ledger_entry_of_an_unknown_uuid_is_none(self):
         assert self._c1_finder("$*.csvpaths.:uuid()")._ledger_entry("nope") is None
+
+
+ACME_MANIFEST_JSON = "named_paths/acme/manifest.json"
+C1_LEDGER_MANIFEST_JSON = "named_paths/manifest.json"
+
+
+class TestManifestEntryQueryPaths:
+    # added 2026-11-01. A reference with an explicit ':manifest()' names
+    # a manifest entry, a record, so query() gives the manifest.json the
+    # entry is read from, with the entry's uuid (compendium 5.7; agreed
+    # with David 2026-11-01): the group's own manifest, or the root
+    # ledger for the '*' manifest set (C1). These used to give the
+    # group file. Forms without ':manifest()' keep the group file.
+
+    @pytest.mark.parametrize(
+        "reference,uuids",
+        [
+            ("$acme.csvpaths.:last():manifest()", ["v1-uuid"]),
+            ("$acme.csvpaths.:manifest():last()", ["v1-uuid"]),
+            ("$acme.csvpaths.:first():manifest()", ["v0-uuid"]),
+            ("$acme.csvpaths.:all():manifest()", ["v0-uuid", "v1-uuid"]),
+            ("$acme.csvpaths.:manifest():uuid()", ["v0-uuid", "v1-uuid"]),
+            ("$acme.csvpaths.:last():manifest():uuid()", ["v1-uuid"]),
+        ],
+    )
+    def test_literal_root_gives_the_groups_manifest(self, reference, uuids):
+        results = _finder(reference).query()
+        assert results.uuids == uuids
+        assert results.files == [ACME_MANIFEST_JSON] * len(uuids)
+
+    @pytest.mark.parametrize(
+        "reference", ["$acme.csvpaths.:last()", "$acme.csvpaths.:last():uuid()"]
+    )
+    def test_without_manifest_the_version_keeps_the_group_file(self, reference):
+        assert _finder(reference).query().files == [GROUP_FILE_PATH]
+
+    def test_bare_manifest_is_still_the_whole_file(self):
+        results = _finder("$acme.csvpaths.:manifest()").query()
+        assert results.files == [ACME_MANIFEST_JSON]
+        assert results.uuids == [None]
+
+    def test_literal_resolve_still_gives_the_entry(self):
+        results = _finder("$acme.csvpaths.:last():manifest()").resolve()
+        assert results.results[0].data == ACME_MANIFEST[1]
+
+    def test_star_group_gives_each_groups_own_manifest(self):
+        results = _star_finder("$*.csvpaths.:all():last():manifest()").query()
+        assert [(r.path, r.uuid) for r in results.results] == [
+            ("named_paths/alpha/manifest.json", "a-v2"),
+            ("named_paths/beta/manifest.json", "b-v1"),
+        ]
+
+    def test_star_group_without_a_pointer_lists_every_entry(self):
+        results = _star_finder("$*.csvpaths.:all():manifest()").query()
+        assert [(r.path, r.uuid) for r in results.results] == [
+            ("named_paths/alpha/manifest.json", "a-v1"),
+            ("named_paths/alpha/manifest.json", "a-v2"),
+            ("named_paths/beta/manifest.json", "b-v1"),
+        ]
+
+    def test_star_group_resolve_reads_each_groups_entry(self):
+        results = _star_finder("$*.csvpaths.:all():last():manifest()").resolve()
+        assert [r.data for r in results.results] == [
+            STAR_ALPHA_MANIFEST[1],
+            STAR_BETA_MANIFEST[0],
+        ]
+
+    def test_star_without_manifest_keeps_the_group_file(self):
+        results = _star_finder("$*.csvpaths.:all():last()").query()
+        assert results.files == [
+            "named_paths/alpha/group.csvpath",
+            "named_paths/beta/group.csvpath",
+        ]
+
+    @staticmethod
+    def _c1(reference: str):
+        return TestStarLedgerReadKeepsDeletedEntries._c1_finder(reference)
+
+    @pytest.mark.parametrize(
+        "reference,uuids",
+        [
+            ("$*.csvpaths.:manifest():uuid()", _C1_LEDGER_UUIDS),
+            ("$*.csvpaths.:manifest():last():uuid()", ["keep-reload"]),
+            ('$*.csvpaths.:manifest():having("s"):uuid()', ["keep-v1"]),
+            ('$*.csvpaths.:manifest():having("s")', ["keep-v1"]),
+            ("$*.csvpaths.:manifest():first()", ["keep-v1"]),
+            ("$*.csvpaths.:manifest():last()", ["keep-reload"]),
+        ],
+    )
+    def test_the_star_manifest_set_gives_the_ledger(self, reference, uuids):
+        results = self._c1(reference).query()
+        assert results.uuids == uuids
+        assert results.files == [C1_LEDGER_MANIFEST_JSON] * len(uuids)
+
+    def test_a_bare_star_field_keeps_the_group_files(self):
+        # no ':manifest()': Group 3, unchanged here (the C1 bare-half
+        # revert will move it off the ledger).
+        results = self._c1("$*.csvpaths.:uuid()").query()
+        assert C1_LEDGER_MANIFEST_JSON not in results.files
+
+    def test_a_live_set_record_resolves_to_its_groups_entry(self):
+        # R2, fixed 2026-11-01: the pointer form read the ledger entry
+        # though keep-v1 is live. named_paths_identities is only in the
+        # group's own entry.
+        for reference in [
+            "$*.csvpaths.:manifest():first()",
+            '$*.csvpaths.:manifest():having("s")',
+        ]:
+            data = self._c1(reference).resolve().results[0].data
+            assert data == _C1_KEEP, reference
+
+    def test_a_deleted_set_record_resolves_to_its_ledger_entry(self):
+        data = self._c1("$*.csvpaths.:manifest():index(2)").resolve().results[0].data
+        assert data == _C1_LEDGER[2]
+
+    def test_an_unchanged_reload_resolves_to_its_ledger_entry(self):
+        data = self._c1("$*.csvpaths.:manifest():last()").resolve().results[0].data
+        assert data == _C1_LEDGER[3]
+
+
+class TestVersionResultPath:
+    # the helper behind TestManifestEntryQueryPaths.
+
+    @staticmethod
+    def _finder():
+        return _finder("$acme.csvpaths.:last()", inputs_csvpaths_path="named_paths")
+
+    def test_each_source(self):
+        finder = self._finder()
+        version = ACME_MANIFEST[0]
+        assert finder._version_result_path(version=version, manifest_source=None) == (
+            GROUP_FILE_PATH
+        )
+        assert finder._version_result_path(
+            version=version, manifest_source=finder.GROUP_MANIFEST
+        ) == ACME_MANIFEST_JSON
+        assert finder._version_result_path(
+            version=version, manifest_source=finder.LEDGER_MANIFEST
+        ) == C1_LEDGER_MANIFEST_JSON
+
+    def test_bad_arguments_raise(self):
+        finder = self._finder()
+        with pytest.raises(TypeError):
+            finder._version_result_path(version=None, manifest_source=None)
+        with pytest.raises(ValueError):
+            finder._version_result_path(version={"uuid": "u"}, manifest_source=None)
+        with pytest.raises(ValueError):
+            finder._version_result_path(
+                version=ACME_MANIFEST[0], manifest_source="elsewhere"
+            )
+        # checked up front, even with no versions to give a path to
+        with pytest.raises(ValueError):
+            finder._apply_name_three_to_versions([], None, manifest_source="elsewhere")
