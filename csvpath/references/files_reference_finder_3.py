@@ -286,6 +286,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 reference=reference, chain=manifest_chain, name_filter=None
             )
 
+        definition_calls = self._definition_chain(name_one=name_one)
+        if definition_calls is not None:
+            # ':definition()' with fields, e.g. ':definition():on_arrival()'
+            # or ':definition(:on_arrival(:not_none()))' (compendium 6.19,
+            # E3, 2026-11-02).
+            return self._query_definition_chain(
+                reference=reference, calls=definition_calls, name_filter=None
+            )
+
         bare_field_call = self._bare_definition_field_call(name_one)
         if bare_field_call is not None:
             # ":on_arrival()"/":sources()"/":template()" bare -- settled
@@ -1218,6 +1227,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # finding E, 2026-11-02.
             return self._query_manifest_chain(
                 reference=reference, chain=manifest_chain, name_filter=name_filter
+            )
+        definition_calls = self._definition_chain(name_one=name_one)
+        if definition_calls is not None:
+            # ':definition()' with fields over each live named-file, e.g.
+            # compendium 6.35's '$*.files.:definition(:on_arrival(
+            # :not_none()))' (E3, 2026-11-02).
+            return self._query_definition_chain(
+                reference=reference, calls=definition_calls, name_filter=name_filter
             )
         is_home = self._is_home_prefixed_reference(name_one)
         is_bare_definition = self._is_bare_definition_reference(name_one)
@@ -2620,6 +2637,170 @@ class FilesReferenceFinder3(ReferenceFinder3):
         ]
 
     @staticmethod
+    def _definition_chain(*, name_one) -> "list | None":
+        """the definition.json field calls of a ':definition()' chain in
+        name_one, chained or nested as its argument, e.g.
+        ':definition():on_arrival()' or
+        ':definition(:on_arrival(:not_none()))' (E3, 2026-11-02). Like
+        ':manifest()', ':definition()' names one file per named-file, and
+        definition.json has no file home or version, so the chain only
+        reads and filters that one record.
+
+        Returns None for any other shape: bare ':definition()', and a
+        chain with ':home()' or a path-building function, which keep
+        their own branches. Raises for a field that does not read
+        definition.json, and for a pointer, range or time window, which
+        have no version to select."""
+        if name_one is None:
+            raise ValueError("name_one cannot be None")
+        if len(name_one.path) != 1:
+            return None
+        calls = [name_one.path[0], *name_one.functions]
+        if not all(isinstance(c, FunctionCall3) for c in calls):
+            return None
+        definitions = [c for c in calls if c.name == "definition"]
+        if len(definitions) != 1:
+            return None
+        definition = definitions[0]
+        others = [c for c in calls if c is not definition]
+        if isinstance(definition.arg, FunctionCall3):
+            others.insert(0, definition.arg)
+        elif definition.arg is not None:
+            return None
+        if not others:
+            return None
+        if any(c.name in ("home", "name", "regex", "choice") for c in others):
+            return None
+        for call in others:
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            if function_cls is not None and (
+                function_cls.SOURCE == "definition"
+                or function_cls.BARE_SOURCE == "definition"
+            ):
+                continue
+            if function_cls is not None and function_cls.SOURCE in (
+                "manifest",
+                "computed",
+            ):
+                raise ReferenceException3(
+                    f"':{call.name}()' does not read a named-file's "
+                    "definition.json, so it is not supported in a "
+                    "':definition()' chain."
+                )
+            raise ReferenceException3(
+                f"':{call.name}()' is not supported in a ':definition()' "
+                "chain -- definition.json is not versioned, so there is no "
+                "version to select."
+            )
+        return others
+
+    def _split_definition_fields(self, *, calls: list) -> tuple:
+        """(filters, values) of a ':definition()' chain's field calls. A
+        field with a predicate argument (':on_arrival(:not_none())') is a
+        filter, built; any other field is a value, as written. Its
+        argument, if any, picks a key (':source_port("email")'). The same
+        test the bare definition fields use."""
+        if calls is None:
+            raise ValueError("calls cannot be None")
+        filters = []
+        values = []
+        for call in calls:
+            if call.arg is not None:
+                built = self._build(call)
+                if isinstance(built.arg, PredicateFunction3):
+                    filters.append(built)
+                    continue
+            values.append(call)
+        return filters, values
+
+    def _query_definition_chain(
+        self, *, reference: Reference3, calls: list, name_filter: "str | None"
+    ) -> ReferenceResults3:
+        """query() for a ':definition()' chain (_definition_chain()): the
+        definition.json of each named-file that passes every filter, one
+        named-file for a literal root, each live one for '*', ':regex()'
+        and ':choice()'. Several whole files at once cannot be resolved
+        (compendium 5.8), so that case is flagged."""
+        if calls is None:
+            raise ValueError("calls cannot be None")
+        if reference.name_three is not None:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not support combining a "
+                "':definition()' chain with name_three -- definition.json is "
+                "not versioned, there is no version to select."
+            )
+        filters, values = self._split_definition_fields(calls=calls)
+        if len(values) > 1:
+            self.csvpaths.logger.warning(
+                "Reference resolves to the value of the last field-accessor "
+                "function in its chain (:%s()) -- :%s() earlier in the same "
+                "chain could also have provided a value; see compendium 5.20b.",
+                values[-1].name,
+                "(), :".join(f.name for f in values[:-1]),
+            )
+        if isinstance(reference.root_major, str):
+            names = [reference.root_major]
+        else:
+            names = self._matching_names(self.source.file_names(), name_filter)
+        names = [
+            name
+            for name in names
+            if all(self._matches_definition_field_predicate(name, f) for f in filters)
+        ]
+        results = [
+            ReferenceResult3(
+                path=Nos(self.csvpaths.file_manager.named_file_home(name)).join(
+                    "definition.json"
+                ),
+                uuid=None,
+            )
+            for name in names
+        ]
+        return ReferenceResults3(
+            results=results,
+            ambiguous_content_read=not values and len(results) > 1,
+        )
+
+    def _definition_chain_data(
+        self, *, reference: Reference3, calls: list, path: str
+    ) -> object:
+        """resolve() for a ':definition()' chain: the last value field's
+        value from the named-file's definition.json, or with no value
+        field the definition.json itself (compendium 6.19)."""
+        if calls is None:
+            raise ValueError("calls cannot be None")
+        if path is None or path == "":
+            raise ValueError("path cannot be None or empty")
+        _, values = self._split_definition_fields(calls=calls)
+        if not values:
+            return self._read_well_known_file(path)
+        if isinstance(reference.root_major, str):
+            name = reference.root_major
+        else:
+            name = next(
+                (
+                    n
+                    for n in self.source.file_names()
+                    if Nos(self.csvpaths.file_manager.named_file_home(n)).join(
+                        "definition.json"
+                    )
+                    == path
+                ),
+                None,
+            )
+            if name is None:
+                raise ReferenceException3(
+                    f"FilesReferenceFinder3 found no named-file for {path!r}."
+                )
+        field_call = values[-1]
+        function_cls = ReferenceFunctionFactory.get_registered_class(field_call.name)
+        key_path = self._apply_key_arg(
+            function_cls.KEY.get(Reference3.FILES), field_call.arg
+        )
+        config = self.csvpaths.file_manager.describer.get_config(name)
+        return self._extract_field_value(config.model_dump(exclude_none=True), key_path)
+
+    @staticmethod
     def _is_name_three_gate(function) -> bool:
         """true when `function` is a field with an argument that filters
         the versions it rides with in name_three, e.g. ':type("csv")'
@@ -2707,8 +2888,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if log_call is not None:
             return self._read_log_file(result.path, log_call.arg)
         manifest_chain = None
+        definition_calls = None
         if reference.name_three is None:
             manifest_chain = self._manifest_chain(name_one=reference.name_one)
+            definition_calls = self._definition_chain(name_one=reference.name_one)
+        if definition_calls is not None:
+            return self._definition_chain_data(
+                reference=reference, calls=definition_calls, path=result.path
+            )
         if manifest_chain is not None:
             # a general ':manifest()' chain (finding E): the entry query()
             # matched, or the last unargued field's value on it. a gate

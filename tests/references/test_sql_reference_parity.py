@@ -231,6 +231,14 @@ FILES = [
     "$orders.files.:flatten().:last():fingerprint():template()",
     '$*.files.:flatten().:type("tsv"):last():uuid()',
     '$*.files.:all().:last():type("csv")',
+    #
+    # E3 (2026-11-02): ':definition()' with fields
+    #
+    "$orders.files.:definition():template()",
+    "$orders.files.:definition(:template(:not_none()))",
+    "$*.files.:definition():template()",
+    "$*.files.:definition(:template(:not_none()))",
+    "$:regex(/^o/).files.:definition():template()",
 ]
 
 CSVPATHS = [
@@ -618,3 +626,38 @@ def test_name_three_gates_on_a_real_filesystem(paths):
         assert finder.resolve().results[0].data == f.read()
     finder = _finder("$people.files.:flatten().:last():fingerprint():template()")
     assert [r.data for r in finder.resolve().results] == [people[-1]["template"]]
+
+
+def test_definition_chains_on_a_real_filesystem(paths):
+    #
+    # E3 (2026-11-02): ':definition()' with fields reads each named-file's
+    # one definition.json, on a real filesystem, in both modes. Registering
+    # with a template does not write definition.json, so this stores one
+    # for people, and puts people's definition back afterwards.
+    #
+    describer = paths.file_manager.describer
+    original = describer.get_json("people")
+    describer.store_template("people", "people/:filename")
+
+    def _finder(reference: str):
+        off, on = _both(paths, reference)
+        assert off == on
+        assert off[0] == "ok"
+        _mode(paths, "off")
+        return ReferenceFinderFactory3.for_reference(
+            reference=reference, csvpaths=paths
+        )
+
+    try:
+        finder = _finder("$people.files.:definition():template()")
+        assert [r.data for r in finder.resolve().results] == ["people/:filename"]
+        finder = _finder("$people.files.:definition(:template(:not_none()))")
+        results = finder.resolve().results
+        assert len(results) == 1
+        with open(results[0].path, "rb") as f:
+            assert results[0].data == f.read()
+        finder = _finder("$*.files.:definition(:template(:not_none()))")
+        home = paths.file_manager.named_file_home("people")
+        assert finder.query().files == [Nos(home).join("definition.json")]
+    finally:
+        describer.store_json("people", original)
