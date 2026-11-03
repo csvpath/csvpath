@@ -300,12 +300,15 @@ conversion.report.skipped   # what was not translated
 | `CreditCardDetector` | 13-19 digits (or grouped), Luhn, issuer prefix and length, less issuer test numbers |
 | `GroupedDigitsDetector` | fixed-length digits, printed in groups or fixed formats, with a named check digit: SIN, NHS, CPF, CNPJ, SUBE, Aadhaar |
 | `EsIdDetector` | Spain DNI and NIE: digits and a mod 23 control letter |
+| `FrNirDetector` | France NIR (INSEE): 15 characters, Corsica's 2A and 2B, mod 97 key |
+| `MxCurpDetector` | Mexico CURP: 18 characters, birth date, state, check digit |
+| `ItCfDetector` | Italy Codice Fiscale of people: 16 characters, omocodia, birth date, check letter |
 | `ClRutDetector` | Chile RUT and RUN: 7 or 8 digits and a check character, 0-9 or K |
 | `VinDetector` | 17-character VINs; no check digit required |
 | `BankAccountDetector` | FR, DE, IT, ES, UK: IBANs (no keyword) and BBANs (keyword), plus UK sort code and account |
 | `IbanDetector` | one country's IBANs: length, printed layout, ISO 13616 mod 97 |
 | `UsSsnDetector`, `UsNpiDetector` | SSA's SSN rules; CMS's NPI check digit (Luhn over 80840) |
-| `ChecksumUtility` (`chut`) | check-digit algorithms: Luhn, mod 11s, mod 97, RUT, RIB, Verhoeff, the Spanish mod 23 letter |
+| `ChecksumUtility` (`chut`) | check-digit algorithms: Luhn, mod 11s, mod 97, RUT, RIB, Verhoeff, the Spanish mod 23 letter, NIR key, CURP digit, Codice Fiscale letter |
 | `MacieMdi` (`macie_mdi`) | applies a managed identifier to every cell |
 | `MacieRun` | one run's shared state (allow lists, tally) and outputs; limits from metadata, config, defaults; noisy setup failure |
 | `MacieAllowRegex` (`macie_allow_regex`) | registers a regex allow list before any line is read |
@@ -520,6 +523,36 @@ numbers).
   cross-checked against the dihedral group's arithmetic on 20,000 random
   strings; that check caught a mistyped table row before any test ran.
 
+**France NIR, Mexico CURP and Italy Codice Fiscale**: all three are
+PERSONAL_INFORMATION, require a keyword, and are HIGH from one
+occurrence. Macie publishes only their keywords. Each has its own
+detector, and each check was compared with python-stdnum's on 20,000
+random inputs (outside the test suite; stdnum is not a dependency), which
+also re-confirmed the DNI, NIE and Aadhaar checks.
+- **`FRANCE_NATIONAL_IDENTIFICATION_NUMBER`** (`FrNirDetector`, INSEE
+  codes): 15 characters, the department 2 digits or Corsica's 2A or 2B,
+  and a key of 97 minus the first 13 mod 97, with 2A and 2B as 19 and 18
+  (`chut.fr_nir_key`). Printed contiguous, as 1-2-2-2-3-3-2 with spaces
+  or dots, or with only the key apart. We apply no rule to the sex digit
+  or the month: INSEE uses other values for some people, and a rule we
+  can't confirm would miss real numbers. The France list includes the
+  bare keyword `social`, which matches widely (item 3).
+- **`MEXICO_CURP_NUMBER`** (`MxCurpDetector`): RENAPO's 18 characters, a
+  real birth date (the character before the check digit says 1900s or
+  2000s), a state code or `NE`, and a check digit over RENAPO's alphabet,
+  which has `Ñ` after `N` (`chut.mx_curp_check`). Ours: sex `X` is
+  accepted as well as `H` and `M`, so newer CURPs are not missed; RENAPO's
+  list of 4 letter words never issued is not applied, since those codes
+  never occur.
+- **`ITALY_NATIONAL_IDENTIFICATION_NUMBER`** (`ItCfDetector`): Macie lists
+  it as both a national identification and a taxpayer number, with one
+  keyword list. We detect the 16 character codice fiscale of a person,
+  with omocodia letters for digits, a real birth day and month, and the
+  check letter (`chut.it_cf_check`). Organizations' 11 digit codice
+  fiscale (their partita IVA) is not detected. Macie's keywords include
+  `p. iva`, so it may be, and the entry is **partial**: the converter
+  reports it, as for CNPJ.
+
 Each managed identifier is a catalog entry plus a detector in
 `csvpath/macie/detectors/`, named in `DETECTORS`. One class may serve
 several detector names. A test checks that
@@ -556,6 +589,11 @@ every detector the catalog names exists, and every detector is used.
     letter)? Does it check the letter? NIE and Aadhaar formats are the
     issuers'. The short Spanish keywords match as substrings (item 3):
     `nie` in `niece`, `tin` in `setting`.
+11. NIR, CURP and Codice Fiscale formats are the issuers'. Does Macie
+    detect Italy's 11 digit organization codes? Does it accept NIRs with
+    dots, or CURPs with sex X? python-stdnum also rejects Aadhaar
+    numbers that are palindromes; we don't (over-reporting is the safer
+    side), and Macie doesn't say.
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

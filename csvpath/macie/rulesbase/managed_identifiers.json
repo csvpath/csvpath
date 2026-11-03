@@ -296,6 +296,64 @@
         "adhaar",
         "uidai"
       ]
+    },
+    "fr_nir": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "assurance sociale",
+        "carte nationale d’identité",
+        "cni",
+        "code sécurité sociale",
+        "French social security number",
+        "fssn#",
+        "insee",
+        "insurance number",
+        "national id number",
+        "nationalid#",
+        "numéro d'assurance",
+        "sécurité sociale",
+        "sécurité sociale non.",
+        "sécurité sociale numéro",
+        "social",
+        "social security",
+        "social security number",
+        "socialsecuritynumber",
+        "ss#",
+        "ssn",
+        "ssn#"
+      ]
+    },
+    "mx_curp": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "clave personal identidad",
+        "clave única",
+        "clave única de registro de población",
+        "clavepersonalIdentidad",
+        "curp",
+        "registration code",
+        "registry code",
+        "personal identidad clave",
+        "population code"
+      ]
+    },
+    "it_cf": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "codice fiscal",
+        "dati anagrafici",
+        "ehic",
+        "health card",
+        "health insurance card",
+        "p. iva",
+        "partita i.v.a.",
+        "personal data",
+        "tax code",
+        "tessera sanitaria"
+      ]
     }
   },
   "identifiers": {
@@ -1025,6 +1083,40 @@
       "fidelity": "A",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
       "retrieved": "2026-11-03"
+    },
+    "FRANCE_NATIONAL_IDENTIFICATION_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "fr_nir",
+      "keyword_mode": "required",
+      "keywords_from": "fr_nir",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
+    },
+    "MEXICO_CURP_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "mx_curp",
+      "keyword_mode": "required",
+      "keywords_from": "mx_curp",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
+    },
+    "ITALY_NATIONAL_IDENTIFICATION_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "it_cf",
+      "keyword_mode": "required",
+      "keywords_from": "it_cf",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "partial": "Only the 16 character codice fiscale of people is detected, not the 11 digit codice fiscale of organizations"
     }
   },
   "detectors": {
@@ -1523,6 +1615,24 @@
         "1"
       ],
       "exclusions": []
+    },
+    "fr_nir": {
+      "notes": [
+        "Macie publishes only the keywords for FRANCE_NATIONAL_IDENTIFICATION_NUMBER (INSEE codes).",
+        "The format is ours, from INSEE: 15 characters, the department 2 digits or 2A or 2B, and a key of 97 minus the first 13 mod 97, with 2A and 2B as 19 and 18. Contiguous, 1-2-2-2-3-3-2 with spaces or dots, or with only the key apart. No rule on the sex digit or the month: a rule we cannot confirm would miss real numbers."
+      ]
+    },
+    "mx_curp": {
+      "notes": [
+        "Macie publishes only the keywords for MEXICO_CURP_NUMBER.",
+        "The format is ours, from RENAPO: 4 letters, a real YYMMDD birth date, sex, a state code (or NE), 3 letters, a century character and a check digit over RENAPO's alphabet, which has Ñ after N. Ours: sex X is accepted as well as H and M, and RENAPO's list of 4 letter words never issued is not applied."
+      ]
+    },
+    "it_cf": {
+      "notes": [
+        "Macie lists ITALY_NATIONAL_IDENTIFICATION_NUMBER as both a national identification and a taxpayer number, with one keyword list. It says Codice Fiscale.",
+        "The format is ours, from the Agenzia delle Entrate: the 16 character code of a person, with omocodia letters for digits, a real birth day and month, and a check letter. The 11 digit code of organizations is not detected, so the entry is partial."
+      ]
     }
   }
 }

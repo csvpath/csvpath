@@ -1,0 +1,72 @@
+#
+# France NIR (INSEE) numbers, Mexico CURPs and Italy Codice Fiscale codes:
+# Macie's FRANCE_NATIONAL_IDENTIFICATION_NUMBER, MEXICO_CURP_NUMBER and
+# ITALY_NATIONAL_IDENTIFICATION_NUMBER, as our stand-ins. All three
+# require a keyword. Macie publishes only the keywords; the formats are
+# the issuers'. The Italian identifier is partially translated (no 11
+# digit organization codes), which the conversion report says.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: fr-mx-it-people.csvpath
+    data: people.csv
+    finding_lines: [1, 2, 4, 5, 7, 8, 10, 11]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie FRANCE_NATIONAL_IDENTIFICATION_NUMBER: occurrence 1, line 1 (row 2), column 2 insee" }
+      - { line: 2, message: "macie FRANCE_NATIONAL_IDENTIFICATION_NUMBER: occurrence 2, line 2 (row 3), column 2 insee" }
+      - { line: 4, message: "macie MEXICO_CURP_NUMBER: occurrence 1, line 4 (row 5), column 3 curp" }
+      - { line: 5, message: "macie MEXICO_CURP_NUMBER: occurrence 2, line 5 (row 6), column 3 curp" }
+      - { line: 7, message: "macie ITALY_NATIONAL_IDENTIFICATION_NUMBER: occurrence 1, line 7 (row 8), column 4 codice_fiscale" }
+      - { line: 8, message: "macie ITALY_NATIONAL_IDENTIFICATION_NUMBER: occurrence 2, line 8 (row 9), column 4 codice_fiscale" }
+    findings: findings.json
+    #
+    # Headers: "insee" holds a France keyword, "curp" a Mexico keyword,
+    # "codice_fiscale" the Italy keyword "codice fiscal" (space as _, and
+    # a substring); "id" and "notes" hold none.
+    #
+    #   line  cell                                    reported as
+    #   1     insee 2 95 10 99 126 111 93             NIR: groups, key 93
+    #   2     insee 253072B07300470                   NIR: Corsica 2B counts as 18
+    #   3     insee 295109912611199                   nothing: bad key
+    #   4     curp BOXW310820HNERXN09                 CURP: born 1931 (digit before
+    #                                                 the check digit)
+    #   5     curp GOMA050612MDFRRNA8                 CURP: born 2005 (a letter)
+    #   6     curp BOXW310820HZZRXN06                 nothing: right check digit, but
+    #                                                 there is no state ZZ
+    #   7     codice_fiscale RSSMRA85T10A562S         Codice Fiscale
+    #   8     codice_fiscale RSSMRA85T50A562W         Codice Fiscale: a woman, day + 40
+    #   9     codice_fiscale RSSMRA85B30A562G         nothing: right check letter, but
+    #                                                 30 February
+    #   10    notes "tessera sanitaria                Codice Fiscale: keyword before,
+    #         RSSMRA85T10A56NH"                       omocodia N for 6
+    #   11    notes "curp boxw310820hnerxn09 /        CURP ("curp" before, lower case)
+    #         insee 2951099126111 93"                 and NIR ("insee" before, key
+    #                                                 apart), one cell
+    #   12    notes RCCMNL83S18D969H                  nothing: no keyword
+    #
+    # On each line France, then Mexico, then Italy: the wrapper's resolved
+    # order. Totals: NIR 3 (lines 1, 2, 11), CURP 3 (4, 5, 11), Codice
+    # Fiscale 3 (7, 8, 10), so with a detail cap of 2 each shows its first
+    # 2. Macie scores national identification numbers HIGH from one
+    # occurrence. All three are PERSONAL_INFORMATION: totalCount 9.

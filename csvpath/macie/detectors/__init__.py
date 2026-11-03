@@ -10,8 +10,11 @@ from .bank_account_detector import BankAccountDetector
 from .cl_rut_detector import ClRutDetector
 from .credit_card_detector import CreditCardDetector
 from .es_id_detector import EsIdDetector
+from .fr_nir_detector import FrNirDetector
 from .grouped_digits_detector import GroupedDigitsDetector
 from .iban_detector import IbanDetector
+from .it_cf_detector import ItCfDetector
+from .mx_curp_detector import MxCurpDetector
 from .us_npi_detector import UsNpiDetector
 from .us_ssn_detector import UsSsnDetector
 from .vin_detector import VinDetector
@@ -26,8 +29,11 @@ DETECTORS = {
     "credit_card": CreditCardDetector,
     "es_dni": EsIdDetector,
     "es_nie": EsIdDetector,
+    "fr_nir": FrNirDetector,
     "iban": IbanDetector,
     "in_aadhaar": GroupedDigitsDetector,
+    "it_cf": ItCfDetector,
+    "mx_curp": MxCurpDetector,
     "us_npi": UsNpiDetector,
     "uk_nhs": GroupedDigitsDetector,
     "us_ssn": UsSsnDetector,

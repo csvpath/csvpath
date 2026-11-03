@@ -1,0 +1,81 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "eu-west-3",
+    "downloaded_at": "2026-11-03T18:10:00Z",
+    "job_id": "4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "FRANCE_NATIONAL_IDENTIFICATION_NUMBER",
+      "MEXICO_CURP_NUMBER",
+      "ITALY_NATIONAL_IDENTIFICATION_NUMBER"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "FRANCE_NATIONAL_IDENTIFICATION_NUMBER",
+      "MEXICO_CURP_NUMBER",
+      "ITALY_NATIONAL_IDENTIFICATION_NUMBER"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "FRANCE_NATIONAL_IDENTIFICATION_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "MEXICO_CURP_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "ITALY_NATIONAL_IDENTIFICATION_NUMBER"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "People records, France, Mexico and Italy",
+      "jobArn": "arn:aws:macie2:eu-west-3:123456789012:classification-job/4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d",
+      "jobId": "4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "FRANCE_NATIONAL_IDENTIFICATION_NUMBER",
+        "MEXICO_CURP_NUMBER",
+        "ITALY_NATIONAL_IDENTIFICATION_NUMBER"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "fr-mx-it-people",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-people"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

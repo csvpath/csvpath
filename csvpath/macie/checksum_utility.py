@@ -200,6 +200,74 @@ class ChecksumUtility:
         return cls.ES_ID_LETTERS[int(text) % 23]
 
     @classmethod
+    def fr_nir_key(cls, *, nir: str) -> bool:
+        """True if a French NIR (INSEE number), 15 characters without
+        separators, has the right key: the last two digits are 97 minus
+        the first 13 mod 97. Corsica's departments 2A and 2B count as 19
+        and 18."""
+        if not isinstance(nir, str):
+            raise TypeError(f"nir must be a str, not {type(nir)}")
+        text = nir.upper()
+        department = text[5:7]
+        if department == "2A":
+            text = text[:5] + "19" + text[7:]
+        elif department == "2B":
+            text = text[:5] + "18" + text[7:]
+        if len(text) != 15 or not (text.isascii() and text.isdigit()):
+            raise ValueError(
+                f"nir must be 15 digits, or 2A or 2B in the department, not {nir!r}"
+            )
+        return 97 - int(text[:13]) % 97 == int(text[13:])
+
+    #
+    # RENAPO's CURP alphabet: N is followed by Ñ, so O to Z are worth one
+    # more than counting from A = 10
+    #
+    MX_CURP_ALPHABET = "0123456789ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"
+
+    @classmethod
+    def mx_curp_check(cls, *, curp: str) -> str:
+        """the check digit of a Mexican CURP, from its first 17
+        characters: each character's value in the CURP alphabet times 18
+        minus its position (0-based), summed; 10 minus the sum mod 10, with
+        10 as 0"""
+        if not isinstance(curp, str):
+            raise TypeError(f"curp must be a str, not {type(curp)}")
+        text = curp.upper()
+        if len(text) != 17 or any(c not in cls.MX_CURP_ALPHABET for c in text):
+            raise ValueError(f"curp must be 17 letters and digits, not {curp!r}")
+        total = sum(
+            cls.MX_CURP_ALPHABET.index(c) * (18 - i) for i, c in enumerate(text)
+        )
+        return str((10 - total % 10) % 10)
+
+    #
+    # the Codice Fiscale check: characters in odd positions (1st, 3rd ...)
+    # are worth these values, digits 0-9 the same as letters A-J; in even
+    # positions a digit is its value and a letter A = 0 ... Z = 25
+    #
+    IT_CF_ODD = (
+        1, 0, 5, 7, 9, 13, 15, 17, 19, 21, 2, 4, 18,
+        20, 11, 3, 6, 8, 12, 14, 16, 10, 22, 25, 24, 23,
+    )  # fmt: skip
+
+    @classmethod
+    def it_cf_check(cls, *, code: str) -> str:
+        """the check letter of an Italian Codice Fiscale, from its first 15
+        characters: the odd and even position values, summed, mod 26 as a
+        letter"""
+        if not isinstance(code, str):
+            raise TypeError(f"code must be a str, not {type(code)}")
+        text = code.upper()
+        if len(text) != 15 or not (text.isascii() and text.isalnum()):
+            raise ValueError(f"code must be 15 letters and digits, not {code!r}")
+        total = 0
+        for i, c in enumerate(text):
+            v = int(c) if c.isdigit() else ord(c) - ord("A")
+            total += cls.IT_CF_ODD[v] if i % 2 == 0 else v
+        return chr(ord("A") + total % 26)
+
+    @classmethod
     def _digits(cls, *, digits: str, length: int) -> None:
         if not isinstance(digits, str):
             raise TypeError(f"digits must be a str, not {type(digits)}")
