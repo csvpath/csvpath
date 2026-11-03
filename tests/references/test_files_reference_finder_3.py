@@ -1757,6 +1757,10 @@ class TestDefinitionChainParts:
                 "$alpha.files.:definition(:on_arrival(:not_none())):template()",
                 ["on_arrival", "template"],
             ),
+            # a bare definition field is a one-field chain (2026-11-03)
+            ("$alpha.files.:on_arrival()", ["on_arrival"]),
+            ("$alpha.files.:template(:not_none())", ["template"]),
+            ('$*.files.:source_port("email")', ["source_port"]),
         ],
     )
     def test_the_field_calls(self, reference, names):
@@ -1766,7 +1770,6 @@ class TestDefinitionChainParts:
         "reference",
         [
             "$alpha.files.:definition()",
-            "$alpha.files.:on_arrival()",
             '$alpha.files.:name("orders.csv"):definition()',
             "$alpha.files.:manifest():uuid()",
         ],
@@ -1902,6 +1905,117 @@ class TestDefinitionChain:
             definitions={"alpha": DEF_ALPHA},
         )
         assert finder.resolve().results[0].data == b'{"on_arrival": {}}'
+
+
+class TestBareDefinitionField:
+    # a bare definition field means the one-field ':definition()' chain
+    # (2026-11-03): ':template(:not_none())' is
+    # ':definition(:template(:not_none()))' and ':template()' is
+    # ':definition():template()'. Before, a bare filter resolved to the
+    # field's value, not the definition.json (D), and every bare field
+    # raised on resolve under '*', ':regex()' and ':choice()'.
+    @pytest.mark.parametrize(
+        "bare, chain",
+        [
+            ("$alpha.files.:template()", "$alpha.files.:definition():template()"),
+            (
+                '$alpha.files.:source_port("email")',
+                '$alpha.files.:definition():source_port("email")',
+            ),
+            ("$*.files.:template()", "$*.files.:definition():template()"),
+            (
+                '$:choice("beta").files.:template()',
+                '$:choice("beta").files.:definition():template()',
+            ),
+            (
+                "$:regex(/^al/).files.:on_arrival()",
+                "$:regex(/^al/).files.:definition():on_arrival()",
+            ),
+        ],
+    )
+    def test_a_value_is_the_same_as_the_chain(self, bare, chain):
+        assert _def_finder(bare).query().files == _def_finder(chain).query().files
+        assert _def_values(bare) == _def_values(chain)
+
+    @pytest.mark.parametrize(
+        "bare, chain",
+        [
+            (
+                "$*.files.:on_arrival(:not_none())",
+                "$*.files.:definition(:on_arrival(:not_none()))",
+            ),
+            (
+                "$*.files.:on_arrival(:none())",
+                "$*.files.:definition(:on_arrival(:none()))",
+            ),
+            (
+                "$alpha.files.:template(:empty())",
+                "$alpha.files.:definition(:template(:empty()))",
+            ),
+            (
+                "$*.files.:template(:not_none())",
+                "$*.files.:definition(:template(:not_none()))",
+            ),
+        ],
+    )
+    def test_a_filter_queries_the_same_as_the_chain(self, bare, chain):
+        bare_results = _def_finder(bare).query()
+        chain_results = _def_finder(chain).query()
+        assert bare_results.files == chain_results.files
+        assert (
+            bare_results.ambiguous_content_read
+            == chain_results.ambiguous_content_read
+        )
+
+    def test_star_values_are_not_flagged(self):
+        # a value per named-file, not several whole files; this raised
+        # "cannot resolve more than one match" before.
+        assert not _def_finder("$*.files.:template()").query().ambiguous_content_read
+        assert sorted(_def_values("$*.files.:template()")) == [
+            ":0/:filename",
+            ":filename",
+        ]
+
+    def test_a_key_argument_under_choice(self):
+        # raised "unhashable type: 'FunctionCall3'" before.
+        assert _def_values('$:choice("alpha").files.:source_port("email")') == [22]
+
+    def _real_homes(self, tmp_path):
+        homes = {}
+        for name, text in {
+            "alpha": '{"template": ":0/:filename"}',
+            "beta": "{}",
+        }.items():
+            home = tmp_path / name
+            home.mkdir()
+            (home / "definition.json").write_text(text, encoding="utf-8")
+            homes[name] = (str(home), [])
+        return homes
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$alpha.files.:template(:not_none())",
+            "$*.files.:template(:not_none())",
+            '$:choice("alpha").files.:template(:not_none())',
+        ],
+    )
+    def test_a_filter_resolves_to_the_definition_file(self, tmp_path, reference):
+        # D: a filter gives no value. this gave ":0/:filename" at a
+        # literal root and raised under '*' and ':choice()' before.
+        homes = self._real_homes(tmp_path)
+        finder = _finder(
+            reference,
+            homes["alpha"][0],
+            [],
+            by_name=homes,
+            definitions={"alpha": {"template": ":0/:filename"}, "beta": {}},
+        )
+        assert finder.resolve().results[0].data == b'{"template": ":0/:filename"}'
+
+    def test_name_three_raises(self):
+        with pytest.raises(ReferenceException3):
+            _def_finder("$alpha.files.:on_arrival().:last()").query()
 
 
 class TestStarTraversalGroup:

@@ -176,9 +176,14 @@ the `acme` run results with no host.
 $acme.results.*:host(:none())
 
 ### :not_none()
-Select the name home paths+uuid of all named-files that have an arrival
-activation set.
+Select the definition.json of each named-file that has an arrival activation
+set.
 $*.files.:on_arrival(:not_none())
+
+Get the default template of each named-file that has one. A named-file with no
+default has no `template` key in its definition.json, so `:not_none()`, not
+`:not_empty()`, is the test.
+$*.files.:definition(:template(:not_none())):template()
 
 ### :empty()
 Empty and none are for the most part synonymous. In a few cases there are
@@ -191,13 +196,20 @@ key that is not present matches `:none()`, but not `:empty()`.
 | `:empty()` | `''`, `[]`, `{}` |
 | `:none()`  | `''`, `null`, No such field |
 
-Find the name homes where `status` indicates a successful registration and there
-was no template.
-$*.files.:status("complete"):template(:empty())
+Find the registrations where `status` indicates a successful registration and
+there was no template. A registration with no template records `''` in its
+manifest.json entry.
+$*.files.:flatten().:status("complete"):template(:empty())
 
 ### :not_empty()
-Get a list of all templates used in registrations
-$*.files.:template(:not_empty())
+Get the registrations that used a template. The template used is a fact about
+each registration, read from its manifest.json entry in name_three; `:flatten()`
+reaches registrations at any depth. A bare `:template()` is the named-file's
+current default, from definition.json.
+$*.files.:flatten().:template(:not_empty())
+
+Get the templates those registrations used
+$*.files.:flatten().:template(:not_empty()):template()
 
 ---
 
