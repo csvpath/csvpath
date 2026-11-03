@@ -492,6 +492,29 @@ class PathsManager:
             return False
         return True
 
+    def configure_named_paths(self, name: NamedPathsName) -> str:
+        """creates a named-paths group without loading any csvpaths, as
+        FileManager.configure_named_file creates a named-file without a
+        registration. the group has its home, definition.json and README,
+        and no group.csvpaths or manifest entry until its first load. assets,
+        such as lists for load_list(), can be stored in it before that load.
+        an existing group is left as it is. returns the group's home."""
+        if not isinstance(name, str) or name.strip() == "":
+            raise ValueError("Named-paths group name must be a non-empty str")
+        if name.strip().startswith("$") or "." in name:
+            raise ValueError(
+                f"Named-paths group name {name!r} cannot start with $ or contain ."
+            )
+        home = self.named_paths_home(name)
+        t = self.get_json_paths_file(name)
+        if t is None:
+            raise ValueError(f"JSON definition for {name} cannot be None")
+        if name not in t:
+            t[name] = []
+            self.describer.store_json(name, t)
+        self.assure_readme(name)
+        return home
+
     def add_named_paths(
         self,
         *,
@@ -867,7 +890,12 @@ class PathsManager:
         # desireable or if it has a bug. in principle, still don't see a reason this
         # update should obtain, unless a user edits a file they shouldn't.
         #
-        self.registrar.update_manifest_if(name=name, group_file_path=grp, paths=cs)
+        # a group with no group file (e.g. one made by configure_named_paths
+        # and not yet loaded) has nothing to fingerprint. asking for its
+        # manifest path would write a [] manifest.json from a read.
+        #
+        if nos.exists():
+            self.registrar.update_manifest_if(name=name, group_file_path=grp, paths=cs)
         return cs
 
     def _str_from_list(self, paths: list[Csvpath]) -> Csvpath:
