@@ -8,6 +8,12 @@ report is written next to it, as for ODCS contracts.
 A Macie csvpath's id must be unique in its group, so an append that would
 share one is refused. Other duplicate ids are still allowed.
 
+A wrapper's readable text allow lists are stored in the group's assets,
+as <list id>.txt, before its csvpath is loaded; the csvpath reads them with
+load_list(). An append whose list would replace a different list of the
+same id is refused, since that would change what the group's other
+csvpaths allow.
+
 These tests use the normative pair in tests/macie/test_resources/normative/,
 so the expected run results are the ones the converter tests already verify.
 """
@@ -36,7 +42,13 @@ ORDERS_CONTRACT = os.path.join(
     "tests", "odcs", "test_resources", "normative", "01_orders_simple", "contract.yaml"
 )
 
-GROUPS = ["macie_test_hr", "macie_test_mixed", "macie_test_dir", "hr-employee-ids"]
+GROUPS = [
+    "macie_test_hr",
+    "macie_test_mixed",
+    "macie_test_dir",
+    "macie_test_text",
+    "hr-employee-ids",
+]
 NAMED_FILE = "macie_test_employees"
 
 
@@ -300,3 +312,146 @@ def test_macie_package_is_imported_lazily(tmp_path) -> None:
         env=os.environ.copy(),
     )
     assert out.stdout.strip().splitlines()[-1] == "False"
+
+
+#
+# text allow lists
+#
+
+TEXT_PAIR = os.path.join(
+    "tests", "macie", "test_resources", "normative", "09_text_allow_list"
+)
+TEXT_WRAPPER_FILE = "hr-contractor-allow.macie.json"
+TEXT_WRAPPER = os.path.join(TEXT_PAIR, TEXT_WRAPPER_FILE)
+LIST_ID = "c0n7r4a1c7o9r5s3a6l0lw"
+ENTRIES = ["emp-234567", "EMP-678901", "EMP-456789"]
+TEXT_GROUP = "macie_test_text"
+
+
+def _add_text(paths: CsvPaths, *, file_path: str = TEXT_WRAPPER, append=False) -> str:
+    return paths.paths_manager.add_named_paths_from_file(
+        name=TEXT_GROUP, file_path=file_path, append=append
+    )
+
+
+def _list(paths: CsvPaths, list_id: str = LIST_ID) -> list[str] | None:
+    text = paths.paths_manager.asset_manager.get_asset_file(
+        TEXT_GROUP, f"{list_id}.txt"
+    )
+    return None if text is None else text.splitlines()
+
+
+def _text_variant(tmp_path, *, job_name: str, entries: list[str]) -> str:
+    #
+    # another job's wrapper with the same allow list id: a new csvpath id,
+    # so only the list can collide
+    #
+    with open(TEXT_WRAPPER, encoding="utf-8") as f:
+        w = json.load(f)
+    w["aws"]["classificationJob"]["name"] = job_name
+    for a in w["allowLists"]:
+        if a["settings"]["id"] == LIST_ID:
+            a["contents"]["entries"] = entries
+    p = tmp_path / f"{job_name}.macie.json"
+    p.write_text(json.dumps(w), encoding="utf-8")
+    return str(p)
+
+
+def test_macie_text_list_is_stored_in_the_group_assets(paths) -> None:
+    _add_text(paths)
+    assert _list(paths) == ENTRIES
+    home = paths.paths_manager.named_paths_home(TEXT_GROUP)
+    report = json.loads(_read(Nos(home).join(f"{TEXT_WRAPPER_FILE}.report.json")))
+    assert report["lists"] == [{"name": LIST_ID, "entries": 3}]
+    assert f'load_list("{LIST_ID}")' in _group(paths, TEXT_GROUP)[0]
+
+
+def test_macie_text_list_group_runs_as_expected(paths) -> None:
+    paths.config.set(section="macie", name="max_detail", value="3")
+    _add_text(paths)
+    data = os.path.join(TEXT_PAIR, "data", "employees.csv")
+    paths.file_manager.add_named_file(name=NAMED_FILE, path=data)
+    paths.collect_paths(filename=NAMED_FILE, pathsname=TEXT_GROUP)
+    result = paths.results_manager.get_named_results(TEXT_GROUP)[0]
+    with open(os.path.join(TEXT_PAIR, "expected.yaml"), encoding="utf-8") as f:
+        run = yaml.safe_load(f)["runs"][0]
+    with open(data, encoding="utf-8", newline="") as f:
+        rows = list(csv.reader(f))
+    assert result.lines.to_list() == [rows[i] for i in run["finding_lines"]]
+    with open(os.path.join(TEXT_PAIR, "expected", "findings.json")) as f:
+        assert result.csvpath.variables["macie_findings"] == json.load(f)
+
+
+def test_macie_text_list_missing_at_run_time_is_an_error(paths) -> None:
+    #
+    # load_list() has no fallback: a group whose list is gone cannot run
+    # as if it had no allow list
+    #
+    _add_text(paths)
+    paths.paths_manager.asset_manager.delete_asset_file(TEXT_GROUP, f"{LIST_ID}.txt")
+    data = os.path.join(TEXT_PAIR, "data", "employees.csv")
+    paths.file_manager.add_named_file(name=NAMED_FILE, path=data)
+    paths.collect_paths(filename=NAMED_FILE, pathsname=TEXT_GROUP)
+    result = paths.results_manager.get_named_results(TEXT_GROUP)[0]
+    assert result.csvpath.is_valid is False
+    assert result.lines.to_list() == []
+    assert [e.message for e in result.errors][0].startswith(
+        f"Cannot load list {LIST_ID!r}: No list at "
+    )
+
+
+def test_macie_unreadable_text_list_stores_nothing(paths) -> None:
+    path = os.path.join("tests", "macie", "test_resources", "wrappers")
+    paths.paths_manager.add_named_paths_from_file(
+        name=TEXT_GROUP, file_path=os.path.join(path, "job_download.macie.json")
+    )
+    assets = paths.paths_manager.asset_manager.assets_dir_path(TEXT_GROUP)
+    assert not Nos(assets).exists() or not [
+        f for f in Nos(assets).listdir() if f.endswith(".txt")
+    ]
+
+
+def test_macie_text_list_refused_append_writes_no_list(paths) -> None:
+    #
+    # the shared csvpath id is refused before the list is written
+    #
+    _add_text(paths)
+    paths.paths_manager.asset_manager.delete_asset_file(TEXT_GROUP, f"{LIST_ID}.txt")
+    with pytest.raises(MacieException):
+        _add_text(paths, append=True)
+    assert _list(paths) is None
+
+
+def test_macie_text_list_append_with_different_entries_is_refused(
+    paths, tmp_path
+) -> None:
+    _add_text(paths)
+    other = _text_variant(tmp_path, job_name="hr-other", entries=["EMP-111111"])
+    with pytest.raises(MacieException, match=LIST_ID):
+        _add_text(paths, file_path=other, append=True)
+    #
+    # nothing changed: the list, the csvpaths, the manifest
+    #
+    assert _list(paths) == ENTRIES
+    assert _ids(paths, TEXT_GROUP) == ["hr-contractor-allow"]
+    assert len(paths.paths_manager.get_manifest_for_name(TEXT_GROUP)) == 1
+
+
+def test_macie_text_list_append_with_the_same_entries_is_allowed(
+    paths, tmp_path
+) -> None:
+    _add_text(paths)
+    other = _text_variant(tmp_path, job_name="hr-other", entries=list(ENTRIES))
+    _add_text(paths, file_path=other, append=True)
+    assert _ids(paths, TEXT_GROUP) == ["hr-contractor-allow", "hr-other"]
+    assert _list(paths) == ENTRIES
+
+
+def test_macie_text_list_reload_without_append_replaces_the_list(
+    paths, tmp_path
+) -> None:
+    _add_text(paths)
+    other = _text_variant(tmp_path, job_name="hr-other", entries=["EMP-111111"])
+    _add_text(paths, file_path=other)
+    assert _ids(paths, TEXT_GROUP) == ["hr-other"]
+    assert _list(paths) == ["EMP-111111"]

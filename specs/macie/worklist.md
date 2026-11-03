@@ -48,9 +48,10 @@ last. Add an item the moment something is deferred.
    then Framework, then a `common.json` shared with other rule systems).
    From David's notes; deferred until there is more than one identifier
    to customize (David, 2026-11-01).
-5. **Text allow lists**: `macie_allow_words` via `load_list()` (#470).
-   #470 is a general function: message the refs-v3 session (csvpath-35)
-   before starting it.
+5. ~~**Text allow lists**~~ Done: `macie_allow_words` via `load_list()`
+   (#499) and `configure_named_paths()` (#502); lists stored in the group's
+   assets on load; a conflicting list on append is refused. Pair
+   09_text_allow_list.
 6. **Managed identifiers, group B** (format plus keyword).
 7. **boto3 download** into a wrapper. Needs an AWS account, region and
    permissions agreed with David first.
@@ -74,7 +75,9 @@ last. Add an item the moment something is deferred.
   group without append rewrites `group.csvpaths` but leaves the wrapper and
   contract copies, and their `.report.json` files, from earlier loads. The
   group home can then describe rules it no longer runs. Cleanup should be
-  automatic (David, 2026-10-31).
+  automatic (David, 2026-10-31). Text allow lists in `assets/` are the
+  same: a reload without append replaces the lists the new wrapper has,
+  and leaves the others.
 - **Directory loads under a name** refuse Macie wrappers, as they refuse
   ODCS contracts. Appending with `add_named_paths_from_file(append=True)`
   works for both.
