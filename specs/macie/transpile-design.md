@@ -298,13 +298,14 @@ conversion.report.skipped   # what was not translated
 | `ManagedCatalog` | our managed identifier stand-ins, from `csvpath/macie/rulesbase/managed_identifiers.json`, checked on load |
 | `ManagedIdentifier` | occurrences of one managed identifier in one cell: detector, keyword mode, allow lists |
 | `CreditCardDetector` | 13-19 digits (or grouped), Luhn, issuer prefix and length, less issuer test numbers |
-| `GroupedDigitsDetector` | fixed-length digits, printed in groups or fixed formats, with a named check digit: SIN, NHS, CPF, CNPJ, SUBE |
+| `GroupedDigitsDetector` | fixed-length digits, printed in groups or fixed formats, with a named check digit: SIN, NHS, CPF, CNPJ, SUBE, Aadhaar |
+| `EsIdDetector` | Spain DNI and NIE: digits and a mod 23 control letter |
 | `ClRutDetector` | Chile RUT and RUN: 7 or 8 digits and a check character, 0-9 or K |
 | `VinDetector` | 17-character VINs; no check digit required |
 | `BankAccountDetector` | FR, DE, IT, ES, UK: IBANs (no keyword) and BBANs (keyword), plus UK sort code and account |
 | `IbanDetector` | one country's IBANs: length, printed layout, ISO 13616 mod 97 |
 | `UsSsnDetector`, `UsNpiDetector` | SSA's SSN rules; CMS's NPI check digit (Luhn over 80840) |
-| `ChecksumUtility` (`chut`) | check-digit algorithms (Luhn so far) |
+| `ChecksumUtility` (`chut`) | check-digit algorithms: Luhn, mod 11s, mod 97, RUT, RIB, Verhoeff, the Spanish mod 23 letter |
 | `MacieMdi` (`macie_mdi`) | applies a managed identifier to every cell |
 | `MacieRun` | one run's shared state (allow lists, tally) and outputs; limits from metadata, config, defaults; noisy setup failure |
 | `MacieAllowRegex` (`macie_allow_regex`) | registers a regex allow list before any line is read |
@@ -489,6 +490,36 @@ PERSONAL_INFORMATION and require a keyword.
 (`#` for a digit), `prefixes` and `reject_repeated`, so CPF, CNPJ and
 SUBE are catalog data on the same class as SIN and NHS.
 
+**Spain DNI and NIE, and India Aadhaar**: all three are
+PERSONAL_INFORMATION, require a keyword, and are HIGH from one
+occurrence (Macie's table for national identification and taxpayer
+numbers).
+- **`SPAIN_DNI_NUMBER`.** Macie publishes the keywords, and that
+  `99999999`, `99.999.999` and all zeroes are never reported. It also
+  says it may report an Argentina DNI as a Spain DNI, or the other way
+  around. The format is ours, from the Ministerio del Interior: 8 digits,
+  optionally dotted, and a control letter, optionally after a hyphen or
+  space (`12345678Z`, `12.345.678-Z`). The letter is the number mod 23
+  indexing `TRWAGMYFPDXBNJZSQVHLCKE` (`chut.es_id_letter`). We require
+  the letter, so a digits-only Argentina DNI is not reported. Macie's
+  exclusions (no letter) suggest it may accept digits alone, so the
+  fidelity tier is B.
+- **`SPAIN_NIE_NUMBER`.** Macie lists it with the taxpayer numbers and
+  publishes only Spain's taxpayer keywords, shared with NIF and CIF. The
+  format is ours: X, Y or Z, 7 digits and a control letter, the DNI's
+  mod 23 with X, Y and Z as 0, 1 and 2 (`X1234567L`, `X-1234567-L`).
+  All zeroes are never reported, as Macie says of several taxpayer
+  numbers.
+- One class, `EsIdDetector`, serves `es_dni` and `es_nie`; the catalog
+  data gives the form. Letters may be either case, and numbers must not
+  touch other letters or digits.
+- **`INDIA_AADHAAR_NUMBER`.** Macie publishes only the keywords. The
+  format is UIDAI's: 12 digits, never starting with 0 or 1, the last a
+  Verhoeff check digit (`chut.verhoeff`), printed 4-4-4 or contiguous.
+  It is catalog data on `GroupedDigitsDetector`. The Verhoeff tables were
+  cross-checked against the dihedral group's arithmetic on 20,000 random
+  strings; that check caught a mistyped table row before any test ran.
+
 Each managed identifier is a catalog entry plus a detector in
 `csvpath/macie/detectors/`, named in `DETECTORS`. One class may serve
 several detector names. A test checks that
@@ -520,6 +551,11 @@ every detector the catalog names exists, and every detector is used.
 9. BBANs: does Macie check Italy's CIN letter, or anything for German
    and UK BBANs? Which printed layouts does it accept? (Macie's examples
    are only contiguous and groups of four.)
+10. Spain DNI: does Macie need the control letter, or does it report 8
+    digits alone (its exclusions `99999999` and `99.999.999` have no
+    letter)? Does it check the letter? NIE and Aadhaar formats are the
+    issuers'. The short Spanish keywords match as substrings (item 3):
+    `nie` in `niece`, `tin` in `setting`.
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

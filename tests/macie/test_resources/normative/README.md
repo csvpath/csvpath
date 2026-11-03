@@ -72,3 +72,8 @@ Design decisions are in `specs/macie/transpile-design.md`.
   one allowed occurrence leaves a line with no finding, and another
   leaves a second occurrence in the same cell. The normative runs write
   the list to a temp dir; in a group it is `assets/<id>.txt`.
+- `10_es_in`: Spain DNI and NIE and India Aadhaar. Header and in-cell
+  keywords, no keyword, a dotted DNI, a NIE with hyphens, wrong control
+  letter, Macie's DNI example 99999999 and an all-zero NIE (both with the
+  right letter, neither reported), an Aadhaar that passes Verhoeff but
+  starts with 1, a bad Verhoeff digit, and two identifiers in one cell.

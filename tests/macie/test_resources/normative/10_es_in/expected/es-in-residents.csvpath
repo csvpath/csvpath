@@ -1,0 +1,44 @@
+~
+  id: es-in-residents
+  macie-origin: job
+  macie-job-id: 3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c
+  macie-account: 123456789012
+  macie-region: eu-west-1
+  macie-source-arn: arn|aws|macie2|eu-west-1|123456789012|classification-job/3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c
+  macie-downloaded-at: 20261103T153000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "SPAIN_DNI_NUMBER",
+        "PERSONAL_INFORMATION",
+        "es_dni",
+        "required",
+        "dni|dni#|dninúmero#|documento nacional de identidad|identidad único|identidadúnico#|insurance number|national identification number|national identity|nationalid#|nationalidno#|número nacional identidad|personal identification number|personal identity no|unique identity number|uniqueid#",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "SPAIN_NIE_NUMBER",
+        "PERSONAL_INFORMATION",
+        "es_nie",
+        "required",
+        "cif|cif número|cifnúmero#|nie|nif|número de contribuyente|número de identidad de extranjero|número de identificación fiscal|número de impuesto corporativo|personal tax number|tax id|tax identification number|tax number|tin|tin#",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "INDIA_AADHAAR_NUMBER",
+        "PERSONAL_INFORMATION",
+        "in_aadhaar",
+        "required",
+        "aadhaar|aadhar|adhaar|uidai",
+        30,
+        "1:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]
