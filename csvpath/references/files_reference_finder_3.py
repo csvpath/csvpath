@@ -223,7 +223,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # from _is_bare_function_only's own "bare marker" test; a
             # bare context-setter/pointer/marker function occupying
             # name_one's entire content (':manifest()', ':all()',
-            # ':home()', etc.) has no file of its own to read a
+            # ':flatten()', etc.) has no file of its own to read a
             # worksheet from.
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not support the '#worksheet' "
@@ -465,27 +465,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
             candidates = self._candidates_for_name(root_major, [Star3()])
         elif is_flattened or is_deep_grouped:
             candidates = self._all_candidates_for_name(root_major)
-        elif self._is_bare_home_reference(name_one):
-            # ':home()' as name_one's entire content -- a zero-level
-            # selector, added 2026-08-12, mirroring RESULTS' own
-            # ':home()' (David: keep functions meaning the same thing
-            # across datatypes). Unlike RESULTS, this does NOT fall out
-            # for free -- name_one can never be empty for FILES (the
-            # grammar requires something after the last "."), so there
-            # is no pre-existing "no pattern" code path for a bare
-            # pointer to piggyback on the way RESULTS' bare pointer did.
-            # Reuses the existing exact-length _matches machinery with
-            # an EMPTY pattern (already correctly requires zero
-            # intermediate segments, i.e. file_home == root_major's own
-            # home directory exactly) -- no new matching primitive
-            # needed. Does not collide with ':home()'s ordinary job as
-            # a field accessor in name_three (SOURCE == "manifest",
-            # reading the "file_home" key off a matched candidate) --
-            # different position, different code path, and bare
-            # ':home()' in name_one was previously unreachable/
-            # undefined (only SOURCE == "definition" functions get bare
-            # treatment via _bare_definition_field_call).
-            candidates = self._candidates_for_name(root_major, [])
         elif self._is_bare_selector_reference(name_one):
             # bare ':fingerprint("hash...")' -- added 2026-08-13, the
             # shape generalized 2026-08-28 (see Function3.
@@ -597,7 +576,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # path segment (:name()/:regex()/a clock function), or does
             # not operate in a path segment at all -- all already
             # excluded by the branches above (bare/prefixed :all()/
-            # :flatten()/:groups()/:home()/selector-when-argued) or by
+            # :flatten()/:groups()/selector-when-argued) or by
             # _apply_implied_star()'s own exemption list (:name()/
             # :regex()/a clock function, checked again here since this
             # branch is also reached by a literal-PREFIXED path ending in
@@ -1177,33 +1156,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
         trigger it -- confirmed live before fixing, the identical bug
         also existed in this method's own literal-root twin above.
 
-        ':home()' and ':definition()' as name_one's own content -- added
+        bare ':definition()' as name_one's own content -- added
         2026-08-27 (FILES '*' traversal generalization bucket-list
-        entry), closing three of that entry's four identified gaps (the
-        fourth, a predicate argument to filter by, is separately unbuilt
-        -- see the predicate-argument bucket-list entry). Two independent
-        shapes, both METADATA_FILE (definition.json is never versioned,
+        entry): every named-file's own definition.json, one result per
+        named-file, METADATA_FILE (definition.json is never versioned,
         so there is no "which version" left for name_three to narrow --
-        combining either shape with name_three is rejected):
-        - bare ':definition()' alone -- every named-file's own
-          definition.json, one result per named-file, regardless of
-          whether it has any zero-level registration at all.
-        - ':home()' with ':definition()' chained onto it -- the SAME
-          per-named-file definition.json lookup, but FILTERED to only
-          named-files that have at least one zero-level ("no template")
-          registration, per the concrete worked example that motivated
-          this ("$*.files.:home():definition(:on_arrival(:not_none()))"
-          -- "which named-files have on_arrival set," restricted to
-          plain, non-templated registrations). ':home()' here is a
-          filter, not the placeholder-value role it plays bare -- it has
-          nothing to be a placeholder FOR, since ':definition()' does not
-          vary by version/path the way a pointer's target would.
-        A bare ':home()' with nothing chained onto it (no ':definition()')
-        is a separate, third shape -- see the is_home branch below -- and
-        falls through to the ordinary candidate/pointer machinery every
-        other bare shape uses, since it is FIRST_PARTY-style path
-        narrowing (an empty, zero-level pattern), not a metadata-file
-        read.
+        combining it with name_three is rejected). A ':definition()'
+        chain with fields is E3's _definition_chain branch. ':home()',
+        which used to scope this to named-files with a zero-level
+        registration, was retired 2026-11-03 (David).
         """
         name_one = reference.name_one
         if name_one.name_two is not None:
@@ -1236,10 +1197,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             return self._query_definition_chain(
                 reference=reference, calls=definition_calls, name_filter=name_filter
             )
-        is_home = self._is_home_prefixed_reference(name_one)
-        is_bare_definition = self._is_bare_definition_reference(name_one)
-        definition_call = self._chained_definition_call(name_one)
-        if is_bare_definition or (is_home and definition_call is not None):
+        if self._is_bare_definition_reference(name_one):
             if reference.name_three is not None:
                 # settled, not a gap -- definition.json is never
                 # versioned (same reasoning as every other :definition()
@@ -1254,30 +1212,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
             names = self._matching_names(
                 self.source.file_names(), name_filter
             )
-            if is_home:
-                names = [
-                    name for name in names if self._candidates_for_name(name, [])
-                ]
-                if definition_call.arg is not None:
-                    # generic predicate-argument filtering -- added
-                    # 2026-10-17, closing the predicate-argument bucket-
-                    # list entry's own worked example ("which named-files
-                    # have on_arrival set"). self._build(definition_call)
-                    # recursively builds the nested ':on_arrival(...)'
-                    # chain AND runs Definition3.check_valid() (which
-                    # cross-validates that the nested call is SOURCE ==
-                    # "definition" with a PredicateFunction3 arg -- see
-                    # its own docstring) before this ever filters
-                    # anything, so field_call here is already a real,
-                    # validated Function3 instance.
-                    field_call = self._build(definition_call).arg
-                    names = [
-                        name
-                        for name in names
-                        if self._matches_definition_field_predicate(
-                            name, field_call
-                        )
-                    ]
             results = []
             for name in names:
                 home = self.csvpaths.file_manager.named_file_home(name)
@@ -1383,37 +1317,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 self.source.file_names(), name_filter
             ):
                 candidates.extend(self._all_candidates_for_name(name))
-        elif is_home:
-            # bare ':home()', nothing chained onto it -- the zero-level
-            # ("no template") placeholder, exactly like the literal-root
-            # case's own is_bare_home_reference branch in query(), just
-            # gathered across every named-file instead of one. Not
-            # partitioned: an empty pattern is still a POOL-mode narrowing
-            # (one level, just zero segments), the same peer relationship
-            # a literal/'*' pattern already has to '*' traversal's own
-            # bare-path POOL mode above -- a terminal pointer picks one
-            # overall winner by time across every named-file's zero-level
-            # version, it does not pick one winner per named-file (that
-            # is what ':all()' is for).
-            if name_one.functions:
-                # settled, not a gap -- ':definition()' is the only
-                # function this design ever scoped chaining onto a bare
-                # ':home()' during '*' traversal to (the one worked
-                # example driving this shape, "which named-files have
-                # on_arrival set," needs exactly that combination). No
-                # other worked example asks for a different function
-                # here.
-                raise ReferenceException3(
-                    "FilesReferenceFinder3 does not support chaining "
-                    f":{name_one.functions[0].name}() onto ':home()' "
-                    "during '*' traversal -- only ':definition()' is "
-                    "supported."
-                )
-            candidates = []
-            for name in self._matching_names(
-                self.source.file_names(), name_filter
-            ):
-                candidates.extend(self._candidates_for_name(name, []))
         elif self._bare_manifest_field_call(name_one) is not None:
             # ':manifest():uuid()' during '*' traversal -- added
             # 2026-08-28, David's own worked example ("get uuids from
@@ -2278,37 +2181,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
         )
 
     @staticmethod
-    def _is_bare_home_reference(name_one) -> bool:
-        """same shape as _is_bare_all_reference/_is_bare_flatten_
-        reference/_is_bare_groups_reference, for ':home()' -- a zero-
-        level selector when it is name_one's entire content (settled
-        2026-08-12). Structurally exclusive with all three siblings."""
-        return (
-            not name_one.functions
-            and len(name_one.path) == 1
-            and isinstance(name_one.path[0], FunctionCall3)
-            and name_one.path[0].name == "home"
-            and name_one.path[0].arg is None
-        )
-
-    @staticmethod
-    def _is_home_prefixed_reference(name_one) -> bool:
-        """true when name_one's path is exactly a single, argument-less
-        ':home()' call -- UNLIKE _is_bare_home_reference, this does NOT
-        also require name_one.functions to be empty, since ':home()' is
-        legal here either bare (the zero-level placeholder, see
-        _query_star_traversal's own is_home branch) or with exactly one
-        ':definition()' chained onto it (the filtered-definition-lookup
-        shape, see _chained_definition_call) -- '*' traversal only,
-        added 2026-08-27 alongside that pair of shapes."""
-        return (
-            len(name_one.path) == 1
-            and isinstance(name_one.path[0], FunctionCall3)
-            and name_one.path[0].name == "home"
-            and name_one.path[0].arg is None
-        )
-
-    @staticmethod
     def _is_bare_definition_reference(name_one) -> bool:
         """true when name_one's entire content is a single, argument-
         less ':definition()' call, with no trailing function chain --
@@ -2322,33 +2194,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
             and name_one.path[0].name == "definition"
             and name_one.path[0].arg is None
         )
-
-    @staticmethod
-    def _chained_definition_call(name_one) -> "FunctionCall3 | None":
-        """returns the ':definition()' FunctionCall3 when it is the ONE
-        thing chained onto name_one.functions (e.g. the "'home()':
-        ':definition()'" shape ':home():definition()'), else None. Added
-        2026-08-27 alongside _is_home_prefixed_reference -- the two are
-        meant to be checked together (is_home and this both non-None) to
-        recognize the filtered-definition-lookup shape specifically,
-        rather than any other function someone might try to chain onto
-        ':home()' during '*' traversal (still rejected, see the is_home
-        branch's own functions check).
-
-        No longer requires `call.arg is None` -- widened 2026-10-17 so
-        this also recognizes ':home():definition(:on_arrival(:not_none()))'
-        (the predicate-argument filtering shape, see query()'s own
-        handling of a non-None arg here and Definition3.check_valid()
-        for the real argument-shape validation, which this method does
-        not attempt -- it only identifies the call, same as every other
-        _is_X/._chained_X sibling in this file leaves argument-shape
-        checks to the caller or to build()/check_valid()."""
-        if len(name_one.functions) != 1:
-            return None
-        call = name_one.functions[0]
-        if isinstance(call, FunctionCall3) and call.name == "definition":
-            return call
-        return None
 
     def _matches_definition_field_predicate(self, name: str, field_call) -> bool:
         """true if `name`'s own definition.json has `field_call`'s own
@@ -2647,8 +2492,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
         reads and filters that one record.
 
         Returns None for any other shape: bare ':definition()', and a
-        chain with ':home()' or a path-building function, which keep
-        their own branches. Raises for a field that does not read
+        chain with a path-building function, which keep their own
+        branches. Raises for a field that does not read
         definition.json, and for a pointer, range or time window, which
         have no version to select."""
         if name_one is None:
@@ -2669,7 +2514,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             return None
         if not others:
             return None
-        if any(c.name in ("home", "name", "regex", "choice") for c in others):
+        if any(c.name in ("name", "regex", "choice") for c in others):
             return None
         for call in others:
             function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
@@ -2917,39 +2762,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         if (
             reference.name_three is None
-            and self._chained_definition_call(reference.name_one) is not None
-        ):
-            # ':home():definition()' chained during '*' traversal --
-            # added 2026-08-27, covers both bare and (widened 2026-10-17)
-            # predicate-argued (':home():definition(:on_arrival(
-            # :not_none()))') forms. Checked here, BEFORE resolve_kind is
-            # even read, rather than as a branch inside the `kind ==
-            # METADATA_FILE` block below (where it used to live, and
-            # still would work for the BARE form) -- a predicate-argued
-            # nested field accessor makes resolve_kind's own generic
-            # nested-arg walk classify the WHOLE reference as
-            # METADATA_FIELD (a nested SOURCE == "definition" call
-            # triggers the same default rule an ordinary bare field read
-            # does), not METADATA_FILE. Widening the `kind ==
-            # METADATA_FILE` guard below to also admit METADATA_FIELD was
-            # tried first and confirmed LIVE to be unsafe for FILES
-            # (unlike the analogous, safe widening already shipped for
-            # RESULTS' :errors():idchain(...) GATE) -- it let ORDINARY
-            # field reads during '*' traversal (e.g. ":all():last()
-            # :uuid()", already METADATA_FIELD by resolve_kind) also
-            # reach this block, where Rule 1b's own unconditional
-            # "Star3 root_major + result.uuid is not None" re-derive-by-
-            # uuid branch incorrectly intercepted them, returning the
-            # whole manifest entry instead of the uuid field value (9
-            # tests caught this immediately). Checking this specific
-            # shape FIRST, before `kind` is even computed, sidesteps the
-            # whole question -- result.path is already the matched
-            # named-file's own definition.json path, set by
-            # _query_star_traversal's own early METADATA_FILE branch,
-            # regardless of which form matched there.
-            return self._read_well_known_file(result.path)
-        if (
-            reference.name_three is None
             and not isinstance(reference.root_major, Star3)
             and result.uuid is not None
             and self._name_one_pointer(reference.name_one) is not None
@@ -2958,10 +2770,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # pointer (:first()/:last()/:index(n)) directly in name_one
             # implies :manifest(), same as the explicit ':manifest()'+
             # pointer shape just below (_pointer_before_manifest)
-            # already means. Checked here, BEFORE resolve_kind is read,
-            # for the same reason the _chained_definition_call check
-            # just above is: resolve_kind's own generic classification
-            # has nothing to go on here (the pointer itself carries no
+            # already means. Checked here, BEFORE resolve_kind is read:
+            # resolve_kind's own generic classification has nothing to
+            # go on here (the pointer itself carries no
             # metadata_kind() of its own, unlike an explicit
             # ':manifest()' call), so it would otherwise default to
             # FIRST_PARTY and never reach the re-derive-by-uuid logic

@@ -569,15 +569,6 @@ class ReferenceFinder3(ABC):
             # all three as "fully occupies a path segment," so none of
             # them implies a '*' wildcard.
             "choice",
-            # ':home()' is a zero-level PLACEHOLDER marker (see
-            # home_3.py), not an ordinary field accessor -- David
-            # deliberately decided against a prefixed "beta/:home()"
-            # shape on UX grounds ("explicit felt more mysterious than
-            # the default"), a considered rejection this normalization
-            # must not silently resurrect. Belongs in the compendium's
-            # own "doesn't operate in a path segment at all" category,
-            # alongside :manifest()/:definition().
-            "home",
             # ':manifest()' -- added 2026-10-15, closing a real gap: it
             # was previously ONLY exempt by accident, never by name.
             # David caught this live (not a code bug yet, since FILES
@@ -1027,7 +1018,7 @@ class ReferenceFinder3(ABC):
         name check replaced by a registry lookup so any future
         SELECTOR_WHEN_ARGUED function is recognized here for free,
         without a new hand-written check per function. The OPPOSITE arg
-        requirement from ':all()'/':flatten()'/':groups()'/':home()'
+        requirement from ':all()'/':flatten()'/':groups()'
         (WITH an argument, not without) mirrors
         _is_bare_fingerprint_reference()'s own original reasoning: a
         bare, argument-less call has no value to search a manifest

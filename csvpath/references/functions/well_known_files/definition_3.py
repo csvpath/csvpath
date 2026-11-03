@@ -33,7 +33,7 @@ class Definition3(Function3):
     # the generic predicate-argument filtering mechanism (deferred-work
     # bucket list's own "Predicate-argument field accessors" entry),
     # closing its own motivating worked example:
-    # "$*.files.:home():definition(:on_arrival(:not_none()))" -- "which
+    # "$*.files.:definition(:on_arrival(:not_none()))" -- "which
     # named-files have on_arrival set." check_valid() below cross-
     # validates the nested function rather than listing every possible
     # definition-sourced field accessor (:on_arrival()/:sources()/etc)

@@ -1056,7 +1056,7 @@ class TestImpliedStar:
     # following directly after a path separator implies a '*' wildcard,"
     # unless it is itself a wildcard, fully occupies a path segment
     # (':name()'/':regex()'/':choice()'/a clock function), or does not
-    # operate in a path segment at all (':manifest()'/':home()'/etc).
+    # operate in a path segment at all (':manifest()'/etc).
     # ':last()' is a plain pointer -- none of those exemptions apply, so
     # "beta/:last()" now means the same as "beta/*:last()" -- and, per
     # the SAME degenerate-run_dir-slot reasoning TestAllGrouping's own
@@ -1100,17 +1100,6 @@ class TestImpliedStar:
         _write_archive_manifest(tmp_path, "acme", [flat, one_level])
         results = _finder("$acme.results.:last()", str(tmp_path)).query()
         assert results.uuids == ["flat-1"]
-
-    def test_home_is_exempt_prefixed_still_raises(self, tmp_path):
-        # ':home()' is a zero-level PLACEHOLDER marker, not an ordinary
-        # field accessor -- David deliberately rejected "beta/:home()"
-        # on UX grounds (see TestHomeAsAZeroLevelSelector), a decision
-        # this normalization must not silently resurrect.
-        base = tmp_path / "acme"
-        beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
-        _write_archive_manifest(tmp_path, "acme", [beta1])
-        with pytest.raises(ReferenceException3):
-            _finder("$acme.results.beta/:home()", str(tmp_path)).query()
 
     def test_all_flatten_groups_are_exempt_unaffected(self, tmp_path):
         # sanity check -- these are wildcards themselves, already
@@ -1972,84 +1961,56 @@ class TestStatementLevelPointer:
         assert results.uuids == ["f-uuid"]
 
 
-class TestHomeAsAZeroLevelSelector:
-    # settled 2026-08-11: bare ':home()' (David's own framing --
-    # "everything that has its home here") fills the one real gap left
-    # in the depth model -- there was no way to ask for "every zero-
-    # level run, unreduced" (bare pointer always reduces to one, ':all()'
-    # is one-level not zero, ':flatten()' is any depth not zero). Needed
-    # no code change at all -- ':home()' is VALUE-role, never a pointer,
-    # so when it is the only function in the bare chain, nothing reduces
-    # the candidate set and every zero-level run comes back unreduced
-    # for free.
-    #
-    # settled 2026-08-12: there is NO prefixed equivalent
-    # ("beta/:home()") -- a plain literal prefix segment with nothing
-    # trailing already means "every run under this exact prefix,
-    # unreduced" (confirmed identical results to a prefixed ':home()'
-    # in every case tested), so a prefixed ':home()' would just be a
-    # second, more confusing spelling of something that already has
-    # one. ':home()' is only load-bearing at the bare/root position,
-    # where the grammar has no other way to say "zero segments."
-    def test_bare_home_lists_every_zero_level_run_unreduced(self, tmp_path):
+class TestHomeIsRetired:
+    # ':home()' was retired 2026-11-03 (David). Its one job here, every
+    # zero-level run unreduced, is what ':all()' and ':from(0)' already
+    # give, and ':home():last()' was just ':last()'. It is no longer a
+    # registered function, so every use raises.
+    def _archive(self, tmp_path):
         base = tmp_path / "alpha"
         flat1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
         flat2 = _make_run(base, "2026-01-02_00-00-00", "flat-2", {})
         one_level = _make_run(base / "zero", "2026-01-03_00-00-00", "one-level", {})
         _write_archive_manifest(tmp_path, "alpha", [flat1, flat2, one_level])
-        results = _finder("$alpha.results.:home()", str(tmp_path)).query()
+
+    @pytest.mark.parametrize(
+        "reference",
+        ["$alpha.results.:all()", "$alpha.results.:from(0)"],
+    )
+    def test_every_zero_level_run_unreduced(self, tmp_path, reference):
+        self._archive(tmp_path)
+        results = _finder(reference, str(tmp_path)).query()
         assert set(results.uuids) == {"flat-1", "flat-2"}
 
-    def test_home_then_pointer_reduces_to_one(self, tmp_path):
-        base = tmp_path / "alpha"
-        flat1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
-        flat2 = _make_run(base, "2026-01-02_00-00-00", "flat-2", {})
-        _write_archive_manifest(tmp_path, "alpha", [flat1, flat2])
-        results = _finder("$alpha.results.:home():last()", str(tmp_path)).query()
+    def test_a_bare_pointer_is_zero_level(self, tmp_path):
+        self._archive(tmp_path)
+        results = _finder("$alpha.results.:last()", str(tmp_path)).query()
         assert results.uuids == ["flat-2"]
 
-    def test_pointer_then_home_gives_the_same_result_either_order(
-        self, tmp_path
-    ):
-        # order-independence: ':home()' is not a pointer, so its own
-        # presence never competes with a real pointer for which one
-        # "wins" -- both orders mean the same thing.
-        base = tmp_path / "alpha"
-        flat1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
-        flat2 = _make_run(base, "2026-01-02_00-00-00", "flat-2", {})
-        _write_archive_manifest(tmp_path, "alpha", [flat1, flat2])
-        home_then_pointer = _finder(
-            "$alpha.results.:home():last()", str(tmp_path)
-        ).query()
-        pointer_then_home = _finder(
-            "$alpha.results.:last():home()", str(tmp_path)
-        ).query()
-        assert home_then_pointer.uuids == pointer_then_home.uuids == ["flat-2"]
-
-    def test_bare_home_rejects_an_argument(self, tmp_path):
-        base = tmp_path / "alpha"
-        run1 = _make_run(base, "2026-01-01_00-00-00", "run1", {})
-        _write_archive_manifest(tmp_path, "alpha", [run1])
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$alpha.results.:home()",
+            "$alpha.results.:home():last()",
+            "$alpha.results.:last():home()",
+            '$alpha.results.:home("x")',
+            "$alpha.results.zero/:home()",
+            "$*.results.:home()",
+            "$*.results.:home().invoices:errors()",
+        ],
+    )
+    def test_every_use_raises(self, tmp_path, reference):
+        self._archive(tmp_path)
         with pytest.raises(ReferenceException3):
-            _finder('$alpha.results.:home("x")', str(tmp_path)).query()
+            _finder(reference, str(tmp_path)).query()
 
-    def test_prefixed_home_is_not_a_thing_use_the_literal_prefix_alone(
-        self, tmp_path
-    ):
-        # a literal prefix segment with nothing trailing already means
-        # "every run under this exact prefix, unreduced" -- confirmed
-        # this gives identical results to a would-be prefixed ':home()'
-        # in every case tested, so ':home()' was never wired up as a
-        # legal non-first path segment. This locks in that "beta/
-        # :home()" is simply unsupported syntax, not a silent no-op.
+    def test_a_literal_prefix_alone_gives_every_run_under_it(self, tmp_path):
         base = tmp_path / "acme"
         beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
         beta2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
         _write_archive_manifest(tmp_path, "acme", [beta1, beta2])
         plain_prefix = _finder("$acme.results.beta", str(tmp_path)).query()
         assert set(plain_prefix.uuids) == {"beta-1", "beta-2"}
-        with pytest.raises(ReferenceException3):
-            _finder("$acme.results.beta/:home()", str(tmp_path)).query()
 
 
 class TestDiscoveryFromArchiveManifest:
@@ -2266,8 +2227,8 @@ class TestFieldAccessorFunctions:
 
     def test_run_home_at_run_scope_reads_run_home(self, tmp_path):
         # :home() split 2026-08-26 -- run scope's own field-read job is
-        # now :run_home() (:home() itself keeps only the zero-level
-        # placeholder role). Confirmed against results_registrar.py that
+        # now :run_home() (:home() itself was retired 2026-11-03).
+        # Confirmed against results_registrar.py that
         # "run_home" is a real, written field, not just documented.
         base = tmp_path / "widgets"
         run_dir = base / "2026-01-01_00-00-00"
@@ -4793,10 +4754,11 @@ class TestStarTraversalPointerIsOptional:
         _write_archive_manifest_multi(
             tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
         )
-        # ':home()' is the only legal spelling of "bare, zero-level,
-        # nothing else" -- a totally empty name_one ("$*.results.") is
-        # not valid grammar (confirmed live: Lark rejects it outright).
-        results = _finder("$*.results.:home()", str(tmp_path)).query()
+        # a totally empty name_one ("$*.results.") is not valid grammar
+        # (confirmed live: Lark rejects it outright), so "bare, zero-
+        # level, nothing else" is spelled ':from(0)' (':home()' was
+        # retired 2026-11-03).
+        results = _finder("$*.results.:from(0)", str(tmp_path)).query()
         assert sorted(results.uuids) == ["acme-run", "widgets-run"]
 
     def test_prefixed_flatten_with_no_pointer_lists_everything_beyond_prefix(
@@ -4877,7 +4839,7 @@ class TestStarTraversalPointerIsOptional:
         _write_archive_manifest_multi(
             tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
         )
-        finder = _finder("$*.results.:home().invoices:errors()", str(tmp_path))
+        finder = _finder("$*.results.:from(0).invoices:errors()", str(tmp_path))
         assert len(finder.query()) > 1
         with pytest.raises(ReferenceException3):
             finder.resolve()
@@ -4902,7 +4864,7 @@ class TestStarTraversalPointerIsOptional:
         ) as f:
             json.dump(errors, f)
         results = _finder(
-            "$*.results.:home().invoices:errors()", str(tmp_path)
+            "$*.results.:from(0).invoices:errors()", str(tmp_path)
         ).resolve()
         assert len(results) == 1
         assert results.results[0].data == errors

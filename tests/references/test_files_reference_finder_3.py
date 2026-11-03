@@ -3,6 +3,9 @@ import os
 import pytest
 
 from csvpath.references.files_reference_finder_3 import FilesReferenceFinder3
+from csvpath.references.functions.reference_function_factory_3 import (
+    ReferenceFunctionFactory,
+)
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.reference_results_3 import ReferenceResult3
@@ -89,7 +92,7 @@ class _FakeFileDescriber:
 
 class _PerNameFakeFileDescriber:
     # added 2026-10-17 for the predicate-argument filtering tests
-    # (':home():definition(:on_arrival(:not_none()))') -- those need a
+    # (':definition(:on_arrival(:not_none()))') -- those need a
     # DIFFERENT on_arrival config per named-file to prove filtering
     # actually filters, which the single-global-dict _FakeFileDescriber
     # above cannot express. Falls back to {} (an empty/unconfigured
@@ -1764,12 +1767,19 @@ class TestDefinitionChainParts:
         [
             "$alpha.files.:definition()",
             "$alpha.files.:on_arrival()",
-            "$*.files.:home():definition(:on_arrival(:not_none()))",
+            '$alpha.files.:name("orders.csv"):definition()',
             "$alpha.files.:manifest():uuid()",
         ],
     )
     def test_other_shapes_are_not_claimed(self, reference):
         assert self._calls(reference) is None
+
+    def test_a_retired_home_raises(self):
+        # ':home()' was retired 2026-11-03; it no longer scopes a
+        # ':definition()' chain.
+        with pytest.raises(ReferenceException3) as error:
+            self._calls("$*.files.:home():definition(:on_arrival(:not_none()))")
+        assert "':home()' is not supported" in str(error.value)
 
     @pytest.mark.parametrize("field", ["uuid()", "fingerprint()", "named_file_home()"])
     def test_a_field_not_in_definition_json_raises(self, field):
@@ -2148,13 +2158,9 @@ class TestStarTraversalGroupsAnyDepth:
 
 
 #
-# alpha has TWO zero-level ("no template") entries directly at its own
-# home; beta has only a ONE-level "orders.csv" entry -- proves ':home()'
-# traversal pools zero-level candidates ACROSS named-files (not just
-# within one, which TestHomeAsAZeroLevelSelector already covers), and
-# that a named-file with no zero-level registration at all is correctly
-# excluded/contributes nothing -- both to the plain pooled-candidate
-# shape and to the ':home():definition()' filtered-lookup shape below.
+# two named-files for the '*' traversal ':definition()' and worksheet
+# tests below. The fixture once also served ':home()', retired
+# 2026-11-03.
 #
 HOME_STAR_ALPHA_HOME = "inputs/named_files/alpha"
 HOME_STAR_ALPHA_MANIFEST = [
@@ -2192,35 +2198,7 @@ def _home_star_finder(reference: str) -> FilesReferenceFinder3:
     )
 
 
-class TestStarTraversalHome:
-    # bare ':home()' as name_one's entire content during '*' traversal --
-    # added 2026-08-27 (FILES '*' traversal generalization bucket-list
-    # entry, gap #1: ":home()" + "'*'" traversal did not exist at all,
-    # raising "Does not yet support :home() as a name_one path segment").
-    # Not partitioned (mirrors the plain-path POOL branch immediately
-    # above, just with an empty pattern instead of a compiled one) -- a
-    # terminal pointer picks ONE overall winner by time across every
-    # named-file's own zero-level candidates, it does not pick one winner
-    # per named-file (':all()' already does that).
-    def test_last_pools_zero_level_candidates_across_named_files(self):
-        results = _home_star_finder("$*.files.:home().:last()").query()
-        assert results.uuids == ["u-alpha-zero-2"]
-
-    def test_a_named_file_with_no_zero_level_entry_contributes_nothing(self):
-        # beta's only entry is one level deep -- must never appear,
-        # regardless of pointer.
-        results = _home_star_finder("$*.files.:home().:first()").query()
-        assert "u-beta-one-level" not in results.uuids
-        assert results.uuids == ["u-alpha-zero-1"]
-
-    def test_with_no_name_three_dedupes_to_zero_level_file_homes_only(self):
-        results = _home_star_finder("$*.files.:home()").query()
-        assert results.files == [HOME_STAR_ALPHA_HOME]
-
-    def test_chaining_anything_other_than_definition_is_rejected(self):
-        with pytest.raises(ReferenceException3):
-            _home_star_finder("$*.files.:home():uuid().:last()").query()
-
+class TestStarTraversalWorksheet:
     def test_worksheet_marker_is_rejected(self):
         # not-yet-supported sweep #6, 2026-10-20: '#worksheet' means
         # content from exactly one specific XLSX file -- '*' traversal
@@ -2231,12 +2209,9 @@ class TestStarTraversalHome:
 
 
 class TestStarTraversalDefinition:
-    # bare ':definition()' during '*' traversal (gap #2) and ':home()'
-    # with ':definition()' chained onto it (gap #3, "does not yet support
-    # functions attached directly to name_one for '*' traversal" even
-    # once #1/#2 individually work) -- both added 2026-08-27, same
-    # bucket-list entry as TestStarTraversalHome above. Neither takes
-    # name_three -- definition.json is never versioned, so there is
+    # bare ':definition()' during '*' traversal, added 2026-08-27, and
+    # ':definition()' with a predicate-argued field (E3's chain). Neither
+    # takes name_three -- definition.json is never versioned, so there is
     # nothing left to narrow once a named-file is matched.
     def test_bare_definition_gives_one_result_per_named_file(self):
         results = _home_star_finder("$*.files.:definition()").query()
@@ -2254,72 +2229,20 @@ class TestStarTraversalDefinition:
         results = _home_star_finder("$*.files.:definition()").query()
         assert results.ambiguous_content_read is True
 
-    def test_home_prefixed_definition_filters_to_zero_level_named_files_only(self):
-        # beta has no zero-level registration -- must be excluded, even
-        # though it has its own definition.json like any named-file would.
-        results = _home_star_finder("$*.files.:home():definition()").query()
-        assert results.files == [pathu.resep(f"{HOME_STAR_ALPHA_HOME}/definition.json")]
-        assert results.ambiguous_content_read is False
-
     def test_bare_definition_combined_with_name_three_is_rejected(self):
         with pytest.raises(ReferenceException3):
             _home_star_finder("$*.files.:definition().:last()").query()
-
-    def test_home_prefixed_definition_combined_with_name_three_is_rejected(
-        self,
-    ):
-        with pytest.raises(ReferenceException3):
-            _home_star_finder("$*.files.:home():definition().:last()").query()
-
-    def test_resolve_reads_each_named_files_own_definition_bytes(self, tmp_path):
-        # manifest file_home values must actually match the tmp_path
-        # homes below (unlike HOME_STAR_ALPHA_MANIFEST's hardcoded
-        # "inputs/named_files/..." strings) -- ':home()' filters by real
-        # file_home-vs-home matching, not by name alone.
-        alpha_home = tmp_path / "alpha"
-        alpha_home.mkdir()
-        (alpha_home / "definition.json").write_bytes(b'{"on_arrival": "go"}')
-        alpha_manifest = [
-            {
-                "file": str(alpha_home / "aaa.csv"),
-                "file_home": str(alpha_home),
-                "uuid": "u-alpha-zero-1",
-            }
-        ]
-        beta_home = tmp_path / "beta"
-        beta_home.mkdir()
-        (beta_home / "definition.json").write_bytes(b'{"on_arrival": null}')
-        beta_manifest = [
-            {
-                "file": str(beta_home / "orders.csv" / "ccc.csv"),
-                "file_home": str(beta_home / "orders.csv"),
-                "uuid": "u-beta-one-level",
-            }
-        ]
-        by_name = {
-            "alpha": (str(alpha_home), alpha_manifest),
-            "beta": (str(beta_home), beta_manifest),
-        }
-        finder = _finder(
-            "$*.files.:home():definition()", str(alpha_home), [], by_name=by_name
-        )
-        results = finder.resolve()
-        assert len(results.results) == 1
-        assert results.results[0].data == b'{"on_arrival": "go"}'
 
     def test_on_arrival_predicate_filters_to_named_files_that_have_it_set(self):
         # the generic predicate-argument filtering mechanism (added
         # 2026-10-17, closing the deferred-work bucket list's own
         # "Predicate-argument field accessors" entry) -- its own
-        # motivating worked example:
-        # "$*.files.:home():definition(:on_arrival(:not_none()))" --
-        # "which named-files have on_arrival set." Both alpha and beta
-        # are zero-level-eligible (isolating the predicate's own effect
-        # from the pre-existing ':home()' filter, already covered by
-        # test_home_prefixed_definition_filters_to_zero_level_named_
-        # files_only above) -- only alpha has on_arrival configured.
+        # motivating worked example (compendium 6.35):
+        # "$*.files.:definition(:on_arrival(:not_none()))" -- "which
+        # named-files have on_arrival set." Only alpha has on_arrival
+        # configured.
         results = _finder(
-            "$*.files.:home():definition(:on_arrival(:not_none()))",
+            "$*.files.:definition(:on_arrival(:not_none()))",
             HOME_STAR_ALPHA_HOME,
             HOME_STAR_ALPHA_MANIFEST,
             by_name=HOME_STAR_BY_NAME,
@@ -2334,16 +2257,16 @@ class TestStarTraversalDefinition:
             },
         ).query()
         # content resolution itself (reading the real definition.json
-        # bytes for a survivor) is already proven by the pre-existing
-        # test_resolve_reads_each_named_files_own_definition_bytes above
-        # -- this test is only about WHICH named-files survive the new
-        # predicate filter.
+        # bytes for a survivor) is proven by
+        # test_on_arrival_predicate_survivor_resolves_its_real_definition_
+        # bytes below -- this test is only about WHICH named-files
+        # survive the predicate filter.
         assert results.files == [pathu.resep(f"{HOME_STAR_ALPHA_HOME}/definition.json")]
         assert results.ambiguous_content_read is False
 
     def test_on_arrival_predicate_with_no_survivors_gives_empty_results(self):
         results = _finder(
-            "$*.files.:home():definition(:on_arrival(:not_none()))",
+            "$*.files.:definition(:on_arrival(:not_none()))",
             HOME_STAR_ALPHA_HOME,
             HOME_STAR_ALPHA_MANIFEST,
             by_name=HOME_STAR_BY_NAME,
@@ -2356,7 +2279,7 @@ class TestStarTraversalDefinition:
     ):
         with pytest.raises(ReferenceException3):
             _finder(
-                "$*.files.:home():definition(:on_arrival(:not_none())).:last()",
+                "$*.files.:definition(:on_arrival(:not_none())).:last()",
                 HOME_STAR_ALPHA_HOME,
                 HOME_STAR_ALPHA_MANIFEST,
                 by_name=HOME_STAR_BY_NAME,
@@ -2399,7 +2322,7 @@ class TestStarTraversalDefinition:
             "beta": (str(beta_home), beta_manifest),
         }
         results = _finder(
-            "$*.files.:home():definition(:on_arrival(:not_none()))",
+            "$*.files.:definition(:on_arrival(:not_none()))",
             str(alpha_home),
             [],
             by_name=by_name,
@@ -2754,53 +2677,36 @@ HOME_TEST_MANIFEST = [
 ]
 
 
-class TestHomeAsAZeroLevelSelector:
-    # bare ':home()' as name_one's entire content -- added 2026-08-12,
-    # a zero-level selector mirroring ResultsReferenceFinder3's own
-    # ':home()' (David: keep functions meaning the same thing across
-    # datatypes). Unlike RESULTS, this needed real new code -- FILES'
-    # name_one can never be empty, so there is no pre-existing "no
-    # pattern" path for a bare pointer to fall into the way RESULTS'
-    # did. HOME_TEST_MANIFEST has both zero-level entries (directly at
-    # homer's own home) and a one-level "orders.csv" entry that must be
-    # excluded.
-    def test_home_then_pointer_gives_the_latest_zero_level_entry(self):
-        results = _finder(
-            "$homer.files.:home().:last()", HOME_TEST_HOME, HOME_TEST_MANIFEST
-        ).query()
-        assert results.uuids == ["u-zero-2"]
+class TestHomeIsRetired:
+    # ':home()' was retired 2026-11-03 (David). It was a zero-level
+    # placeholder that matched nothing a real registration writes: a
+    # no-template file home is "<named-file>/<filename>", never the
+    # named-file home itself, which is all HOME_TEST_MANIFEST's first
+    # two entries have. It is no longer a registered function, so every
+    # use raises.
+    def test_it_is_not_registered(self):
+        assert ReferenceFunctionFactory.get_registered_class("home") is None
 
-    def test_bare_home_dedupes_to_the_named_files_own_home_directory(self):
-        results = _finder(
-            "$homer.files.:home()", HOME_TEST_HOME, HOME_TEST_MANIFEST
-        ).query()
-        assert results.files == [HOME_TEST_HOME]
-        assert results.results[0].uuid is None
-
-    def test_home_excludes_the_one_level_entry(self):
-        results = _finder(
-            "$homer.files.:home()", HOME_TEST_HOME, HOME_TEST_MANIFEST
-        ).query()
-        assert "u-one-level" not in results.uuids
-
-    def test_home_rejects_an_argument(self):
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$homer.files.:home()",
+            "$homer.files.:home().:last()",
+            '$homer.files.:home("x").:last()',
+            '$homer.files.:name("orders.csv").:first():home()',
+            "$*.files.:home()",
+            "$*.files.:home().:last()",
+            "$*.files.:home():definition()",
+            "$*.files.:home():definition(:on_arrival(:not_none()))",
+        ],
+    )
+    def test_every_use_raises(self, reference):
         with pytest.raises(ReferenceException3):
             _finder(
-                '$homer.files.:home("x").:last()', HOME_TEST_HOME, HOME_TEST_MANIFEST
-            ).query()
-
-    def test_home_in_name_three_position_now_raises(self):
-        # ':home()' no longer has an ordinary field-accessor job at all
-        # (split 2026-08-26 -- see :file_home() for FILES' own share of
-        # that retired job) -- it keeps only the bare, name_one, zero-
-        # level placeholder role, so using it in name_three now raises
-        # via POSITIONS/_check_position, rather than silently reading
-        # "file_home" the way it used to.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$homer.files.:name("orders.csv").:first():home()',
+                reference,
                 HOME_TEST_HOME,
                 HOME_TEST_MANIFEST,
+                by_name={"homer": (HOME_TEST_HOME, HOME_TEST_MANIFEST)},
             ).query()
 
     def test_file_home_in_name_three_position_works(self):
@@ -4993,7 +4899,7 @@ class TestNameTwoWorksheetMarker:
             results.resolve()
 
     def test_worksheet_marker_rejects_a_bare_marker_function(self):
-        # ':all()' (or ':manifest()'/':home()'/etc.) occupies name_one's
+        # ':all()' (or ':manifest()'/':flatten()'/etc.) occupies name_one's
         # entire content on its own -- there is no literal file for a
         # worksheet marker to apply to.
         with pytest.raises(ReferenceException3):
@@ -5051,7 +4957,7 @@ class TestRegexRootMajor:
     # pre-filtered by pattern before it enumerates named_file_names.
     def test_regex_filters_to_matching_named_files(self):
         results = _finder(
-            "$:regex(/^abba_.*/).files.:home()",
+            "$:regex(/^abba_.*/).files.:flatten()",
             REGEX_ACME_HOME,
             REGEX_ACME_MANIFEST,
             by_name=REGEX_BY_NAME,
@@ -5060,7 +4966,7 @@ class TestRegexRootMajor:
 
     def test_regex_excludes_non_matching_named_files(self):
         results = _finder(
-            "$:regex(/^abba_.*/).files.:home()",
+            "$:regex(/^abba_.*/).files.:flatten()",
             REGEX_ACME_HOME,
             REGEX_ACME_MANIFEST,
             by_name=REGEX_BY_NAME,
@@ -5069,7 +4975,7 @@ class TestRegexRootMajor:
 
     def test_regex_with_no_matches_gives_empty(self):
         results = _finder(
-            "$:regex(/^zzz_.*/).files.:home()",
+            "$:regex(/^zzz_.*/).files.:flatten()",
             REGEX_ACME_HOME,
             REGEX_ACME_MANIFEST,
             by_name=REGEX_BY_NAME,
@@ -5079,7 +4985,7 @@ class TestRegexRootMajor:
     def test_wrong_root_major_function_is_rejected(self):
         with pytest.raises(ReferenceException3):
             _finder(
-                '$:having("x").files.:home()',
+                '$:having("x").files.:flatten()',
                 REGEX_ACME_HOME,
                 REGEX_ACME_MANIFEST,
                 by_name=REGEX_BY_NAME,
@@ -5087,7 +4993,7 @@ class TestRegexRootMajor:
 
     def test_regex_accepts_a_registered_variable(self):
         results = _finder(
-            "$:regex(@aregex).files.:home()",
+            "$:regex(@aregex).files.:flatten()",
             REGEX_ACME_HOME,
             REGEX_ACME_MANIFEST,
             by_name=REGEX_BY_NAME,
@@ -5110,7 +5016,7 @@ class TestChoiceRootMajor:
     # ChoiceSelector3's own .pattern property instead.
     def test_choice_selects_every_listed_name(self):
         results = _finder(
-            '$:choice("acme_orders|abba_invoices").files.:home()',
+            '$:choice("acme_orders|abba_invoices").files.:flatten()',
             REGEX_ACME_HOME,
             REGEX_ACME_MANIFEST,
             by_name=REGEX_BY_NAME,
@@ -5119,7 +5025,7 @@ class TestChoiceRootMajor:
 
     def test_choice_excludes_names_not_listed(self):
         results = _finder(
-            '$:choice("abba_invoices").files.:home()',
+            '$:choice("abba_invoices").files.:flatten()',
             REGEX_ACME_HOME,
             REGEX_ACME_MANIFEST,
             by_name=REGEX_BY_NAME,
@@ -5128,7 +5034,7 @@ class TestChoiceRootMajor:
 
     def test_choice_with_no_matching_name_gives_empty(self):
         results = _finder(
-            '$:choice("zzz_nonexistent").files.:home()',
+            '$:choice("zzz_nonexistent").files.:flatten()',
             REGEX_ACME_HOME,
             REGEX_ACME_MANIFEST,
             by_name=REGEX_BY_NAME,
@@ -5139,7 +5045,7 @@ class TestChoiceRootMajor:
         # exact match only -- "acme" alone must not match
         # "acme_orders" the way a :regex() substring search would.
         results = _finder(
-            '$:choice("acme").files.:home()',
+            '$:choice("acme").files.:flatten()',
             REGEX_ACME_HOME,
             REGEX_ACME_MANIFEST,
             by_name=REGEX_BY_NAME,
@@ -5148,7 +5054,7 @@ class TestChoiceRootMajor:
 
     def test_choice_accepts_a_registered_variable(self):
         results = _finder(
-            "$:choice(@names).files.:home()",
+            "$:choice(@names).files.:flatten()",
             REGEX_ACME_HOME,
             REGEX_ACME_MANIFEST,
             by_name=REGEX_BY_NAME,
