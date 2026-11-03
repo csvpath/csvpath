@@ -1115,8 +1115,7 @@
       "severity": "1:HIGH",
       "fidelity": "A",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
-      "retrieved": "2026-11-03",
-      "partial": "Only the 16 character codice fiscale of people is detected, not the 11 digit codice fiscale of organizations"
+      "retrieved": "2026-11-03"
     }
   },
   "detectors": {
@@ -1631,7 +1630,7 @@
     "it_cf": {
       "notes": [
         "Macie lists ITALY_NATIONAL_IDENTIFICATION_NUMBER as both a national identification and a taxpayer number, with one keyword list. It says Codice Fiscale.",
-        "The format is ours, from the Agenzia delle Entrate: the 16 character code of a person, with omocodia letters for digits, a real birth day and month, and a check letter. The 11 digit code of organizations is not detected, so the entry is partial."
+        "The formats are ours, from the Agenzia delle Entrate: the 16 character code of a person, with omocodia letters for digits, a real birth day and month, and a check letter; and the 11 digit code of an organization (its partita IVA): 7 digits not all zero, an office code 001-100, 120, 121, 888 or 999, and a Luhn check digit, optionally after IT. The 11 digit codes go beyond what Macie documents: Macie says Codice Fiscale and its keywords include p. iva and partita i.v.a. (David, 2026-11-03: go beyond Macie at the margin when the check is clearly described)."
       ]
     }
   }

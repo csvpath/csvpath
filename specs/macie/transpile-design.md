@@ -302,7 +302,7 @@ conversion.report.skipped   # what was not translated
 | `EsIdDetector` | Spain DNI and NIE: digits and a mod 23 control letter |
 | `FrNirDetector` | France NIR (INSEE): 15 characters, Corsica's 2A and 2B, mod 97 key |
 | `MxCurpDetector` | Mexico CURP: 18 characters, birth date, state, check digit |
-| `ItCfDetector` | Italy Codice Fiscale of people: 16 characters, omocodia, birth date, check letter |
+| `ItCfDetector` | Italy Codice Fiscale: people's 16 characters (omocodia, birth date, check letter) and organizations' 11 digits (office code, Luhn) |
 | `ClRutDetector` | Chile RUT and RUN: 7 or 8 digits and a check character, 0-9 or K |
 | `VinDetector` | 17-character VINs; no check digit required |
 | `BankAccountDetector` | FR, DE, IT, ES, UK: IBANs (no keyword) and BBANs (keyword), plus UK sort code and account |
@@ -526,9 +526,14 @@ numbers).
 **France NIR, Mexico CURP and Italy Codice Fiscale**: all three are
 PERSONAL_INFORMATION, require a keyword, and are HIGH from one
 occurrence. Macie publishes only their keywords. Each has its own
-detector, and each check was compared with python-stdnum's on 20,000
-random inputs (outside the test suite; stdnum is not a dependency), which
-also re-confirmed the DNI, NIE and Aadhaar checks.
+detector.
+
+**Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
+compares every `ChecksumUtility` check that python-stdnum also implements
+(Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
+CURP, Codice Fiscale) and the partita IVA rules with stdnum, on seeded
+random inputs. python-stdnum is a dev dependency only (LGPL, not
+shipped). Reintroducing the mistyped Verhoeff row fails the test.
 - **`FRANCE_NATIONAL_IDENTIFICATION_NUMBER`** (`FrNirDetector`, INSEE
   codes): 15 characters, the department 2 digits or Corsica's 2A or 2B,
   and a key of 97 minus the first 13 mod 97, with 2A and 2B as 19 and 18
@@ -548,10 +553,14 @@ also re-confirmed the DNI, NIE and Aadhaar checks.
   it as both a national identification and a taxpayer number, with one
   keyword list. We detect the 16 character codice fiscale of a person,
   with omocodia letters for digits, a real birth day and month, and the
-  check letter (`chut.it_cf_check`). Organizations' 11 digit codice
-  fiscale (their partita IVA) is not detected. Macie's keywords include
-  `p. iva`, so it may be, and the entry is **partial**: the converter
-  reports it, as for CNPJ.
+  check letter (`chut.it_cf_check`); and an organization's 11 digit
+  codice fiscale, the same as its partita IVA: 7 digits not all zero, an
+  office code 001-100, 120, 121, 888 or 999, and a Luhn check digit,
+  optionally after `IT`. Macie says only "Codice Fiscale", but its
+  keywords include `p. iva` and `partita i.v.a.`. **Going beyond Macie:**
+  when a check is clearly described, we may detect a little more than
+  Macie documents, at the margin, where it makes sense and is doable
+  (David, 2026-11-03).
 
 Each managed identifier is a catalog entry plus a detector in
 `csvpath/macie/detectors/`, named in `DETECTORS`. One class may serve
@@ -590,7 +599,7 @@ every detector the catalog names exists, and every detector is used.
     issuers'. The short Spanish keywords match as substrings (item 3):
     `nie` in `niece`, `tin` in `setting`.
 11. NIR, CURP and Codice Fiscale formats are the issuers'. Does Macie
-    detect Italy's 11 digit organization codes? Does it accept NIRs with
+    detect Italy's 11 digit organization codes (we do)? Does it accept NIRs with
     dots, or CURPs with sex X? python-stdnum also rejects Aadhaar
     numbers that are palindromes; we don't (over-reporting is the safer
     side), and Macie doesn't say.

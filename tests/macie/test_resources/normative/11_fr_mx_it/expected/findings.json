@@ -63,7 +63,7 @@
         },
         {
           "type": "ITALY_NATIONAL_IDENTIFICATION_NUMBER",
-          "count": 3,
+          "count": 4,
           "severity": "HIGH",
           "occurrences": {
             "cells": [
@@ -84,12 +84,18 @@
                 "column": 5,
                 "columnName": "notes",
                 "row": 11
+              },
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 15
               }
             ]
           }
         }
       ],
-      "totalCount": 9
+      "totalCount": 10
     }
   ],
   "csvpath": {

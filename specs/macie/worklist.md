@@ -38,11 +38,11 @@ last. Add an item the moment something is deferred.
    Brazil CPF and CNPJ, Chile RUT, Argentina SUBE, pair 07_latam. Sixth
    batch done: Spain DNI and NIE, India Aadhaar, pair 10_es_in. Seventh
    batch done: France NIR (INSEE), Mexico CURP, Italy Codice Fiscale
-   (partial: no 11 digit organization codes), pair 11_fr_mx_it. Still
-   to decide with David: whether Italy's 11 digit codes are needed, and
-   which other check-digit identifiers come next (e.g. Germany national
-   and tax ids, Argentina CUIT, Australia TFN, Spain NIF and CIF, Mexico
-   RFC, UK UTR) before group B.
+   (people's 16 character codes and organizations' 11 digit codes), pair
+   11_fr_mx_it. Next: the other check-digit identifiers, before group B
+   (David, 2026-11-03: clear the decks of similar work), e.g. Germany
+   national and tax ids, Argentina CUIT, Australia TFN, Spain NIF and
+   CIF, Mexico RFC, UK UTR.
 4b. ~~**BBANs for France, Germany, Italy, Spain and the UK**~~ Done: the
    bank detector, pair 08_bban. The five identifiers are no longer
    partially translated. Italy's CIN letter is not checked (rule not

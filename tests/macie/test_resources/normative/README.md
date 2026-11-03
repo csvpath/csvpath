@@ -81,5 +81,5 @@ Design decisions are in `specs/macie/transpile-design.md`.
   Fiscale. A grouped NIR, a Corsican NIR, a bad key; CURPs born in the
   1900s and 2000s, one with no such state; a Codice Fiscale for a woman
   (day + 40), one with omocodia, one dated 30 February; two identifiers
-  in one cell, lower case; and no keyword. The Italian identifier is
-  partial, which the conversion report says.
+  in one cell, lower case; no keyword; and an organization's 11 digit
+  code (partita IVA) with an IT prefix, and one with a bad Luhn digit.

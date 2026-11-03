@@ -4,10 +4,11 @@ from ..checksum_utility import ChecksumUtility as chut
 
 
 class ItCfDetector:
-    """finds Italian Codice Fiscale codes for people in a cell, our
-    stand-in for Macie's ITALY_NATIONAL_IDENTIFICATION_NUMBER. Macie
-    publishes only the keywords. The format is ours, from the Agenzia delle
-    Entrate: 16 characters,
+    """finds Italian Codice Fiscale codes in a cell, our stand-in for
+    Macie's ITALY_NATIONAL_IDENTIFICATION_NUMBER. Macie publishes only the
+    keywords. The formats are ours, from the Agenzia delle Entrate.
+
+    A person's code is 16 characters,
 
         6 letters    from the surname and name
         2 digits     birth year
@@ -21,16 +22,21 @@ class ItCfDetector:
     be a real day of the month. Letters may be upper or lower case. Codes
     must not touch other letters or digits.
 
-    Not detected: the 11 digit codice fiscale of organizations (the same
-    as their partita IVA). The catalog entry is partial."""
+    An organization's code is 11 digits, the same as its partita IVA:
+    7 digits, not all zero, for the organization; a 3 digit office code,
+    001 to 100, 120, 121, 888 or 999; and a Luhn check digit over all 11.
+    An IT prefix, as on VAT documents, is allowed (ours), with or without
+    a space: IT 00743110157."""
 
     D = "[0-9LMNPQRSTUV]"
     CANDIDATES = re.compile(
-        r"(?<![A-Za-z0-9])"
-        rf"[A-Z]{{6}}{D}{{2}}[ABCDEHLMPRST]{D}{{2}}[A-Z]{D}{{3}}[A-Z]"
-        r"(?![A-Za-z0-9])",
+        r"(?<![A-Za-z0-9])(?:"
+        rf"(?P<person>[A-Z]{{6}}{D}{{2}}[ABCDEHLMPRST]{D}{{2}}[A-Z]{D}{{3}}[A-Z])"
+        r"|(?:IT ?)?(?P<organization>\d{11})"
+        r")(?![A-Za-z0-9])",
         re.ASCII | re.IGNORECASE,
     )
+    OFFICES = frozenset({"120", "121", "888", "999"})
     OMOCODIA = str.maketrans("LMNPQRSTUV", "0123456789")
     MONTHS = "ABCDEHLMPRST"
     DAYS = (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
@@ -44,9 +50,21 @@ class ItCfDetector:
             raise TypeError(f"cell must be a str, not {type(cell)}")
         found = []
         for m in self.CANDIDATES.finditer(cell):
-            if self.is_cf(code=m.group(0).upper()):
+            if m.group("person") is not None:
+                ok = self.is_cf(code=m.group("person").upper())
+            else:
+                ok = self.is_organization(digits=m.group("organization"))
+            if ok:
                 found.append((m.start(), m.end()))
         return found
+
+    def is_organization(self, *, digits: str) -> bool:
+        office = digits[7:10]
+        if set(digits[:7]) == {"0"}:
+            return False
+        if not ("001" <= office <= "100" or office in self.OFFICES):
+            return False
+        return chut.luhn(digits=digits)
 
     def is_cf(self, *, code: str) -> bool:
         year = int(code[6:8].translate(self.OMOCODIA))

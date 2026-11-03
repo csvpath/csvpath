@@ -3,8 +3,8 @@
 # Macie's FRANCE_NATIONAL_IDENTIFICATION_NUMBER, MEXICO_CURP_NUMBER and
 # ITALY_NATIONAL_IDENTIFICATION_NUMBER, as our stand-ins. All three
 # require a keyword. Macie publishes only the keywords; the formats are
-# the issuers'. The Italian identifier is partially translated (no 11
-# digit organization codes), which the conversion report says.
+# the issuers'. The Italian identifier also detects organizations' 11
+# digit codes (partita IVA), beyond what Macie documents.
 #
 #   conversion:     MacieConverter.convert() arguments (see below)
 #   csvpath:        file in expected/ to run; the converter's exact output
@@ -29,7 +29,7 @@ conversion:
 runs:
   - csvpath: fr-mx-it-people.csvpath
     data: people.csv
-    finding_lines: [1, 2, 4, 5, 7, 8, 10, 11]
+    finding_lines: [1, 2, 4, 5, 7, 8, 10, 11, 14]
     printouts:
       macie: printouts.macie.txt
     errors:
@@ -64,9 +64,13 @@ runs:
     #         insee 2951099126111 93"                 and NIR ("insee" before, key
     #                                                 apart), one cell
     #   12    notes RCCMNL83S18D969H                  nothing: no keyword
+    #   13    codice_fiscale 00743110158              nothing: an organization code
+    #                                                 with a bad Luhn digit
+    #   14    notes "partita i.v.a. IT                Codice Fiscale: an organization
+    #         00743110157"                            code, keyword before, IT prefix
     #
     # On each line France, then Mexico, then Italy: the wrapper's resolved
     # order. Totals: NIR 3 (lines 1, 2, 11), CURP 3 (4, 5, 11), Codice
-    # Fiscale 3 (7, 8, 10), so with a detail cap of 2 each shows its first
-    # 2. Macie scores national identification numbers HIGH from one
-    # occurrence. All three are PERSONAL_INFORMATION: totalCount 9.
+    # Fiscale 4 (7, 8, 10, 14), so with a detail cap of 2 each shows its
+    # first 2. Macie scores national identification numbers HIGH from one
+    # occurrence. All three are PERSONAL_INFORMATION: totalCount 10.

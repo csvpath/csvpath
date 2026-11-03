@@ -89,6 +89,7 @@ pylint = "3.3.9"
 coverage = "7.13.4"
 pytest-profiling = "1.8.1"
 release_candidate_maker = { path = "assets/libs/release_candidate_maker-0.0.35.tar.gz" }
+python-stdnum = "1.20"
 
 [build-system]
 requires = ["poetry-core"]

@@ -6,4 +6,4 @@ macie ITALY_NATIONAL_IDENTIFICATION_NUMBER: occurrence 1, line 7 (row 8), column
 macie ITALY_NATIONAL_IDENTIFICATION_NUMBER: occurrence 2, line 8 (row 9), column 4 codice_fiscale
 macie FRANCE_NATIONAL_IDENTIFICATION_NUMBER: 3 occurrences, severity HIGH, detail shown for first 2
 macie MEXICO_CURP_NUMBER: 3 occurrences, severity HIGH, detail shown for first 2
-macie ITALY_NATIONAL_IDENTIFICATION_NUMBER: 3 occurrences, severity HIGH, detail shown for first 2
+macie ITALY_NATIONAL_IDENTIFICATION_NUMBER: 4 occurrences, severity HIGH, detail shown for first 2

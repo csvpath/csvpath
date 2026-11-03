@@ -1,8 +1,8 @@
 """France NIR (INSEE), Mexico CURP and Italy Codice Fiscale stand-ins: the
 checks, FrNirDetector, MxCurpDetector, ItCfDetector, and the catalog
-entries. The checks were compared with python-stdnum's on 20,000 random
-inputs each, outside the test suite; the published examples are stdnum's
-and the Agenzia delle Entrate's well-known RSSMRA85T10A562S."""
+entries. test_macie_checksum_oracle compares the checks with
+python-stdnum's on random inputs; the published examples here are
+stdnum's and the well-known RSSMRA85T10A562S."""
 
 import pytest
 
@@ -258,6 +258,54 @@ def test_macie_cf_not_a_cf(cf, cell: str) -> None:
     assert cf.matches(cell=cell) == []
 
 
+@pytest.mark.parametrize(
+    "cell",
+    [
+        "00743110157",
+        "12345670124",
+        #
+        # office codes 120 and 888 are allowed beyond 001-100
+        #
+        "12345671205",
+        "12345678887",
+        "IT00743110157",
+        "IT 00743110157",
+        "it00743110157",
+    ],
+)
+def test_macie_cf_organization_formats(cf, cell: str) -> None:
+    assert cf.matches(cell=cell) == [(0, len(cell))]
+
+
+@pytest.mark.parametrize(
+    "cell",
+    [
+        #
+        # bad Luhn digit; Luhn-valid but all zero organization digits or
+        # office 101; 10 or 12 digits; touching letters
+        #
+        "00743110158",
+        "00000000018",
+        "12345671015",
+        "0074311015",
+        "007431101570",
+        "X00743110157",
+        "00743110157X",
+    ],
+)
+def test_macie_cf_not_an_organization(cf, cell: str) -> None:
+    assert cf.matches(cell=cell) == []
+
+
+def test_macie_cf_organization_in_text(cf) -> None:
+    assert cf.matches(cell="P. IVA IT 00743110157, Milano") == [(7, 21)]
+    #
+    # after a hyphen the digits stand alone, so they are reported without
+    # the prefix
+    #
+    assert cf.matches(cell="IT-00743110157") == [(3, 14)]
+
+
 def test_macie_fr_mx_it_bad_config_and_cell(nir, curp, cf) -> None:
     for cls in [FrNirDetector, MxCurpDetector, ItCfDetector]:
         with pytest.raises(TypeError):
@@ -279,8 +327,8 @@ def test_macie_fr_mx_it_catalog(catalog) -> None:
     assert "insee" in fr["keywords"] and "social" in fr["keywords"]
     assert "curp" in mx["keywords"]
     assert "codice fiscal" in it["keywords"] and "p. iva" in it["keywords"]
-    assert "11 digit" in it["partial"]
-    assert "partial" not in fr and "partial" not in mx
+    for e in [fr, mx, it]:
+        assert "partial" not in e
     for e in [fr, mx, it]:
         assert e["category"] == "PERSONAL_INFORMATION"
         assert e["keyword_mode"] == "required"
@@ -299,6 +347,8 @@ def test_macie_fr_mx_it_catalog(catalog) -> None:
         ("ITALY_NATIONAL_IDENTIFICATION_NUMBER", CF, "codice_fiscale", 1),
         ("ITALY_NATIONAL_IDENTIFICATION_NUMBER", f"tax code {CF}", "x", 1),
         ("ITALY_NATIONAL_IDENTIFICATION_NUMBER", CF, "notes", 0),
+        ("ITALY_NATIONAL_IDENTIFICATION_NUMBER", "partita i.v.a. 00743110157", "x", 1),
+        ("ITALY_NATIONAL_IDENTIFICATION_NUMBER", "00743110157", "notes", 0),
     ],
 )
 def test_macie_fr_mx_it_identifiers(
@@ -310,12 +360,15 @@ def test_macie_fr_mx_it_identifiers(
     )
 
 
-def test_macie_cf_converter_reports_partial() -> None:
+def test_macie_cf_converter_reports_nothing_skipped() -> None:
+    #
+    # with organization codes the Italian identifier is fully translated
     w = MacieWrapperLoader.from_path(
         path="tests/macie/test_resources/wrappers/handcrafted_minimal.macie.json"
     )
     name = "ITALY_NATIONAL_IDENTIFICATION_NUMBER"
     w["selection"]["managedDataIdentifierIds"] = [name]
     w["managedDataIdentifiers"]["resolved"] = [name]
+    #
     skipped = MacieConverter(wrapper=w).convert(name="t").report.skipped
-    assert [s.feature for s in skipped] == ["managedDataIdentifier.partial"]
+    assert skipped == []
