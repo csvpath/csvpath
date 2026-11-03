@@ -505,56 +505,6 @@ class TestPathNarrowingAndInstanceSelection:
         assert results.results[0].data["run_uuid"] == "one-level-uuid"
 
 
-class TestHomeAsAZeroLevelSelector:
-    # decided jointly 2026-08-11, added to the doc under its own new
-    # "## :home() as a zero-level selector" heading -- fills the one
-    # real gap in the depth model: no existing mechanism returned
-    # "every zero-level run, unreduced" (bare pointer always reduces to
-    # one; ':all()' is one-level not zero; ':flatten()' is any depth
-    # not zero). Works because ':home()' is VALUE-role, never a
-    # POINTER -- when it is the only function present, nothing reduces
-    # the candidate set.
-    def test_bare_home_lists_every_no_template_run(self, tmp_path):
-        base = tmp_path / "alpha"
-        flat1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
-        flat2 = _make_run(base, "2026-01-02_00-00-00", "flat-2", {})
-        one_level = _make_run(
-            base / "zero", "2026-01-03_00-00-00", "one-level", {}
-        )
-        _write_archive_manifest(tmp_path, "alpha", [flat1, flat2, one_level])
-        results = _finder("$alpha.results.:home()", str(tmp_path)).query()
-        assert set(results.uuids) == {"flat-1", "flat-2"}
-
-    def test_home_then_pointer_order_independent(self, tmp_path):
-        base = tmp_path / "alpha"
-        flat1 = _make_run(base, "2026-01-01_00-00-00", "flat-1", {})
-        flat2 = _make_run(base, "2026-01-02_00-00-00", "flat-2", {})
-        _write_archive_manifest(tmp_path, "alpha", [flat1, flat2])
-        home_first = _finder(
-            "$alpha.results.:home():last()", str(tmp_path)
-        ).query()
-        pointer_first = _finder(
-            "$alpha.results.:last():home()", str(tmp_path)
-        ).query()
-        assert home_first.uuids == pointer_first.uuids == ["flat-2"]
-
-    # NOTE: there is no prefixed equivalent ("beta/:home()") -- a plain
-    # literal prefix with nothing trailing already means "every run
-    # under this exact prefix, unreduced" (confirmed identical results
-    # in every case tested), so ':home()' is root-only.
-    def test_prefixed_home_is_not_a_thing_use_the_literal_prefix_alone(
-        self, tmp_path
-    ):
-        base = tmp_path / "acme"
-        beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
-        beta2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
-        _write_archive_manifest(tmp_path, "acme", [beta1, beta2])
-        plain_prefix = _finder("$acme.results.beta", str(tmp_path)).query()
-        assert set(plain_prefix.uuids) == {"beta-1", "beta-2"}
-        with pytest.raises(ReferenceException3):
-            _finder("$acme.results.beta/:home()", str(tmp_path)).query()
-
-
 class TestFunctionalTaxonomyGates:
     # added 2026-10-18, covering this week's "functional taxonomy" GATE
     # build (compendium 6.7's uuid/name/fingerprint groups) and the

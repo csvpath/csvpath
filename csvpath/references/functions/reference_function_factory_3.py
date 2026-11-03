@@ -79,7 +79,6 @@ class ReferenceFunctionFactory:
         from .fields.group_home_3 import GroupHome3
         from .fields.group_manifest_3 import GroupManifest3
         from .fields.has_errors_3 import HasErrors3
-        from .fields.home_3 import Home3
         from .fields.host_3 import Host3
         from .fields.identity_3 import Identity3
         from .fields.instance_home_3 import InstanceHome3
@@ -223,7 +222,6 @@ class ReferenceFunctionFactory:
             Template3.NAME: Template3,
             Time3.NAME: Time3,
             Fingerprint3.NAME: Fingerprint3,
-            Home3.NAME: Home3,
             FileHome3.NAME: FileHome3,
             GroupHome3.NAME: GroupHome3,
             RunHome3.NAME: RunHome3,

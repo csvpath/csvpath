@@ -40,18 +40,17 @@ must be accessible by v3 reference in two ways:
 - Using a more specific function that retrieves just that specific item of
   data, as listed below
 
-*Note: `:home()` at one point had two meanings; today it has neither of the
-ones described here. It is now solely the zero-level (no-template) placeholder
-for FILES/RESULTS -- used bare, alone, as name_one's entire content, meaning
-"nothing narrows further, this entity's own home directory already is the
-whole result." Reading an entity's own home-directory *field* off an already-
-selected version/run/instance is a separate, per-datatype function instead:
-`:file_home()` (FILES), `:group_home()` (CSVPATHS), `:run_home()` (RESULTS
-run scope), `:instance_home()` (RESULTS instance scope). CSVPATHS has no
-path/zero-level dimension at all, so it never uses `:home()` itself --
-`:group_home()` is its entire share of the old combined job. Relationships
-with *other* entities keep their own clearly specific home references, such
-as `:named_file_home()`.*
+*Note: `:home()` is retired. It once read an entity's home-directory field
+and also served as a zero-level placeholder in name_one; neither job remains.
+The placeholder matched nothing real in FILES (a no-template registration's
+file home is `<named-file>/<filename>`, never the named-file home itself), and
+in RESULTS `:all()` and `:from(0)` already give every zero-level run. Reading
+an entity's own home-directory *field* off an already-selected
+version/run/instance is a per-datatype function: `:file_home()` (FILES),
+`:group_home()` (CSVPATHS), `:run_home()` (RESULTS run scope),
+`:instance_home()` (RESULTS instance scope). Relationships with *other*
+entities keep their own clearly specific home references, such as
+`:named_file_home()`.*
 
 ---
 

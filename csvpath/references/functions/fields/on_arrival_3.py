@@ -17,7 +17,7 @@ class OnArrival3(Function3):
     # 2026-10-17, the generic predicate-argument filtering mechanism's
     # own original motivating worked example: ":on_arrival(:not_none())"
     # nested inside ":definition(...)" during '*' traversal
-    # ("$*.files.:home():definition(:on_arrival(:not_none()))" -- "which
+    # ("$*.files.:definition(:on_arrival(:not_none()))" -- "which
     # named-files have on_arrival set"). See Definition3's own
     # check_valid() for the cross-validation that this nested shape must
     # satisfy, and FilesReferenceFinder3._matches_definition_field_

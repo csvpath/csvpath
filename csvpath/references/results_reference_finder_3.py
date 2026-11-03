@@ -390,36 +390,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # zero-level (direct children of the group's own root)
                 # only, NOT "ignore depth entirely" -- settled
                 # 2026-08-10. ':flatten()' above is the new home for
-                # the any-depth case this used to cover. A bare
-                # ':home()' ALONE (no pointer/:all()/:flatten() also
-                # present) reaches this same branch and needs no
-                # special-casing at all -- settled 2026-08-11: ':home()'
-                # is a VALUE-role field accessor, never a POINTER, so
-                # _pointer_from_calls() below naturally finds none,
-                # leaving every zero-level candidate unreduced -- "every
-                # run whose home is right here" (David's own framing).
-                # The moment a real pointer joins the chain (either
-                # order -- ":home():last()" or ":last():home()"), that
-                # pointer reduces to one and ':home()' reverts to its
-                # ordinary job (reading the field off whatever got
-                # selected) -- no order-sensitivity trap, since nothing
-                # here depends on which of the two is written first.
-                # There is NO prefixed equivalent ("beta/:home()") --
-                # considered and removed 2026-08-12: a literal prefix
-                # segment with nothing trailing already means "every
-                # run under this exact prefix, unreduced" (long-
-                # standing, pre-dates this whole depth refactor --
-                # confirmed "$acme.results.beta" and
-                # "$acme.results.beta/:home()" give identical results
-                # in every case tested). ':home()' is only load-bearing
-                # at the bare/root position, where the grammar cannot
-                # express "zero segments" any other way -- a literal
-                # prefix already covers every other depth, so adding
-                # ':home()' there would just be a second, more
-                # confusing spelling of something that already has one
-                # (David: explicit felt "more mysterious than the
-                # default," and collided with the unrelated ":run_dir"
-                # template token in a reader's head).
+                # the any-depth case this used to cover. Every
+                # zero-level run, unreduced, is ':all()' or ':from(0)';
+                # ':home()', which used to spell that, was retired
+                # 2026-11-03 (David).
                 candidates = [
                     rh for rh in run_homes if self._matches_prefix(rh, home, [])
                 ]
@@ -1207,12 +1181,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         _results_for_run() already builds each candidate's
         ReferenceResult3 from its own real run directory, independent
         of any group-name context, so resolving a field from it needs
-        nothing star-traversal-specific. ':home()' is exempted the same
-        way, but explicitly by name (added 2026-08-26, alongside its own
-        SOURCE/KEY narrowing to the zero-level placeholder role only --
-        see home_3.py) rather than falling out of the field-accessor
-        exemption above for free the way it used to when it still
-        declared SOURCE == "manifest".
+        nothing star-traversal-specific.
 
         A run-filtering ':having("identity")' (added 2026-08-27,
         mirroring CsvpathsReferenceFinder3's own star-traversal support)
@@ -1255,7 +1224,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         flatten_call = next((f for f in built if f.name == "flatten"), None)
         groups_call = next((f for f in built if f.name == "groups"), None)
         manifest_call = next((f for f in built if f.name == "manifest"), None)
-        home_call = next((f for f in built if f.name == "home"), None)
         having_call = next((f for f in built if f.name == "having"), None)
         if sum([all_call is not None, flatten_call is not None, groups_call is not None]) > 1:
             raise ReferenceException3(
@@ -1305,7 +1273,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             and f is not all_call
             and f is not groups_call
             and f is not manifest_call
-            and f is not home_call
             and f is not having_call
             and f is not lower_call
             and f is not upper_call

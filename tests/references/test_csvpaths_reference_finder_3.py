@@ -1668,9 +1668,8 @@ class TestFieldAccessorFunctions:
 
     def test_group_home(self):
         # :home() split 2026-08-26 -- CSVPATHS' own share of the old
-        # field-read job is now :group_home() (:home() itself keeps
-        # only the FILES/RESULTS zero-level placeholder role, which
-        # CSVPATHS has no equivalent concept for).
+        # field-read job is now :group_home() (:home() itself was
+        # retired 2026-11-03).
         results = _finder(
             "$acme.csvpaths.:first():group_home()", RICH_MANIFEST
         ).resolve()
