@@ -1479,9 +1479,11 @@ Every field accessor has the ability to match on a provided value, and
 thereby filter the reference.
 
 For e.g. `$*.files.:definition(:on_arrival(:not_none()))`
-limits the registration file homes returned to 0-level template
-registrations where the named-file's `definition.json` has an `on_arrival`
-activation declared.
+limits the definition files returned to those of the named-files whose
+`definition.json` has an `on_arrival` activation declared. Like
+`:manifest()`, `:definition()` names one file per named-file; it has no
+relationship to file homes or template paths (see 6.19 for the same
+filter on one named-file).
 
 #### 6.36
 The predicate support functions are those that make it possible to use

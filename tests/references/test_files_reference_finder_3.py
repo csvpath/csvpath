@@ -1700,6 +1700,200 @@ class TestAttachedFieldFunctionsMessage:
         assert finder.query().uuids == ["u-one-1", "u-one-2"]
 
 
+#
+# E3 (2026-11-02): ':definition()' with a field chain. ':definition()'
+# names one file per named-file, like ':manifest()'; definition.json has
+# no file home or version, so the chain reads and filters that one record.
+#
+DEF_ALPHA = {
+    "template": ":0/:filename",
+    "on_arrival": {"named_paths_group": "checks", "run_method": "collect_paths"},
+    "sources": {
+        "email": {"address": "mail.local", "port": 22, "username": "u", "password": "p"}
+    },
+}
+DEF_BETA = {"template": ":filename"}
+
+
+def _def_finder(reference: str) -> FilesReferenceFinder3:
+    finder = _finder(
+        reference,
+        STAR_ALPHA_HOME,
+        STAR_ALPHA_MANIFEST,
+        by_name=STAR_BY_NAME,
+        definitions={"alpha": DEF_ALPHA, "beta": DEF_BETA},
+    )
+    finder.csvpaths.logger = _FakeLogger()
+    return finder
+
+
+def _def_values(reference: str) -> list:
+    return [r.data for r in _def_finder(reference).resolve().results]
+
+
+def _def_path(home: str) -> str:
+    return pathu.resep(f"{home}/definition.json")
+
+
+class TestDefinitionChainParts:
+    def _calls(self, reference: str):
+        name_one = _def_finder(reference).ref.parsed.name_one
+        return FilesReferenceFinder3._definition_chain(name_one=name_one)
+
+    def test_none_raises(self):
+        with pytest.raises(ValueError):
+            FilesReferenceFinder3._definition_chain(name_one=None)
+
+    @pytest.mark.parametrize(
+        "reference, names",
+        [
+            ("$alpha.files.:definition():on_arrival()", ["on_arrival"]),
+            ("$alpha.files.:on_arrival():definition()", ["on_arrival"]),
+            ("$alpha.files.:definition(:on_arrival(:not_none()))", ["on_arrival"]),
+            (
+                "$alpha.files.:definition(:on_arrival(:not_none())):template()",
+                ["on_arrival", "template"],
+            ),
+        ],
+    )
+    def test_the_field_calls(self, reference, names):
+        assert [c.name for c in self._calls(reference)] == names
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$alpha.files.:definition()",
+            "$alpha.files.:on_arrival()",
+            "$*.files.:home():definition(:on_arrival(:not_none()))",
+            "$alpha.files.:manifest():uuid()",
+        ],
+    )
+    def test_other_shapes_are_not_claimed(self, reference):
+        assert self._calls(reference) is None
+
+    @pytest.mark.parametrize("field", ["uuid()", "fingerprint()", "named_file_home()"])
+    def test_a_field_not_in_definition_json_raises(self, field):
+        with pytest.raises(ReferenceException3) as error:
+            self._calls(f"$alpha.files.:definition():{field}")
+        assert "does not read a named-file's definition.json" in str(error.value)
+
+    @pytest.mark.parametrize("function", ["last()", "index(1)", "from(1)", "today()"])
+    def test_a_version_selector_raises(self, function):
+        with pytest.raises(ReferenceException3) as error:
+            self._calls(f"$alpha.files.:definition():{function}")
+        assert "definition.json is not versioned" in str(error.value)
+
+
+class TestDefinitionChain:
+    def test_a_field_value(self):
+        # compendium 6.19 and NRE 345: "returns the arrival activation
+        # field value". these raised before.
+        assert _def_values("$alpha.files.:definition():on_arrival()") == [
+            DEF_ALPHA["on_arrival"]
+        ]
+        assert _def_values("$alpha.files.:definition():run_method()") == [
+            "collect_paths"
+        ]
+        assert _def_values("$alpha.files.:definition():template()") == [":0/:filename"]
+
+    def test_a_key_argument_is_a_value(self):
+        assert _def_values('$alpha.files.:definition():source_port("email")') == [22]
+
+    def test_the_same_value_as_the_bare_field(self):
+        for field in ("on_arrival()", "run_method()", 'source_port("email")'):
+            assert _def_values(f"$alpha.files.:definition():{field}") == _def_values(
+                f"$alpha.files.:{field}"
+            )
+
+    def test_the_query_path_is_the_definition_file(self):
+        results = _def_finder("$alpha.files.:definition():on_arrival()").query()
+        assert results.files == [_def_path(STAR_ALPHA_HOME)]
+        assert results.uuids == [None]
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$NAME.files.:definition(:on_arrival(:not_none()))",
+            "$NAME.files.:definition():on_arrival(:not_none())",
+            "$NAME.files.:on_arrival(:not_none()):definition()",
+        ],
+    )
+    def test_a_predicate_filters_nested_or_chained(self, reference):
+        # 6.19: the definition is returned only if an arrival activation
+        # is found
+        alpha = _def_finder(reference.replace("NAME", "alpha")).query()
+        assert alpha.files == [_def_path(STAR_ALPHA_HOME)]
+        assert _def_finder(reference.replace("NAME", "beta")).query().results == []
+
+    def test_a_filter_with_a_value(self):
+        reference = "$*.files.:definition():on_arrival(:not_none()):template()"
+        assert _def_values(reference) == [":0/:filename"]
+
+    def test_two_filters_are_anded(self):
+        base = "$*.files.:definition():on_arrival(:not_none())"
+        assert _def_finder(f"{base}:template(:empty())").query().results == []
+        assert _def_finder(f"{base}:template(:not_empty())").query().files == [
+            _def_path(STAR_ALPHA_HOME)
+        ]
+
+    def test_the_last_value_field_wins_with_a_warning(self):
+        finder = _def_finder("$alpha.files.:definition():template():run_method()")
+        assert [r.data for r in finder.resolve().results] == ["collect_paths"]
+        assert len(finder.csvpaths.logger.warnings) == 1
+        reversed_ = "$alpha.files.:definition():run_method():template()"
+        assert _def_values(reversed_) == [":0/:filename"]
+
+    def test_a_filter_does_not_count_toward_the_warning(self):
+        finder = _def_finder(
+            "$alpha.files.:definition():on_arrival(:not_none()):template()"
+        )
+        finder.resolve()
+        assert finder.csvpaths.logger.warnings == []
+
+    def test_star_gives_each_matching_named_file(self):
+        # compendium 6.35's own example, which raised before
+        results = _def_finder("$*.files.:definition(:on_arrival(:not_none()))").query()
+        assert results.files == [_def_path(STAR_ALPHA_HOME)]
+        assert not results.ambiguous_content_read
+        results = _def_finder("$*.files.:definition(:on_arrival(:none()))").query()
+        assert results.files == [_def_path(STAR_BETA_HOME)]
+
+    def test_star_values_come_from_each_named_files_own_definition(self):
+        values = _def_values("$*.files.:definition():template()")
+        assert sorted(values) == [":0/:filename", ":filename"]
+
+    def test_star_with_several_whole_files_is_flagged(self):
+        # compendium 5.8: several definition files can be queried, not
+        # resolved
+        results = _def_finder("$*.files.:definition(:template(:not_none()))").query()
+        assert len(results.results) == 2
+        assert results.ambiguous_content_read
+        results = _def_finder("$*.files.:definition():template()").query()
+        assert not results.ambiguous_content_read
+
+    def test_a_regex_root(self):
+        assert _def_values("$:regex(/^be/).files.:definition():template()") == [
+            ":filename"
+        ]
+
+    def test_name_three_raises(self):
+        with pytest.raises(ReferenceException3) as error:
+            _def_finder("$alpha.files.:definition():template().:last()").query()
+        assert "':definition()' chain with name_three" in str(error.value)
+
+    def test_with_only_a_filter_resolve_gives_the_definition_file(self, tmp_path):
+        home = tmp_path / "alpha"
+        home.mkdir()
+        (home / "definition.json").write_text('{"on_arrival": {}}', encoding="utf-8")
+        finder = _finder(
+            "$alpha.files.:definition(:on_arrival(:not_none()))",
+            str(home),
+            [],
+            definitions={"alpha": DEF_ALPHA},
+        )
+        assert finder.resolve().results[0].data == b'{"on_arrival": {}}'
+
+
 class TestStarTraversalGroup:
     # bare ':all()' as name_one's entire content partitions every
     # named-file's EXACTLY-one-level matches (corrected 2026-08-12 to
