@@ -434,9 +434,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # a path-BUILDING function like :name()/:regex() exempted
             # above). This is restating the design, not deferring it.
             raise ReferenceException3(
-                "FilesReferenceFinder3 does not support functions attached "
-                "directly to name_one -- put the version-selecting function in "
-                "name_three instead."
+                self._attached_functions_message(
+                    name_one=name_one, star_traversal=False
+                )
             )
         # bare ':all()'/':flatten()'/':groups()' for ONE named-file --
         # see the class docstring's 2026-08-12 note. ':all()' is a
@@ -643,9 +643,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # the implied-'*' normalization instead of a direct
                 # literal path, e.g. "orders/:after(...)".
                 raise ReferenceException3(
-                    "FilesReferenceFinder3 does not support functions "
-                    "attached directly to name_one -- put the version-"
-                    "selecting function in name_three instead."
+                    self._attached_functions_message(
+                        name_one=name_one, star_traversal=False
+                    )
                 )
             pattern = self._compile_path_pattern(name_one.path)
             candidates = self._candidates_for_name(root_major, pattern)
@@ -1464,9 +1464,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # same settled restriction as query()'s own literal-root
                 # branch (not-yet-supported sweep #3), for '*' traversal.
                 raise ReferenceException3(
-                    "FilesReferenceFinder3 does not support functions "
-                    "attached directly to name_one for '*' traversal -- put "
-                    "the version-selecting function in name_three instead."
+                    self._attached_functions_message(
+                        name_one=name_one, star_traversal=True
+                    )
                 )
             pattern = self._compile_path_pattern(name_one.path)
             candidates = []
@@ -1794,6 +1794,42 @@ class FilesReferenceFinder3(ReferenceFinder3):
             for entry in manifest
             if pathu.parts(entry["file_home"])[: len(home_parts)] == home_parts
         ]
+
+    @staticmethod
+    def _attached_functions_message(*, name_one, star_traversal: bool) -> str:
+        """the error for functions attached directly to name_one with no
+        separating '.'. When one of them is a field function, e.g.
+        ':name("orders.csv"):fingerprint()', the message gives the
+        reference with the dot, since name_one picks the file and
+        name_three picks the version and reads its fields (E2, option C,
+        David 2026-11-02). Otherwise the long-standing message."""
+        if name_one is None:
+            raise ValueError("name_one cannot be None")
+        has_field = False
+        for call in name_one.functions:
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            if function_cls is not None and function_cls.SOURCE is not None:
+                has_field = True
+        if not has_field:
+            if star_traversal:
+                return (
+                    "FilesReferenceFinder3 does not support functions "
+                    "attached directly to name_one for '*' traversal -- put "
+                    "the version-selecting function in name_three instead."
+                )
+            return (
+                "FilesReferenceFinder3 does not support functions attached "
+                "directly to name_one -- put the version-selecting function in "
+                "name_three instead."
+            )
+        path = "/".join(str(segment) for segment in name_one.path)
+        functions = "".join(str(call) for call in name_one.functions)
+        return (
+            "FilesReferenceFinder3 does not support field functions attached "
+            "directly to name_one: name_one picks the file, name_three picks "
+            "the version and reads its fields. Put them in name_three, after "
+            f"a '.': '{path}.{functions}'"
+        )
 
     def _name_one_pointer(self, name_one) -> "FunctionCall3 | None":
         """the version-selecting pointer (:first()/:last()/:index(n))
