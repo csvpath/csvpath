@@ -12,7 +12,7 @@ class MacieGroupLoader:
     group, kept here so the paths manager stays a few lines. (The wrapper
     file itself is read by MacieWrapperLoader.)
 
-        paths, report = MacieGroupLoader.convert_file(path=p, config=config)
+        paths, report, lists = MacieGroupLoader.convert_file(path=p, config=config)
 
     It also holds the one rule Macie adds to a group: a Macie csvpath's id
     is never shared with another csvpath in the group, since two csvpaths
@@ -29,9 +29,13 @@ class MacieGroupLoader:
         return logging.getLogger(cls.__name__)
 
     @classmethod
-    def convert_file(cls, *, path: str, config) -> tuple[list[str], dict]:
-        """the csvpath for a wrapper file, as a one-item list, and the
-        conversion report as a dict"""
+    def convert_file(
+        cls, *, path: str, config
+    ) -> tuple[list[str], dict, dict[str, list[str]]]:
+        """the csvpath for a wrapper file, as a one-item list, the
+        conversion report as a dict, and the text allow lists the csvpath
+        loads, as {list name: entries}. The report has each list's name and
+        entry count, not its entries."""
         if not isinstance(path, str) or path.strip() == "":
             raise ValueError("path must be a non-empty str")
         if not MacieWrapperLoader.is_wrapper_path(path=path):
@@ -51,6 +55,9 @@ class MacieGroupLoader:
             "account_id": source.get("account_id"),
             "region": source.get("region"),
             "downloaded_at": source.get("downloaded_at"),
+            "lists": [
+                {"name": k, "entries": len(v)} for k, v in conversion.lists.items()
+            ],
             "skipped": [
                 {
                     "object": s.object,
@@ -66,7 +73,50 @@ class MacieGroupLoader:
             path,
             len(report["skipped"]),
         )
-        return ([conversion.csvpath.strip()], report)
+        return ([conversion.csvpath.strip()], report, dict(conversion.lists))
+
+    @classmethod
+    def store_lists(
+        cls, *, paths_manager, name: str, lists: dict[str, list[str]], append: bool
+    ) -> list[str]:
+        """writes a wrapper's text allow lists to the group's assets, where
+        load_list() reads them, creating the group if needed. Returns the
+        list paths.
+
+        When appending, a list already in the group with different entries
+        is refused before anything is written: replacing it would change
+        what an earlier csvpath in the group allows. The same entries are
+        fine. Without append the group's csvpaths are replaced, so its lists
+        are too."""
+        if paths_manager is None:
+            raise ValueError("paths_manager cannot be None")
+        if not isinstance(name, str) or name.strip() == "":
+            raise ValueError("name must be a non-empty str")
+        if not isinstance(lists, dict):
+            raise TypeError(f"lists must be a dict, not {type(lists)}")
+        if not isinstance(append, bool):
+            raise TypeError(f"append must be a bool, not {type(append)}")
+        am = paths_manager.asset_manager
+        for list_name in lists:
+            am.check_list_name(list_name)
+        if append is True and paths_manager.has_named_paths(name):
+            for list_name, entries in lists.items():
+                have = am.get_asset_file(name, f"{list_name}{am.LIST_SUFFIX}")
+                if have is not None and have.splitlines() != list(entries):
+                    msg = (
+                        f"Cannot append to named-paths group {name}: its allow list "
+                        f"{list_name!r} has different entries than the list with "
+                        "that id in the new Macie wrapper. Replacing it would change "
+                        "what the group's other csvpaths allow. Give the list a new "
+                        "id, or reload the group without append"
+                    )
+                    cls.logger().error(msg)
+                    raise MacieException(msg)
+        paths_manager.configure_named_paths(name)
+        return [
+            am.store_list(name=name, list_name=k, values=list(v))
+            for k, v in lists.items()
+        ]
 
     @classmethod
     def name_for(cls, *, wrapper: dict, path: str) -> str | None:

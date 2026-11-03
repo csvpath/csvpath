@@ -3,6 +3,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
+from csvpath.managers.paths.paths_asset_manager import PathsAssetManager
 from csvpath.odcs.conversion_report import ConversionReport
 from csvpath.odcs.csvpath_text_utility import CsvPathTextUtility as csut
 
@@ -21,13 +22,18 @@ class MacieConversion:
     name:    the csvpath's id, and the named-paths group name to use
     csvpath: the csvpath text. With no data file path its root is $[1*],
              ready to be loaded into a named-paths group.
-    report:  what was not translated, e.g. managed identifiers, text allow
-             lists and findings filters, plus the wrapper's own warnings
+    report:  what was not translated, e.g. managed identifiers we have no
+             stand-in for, unreadable text allow lists and findings
+             filters, plus the wrapper's own warnings
+    lists:   the text allow lists the csvpath loads with load_list(), as
+             list name -> entries. Loading the wrapper into a named-paths
+             group stores them in the group's assets.
     """
 
     name: str
     csvpath: str
     report: ConversionReport = field(default_factory=ConversionReport)
+    lists: dict[str, list[str]] = field(default_factory=dict)
 
 
 class MacieConverter:
@@ -40,10 +46,11 @@ class MacieConverter:
         conversion.report.skipped    # what was not translated
 
     Translated today: custom data identifiers (macie_cdi), managed data
-    identifiers we have a stand-in for in the catalog (macie_mdi), and
-    regex allow lists (macie_allow_regex). Reported as skipped: other
-    managed identifiers, text allow lists (they need load_list(), #470)
-    and findings filters, which act on findings after detection.
+    identifiers we have a stand-in for in the catalog (macie_mdi), regex
+    allow lists (macie_allow_regex), and text allow lists whose entries
+    were downloaded (macie_allow_words with load_list()). Reported as
+    skipped: other managed identifiers, text allow lists that could not be
+    read, and findings filters, which act on findings after detection.
 
     A value the csvpath can't express, e.g. a keyword containing a double
     quote or "|", fails the conversion: skipping part of an identifier
@@ -87,11 +94,21 @@ class MacieConverter:
         path: str | None = None,
         max_findings: int = MAX_FINDINGS,
         max_detail: int = MAX_DETAIL,
+        list_dir: str | None = None,
     ) -> MacieConversion:
         """name defaults to the Macie job's or template's name; a
         handcrafted wrapper must be given one. path, if given, is a data
-        file the csvpath can run against stand-alone."""
+        file the csvpath can run against stand-alone.
+
+        Text allow lists are loaded with load_list(). In a named-paths group
+        the list name is enough. Stand-alone, outside a group, give
+        list_dir: load_list() then reads <list_dir>/<list name>.txt, and
+        the caller writes conversion.lists there."""
         path = csut.existing_data_path(path=path)
+        if list_dir is not None and (
+            not isinstance(list_dir, str) or list_dir.strip() == ""
+        ):
+            raise ValueError("list_dir must be a non-empty str, or None")
         for n, v, minimum in [
             ("max_findings", max_findings, 1),
             ("max_detail", max_detail, 0),
@@ -100,8 +117,16 @@ class MacieConverter:
                 raise ValueError(f"{n} must be an int of at least {minimum}, not {v!r}")
         name = self._name(name=name)
         report = ConversionReport()
+        lists = {}
         body = []
-        body += self._allow_lists(name=name, report=report)
+        body += self._allow_lists(
+            name=name, report=report, lists=lists, list_dir=list_dir
+        )
+        if lists and path != "" and list_dir is None:
+            self._fail(
+                f"Macie wrapper for {name} has text allow lists: a stand-alone "
+                "csvpath (path=...) needs list_dir for load_list() to read them"
+            )
         body += self._custom_identifiers()
         body += self._managed_identifiers(name=name, report=report)
         if not any(b.startswith(("macie_cdi(", "macie_mdi(")) for b in body):
@@ -116,7 +141,7 @@ class MacieConverter:
             name=name, max_findings=max_findings, max_detail=max_detail
         )
         csvpath = self._text(metadata=metadata, path=path, body=body)
-        return MacieConversion(name=name, csvpath=csvpath, report=report)
+        return MacieConversion(name=name, csvpath=csvpath, report=report, lists=lists)
 
     # =============
     # parts
@@ -179,7 +204,14 @@ class MacieConverter:
             return template.get("arn")
         return None
 
-    def _allow_lists(self, *, name: str, report: ConversionReport) -> list[str]:
+    def _allow_lists(
+        self,
+        *,
+        name: str,
+        report: ConversionReport,
+        lists: dict,
+        list_dir: str | None,
+    ) -> list[str]:
         out = []
         for i, a in enumerate(self.wrapper.get("allowLists") or []):
             settings = a["settings"]
@@ -190,17 +222,49 @@ class MacieConverter:
                     f"{self._string(value=settings['name'])}, "
                     f"{self._regex(pattern=criteria['regex'])})"
                 )
-            else:
+                continue
+            contents = a.get("contents") or {}
+            if contents.get("status") != "OK":
+                #
+                # alert and continue: the identifiers still run, without this
+                # list, and the report and the wrapper's warning say so
+                #
                 report.skip(
                     obj=name,
                     location=f"allowLists[{i}]",
-                    feature="allowList.s3WordsList",
+                    feature="allowList.s3WordsList.unreadable",
                     reason=(
-                        f"Text allow list {settings['name']} is not translated yet: "
-                        "it needs load_list() (#470)"
+                        f"Text allow list {settings['name']} could not be read when "
+                        f"the wrapper was downloaded ({contents.get('status')}), so its "
+                        "entries are not applied"
                     ),
                 )
+                continue
+            list_name = self._list_name(settings=settings)
+            lists[list_name] = list(contents["entries"])
+            source = (
+                list_name
+                if list_dir is None
+                else f"{list_dir.rstrip('/')}/{list_name}{PathsAssetManager.LIST_SUFFIX}"
+            )
+            out.append(
+                "macie_allow_words.nocontrib("
+                f"{self._string(value=settings['name'])}, "
+                f"load_list({self._string(value=source)}))"
+            )
         return out
+
+    def _list_name(self, *, settings: dict) -> str:
+        """a text allow list's load_list() name is its Macie id: ids are
+        short and stable, and names may hold characters a list name can't"""
+        list_id = settings.get("id")
+        try:
+            return PathsAssetManager.check_list_name(list_id)
+        except ValueError as e:
+            self._fail(
+                f"Text allow list {settings.get('name')!r} has an id that cannot be a "
+                f"list name: {e}"
+            )
 
     def _custom_identifiers(self) -> list[str]:
         out = []

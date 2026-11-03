@@ -1,0 +1,38 @@
+#
+# Pair 01's data and custom identifier, with a text allow list as well as
+# the regex one. See 01_employee_ids/expected.yaml for the keys and for
+# why each line does or doesn't have an occurrence before allow lists.
+#
+# The text allow list is loaded with load_list(), by its Macie id. In a
+# named-paths group it is assets/c0n7r4a1c7o9r5s3a6l0lw.txt, written when
+# the wrapper is loaded. The normative runs write it to a temp dir.
+#
+conversion:
+  max_detail: 3
+runs:
+  - csvpath: hr-contractor-allow.csvpath
+    data: employees.csv
+    finding_lines: [1, 5, 7, 9, 11]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie EmployeeId: occurrence 1, line 1 (row 2), column 3 employee_id" }
+      - { line: 5, message: "macie EmployeeId: occurrence 2, line 5 (row 6), column 4 manager_note" }
+      - { line: 7, message: "macie EmployeeId: occurrence 3, line 7 (row 8), column 4 manager_note" }
+    findings: findings.json
+    #
+    # pair 01 has 8 occurrences. The text allow list "contractors" has
+    # emp-234567, EMP-678901 and EMP-456789, and allows 3 of them:
+    #   line 5  employee_id   EMP-234567  allowed: entries ignore case
+    #   line 6  employee_id   EMP-456789  allowed, so line 6 has no finding
+    #   line 7  manager_note  EMP-678901  allowed; EMP-789012 in the same
+    #                                     cell is not, so line 7 still has one
+    # The 5 left, in file order:
+    #   line 1  employee_id   EMP-123456
+    #   line 5  manager_note  EMP-345678
+    #   line 7  manager_note  EMP-789012
+    #   line 9  employee_id   EMP-012345  (EMP-901234 is allowed by the regex)
+    #   line 11 employee_id   EMP-223344  the occurrence text, inside XEMP-223344,
+    #                                     is not an entry
+    #
+    # 5 occurrences: MEDIUM at 5. Detail cap 3, then the summary.

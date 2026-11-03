@@ -413,7 +413,7 @@ def test_macie_converter_regex_literals_run(
 def test_macie_converter_report() -> None:
     skipped = MacieConverter(wrapper=_job()).convert().report.skipped
     assert [(s.location, s.feature) for s in skipped] == [
-        ("allowLists[1]", "allowList.s3WordsList"),
+        ("allowLists[1]", "allowList.s3WordsList.unreadable"),
         #
         # resolved[0] and [1], CREDIT_CARD_NUMBER and
         # USA_SOCIAL_SECURITY_NUMBER, are translated. NAME is not
@@ -426,7 +426,7 @@ def test_macie_converter_report() -> None:
     ]
     assert {s.object for s in skipped} == {"hr-exports-weekly"}
     assert "public-names" in skipped[0].reason
-    assert "#470" in skipped[0].reason
+    assert "ACCESS_DENIED" in skipped[0].reason
     assert "NAME" in skipped[1].reason
 
 
@@ -456,3 +456,59 @@ def test_macie_converter_bad_wrapper() -> None:
         MacieConverter(wrapper=None)
     with pytest.raises(MacieException):
         MacieConverter(wrapper={"not": "a wrapper"})
+
+
+# =============
+# text allow lists
+# =============
+
+TEXT_WRAPPER = os.path.join(
+    "tests",
+    "macie",
+    "test_resources",
+    "normative",
+    "09_text_allow_list",
+    "hr-contractor-allow.macie.json",
+)
+LIST_ID = "c0n7r4a1c7o9r5s3a6l0lw"
+
+
+def _text() -> dict:
+    return MacieWrapperLoader.from_path(path=TEXT_WRAPPER)
+
+
+def test_macie_converter_text_list_loads_by_id() -> None:
+    conversion = MacieConverter(wrapper=_text()).convert()
+    assert conversion.lists == {LIST_ID: ["emp-234567", "EMP-678901", "EMP-456789"]}
+    assert (
+        f'macie_allow_words.nocontrib("contractors", load_list("{LIST_ID}"))'
+        in conversion.csvpath
+    )
+    assert conversion.report.skipped == []
+
+
+def test_macie_converter_text_list_stand_alone_needs_list_dir(tmp_path) -> None:
+    data = tmp_path / "d.csv"
+    data.write_text("a\n1\n", encoding="utf-8")
+    with pytest.raises(MacieException, match="list_dir"):
+        MacieConverter(wrapper=_text()).convert(path=str(data))
+    csvpath = (
+        MacieConverter(wrapper=_text())
+        .convert(path=str(data), list_dir=f"{tmp_path}/")
+        .csvpath
+    )
+    assert f'load_list("{tmp_path}/{LIST_ID}.txt")' in csvpath
+
+
+@pytest.mark.parametrize("list_dir", ["", "  ", 5])
+def test_macie_converter_bad_list_dir(list_dir) -> None:
+    with pytest.raises(ValueError):
+        MacieConverter(wrapper=_text()).convert(list_dir=list_dir)
+
+
+def test_macie_converter_text_list_id_must_be_a_list_name() -> None:
+    w = _text()
+    w["allowLists"][1]["settings"]["id"] = "bad id"
+    w["selection"]["allowListIds"][1] = "bad id"
+    with pytest.raises(MacieException):
+        MacieConverter(wrapper=w).convert()

@@ -13,7 +13,7 @@ import pytest
 import yaml
 
 from csvpath import CsvPath
-from csvpath.macie.macie_converter import MacieConverter
+from csvpath.macie.macie_converter import MacieConversion, MacieConverter
 from csvpath.macie.macie_wrapper_loader import MacieWrapperLoader
 from csvpath.util.printer import Printer
 
@@ -75,12 +75,41 @@ def _run_id(param) -> str:
     return os.path.basename(param)
 
 
-def _convert(*, pair: str, path: str | None = None) -> str:
+def _conversion(
+    *, pair: str, path: str | None = None, list_dir: str | None = None
+) -> MacieConversion:
     names = [n for n in os.listdir(pair) if MacieWrapperLoader.is_wrapper_path(path=n)]
     assert len(names) == 1
     wrapper = MacieWrapperLoader.from_path(path=os.path.join(pair, names[0]))
     args = _expected(pair).get("conversion") or {}
-    return MacieConverter(wrapper=wrapper).convert(path=path, **args).csvpath
+    return MacieConverter(wrapper=wrapper).convert(path=path, list_dir=list_dir, **args)
+
+
+def _convert(*, pair: str, path: str | None = None) -> str:
+    return _conversion(pair=pair, path=path).csvpath
+
+
+def _write_lists(*, lists: dict[str, list[str]], list_dir) -> None:
+    #
+    # as PathsAssetManager.store_list() writes them in a group
+    #
+    for name, entries in lists.items():
+        with open(os.path.join(list_dir, f"{name}.txt"), "w", encoding="utf-8") as f:
+            f.write("".join(f"{e}\n" for e in entries))
+
+
+def _with_list_dir(*, csvpath: str, lists: dict, list_dir: str) -> str:
+    #
+    # expected csvpaths load lists by name, as in a group. stand-alone,
+    # load_list() needs the path
+    #
+    for name in lists:
+        group_form = f'load_list("{name}")'
+        assert csvpath.count(group_form) == 1
+        csvpath = csvpath.replace(
+            group_form, f'load_list("{os.path.join(list_dir, name)}.txt")'
+        )
+    return csvpath
 
 
 def _with_data_path(*, csvpath: str, data_path: str) -> str:
@@ -102,15 +131,19 @@ def test_macie_converter_produces_expected_csvpath(pair: str) -> None:
 
 
 @pytest.mark.parametrize("pair,run,source", _runs(), ids=_run_id)
-def test_macie_normative_run(pair: str, run: dict, source: str) -> None:
+def test_macie_normative_run(pair: str, run: dict, source: str, tmp_path) -> None:
     data_path = os.path.join(pair, "data", run["data"])
+    list_dir = str(tmp_path)
+    lists = _conversion(pair=pair).lists
+    _write_lists(lists=lists, list_dir=list_dir)
     if source == "expected":
         with open(
             os.path.join(pair, "expected", run["csvpath"]), encoding="utf-8"
         ) as f:
             csvpath = _with_data_path(csvpath=f.read(), data_path=data_path)
+        csvpath = _with_list_dir(csvpath=csvpath, lists=lists, list_dir=list_dir)
     else:
-        csvpath = _convert(pair=pair, path=data_path)
+        csvpath = _conversion(pair=pair, path=data_path, list_dir=list_dir).csvpath
     path = CsvPath()
     printer = StreamPrinter()
     path.set_printers([printer])

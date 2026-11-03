@@ -41,7 +41,7 @@ validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
 ~
 $[1*][
   macie_allow_regex.nocontrib("<allow list name>", /<regex>/)
-  macie_allow_words.nocontrib("<allow list name>", load_list("<list name>"))
+  macie_allow_words.nocontrib("<allow list name>", load_list("<allow list id>"))
   macie_cdi("<cdi name>", "<cdi ARN or empty>", /<regex>/, "<keywords>", "<ignore words>", <distance>, "<severity levels>")
   macie_mdi("<managed id>")
   last.nocontrib() -> macie_report()
@@ -58,7 +58,7 @@ $[1*][
   by `|`. Only up to 50 keywords and 10 ignore words, so inline is fine.
   The transpiler rejects (fails fast on) an entry that contains `|`.
   Text allow lists, which can have 100,000 entries, use `load_list()`
-  (issue #470) instead.
+  (#470, #499) instead: see "Text allow lists" below.
 - **Severity levels** are passed as one string, `"1:LOW 5:MEDIUM 10:HIGH"`.
   Absent in the wrapper -> `"1:MEDIUM"`, which is Macie's default.
 - **Metadata values must not contain `:`** (the metadata parser treats each
@@ -253,11 +253,14 @@ conversion.csvpath          # the csvpath text, root $[1*]
 conversion.report.skipped   # what was not translated
 ```
 
-- **Translated:** custom data identifiers (`macie_cdi`) and regex allow
-  lists (`macie_allow_regex`).
-- **Reported, not translated:** managed identifiers (not yet), text allow
-  lists (need `load_list()`, #470), findings filters (they act on findings
-  after detection), and every wrapper warning.
+- **Translated:** custom data identifiers (`macie_cdi`), managed
+  identifiers we have a stand-in for (`macie_mdi`), regex allow lists
+  (`macie_allow_regex`), and readable text allow lists
+  (`macie_allow_words`, with `load_list()`).
+- **Reported, not translated:** managed identifiers without a stand-in,
+  text allow lists that could not be read at download time, findings
+  filters (they act on findings after detection), and every wrapper
+  warning.
 - **Fails the conversion:** a value CVL can't express, such as a
   keyword, ignore word or name with a double quote, or a keyword or ignore
   word with `|`. Skipping part of an identifier would silently change what
@@ -305,6 +308,8 @@ conversion.report.skipped   # what was not translated
 | `MacieMdi` (`macie_mdi`) | applies a managed identifier to every cell |
 | `MacieRun` | one run's shared state (allow lists, tally) and outputs; limits from metadata, config, defaults; noisy setup failure |
 | `MacieAllowRegex` (`macie_allow_regex`) | registers a regex allow list before any line is read |
+| `MacieAllowWords` (`macie_allow_words`) | registers a text allow list, from `load_list()`, before any line is read |
+| `MacieGroupLoader` | the Macie side of a group load: convert a wrapper file, store its text lists, refuse shared ids and conflicting lists |
 | `MacieCdi` (`macie_cdi`) | applies a custom identifier to every cell; matches lines with an occurrence |
 | `MacieReport` (`macie_report`) | summary and `macie_findings`, once |
 
@@ -312,7 +317,7 @@ The CVL functions are listed in
 `csvpath/matching/functions/internal.imports` and imported on first use.
 `tests/macie/test_macie_functions.py` covers them one behavior at a time;
 `tests/macie/test_macie_normative_runs.py` runs each pair's expected
-csvpath through real CVL. Not yet written: `macie_allow_words`.
+csvpath through real CVL.
 
 `tests/macie/test_macie_pair_semantics.py` runs every normative pair's
 data through these classes, without CVL, and checks the pair's expected
@@ -547,6 +552,47 @@ written. Two csvpaths with one id would scan twice and blur whose findings
 are whose. Duplicate ids among non-Macie csvpaths are still allowed: there
 they are housekeeping, and teams reuse building-block csvpaths across
 groups. (David, 2026-10-31.)
+
+## Text allow lists
+
+A text allow list's entries are in the wrapper (`contents.entries`,
+downloaded from S3). There can be 100,000 of them, so they are not written
+into the csvpath. The csvpath loads them by the allow list's Macie id:
+
+```
+macie_allow_words.nocontrib("contractors", load_list("c0n7r4a1c7o9r5s3a6l0lw"))
+```
+
+- **The id, not the name, is the list name.** Ids are short, stable and
+  safe as file names; names may hold characters a list name can't.
+  `PathsAssetManager.check_list_name()` checks it, and the conversion
+  fails if it can't be a list name.
+- **In a group, the list is `assets/<id>.txt`.** The load order is:
+  convert, refuse a shared csvpath id, refuse a conflicting list (below),
+  `configure_named_paths()` if the group is new, `store_list()` for each
+  list, then load the csvpath. Both refusals come before anything is
+  written. `load_list()` reads the list once, when the csvpath is
+  validated; a missing list is an error then, and the csvpath is invalid
+  (it does not run as if it had no allow list).
+- **Stand-alone** (`convert(path=...)`), the caller passes `list_dir` and
+  writes `conversion.lists` there; `load_list()` then reads
+  `<list_dir>/<id>.txt`. Without `list_dir` the conversion fails.
+- **An unreadable list** (status other than `OK` at download) is reported
+  as `allowList.s3WordsList.unreadable` and nothing is stored: alert and
+  continue, as in David's notes. Its identifiers still run.
+- **The report** (`<file>.report.json`) records each stored list's id and
+  entry count, not its entries.
+- **A conflicting list is refused.** When appending, a list already in the
+  group with the same id and different entries is an error: replacing it
+  would change what the group's earlier csvpaths allow, and that could
+  open a compliance gap. The same entries are fine. Without append the
+  group's csvpaths are replaced, so its lists are too. The check is on the
+  list file, whoever wrote it. (David, 2026-11-03.)
+- Entries are compared and allowed as Macie does: the occurrence text
+  equals an entry, ignoring case.
+
+Normative pair `09_text_allow_list` covers it; `tests/csvpaths/test_csvpaths_macie.py`
+loads and runs it as a group.
 
 ## Decided 2026-10-30 (David)
 

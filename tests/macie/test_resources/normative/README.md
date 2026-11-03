@@ -36,7 +36,7 @@ Design decisions are in `specs/macie/transpile-design.md`.
   header and before and after the number in a cell, a keyword too far
   away, grouped numbers, two cards in one cell, a bad check digit, a Luhn
   number with no brand prefix, an issuer test number, a regex allow list,
-  and a 20-digit run. A text allow list waits for `load_list()` (#470).
+  and a 20-digit run.
 - `03_breaker`: two custom identifiers, `max_findings` 5 and a detail cap
   of 2. The global breaker trips between two occurrences in one cell; the
   second identifier is not applied on that line; the run stops, and the
@@ -66,3 +66,9 @@ Design decisions are in `specs/macie/transpile-design.md`.
   reported); the UK sort code and account; a bad RIB key and bad Spanish
   check digits; IBANs with and without a keyword (always reported); and a
   German IBAN and BBAN in one cell.
+- `09_text_allow_list`: pair 01's data and custom identifier with a text
+  allow list as well as the regex one. The list is loaded with
+  `load_list()` by its Macie id; an entry in another case still allows,
+  one allowed occurrence leaves a line with no finding, and another
+  leaves a second occurrence in the same cell. The normative runs write
+  the list to a temp dir; in a group it is `assets/<id>.txt`.

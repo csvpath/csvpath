@@ -373,9 +373,14 @@ class PathsManager:
             elif self._is_macie_path(file_path):
                 #
                 # macie wrapper. like an ODCS contract: copied into the group
-                # home, with its conversion report next to it
+                # home, with its conversion report next to it. its text allow
+                # lists go in the group's assets first, since load_list()
+                # reads them when the csvpath is validated. both checks run
+                # before anything is written
                 #
-                paths, report = self._get_csvpaths_from_macie(file_path)
+                paths, report, lists = self._get_csvpaths_from_macie(file_path)
+                self._refuse_shared_macie_ids(name=name, paths=paths, append=append)
+                self._store_macie_lists(name=name, lists=lists, append=append)
             else:
                 #
                 # regular path
@@ -979,11 +984,13 @@ class PathsManager:
             raise ValueError("Path cannot be None")
         return path.endswith(cls.MACIE_SUFFIX)
 
-    def _get_csvpaths_from_macie(self, file_path: str) -> tuple[list[Csvpath], dict]:
+    def _get_csvpaths_from_macie(
+        self, file_path: str
+    ) -> tuple[list[Csvpath], dict, dict[str, list[str]]]:
         #
-        # returns the csvpath and the conversion report. one wrapper is one
-        # csvpath. imported here so that loading CsvPaths does not load the
-        # Macie package unless needed.
+        # returns the csvpath, the conversion report and the text allow
+        # lists. one wrapper is one csvpath. imported here so that loading
+        # CsvPaths does not load the Macie package unless needed.
         #
         if file_path is None or str(file_path).strip() == "":
             raise ValueError("Macie wrapper file path cannot be None or empty")
@@ -991,6 +998,22 @@ class PathsManager:
 
         return MacieGroupLoader.convert_file(
             path=file_path, config=self.csvpaths.config
+        )
+
+    def _store_macie_lists(
+        self, *, name: NamedPathsName, lists: dict[str, list[str]], append: bool
+    ) -> None:
+        #
+        # a wrapper's text allow lists go in the group's assets before its
+        # csvpath is loaded. nothing to do, and no Macie import, when there
+        # are none
+        #
+        if not lists:
+            return
+        from csvpath.macie.macie_group_loader import MacieGroupLoader
+
+        MacieGroupLoader.store_lists(
+            paths_manager=self, name=name, lists=lists, append=append
         )
 
     def _refuse_shared_macie_ids(

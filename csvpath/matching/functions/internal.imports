@@ -15,3 +15,4 @@ from csvpath.macie.functions.macie_allow import MacieAllowRegex as macie_allow_r
 from csvpath.macie.functions.macie_cdi import MacieCdi as macie_cdi
 from csvpath.macie.functions.macie_report import MacieReport as macie_report
 from csvpath.macie.functions.macie_mdi import MacieMdi as macie_mdi
+from csvpath.macie.functions.macie_allow import MacieAllowWords as macie_allow_words
