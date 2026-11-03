@@ -243,6 +243,59 @@
         "iban",
         "sepa"
       ]
+    },
+    "es_dni": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "dni",
+        "dni#",
+        "dninúmero#",
+        "documento nacional de identidad",
+        "identidad único",
+        "identidadúnico#",
+        "insurance number",
+        "national identification number",
+        "national identity",
+        "nationalid#",
+        "nationalidno#",
+        "número nacional identidad",
+        "personal identification number",
+        "personal identity no",
+        "unique identity number",
+        "uniqueid#"
+      ]
+    },
+    "es_tax": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "cif",
+        "cif número",
+        "cifnúmero#",
+        "nie",
+        "nif",
+        "número de contribuyente",
+        "número de identidad de extranjero",
+        "número de identificación fiscal",
+        "número de impuesto corporativo",
+        "personal tax number",
+        "tax id",
+        "tax identification number",
+        "tax number",
+        "tin",
+        "tin#"
+      ]
+    },
+    "in_aadhaar": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "aadhaar",
+        "aadhar",
+        "adhaar",
+        "uidai"
+      ]
     }
   },
   "identifiers": {
@@ -939,6 +992,39 @@
       "fidelity": "A",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
       "retrieved": "2026-11-02"
+    },
+    "SPAIN_DNI_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "es_dni",
+      "keyword_mode": "required",
+      "keywords_from": "es_dni",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
+    },
+    "SPAIN_NIE_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "es_nie",
+      "keyword_mode": "required",
+      "keywords_from": "es_tax",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
+    },
+    "INDIA_AADHAAR_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "in_aadhaar",
+      "keyword_mode": "required",
+      "keywords_from": "in_aadhaar",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
     }
   },
   "detectors": {
@@ -1404,6 +1490,39 @@
           ]
         }
       }
+    },
+    "es_dni": {
+      "notes": [
+        "Macie publishes the keywords for SPAIN_DNI_NUMBER, and that 99999999, 99.999.999 and all zeroes are never reported. It also says it may report an Argentina DNI as a Spain DNI, or the other way around.",
+        "The format is ours, from Spain's Ministerio del Interior: 8 digits, optionally dotted, and a control letter (mod 23), optionally after a hyphen or space. We require the letter, so an Argentina DNI (digits only) is not reported; Macie's exclusions suggest it may accept digits alone. Fidelity B until the fidelity scan."
+      ],
+      "form": "dni"
+    },
+    "es_nie": {
+      "notes": [
+        "Macie publishes only the keywords for SPAIN_NIE_NUMBER: Spain's taxpayer list, shared with NIF and CIF.",
+        "The format is ours, from Spain's Ministerio del Interior: X, Y or Z, 7 digits and a control letter, the DNI's mod 23 with X, Y and Z as 0, 1 and 2. A hyphen or space may follow the first letter and precede the last. All zeroes are never reported, as Macie says of several taxpayer numbers."
+      ],
+      "form": "nie"
+    },
+    "in_aadhaar": {
+      "notes": [
+        "Macie publishes only the keywords for INDIA_AADHAAR_NUMBER. The format is ours, from UIDAI: 12 digits, the last a Verhoeff check digit, never starting with 0 or 1, printed 4-4-4."
+      ],
+      "length": 12,
+      "layouts": [
+        [
+          4,
+          4,
+          4
+        ]
+      ],
+      "check": "verhoeff",
+      "first_digit_not": [
+        "0",
+        "1"
+      ],
+      "exclusions": []
     }
   }
 }

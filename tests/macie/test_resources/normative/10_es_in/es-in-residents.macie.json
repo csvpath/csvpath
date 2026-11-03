@@ -1,0 +1,81 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "eu-west-1",
+    "downloaded_at": "2026-11-03T15:30:00Z",
+    "job_id": "3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "SPAIN_DNI_NUMBER",
+      "SPAIN_NIE_NUMBER",
+      "INDIA_AADHAAR_NUMBER"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "SPAIN_DNI_NUMBER",
+      "SPAIN_NIE_NUMBER",
+      "INDIA_AADHAAR_NUMBER"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "SPAIN_DNI_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "SPAIN_NIE_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "INDIA_AADHAAR_NUMBER"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Resident records, Spain and India",
+      "jobArn": "arn:aws:macie2:eu-west-1:123456789012:classification-job/3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c",
+      "jobId": "3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "SPAIN_DNI_NUMBER",
+        "SPAIN_NIE_NUMBER",
+        "INDIA_AADHAAR_NUMBER"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "es-in-residents",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-residents"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

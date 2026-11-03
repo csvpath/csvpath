@@ -140,6 +140,65 @@ class ChecksumUtility:
 
         return f"{digit('00' + bban[:8])}{digit(bban[10:])}" == bban[8:10]
 
+    #
+    # Verhoeff's dihedral group D5: the multiplication table, and the
+    # permutation applied by position
+    #
+    VERHOEFF_D = (
+        (0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
+        (1, 2, 3, 4, 0, 6, 7, 8, 9, 5),
+        (2, 3, 4, 0, 1, 7, 8, 9, 5, 6),
+        (3, 4, 0, 1, 2, 8, 9, 5, 6, 7),
+        (4, 0, 1, 2, 3, 9, 5, 6, 7, 8),
+        (5, 9, 8, 7, 6, 0, 4, 3, 2, 1),
+        (6, 5, 9, 8, 7, 1, 0, 4, 3, 2),
+        (7, 6, 5, 9, 8, 2, 1, 0, 4, 3),
+        (8, 7, 6, 5, 9, 3, 2, 1, 0, 4),
+        (9, 8, 7, 6, 5, 4, 3, 2, 1, 0),
+    )
+    VERHOEFF_P = (
+        (0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
+        (1, 5, 7, 6, 2, 8, 3, 0, 9, 4),
+        (5, 8, 0, 3, 7, 9, 6, 1, 4, 2),
+        (8, 9, 1, 6, 0, 4, 3, 5, 2, 7),
+        (9, 4, 5, 3, 1, 2, 6, 8, 7, 0),
+        (4, 2, 8, 6, 5, 7, 3, 9, 0, 1),
+        (2, 7, 9, 3, 8, 0, 6, 4, 1, 5),
+        (7, 0, 4, 6, 9, 1, 3, 2, 5, 8),
+    )
+
+    @classmethod
+    def verhoeff(cls, *, digits: str) -> bool:
+        """True if a string of ASCII digits, its last digit the check
+        digit, passes the Verhoeff check, as India's Aadhaar numbers do"""
+        if not isinstance(digits, str):
+            raise TypeError(f"digits must be a str, not {type(digits)}")
+        if len(digits) < 2 or not (digits.isascii() and digits.isdigit()):
+            raise ValueError(f"digits must be two or more ASCII digits, not {digits!r}")
+        c = 0
+        for i, ch in enumerate(reversed(digits)):
+            c = cls.VERHOEFF_D[c][cls.VERHOEFF_P[i % 8][int(ch)]]
+        return c == 0
+
+    ES_ID_LETTERS = "TRWAGMYFPDXBNJZSQVHLCKE"
+    ES_NIE_LEADS = {"X": "0", "Y": "1", "Z": "2"}
+
+    @classmethod
+    def es_id_letter(cls, *, number: str) -> str:
+        """the control letter of a Spanish DNI (8 digits) or NIE (X, Y or
+        Z and 7 digits): the number mod 23 indexes TRWAGMYFPDXBNJZSQVHLCKE.
+        For a NIE, X, Y and Z count as 0, 1 and 2."""
+        if not isinstance(number, str):
+            raise TypeError(f"number must be a str, not {type(number)}")
+        text = number.upper()
+        if len(text) == 8 and text[0] in cls.ES_NIE_LEADS:
+            text = cls.ES_NIE_LEADS[text[0]] + text[1:]
+        if len(text) != 8 or not (text.isascii() and text.isdigit()):
+            raise ValueError(
+                f"number must be 8 digits, or X, Y or Z and 7 digits, not {number!r}"
+            )
+        return cls.ES_ID_LETTERS[int(text) % 23]
+
     @classmethod
     def _digits(cls, *, digits: str, length: int) -> None:
         if not isinstance(digits, str):
@@ -152,6 +211,7 @@ class ChecksumUtility:
         "nhs_mod11": "nhs_mod11",
         "cpf_mod11": "cpf_mod11",
         "cnpj_mod11": "cnpj_mod11",
+        "verhoeff": "verhoeff",
     }
 
     @classmethod

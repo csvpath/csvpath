@@ -35,10 +35,10 @@ last. Add an item the moment something is deferred.
    02_credit_card. Second batch done: US SSN and NPI, pair 04_us_ids.
    Third batch done: IBANs, all 52 countries, pair 05_iban. Fourth batch
    done: Canada SIN, UK NHS, VIN, pair 06_sin_nhs_vin. Fifth batch done:
-   Brazil CPF and CNPJ, Chile RUT, Argentina SUBE, pair 07_latam. More
-   group A identifiers next (e.g. Spain DNI/NIE check letter, India
-   Aadhaar Verhoeff, Italy Codice Fiscale, France INSEE, Mexico CURP),
-   each a catalog entry plus a detector.
+   Brazil CPF and CNPJ, Chile RUT, Argentina SUBE, pair 07_latam. Sixth
+   batch done: Spain DNI and NIE, India Aadhaar, pair 10_es_in. Next
+   batch: France INSEE, Mexico CURP, Italy Codice Fiscale, each a new
+   detector.
 4b. ~~**BBANs for France, Germany, Italy, Spain and the UK**~~ Done: the
    bank detector, pair 08_bban. The five identifiers are no longer
    partially translated. Italy's CIN letter is not checked (rule not
