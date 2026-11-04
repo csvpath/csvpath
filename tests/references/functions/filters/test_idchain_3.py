@@ -2,7 +2,7 @@ import pytest
 
 from csvpath.references.functions.function_3 import Function3
 from csvpath.references.functions.filters.idchain_3 import Idchain3
-from csvpath.references.functions.filters.not_none_3 import NotNone3
+from csvpath.references.functions.filters.has_value_3 import HasValue3
 from csvpath.references.functions.filters.predicate_function_3 import (
     PredicateFunction3,
 )
@@ -65,7 +65,7 @@ class TestMatches:
 
     def test_predicate_function_arg_delegates_to_its_own_matches(self):
         # compendium 5.36/4.13's own settled example --
-        # ":idchain(:not_none())" means "any idchain at all".
-        idchain = Idchain3(arg=NotNone3())
+        # ":idchain(:has_value())" means "any idchain at all".
+        idchain = Idchain3(arg=HasValue3())
         assert idchain.matches("add[0]string[2]") is True
         assert idchain.matches(None) is False

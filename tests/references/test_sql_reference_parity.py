@@ -184,15 +184,15 @@ FILES = [
     "$*.files.:flatten()",
     "$*.files.:flatten().:last()",
     "$*.files.:groups().:last()",
-    "$*.files.:template(:not_empty())",
+    "$*.files.:template(:has_value())",
     #
     # the predicate examples, rewritten 2026-11-03 (NRE 178-209), and a
     # bare definition field as a ':definition()' chain
     #
-    "$*.files.:flatten().:template(:not_empty())",
-    "$*.files.:flatten().:template(:not_empty()):template()",
-    '$*.files.:flatten().:status("complete"):template(:empty())',
-    "$*.files.:definition(:template(:not_none())):template()",
+    "$*.files.:flatten().:template(:has_value())",
+    "$*.files.:flatten().:template(:has_value()):template()",
+    '$*.files.:flatten().:status("complete"):template(:does_not_have_value())',
+    "$*.files.:definition(:template(:has_value())):template()",
     "$*.files.:template()",
     "$:regex(/^o/).files.:flatten()",
     "$:regex(/^p/).files.:all()",
@@ -244,9 +244,9 @@ FILES = [
     # E3 (2026-11-02): ':definition()' with fields
     #
     "$orders.files.:definition():template()",
-    "$orders.files.:definition(:template(:not_none()))",
+    "$orders.files.:definition(:template(:has_value()))",
     "$*.files.:definition():template()",
-    "$*.files.:definition(:template(:not_none()))",
+    "$*.files.:definition(:template(:has_value()))",
     "$:regex(/^o/).files.:definition():template()",
 ]
 
@@ -660,12 +660,12 @@ def test_definition_chains_on_a_real_filesystem(paths):
     try:
         finder = _finder("$people.files.:definition():template()")
         assert [r.data for r in finder.resolve().results] == ["people/:filename"]
-        finder = _finder("$people.files.:definition(:template(:not_none()))")
+        finder = _finder("$people.files.:definition(:template(:has_value()))")
         results = finder.resolve().results
         assert len(results) == 1
         with open(results[0].path, "rb") as f:
             assert results[0].data == f.read()
-        finder = _finder("$*.files.:definition(:template(:not_none()))")
+        finder = _finder("$*.files.:definition(:template(:has_value()))")
         home = paths.file_manager.named_file_home("people")
         assert finder.query().files == [Nos(home).join("definition.json")]
         #
@@ -673,7 +673,7 @@ def test_definition_chains_on_a_real_filesystem(paths):
         # a filter resolves to the file, under '*' too, and a value is
         # read through ':choice()'.
         #
-        finder = _finder("$*.files.:template(:not_none())")
+        finder = _finder("$*.files.:template(:has_value())")
         results = finder.resolve().results
         assert len(results) == 1
         with open(results[0].path, "rb") as f:

@@ -28,7 +28,7 @@ class Message3(Function3):
     SUMMARY = (
         "Addresses errors.json entries by their own \"message\" field, "
         "either an exact match (a plain string), a search (a /regex/), "
-        "or a predicate function (e.g. :not_none()) -- only meaningful "
+        "or a predicate function (e.g. :has_value()) -- only meaningful "
         "nested inside :errors()."
     )
     ROLE = Function3.VALUE
@@ -54,7 +54,7 @@ class Message3(Function3):
     def matches(self, value: str) -> bool:
         """true if `value` (an error entry's own "message" string)
         matches this function's arg -- a nested predicate function's
-        own matches() (e.g. :not_none() -- "any message at all"), exact
+        own matches() (e.g. :has_value() -- "any message at all"), exact
         equality for a plain string, or a regex search (not anchored to
         the start/whole string) when the arg is a Regex3. Identical
         logic to Idchain3.matches() -- kept as its own copy rather than

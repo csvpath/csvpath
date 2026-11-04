@@ -40,7 +40,7 @@ class Errors3(Function3):
     # The GATE half, shipped 2026-10-17, is a *separate* :idchain(...)
     # (currently only :idchain(), see _apply_errors_gate's own docstring)
     # CHAINED AFTER :errors() in the same func_chain, not nested inside
-    # it -- e.g. ":errors():idchain(:not_none())". There, the gate's own
+    # it -- e.g. ":errors():idchain(:has_value())". There, the gate's own
     # predicate decides whether :errors()'s WHOLE, unfiltered result is
     # returned at all -- not which entries survive. Chained position,
     # not nesting, is what signals "gate the function before me" instead

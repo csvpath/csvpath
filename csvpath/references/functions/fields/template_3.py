@@ -53,9 +53,9 @@ class Template3(Function3):
     #
     # widened 2026-10-21 to accept a PredicateFunction3 -- mirrors
     # OnArrival3's own identical widening (2026-10-17) for the exact
-    # same reason: FILES' bare ':template(:not_empty())'/
-    # ':template(:empty())' (normative_reference_examples.txt lines
-    # 193/197) were being rejected by _build() before
+    # same reason: FILES' bare ':template(:has_value())'/
+    # ':template(:does_not_have_value())' (normative_reference_examples.txt,
+    # predicate section) were being rejected by _build() before
     # FilesReferenceFinder3 got a chance to apply the predicate (a bare
     # ':template(...)' is a one-field ':definition()' chain since
     # 2026-11-03). CSVPATHS/RESULTS have no

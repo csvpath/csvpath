@@ -289,7 +289,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         definition_calls = self._definition_chain(name_one=name_one)
         if definition_calls is not None:
             # ':definition()' with fields, e.g. ':definition():on_arrival()'
-            # or ':definition(:on_arrival(:not_none()))' (compendium 6.19,
+            # or ':definition(:on_arrival(:has_value()))' (compendium 6.19,
             # E3, 2026-11-02).
             return self._query_definition_chain(
                 reference=reference, calls=definition_calls, name_filter=None
@@ -1143,7 +1143,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if definition_calls is not None:
             # ':definition()' with fields over each live named-file, e.g.
             # compendium 6.35's '$*.files.:definition(:on_arrival(
-            # :not_none()))' (E3, 2026-11-02).
+            # :has_value()))' (E3, 2026-11-02).
             return self._query_definition_chain(
                 reference=reference, calls=definition_calls, name_filter=name_filter
             )
@@ -2098,7 +2098,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
     def _matches_definition_field_predicate(self, name: str, field_call) -> bool:
         """true if `name`'s own definition.json has `field_call`'s own
         field, and that value satisfies `field_call.arg`'s own predicate
-        (e.g. ':not_none()') -- the generic predicate-argument filtering
+        (e.g. ':has_value()') -- the generic predicate-argument filtering
         mechanism, added 2026-10-17 (deferred-work bucket list's own
         "Predicate-argument field accessors" entry). `field_call` is
         already a real, validated Function3 instance by the time this
@@ -2386,13 +2386,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
         """the definition.json field calls of a ':definition()' chain in
         name_one, chained or nested as its argument, e.g.
         ':definition():on_arrival()' or
-        ':definition(:on_arrival(:not_none()))' (E3, 2026-11-02). Like
+        ':definition(:on_arrival(:has_value()))' (E3, 2026-11-02). Like
         ':manifest()', ':definition()' names one file per named-file, and
         definition.json has no file home or version, so the chain only
         reads and filters that one record.
 
         A bare definition field is the same one-field chain:
-        ':template(:not_none())' is ':definition(:template(:not_none()))'
+        ':template(:has_value())' is ':definition(:template(:has_value()))'
         and ':template()' is ':definition():template()' (2026-11-03). A
         filter then resolves to the definition.json (D) and a value is
         read per named-file under every root.
@@ -2450,7 +2450,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
     def _split_definition_fields(self, *, calls: list) -> tuple:
         """(filters, values) of a ':definition()' chain's field calls. A
-        field with a predicate argument (':on_arrival(:not_none())') is a
+        field with a predicate argument (':on_arrival(:has_value())') is a
         filter, built; any other field is a value, as written. Its
         argument, if any, picks a key (':source_port("email")'). The same
         test the bare definition fields use."""

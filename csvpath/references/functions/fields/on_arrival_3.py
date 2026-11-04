@@ -15,9 +15,9 @@ class OnArrival3(Function3):
     #
     # ARG_TYPES widened to accept a PredicateFunction3 -- added
     # 2026-10-17, the generic predicate-argument filtering mechanism's
-    # own original motivating worked example: ":on_arrival(:not_none())"
+    # own original motivating worked example: ":on_arrival(:has_value())"
     # nested inside ":definition(...)" during '*' traversal
-    # ("$*.files.:definition(:on_arrival(:not_none()))" -- "which
+    # ("$*.files.:definition(:on_arrival(:has_value()))" -- "which
     # named-files have on_arrival set"). See Definition3's own
     # check_valid() for the cross-validation that this nested shape must
     # satisfy, and FilesReferenceFinder3._matches_definition_field_
@@ -33,7 +33,7 @@ class OnArrival3(Function3):
         "which named-paths group and run method to trigger automatically "
         "when a new version arrives, read from definition.json. None if "
         "the named-file was never configured for this. May itself take a "
-        "predicate argument (e.g. :not_none()) when nested inside "
+        "predicate argument (e.g. :has_value()) when nested inside "
         ":definition(...) during '*' traversal, filtering which named-"
         "files survive rather than reading a value."
     )

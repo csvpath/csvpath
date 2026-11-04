@@ -824,32 +824,43 @@ def _predicate_finder(reference: str, tmp_path) -> FilesReferenceFinder3:
 
 
 class TestPredicateSupportExamples:
-    def test_not_none_named_files_with_an_arrival_activation(self, tmp_path):
+    def test_has_value_named_files_with_an_arrival_activation(self, tmp_path):
         # "Select the definition.json of each named-file that has an
         # arrival activation set." a filter supplies no value (D), so
         # resolve gives the file.
-        finder = _predicate_finder("$*.files.:on_arrival(:not_none())", tmp_path)
+        finder = _predicate_finder("$*.files.:on_arrival(:has_value())", tmp_path)
         results = finder.query()
         assert results.files == [str(tmp_path / "orders" / "definition.json")]
         assert json.loads(finder.resolve().results[0].data) == {
             "on_arrival": {"named_paths_name": "checks"}
         }
 
-    def test_not_none_default_templates(self, tmp_path):
+    def test_has_value_default_templates(self, tmp_path):
         # "Get the default template of each named-file that has one."
-        reference = "$*.files.:definition(:template(:not_none())):template()"
+        reference = "$*.files.:definition(:template(:has_value())):template()"
         results = _predicate_finder(reference, tmp_path).resolve()
         assert [r.data for r in results.results] == [":4/:filename"]
 
-    def test_not_empty_lets_a_missing_default_through(self, tmp_path):
-        # why the default-template example uses ':not_none()': a missing
-        # key is None, which matches ':none()', not ':empty()'.
-        reference = "$*.files.:definition(:template(:not_empty()))"
-        results = _predicate_finder(reference, tmp_path).query()
-        assert len(results.results) == 2
+    def test_a_missing_default_does_not_have_value(self, tmp_path):
+        # orders has no default template (no key); invoices has one. The
+        # retired ':not_empty()' let the missing default through, which is
+        # why this example once needed ':not_none()' (compendium 6.36).
+        has = "$*.files.:definition(:template(:has_value()))"
+        assert _predicate_finder(has, tmp_path).query().files == [
+            str(tmp_path / "invoices" / "definition.json")
+        ]
+        does_not = "$*.files.:definition(:template(:does_not_have_value()))"
+        assert _predicate_finder(does_not, tmp_path).query().files == [
+            str(tmp_path / "orders" / "definition.json")
+        ]
 
-    def test_empty_complete_registrations_with_no_template(self, tmp_path):
-        reference = '$*.files.:flatten().:status("complete"):template(:empty())'
+    def test_does_not_have_value_complete_registrations_with_no_template(
+        self, tmp_path
+    ):
+        reference = (
+            '$*.files.:flatten().:status("complete")'
+            ":template(:does_not_have_value())"
+        )
         finder = _predicate_finder(reference, tmp_path)
         assert sorted(finder.query().uuids) == ["i-plain", "o-plain"]
         assert sorted(r.data for r in finder.resolve().results) == [
@@ -857,19 +868,19 @@ class TestPredicateSupportExamples:
             b"o-plain\n",
         ]
 
-    def test_not_empty_registrations_that_used_a_template(self, tmp_path):
+    def test_has_value_registrations_that_used_a_template(self, tmp_path):
         finder = _predicate_finder(
-            "$*.files.:flatten().:template(:not_empty())", tmp_path
+            "$*.files.:flatten().:template(:has_value())", tmp_path
         )
         assert finder.query().uuids == ["o-tmpl"]
         assert finder.resolve().results[0].data == b"o-tmpl\n"
 
-    def test_not_empty_the_templates_those_registrations_used(self, tmp_path):
-        reference = "$*.files.:flatten().:template(:not_empty()):template()"
+    def test_has_value_the_templates_those_registrations_used(self, tmp_path):
+        reference = "$*.files.:flatten().:template(:has_value()):template()"
         results = _predicate_finder(reference, tmp_path).resolve()
         assert [r.data for r in results.results] == [":4/:5/:filename"]
 
     def test_star_alone_misses_a_templated_registration(self, tmp_path):
         # '*' is exactly one level; the templated registration is deeper.
-        reference = "$*.files.*.:template(:not_empty())"
+        reference = "$*.files.*.:template(:has_value())"
         assert _predicate_finder(reference, tmp_path).query().results == []
