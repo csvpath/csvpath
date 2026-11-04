@@ -44,10 +44,11 @@ last. Add an item the moment something is deferred.
    TFNs), UK UTR (partial: no TRNs), pair 12_tax_ids. Ninth batch done:
    Spain NIF and CIF, Mexico RFC and Colombia NIT (each for individuals
    and organizations), France TIN, pair 13_tax_ids_2; the splits agreed
-   with David on 2026-11-03. Next, still before group B (David: clear
-   the decks of similar work): maybe the Germany national id card and
-   the US DEA number; list the rest of Macie's check-digit identifiers
-   with David first.
+   with David on 2026-11-03. Credentials done: all nine of Macie's
+   credential identifiers, pair 14_credentials. Group A left: the
+   Germany national id card, the US DEA number, US ITIN, Medicare MBI.
+   Then group B (David, 2026-11-03: either order, as long as both get
+   done).
 4b. ~~**BBANs for France, Germany, Italy, Spain and the UK**~~ Done: the
    bank detector, pair 08_bban. The five identifiers are no longer
    partially translated. Italy's CIN letter is not checked (rule not
@@ -61,7 +62,31 @@ last. Add an item the moment something is deferred.
    (#499) and `configure_named_paths()` (#502); lists stored in the group's
    assets on load; a conflicting list on append is refused. Pair
    09_text_allow_list.
-6. **Managed identifiers, group B** (format plus keyword).
+6. **Managed identifiers still to build** (inventory from Macie's PII,
+   PHI, financial and credentials pages, 2026-11-04). Group A has a check
+   or a fixed structure; group B is format plus keyword; group C needs
+   ML or a gazetteer.
+   - **Group A, health and payments:** US DEA number (check digit),
+     Medicare MBI (fixed positions), US ITIN (9xx with set middle
+     ranges), HICN (an SSN plus a beneficiary code), NDC (10 digits,
+     4-4-2 / 5-3-2 / 5-4-1), HCPCS (a letter and 4 digits), UDI (GS1,
+     HIBCC, ICCBBA formats with check characters), France health
+     insurance number (the NIR, reusing `fr_nir` with health keywords),
+     Canada health number (by province), EHIC card numbers (EU and
+     Finland), credit card magnetic stripe (tracks 1 and 2, Luhn PAN).
+   - **Group A, other:** Germany national id card (Personalausweis,
+     7-3-1 check digits).
+   - **Group B:** driver's licenses (32 identifiers; the US one covers
+     50+ state formats), passports (7), phone numbers (7), UK NINO, UK
+     electoral roll, Canada permanent resident card, India PAN, Brazil RG,
+     Argentina DNI, Colombia cedula, US and Canada bank account numbers
+     (9-17 digits, no spaces), credit card expiration and security code,
+     birth dates, GPS coordinates, HTTP cookies, Brazil CEP codes.
+   - **Group C, report as not supported:** NAME and ADDRESS.
+   Order (David, 2026-11-04: either order is fine as long as both get
+   done): finish group A first, as it reuses the existing detectors,
+   then group B after a design pass with David on a generic pattern
+   detector.
 7. **boto3 download** into a wrapper. Needs an AWS account, region and
    permissions agreed with David first.
 8. **One-time fidelity scan against real Macie** (billed; ask first) to
