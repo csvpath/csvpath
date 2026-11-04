@@ -185,6 +185,15 @@ FILES = [
     "$*.files.:flatten().:last()",
     "$*.files.:groups().:last()",
     "$*.files.:template(:not_empty())",
+    #
+    # the predicate examples, rewritten 2026-11-03 (NRE 178-209), and a
+    # bare definition field as a ':definition()' chain
+    #
+    "$*.files.:flatten().:template(:not_empty())",
+    "$*.files.:flatten().:template(:not_empty()):template()",
+    '$*.files.:flatten().:status("complete"):template(:empty())',
+    "$*.files.:definition(:template(:not_none())):template()",
+    "$*.files.:template()",
     "$:regex(/^o/).files.:flatten()",
     "$:regex(/^p/).files.:all()",
     "$people.files.:all()",
@@ -659,5 +668,17 @@ def test_definition_chains_on_a_real_filesystem(paths):
         finder = _finder("$*.files.:definition(:template(:not_none()))")
         home = paths.file_manager.named_file_home("people")
         assert finder.query().files == [Nos(home).join("definition.json")]
+        #
+        # a bare definition field is the same one-field chain (2026-11-03):
+        # a filter resolves to the file, under '*' too, and a value is
+        # read through ':choice()'.
+        #
+        finder = _finder("$*.files.:template(:not_none())")
+        results = finder.resolve().results
+        assert len(results) == 1
+        with open(results[0].path, "rb") as f:
+            assert results[0].data == f.read()
+        finder = _finder('$:choice("people").files.:template()')
+        assert [r.data for r in finder.resolve().results] == ["people/:filename"]
     finally:
         describer.store_json("people", original)

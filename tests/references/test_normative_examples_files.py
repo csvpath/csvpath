@@ -32,12 +32,15 @@ from csvpath.references.files_reference_finder_3 import FilesReferenceFinder3
 
 
 class _FakeFileDescriber:
-    def __init__(self, definition: dict):
+    def __init__(self, definition: dict, definitions: dict | None = None):
         self._definition = definition
+        self._definitions = definitions
 
     def get_config(self, name):
         from csvpath.managers.files.file_descriptor import Config
 
+        if self._definitions is not None:
+            return Config(**self._definitions.get(name, {}))
         return Config(**self._definition)
 
 
@@ -49,12 +52,14 @@ class _FakeFileManager:
         definition: dict | None = None,
         ledger=None,
         by_name: dict | None = None,
+        definitions: dict | None = None,
     ):
         self._home = home
         self._manifest = manifest
         self._definition = definition or {}
         self._ledger = manifest if ledger is None else ledger
         self._by_name = by_name
+        self._definitions = definitions
 
     def named_file_home(self, name):
         if self._by_name is not None:
@@ -78,7 +83,7 @@ class _FakeFileManager:
 
     @property
     def describer(self):
-        return _FakeFileDescriber(self._definition)
+        return _FakeFileDescriber(self._definition, self._definitions)
 
 
 class _FakeConfig:
@@ -100,9 +105,17 @@ def _finder(
     inputs_files_path: str | None = None,
     ledger: list | None = None,
     by_name: dict | None = None,
+    definitions: dict | None = None,
 ) -> FilesReferenceFinder3:
     csvpaths = _FakeCsvPaths(
-        _FakeFileManager(home, manifest, definition, ledger=ledger, by_name=by_name),
+        _FakeFileManager(
+            home,
+            manifest,
+            definition,
+            ledger=ledger,
+            by_name=by_name,
+            definitions=definitions,
+        ),
         inputs_files_path=inputs_files_path,
     )
     ref = ReferenceParser3(string=reference, csvpaths=csvpaths)
@@ -753,3 +766,110 @@ class TestFunctionalTaxonomyGatesAndSelectors:
         ).query()
         assert results.uuids == ["fail-1"]
         assert results.files == ["inputs/named_files/manifest.json"]
+
+
+def _predicate_finder(reference: str, tmp_path) -> FilesReferenceFinder3:
+    """the doc's "## Predicate support functions" FILES examples (NRE
+    lines 178-209), rewritten 2026-11-03. orders has a plain registration,
+    a templated one two levels deeper, and a failed one; invoices has one
+    plain registration. A plain registration records template '' in its
+    manifest.json entry. Only invoices has a default template in its
+    definition.json, and only orders has an arrival activation; a
+    named-file with no default has no "template" key at all."""
+    by_name = {}
+    for name, entries in {
+        "orders": [
+            ("orders.csv", "o-plain", "", "complete"),
+            ("2026/01/orders.csv", "o-tmpl", ":4/:5/:filename", "complete"),
+            ("orders.csv", "o-failed", "", "failed"),
+        ],
+        "invoices": [("invoices.csv", "i-plain", "", "complete")],
+    }.items():
+        home = tmp_path / name
+        manifest = []
+        for i, (sub, uuid, template, status) in enumerate(entries):
+            file_home = home / sub
+            file_home.mkdir(parents=True, exist_ok=True)
+            path = file_home / f"{uuid}.csv"
+            path.write_text(f"{uuid}\n", encoding="utf-8")
+            manifest.append(
+                {
+                    "file": str(path),
+                    "file_home": str(file_home),
+                    "uuid": uuid,
+                    "template": template,
+                    "status": status,
+                    "time": f"2026-01-0{i + 1}T00:00:00+00:00",
+                }
+            )
+        by_name[name] = (str(home), manifest)
+    definitions = {
+        "orders": {"on_arrival": {"named_paths_name": "checks"}},
+        "invoices": {"template": ":4/:filename"},
+    }
+    for name, definition in definitions.items():
+        (tmp_path / name / "definition.json").write_text(
+            json.dumps(definition), encoding="utf-8"
+        )
+    return _finder(
+        reference,
+        by_name["orders"][0],
+        by_name["orders"][1],
+        # the global arrivals ledger holds every registration; ':status()'
+        # reads it.
+        ledger=[e for _, manifest in by_name.values() for e in manifest],
+        by_name=by_name,
+        definitions=definitions,
+    )
+
+
+class TestPredicateSupportExamples:
+    def test_not_none_named_files_with_an_arrival_activation(self, tmp_path):
+        # "Select the definition.json of each named-file that has an
+        # arrival activation set." a filter supplies no value (D), so
+        # resolve gives the file.
+        finder = _predicate_finder("$*.files.:on_arrival(:not_none())", tmp_path)
+        results = finder.query()
+        assert results.files == [str(tmp_path / "orders" / "definition.json")]
+        assert json.loads(finder.resolve().results[0].data) == {
+            "on_arrival": {"named_paths_name": "checks"}
+        }
+
+    def test_not_none_default_templates(self, tmp_path):
+        # "Get the default template of each named-file that has one."
+        reference = "$*.files.:definition(:template(:not_none())):template()"
+        results = _predicate_finder(reference, tmp_path).resolve()
+        assert [r.data for r in results.results] == [":4/:filename"]
+
+    def test_not_empty_lets_a_missing_default_through(self, tmp_path):
+        # why the default-template example uses ':not_none()': a missing
+        # key is None, which matches ':none()', not ':empty()'.
+        reference = "$*.files.:definition(:template(:not_empty()))"
+        results = _predicate_finder(reference, tmp_path).query()
+        assert len(results.results) == 2
+
+    def test_empty_complete_registrations_with_no_template(self, tmp_path):
+        reference = '$*.files.:flatten().:status("complete"):template(:empty())'
+        finder = _predicate_finder(reference, tmp_path)
+        assert sorted(finder.query().uuids) == ["i-plain", "o-plain"]
+        assert sorted(r.data for r in finder.resolve().results) == [
+            b"i-plain\n",
+            b"o-plain\n",
+        ]
+
+    def test_not_empty_registrations_that_used_a_template(self, tmp_path):
+        finder = _predicate_finder(
+            "$*.files.:flatten().:template(:not_empty())", tmp_path
+        )
+        assert finder.query().uuids == ["o-tmpl"]
+        assert finder.resolve().results[0].data == b"o-tmpl\n"
+
+    def test_not_empty_the_templates_those_registrations_used(self, tmp_path):
+        reference = "$*.files.:flatten().:template(:not_empty()):template()"
+        results = _predicate_finder(reference, tmp_path).resolve()
+        assert [r.data for r in results.results] == [":4/:5/:filename"]
+
+    def test_star_alone_misses_a_templated_registration(self, tmp_path):
+        # '*' is exactly one level; the templated registration is deeper.
+        reference = "$*.files.*.:template(:not_empty())"
+        assert _predicate_finder(reference, tmp_path).query().results == []

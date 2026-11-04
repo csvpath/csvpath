@@ -56,8 +56,9 @@ class Template3(Function3):
     # same reason: FILES' bare ':template(:not_empty())'/
     # ':template(:empty())' (normative_reference_examples.txt lines
     # 193/197) were being rejected by _build() before
-    # FilesReferenceFinder3.query()'s own bare_field_call dispatch ever
-    # got a chance to apply the predicate. CSVPATHS/RESULTS have no
+    # FilesReferenceFinder3 got a chance to apply the predicate (a bare
+    # ':template(...)' is a one-field ':definition()' chain since
+    # 2026-11-03). CSVPATHS/RESULTS have no
     # equivalent bare/definition duality (see this class's own docstring
     # above) and no code path that reads this arg, so the widening is a
     # no-op for them -- ARG_REQUIRED stays False, an ordinary bare field

@@ -295,56 +295,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 reference=reference, calls=definition_calls, name_filter=None
             )
 
-        bare_field_call = self._bare_definition_field_call(name_one)
-        if bare_field_call is not None:
-            # ":on_arrival()"/":sources()"/":template()" bare -- settled
-            # 2026-08-12, David: an arrival activation lives in the
-            # named-file's own definition.json, it "doesn't go to the
-            # version level" -- confirmed by direct testing that the
-            # value is identical regardless of which version a
-            # :name(...)+pointer combo narrowed to (SOURCE == "definition"
-            # means _extract_data() never reads result.uuid for these),
-            # so requiring either was a real inconsistency with
-            # :definition() itself, which already gets this same bare
-            # treatment. No :name(...)/version needed at all -- matches
-            # :definition()'s own precedent exactly, this just extracts
-            # one key from it instead of returning the whole file.
-            #
-            # Predicate-argument filtering added 2026-10-21: this bare
-            # position was unconditionally matching regardless of the
-            # argument (':template(:not_empty())' and ':template(:empty())'
-            # both matched every named-file, confirmed live before fixing)
-            # -- the exact generic mechanism already built for
-            # ':on_arrival()' nested inside ':definition(...)' during '*'
-            # traversal (_matches_definition_field_predicate(), added
-            # 2026-10-17, "deliberately NOT bespoke to ':on_arrival()'")
-            # was simply never wired into this, the other BARE_SOURCE ==
-            # "definition" dispatch position. self._build(bare_field_call)
-            # recursively builds the call AND its nested predicate arg into
-            # real Function3 instances (confirmed live: bare_field_call.arg
-            # is still a raw, un-built FunctionCall3 AST node at this point,
-            # with no .matches() method, until built).
-            #
-            # Only PredicateFunction3 args (e.g. ':not_empty()') mean
-            # "filter" here -- some other BARE_SOURCE == "definition"
-            # functions take a plain KEY string instead (e.g.
-            # ':source_port("email")', parameterizing WHICH value to
-            # read, not filtering -- caught live before shipping: treating
-            # every non-None arg as a filter broke exactly these, since a
-            # bare string has no .matches()). _extract_data()'s own
-            # "use_definition" branch already applies that KEY arg later,
-            # via _apply_key_arg() -- unchanged, not this branch's job.
-            if bare_field_call.arg is not None:
-                built = self._build(bare_field_call)
-                if isinstance(built.arg, PredicateFunction3):
-                    if not self._matches_definition_field_predicate(
-                        root_major, built
-                    ):
-                        return ReferenceResults3(results=[])
-            home = self.csvpaths.file_manager.named_file_home(root_major)
-            path = Nos(home).join("definition.json")
-            return ReferenceResults3(results=[ReferenceResult3(path=path, uuid=None)])
-
         manifest_field_call = self._bare_manifest_field_call(name_one)
         if manifest_field_call is not None:
             # ':manifest():uuid()'/':manifest():time()' -- added
@@ -1227,56 +1177,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # below. query() itself still returns every match; only
                 # resolve_from() raises if a caller actually tries to
                 # resolve more than one of these at once.
-                ambiguous_content_read=len(results) > 1,
-            )
-
-        bare_field_call = self._bare_definition_field_call(name_one)
-        if bare_field_call is not None:
-            # the '*'-traversal counterpart to the literal-root bare_
-            # field_call branch above (query()'s own, not this method's)
-            # -- added 2026-10-21, closing the normative doc's own exact
-            # worked example ("$*.files.:template(:not_empty())",
-            # normative_reference_examples.txt line 197: "get a list of
-            # all templates used in registrations"). Previously fell
-            # through to the generic _compile_path_pattern() path and
-            # raised "not yet supported" for ANY such bare call here
-            # (":template()", ":on_arrival()", etc.), even argument-less,
-            # since none of :name()/a clock function/:choice()/:regex()
-            # matched it -- this was a real, cleanly-rejected gap, not
-            # silently wrong. Same shape as the literal-root branch, just
-            # over every matching named-file instead of one: no name_three
-            # (definition.json is never versioned, same reasoning as
-            # :definition() itself), predicate-argument filtering via the
-            # same isinstance(built.arg, PredicateFunction3) guard (NOT
-            # "arg is not None" -- see the literal-root branch's own
-            # comment for why: some BARE_SOURCE == "definition" functions,
-            # e.g. ":source_port(\"email\")", use .arg as a KEY string, not
-            # a filter, and must keep matching every name unfiltered).
-            if reference.name_three is not None:
-                raise ReferenceException3(
-                    f"FilesReferenceFinder3 does not support combining "
-                    f"':{bare_field_call.name}()' with name_three during "
-                    "'*' traversal -- definition.json is not versioned, "
-                    "there is no version to select."
-                )
-            names = self._matching_names(
-                self.source.file_names(), name_filter
-            )
-            if bare_field_call.arg is not None:
-                built = self._build(bare_field_call)
-                if isinstance(built.arg, PredicateFunction3):
-                    names = [
-                        name
-                        for name in names
-                        if self._matches_definition_field_predicate(name, built)
-                    ]
-            results = []
-            for name in names:
-                home = self.csvpaths.file_manager.named_file_home(name)
-                path = Nos(home).join("definition.json")
-                results.append(ReferenceResult3(path=path, uuid=None))
-            return ReferenceResults3(
-                results=results,
                 ambiguous_content_read=len(results) > 1,
             )
 
@@ -2204,10 +2104,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
         already a real, validated Function3 instance by the time this
         is called (Definition3.check_valid() already confirmed it is
         SOURCE == "definition" with a PredicateFunction3 arg, see
-        query()'s own call site) -- this just reads the value and tests
-        it, the exact same KEY-driven extraction the ordinary bare-
-        field-accessor read already uses (see _extract_data()'s own
-        "use_definition" branch), reused here rather than duplicated.
+        _query_definition_chain()) -- this just reads the value and
+        tests it, the same KEY-driven extraction _extract_data() uses for
+        a SOURCE == "definition" field, reused here rather than
+        duplicated.
         Deliberately NOT bespoke to ':on_arrival()' -- any current or
         future SOURCE == "definition" field accessor works here for
         free, since nothing about this method's own logic names one."""
@@ -2491,6 +2391,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
         definition.json has no file home or version, so the chain only
         reads and filters that one record.
 
+        A bare definition field is the same one-field chain:
+        ':template(:not_none())' is ':definition(:template(:not_none()))'
+        and ':template()' is ':definition():template()' (2026-11-03). A
+        filter then resolves to the definition.json (D) and a value is
+        read per named-file under every root.
+
         Returns None for any other shape: bare ':definition()', and a
         chain with a path-building function, which keep their own
         branches. Raises for a field that does not read
@@ -2498,6 +2404,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
         have no version to select."""
         if name_one is None:
             raise ValueError("name_one cannot be None")
+        bare = FilesReferenceFinder3._bare_definition_field_call(name_one)
+        if bare is not None:
+            return [bare]
         if len(name_one.path) != 1:
             return None
         calls = [name_one.path[0], *name_one.functions]
@@ -2931,31 +2840,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     ]
                 )
             else:
-                # a bare, SOURCE == "definition" field accessor occupying
-                # name_one's entire content (":on_arrival()"/":sources()"),
-                # OR a bare BARE_SOURCE == "definition" field accessor
-                # (":template()" -- added 2026-08-26, see Template3's own
-                # docstring) -- settled 2026-08-12/2026-08-26, see
-                # query()'s own comment. Never reads result.uuid below for
-                # a plain SOURCE == "definition" function (result.uuid
-                # being None here is fine for those); a BARE_SOURCE
-                # function reached here specifically because NO version
-                # was selected at all, same reasoning.
-                field_call = self._bare_definition_field_call(reference.name_one)
-                if field_call is None:
-                    # ':manifest():uuid()'-style, chained onto a bare
-                    # ':manifest()' in name_one rather than definition-
-                    # sourced -- added 2026-08-28, see query()'s/
-                    # _query_star_traversal()'s own comment on this
-                    # shape. result.uuid is real here (query() built it
-                    # from the actual matched manifest entry), so the
-                    # ordinary manifest-entry-by-uuid read below applies
-                    # unchanged -- only the "which manifest to search"
-                    # step (just below) needs to know about '*' root.
-                    field_call = self._bare_manifest_field_call(
-                        reference.name_one
-                    )
-                    is_manifest_chain = field_call is not None
+                # ':manifest():uuid()'-style, chained onto a bare
+                # ':manifest()' in name_one -- added 2026-08-28, see
+                # query()'s/_query_star_traversal()'s own comment on this
+                # shape. result.uuid is real here (query() built it from
+                # the actual matched manifest entry), so the ordinary
+                # manifest-entry-by-uuid read below applies unchanged --
+                # only the "which manifest to search" step (just below)
+                # needs to know about '*' root. A bare definition field
+                # (':on_arrival()', ':template()') never reaches here: it
+                # is a ':definition()' chain, resolved at the top of this
+                # method (2026-11-03).
+                field_call = self._bare_manifest_field_call(reference.name_one)
+                is_manifest_chain = field_call is not None
             if field_call is not None:
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     field_call.name
@@ -2995,12 +2892,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     return reference.root_major
                 key_path = function_cls.KEY.get(reference.datatype)
                 key_path = self._apply_key_arg(key_path, field_call.arg)
-                use_definition = function_cls.SOURCE == "definition" or (
-                    is_bare_field_call
-                    and not is_manifest_chain
-                    and function_cls.BARE_SOURCE == "definition"
-                )
-                if use_definition:
+                if function_cls.SOURCE == "definition":
                     config = self.csvpaths.file_manager.describer.get_config(
                         reference.root_major
                     )
