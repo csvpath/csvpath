@@ -77,3 +77,9 @@ Design decisions are in `specs/macie/transpile-design.md`.
   letter, Macie's DNI example 99999999 and an all-zero NIE (both with the
   right letter, neither reported), an Aadhaar that passes Verhoeff but
   starts with 1, a bad Verhoeff digit, and two identifiers in one cell.
+- `11_fr_mx_it`: France NIR (INSEE), Mexico CURP and Italy Codice
+  Fiscale. A grouped NIR, a Corsican NIR, a bad key; CURPs born in the
+  1900s and 2000s, one with no such state; a Codice Fiscale for a woman
+  (day + 40), one with omocodia, one dated 30 February; two identifiers
+  in one cell, lower case; no keyword; and an organization's 11 digit
+  code (partita IVA) with an IT prefix, and one with a bad Luhn digit.

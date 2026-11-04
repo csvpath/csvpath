@@ -1,0 +1,44 @@
+~
+  id: fr-mx-it-people
+  macie-origin: job
+  macie-job-id: 4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d
+  macie-account: 123456789012
+  macie-region: eu-west-3
+  macie-source-arn: arn|aws|macie2|eu-west-3|123456789012|classification-job/4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d
+  macie-downloaded-at: 20261103T181000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "FRANCE_NATIONAL_IDENTIFICATION_NUMBER",
+        "PERSONAL_INFORMATION",
+        "fr_nir",
+        "required",
+        "assurance sociale|carte nationale d’identité|cni|code sécurité sociale|French social security number|fssn#|insee|insurance number|national id number|nationalid#|numéro d'assurance|sécurité sociale|sécurité sociale non.|sécurité sociale numéro|social|social security|social security number|socialsecuritynumber|ss#|ssn|ssn#",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "MEXICO_CURP_NUMBER",
+        "PERSONAL_INFORMATION",
+        "mx_curp",
+        "required",
+        "clave personal identidad|clave única|clave única de registro de población|clavepersonalIdentidad|curp|registration code|registry code|personal identidad clave|population code",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "ITALY_NATIONAL_IDENTIFICATION_NUMBER",
+        "PERSONAL_INFORMATION",
+        "it_cf",
+        "required",
+        "codice fiscal|dati anagrafici|ehic|health card|health insurance card|p. iva|partita i.v.a.|personal data|tax code|tessera sanitaria",
+        30,
+        "1:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]
