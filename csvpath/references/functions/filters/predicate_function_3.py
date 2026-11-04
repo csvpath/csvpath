@@ -3,7 +3,7 @@ from ..function_3 import Function3
 
 class PredicateFunction3(Function3):
     """shared base for compendium 5.31's predicate-support functions
-    (:true()/:false()/:none()/:not_none()/:empty()/:not_empty()) --
+    (:true()/:false()/:has_value()/:does_not_have_value()) --
     exists so a consuming function (e.g. Idchain3) can declare its own
     ARG_TYPES generically as (..., PredicateFunction3) instead of
     enumerating every concrete predicate class by name one by one,

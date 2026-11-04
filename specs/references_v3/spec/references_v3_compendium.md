@@ -803,9 +803,9 @@ that finds the last `results` run and using the `:idchain()` field accessor:
 
 #### 5.19
 `$acme.results.:last().:errors()` — returns the path+uuid, and resolves to content of file
-`$acme.results.:last().:errors(:idchain(:not_none()))` — returns the path+uuid, and resolves to all errors that have idchains
+`$acme.results.:last().:errors(:idchain(:has_value()))` — returns the path+uuid, and resolves to all errors that have idchains
 `$acme.results.:last().:errors(:idchain("add[0]"))` — returns the path+uuid, and resolves to all errors with matching idchains
-`$acme.results.:last().:errors():idchain(:not_none())` — returns path+uuid, and resolves to contents, iff idchain exists in file
+`$acme.results.:last().:errors():idchain(:has_value())` — returns path+uuid, and resolves to contents, iff idchain exists in file
 `$acme.results.:last().:errors():idchain("add[0]")` — returns path+uuid, and resolves to contents, iff idchain matching exists in file
 
 #### 5.20
@@ -1204,7 +1204,7 @@ field.
 
 The following reference returns the definition JSON structure on `resolve()`
 if an arrival activation is found; otherwise, it returns None.
-`$acme.files.:definition(:on_arrival(:not_none()))`
+`$acme.files.:definition(:on_arrival(:has_value()))`
 
 #### 6.20
 The only times there may not be manifests where expected are:
@@ -1478,7 +1478,7 @@ dependency relationship to registrations
 Every field accessor has the ability to match on a provided value, and
 thereby filter the reference.
 
-For e.g. `$*.files.:definition(:on_arrival(:not_none()))`
+For e.g. `$*.files.:definition(:on_arrival(:has_value()))`
 limits the definition files returned to those of the named-files whose
 `definition.json` has an `on_arrival` activation declared. Like
 `:manifest()`, `:definition()` names one file per named-file; it has no
@@ -1491,10 +1491,15 @@ predicate matching with variable or category values.
 
 - :true() — matches the JSON true / Python True
 - :false() — matches the JSON false / Python False
-- :none() — matches the JSON null / Python None
-- :not_none() — value is not null / None
-- :empty() — value is ""
-- :not_empty() — value is not ""
+- :has_value() — the field holds a primitive, including `0` and `false`,
+  or a list or dict that is not empty
+- :does_not_have_value() — everything else: `""`, `[]`, `{}`, `null`, or
+  no such field. Every field matches exactly one of the two.
+  These two replace `:none()`, `:not_none()`, `:empty()` and
+  `:not_empty()`, retired 2026-11-03: four overlapping tests meant that,
+  e.g., `:not_empty()` matched a missing field. A reference looking for
+  missing facts gets fields that are present but empty too; the results
+  show which is which.
 - :regex(/.../) — value matches regex
 - :having("...") — structure has a named/IDed child. Primary case: named-paths groups versions having a csvpath statement ID.
 - The directional functions listed above can be used as operators:

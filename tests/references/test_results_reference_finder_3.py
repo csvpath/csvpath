@@ -2813,6 +2813,47 @@ class TestErrorCountPredicateGate:
         assert sorted(r.data for r in results.results) == [0, 2, 5]
 
 
+class TestHasValuePredicates:
+    # compendium 6.36 (David, 2026-11-03): ':has_value()' and
+    # ':does_not_have_value()' replace ':none()', ':not_none()', ':empty()'
+    # and ':not_empty()', which are retired with no aliases.
+    @pytest.fixture
+    def runs(self, tmp_path):
+        base = tmp_path / "acme"
+        run_homes = []
+        for i, manifest in enumerate(
+            (
+                {"run_uuid": "zero", "error_count": 0},
+                {"run_uuid": "two", "error_count": 2},
+                {"run_uuid": "missing"},
+            )
+        ):
+            run_dir = base / f"2026-01-0{i + 1}_00-00-00"
+            _write_json(run_dir / "manifest.json", manifest)
+            run_homes.append(str(run_dir))
+        _write_archive_manifest(tmp_path, "acme", run_homes)
+        return str(tmp_path)
+
+    def test_zero_has_a_value(self, runs):
+        results = _finder(
+            "$acme.results.:flatten():error_count(:has_value())", runs
+        ).query()
+        assert results.uuids == ["zero", "two"]
+
+    def test_a_missing_field_does_not_have_a_value(self, runs):
+        results = _finder(
+            "$acme.results.:flatten():error_count(:does_not_have_value())", runs
+        ).query()
+        assert results.uuids == ["missing"]
+
+    @pytest.mark.parametrize("name", ["none", "not_none", "empty", "not_empty"])
+    def test_the_old_predicates_raise(self, runs, name):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                f"$acme.results.:flatten():error_count(:{name}())", runs
+            ).query()
+
+
 class TestRangeBeforeGate:
     # compendium 6.28 (David, 2026-11-02): a range is made before a filter
     # selects from it, whatever the written order, and a pointer picks
@@ -3461,7 +3502,7 @@ class TestWellKnownFileAccessors:
         self, acme_archive, instance_dir
     ):
         # compendium 5.31/5.36/4.13's own settled worked example --
-        # :not_none() (built 2026-08-26) nested inside :idchain() means
+        # :has_value() (built 2026-08-26) nested inside :idchain() means
         # "any idchain at all", not one specific value/pattern.
         errors = [
             {"source": "add[0]string[2]", "message": "bad add"},
@@ -3471,7 +3512,7 @@ class TestWellKnownFileAccessors:
             json.dump(errors, f)
         results = _finder(
             "$acme.results.customers/2025:first().company_names"
-            ":errors(:idchain(:not_none()))",
+            ":errors(:idchain(:has_value()))",
             acme_archive,
         ).resolve()
         assert results.results[0].data == [errors[0]]
@@ -3536,7 +3577,7 @@ class TestWellKnownFileAccessors:
             json.dump(errors, f)
         results = _finder(
             "$acme.results.customers/2025:first().company_names"
-            ":errors(:message(:not_none()))",
+            ":errors(:message(:has_value()))",
             acme_archive,
         ).resolve()
         assert results.results[0].data == [errors[0]]
@@ -3768,9 +3809,9 @@ class TestErrorsIdchainGate:
     # WHOLE, unfiltered content is returned at all. The five settled
     # acceptance-criteria references from the compendium itself:
     #   :errors()                        -- full content
-    #   :errors(:idchain(:not_none()))   -- filter: entries that HAVE an idchain
+    #   :errors(:idchain(:has_value()))   -- filter: entries that HAVE an idchain
     #   :errors(:idchain("add[0]"))      -- filter: entries matching that idchain
-    #   :errors():idchain(:not_none())   -- gate: full content, iff some idchain exists
+    #   :errors():idchain(:has_value())   -- gate: full content, iff some idchain exists
     #   :errors():idchain("add[0]")      -- gate: full content, iff a matching idchain exists
     @pytest.fixture
     def instance_dir(self, acme_archive):
@@ -3792,7 +3833,7 @@ class TestErrorsIdchainGate:
             json.dump(errors, f)
         results = _finder(
             "$acme.results.customers/2025:first().company_names"
-            ":errors():idchain(:not_none())",
+            ":errors():idchain(:has_value())",
             acme_archive,
         ).resolve()
         # the WHOLE, UNFILTERED list -- not narrowed to just the
@@ -3807,7 +3848,7 @@ class TestErrorsIdchainGate:
             json.dump(errors, f)
         results = _finder(
             "$acme.results.customers/2025:first().company_names"
-            ":errors():idchain(:not_none())",
+            ":errors():idchain(:has_value())",
             acme_archive,
         ).resolve()
         assert results.results[0].data is None
@@ -3848,7 +3889,7 @@ class TestErrorsIdchainGate:
         # every other well-known file gets, not an error.
         results = _finder(
             "$acme.results.customers/2025:first().company_names"
-            ":errors():idchain(:not_none())",
+            ":errors():idchain(:has_value())",
             acme_archive,
         ).resolve()
         assert results.results[0].data is None
@@ -3859,7 +3900,7 @@ class TestErrorsIdchainGate:
         with pytest.raises(ReferenceException3):
             _finder(
                 "$acme.results.customers/2025:first().company_names"
-                ":idchain(:not_none())",
+                ":idchain(:has_value())",
                 acme_archive,
             ).query()
 

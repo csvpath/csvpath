@@ -626,7 +626,7 @@ genuinely uncertain is marked below rather than guessed.
 #### 6.35
 - `test_results_reference_finder_3.py::TestErrorCountPredicateGate`,
   `functions/well_known_files/test_definition_3.py`/`test_on_arrival_3.py`
-  (the exact `:definition(:on_arrival(:not_none()))` example, built
+  (the exact `:definition(:on_arrival(:has_value()))` example, built
   2026-10-17 — predicate-argument mechanism) — **UPDATED from
   "`:error_count()` is not built" (2026-08-24); fully built now,
   including its own GATE and the generalized version every other field
@@ -634,13 +634,17 @@ genuinely uncertain is marked below rather than guessed.
   `:named_paths_name()`, etc.) reuses.**
 
 #### 6.36
-- `functions/filters/test_true_3.py`, `test_false_3.py`, `test_none_3.py`,
-  `test_not_none_3.py`, `test_empty_3.py`, `test_not_empty_3.py`,
-  `functions/selectors/test_regex_3.py`, `test_having_3.py` — **UPDATED
-  from "1/8 built" (2026-08-24); all 8 predicate-support functions are
-  now built and tested**, including `:having()`'s own two widenings
-  this week (nested field-accessor argument, list argument for "any of
-  these identities").
+- `functions/filters/test_true_3.py`, `test_false_3.py`,
+  `test_has_value_3.py`, `functions/selectors/test_regex_3.py`,
+  `test_having_3.py` — **UPDATED from "1/8 built" (2026-08-24); all
+  predicate-support functions are now built and tested**, including
+  `:having()`'s own two widenings this week (nested field-accessor
+  argument, list argument for "any of these identities").
+  **UPDATED 2026-11-03:** `:has_value()`/`:does_not_have_value()`
+  replace `:none()`, `:not_none()`, `:empty()` and `:not_empty()`
+  (`test_has_value_3.py`; the old four raise, see
+  `TestHasValuePredicates` and `TestManifestChainGate` in the RESULTS
+  and FILES finder tests).
 
 #### 6.37
 - Doc pointer/conceptual framing (Point/Narrow/Match), demonstrated by

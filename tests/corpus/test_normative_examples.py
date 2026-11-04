@@ -234,7 +234,7 @@ class TestTemplatePredicateFiltering:
     """FilesReferenceFinder3.query()'s literal-root bare_field_call branch
     previously returned definition.json unconditionally for ANY
     ':template(...)' call, ignoring the argument entirely -- confirmed
-    live, :template(:empty()) and :template(:not_empty()) both matched
+    live, the predicate-argued ':template(...)' forms all matched
     every named-file regardless of its actual template value. Fixed
     2026-10-21, two changes:
     - Template3.ARG_TYPES widened from () to (PredicateFunction3,),
@@ -251,23 +251,33 @@ class TestTemplatePredicateFiltering:
     intentionally does NOT store a default merely because some
     individual add_named_file() registration happened to pass a
     template (unlike named-paths, where the add-time template IS the
-    assumed default for future runs). So both groups' real `template`
-    value is None, and :not_empty() correctly matches both (None != ""),
-    while :empty() matches neither (None != "") -- :empty()/:not_empty()
-    distinguish from a literal empty string, not from a missing/None
-    value (that's :none()'s own, separate job per the compendium's
-    empty/none table) -- confirmed this is consistent with Empty3/
-    NotEmpty3's own existing, unmodified implementation.
+    assumed default for future runs). So neither group has a `template`
+    key, which a field read gives as None.
+
+    Changed 2026-11-03 (compendium 6.36): a missing default does not
+    have a value, so ':does_not_have_value()' matches both groups and
+    ':has_value()' matches neither. The retired ':not_empty()' matched
+    both, since it only rejected "".
     """
 
-    def test_not_empty_matches_named_files_with_no_default_template(self, csvpaths):
+    def test_does_not_have_value_matches_named_files_with_no_default_template(
+        self, csvpaths
+    ):
         for name in ("zipcodes", "orders"):
-            r = _query(csvpaths, FilesReferenceFinder3, f"${name}.files.:template(:not_empty())")
-            assert r.files == [f"tests/corpus/data/inputs/named_files/{name}/definition.json"]
+            r = _query(
+                csvpaths,
+                FilesReferenceFinder3,
+                f"${name}.files.:template(:does_not_have_value())",
+            )
+            assert r.files == [
+                f"tests/corpus/data/inputs/named_files/{name}/definition.json"
+            ]
 
-    def test_empty_matches_neither_since_value_is_none_not_empty_string(self, csvpaths):
+    def test_has_value_matches_neither_since_there_is_no_default(self, csvpaths):
         for name in ("zipcodes", "orders"):
-            r = _query(csvpaths, FilesReferenceFinder3, f"${name}.files.:template(:empty())")
+            r = _query(
+                csvpaths, FilesReferenceFinder3, f"${name}.files.:template(:has_value())"
+            )
             assert r.files == []
 
     def test_bare_template_still_unaffected(self, csvpaths):
@@ -291,7 +301,7 @@ class TestStarTemplatePredicateFiltering:
     raised ReferenceException3('Does not yet support :template() as a
     name_one path segment') for the EXACT normative example
     '$*.files.:template(:not_empty())' (normative_reference_examples.txt
-    line 197, "get a list of all templates used in registrations") --
+    line 197 then, "get a list of all templates used in registrations") --
     a known, cleanly-rejected gap, not silently wrong, but it still
     blocked this normative example from working at all. Fixed 2026-10-21:
     _query_star_traversal() now recognizes a bare BARE_SOURCE ==
@@ -300,25 +310,29 @@ class TestStarTemplatePredicateFiltering:
     predicate-filtering logic across every matching named-file, instead
     of falling through to generic path-pattern compilation."""
 
-    def test_not_empty_matches_every_named_file_with_no_default_template(self, csvpaths):
+    def test_does_not_have_value_matches_every_named_file_with_no_default(
+        self, csvpaths
+    ):
         # none of the four named-files groups has ever set a default
         # template via a dedicated call (see TestTemplatePredicateFiltering
-        # above) -- :not_empty() correctly matches all of them (None != "").
-        r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:not_empty())")
+        # above), so none has a value (compendium 6.36).
+        r = _query(
+            csvpaths, FilesReferenceFinder3, "$*.files.:template(:does_not_have_value())"
+        )
         assert sorted(r.files) == sorted(
             f"tests/corpus/data/inputs/named_files/{name}/definition.json"
             for name in ("acme_invoices", "orders", "zipcodes", "energy_readings")
         )
 
-    def test_empty_matches_none(self, csvpaths):
-        r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:empty())")
+    def test_has_value_matches_none(self, csvpaths):
+        r = _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:has_value())")
         assert r.files == []
 
     def test_name_three_still_rejected(self, csvpaths):
         # definition.json is never versioned -- same restriction as the
         # literal-root branch and as bare ':definition()' itself.
         with pytest.raises(ReferenceException3):
-            _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:not_empty()).:first()")
+            _query(csvpaths, FilesReferenceFinder3, "$*.files.:template(:has_value()).:first()")
 
 
 class TestStatusRegistrationFailed:

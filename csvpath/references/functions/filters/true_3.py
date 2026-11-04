@@ -12,7 +12,7 @@ class True3(PredicateFunction3):
     # a value fed to whatever function's own filtering logic it is
     # nested inside (currently only :idchain(), see Idchain3.matches()
     # -- added 2026-08-26; the generic "any field accessor accepts a
-    # predicate argument" mechanism, e.g. :on_arrival(:not_none()), is
+    # predicate argument" mechanism, e.g. :on_arrival(:has_value()), is
     # separate, bigger, still-undesigned follow-up work, tracked
     # independently on the bucket list). DATATYPES is every datatype on
     # purpose, even though the one consumer wired up so far is RESULTS-

@@ -33,7 +33,7 @@ class Definition3(Function3):
     # the generic predicate-argument filtering mechanism (deferred-work
     # bucket list's own "Predicate-argument field accessors" entry),
     # closing its own motivating worked example:
-    # "$*.files.:definition(:on_arrival(:not_none()))" -- "which
+    # "$*.files.:definition(:on_arrival(:has_value()))" -- "which
     # named-files have on_arrival set." check_valid() below cross-
     # validates the nested function rather than listing every possible
     # definition-sourced field accessor (:on_arrival()/:sources()/etc)
@@ -55,7 +55,7 @@ class Definition3(Function3):
         "versioned; resolves to None if the group/file was never "
         "explicitly configured (no definition.json written yet). May take "
         "a nested, predicate-argued definition field accessor (e.g. "
-        ":on_arrival(:not_none())) during '*' traversal, which filters "
+        ":on_arrival(:has_value())) during '*' traversal, which filters "
         "which named-files survive rather than reading a value."
     )
     ROLE = Function3.VALUE
@@ -84,7 +84,7 @@ class Definition3(Function3):
         if not isinstance(self._arg.arg, PredicateFunction3):
             raise ReferenceException3(
                 ":definition()'s own nested field accessor must itself "
-                "carry a predicate argument (e.g. :not_none()) -- this is "
+                "carry a predicate argument (e.g. :has_value()) -- this is "
                 "the only nested-argument shape :definition() currently "
                 "supports."
             )

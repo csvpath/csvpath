@@ -171,45 +171,50 @@ where the run method is in `collect_by_line()` or
 `fast_forward_by_line()`, the breadth-first run methods.
 $acme.results.:serial(:false())
 
-### :none() Provides the `None` value for use in metadata predicates. Find all
-the `acme` run results with no host.
-$acme.results.*:host(:none())
+### :has_value() and :does_not_have_value()
+A field has a value when it holds a primitive, including `0` and `false`, or a
+list or dict that is not empty. Everything else does not have a value: `""`,
+`[]`, `{}`, `null`, and a field that is not present at all. Every field
+matches exactly one of the two.
 
-### :not_none()
+| Field holds | `:has_value()` | `:does_not_have_value()` |
+|-------------|----------------|--------------------------|
+| a primitive, e.g. `"x"`, `0`, `false` | yes | no |
+| a non-empty list or dict | yes | no |
+| `""`, `[]`, `{}` | no | yes |
+| `null` | no | yes |
+| no such field | no | yes |
+
+The two do not tell a field that is present but empty from one that is not
+present. A reference looking for missing facts gets both, and the results show
+which is which.
+
+### :has_value()
 Select the definition.json of each named-file that has an arrival activation
 set.
-$*.files.:on_arrival(:not_none())
+$*.files.:on_arrival(:has_value())
 
 Get the default template of each named-file that has one. A named-file with no
-default has no `template` key in its definition.json, so `:not_none()`, not
-`:not_empty()`, is the test.
-$*.files.:definition(:template(:not_none())):template()
+default has no `template` key in its definition.json.
+$*.files.:definition(:template(:has_value())):template()
 
-### :empty()
-Empty and none are for the most part synonymous. In a few cases there are
-distinctions. A field that defaulted to an empty list matches `:empty()` not
-`:none()`. A JSON file that serialized None as null does not match `:empty()`. A
-key that is not present matches `:none()`, but not `:empty()`.
-
-| Function | Matches |
-|----------|---------|
-| `:empty()` | `''`, `[]`, `{}` |
-| `:none()`  | `''`, `null`, No such field |
-
-Find the registrations where `status` indicates a successful registration and
-there was no template. A registration with no template records `''` in its
-manifest.json entry.
-$*.files.:flatten().:status("complete"):template(:empty())
-
-### :not_empty()
 Get the registrations that used a template. The template used is a fact about
 each registration, read from its manifest.json entry in name_three; `:flatten()`
 reaches registrations at any depth. A bare `:template()` is the named-file's
 current default, from definition.json.
-$*.files.:flatten().:template(:not_empty())
+$*.files.:flatten().:template(:has_value())
 
 Get the templates those registrations used
-$*.files.:flatten().:template(:not_empty()):template()
+$*.files.:flatten().:template(:has_value()):template()
+
+### :does_not_have_value()
+Find all the `acme` run results with no host.
+$acme.results.*:host(:does_not_have_value())
+
+Find the registrations where `status` indicates a successful registration and
+there was no template. A registration with no template records `""` in its
+manifest.json entry.
+$*.files.:flatten().:status("complete"):template(:does_not_have_value())
 
 ---
 
@@ -221,13 +226,13 @@ The following references return the path+uuid on `query()`.
 `$acme.results.:last().:errors()`
 
 #### `resolve()` to all errors that have idchains
-`$acme.results.:last().:errors(:idchain(:not_none()))`
+`$acme.results.:last().:errors(:idchain(:has_value()))`
 
 #### `resolves()` to all errors with matching idchains
 `$acme.results.:last().:errors(:idchain("add[0]"))`
 
 #### `resolve()` to contents, iff idchain exists in file
-`$acme.results.:last().:errors():idchain(:not_none())`
+`$acme.results.:last().:errors():idchain(:has_value())`
 
 #### `resolve()` to contents, iff idchain matching exists in file
 `$acme.results.:last().:errors():idchain("add[0]")`

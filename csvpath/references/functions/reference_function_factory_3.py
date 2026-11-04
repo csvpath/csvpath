@@ -147,13 +147,11 @@ class ReferenceFunctionFactory:
         from .fields.webhooks_on_complete_valid_3 import WebhooksOnCompleteValid3
 
         from .filters.count_3 import Count3
-        from .filters.empty_3 import Empty3
+        from .filters.does_not_have_value_3 import DoesNotHaveValue3
         from .filters.false_3 import False3
+        from .filters.has_value_3 import HasValue3
         from .filters.idchain_3 import Idchain3
         from .filters.message_3 import Message3
-        from .filters.none_3 import None3
-        from .filters.not_empty_3 import NotEmpty3
-        from .filters.not_none_3 import NotNone3
         from .filters.true_3 import True3
 
         cls._FUNCTIONS = {
@@ -212,10 +210,8 @@ class ReferenceFunctionFactory:
             Count3.NAME: Count3,
             True3.NAME: True3,
             False3.NAME: False3,
-            None3.NAME: None3,
-            NotNone3.NAME: NotNone3,
-            Empty3.NAME: Empty3,
-            NotEmpty3.NAME: NotEmpty3,
+            HasValue3.NAME: HasValue3,
+            DoesNotHaveValue3.NAME: DoesNotHaveValue3,
             File3.NAME: File3,
             Log3.NAME: Log3,
             Uuid3.NAME: Uuid3,

@@ -92,7 +92,7 @@ class _FakeFileDescriber:
 
 class _PerNameFakeFileDescriber:
     # added 2026-10-17 for the predicate-argument filtering tests
-    # (':definition(:on_arrival(:not_none()))') -- those need a
+    # (':definition(:on_arrival(:has_value()))') -- those need a
     # DIFFERENT on_arrival config per named-file to prove filtering
     # actually filters, which the single-global-dict _FakeFileDescriber
     # above cannot express. Falls back to {} (an empty/unconfigured
@@ -1065,10 +1065,15 @@ class TestManifestChainGate:
             ('type("csv")', ["u-a1", "u-b1"], ["u-a1"]),
             ('type("xlsx")', ["u-a2"], ["u-a2"]),
             ('type("json")', [], []),
-            ('template(:empty())', ["u-a1", "u-b1"], ["u-a1"]),
-            # the ledger set lists the failed u-b2 since 2026-11-01, and
-            # :not_empty() matches its missing (None) template
-            ('template(:not_empty())', ["u-a2", "u-b2"], ["u-a2"]),
+            # the ledger set lists the failed u-b2 since 2026-11-01. Its
+            # template is missing, which does not have a value (compendium
+            # 6.36, 2026-11-03; the retired ':not_empty()' matched it).
+            (
+                "template(:does_not_have_value())",
+                ["u-a1", "u-b1", "u-b2"],
+                ["u-a1"],
+            ),
+            ("template(:has_value())", ["u-a2"], ["u-a2"]),
             ('uuid("u-a2")', ["u-a2"], ["u-a2"]),
             ('uuid("nope")', [], []),
             ('fingerprint("f-b1")', ["u-b1"], []),
@@ -1079,6 +1084,14 @@ class TestManifestChainGate:
     def test_gate_filters_both_roots(self, gate, star, literal):
         assert _gate_uuids(f"$*.files.:manifest():{gate}") == star
         assert _gate_uuids(f"$alpha.files.:manifest():{gate}") == literal
+
+    @pytest.mark.parametrize("name", ["none", "not_none", "empty", "not_empty"])
+    def test_the_retired_predicates_raise(self, name):
+        # retired 2026-11-03 for ':has_value()'/':does_not_have_value()'
+        # (compendium 6.36), with no aliases
+        for root in ("$*", "$alpha"):
+            with pytest.raises(ReferenceException3):
+                _gate_uuids(f"{root}.files.:manifest():template(:{name}())")
 
     def test_status_gate_matches_the_ledger_status(self):
         # status is ledger-only; a literal root reads it through the
@@ -1152,7 +1165,7 @@ class TestManifestChainGate:
 
     @pytest.mark.parametrize("root", ["$*", "$alpha"])
     @pytest.mark.parametrize(
-        "gate", ['file_name("one.csv")', "time(:not_none())", 'host("h")']
+        "gate", ['file_name("one.csv")', "time(:has_value())", 'host("h")']
     )
     def test_a_field_that_takes_no_argument_raises(self, root, gate):
         # these do not filter yet. they raise instead of being ignored.
@@ -1465,7 +1478,7 @@ class TestNameThreeGateParts:
 
     def test_which_functions_are_gates(self, tmp_path):
         built = self._built(
-            f'{ORDERS}.:last():type("csv"):uuid():template(:empty())', tmp_path
+            f'{ORDERS}.:last():type("csv"):uuid():template(:does_not_have_value())', tmp_path
         )
         assert [FilesReferenceFinder3._is_name_three_gate(f) for f in built] == [
             False,
@@ -1475,7 +1488,7 @@ class TestNameThreeGateParts:
         ]
 
     @pytest.mark.parametrize(
-        "field", ['source_port("email")', "on_arrival(:not_none())"]
+        "field", ['source_port("email")', "on_arrival(:has_value())"]
     )
     def test_a_definition_field_is_not_a_gate(self, field, tmp_path):
         # its argument picks a key or filters definition.json, never the
@@ -1542,7 +1555,7 @@ class TestNameThreeGates:
         assert _g_values(reference, tmp_path) == ["g2"]
 
     def test_two_gates_are_anded(self, tmp_path):
-        reference = f'{ORDERS}.:type("csv"):template(:empty()):uuid()'
+        reference = f'{ORDERS}.:type("csv"):template(:does_not_have_value()):uuid()'
         assert _g_values(reference, tmp_path) == ["g0", "g3"]
 
     def test_with_only_a_gate_resolve_gives_the_version_bytes(self, tmp_path):
@@ -1752,14 +1765,14 @@ class TestDefinitionChainParts:
         [
             ("$alpha.files.:definition():on_arrival()", ["on_arrival"]),
             ("$alpha.files.:on_arrival():definition()", ["on_arrival"]),
-            ("$alpha.files.:definition(:on_arrival(:not_none()))", ["on_arrival"]),
+            ("$alpha.files.:definition(:on_arrival(:has_value()))", ["on_arrival"]),
             (
-                "$alpha.files.:definition(:on_arrival(:not_none())):template()",
+                "$alpha.files.:definition(:on_arrival(:has_value())):template()",
                 ["on_arrival", "template"],
             ),
             # a bare definition field is a one-field chain (2026-11-03)
             ("$alpha.files.:on_arrival()", ["on_arrival"]),
-            ("$alpha.files.:template(:not_none())", ["template"]),
+            ("$alpha.files.:template(:has_value())", ["template"]),
             ('$*.files.:source_port("email")', ["source_port"]),
         ],
     )
@@ -1781,7 +1794,7 @@ class TestDefinitionChainParts:
         # ':home()' was retired 2026-11-03; it no longer scopes a
         # ':definition()' chain.
         with pytest.raises(ReferenceException3) as error:
-            self._calls("$*.files.:home():definition(:on_arrival(:not_none()))")
+            self._calls("$*.files.:home():definition(:on_arrival(:has_value()))")
         assert "':home()' is not supported" in str(error.value)
 
     @pytest.mark.parametrize("field", ["uuid()", "fingerprint()", "named_file_home()"])
@@ -1826,9 +1839,9 @@ class TestDefinitionChain:
     @pytest.mark.parametrize(
         "reference",
         [
-            "$NAME.files.:definition(:on_arrival(:not_none()))",
-            "$NAME.files.:definition():on_arrival(:not_none())",
-            "$NAME.files.:on_arrival(:not_none()):definition()",
+            "$NAME.files.:definition(:on_arrival(:has_value()))",
+            "$NAME.files.:definition():on_arrival(:has_value())",
+            "$NAME.files.:on_arrival(:has_value()):definition()",
         ],
     )
     def test_a_predicate_filters_nested_or_chained(self, reference):
@@ -1839,13 +1852,13 @@ class TestDefinitionChain:
         assert _def_finder(reference.replace("NAME", "beta")).query().results == []
 
     def test_a_filter_with_a_value(self):
-        reference = "$*.files.:definition():on_arrival(:not_none()):template()"
+        reference = "$*.files.:definition():on_arrival(:has_value()):template()"
         assert _def_values(reference) == [":0/:filename"]
 
     def test_two_filters_are_anded(self):
-        base = "$*.files.:definition():on_arrival(:not_none())"
-        assert _def_finder(f"{base}:template(:empty())").query().results == []
-        assert _def_finder(f"{base}:template(:not_empty())").query().files == [
+        base = "$*.files.:definition():on_arrival(:has_value())"
+        assert _def_finder(f"{base}:template(:does_not_have_value())").query().results == []
+        assert _def_finder(f"{base}:template(:has_value())").query().files == [
             _def_path(STAR_ALPHA_HOME)
         ]
 
@@ -1858,17 +1871,17 @@ class TestDefinitionChain:
 
     def test_a_filter_does_not_count_toward_the_warning(self):
         finder = _def_finder(
-            "$alpha.files.:definition():on_arrival(:not_none()):template()"
+            "$alpha.files.:definition():on_arrival(:has_value()):template()"
         )
         finder.resolve()
         assert finder.csvpaths.logger.warnings == []
 
     def test_star_gives_each_matching_named_file(self):
         # compendium 6.35's own example, which raised before
-        results = _def_finder("$*.files.:definition(:on_arrival(:not_none()))").query()
+        results = _def_finder("$*.files.:definition(:on_arrival(:has_value()))").query()
         assert results.files == [_def_path(STAR_ALPHA_HOME)]
         assert not results.ambiguous_content_read
-        results = _def_finder("$*.files.:definition(:on_arrival(:none()))").query()
+        results = _def_finder("$*.files.:definition(:on_arrival(:does_not_have_value()))").query()
         assert results.files == [_def_path(STAR_BETA_HOME)]
 
     def test_star_values_come_from_each_named_files_own_definition(self):
@@ -1878,7 +1891,7 @@ class TestDefinitionChain:
     def test_star_with_several_whole_files_is_flagged(self):
         # compendium 5.8: several definition files can be queried, not
         # resolved
-        results = _def_finder("$*.files.:definition(:template(:not_none()))").query()
+        results = _def_finder("$*.files.:definition(:template(:has_value()))").query()
         assert len(results.results) == 2
         assert results.ambiguous_content_read
         results = _def_finder("$*.files.:definition():template()").query()
@@ -1899,7 +1912,7 @@ class TestDefinitionChain:
         home.mkdir()
         (home / "definition.json").write_text('{"on_arrival": {}}', encoding="utf-8")
         finder = _finder(
-            "$alpha.files.:definition(:on_arrival(:not_none()))",
+            "$alpha.files.:definition(:on_arrival(:has_value()))",
             str(home),
             [],
             definitions={"alpha": DEF_ALPHA},
@@ -1909,8 +1922,8 @@ class TestDefinitionChain:
 
 class TestBareDefinitionField:
     # a bare definition field means the one-field ':definition()' chain
-    # (2026-11-03): ':template(:not_none())' is
-    # ':definition(:template(:not_none()))' and ':template()' is
+    # (2026-11-03): ':template(:has_value())' is
+    # ':definition(:template(:has_value()))' and ':template()' is
     # ':definition():template()'. Before, a bare filter resolved to the
     # field's value, not the definition.json (D), and every bare field
     # raised on resolve under '*', ':regex()' and ':choice()'.
@@ -1941,20 +1954,20 @@ class TestBareDefinitionField:
         "bare, chain",
         [
             (
-                "$*.files.:on_arrival(:not_none())",
-                "$*.files.:definition(:on_arrival(:not_none()))",
+                "$*.files.:on_arrival(:has_value())",
+                "$*.files.:definition(:on_arrival(:has_value()))",
             ),
             (
-                "$*.files.:on_arrival(:none())",
-                "$*.files.:definition(:on_arrival(:none()))",
+                "$*.files.:on_arrival(:does_not_have_value())",
+                "$*.files.:definition(:on_arrival(:does_not_have_value()))",
             ),
             (
-                "$alpha.files.:template(:empty())",
-                "$alpha.files.:definition(:template(:empty()))",
+                "$alpha.files.:template(:does_not_have_value())",
+                "$alpha.files.:definition(:template(:does_not_have_value()))",
             ),
             (
-                "$*.files.:template(:not_none())",
-                "$*.files.:definition(:template(:not_none()))",
+                "$*.files.:template(:has_value())",
+                "$*.files.:definition(:template(:has_value()))",
             ),
         ],
     )
@@ -1995,9 +2008,9 @@ class TestBareDefinitionField:
     @pytest.mark.parametrize(
         "reference",
         [
-            "$alpha.files.:template(:not_none())",
-            "$*.files.:template(:not_none())",
-            '$:choice("alpha").files.:template(:not_none())',
+            "$alpha.files.:template(:has_value())",
+            "$*.files.:template(:has_value())",
+            '$:choice("alpha").files.:template(:has_value())',
         ],
     )
     def test_a_filter_resolves_to_the_definition_file(self, tmp_path, reference):
@@ -2352,11 +2365,11 @@ class TestStarTraversalDefinition:
         # 2026-10-17, closing the deferred-work bucket list's own
         # "Predicate-argument field accessors" entry) -- its own
         # motivating worked example (compendium 6.35):
-        # "$*.files.:definition(:on_arrival(:not_none()))" -- "which
+        # "$*.files.:definition(:on_arrival(:has_value()))" -- "which
         # named-files have on_arrival set." Only alpha has on_arrival
         # configured.
         results = _finder(
-            "$*.files.:definition(:on_arrival(:not_none()))",
+            "$*.files.:definition(:on_arrival(:has_value()))",
             HOME_STAR_ALPHA_HOME,
             HOME_STAR_ALPHA_MANIFEST,
             by_name=HOME_STAR_BY_NAME,
@@ -2380,7 +2393,7 @@ class TestStarTraversalDefinition:
 
     def test_on_arrival_predicate_with_no_survivors_gives_empty_results(self):
         results = _finder(
-            "$*.files.:definition(:on_arrival(:not_none()))",
+            "$*.files.:definition(:on_arrival(:has_value()))",
             HOME_STAR_ALPHA_HOME,
             HOME_STAR_ALPHA_MANIFEST,
             by_name=HOME_STAR_BY_NAME,
@@ -2393,7 +2406,7 @@ class TestStarTraversalDefinition:
     ):
         with pytest.raises(ReferenceException3):
             _finder(
-                "$*.files.:definition(:on_arrival(:not_none())).:last()",
+                "$*.files.:definition(:on_arrival(:has_value())).:last()",
                 HOME_STAR_ALPHA_HOME,
                 HOME_STAR_ALPHA_MANIFEST,
                 by_name=HOME_STAR_BY_NAME,
@@ -2436,7 +2449,7 @@ class TestStarTraversalDefinition:
             "beta": (str(beta_home), beta_manifest),
         }
         results = _finder(
-            "$*.files.:definition(:on_arrival(:not_none()))",
+            "$*.files.:definition(:on_arrival(:has_value()))",
             str(alpha_home),
             [],
             by_name=by_name,
@@ -2811,7 +2824,7 @@ class TestHomeIsRetired:
             "$*.files.:home()",
             "$*.files.:home().:last()",
             "$*.files.:home():definition()",
-            "$*.files.:home():definition(:on_arrival(:not_none()))",
+            "$*.files.:home():definition(:on_arrival(:has_value()))",
         ],
     )
     def test_every_use_raises(self, reference):

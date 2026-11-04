@@ -2,7 +2,7 @@ import pytest
 
 from csvpath.references.functions.function_3 import Function3
 from csvpath.references.functions.filters.message_3 import Message3
-from csvpath.references.functions.filters.not_none_3 import NotNone3
+from csvpath.references.functions.filters.has_value_3 import HasValue3
 from csvpath.references.functions.filters.predicate_function_3 import (
     PredicateFunction3,
 )
@@ -66,8 +66,8 @@ class TestMatches:
         assert Message3(arg=Regex3(pattern="customer")).matches(None) is False
 
     def test_predicate_function_arg_delegates_to_its_own_matches(self):
-        # same settled shape as Idchain3's own ":idchain(:not_none())" --
-        # ":message(:not_none())" means "any message at all".
-        message = Message3(arg=NotNone3())
+        # same settled shape as Idchain3's own ":idchain(:has_value())" --
+        # ":message(:has_value())" means "any message at all".
+        message = Message3(arg=HasValue3())
         assert message.matches("customer: 319") is True
         assert message.matches(None) is False

@@ -38,7 +38,7 @@ class Idchain3(Function3):
     # need to anchor to the whole idchain string, just find something
     # within it (e.g. matching one match-component among several
     # chained together) -- or, added 2026-08-26, a PredicateFunction3
-    # (":idchain(:not_none())", compendium 5.31/5.36/4.13) -- "any
+    # (":idchain(:has_value())", compendium 5.31/5.36/4.13) -- "any
     # idchain at all," not an empty-argument special case, per David's
     # 2026-08-21 framing. The grammar already allowed a REGEX arg
     # everywhere a STRING is allowed, including here -- this is the
@@ -51,7 +51,7 @@ class Idchain3(Function3):
         "Addresses one specific match component within a well-known "
         "file's own entries (e.g. errors.json) by its idchain string, "
         "either an exact match (a plain string), a search (a /regex/), "
-        "or a predicate function (e.g. :not_none()) -- only meaningful "
+        "or a predicate function (e.g. :has_value()) -- only meaningful "
         "nested inside :errors()."
     )
     ROLE = Function3.VALUE
@@ -83,7 +83,7 @@ class Idchain3(Function3):
     def matches(self, value: str) -> bool:
         """true if `value` (an error entry's own "source" idchain
         string) matches this idchain's arg -- a nested predicate
-        function's own matches() (e.g. :not_none() -- "any idchain at
+        function's own matches() (e.g. :has_value() -- "any idchain at
         all"), exact equality for a plain string, or a regex search
         (not anchored to the start/whole string) when the arg is a
         Regex3."""
