@@ -268,6 +268,60 @@ class ChecksumUtility:
         return chr(ord("A") + total % 26)
 
     @classmethod
+    def de_idnr(cls, *, digits: str) -> bool:
+        """True if 11 ASCII digits are a valid German Steuer-IdNr: no
+        leading 0; in the first ten, exactly one digit occurs two or three
+        times and the others once; and the ISO 7064 MOD 11,10 check digit"""
+        cls._digits(digits=digits, length=11)
+        if digits[0] == "0":
+            return False
+        counts = [digits[:10].count(d) for d in set(digits[:10])]
+        repeated = [c for c in counts if c > 1]
+        if len(repeated) != 1 or repeated[0] not in (2, 3):
+            return False
+        #
+        # MOD 11,10: carry a product through the digits; the check digit
+        # makes the last step land on 1
+        #
+        product = 10
+        for c in digits[:10]:
+            total = (int(c) + product) % 10 or 10
+            product = (total * 2) % 11
+        return (11 - product) % 10 == int(digits[10])
+
+    @classmethod
+    def ar_cuit(cls, *, digits: str) -> bool:
+        """True if 11 ASCII digits pass the Argentina CUIT/CUIL mod 11
+        check: the first ten weighted 5 4 3 2 7 6 5 4 3 2; 11 minus the
+        sum mod 11 is the check digit, with 11 as 0 and 10 as 9"""
+        cls._digits(digits=digits, length=11)
+        total = sum(int(c) * w for c, w in zip(digits, (5, 4, 3, 2, 7, 6, 5, 4, 3, 2)))
+        check = 11 - total % 11
+        if check == 11:
+            check = 0
+        elif check == 10:
+            check = 9
+        return check == int(digits[10])
+
+    @classmethod
+    def au_tfn(cls, *, digits: str) -> bool:
+        """True if 9 ASCII digits are a valid Australian TFN: weighted 1 4
+        3 7 5 8 6 9 10, the sum is divisible by 11"""
+        cls._digits(digits=digits, length=9)
+        weights = (1, 4, 3, 7, 5, 8, 6, 9, 10)
+        return sum(int(c) * w for c, w in zip(digits, weights)) % 11 == 0
+
+    @classmethod
+    def gb_utr(cls, *, digits: str) -> bool:
+        """True if 10 ASCII digits are a valid UK UTR: the FIRST digit
+        checks the other nine, weighted 6 7 8 9 10 5 4 3 2, as
+        21987654321 indexed by the sum mod 11"""
+        cls._digits(digits=digits, length=10)
+        weights = (6, 7, 8, 9, 10, 5, 4, 3, 2)
+        total = sum(int(c) * w for c, w in zip(digits[1:], weights))
+        return "21987654321"[total % 11] == digits[0]
+
+    @classmethod
     def _digits(cls, *, digits: str, length: int) -> None:
         if not isinstance(digits, str):
             raise TypeError(f"digits must be a str, not {type(digits)}")
@@ -280,6 +334,10 @@ class ChecksumUtility:
         "cpf_mod11": "cpf_mod11",
         "cnpj_mod11": "cnpj_mod11",
         "verhoeff": "verhoeff",
+        "de_idnr": "de_idnr",
+        "ar_cuit": "ar_cuit",
+        "au_tfn": "au_tfn",
+        "gb_utr": "gb_utr",
     }
 
     @classmethod

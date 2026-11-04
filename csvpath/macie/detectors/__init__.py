@@ -20,13 +20,17 @@ from .us_ssn_detector import UsSsnDetector
 from .vin_detector import VinDetector
 
 DETECTORS = {
+    "ar_cuit_individual": GroupedDigitsDetector,
+    "ar_cuit_organization": GroupedDigitsDetector,
     "ar_sube": GroupedDigitsDetector,
+    "au_tfn": GroupedDigitsDetector,
     "bank": BankAccountDetector,
     "br_cnpj": GroupedDigitsDetector,
     "br_cpf": GroupedDigitsDetector,
     "ca_sin": GroupedDigitsDetector,
     "cl_rut": ClRutDetector,
     "credit_card": CreditCardDetector,
+    "de_idnr": GroupedDigitsDetector,
     "es_dni": EsIdDetector,
     "es_nie": EsIdDetector,
     "fr_nir": FrNirDetector,
@@ -35,6 +39,7 @@ DETECTORS = {
     "it_cf": ItCfDetector,
     "mx_curp": MxCurpDetector,
     "us_npi": UsNpiDetector,
+    "gb_utr": GroupedDigitsDetector,
     "uk_nhs": GroupedDigitsDetector,
     "us_ssn": UsSsnDetector,
     "vin": VinDetector,

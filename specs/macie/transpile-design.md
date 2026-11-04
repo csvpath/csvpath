@@ -298,7 +298,7 @@ conversion.report.skipped   # what was not translated
 | `ManagedCatalog` | our managed identifier stand-ins, from `csvpath/macie/rulesbase/managed_identifiers.json`, checked on load |
 | `ManagedIdentifier` | occurrences of one managed identifier in one cell: detector, keyword mode, allow lists |
 | `CreditCardDetector` | 13-19 digits (or grouped), Luhn, issuer prefix and length, less issuer test numbers |
-| `GroupedDigitsDetector` | fixed-length digits, printed in groups or fixed formats, with a named check digit: SIN, NHS, CPF, CNPJ, SUBE, Aadhaar |
+| `GroupedDigitsDetector` | fixed-length digits, printed in groups or fixed formats, with a named check digit: SIN, NHS, CPF, CNPJ, SUBE, Aadhaar, IdNr, CUIT, TFN, UTR |
 | `EsIdDetector` | Spain DNI and NIE: digits and a mod 23 control letter |
 | `FrNirDetector` | France NIR (INSEE): 15 characters, Corsica's 2A and 2B, mod 97 key |
 | `MxCurpDetector` | Mexico CURP: 18 characters, birth date, state, check digit |
@@ -308,7 +308,7 @@ conversion.report.skipped   # what was not translated
 | `BankAccountDetector` | FR, DE, IT, ES, UK: IBANs (no keyword) and BBANs (keyword), plus UK sort code and account |
 | `IbanDetector` | one country's IBANs: length, printed layout, ISO 13616 mod 97 |
 | `UsSsnDetector`, `UsNpiDetector` | SSA's SSN rules; CMS's NPI check digit (Luhn over 80840) |
-| `ChecksumUtility` (`chut`) | check-digit algorithms: Luhn, mod 11s, mod 97, RUT, RIB, Verhoeff, the Spanish mod 23 letter, NIR key, CURP digit, Codice Fiscale letter |
+| `ChecksumUtility` (`chut`) | check-digit algorithms: Luhn, mod 11s, mod 97, RUT, RIB, Verhoeff, the Spanish mod 23 letter, NIR key, CURP digit, Codice Fiscale letter, IdNr, CUIT, TFN, UTR |
 | `MacieMdi` (`macie_mdi`) | applies a managed identifier to every cell |
 | `MacieRun` | one run's shared state (allow lists, tally) and outputs; limits from metadata, config, defaults; noisy setup failure |
 | `MacieAllowRegex` (`macie_allow_regex`) | registers a regex allow list before any line is read |
@@ -528,10 +528,36 @@ PERSONAL_INFORMATION, require a keyword, and are HIGH from one
 occurrence. Macie publishes only their keywords. Each has its own
 detector.
 
+**Germany IdNr, Argentina CUIT and CUIL, Australia TFN and UK UTR**:
+taxpayer numbers, all PERSONAL_INFORMATION and keyword required. Macie
+publishes only their keywords. All four are `GroupedDigitsDetector` data
+with a new named check:
+- **`GERMANY_TAX_IDENTIFICATION_NUMBER`**: the Steuer-IdNr, which is
+  what Macie says it detects. 11 digits, printed 2-3-3-3, no leading 0;
+  in the first ten, exactly one digit occurs two or three times and the
+  others once; ISO 7064 MOD 11,10 (`chut.de_idnr`). HIGH.
+- **`ARGENTINA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER`** and
+  **`ARGENTINA_ORGANIZATION_TAX_IDENTIFICATION_NUMBER`**: CUIT and CUIL,
+  11 digits printed 2-8-1, a mod 11 check digit (`chut.ar_cuit`). The two
+  share Macie's keywords, so the type prefix decides which reports a
+  number: 20, 23, 24 and 27 for individuals; 30, 33 and 34 for
+  organizations. The international types 50, 51 and 55 go with
+  organizations (ours). Individuals are HIGH; organizations MEDIUM for
+  1-99, HIGH from 100, per Macie.
+- **`AUSTRALIA_TAX_FILE_NUMBER`**: 9 digits, printed 3-3-3, weighted
+  sum divisible by 11 (`chut.au_tfn`). HIGH. **Partial:** older 8 digit
+  TFNs are not detected, because the published weights for them
+  disagree (python-stdnum's are not Wikipedia's) and a wrong rule would
+  miss real numbers.
+- **`UK_TAX_IDENTIFICATION_NUMBER`**: Macie says TRNs and UTRs. A UTR is
+  10 digits, printed 5-5, the first digit a check over the other nine
+  (`chut.gb_utr`). HIGH. **Partial:** TRNs (temporary reference
+  numbers) are not detected; their format could not be confirmed.
+
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
 (Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
-CURP, Codice Fiscale) and the partita IVA rules with stdnum, on seeded
+CURP, Codice Fiscale, IdNr, CUIT, TFN, UTR) and the partita IVA rules with stdnum, on seeded
 random inputs. python-stdnum is a dev dependency only (LGPL, not
 shipped). Reintroducing the mistyped Verhoeff row fails the test.
 - **`FRANCE_NATIONAL_IDENTIFICATION_NUMBER`** (`FrNirDetector`, INSEE
@@ -603,6 +629,9 @@ every detector the catalog names exists, and every detector is used.
     dots, or CURPs with sex X? python-stdnum also rejects Aadhaar
     numbers that are palindromes; we don't (over-reporting is the safer
     side), and Macie doesn't say.
+12. Taxpayer numbers: does Macie detect 8 digit TFNs, TRNs, or the
+    German Steuernummer (its keywords include `steuernummer`)? Which
+    CUIT types does it count as organizations?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

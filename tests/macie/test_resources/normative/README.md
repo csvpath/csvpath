@@ -83,3 +83,10 @@ Design decisions are in `specs/macie/transpile-design.md`.
   (day + 40), one with omocodia, one dated 30 February; two identifiers
   in one cell, lower case; no keyword; and an organization's 11 digit
   code (partita IVA) with an IT prefix, and one with a bad Luhn digit.
+- `12_tax_ids`: Germany IdNr, Argentina CUIT and CUIL for individuals and
+  organizations, Australia TFN and UK UTR. Grouped and contiguous forms;
+  an IdNr with one digit three times and one with two digits repeated;
+  the CUIT type deciding individual or organization (MEDIUM); bad check
+  digits; an 8 digit TFN (not detected, the entry is partial); a UTR's
+  leading check digit; a keyword with a hyphen; two identifiers in one
+  cell; and no keyword.

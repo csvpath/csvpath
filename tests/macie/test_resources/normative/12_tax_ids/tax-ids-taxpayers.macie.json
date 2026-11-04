@@ -1,0 +1,95 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "eu-central-1",
+    "downloaded_at": "2026-11-03T21:00:00Z",
+    "job_id": "5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "GERMANY_TAX_IDENTIFICATION_NUMBER",
+      "ARGENTINA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER",
+      "ARGENTINA_ORGANIZATION_TAX_IDENTIFICATION_NUMBER",
+      "AUSTRALIA_TAX_FILE_NUMBER",
+      "UK_TAX_IDENTIFICATION_NUMBER"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "GERMANY_TAX_IDENTIFICATION_NUMBER",
+      "ARGENTINA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER",
+      "ARGENTINA_ORGANIZATION_TAX_IDENTIFICATION_NUMBER",
+      "AUSTRALIA_TAX_FILE_NUMBER",
+      "UK_TAX_IDENTIFICATION_NUMBER"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "GERMANY_TAX_IDENTIFICATION_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "ARGENTINA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "ARGENTINA_ORGANIZATION_TAX_IDENTIFICATION_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "AUSTRALIA_TAX_FILE_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "UK_TAX_IDENTIFICATION_NUMBER"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Taxpayer records, Germany, Argentina, Australia and the UK",
+      "jobArn": "arn:aws:macie2:eu-central-1:123456789012:classification-job/5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e",
+      "jobId": "5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "GERMANY_TAX_IDENTIFICATION_NUMBER",
+        "ARGENTINA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER",
+        "ARGENTINA_ORGANIZATION_TAX_IDENTIFICATION_NUMBER",
+        "AUSTRALIA_TAX_FILE_NUMBER",
+        "UK_TAX_IDENTIFICATION_NUMBER"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "tax-ids-taxpayers",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-taxpayers"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}
