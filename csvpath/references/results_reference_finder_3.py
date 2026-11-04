@@ -292,6 +292,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "already means its own whole period, both ends included."
             )
 
+        name_one_field_calls = self._find_field_function_calls(
+            self._build_chain(calls), Reference3.RESULTS
+        )
+
         def _narrow(cands: list) -> list:
             # applies the range/time-window narrowing -- called once on
             # the whole pooled candidate list in POOL mode, and once per
@@ -302,12 +306,36 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # here too -- a range is just a multi-valued pointer, the
             # same category of terminal reduction, so it follows the
             # identical convention rather than a pooled-then-sliced one.
+            #
+            # then the gates: a range comes before a filter, whatever the
+            # written order (compendium 6.28), and the pointer picks from
+            # what is left. Every argued field accessor is its own GATE,
+            # wherever it sits in the chain (compendium 6.1) -- e.g.
+            # ":error_count(:above(3))". Same literal-root equivalent as
+            # _star_pool_and_reduce()'s/_star_group_and_reduce()'s own
+            # copy of this filter. Was first-match only until 2026-10-30,
+            # so ":last():run_uuid():status(\"failed\")" never filtered. A
+            # field accessor with no argument is an ordinary field read
+            # (e.g. ":uuid()"), not a gate, and is skipped.
+            #
             if bare_time_window is not None:
-                return self._apply_bare_time_window(cands, bare_time_window)
-            if has_range:
+                cands = self._apply_bare_time_window(cands, bare_time_window)
+            elif has_range:
                 if from_is_date or to_is_date:
-                    return self._apply_date_range(cands, from_call, to_call)
-                return self._apply_range(cands, from_call, to_call)
+                    cands = self._apply_date_range(cands, from_call, to_call)
+                else:
+                    cands = self._apply_range(cands, from_call, to_call)
+            for name_one_field_call in name_one_field_calls:
+                if name_one_field_call.arg is None:
+                    continue
+                cands = [
+                    rh
+                    for rh in cands
+                    if self._matches_field_predicate(
+                        self._run_field_value(rh, name_one_field_call),
+                        name_one_field_call.arg,
+                    )
+                ]
             return cands
 
         # group_key_for: set when ':all()'/':groups()' partitions
@@ -575,34 +603,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 for rh in candidates
                 if self._run_satisfies_having(rh, having_call)
             ]
-        name_one_field_calls = self._find_field_function_calls(
-            self._build_chain(calls), Reference3.RESULTS
-        )
-        for name_one_field_call in name_one_field_calls:
-            # every argued field accessor is its own GATE, wherever it
-            # sits in the chain (compendium 6.1) -- e.g.
-            # ":error_count(:above(3))". Same literal-root equivalent as
-            # _star_pool_and_reduce()'s/_star_group_and_reduce()'s own
-            # copy of this filter, see their shared comment for the
-            # full reasoning. Was first-match only until 2026-10-30, so
-            # ":last():run_uuid():status(\"failed\")" never filtered. A
-            # field accessor with no argument is an ordinary field read
-            # (e.g. ":uuid()"), not a gate, and is skipped.
-            if name_one_field_call.arg is None:
-                continue
-            candidates = [
-                rh
-                for rh in candidates
-                if self._matches_field_predicate(
-                    self._run_field_value(rh, name_one_field_call),
-                    name_one_field_call.arg,
-                )
-            ]
 
         # range/bare-time-window detection+validation already happened
         # earlier (right after `pointer`/`is_grouped`, so group_key_for
         # could account for it) -- only the actual narrowing (via
-        # _narrow(), also defined there) still happens here, applied
+        # _narrow(), also defined there, which also applies the argued-
+        # field gates after the range) still happens here, applied
         # per-group or pooled below, same position this used to apply
         # it pooled-only, before task #7's follow-up fix made it
         # per-partition.
@@ -1452,6 +1458,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 for rh in run_homes
                 if self._run_satisfies_having(rh, having_call)
             ]
+        if bare_time_window is not None:
+            run_homes = self._apply_bare_time_window(run_homes, bare_time_window)
+        if lower_call is not None or upper_call is not None:
+            run_homes = sorted(run_homes, key=self._run_dir_sort_key)
+            run_homes = self._apply_run_level_range(run_homes, lower_call, upper_call)
+        # the gates come after the range, whatever the written order
+        # (compendium 6.28); the pointer picks from what is left.
         for field_call in field_calls or []:
             if field_call.arg is not None:
                 run_homes = [
@@ -1461,11 +1474,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         self._run_field_value(rh, field_call), field_call.arg
                     )
                 ]
-        if bare_time_window is not None:
-            run_homes = self._apply_bare_time_window(run_homes, bare_time_window)
-        if lower_call is not None or upper_call is not None:
-            run_homes = sorted(run_homes, key=self._run_dir_sort_key)
-            run_homes = self._apply_run_level_range(run_homes, lower_call, upper_call)
         run_homes = sorted(run_homes, key=self._run_dir_sort_key)
         if pointer is None:
             results = []
@@ -1692,16 +1700,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 for r in records
                 if self._run_record_satisfies_having(record=r, having_call=having_call)
             ]
-        for field_call in field_calls or []:
-            if field_call.arg is not None:
-                records = [
-                    r
-                    for r in records
-                    if self._matches_field_predicate(
-                        self._run_record_field_value(record=r, field_call=field_call),
-                        field_call.arg,
-                    )
-                ]
         has_range = lower_call is not None or upper_call is not None
         if bare_time_window is not None or has_range:
             by_home = {r["run_home"]: r for r in records}
@@ -1713,6 +1711,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     run_homes, lower_call, upper_call
                 )
             records = [by_home[rh] for rh in run_homes]
+        # the gates come after the range, whatever the written order
+        # (compendium 6.28); the pointer picks from what is left.
+        for field_call in field_calls or []:
+            if field_call.arg is not None:
+                records = [
+                    r
+                    for r in records
+                    if self._matches_field_predicate(
+                        self._run_record_field_value(record=r, field_call=field_call),
+                        field_call.arg,
+                    )
+                ]
         if pointer is not None:
             selected = self._apply_pointer(pointer, records)
             records = [] if selected is None else [selected]
@@ -1858,14 +1868,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         self, *, record: dict, selector: dict
     ) -> list[dict]:
         """the instance records of one run record that a name_three
-        selects, in arrival order (6.13b(ii)): argued fields filter
-        first, then an identity, pointer or range picks, the same way
+        selects, in arrival order (6.13b(ii)): a range first, then the
+        argued fields filter, whatever the written order (6.28), then an
+        identity or pointer picks from what is left, the same way
         filters come before the pointer in name_one."""
         if record is None or not isinstance(record, dict):
             raise TypeError("Record must be a dict")
         if selector is None or not isinstance(selector, dict):
             raise TypeError("Selector must be a dict")
         entries = record["instances"]
+        if selector["range_bounds"] is not None and selector["pointer"] is None:
+            lower_call, upper_call = selector["range_bounds"]
+            entries = self._apply_range(entries, lower_call, upper_call)
         for field_call in selector["filters"]:
             entries = [
                 e
@@ -1881,8 +1895,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             selected = self._apply_pointer(selector["pointer"], entries)
             return [] if selected is None else [selected]
         if selector["range_bounds"] is not None:
-            lower_call, upper_call = selector["range_bounds"]
-            return self._apply_range(entries, lower_call, upper_call)
+            return entries
         if selector["identity"] is not None:
             return [e for e in entries if e.get("identity") == selector["identity"]]
         return entries
@@ -2101,15 +2114,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 for rh, key in partitioned
                 if self._run_satisfies_having(rh, having_call)
             ]
-        for field_call in field_calls or []:
-            if field_call.arg is not None:
-                partitioned = [
-                    (rh, key)
-                    for rh, key in partitioned
-                    if self._matches_field_predicate(
-                        self._run_field_value(rh, field_call), field_call.arg
-                    )
-                ]
         if bare_time_window is not None:
             start = bare_time_window.start_datetime()
             end = bare_time_window.end_datetime()
@@ -2127,6 +2131,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 match_all,
                 range_bounds,
                 accessor,
+                field_calls=field_calls,
                 instance_pointer=instance_pointer,
             )
         groups: dict = {}
@@ -2139,6 +2144,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 candidates = self._apply_run_level_range(
                     candidates, lower_call, upper_call
                 )
+            # the gates come after the range, within each group, whatever
+            # the written order (compendium 6.28); the pointer picks from
+            # what is left.
+            for field_call in field_calls or []:
+                if field_call.arg is not None:
+                    candidates = [
+                        rh
+                        for rh in candidates
+                        if self._matches_field_predicate(
+                            self._run_field_value(rh, field_call), field_call.arg
+                        )
+                    ]
             if pointer is not None:
                 selected = self._apply_pointer(pointer, candidates)
                 selected_runs = [selected] if selected is not None else []

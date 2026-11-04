@@ -2813,6 +2813,157 @@ class TestErrorCountPredicateGate:
         assert sorted(r.data for r in results.results) == [0, 2, 5]
 
 
+class TestRangeBeforeGate:
+    # compendium 6.28 (David, 2026-11-02): a range is made before a filter
+    # selects from it, whatever the written order, and a pointer picks
+    # from what the range and filters leave. Only an index range can tell
+    # the two orders apart: a date range is itself a match on each run's
+    # own time, so it gives the same answer either way.
+    #
+    # acme has five runs with error_count 5, 0, 5, 0, 5 (a0-a4); widgets
+    # has three with 0, 5, 5 (w0-w2), dated after every acme run. Each
+    # run has instances "0", "1", "2" with error_count 5, 0, 5.
+    # ":from(0):to(1):error_count(:above(3))" is a0 (range first), not
+    # a0 and a2 (gate first).
+    @pytest.fixture
+    def runs(self, tmp_path):
+        entries = []
+        for group, month, counts in (
+            ("acme", "01", (5, 0, 5, 0, 5)),
+            ("widgets", "02", (0, 5, 5)),
+        ):
+            for i, count in enumerate(counts):
+                run_uuid = f"{group[0]}{i}"
+                run_dir = tmp_path / group / f"2026-{month}-0{i + 1}_00-00-00"
+                _write_json(
+                    run_dir / "manifest.json",
+                    {"run_uuid": run_uuid, "error_count": count},
+                )
+                for j, instance_count in enumerate((5, 0, 5)):
+                    _write_json(
+                        run_dir / str(j) / "manifest.json",
+                        {"uuid": f"{run_uuid}-i{j}", "error_count": instance_count},
+                    )
+                    entries.append(
+                        {
+                            "named_paths_name": group,
+                            "run_home": str(run_dir),
+                            "run_uuid": run_uuid,
+                            "uuid": f"{run_uuid}-i{j}",
+                            "identity": str(j),
+                            "time": f"2026-{month}-0{i + 1}T00:00:0{j}",
+                        }
+                    )
+        _write_json(tmp_path / "manifest.json", entries)
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$acme.results.:from(0):to(1):error_count(:above(3))",
+            "$acme.results.:error_count(:above(3)):from(0):to(1)",
+            "$acme.results.:all():from(0):to(1):error_count(:above(3))",
+            "$*.results.:from(0):to(1):error_count(:above(3))",
+            "$*.results.:flatten():from(0):to(1):error_count(:above(3))",
+            "$*.results.:flatten():error_count(:above(3)):from(0):to(1)",
+            "$*.results.:manifest():from(0):to(1):error_count(:above(3))",
+            "$*.results.:manifest():error_count(:above(3)):from(0):to(1)",
+        ],
+    )
+    def test_the_range_comes_first_in_name_one(self, runs, reference):
+        assert _finder(reference, runs).query().uuids == ["a0"]
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$acme.results.:from(0):to(1):error_count(:above(3)):last()",
+            "$*.results.:flatten():from(0):to(1):error_count(:above(3)):last()",
+            "$*.results.:manifest():from(0):to(1):error_count(:above(3)):last()",
+        ],
+    )
+    def test_a_pointer_picks_from_what_the_range_and_gate_leave(
+        self, runs, reference
+    ):
+        # gate first, :last() would pick a2
+        assert _finder(reference, runs).query().uuids == ["a0"]
+
+    def test_the_range_comes_first_within_each_group(self, runs):
+        # widgets' first two runs are w0 (0) and w1 (5): w1. Gate first,
+        # widgets would give w1 and w2, and acme a0 and a2.
+        results = _finder(
+            "$*.results.:groups():from(0):to(1):error_count(:above(3))", runs
+        ).query()
+        assert sorted(results.uuids) == ["a0", "w1"]
+
+    def test_the_range_comes_first_within_each_group_with_a_pointer(self, runs):
+        # gate first, :last() would pick a2 and w2
+        results = _finder(
+            "$*.results.:groups():from(0):to(1):error_count(:above(3)):last()",
+            runs,
+        ).query()
+        assert sorted(results.uuids) == ["a0", "w1"]
+
+    def test_a_gate_without_a_range_in_groups_still_filters(self, runs):
+        # the no-pointer, no-range case hands off to the pooled tail,
+        # which must still apply the gates
+        results = _finder(
+            "$*.results.:groups():error_count(:above(3))", runs
+        ).query()
+        assert sorted(results.uuids) == ["a0", "a2", "a4", "w1", "w2"]
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$acme.results.:from(:date(\"2026-01-01\")):to(:date(\"2026-01-02\"))"
+            ":error_count(:above(3))",
+            "$acme.results.:error_count(:above(3))"
+            ":from(:date(\"2026-01-01\")):to(:date(\"2026-01-02\"))",
+        ],
+    )
+    def test_a_date_range_gives_the_same_answer_either_way(self, runs, reference):
+        assert _finder(reference, runs).query().uuids == ["a0"]
+
+    def test_the_range_comes_first_in_a_manifest_set_name_three(self, runs):
+        # a4's instances 0 and 1 are 5 and 0: i0. Gate first, i0 and i2.
+        results = _finder(
+            "$*.results.:manifest():last().:from(0):to(1):error_count(:above(3))",
+            runs,
+        ).query()
+        assert results.uuids == ["w2-i0"]
+
+    def test_a_manifest_set_name_three_range_alone(self, runs):
+        results = _finder(
+            "$*.results.:manifest():last().:from(0):to(1)", runs
+        ).query()
+        assert results.uuids == ["w2-i0", "w2-i1"]
+
+    def test_a_manifest_set_name_three_gate_alone(self, runs):
+        results = _finder(
+            "$*.results.:manifest():last().:error_count(:above(3))", runs
+        ).query()
+        assert results.uuids == ["w2-i0", "w2-i2"]
+
+    def test_having_still_comes_before_the_range(self, tmp_path):
+        # :having() is not moved: 6.39 calls it a context setter, and
+        # whether 6.28 covers it is an open question. Instance "x" is in
+        # r2 and r3 only, so the first run having it is r2.
+        run_homes = [
+            _make_run(
+                tmp_path / "acme",
+                f"2026-01-0{i + 1}_00-00-00",
+                f"r{i}",
+                {"x": f"r{i}-x"} if i >= 2 else {"0": f"r{i}-0"},
+            )
+            for i in range(4)
+        ]
+        _write_archive_manifest(tmp_path, "acme", run_homes)
+        for reference in (
+            "$acme.results.:having(\"x\"):from(0):to(0)",
+            "$*.results.:flatten():having(\"x\"):from(0):to(0)",
+        ):
+            assert _finder(reference, str(tmp_path)).query().uuids == ["r2"]
+
+
 class TestUuidGate:
     # normative_reference_examples.txt's own worked examples, added
     # 2026-10-18 alongside Uuid3/RunUuid3's own ARG_TYPES widening --
