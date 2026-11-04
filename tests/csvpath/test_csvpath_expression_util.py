@@ -213,7 +213,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.is_none(0) is False
         assert ExpressionUtility.is_none(1) is False
 
-    def test_exp_util_bool(self):
+    def test_exp_util_bool_1(self):
         assert ExpressionUtility.asbool(True) is True
         assert ExpressionUtility.asbool(False) is False
         assert ExpressionUtility.asbool(None) is False
@@ -233,6 +233,14 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.asbool("nan") is False
         assert ExpressionUtility.asbool("Nan") is True
         assert ExpressionUtility.asbool("NaN") is False
+
+    def test_exp_util_bool_2(self):
+        assert ExpressionUtility.asbool([]) is True
+        assert ExpressionUtility.asbool([], strict=True) is False
+        assert ExpressionUtility.asbool({}) is True
+        assert ExpressionUtility.asbool({}, strict=True) is False
+        assert ExpressionUtility.asbool(()) is True
+        assert ExpressionUtility.asbool((), strict=True) is False
 
     def test_exp_util_ascomparable(self):
         assert ExpressionUtility.ascompariable(None) is None
@@ -382,7 +390,10 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
             )
             == "datetime"
         )
-        assert ExpressionUtility.is_date_or_datetime_obj("not a date/datetime") == "unknown"
+        assert (
+            ExpressionUtility.is_date_or_datetime_obj("not a date/datetime")
+            == "unknown"
+        )
 
     def test_exp_util_to_simple_bool(self):
         assert ExpressionUtility.to_simple_bool(True) is True

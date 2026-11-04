@@ -59,6 +59,7 @@ from .math.equals import Equals
 from .math.round import Round
 from .math.mod import Mod
 from .boolean.notf import Not
+from .boolean.nor import Nor
 from .boolean.inf import In
 from .boolean.orf import Or
 from .boolean.empty import Empty
@@ -66,6 +67,7 @@ from .boolean.no import No
 from .boolean.yes import Yes
 from .boolean.between import Between
 from .boolean.andf import And
+from .boolean.andf import Nand
 from .boolean.any import Any
 from .boolean.all import All
 from .boolean.exists import Exists
@@ -110,6 +112,7 @@ from .misc.collect_original import CollectOriginal
 from .misc.load_list import LoadList
 from .testing.debug import Debug, BriefStackTrace, VoteStack, DoWhenStack, Log
 from .validity.line import Line
+from .validity.validate import Validate
 from .validity.failed import Failed
 from .validity.fail import Fail, FailAll
 from .validity.percent_matching import PercentMatching
@@ -372,6 +375,7 @@ class FunctionFactory:
         fs["regex"] = Regex
         fs["exact"] = Regex
         fs["not"] = Not
+        fs["nor"] = Nor
         fs["year"] = DatePart
         fs["month"] = DatePart
         fs["day"] = DatePart
@@ -521,6 +525,7 @@ class FunctionFactory:
         fs["fail"] = Fail
         fs["fail_all"] = FailAll
         fs["failed"] = Failed
+        fs["validate"] = Validate
         fs["valid"] = Failed
         fs["percent_matching"] = PercentMatching
         fs["matches"] = Matches
@@ -547,6 +552,7 @@ class FunctionFactory:
         fs["int"] = Int
         fs["float"] = Float
         fs["and"] = And
+        fs["nand"] = Nand
         fs["track"] = Track
         fs["track_any"] = Track
         fs["clear"] = Clear
