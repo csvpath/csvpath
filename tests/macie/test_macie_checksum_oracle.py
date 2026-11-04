@@ -18,8 +18,10 @@ from stdnum.ar import cuit
 from stdnum.au import tfn
 from stdnum.br import cnpj, cpf
 from stdnum.cl import rut
+from stdnum.co import nit
 from stdnum.de import idnr
-from stdnum.es import dni, nie
+from stdnum.es import cif, dni, nie
+from stdnum.fr import nif as fr_nif
 from stdnum.fr import nir
 from stdnum.gb import nhs, utr
 from stdnum.iso7064 import mod_11_10, mod_97_10
@@ -183,3 +185,29 @@ def test_macie_oracle_gb_utr() -> None:
         rest = _digits(rng, 9)
         first = utr.calc_check_digit(rest) if rng.random() < 0.5 else _digits(rng, 1)
         assert chut.gb_utr(digits=first + rest) == utr.is_valid(first + rest), rest
+
+
+def test_macie_oracle_es_cif() -> None:
+    rng = random.Random(16)
+    for _ in range(N):
+        head = rng.choice(chut.ES_CIF_TYPES) + _digits(rng, 7)
+        right = cif.calc_check_digits(head)
+        last = rng.choice([right[0], right[1], rng.choice(DIGITS + "JABCDEFGHI")])
+        assert chut.es_cif(cif=head + last) == cif.is_valid(head + last), head + last
+
+
+def test_macie_oracle_co_nit() -> None:
+    rng = random.Random(17)
+    for _ in range(N):
+        body = _digits(rng, rng.randint(7, 15))
+        check = nit.calc_check_digit(body) if rng.random() < 0.5 else _digits(rng, 1)
+        assert chut.co_nit(digits=body + check) == nit.is_valid(body + check), body
+
+
+def test_macie_oracle_fr_spi() -> None:
+    rng = random.Random(18)
+    for _ in range(N):
+        head = _digits(rng, 10)
+        tail = fr_nif.calc_check_digits(head) if rng.random() < 0.5 else _digits(rng, 3)
+        number = head + tail
+        assert chut.fr_spi(digits=number) == fr_nif.is_valid(number), number

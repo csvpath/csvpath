@@ -413,6 +413,45 @@
         "unique taxpayer reference",
         "utr"
       ]
+    },
+    "co_nit": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "nit",
+        "nit.",
+        "nit#",
+        "n.i.t."
+      ]
+    },
+    "mx_rfc": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "código del registro federal de contribuyentes",
+        "identificación de impuestos",
+        "identificacion de impuestos",
+        "impuesto al valor agregado",
+        "iva",
+        "iva#",
+        "i.v.a.",
+        "registro federal de contribuyentes",
+        "rfc",
+        "rfc#",
+        "r.f.c."
+      ]
+    },
+    "fr_tax": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "numéro d'identification fiscal",
+        "tax id",
+        "tax identification number",
+        "tax number",
+        "tin",
+        "tin#"
+      ]
     }
   },
   "identifiers": {
@@ -1232,6 +1271,83 @@
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
       "retrieved": "2026-11-03",
       "partial": "Only UTRs are detected, not TRNs (temporary reference numbers)"
+    },
+    "SPAIN_NIF_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "es_nif",
+      "keyword_mode": "required",
+      "keywords_from": "es_tax",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
+    },
+    "SPAIN_TAX_IDENTIFICATION_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "es_cif",
+      "keyword_mode": "required",
+      "keywords_from": "es_tax",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
+    },
+    "MEXICO_INDIVIDUAL_RFC_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "mx_rfc_individual",
+      "keyword_mode": "required",
+      "keywords_from": "mx_rfc",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
+    },
+    "MEXICO_ORGANIZATION_RFC_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "mx_rfc_organization",
+      "keyword_mode": "required",
+      "keywords_from": "mx_rfc",
+      "distance": 30,
+      "severity": "1:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
+    },
+    "COLOMBIA_INDIVIDUAL_NIT_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "co_nit_individual",
+      "keyword_mode": "required",
+      "keywords_from": "co_nit",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
+    },
+    "COLOMBIA_ORGANIZATION_NIT_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "co_nit_organization",
+      "keyword_mode": "required",
+      "keywords_from": "co_nit",
+      "distance": 30,
+      "severity": "1:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
+    },
+    "FRANCE_TAX_IDENTIFICATION_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "fr_spi",
+      "keyword_mode": "required",
+      "keywords_from": "fr_tax",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
     }
   },
   "detectors": {
@@ -1843,6 +1959,70 @@
         ]
       ],
       "check": "gb_utr",
+      "exclusions": []
+    },
+    "es_nif": {
+      "notes": [
+        "Macie says it detects CIF, NIE and NIF numbers for Spain, with SPAIN_NIE_NUMBER, SPAIN_NIF_NUMBER and SPAIN_TAX_IDENTIFICATION_NUMBER sharing Spain's taxpayer keywords. Ours (David, 2026-11-03): NIF is a person's NIF, the DNI form or K, L or M; CIF is SPAIN_TAX_IDENTIFICATION_NUMBER; NIEs stay with SPAIN_NIE_NUMBER, so nothing is counted twice. Fidelity B.",
+        "The format is ours, from the Agencia Tributaria: the DNI form (8 digits and the mod 23 letter, with Macie's DNI exclusions), or K, L or M, 7 digits and the DNI's letter over the 7 digits."
+      ],
+      "form": "nif"
+    },
+    "es_cif": {
+      "notes": [
+        "Macie says it detects CIF, NIE and NIF numbers for Spain, with SPAIN_NIE_NUMBER, SPAIN_NIF_NUMBER and SPAIN_TAX_IDENTIFICATION_NUMBER sharing Spain's taxpayer keywords. Ours (David, 2026-11-03): NIF is a person's NIF, the DNI form or K, L or M; CIF is SPAIN_TAX_IDENTIFICATION_NUMBER; NIEs stay with SPAIN_NIE_NUMBER, so nothing is counted twice. Fidelity B.",
+        "The format is ours, from the Agencia Tributaria: a type letter (A B C D E F G H J N P Q R S U V W), 7 digits, and a control digit or letter from the Luhn digit of the 7; either form is accepted, as sources disagree on which types use which."
+      ],
+      "form": "cif"
+    },
+    "mx_rfc_individual": {
+      "notes": [
+        "Macie publishes the keywords, shared by the individual and organization identifiers, and that XAXX010101000 and XEXX010101000 are never reported; organizations are MEDIUM for 1-99, HIGH from 100. The format is ours, from the SAT: individuals 4 letters, organizations 3, then a real YYMMDD date and 3 characters. The final check digit is not checked: about 1.5% of RFCs in use have a wrong one (David, 2026-11-03). Fidelity B."
+      ],
+      "form": "individual"
+    },
+    "mx_rfc_organization": {
+      "notes": [
+        "Macie publishes the keywords, shared by the individual and organization identifiers, and that XAXX010101000 and XEXX010101000 are never reported; organizations are MEDIUM for 1-99, HIGH from 100. The format is ours, from the SAT: individuals 4 letters, organizations 3, then a real YYMMDD date and 3 characters. The final check digit is not checked: about 1.5% of RFCs in use have a wrong one (David, 2026-11-03). Fidelity B."
+      ],
+      "form": "organization"
+    },
+    "co_nit_individual": {
+      "notes": [
+        "Macie publishes only the keywords, shared by the individual and organization identifiers; organizations are MEDIUM for 1-99, HIGH from 100. The format is ours, from the DIAN: a body and a mod 11 check digit over prime weights, dotted, hyphenated or contiguous. Nothing in a NIT says person or organization; ours (David, 2026-11-03): a 9 digit body starting 8 or 9 is an organization's, any other 6 to 10 digit body a person's. Fidelity B."
+      ],
+      "form": "individual"
+    },
+    "co_nit_organization": {
+      "notes": [
+        "Macie publishes only the keywords, shared by the individual and organization identifiers; organizations are MEDIUM for 1-99, HIGH from 100. The format is ours, from the DIAN: a body and a mod 11 check digit over prime weights, dotted, hyphenated or contiguous. Nothing in a NIT says person or organization; ours (David, 2026-11-03): a 9 digit body starting 8 or 9 is an organization's, any other 6 to 10 digit body a person's. Fidelity B."
+      ],
+      "form": "organization"
+    },
+    "fr_spi": {
+      "notes": [
+        "Macie publishes only the keywords for FRANCE_TAX_IDENTIFICATION_NUMBER (TINs).",
+        "The format is ours, from the DGFiP: the SPI number, 13 digits, printed 2-2-3-3-3, the first digit 0 to 3, the last three the first ten mod 511."
+      ],
+      "length": 13,
+      "layouts": [
+        [
+          2,
+          2,
+          3,
+          3,
+          3
+        ]
+      ],
+      "check": "fr_spi",
+      "first_digit_not": [
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
       "exclusions": []
     }
   }

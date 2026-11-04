@@ -1,0 +1,89 @@
+#
+# Spain NIF and CIF, Mexico RFC (individuals and organizations), Colombia
+# NIT (individuals and organizations) and France TIN (SPI): Macie's
+# SPAIN_NIF_NUMBER, SPAIN_TAX_IDENTIFICATION_NUMBER,
+# MEXICO_INDIVIDUAL_ and MEXICO_ORGANIZATION_RFC_NUMBER,
+# COLOMBIA_INDIVIDUAL_ and COLOMBIA_ORGANIZATION_NIT_NUMBER and
+# FRANCE_TAX_IDENTIFICATION_NUMBER, as our stand-ins. All require a
+# keyword. Macie publishes the keywords and the RFC exclusions; the
+# formats are the issuers', and how they split is ours, agreed with
+# David on 2026-11-03.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: tax-ids-2-taxpayers.csvpath
+    data: taxpayers.csv
+    finding_lines: [1, 2, 4, 5, 7, 8, 10, 11, 13, 15, 16]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie SPAIN_NIF_NUMBER: occurrence 1, line 1 (row 2), column 2 nif" }
+      - { line: 2, message: "macie SPAIN_NIF_NUMBER: occurrence 2, line 2 (row 3), column 2 nif" }
+      - { line: 4, message: "macie SPAIN_TAX_IDENTIFICATION_NUMBER: occurrence 1, line 4 (row 5), column 3 cif" }
+      - { line: 5, message: "macie SPAIN_TAX_IDENTIFICATION_NUMBER: occurrence 2, line 5 (row 6), column 3 cif" }
+      - { line: 7, message: "macie MEXICO_INDIVIDUAL_RFC_NUMBER: occurrence 1, line 7 (row 8), column 4 rfc" }
+      - { line: 8, message: "macie MEXICO_ORGANIZATION_RFC_NUMBER: occurrence 1, line 8 (row 9), column 4 rfc" }
+      - { line: 10, message: "macie COLOMBIA_ORGANIZATION_NIT_NUMBER: occurrence 1, line 10 (row 11), column 5 nit" }
+      - { line: 11, message: "macie COLOMBIA_INDIVIDUAL_NIT_NUMBER: occurrence 1, line 11 (row 12), column 5 nit" }
+      - { line: 13, message: "macie FRANCE_TAX_IDENTIFICATION_NUMBER: occurrence 1, line 13 (row 14), column 6 tin" }
+      - { line: 15, message: "macie MEXICO_INDIVIDUAL_RFC_NUMBER: occurrence 2, line 15 (row 16), column 7 notes" }
+      - { line: 15, message: "macie COLOMBIA_INDIVIDUAL_NIT_NUMBER: occurrence 2, line 15 (row 16), column 7 notes" }
+      - { line: 16, message: "macie FRANCE_TAX_IDENTIFICATION_NUMBER: occurrence 2, line 16 (row 17), column 7 notes" }
+    findings: findings.json
+    #
+    # Headers: "nif" and "cif" hold keywords of Spain's taxpayer list,
+    # "rfc" Mexico's, "nit" Colombia's, and "tin" both France's and
+    # Spain's; "id" and "notes" hold none.
+    #
+    #   line  cell                                    reported as
+    #   1     nif 12345678Z                           NIF: the DNI form
+    #   2     nif M-1234567-L                         NIF: the M form, the DNI letter
+    #                                                 over the 7 digits
+    #   3     nif X1234567L                           nothing: a NIE is
+    #                                                 SPAIN_NIE_NUMBER's, which this
+    #                                                 job does not select
+    #   4     cif B64717838                           CIF: control digit
+    #   5     cif A1358562E                           CIF: control letter
+    #   6     cif B64717839                           nothing: bad control
+    #   7     rfc GODE 561231 GR8                     RFC individual: 4 letters
+    #   8     rfc MAB-930714-8T4                      RFC organization: 3 letters
+    #   9     rfc XAXX010101000                       nothing: Macie's example
+    #   10    nit 900.123.456-8                       NIT organization: 9 digits from 9
+    #   11    nit 79.123.456-0                        NIT individual: an 8 digit cedula
+    #   12    nit 900.123.456-7                       nothing: bad check digit
+    #   13    tin 30 23 217 600 053                   TIN: groups 2-2-3-3-3, mod 511
+    #   14    tin 9701987765432                       nothing: right mod 511 digits,
+    #                                                 but SPIs start 0 to 3
+    #   15    notes "rfc VACE460910SX6, nit           RFC individual (its check digit
+    #         1.012.345.678-9"                        is wrong, and not checked) and
+    #                                                 NIT individual (10 digits)
+    #   16    notes "tin 3023217600053 / cif          TIN ("tin" before) and CIF
+    #         J99216582"                              ("cif" before), one cell
+    #   17    notes M1234567L                         nothing: no keyword
+    #
+    # On each line the identifiers run in the wrapper's resolved order:
+    # NIF, CIF, RFC individual, RFC organization, NIT individual, NIT
+    # organization, TIN. Totals: NIF 2, CIF 3 (lines 4, 5, 16; the third
+    # past the cap of 2), RFC individual 2, RFC organization 1, NIT
+    # individual 2, NIT organization 1, TIN 2. Organizations' RFCs and
+    # NITs are MEDIUM for 1-99, the rest HIGH from one occurrence. All are
+    # PERSONAL_INFORMATION: totalCount 13.

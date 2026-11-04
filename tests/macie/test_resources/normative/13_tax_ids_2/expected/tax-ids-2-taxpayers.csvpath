@@ -1,0 +1,80 @@
+~
+  id: tax-ids-2-taxpayers
+  macie-origin: job
+  macie-job-id: 6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f
+  macie-account: 123456789012
+  macie-region: us-west-2
+  macie-source-arn: arn|aws|macie2|us-west-2|123456789012|classification-job/6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f
+  macie-downloaded-at: 20261103T233000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "SPAIN_NIF_NUMBER",
+        "PERSONAL_INFORMATION",
+        "es_nif",
+        "required",
+        "cif|cif número|cifnúmero#|nie|nif|número de contribuyente|número de identidad de extranjero|número de identificación fiscal|número de impuesto corporativo|personal tax number|tax id|tax identification number|tax number|tin|tin#",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "SPAIN_TAX_IDENTIFICATION_NUMBER",
+        "PERSONAL_INFORMATION",
+        "es_cif",
+        "required",
+        "cif|cif número|cifnúmero#|nie|nif|número de contribuyente|número de identidad de extranjero|número de identificación fiscal|número de impuesto corporativo|personal tax number|tax id|tax identification number|tax number|tin|tin#",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "MEXICO_INDIVIDUAL_RFC_NUMBER",
+        "PERSONAL_INFORMATION",
+        "mx_rfc_individual",
+        "required",
+        "código del registro federal de contribuyentes|identificación de impuestos|identificacion de impuestos|impuesto al valor agregado|iva|iva#|i.v.a.|registro federal de contribuyentes|rfc|rfc#|r.f.c.",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "MEXICO_ORGANIZATION_RFC_NUMBER",
+        "PERSONAL_INFORMATION",
+        "mx_rfc_organization",
+        "required",
+        "código del registro federal de contribuyentes|identificación de impuestos|identificacion de impuestos|impuesto al valor agregado|iva|iva#|i.v.a.|registro federal de contribuyentes|rfc|rfc#|r.f.c.",
+        30,
+        "1:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "COLOMBIA_INDIVIDUAL_NIT_NUMBER",
+        "PERSONAL_INFORMATION",
+        "co_nit_individual",
+        "required",
+        "nit|nit.|nit#|n.i.t.",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "COLOMBIA_ORGANIZATION_NIT_NUMBER",
+        "PERSONAL_INFORMATION",
+        "co_nit_organization",
+        "required",
+        "nit|nit.|nit#|n.i.t.",
+        30,
+        "1:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "FRANCE_TAX_IDENTIFICATION_NUMBER",
+        "PERSONAL_INFORMATION",
+        "fr_spi",
+        "required",
+        "numéro d'identification fiscal|tax id|tax identification number|tax number|tin|tin#",
+        30,
+        "1:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

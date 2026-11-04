@@ -1,0 +1,109 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "us-west-2",
+    "downloaded_at": "2026-11-03T23:30:00Z",
+    "job_id": "6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "SPAIN_NIF_NUMBER",
+      "SPAIN_TAX_IDENTIFICATION_NUMBER",
+      "MEXICO_INDIVIDUAL_RFC_NUMBER",
+      "MEXICO_ORGANIZATION_RFC_NUMBER",
+      "COLOMBIA_INDIVIDUAL_NIT_NUMBER",
+      "COLOMBIA_ORGANIZATION_NIT_NUMBER",
+      "FRANCE_TAX_IDENTIFICATION_NUMBER"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "SPAIN_NIF_NUMBER",
+      "SPAIN_TAX_IDENTIFICATION_NUMBER",
+      "MEXICO_INDIVIDUAL_RFC_NUMBER",
+      "MEXICO_ORGANIZATION_RFC_NUMBER",
+      "COLOMBIA_INDIVIDUAL_NIT_NUMBER",
+      "COLOMBIA_ORGANIZATION_NIT_NUMBER",
+      "FRANCE_TAX_IDENTIFICATION_NUMBER"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "SPAIN_NIF_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "SPAIN_TAX_IDENTIFICATION_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "MEXICO_INDIVIDUAL_RFC_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "MEXICO_ORGANIZATION_RFC_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "COLOMBIA_INDIVIDUAL_NIT_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "COLOMBIA_ORGANIZATION_NIT_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "FRANCE_TAX_IDENTIFICATION_NUMBER"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Taxpayer records, Spain, Mexico, Colombia and France",
+      "jobArn": "arn:aws:macie2:us-west-2:123456789012:classification-job/6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f",
+      "jobId": "6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "SPAIN_NIF_NUMBER",
+        "SPAIN_TAX_IDENTIFICATION_NUMBER",
+        "MEXICO_INDIVIDUAL_RFC_NUMBER",
+        "MEXICO_ORGANIZATION_RFC_NUMBER",
+        "COLOMBIA_INDIVIDUAL_NIT_NUMBER",
+        "COLOMBIA_ORGANIZATION_NIT_NUMBER",
+        "FRANCE_TAX_IDENTIFICATION_NUMBER"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "tax-ids-2-taxpayers",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-taxpayers-2"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

@@ -1,0 +1,162 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "PERSONAL_INFORMATION",
+      "detections": [
+        {
+          "type": "SPAIN_NIF_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "nif",
+                "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "nif",
+                "row": 3
+              }
+            ]
+          }
+        },
+        {
+          "type": "SPAIN_TAX_IDENTIFICATION_NUMBER",
+          "count": 3,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "cif",
+                "row": 5
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "cif",
+                "row": 6
+              },
+              {
+                "cellReference": null,
+                "column": 7,
+                "columnName": "notes",
+                "row": 17
+              }
+            ]
+          }
+        },
+        {
+          "type": "MEXICO_INDIVIDUAL_RFC_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "rfc",
+                "row": 8
+              },
+              {
+                "cellReference": null,
+                "column": 7,
+                "columnName": "notes",
+                "row": 16
+              }
+            ]
+          }
+        },
+        {
+          "type": "MEXICO_ORGANIZATION_RFC_NUMBER",
+          "count": 1,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "rfc",
+                "row": 9
+              }
+            ]
+          }
+        },
+        {
+          "type": "COLOMBIA_INDIVIDUAL_NIT_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "nit",
+                "row": 12
+              },
+              {
+                "cellReference": null,
+                "column": 7,
+                "columnName": "notes",
+                "row": 16
+              }
+            ]
+          }
+        },
+        {
+          "type": "COLOMBIA_ORGANIZATION_NIT_NUMBER",
+          "count": 1,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "nit",
+                "row": 11
+              }
+            ]
+          }
+        },
+        {
+          "type": "FRANCE_TAX_IDENTIFICATION_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 6,
+                "columnName": "tin",
+                "row": 14
+              },
+              {
+                "cellReference": null,
+                "column": 7,
+                "columnName": "notes",
+                "row": 17
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 13
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:us-west-2:123456789012:classification-job/6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}

@@ -41,10 +41,13 @@ last. Add an item the moment something is deferred.
    (people's 16 character codes and organizations' 11 digit codes), pair
    11_fr_mx_it. Eighth batch done: Germany IdNr, Argentina CUIT and CUIL
    (individuals and organizations), Australia TFN (partial: no 8 digit
-   TFNs), UK UTR (partial: no TRNs), pair 12_tax_ids. Next, still before
-   group B (David, 2026-11-03: clear the decks of similar work): Spain
-   NIF and CIF, Mexico RFC, Colombia NIT, France TIN; then maybe the
-   Germany national id card and the US DEA number.
+   TFNs), UK UTR (partial: no TRNs), pair 12_tax_ids. Ninth batch done:
+   Spain NIF and CIF, Mexico RFC and Colombia NIT (each for individuals
+   and organizations), France TIN, pair 13_tax_ids_2; the splits agreed
+   with David on 2026-11-03. Next, still before group B (David: clear
+   the decks of similar work): maybe the Germany national id card and
+   the US DEA number; list the rest of Macie's check-digit identifiers
+   with David first.
 4b. ~~**BBANs for France, Germany, Italy, Spain and the UK**~~ Done: the
    bank detector, pair 08_bban. The five identifiers are no longer
    partially translated. Italy's CIN letter is not checked (rule not

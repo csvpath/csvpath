@@ -321,6 +321,54 @@ class ChecksumUtility:
         total = sum(int(c) * w for c, w in zip(digits[1:], weights))
         return "21987654321"[total % 11] == digits[0]
 
+    ES_CIF_TYPES = "ABCDEFGHJNPQRSUVW"
+    ES_CIF_LETTERS = "JABCDEFGHI"
+
+    @classmethod
+    def es_cif(cls, *, cif: str) -> bool:
+        """True if a Spanish CIF, 9 characters without separators, is
+        valid: an organization type letter, 7 digits, and a control
+        character from the Luhn check digit of the 7 digits, either the
+        digit or JABCDEFGHI indexed by it (sources disagree on which types
+        use which, so either is accepted)"""
+        if not isinstance(cif, str):
+            raise TypeError(f"cif must be a str, not {type(cif)}")
+        text = cif.upper()
+        if (
+            len(text) != 9
+            or text[0] not in cls.ES_CIF_TYPES
+            or not (text[1:8].isascii() and text[1:8].isdigit())
+        ):
+            raise ValueError(
+                f"cif must be a type letter, 7 digits and a control, not {cif!r}"
+            )
+        body = text[1:8]
+        for d in "0123456789":
+            if cls.luhn(digits=body + d):
+                return text[8] in (d, cls.ES_CIF_LETTERS[int(d)])
+        return False
+
+    @classmethod
+    def co_nit(cls, *, digits: str) -> bool:
+        """True if ASCII digits, the last the check digit, pass the
+        Colombia NIT check: from the right of the body, weighted 3 7 13 17
+        19 23 29 37 41 43 47 53 59 67 71, the sum mod 11 indexes
+        01987654321"""
+        if not isinstance(digits, str):
+            raise TypeError(f"digits must be a str, not {type(digits)}")
+        if not 2 <= len(digits) <= 16 or not (digits.isascii() and digits.isdigit()):
+            raise ValueError(f"digits must be 2 to 16 ASCII digits, not {digits!r}")
+        weights = (3, 7, 13, 17, 19, 23, 29, 37, 41, 43, 47, 53, 59, 67, 71)
+        total = sum(w * int(c) for w, c in zip(weights, reversed(digits[:-1])))
+        return "01987654321"[total % 11] == digits[-1]
+
+    @classmethod
+    def fr_spi(cls, *, digits: str) -> bool:
+        """True if 13 ASCII digits are a valid French tax number (SPI): the
+        first digit 0 to 3, and the last three the first ten mod 511"""
+        cls._digits(digits=digits, length=13)
+        return digits[0] in "0123" and int(digits[:10]) % 511 == int(digits[10:])
+
     @classmethod
     def _digits(cls, *, digits: str, length: int) -> None:
         if not isinstance(digits, str):
@@ -338,6 +386,7 @@ class ChecksumUtility:
         "ar_cuit": "ar_cuit",
         "au_tfn": "au_tfn",
         "gb_utr": "gb_utr",
+        "fr_spi": "fr_spi",
     }
 
     @classmethod
