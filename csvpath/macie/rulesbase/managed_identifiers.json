@@ -354,6 +354,65 @@
         "tax code",
         "tessera sanitaria"
       ]
+    },
+    "de_tax": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "identifikationsnummer",
+        "steuer id",
+        "steueridentifikationsnummer",
+        "steuernummer",
+        "tax id",
+        "tax identification number",
+        "tax number"
+      ]
+    },
+    "ar_tax": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "argentina taxpayer id",
+        "clave única de identificación tributaria",
+        "cuil",
+        "c.u.i.l",
+        "cuit",
+        "c.u.i.t",
+        "número de identificación fiscal",
+        "número de contribuyente",
+        "unified labor identification code"
+      ]
+    },
+    "au_tfn": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "tax file number",
+        "tfn"
+      ]
+    },
+    "gb_tax": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "paye",
+        "tax id",
+        "tax id no.",
+        "tax id number",
+        "tax identification",
+        "tax identification#",
+        "tax no.",
+        "tax number",
+        "tax reference",
+        "tax#",
+        "taxid#",
+        "temporary reference number",
+        "tin",
+        "trn",
+        "unique tax reference",
+        "unique taxpayer reference",
+        "utr"
+      ]
     }
   },
   "identifiers": {
@@ -1116,6 +1175,63 @@
       "fidelity": "A",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
       "retrieved": "2026-11-03"
+    },
+    "GERMANY_TAX_IDENTIFICATION_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "de_idnr",
+      "keyword_mode": "required",
+      "keywords_from": "de_tax",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
+    },
+    "ARGENTINA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "ar_cuit_individual",
+      "keyword_mode": "required",
+      "keywords_from": "ar_tax",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
+    },
+    "ARGENTINA_ORGANIZATION_TAX_IDENTIFICATION_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "ar_cuit_organization",
+      "keyword_mode": "required",
+      "keywords_from": "ar_tax",
+      "distance": 30,
+      "severity": "1:MEDIUM 100:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03"
+    },
+    "AUSTRALIA_TAX_FILE_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "au_tfn",
+      "keyword_mode": "required",
+      "keywords_from": "au_tfn",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "partial": "Only 9 digit TFNs are detected, not the older 8 digit TFNs"
+    },
+    "UK_TAX_IDENTIFICATION_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "gb_utr",
+      "keyword_mode": "required",
+      "keywords_from": "gb_tax",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-03",
+      "partial": "Only UTRs are detected, not TRNs (temporary reference numbers)"
     }
   },
   "detectors": {
@@ -1632,6 +1748,102 @@
         "Macie lists ITALY_NATIONAL_IDENTIFICATION_NUMBER as both a national identification and a taxpayer number, with one keyword list. It says Codice Fiscale.",
         "The formats are ours, from the Agenzia delle Entrate: the 16 character code of a person, with omocodia letters for digits, a real birth day and month, and a check letter; and the 11 digit code of an organization (its partita IVA): 7 digits not all zero, an office code 001-100, 120, 121, 888 or 999, and a Luhn check digit, optionally after IT. The 11 digit codes go beyond what Macie documents: Macie says Codice Fiscale and its keywords include p. iva and partita i.v.a. (David, 2026-11-03: go beyond Macie at the margin when the check is clearly described)."
       ]
+    },
+    "de_idnr": {
+      "notes": [
+        "Macie publishes only the keywords for GERMANY_TAX_IDENTIFICATION_NUMBER, and says it detects Steueridentifikationsnummer numbers.",
+        "The format is ours, from the Bundeszentralamt fuer Steuern: 11 digits, no leading 0, in the first ten exactly one digit two or three times and the others once, and an ISO 7064 MOD 11,10 check digit. Printed 2-3-3-3."
+      ],
+      "length": 11,
+      "layouts": [
+        [
+          2,
+          3,
+          3,
+          3
+        ]
+      ],
+      "check": "de_idnr",
+      "exclusions": []
+    },
+    "ar_cuit_individual": {
+      "notes": [
+        "Macie publishes only the keywords for ARGENTINA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER (CUIL and CUIT), shared with the organization identifier.",
+        "The format is ours, from AFIP: 11 digits, printed 2-8-1 with hyphens or spaces, a 2 digit type, and a mod 11 check digit weighted 5 4 3 2 7 6 5 4 3 2.",
+        "Individuals' types are 20, 23, 24 and 27."
+      ],
+      "length": 11,
+      "layouts": [
+        [
+          2,
+          8,
+          1
+        ]
+      ],
+      "check": "ar_cuit",
+      "prefixes": [
+        "20",
+        "23",
+        "24",
+        "27"
+      ],
+      "exclusions": []
+    },
+    "ar_cuit_organization": {
+      "notes": [
+        "Macie publishes only the keywords for ARGENTINA_ORGANIZATION_TAX_IDENTIFICATION_NUMBER, shared with the individual identifier, and scores it MEDIUM for 1-99 occurrences, HIGH from 100.",
+        "The format is ours, from AFIP: 11 digits, printed 2-8-1 with hyphens or spaces, a 2 digit type, and a mod 11 check digit weighted 5 4 3 2 7 6 5 4 3 2.",
+        "Organizations' types are 30, 33 and 34; the international types 50, 51 and 55 are put here too (ours)."
+      ],
+      "length": 11,
+      "layouts": [
+        [
+          2,
+          8,
+          1
+        ]
+      ],
+      "check": "ar_cuit",
+      "prefixes": [
+        "30",
+        "33",
+        "34",
+        "50",
+        "51",
+        "55"
+      ],
+      "exclusions": []
+    },
+    "au_tfn": {
+      "notes": [
+        "Macie publishes only the keywords for AUSTRALIA_TAX_FILE_NUMBER.",
+        "The format is ours, from the ATO: 9 digits, printed 3-3-3, weighted 1 4 3 7 5 8 6 9 10 and divisible by 11. Older 8 digit TFNs are not detected: the published weights for them disagree, so the entry is partial."
+      ],
+      "length": 9,
+      "layouts": [
+        [
+          3,
+          3,
+          3
+        ]
+      ],
+      "check": "au_tfn",
+      "exclusions": []
+    },
+    "gb_utr": {
+      "notes": [
+        "Macie says UK_TAX_IDENTIFICATION_NUMBER detects TRN and UTR numbers, and publishes only the keywords.",
+        "The format is ours, from HMRC: a UTR is 10 digits, printed 5-5, the first digit a check over the other nine, weighted 6 7 8 9 10 5 4 3 2. TRNs are not detected: their format could not be confirmed, so the entry is partial."
+      ],
+      "length": 10,
+      "layouts": [
+        [
+          5,
+          5
+        ]
+      ],
+      "check": "gb_utr",
+      "exclusions": []
     }
   }
 }

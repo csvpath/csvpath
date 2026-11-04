@@ -1,0 +1,62 @@
+~
+  id: tax-ids-taxpayers
+  macie-origin: job
+  macie-job-id: 5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e
+  macie-account: 123456789012
+  macie-region: eu-central-1
+  macie-source-arn: arn|aws|macie2|eu-central-1|123456789012|classification-job/5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e
+  macie-downloaded-at: 20261103T210000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "GERMANY_TAX_IDENTIFICATION_NUMBER",
+        "PERSONAL_INFORMATION",
+        "de_idnr",
+        "required",
+        "identifikationsnummer|steuer id|steueridentifikationsnummer|steuernummer|tax id|tax identification number|tax number",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "ARGENTINA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER",
+        "PERSONAL_INFORMATION",
+        "ar_cuit_individual",
+        "required",
+        "argentina taxpayer id|clave única de identificación tributaria|cuil|c.u.i.l|cuit|c.u.i.t|número de identificación fiscal|número de contribuyente|unified labor identification code",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "ARGENTINA_ORGANIZATION_TAX_IDENTIFICATION_NUMBER",
+        "PERSONAL_INFORMATION",
+        "ar_cuit_organization",
+        "required",
+        "argentina taxpayer id|clave única de identificación tributaria|cuil|c.u.i.l|cuit|c.u.i.t|número de identificación fiscal|número de contribuyente|unified labor identification code",
+        30,
+        "1:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "AUSTRALIA_TAX_FILE_NUMBER",
+        "PERSONAL_INFORMATION",
+        "au_tfn",
+        "required",
+        "tax file number|tfn",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "UK_TAX_IDENTIFICATION_NUMBER",
+        "PERSONAL_INFORMATION",
+        "gb_utr",
+        "required",
+        "paye|tax id|tax id no.|tax id number|tax identification|tax identification#|tax no.|tax number|tax reference|tax#|taxid#|temporary reference number|tin|trn|unique tax reference|unique taxpayer reference|utr",
+        30,
+        "1:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

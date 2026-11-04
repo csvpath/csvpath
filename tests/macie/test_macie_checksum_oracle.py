@@ -14,12 +14,15 @@ import string
 
 import pytest
 from stdnum import luhn, verhoeff
+from stdnum.ar import cuit
+from stdnum.au import tfn
 from stdnum.br import cnpj, cpf
 from stdnum.cl import rut
+from stdnum.de import idnr
 from stdnum.es import dni, nie
 from stdnum.fr import nir
-from stdnum.gb import nhs
-from stdnum.iso7064 import mod_97_10
+from stdnum.gb import nhs, utr
+from stdnum.iso7064 import mod_11_10, mod_97_10
 from stdnum.it import codicefiscale, iva
 from stdnum.mx import curp
 
@@ -140,3 +143,43 @@ def test_macie_oracle_it_organization(cf) -> None:
         )
         number = body + rng.choice([luhn.calc_check_digit(body), _digits(rng, 1)])
         assert cf.is_organization(digits=number) == iva.is_valid(number), number
+
+
+def test_macie_oracle_de_idnr() -> None:
+    #
+    # half the inputs get stdnum's MOD 11,10 digit, so both the digit and
+    # the repeated-digit rule are exercised
+    #
+    rng = random.Random(12)
+    for _ in range(N):
+        body = _digits(rng, 10)
+        check = mod_11_10.calc_check_digit(body) if rng.random() < 0.5 else ""
+        number = body + (check or _digits(rng, 1))
+        assert chut.de_idnr(digits=number) == idnr.is_valid(number), number
+
+
+def test_macie_oracle_ar_cuit() -> None:
+    #
+    # stdnum also checks the type; compare only the check digit
+    #
+    rng = random.Random(13)
+    for _ in range(N):
+        body = _digits(rng, 10)
+        right = cuit.calc_check_digit(body)
+        digit = right if rng.random() < 0.5 else _digits(rng, 1)
+        assert chut.ar_cuit(digits=body + digit) == (digit == right), body + digit
+
+
+def test_macie_oracle_au_tfn() -> None:
+    rng = random.Random(14)
+    for _ in range(N):
+        s = _digits(rng, 9)
+        assert chut.au_tfn(digits=s) == tfn.is_valid(s), s
+
+
+def test_macie_oracle_gb_utr() -> None:
+    rng = random.Random(15)
+    for _ in range(N):
+        rest = _digits(rng, 9)
+        first = utr.calc_check_digit(rest) if rng.random() < 0.5 else _digits(rng, 1)
+        assert chut.gb_utr(digits=first + rest) == utr.is_valid(first + rest), rest
