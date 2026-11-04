@@ -347,11 +347,15 @@ class ExpressionUtility:
         return v
 
     @classmethod
-    def asbool(cls, v) -> bool:
+    def asbool(cls, v, *, strict: bool = False) -> bool:
+        """if strict is True we evaluate containers and if empty return False
+        otherwise, empty containers are considered an actual thing that
+        results in True
+        """
         ret = None
         if v in [False, None] or cls.isnan(v):
             ret = False
-        elif v in [True, [], (), {}]:
+        elif not strict and v in [True, [], (), {}]:
             # an empty set is a valid, positive thing in its own right
             ret = True
         elif f"{v}".lower().strip() == "false":

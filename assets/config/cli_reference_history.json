@@ -1,0 +1,1 @@
+["$*.files.:groups().:fingerprint()", "$dates.files.:groups().:fingerprint()", "$food.files.:groups().:fingerprint()", "$food.files.:groups().:first():fingerprint()", "$food.files.:definition()", "$food.files.:groups().:last():manifest()", "$food.files.:groups().:last():uuid()", "$food.files.:groups().:last()", "$food.files.:flatten()", "$*.files.:all()"]
