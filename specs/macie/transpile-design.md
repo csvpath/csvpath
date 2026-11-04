@@ -302,6 +302,7 @@ conversion.report.skipped   # what was not translated
 | `EsIdDetector` | Spain DNI, NIE, NIF and CIF: a control letter (mod 23) or a CIF control |
 | `MxRfcDetector` | Mexico RFC for people and organizations: letters, a real date, 3 characters |
 | `CoNitDetector` | Colombia NIT: body and mod 11 digit; 9 digits from 8 or 9 is an organization's |
+| `UsIdDetector` | US DEA (check digit), MBI, ITIN, HICN, NDC and HCPCS |
 | `CredentialDetector` | the nine credentials: AWS and Google keys, Basic headers, JWTs, key blocks, PuTTY keys, Stripe keys |
 | `FrNirDetector` | France NIR (INSEE): 15 characters, Corsica's 2A and 2B, mod 97 key |
 | `MxCurpDetector` | Mexico CURP: 18 characters, birth date, state, check digit |
@@ -311,7 +312,7 @@ conversion.report.skipped   # what was not translated
 | `BankAccountDetector` | FR, DE, IT, ES, UK: IBANs (no keyword) and BBANs (keyword), plus UK sort code and account |
 | `IbanDetector` | one country's IBANs: length, printed layout, ISO 13616 mod 97 |
 | `UsSsnDetector`, `UsNpiDetector` | SSA's SSN rules; CMS's NPI check digit (Luhn over 80840) |
-| `ChecksumUtility` (`chut`) | check-digit algorithms: Luhn, mod 11s, mod 97, RUT, RIB, Verhoeff, the Spanish mod 23 letter, NIR key, CURP digit, Codice Fiscale letter, IdNr, CUIT, TFN, UTR, CIF, NIT, SPI |
+| `ChecksumUtility` (`chut`) | check-digit algorithms: Luhn, mod 11s, mod 97, RUT, RIB, Verhoeff, the Spanish mod 23 letter, NIR key, CURP digit, Codice Fiscale letter, IdNr, CUIT, TFN, UTR, CIF, NIT, SPI, DEA |
 | `MacieMdi` (`macie_mdi`) | applies a managed identifier to every cell |
 | `MacieRun` | one run's shared state (allow lists, tally) and outputs; limits from metadata, config, defaults; noisy setup failure |
 | `MacieAllowRegex` (`macie_allow_regex`) | registers a regex allow list before any line is read |
@@ -630,6 +631,33 @@ for each:
   hashes (`exclusions_sha256`): GitHub push protection blocked a push of
   Stripe's published test key, even as an exclusion.
 
+**US health and taxpayer identifiers**: all PERSONAL_INFORMATION,
+keyword required, HIGH from one occurrence. Macie publishes only their
+keywords. One class, `UsIdDetector`, has a form for each:
+- **`US_DRUG_ENFORCEMENT_AGENCY_NUMBER`**: a registrant type letter, the
+  registrant's initial or 9, and 7 digits whose last is a check digit
+  (`chut.us_dea`: the 1st, 3rd and 5th digits plus twice the 2nd, 4th and
+  6th). Ours: any type letter, so new registrant types are not missed.
+- **`USA_MEDICARE_BENEFICIARY_IDENTIFIER`**: CMS's 11 positions (digit,
+  letters, letter-or-digit, digits), letters never S L O I B Z, optional
+  dashes after the 4th and 7th. CMS's published example `1EG4-TE5-MK73`
+  is excluded (ours).
+- **`USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER`**: 9, two digits, the
+  middle digits 50-65, 70-88, 90-92 or 94-99 (the IRS ranges since 2011;
+  python-stdnum still has only 70-99, so the oracle is not used here),
+  four digits.
+- **`USA_HEALTH_INSURANCE_CLAIM_NUMBER`**: an SSN by the SSA rules (reusing
+  `UsSsnDetector`) and a beneficiary code, a letter and an optional letter
+  or digit. **Partial:** Railroad Retirement Board numbers are not
+  detected.
+- **`USA_NATIONAL_DRUG_CODE`**: 10 digits as 4-4-2, 5-3-2 or 5-4-1, the 11
+  digit 5-4-2 billing form, or contiguous. No check digit; fidelity B.
+- **`USA_HEALTHCARE_PROCEDURE_CODE`**: HCPCS Level II (a letter A-V and 4
+  digits) and, since Macie's keywords include "current procedural
+  terminology", CPT codes (5 digits, or 4 and F, T or U). No check
+  digit; fidelity B. The keyword does the work: `cpt` alone is not one
+  of Macie's keywords.
+
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
 (Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
@@ -716,6 +744,9 @@ every detector the catalog names exists, and every detector is used.
     line? Does it report AWS secret keys that are hex, or Basic headers
     whose token does not decode to user:password? Does it report Stripe
     restricted (rk_) keys?
+15. US health: does Macie accept any DEA registrant type letter, MBIs
+    with dashes, NDCs without hyphens, and CPT codes for HCPCS? Does it
+    detect Railroad Retirement Board HICNs?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

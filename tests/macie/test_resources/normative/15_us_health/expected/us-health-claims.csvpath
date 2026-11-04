@@ -1,0 +1,71 @@
+~
+  id: us-health-claims
+  macie-origin: job
+  macie-job-id: 8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b
+  macie-account: 123456789012
+  macie-region: us-east-1
+  macie-source-arn: arn|aws|macie2|us-east-1|123456789012|classification-job/8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b
+  macie-downloaded-at: 20261104T030000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "US_DRUG_ENFORCEMENT_AGENCY_NUMBER",
+        "PERSONAL_INFORMATION",
+        "us_dea",
+        "required",
+        "dea number|dea registration",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "USA_MEDICARE_BENEFICIARY_IDENTIFIER",
+        "PERSONAL_INFORMATION",
+        "us_mbi",
+        "required",
+        "mbi|medicare beneficiary",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER",
+        "PERSONAL_INFORMATION",
+        "us_itin",
+        "required",
+        "i.t.i.n.|individual taxpayer identification number|itin",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "USA_HEALTH_INSURANCE_CLAIM_NUMBER",
+        "PERSONAL_INFORMATION",
+        "us_hicn",
+        "required",
+        "health insurance claim number|hic no|hic no.|hic number|hic#|hicn|hicn#.|hicno#",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "USA_NATIONAL_DRUG_CODE",
+        "PERSONAL_INFORMATION",
+        "us_ndc",
+        "required",
+        "national drug code|ndc",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "USA_HEALTHCARE_PROCEDURE_CODE",
+        "PERSONAL_INFORMATION",
+        "us_hcpcs",
+        "required",
+        "current procedural terminology|hcpcs|healthcare common procedure coding system",
+        30,
+        "1:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

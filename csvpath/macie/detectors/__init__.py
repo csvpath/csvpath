@@ -18,6 +18,7 @@ from .iban_detector import IbanDetector
 from .it_cf_detector import ItCfDetector
 from .mx_curp_detector import MxCurpDetector
 from .mx_rfc_detector import MxRfcDetector
+from .us_id_detector import UsIdDetector
 from .us_npi_detector import UsNpiDetector
 from .us_ssn_detector import UsSsnDetector
 from .vin_detector import VinDetector
@@ -57,6 +58,12 @@ DETECTORS = {
     "mx_curp": MxCurpDetector,
     "mx_rfc_individual": MxRfcDetector,
     "mx_rfc_organization": MxRfcDetector,
+    "us_dea": UsIdDetector,
+    "us_hcpcs": UsIdDetector,
+    "us_hicn": UsIdDetector,
+    "us_itin": UsIdDetector,
+    "us_mbi": UsIdDetector,
+    "us_ndc": UsIdDetector,
     "us_npi": UsNpiDetector,
     "gb_utr": GroupedDigitsDetector,
     "uk_nhs": GroupedDigitsDetector,
