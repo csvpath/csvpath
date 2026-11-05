@@ -556,11 +556,21 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         calls = [name_one.path[0], *name_one.functions]
         built = self._build_chain(calls)
         all_call = next((f for f in built if f.name == "all"), None)
-        is_grouped = all_call is not None
         having_call = next((f for f in built if f.name == "having"), None)
         field_call = self._find_field_function_call(built)
         manifest_call = next((f for f in built if f.name == "manifest"), None)
+        # '*' mimics grouping (finding I, David 2026-10-30 and 2026-11-03):
+        # a pointer applies within each named-paths group, one result per
+        # group, e.g. "$*.csvpaths.:last()" is each group's last loaded
+        # version. Was pooled, one result in total. A ':manifest()'
+        # without ':all()' still pools: it names the global loads ledger,
+        # the logical set across every group. With no pointer there is
+        # nothing to reduce per group, so the pooled, time-ordered list
+        # is the same set in arrival order.
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
+        is_grouped = all_call is not None or (
+            manifest_call is None and len(pointers) > 0
+        )
         # whitelist-based (settled 2026-08-19), replacing an earlier
         # blacklist-based check (any(name=="manifest") or any(name in
         # ("from","to"))) that only ever rejected those two specific
