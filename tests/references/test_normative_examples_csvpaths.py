@@ -486,11 +486,13 @@ def _star_finder(reference: str) -> CsvpathsReferenceFinder3:
 
 
 class TestStarTraversalFlatten:
-    # doc line "### \"*\" traversal, FLATTEN -- single true-latest version
-    # across every named-paths group"
-    def test_last_across_every_group_is_the_true_most_recent(self):
+    # "Find the last loaded version of every named-paths group" --
+    # $*.csvpaths.:last(), one result per group: '*' mimics grouping
+    # (compendium 4.1b; finding I). The old doc line this cited, "single
+    # true-latest version across every named-paths group", is gone.
+    def test_last_is_every_groups_last_version(self):
         results = _star_finder("$*.csvpaths.:last()").query()
-        assert results.uuids == ["b-v1"]
+        assert sorted(results.uuids) == ["a-v2", "b-v1"]
 
 
 class TestStarTraversalGroup:

@@ -477,6 +477,7 @@ technically prevented.
 ### Finding the "last" run or runs of a type of information:
 
 ### Last run from every named-results group with no template
+One result per named-results name: `*` mimics grouping (compendium 4.1b).
 $*.results.:last()
 
 #### A run with no template
@@ -729,7 +730,7 @@ $*.results.:flatten():having(:uuid("a381...")):run_home()
 
 #### Two ways to get the last instance run yesterday.
 $*.results.:manifest():yesterday():last().:last():identity()
-$*.results.:yesterday():last().:last():identity()
+$*.results.:flatten():yesterday():last().:last():identity()
 
 #### Two ways to find all the instances in runs with the named_paths group
 `orders` that happened yesterday.
@@ -1226,6 +1227,7 @@ $*.csvpaths.:manifest()
 
 
 #### Find the last loaded version of every named-paths group
+One result per named-paths group: `*` mimics grouping (compendium 4.1b).
 $*.csvpaths.:last()
 
 #### Find every version from every group

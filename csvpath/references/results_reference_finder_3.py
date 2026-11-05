@@ -914,22 +914,39 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # so no separate any-depth gathering logic is needed
                 # here.
                 run_homes = [rh for rh, _ in self._discover_run_homes(None, name_filter)]
-            else:
-                # zero-level (direct children of each run's own group's
-                # home) only -- same restriction the literal-root
-                # query() case now applies to a plain bare pointer,
-                # settled 2026-08-10.
-                run_homes = [
-                    rh
-                    for rh, group in self._discover_run_homes(None, name_filter)
-                    if self._matches_prefix(
-                        rh,
-                        self.csvpaths.results_manager.get_named_results_home(group),
-                        [],
-                    )
-                ]
-            return self._star_pool_and_reduce(
-                run_homes,
+                return self._star_pool_and_reduce(
+                    run_homes,
+                    pointer,
+                    identity,
+                    match_all,
+                    range_bounds,
+                    accessor,
+                    having_call,
+                    field_calls,
+                    bare_time_window,
+                    instance_pointer=instance_pointer,
+                    lower_call=lower_call,
+                    upper_call=upper_call,
+                )
+            # zero-level (direct children of each run's own group's home)
+            # only -- same restriction the literal-root query() case
+            # applies to a plain bare pointer, settled 2026-08-10. '*'
+            # mimics grouping (finding I, David 2026-10-30 and
+            # 2026-11-03): a pointer or range applies within each named-
+            # results group, one result per group, e.g. "$*.results.
+            # :last()" is each group's last no-template run. Was pooled,
+            # one result in total. ':flatten()' above still pools.
+            partitioned = [
+                (rh, (group,))
+                for rh, group in self._discover_run_homes(None, name_filter)
+                if self._matches_prefix(
+                    rh,
+                    self.csvpaths.results_manager.get_named_results_home(group),
+                    [],
+                )
+            ]
+            return self._star_group_and_reduce(
+                partitioned,
                 pointer,
                 identity,
                 match_all,
@@ -1104,15 +1121,19 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         pointer, _, _, having_call, field_calls, _, bare_time_window, lower_call, upper_call = (
             self._star_run_selector_chain(calls)
         )
-        run_homes = [
-            rh
+        # '*' mimics grouping here too (finding I): a pointer or range
+        # applies within each named-results group, e.g.
+        # "$*.results.beta/*:last()" is each group's last run under a
+        # one-level 'beta' template.
+        partitioned = [
+            (rh, (group,))
             for rh, group in self._discover_run_homes(None, name_filter)
             if self._matches_prefix(
                 rh, self.csvpaths.results_manager.get_named_results_home(group), pattern
             )
         ]
-        return self._star_pool_and_reduce(
-            run_homes,
+        return self._star_group_and_reduce(
+            partitioned,
             pointer,
             identity,
             match_all,

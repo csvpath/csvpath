@@ -545,11 +545,11 @@ class TestFlatten:
             tmp_path,
             {"acme": [acme_flat, acme_deep], "widgets": [widgets_run]},
         )
-        # a bare pointer (zero-level only) misses acme's own deep run
-        # entirely and gives widgets' instead -- confirms ':flatten()'
+        # a bare pointer (zero-level only, one per group since finding I)
+        # misses acme's own deep run entirely -- confirms ':flatten()'
         # below is doing real work, not just passing through unchanged.
         bare = _finder("$*.results.:last()", str(tmp_path)).query()
-        assert bare.results[0].uuid == "widgets-run"
+        assert sorted(bare.uuids) == ["acme-flat", "widgets-run"]
 
         flattened = _finder(
             "$*.results.:flatten():last()", str(tmp_path)
@@ -2904,7 +2904,6 @@ class TestRangeBeforeGate:
             "$acme.results.:from(0):to(1):error_count(:above(3))",
             "$acme.results.:error_count(:above(3)):from(0):to(1)",
             "$acme.results.:all():from(0):to(1):error_count(:above(3))",
-            "$*.results.:from(0):to(1):error_count(:above(3))",
             "$*.results.:flatten():from(0):to(1):error_count(:above(3))",
             "$*.results.:flatten():error_count(:above(3)):from(0):to(1)",
             "$*.results.:manifest():from(0):to(1):error_count(:above(3))",
@@ -2913,6 +2912,14 @@ class TestRangeBeforeGate:
     )
     def test_the_range_comes_first_in_name_one(self, runs, reference):
         assert _finder(reference, runs).query().uuids == ["a0"]
+
+    def test_a_bare_star_range_comes_first_within_each_group(self, runs):
+        # '*' mimics grouping (compendium 4.1b, finding I): acme's first
+        # two runs give a0 and widgets' w0, w1 give w1
+        results = _finder(
+            "$*.results.:from(0):to(1):error_count(:above(3))", runs
+        ).query()
+        assert sorted(results.uuids) == ["a0", "w1"]
 
     @pytest.mark.parametrize(
         "reference",
@@ -4171,30 +4178,161 @@ class TestGlobalArchiveLedgerOrdinalIndexing:
         assert results.results[0].uuid == "run-3"
 
 
+class TestStarRootGroups:
+    # finding I (David, 2026-10-30 and 2026-11-03; compendium 4.1b): a
+    # '*' root mimics grouping. A pointer or range applies within each
+    # named-results name, one result per name; a '*' inside the reference
+    # still pools its own position. It used to pool every name's runs and
+    # give one result in total. ':flatten()' and the logical manifest set
+    # (':manifest()') still pool across every name.
+    #
+    # acme: zero-level a0, a1, a2 and one-level tpl/at0, tpl/at1; widgets:
+    # zero-level w0, w1 and tpl/wt0; gamma: zero-level g0. Days run in
+    # this arrival order: a0 1, w0 2, a1 3, g0 4, a2 5, w1 6, at0 7,
+    # wt0 8, at1 9, so at1 is the most recent run overall and a2, w1, g0
+    # are each name's last no-template run.
+    RUNS = [
+        ("acme", "", "a0", 1),
+        ("widgets", "", "w0", 2),
+        ("acme", "", "a1", 3),
+        ("gamma", "", "g0", 4),
+        ("acme", "", "a2", 5),
+        ("widgets", "", "w1", 6),
+        ("acme", "tpl", "at0", 7),
+        ("widgets", "tpl", "wt0", 8),
+        ("acme", "tpl", "at1", 9),
+    ]
+
+    @pytest.fixture
+    def runs(self, tmp_path):
+        entries = []
+        for group, template, run_uuid, day in self.RUNS:
+            base = tmp_path / group / template if template else tmp_path / group
+            run_dir = base / f"2026-01-0{day}_00-00-00"
+            _write_json(run_dir / "manifest.json", {"run_uuid": run_uuid})
+            entries.append(
+                {
+                    "named_paths_name": group,
+                    "run_home": str(run_dir),
+                    "run_uuid": run_uuid,
+                    "uuid": f"{run_uuid}-i",
+                    "time": f"2026-01-0{day}T00:00:00",
+                }
+            )
+        _write_json(tmp_path / "manifest.json", entries)
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$*.results.:last()", ["a2", "g0", "w1"]),
+            ("$*.results.:first()", ["a0", "g0", "w0"]),
+            ("$*.results.:index(1)", ["a1", "w1"]),
+            ("$*.results.:index(-1)", ["a2", "g0", "w1"]),
+            # the same as ':all()', which is now redundant but permitted
+            ("$*.results.:all():last()", ["a2", "g0", "w1"]),
+            ("$*.results.*:last()", ["a2", "g0", "w1"]),
+        ],
+    )
+    def test_a_pointer_gives_one_result_per_name(self, runs, reference, expected):
+        assert sorted(_finder(reference, runs).query().uuids) == expected
+
+    def test_a_range_applies_within_each_name(self, runs):
+        results = _finder("$*.results.:from(0):to(1)", runs).query()
+        assert sorted(results.uuids) == ["a0", "a1", "g0", "w0", "w1"]
+
+    def test_a_star_inside_the_reference_still_pools_its_own_position(self, runs):
+        # each name's last run under a one-level 'tpl' template: acme's
+        # at0, at1 pool, so at1; widgets' wt0; gamma has none
+        results = _finder("$*.results.tpl/*:last()", runs).query()
+        assert sorted(results.uuids) == ["at1", "wt0"]
+
+    def test_a_regex_root_groups_the_same_way(self, runs):
+        results = _finder("$:regex(/^(acme|gamma)$/).results.:last()", runs)
+        assert sorted(results.query().uuids) == ["a2", "g0"]
+
+    def test_a_field_after_the_pointer_reads_each_name(self, runs):
+        results = _finder("$*.results.:last():run_uuid()", runs).resolve()
+        assert sorted(r.data for r in results.results) == ["a2", "g0", "w1"]
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # every depth, every name: the most recent run of all
+            ("$*.results.:flatten():last()", ["at1"]),
+            ("$*.results.:flatten():first()", ["a0"]),
+            # the logical manifest set, by arrival
+            ("$*.results.:manifest():last()", ["at1"]),
+            ("$*.results.:manifest():first()", ["a0"]),
+        ],
+    )
+    def test_flatten_and_the_manifest_set_still_pool(self, runs, reference, expected):
+        assert _finder(reference, runs).query().uuids == expected
+
+    def test_no_pointer_lists_every_zero_level_run(self, runs):
+        # nothing to reduce per name, so grouping and pooling agree
+        results = _finder("$*.results.:run_uuid()", runs).query()
+        assert sorted(results.uuids) == ["a0", "a1", "a2", "g0", "w0", "w1"]
+
+    def test_nre_732_pair_selects_the_same_run(self, tmp_path):
+        # "Two ways to get the last instance run yesterday" (NRE 732,
+        # rewritten with ':flatten()' for finding I). Tested at the run
+        # each form selects: resolving the trailing ':identity()' is a
+        # separate, pre-existing problem (worklist, 2026-11-05). acme's
+        # run is at 01:00 yesterday; widgets' is at 02:00, in a 'tpl'
+        # template dir.
+        from datetime import timedelta
+
+        day = (daut.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+        entries = []
+        for group, template, hour in (("acme", "", "01"), ("widgets", "tpl", "02")):
+            base = tmp_path / group / template if template else tmp_path / group
+            run_dir = base / f"{day}_{hour}-00-00"
+            run_uuid = f"{group}-run"
+            _write_json(run_dir / "manifest.json", {"run_uuid": run_uuid})
+            entries.append(
+                {
+                    "named_paths_name": group,
+                    "run_home": str(run_dir),
+                    "run_uuid": run_uuid,
+                    "uuid": f"{run_uuid}-i",
+                    "time": f"{day}T{hour}:00:00",
+                }
+            )
+        _write_json(tmp_path / "manifest.json", entries)
+        by_set = _finder("$*.results.:manifest():yesterday():last()", str(tmp_path))
+        by_dir = _finder("$*.results.:flatten():yesterday():last()", str(tmp_path))
+        assert by_set.query().uuids == by_dir.query().uuids == ["widgets-run"]
+        # the old spelling gives one per name, zero-level runs only, so
+        # it misses widgets' templated run and no longer pairs
+        bare = _finder("$*.results.:yesterday():last()", str(tmp_path))
+        assert bare.query().uuids == ["acme-run"]
+
+
 class TestStarTraversal:
-    # only the bare-pointer flatten case is supported for results (see
-    # _query_star_traversal's own docstring for why) -- every named-
-    # results group's discovered runs pool into one combined list,
-    # sorted by each run directory's own trailing timestamp segment
-    # (not the full path, which would sort by group name first when
-    # pooling across groups), reduced by one terminal pointer.
-    def test_last_across_every_group_is_the_true_most_recent(self, two_group_archive):
-        # widgets' only run (2026-01-03) is the global most-recent, not
-        # acme's own last run (2026-01-02) -- proves pooling crosses
-        # groups and is truly sorted by timestamp, not enumeration
-        # order (widgets is written first in the merged manifest).
+    # a bare pointer under '*' -- '*' mimics grouping (compendium 4.1b,
+    # finding I, David 2026-10-30/2026-11-03): each named-results group's
+    # zero-level runs, sorted by each run directory's own trailing
+    # timestamp segment, reduced by the pointer within the group, one
+    # result per group. Was pooled across groups, one result in total.
+    # ':flatten()' still pools, see TestFlatten.
+    def test_last_is_each_groups_last_run(self, two_group_archive):
+        # acme's own last run (2026-01-02) comes back beside widgets',
+        # though widgets' (2026-01-03) is the most recent overall.
+        # widgets is written first in the merged manifest, so the order
+        # within acme is by timestamp, not enumeration.
         results = _finder("$*.results.:last()", two_group_archive).query()
-        assert len(results.results) == 1
-        assert results.results[0].uuid == "widgets-run1-uuid"
+        assert sorted(results.uuids) == ["acme-run2-uuid", "widgets-run1-uuid"]
 
-    def test_first_across_every_group_is_the_true_earliest(self, two_group_archive):
+    def test_first_is_each_groups_first_run(self, two_group_archive):
         results = _finder("$*.results.:first()", two_group_archive).query()
-        assert results.results[0].uuid == "acme-run1-uuid"
+        assert sorted(results.uuids) == ["acme-run1-uuid", "widgets-run1-uuid"]
 
-    def test_index_selects_by_chronological_position(self, two_group_archive):
-        # chronological order: acme-run1, acme-run2, widgets-run1
+    def test_index_selects_within_each_group(self, two_group_archive):
+        # acme: acme-run1, acme-run2; widgets has only widgets-run1, so
+        # it has no index 1
         results = _finder("$*.results.:index(1)", two_group_archive).query()
-        assert results.results[0].uuid == "acme-run2-uuid"
+        assert results.uuids == ["acme-run2-uuid"]
 
     def test_bare_all_with_no_pointer_lists_every_flat_run(
         self, two_group_archive
@@ -4240,9 +4378,9 @@ class TestStarTraversal:
         # closes the name_three gap (2026-08-19) -- _results_for_run()
         # already does the identity selection entirely from a real run
         # directory, independent of group, so it composes with a bare
-        # pointer here unchanged. widgets' run is the true global-
-        # latest, so this proves the run-selection AND the instance
-        # selection within it both resolved correctly, not just one.
+        # pointer here unchanged. Each group's last run gives its own
+        # "invoices" instance, so this proves the run-selection AND the
+        # instance selection within it both resolved correctly.
         acme_run = _make_run(
             tmp_path / "acme",
             "2026-01-01_00-00-00",
@@ -4261,7 +4399,10 @@ class TestStarTraversal:
         results = _finder(
             "$*.results.:last().invoices", str(tmp_path)
         ).query()
-        assert results.results[0].uuid == "widgets-invoices-uuid"
+        assert sorted(results.uuids) == [
+            "acme-invoices-uuid",
+            "widgets-invoices-uuid",
+        ]
 
     def test_name_three_with_no_matching_identity_is_empty_not_an_error(
         self, two_group_archive
@@ -4300,9 +4441,11 @@ class TestStarTraversal:
         results = _finder(
             "$*.results.:last():named_paths_name()", str(tmp_path)
         ).resolve()
-        assert len(results.results) == 1
-        assert results.results[0].uuid == "widgets-run1-uuid"
-        assert results.results[0].data == "widgets"
+        # one result per group (compendium 4.1b), each its own value
+        assert sorted((r.uuid, r.data) for r in results.results) == [
+            ("acme-run1-uuid", "acme"),
+            ("widgets-run1-uuid", "widgets"),
+        ]
 
     def test_field_accessor_exemption_does_not_let_a_second_extra_through(
         self, two_group_archive
@@ -5136,13 +5279,15 @@ class TestPositionEnforcement:
         # interaction restriction, the way query()'s own literal-root
         # path had); the pointer reduces the range, not the full
         # pooled candidate set, same convention as every other
-        # pointer+range position in this file.
+        # pointer+range position in this file. Within each group since
+        # finding I (compendium 4.1b): acme's runs from index 1 are
+        # [acme-run2]; widgets has one run, so nothing from index 1.
         results = _finder("$*.results.:last():from(1)", two_group_archive).query()
-        assert results.uuids == ["widgets-run1-uuid"]
+        assert results.uuids == ["acme-run2-uuid"]
 
-    def test_star_traversal_bare_pointer_is_unaffected(self, two_group_archive):
+    def test_star_traversal_bare_pointer_is_one_per_group(self, two_group_archive):
         results = _finder("$*.results.:last()", two_group_archive).query()
-        assert results.results[0].uuid == "widgets-run1-uuid"
+        assert sorted(results.uuids) == ["acme-run2-uuid", "widgets-run1-uuid"]
 
     def test_star_traversal_range_with_groups_reduces_within_each_group(
         self, two_group_archive
@@ -5153,7 +5298,7 @@ class TestPositionEnforcement:
         # with no pointer: acme's own group has 2 runs, widgets' has 1
         # -- the last 1 of EACH group is run2/run1, NOT the pooled last
         # 1 across everything (which would have been widgets-run1
-        # alone, per the bare-pointer test just above).
+        # alone). A bare '*' gives the same since finding I.
         results = _finder("$*.results.:groups():from(-1)", two_group_archive).query()
         assert sorted(results.uuids) == ["acme-run2-uuid", "widgets-run1-uuid"]
 
@@ -6320,7 +6465,11 @@ class TestQueryPathsNameTheFile:
         "reference, expected",
         [
             ("$*.results.:flatten():last().t:errors()", ["keep/2026-01-05_00-00-00"]),
-            ("$*.results.:last().t:errors()", ["keep/2026-01-05_00-00-00"]),
+            # one per group since finding I (compendium 4.1b), as :all()
+            (
+                "$*.results.:last().t:errors()",
+                ["also/2026-01-03_00-00-00", "keep/2026-01-05_00-00-00"],
+            ),
             (
                 "$*.results.:all():last().t:errors()",
                 ["also/2026-01-03_00-00-00", "keep/2026-01-05_00-00-00"],
@@ -6594,7 +6743,11 @@ class TestRunDirNameThreeManifest:
         "reference, runs",
         [
             ("$*.results.:flatten():last().t:manifest()", ["also/2026-01-03_00-00-00"]),
-            ("$*.results.:last().t:manifest()", ["also/2026-01-03_00-00-00"]),
+            # one per group since finding I (compendium 4.1b), as :all()
+            (
+                "$*.results.:last().t:manifest()",
+                ["also/2026-01-03_00-00-00", "keep/2026-01-02_00-00-00"],
+            ),
             (
                 "$*.results.:all():last().t:manifest()",
                 ["also/2026-01-03_00-00-00", "keep/2026-01-02_00-00-00"],

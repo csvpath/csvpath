@@ -1029,24 +1029,23 @@ def _star_finder(reference: str) -> CsvpathsReferenceFinder3:
 
 
 class TestStarTraversalFlatten:
-    # bare pointer, no ':all()' -- every named-paths group's whole
-    # manifest pools into one combined list, sorted by true
-    # chronological order (each entry's own "time"), reduced by one
-    # terminal pointer.
-    def test_last_across_every_group_is_the_true_most_recent(self):
-        # beta's only version (2026-01-03) is the global most-recent,
-        # not alpha's own last version (2026-01-02) -- proves pooling
-        # crosses groups and is truly time-sorted, not just
-        # concatenated in enumeration order.
+    # bare pointer, no ':all()' -- '*' mimics grouping (compendium 4.1b,
+    # finding I, David 2026-10-30/2026-11-03): the pointer applies within
+    # each named-paths group, one result per group. Was pooled, one
+    # result in total: "$*.csvpaths.:last()" gave b-v1 alone.
+    def test_last_is_each_groups_last_version(self):
+        # alpha's own last version (a-v2) comes back beside beta's, though
+        # beta's is the most recent overall
         results = _star_finder("$*.csvpaths.:last()").query()
-        assert results.uuids == ["b-v1"]
+        assert sorted(results.uuids) == ["a-v2", "b-v1"]
 
-    def test_first_across_every_group_is_the_true_earliest(self):
+    def test_first_is_each_groups_first_version(self):
         results = _star_finder("$*.csvpaths.:first()").query()
-        assert results.uuids == ["a-v1"]
+        assert sorted(results.uuids) == ["a-v1", "b-v1"]
 
-    def test_index_selects_by_chronological_position(self):
-        # chronological order: a-v1, a-v2, b-v1
+    def test_index_selects_within_each_group(self):
+        # alpha's versions are a-v1, a-v2; beta has only b-v1, so it has
+        # no index 1
         results = _star_finder("$*.csvpaths.:index(1)").query()
         assert results.uuids == ["a-v2"]
 
@@ -1064,9 +1063,9 @@ class TestStarTraversalFlatten:
         # not-yet-supported sweep #9, 2026-10-20: name_three now
         # applies generically to whatever _query_star_traversal() pools/
         # groups across every named-paths group, the same shared tail
-        # the literal-root case already uses. ":last()" pools to b-v1
-        # (the true latest, per the test above); "orders" is its own
-        # real identity.
+        # the literal-root case already uses. ":last()" gives each
+        # group's last version (a-v2, b-v1); only b-v1 has the identity
+        # "orders".
         results = _star_finder("$*.csvpaths.:last().orders").query()
         assert results.uuids == ["b-v1"]
         assert results.results[0].identity == "orders"
@@ -1144,7 +1143,9 @@ class TestStarTraversalFieldAccessor:
     # selected -- unlike RESULTS, CSVPATHS genuinely needs this, since
     # get_manifest_for_name(reference.root_major) breaks when
     # root_major is the '*' token (no group is actually named "*").
-    def test_flatten_shape_with_a_field_accessor_now_works(self):
+    def test_bare_pointer_with_a_field_accessor_reads_each_group(self):
+        # '*' mimics grouping (compendium 4.1b): one value per group. Was
+        # pooled, beta's alone.
         by_name = {
             "alpha": [
                 {
@@ -1166,9 +1167,10 @@ class TestStarTraversalFieldAccessor:
         results = _finder(
             "$*.csvpaths.:last():named_paths_name()", by_name=by_name
         ).resolve()
-        assert len(results.results) == 1
-        assert results.results[0].uuid == "b-v1"
-        assert results.results[0].data == "beta"
+        assert sorted((r.uuid, r.data) for r in results.results) == [
+            ("a-v1", "alpha"),
+            ("b-v1", "beta"),
+        ]
 
     def test_grouped_shape_with_a_field_accessor_now_works(self):
         by_name = {
@@ -1249,9 +1251,9 @@ class TestStarTraversalFieldAccessor:
         # :scripts() (SOURCE == "definition") is the other branch
         # _group_manifest_entry() serves -- it needs the matched GROUP
         # NAME, not just its manifest entry, to call describer.get_
-        # config(name). Proves the correct group's own definition.json
-        # is read, not alpha's by accident, by giving each group a
-        # different "scripts" config and asserting on beta's value.
+        # config(name). Proves each group's own definition.json is read,
+        # not one group's for both, by giving each group a different
+        # "scripts" config. One result per group (compendium 4.1b).
         by_name = {
             "alpha": [
                 {
@@ -1277,9 +1279,10 @@ class TestStarTraversalFieldAccessor:
             by_name=by_name,
             definitions_by_name=definitions_by_name,
         ).resolve()
-        assert len(results.results) == 1
-        assert results.results[0].uuid == "b-v1"
-        assert results.results[0].data == {"on_complete_all": "beta_notify.py"}
+        assert sorted((r.uuid, r.data["on_complete_all"]) for r in results.results) == [
+            ("a-v1", "alpha_notify.py"),
+            ("b-v1", "beta_notify.py"),
+        ]
 
     def test_an_argument_on_the_field_accessor_is_rejected(self):
         # added 2026-10-18, alongside :named_paths_name()'s own (and
@@ -1379,6 +1382,108 @@ class TestGroupManifestEntry:
         name, entry = finder._group_manifest_entry("acme", "v1-uuid")
         assert name == "acme"
         assert entry["uuid"] == "v1-uuid"
+
+
+def _root_group_entry(name: str, uuid: str, day: int, identities: list) -> dict:
+    return {
+        "group_file_path": f"named_paths/{name}/group.csvpath",
+        "uuid": uuid,
+        "time": f"2026-01-0{day}T00:00:00+00:00",
+        "named_paths_name": name,
+        "named_paths_identities": identities,
+    }
+
+
+#
+# finding I fixture: alpha has three versions, beta two, gamma one. Only
+# alpha's v1 and v2 and beta's v1 have "checks", so a group's last version
+# and its last version having "checks" differ. beta's v2 is the most
+# recent version overall. The ledger holds every version, in arrival
+# order, for the ':manifest()' forms that still pool.
+#
+ROOT_GROUP_BY_NAME = {
+    "alpha": [
+        _root_group_entry("alpha", "a-v1", 1, ["checks"]),
+        _root_group_entry("alpha", "a-v2", 3, ["checks"]),
+        _root_group_entry("alpha", "a-v3", 5, []),
+    ],
+    "beta": [
+        _root_group_entry("beta", "b-v1", 2, ["checks"]),
+        _root_group_entry("beta", "b-v2", 6, []),
+    ],
+    "gamma": [_root_group_entry("gamma", "g-v1", 4, [])],
+}
+ROOT_GROUP_LEDGER = sorted(
+    (e for entries in ROOT_GROUP_BY_NAME.values() for e in entries),
+    key=lambda e: e["time"],
+)
+
+
+def _root_group_finder(reference: str) -> CsvpathsReferenceFinder3:
+    return _finder(
+        reference,
+        by_name=ROOT_GROUP_BY_NAME,
+        ledger=ROOT_GROUP_LEDGER,
+        inputs_csvpaths_path="named_paths",
+    )
+
+
+class TestStarRootGroups:
+    # finding I (David, 2026-10-30 and 2026-11-03; compendium 4.1b): a
+    # '*' root mimics grouping. A pointer applies within each named-paths
+    # group, one result per group. It used to pool every group's versions
+    # and give one result in total. ':manifest()' without ':all()' names
+    # the global loads ledger and still pools.
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$*.csvpaths.:last()", ["a-v3", "b-v2", "g-v1"]),
+            ("$*.csvpaths.:first()", ["a-v1", "b-v1", "g-v1"]),
+            ("$*.csvpaths.:index(-1)", ["a-v3", "b-v2", "g-v1"]),
+            ("$*.csvpaths.:index(1)", ["a-v2", "b-v2"]),
+            # the same as ':all()', which is now redundant but permitted
+            ("$*.csvpaths.:all():last()", ["a-v3", "b-v2", "g-v1"]),
+        ],
+    )
+    def test_a_pointer_gives_one_result_per_group(self, reference, expected):
+        assert sorted(_root_group_finder(reference).query().uuids) == expected
+
+    def test_having_then_a_pointer_is_per_group(self):
+        # NRE "Find last version containing my_validations for all
+        # named-paths groups": gamma has no version with "checks"
+        results = _root_group_finder(
+            '$*.csvpaths.:having("checks"):index(-1)'
+        ).query()
+        assert sorted(results.uuids) == ["a-v2", "b-v1"]
+
+    def test_an_identity_after_the_pointer_is_per_group(self):
+        # NRE "For all named-paths groups, find my_validations in any
+        # named-paths group's last version": no group's last version has
+        # "checks", and alpha's v2 is not its last
+        results = _root_group_finder("$*.csvpaths.:last().checks").query()
+        assert results.results == []
+        results = _root_group_finder("$*.csvpaths.:first().checks").query()
+        assert sorted(results.uuids) == ["a-v1", "b-v1"]
+        assert {r.identity for r in results.results} == {"checks"}
+
+    def test_a_field_after_the_pointer_reads_each_group(self):
+        results = _root_group_finder("$*.csvpaths.:last():uuid()").resolve()
+        assert sorted(r.data for r in results.results) == ["a-v3", "b-v2", "g-v1"]
+
+    def test_a_regex_root_groups_the_same_way(self):
+        results = _root_group_finder("$:regex(/^(alpha|beta)$/).csvpaths.:last()")
+        assert sorted(results.query().uuids) == ["a-v3", "b-v2"]
+
+    def test_no_pointer_keeps_arrival_order(self):
+        # nothing to reduce per group, so the pooled list in time order
+        results = _root_group_finder("$*.csvpaths.:uuid()").query()
+        assert results.uuids == ["a-v1", "b-v1", "a-v2", "g-v1", "a-v3", "b-v2"]
+
+    def test_the_ledger_still_pools(self):
+        # ':manifest()' names the global loads ledger, the logical set
+        # across every group: its last entry is beta's v2, alone
+        results = _root_group_finder("$*.csvpaths.:manifest():last()").query()
+        assert results.uuids == ["b-v2"]
 
 
 class TestStarTraversalGroup:
@@ -2529,7 +2634,11 @@ class TestStarLedgerReadKeepsDeletedEntries:
         assert results.uuids == ["keep-v1", "gone-v1", "keep-reload"]
 
     def test_bare_pointer_still_reads_the_live_groups(self):
-        assert self._data("$*.csvpaths.:last():uuid()") == ["also-v1"]
+        # one result per live group (compendium 4.1b)
+        assert sorted(self._data("$*.csvpaths.:last():uuid()")) == [
+            "also-v1",
+            "keep-v1",
+        ]
 
     def test_grouped_shape_still_reads_the_live_groups(self):
         results = self._c1_finder("$*.csvpaths.:all():uuid()").query()
@@ -2730,7 +2839,10 @@ class TestBareStarFieldReadsLiveGroups:
         ]
         assert data == [["s"], ["t"]]
 
-    def test_a_pointer_is_unchanged(self):
-        # a bare pointer under '*' already walked the live groups (finding
-        # I, still to come, makes it one result per group)
-        assert self._c1("$*.csvpaths.:last()").query().uuids == ["also-v1"]
+    def test_a_pointer_reads_the_live_groups_one_per_group(self):
+        # a bare pointer under '*' walks the live groups, one result per
+        # group (finding I, compendium 4.1b)
+        assert sorted(self._c1("$*.csvpaths.:last()").query().uuids) == [
+            "also-v1",
+            "keep-v1",
+        ]

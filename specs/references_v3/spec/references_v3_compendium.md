@@ -560,6 +560,23 @@ each fully occupy their `name_one` or `name_three` segment:
 #### 4.1
 `*` flattens its position in the reference into one pooled search space.
 
+#### 4.1b
+As the root, `$*` (every named-file, named-paths group or named-results
+name) mimics grouping: a pointer or range applies within each named entity,
+so the reference gives one result per named entity. `$*.csvpaths.:last()`
+is the last loaded version of every named-paths group, and
+`$*.results.:last()` the last no-template run of every named-results name.
+`:regex()` and `:choice()` roots group the same way. A `*` inside the
+reference still pools its own position (4.1): `$*.results.beta/*:last()` is
+each named-results name's last run under a one-level `beta` template.
+
+Two forms pool across every named entity instead: `:flatten()` in
+`results` (`$*.results.:flatten():last()` is the most recent run of any
+named-results name, at any depth) and the ledger or logical manifest set,
+`:manifest()` (`$*.csvpaths.:manifest():last()`, `$*.results.:manifest():last()`).
+With no pointer or range there is nothing to reduce per named entity, so
+grouping and pooling give the same set.
+
 #### 4.2
 `:all()` anywhere in the `name_one` groups the remaining `name_one` search
 space by the names found at the grouping segment (`:all()`'s position). In
