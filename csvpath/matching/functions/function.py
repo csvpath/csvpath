@@ -1,11 +1,10 @@
 # pylint: disable=C0114
-import traceback
 import time
 from textwrap import TextWrapper, dedent
 
 from typing import Any
 from ..productions.matchable import Matchable
-from csvpath.matching.util.exceptions import ChildrenException, MatchException
+from csvpath.matching.util.exceptions import ChildrenException
 
 
 class CheckedUnset:  # pylint: disable=R0903
@@ -37,11 +36,24 @@ class Function(Matchable):
             self.add_child(child)
         self.description = []
         self.match_qualifiers: list[str] = ["onmatch"]
-        self.value_qualifiers: list[str] = ["onmatch"]
         self.side_effect_qualifiers: list[str] = ["onmatch"]
+
+        self.value_qualifiers: list[str] = []
+        self._add_default_value_qualifiers()
+
         self.name_qualifier = False
         self.aliases = []
         self.wrapper = TextWrapper(drop_whitespace=True)
+
+    def _add_default_value_qualifiers(self) -> None:
+        if self.value_qualifiers is None:
+            self.value_qualifiers = []
+        if "tmp" not in self.value_qualifiers:
+            self.value_qualifiers.append("tmp")
+        if "renew" not in self.value_qualifiers:
+            self.value_qualifiers.append("renew")
+        if "match" not in self.value_qualifiers:
+            self.value_qualifiers.append("onmatch")
 
     def wrap(self, text: str) -> str:
         ss = text.split("\n\n")
