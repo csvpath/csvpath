@@ -1,0 +1,67 @@
+#
+# The first group B stand-ins, written in FormatDetector's notation: UK
+# National Insurance numbers, US and Canada bank account numbers, and card
+# security codes. Macie's UK_NATIONAL_INSURANCE_NUMBER,
+# BANK_ACCOUNT_NUMBER and CREDIT_CARD_SECURITY_CODE. All require a
+# keyword; for group B the keyword does most of the work.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: group-b-accounts.csvpath
+    data: accounts.csv
+    finding_lines: [1, 2, 5, 8, 10, 11]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie UK_NATIONAL_INSURANCE_NUMBER: occurrence 1, line 1 (row 2), column 2 nino" }
+      - { line: 2, message: "macie UK_NATIONAL_INSURANCE_NUMBER: occurrence 2, line 2 (row 3), column 2 nino" }
+      - { line: 5, message: "macie BANK_ACCOUNT_NUMBER: occurrence 1, line 5 (row 6), column 3 bank_account" }
+      - { line: 8, message: "macie CREDIT_CARD_SECURITY_CODE: occurrence 1, line 8 (row 9), column 4 cvv" }
+      - { line: 10, message: "macie BANK_ACCOUNT_NUMBER: occurrence 2, line 10 (row 11), column 5 notes" }
+      - { line: 10, message: "macie CREDIT_CARD_SECURITY_CODE: occurrence 2, line 10 (row 11), column 5 notes" }
+    findings: findings.json
+    #
+    # Headers: "nino", "bank_account" ("bank account" with _) and "cvv" are
+    # each their identifier's keyword; "id" and "notes" hold none.
+    #
+    #   line  cell                                    reported as
+    #   1     nino AB123456C                          NINO: contiguous
+    #   2     nino AB 12 34 56 C                      NINO: spaced
+    #   3     nino GB123456A                          nothing: HMRC does not use GB
+    #   4     nino DA123456A                          nothing: D is never a prefix
+    #                                                 letter
+    #   5     bank 000123456789                       bank account: 12 digits
+    #   6     bank 12345678                           nothing: 8 digits (Macie: 9-17)
+    #   7     bank 1234 5678 9012                     nothing: Macie: no spaces
+    #   8     cvv 123                                 security code
+    #   9     cvv 12345                               nothing: 5 digits
+    #   10    notes "card security code 4321,         security code and bank
+    #         chequing account 98765432101"           account, one cell
+    #   11    notes "national insurance number        NINO: keyword before
+    #         CE 98 76 54 B"
+    #   12    notes 123456789                         nothing: no keyword
+    #
+    # On each line the identifiers run in the wrapper's resolved order, so
+    # on line 10 the bank account comes before the code. Totals: NINO 3
+    # (lines 1, 2, 11; the third past the cap of 2), bank account 2, code
+    # 2. The code is MEDIUM for one occurrence and HIGH from two, so HIGH
+    # here. PERSONAL_INFORMATION totalCount 3, FINANCIAL_INFORMATION 4.

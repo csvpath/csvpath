@@ -567,6 +567,55 @@
         "stripe",
         "swipe"
       ]
+    },
+    "gb_nino": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "insurance no.",
+        "insurance number",
+        "insurance#",
+        "national insurance number",
+        "nationalinsurance#",
+        "nationalinsurancenumber",
+        "nin",
+        "nino"
+      ]
+    },
+    "bank_account": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "bank account",
+        "bank acct",
+        "checking account",
+        "checking acct",
+        "deposit account",
+        "deposit acct",
+        "savings account",
+        "savings acct",
+        "chequing account",
+        "chequing acct"
+      ]
+    },
+    "card_security_code": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "card id",
+        "card identification code",
+        "card identification number",
+        "card security code",
+        "card validation code",
+        "card validation number",
+        "card verification data",
+        "card verification value",
+        "cvc",
+        "cvc2",
+        "cvv",
+        "cvv2",
+        "elo verification code"
+      ]
     }
   },
   "identifiers": {
@@ -1662,6 +1711,39 @@
       "fidelity": "A",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
       "retrieved": "2026-11-05"
+    },
+    "UK_NATIONAL_INSURANCE_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "gb_nino",
+      "keyword_mode": "required",
+      "keywords_from": "gb_nino",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "BANK_ACCOUNT_NUMBER": {
+      "category": "FINANCIAL_INFORMATION",
+      "detector": "bank_account",
+      "keyword_mode": "required",
+      "keywords_from": "bank_account",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
+      "retrieved": "2026-11-05"
+    },
+    "CREDIT_CARD_SECURITY_CODE": {
+      "category": "FINANCIAL_INFORMATION",
+      "detector": "card_security_code",
+      "keyword_mode": "required",
+      "keywords_from": "card_security_code",
+      "distance": 30,
+      "severity": "1:MEDIUM 2:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
+      "retrieved": "2026-11-05"
     }
   },
   "detectors": {
@@ -2468,6 +2550,42 @@
       "notes": [
         "Macie: CREDIT_CARD_MAGNETIC_STRIPE needs a keyword and supports tracks 1 and 2.",
         "The format is ours, from ISO/IEC 7813: track 1 %B, card number, ^, name, ^, YYMM, service code, discretionary data, ?; track 2 ;, card number, =, YYMM, service code, discretionary digits, ?. Sentinels may be missing. The card number must pass Luhn and the month must be 01-12."
+      ]
+    },
+    "gb_nino": {
+      "notes": [
+        "Macie publishes only the keywords for UK_NATIONAL_INSURANCE_NUMBER.",
+        "The format is ours, from HMRC (NIM39110): two prefix letters, 6 digits, a suffix A to D, contiguous or spaced as AB 12 34 56 C. D F I Q U V are never a prefix letter, O is never the second, and the prefixes BG GB KN NK NT TN ZZ are not used."
+      ],
+      "formats": [
+        "[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z]######[A-D]",
+        "[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z] ## ## ## [A-D]"
+      ],
+      "exclude_prefixes": [
+        "BG",
+        "GB",
+        "KN",
+        "NK",
+        "NT",
+        "TN",
+        "ZZ"
+      ]
+    },
+    "bank_account": {
+      "notes": [
+        "Macie: BANK_ACCOUNT_NUMBER detects Canadian and US bank account numbers that are 9-17 digit sequences without spaces, with a keyword. That is the whole format."
+      ],
+      "formats": [
+        "#{9,17}"
+      ]
+    },
+    "card_security_code": {
+      "notes": [
+        "Macie publishes only the keywords for CREDIT_CARD_SECURITY_CODE, and scores it MEDIUM for one occurrence, HIGH from two.",
+        "The format is ours: the 3 digit CVV/CVC or the 4 digit American Express CID. The keyword does nearly all the work; fidelity B."
+      ],
+      "formats": [
+        "#{3,4}"
       ]
     }
   }

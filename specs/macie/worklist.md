@@ -74,6 +74,11 @@ last. Add an item the moment something is deferred.
      HIBCC, ICCBBA formats with check characters), Canada health number
      (by province; the checks need confirming), EHIC card numbers (EU and
      Finland; the format needs confirming).
+   - **Group B, done:** `FormatDetector` and the format notation; UK
+     NINO, US and Canada bank account, card security code, pair
+     17_group_b_first. Next, in `group-b-design.md` order: passports,
+     phone numbers (new keyword mode, Macie's rule), dates, driver's
+     licenses, the rest.
    - **Group B:** driver's licenses (32 identifiers; the US one covers
      50+ state formats), passports (7), phone numbers (7), UK NINO, UK
      electoral roll, Canada permanent resident card, India PAN, Brazil RG,

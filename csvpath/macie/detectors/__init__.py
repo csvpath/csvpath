@@ -13,6 +13,7 @@ from .credential_detector import CredentialDetector
 from .credit_card_detector import CreditCardDetector
 from .de_id_detector import DeIdDetector
 from .es_id_detector import EsIdDetector
+from .format_detector import FormatDetector
 from .fr_nir_detector import FrNirDetector
 from .grouped_digits_detector import GroupedDigitsDetector
 from .iban_detector import IbanDetector
@@ -40,6 +41,8 @@ DETECTORS = {
     "ar_sube": GroupedDigitsDetector,
     "au_tfn": GroupedDigitsDetector,
     "bank": BankAccountDetector,
+    "bank_account": FormatDetector,
+    "card_security_code": FormatDetector,
     "br_cnpj": GroupedDigitsDetector,
     "br_cpf": GroupedDigitsDetector,
     "ca_sin": GroupedDigitsDetector,
@@ -69,6 +72,7 @@ DETECTORS = {
     "us_mbi": UsIdDetector,
     "us_ndc": UsIdDetector,
     "us_npi": UsNpiDetector,
+    "gb_nino": FormatDetector,
     "gb_utr": GroupedDigitsDetector,
     "uk_nhs": GroupedDigitsDetector,
     "us_ssn": UsSsnDetector,

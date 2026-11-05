@@ -1,0 +1,96 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "PERSONAL_INFORMATION",
+      "detections": [
+        {
+          "type": "UK_NATIONAL_INSURANCE_NUMBER",
+          "count": 3,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "nino",
+                "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "nino",
+                "row": 3
+              },
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 12
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 3
+    },
+    {
+      "category": "FINANCIAL_INFORMATION",
+      "detections": [
+        {
+          "type": "BANK_ACCOUNT_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "bank_account",
+                "row": 6
+              },
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 11
+              }
+            ]
+          }
+        },
+        {
+          "type": "CREDIT_CARD_SECURITY_CODE",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "cvv",
+                "row": 9
+              },
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 11
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 4
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:eu-west-2:123456789012:classification-job/0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}
