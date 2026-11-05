@@ -110,3 +110,7 @@ Design decisions are in `specs/macie/transpile-design.md`.
   valid SSN; NDCs in 10 and 11 digit forms; a Level II code and a letter
   that is not one; two identifiers in one cell twice; and cpt, which is
   not a keyword.
+- `16_group_a_more`: the German identity card (the specimen, a bad check
+  digit, lower case), the French health insurance number (a NIR near
+  carte vitale and insurance card), and magnetic stripe tracks 1 and 2
+  (and a card number that fails Luhn). Two categories in the findings.
