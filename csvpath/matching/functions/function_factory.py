@@ -92,6 +92,7 @@ from .lines.dups import HasDups, DupLines, CountDups, PercentDups, Fingerprint
 from .lines.first_line import FirstLine
 from .lines.advance import Advance, AdvanceAll
 from .lines.after_blank import AfterBlank
+from .lines.line_values import LineValuesStack
 from .variables.variables import Variables
 from .variables.pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
 from .variables.get import Get
@@ -577,6 +578,7 @@ class FunctionFactory:
         fs["mismatch"] = Mismatch
         fs["line_number"] = LineNumber
         fs["after_blank"] = AfterBlank
+        fs["line_values_stack"] = LineValuesStack
         fs["round"] = Round
         fs["import"] = Import
         fs["print_line"] = PrintLine

@@ -1,9 +1,8 @@
 # pylint: disable=C0114
-import traceback
 from typing import Any
 from ..util.expression_utility import ExpressionUtility
 from .qualified import Qualified
-from ..util.exceptions import ChildrenException, MatchException
+from ..util.exceptions import ChildrenException
 
 
 class Matchable(Qualified):  # pylint: disable=R0904
@@ -42,10 +41,6 @@ class Matchable(Qualified):  # pylint: disable=R0904
             return f"""{self._simple_class_name()}({self.value})"""
         return f"""{self._simple_class_name()}({self.qualified_name}:{self.value})"""
 
-    #
-    # exp!
-    #
-    # from csvpath.matching.matcher import What
     def assign(self):
         return self.matcher.what(self, "assign")
 
