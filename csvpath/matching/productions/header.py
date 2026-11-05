@@ -44,6 +44,10 @@ class Header(Matchable):
                     f"Header.to_value: miss because n >= {len(self.matcher.line)}"
                 )
         if self.asbool:
+            #
+            # note, not exut.asbool(ret, strict=True) because a) it predates
+            # strict, and b) headers don't hold complex objects.
+            #
             self.value = ExpressionUtility.asbool(ret)
         else:
             self.value = ret
