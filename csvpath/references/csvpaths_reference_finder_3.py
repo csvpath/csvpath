@@ -557,7 +557,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         built = self._build_chain(calls)
         all_call = next((f for f in built if f.name == "all"), None)
         having_call = next((f for f in built if f.name == "having"), None)
-        field_call = self._find_field_function_call(built)
+        # every field accessor, not just the first: argued ones are gates
+        # and the last unargued one supplies the value (5.20b; finding A)
+        field_calls = [f for f in built if f.SOURCE is not None]
         manifest_call = next((f for f in built if f.name == "manifest"), None)
         # '*' mimics grouping (finding I, David 2026-10-30 and 2026-11-03):
         # a pointer applies within each named-paths group, one result per
@@ -571,6 +573,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         is_grouped = all_call is not None or (
             manifest_call is None and len(pointers) > 0
         )
+        gates = self._gate_calls(built=built, pointer_present=len(pointers) > 0)
         # whitelist-based (settled 2026-08-19), replacing an earlier
         # blacklist-based check (any(name=="manifest") or any(name in
         # ("from","to"))) that only ever rejected those two specific
@@ -591,7 +594,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             if f.ROLE != Function3.POINTER
             and f is not all_call
             and f is not having_call
-            and f is not field_call
+            and not any(f is c for c in field_calls)
             and f is not manifest_call
         ]
         if non_pointers:
@@ -611,37 +614,25 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 ":manifest(), or a registered field-accessor function "
                 "(e.g. :uuid()), is supported."
             )
-        field_call_key_path = (
-            field_call.KEY.get(Reference3.CSVPATHS)
-            if field_call is not None and field_call.KEY
-            else None
-        )
-        field_call_key_has_placeholder = (
-            field_call_key_path is not None and "{}" in field_call_key_path
-        )
-        if (
-            field_call is not None
-            and field_call.arg is not None
-            and not field_call_key_has_placeholder
-        ):
-            # added 2026-10-18 -- this method has no GATE mechanism
-            # (unlike RESULTS' own field_call/_matches_field_predicate)
-            # to consume a field accessor's own argument during '*'
-            # traversal, and the bare-selector shape (:uuid("...")) is
-            # dispatched entirely separately, earlier in query(), before
-            # '*' traversal is ever reached. Confirmed live before this
-            # guard existed: a widened ARG_TYPES (e.g. :uuid()'s own)
-            # let an argument through silently here, ignored, returning
-            # the real field value regardless. Excludes functions whose
-            # own KEY path has a "{}" placeholder (e.g. :destination_
-            # address()) -- those DO consume their arg later, at
-            # resolve() time via _apply_key_arg(), not silently; same
-            # exemption _resolve_versions()'s own identical guard needs.
-            raise ReferenceException3(
-                f":{field_call.name}() does not take an argument here -- "
-                "there is no filtering mechanism in CsvpathsReferenceFinder3's "
-                "'*' traversal to apply it to."
-            )
+        for field_call in field_calls:
+            if (
+                field_call.arg is not None
+                and not self._key_has_placeholder(field_call)
+                and not any(field_call is g for g in gates)
+            ):
+                # added 2026-10-18 -- an argument with no use, which a
+                # widened ARG_TYPES (e.g. :uuid()'s own) once let through
+                # silently, ignored. A gate (finding A, 2026-11-05) filters
+                # below, and a "{}"-key field (e.g. :destination_address())
+                # consumes its arg at resolve() via _apply_key_arg(); any
+                # other argued field still raises, see _gate_calls(). The
+                # bare-selector shape (:uuid("...")) is dispatched
+                # separately, earlier in query().
+                raise ReferenceException3(
+                    f":{field_call.name}() does not take an argument here -- "
+                    "there is no filtering mechanism in "
+                    "CsvpathsReferenceFinder3's '*' traversal to apply it to."
+                )
 
         def _having_filtered(manifest: list) -> list:
             if having_call is None:
@@ -658,12 +649,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 if self._version_satisfies_having(entry, having_call)
             ]
 
+        def _filtered(manifest: list) -> list:
+            # ':having()', then the gates; the pointer picks from what is
+            # left (finding A, David 2026-10-29). '*' has no range here.
+            return self._apply_gates(versions=_having_filtered(manifest), gates=gates)
+
         if is_grouped:
             selected_versions = []
             for name in self._matching_names(
                 self.source.paths_names(), name_filter
             ):
-                manifest = _having_filtered(
+                manifest = _filtered(
                     self.source.paths_manifest(name)
                 )
                 if pointers:
@@ -699,7 +695,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # field with no pointer read the ledger too until
                 # 2026-11-01; it now reads each live group in turn, like
                 # every bare '*' read (compendium 6.19, agreed with David).
-                pooled = _having_filtered(
+                pooled = _filtered(
                     self._ledger_versions(name_filter=name_filter)
                 )
             else:
@@ -708,7 +704,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     self.source.paths_names(), name_filter
                 ):
                     pooled.extend(
-                        _having_filtered(
+                        _filtered(
                             self.source.paths_manifest(name)
                         )
                     )
@@ -740,6 +736,20 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             if isinstance(seg, FunctionCall3)
         ]
         kind = reference.resolve_kind
+        value_field_call = self._last_value_field_call(combined_for_path)
+        if kind == Reference3.METADATA_FIELD and value_field_call is None:
+            # only gates: a filter never supplies the value (finding D,
+            # David 2026-10-29), so resolve gives what the reference gives
+            # without them -- the entry for a ':manifest()', otherwise
+            # the version (finding A, 2026-11-05)
+            has_manifest_call = any(
+                seg.contains_function_named("manifest") for seg in combined_for_path
+            )
+            kind = (
+                Reference3.METADATA_FILE
+                if has_manifest_call
+                else Reference3.FIRST_PARTY
+            )
         if kind == Reference3.METADATA_FILE:
             if (
                 self._is_bare_pointer_reference(reference, "manifest")
@@ -827,7 +837,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # accessor found) instead of :named_paths_name()'s (the
             # last, and the one a user chaining two field accessors
             # almost certainly means to read).
-            field_call = self._last_field_function_call(combined_for_path)
+            # a gate never supplies the value (finding A): the last field
+            # that is not one, see _last_value_field_call()
+            field_call = value_field_call
             if field_call is not None:
                 function_cls = ReferenceFunctionFactory.get_registered_class(
                     field_call.name
@@ -1095,6 +1107,94 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             return any(identity in identities for identity in having_call.arg)
         return having_call.arg in identities
 
+    @staticmethod
+    def _key_has_placeholder(f: Function3) -> bool:
+        """true for a field whose KEY has a "{}" placeholder (e.g.
+        :destination_address("sftp")): its argument picks the key, via
+        _apply_key_arg(), so it is a value, never a gate."""
+        if f is None:
+            raise ValueError("Function cannot be None")
+        key_path = f.KEY.get(Reference3.CSVPATHS) if f.KEY else None
+        return key_path is not None and "{}" in key_path
+
+    def _gate_calls(self, *, built: list, pointer_present: bool) -> list:
+        """the argued field accessors in `built` that filter versions, a
+        GATE (finding A, David 2026-10-29; compendium 6.1, 6.35): a
+        version-entry field (SOURCE "manifest") with an argument. Not a
+        gate: :uuid()/:fingerprint() (an argued selector is a pointer,
+        6.44), a "{}"-key field (its argument picks the key), and a field
+        that reads definition.json -- SOURCE "definition", or a
+        BARE_SOURCE "definition" field such as :template() with no
+        pointer -- which would filter whole groups and is not built. Those
+        still raise where an argument has no use."""
+        if built is None:
+            raise ValueError("Built chain cannot be None")
+        gates = []
+        for f in built:
+            if f.arg is None or f.SOURCE != "manifest" or f.SELECTOR_WHEN_ARGUED:
+                continue
+            if self._key_has_placeholder(f):
+                continue
+            if f.BARE_SOURCE == "definition" and not pointer_present:
+                continue
+            gates.append(f)
+        return gates
+
+    def _version_field_value(self, *, entry: dict, field_call: Function3):
+        """the value a version-entry field has for one version, read the
+        way resolve() reads it: the entry's own KEY, then its root ledger
+        entry by the field's LEDGER_KEY. A deleted version, or an
+        unchanged reload, is its ledger entry already (_ledger_versions())."""
+        if entry is None or not isinstance(entry, dict):
+            raise TypeError("Entry must be a dict")
+        if field_call is None:
+            raise ValueError("Field call cannot be None")
+        function_cls = ReferenceFunctionFactory.get_registered_class(field_call.name)
+        key_path = function_cls.KEY.get(Reference3.CSVPATHS)
+        uuid = entry.get("uuid")
+        value = self._extract_field_value_with_ledger_fallback(
+            entry=entry,
+            key_path=key_path,
+            function_cls=function_cls,
+            datatype=Reference3.CSVPATHS,
+            ledger_entry_getter=lambda: (
+                self._ledger_entry(uuid) if uuid is not None else None
+            ),
+        )
+        return function_cls.transform_value(value)
+
+    def _apply_gates(self, *, versions: list, gates: list) -> list:
+        """the versions every gate matches (gates are ANDed, in any
+        order: compendium 6.1)."""
+        if versions is None:
+            raise ValueError("Versions cannot be None")
+        if gates is None:
+            raise ValueError("Gates cannot be None")
+        for gate in gates:
+            versions = [
+                v
+                for v in versions
+                if self._matches_field_predicate(
+                    self._version_field_value(entry=v, field_call=gate), gate.arg
+                )
+            ]
+        return versions
+
+    def _last_value_field_call(self, calls: list) -> "FunctionCall3 | None":
+        """the field accessor whose value resolve() returns: the last one
+        that is not a gate (compendium 5.20b). A gate filters and never
+        supplies the value (finding D, David 2026-10-29). Unlike RESULTS'
+        own copy, an argued "{}"-key field (e.g. :destination_address(
+        "sftp")) still supplies one: its argument picks the key. None when
+        every field accessor in the chain is a gate, or there are none."""
+        if calls is None:
+            raise ValueError("Calls cannot be None")
+        built = self._build_chain(calls)
+        pointer_present = any(f.ROLE == Function3.POINTER for f in built)
+        gates = self._gate_calls(built=built, pointer_present=pointer_present)
+        values = [c for c, b in zip(calls, built) if not any(b is g for g in gates)]
+        return self._last_field_function_call(values)
+
     def _resolve_versions(self, name_one, manifest: list) -> list:
         """name_one's sole job for csvpaths is selecting which
         version(s) to work with, so its path_prefix must reduce to
@@ -1134,6 +1234,10 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             )
         calls = [name_one.path[0], *name_one.functions]
         built = self._build_chain(calls)
+        gates = self._gate_calls(
+            built=built,
+            pointer_present=any(f.ROLE == Function3.POINTER for f in built),
+        )
         for f in built:
             self._check_position(f, Reference3.NAME_ONE, Reference3.CSVPATHS)
             # added 2026-10-18, alongside :uuid()'s own bare-selector
@@ -1148,10 +1252,10 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # guard).
             self._reject_selector_arg_outside_its_bare_form(f)
             # added 2026-10-18, alongside :named_paths_name()'s own
-            # ARG_TYPES widening (RESULTS' worked example) -- CSVPATHS
-            # has no GATE mechanism at all (unlike RESULTS' own field_
-            # call/_matches_field_predicate) to consume an ordinary
-            # field accessor's own argument here. Confirmed live before
+            # ARG_TYPES widening (RESULTS' worked example) -- at the
+            # time CSVPATHS had no GATE mechanism at all (unlike RESULTS'
+            # own field_call/_matches_field_predicate) to consume an
+            # ordinary field accessor's own argument here. Confirmed live before
             # this guard existed: a widened ARG_TYPES let an argument
             # through silently, ignored, returning the real field value
             # regardless. SELECTOR_WHEN_ARGUED functions are already
@@ -1162,13 +1266,14 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # (e.g. :transfer_on_complete_all()/:destination_address())
             # -- those DO consume their arg, via _apply_key_arg() a few
             # lines below this loop, not silently.
-            own_key_path = f.KEY.get(Reference3.CSVPATHS) if f.KEY else None
-            key_has_placeholder = own_key_path is not None and "{}" in own_key_path
+            # A gate (finding A, 2026-11-05) does consume its argument,
+            # below, so it is exempt too; see _gate_calls().
             if (
                 f.SOURCE is not None
                 and not f.SELECTOR_WHEN_ARGUED
-                and not key_has_placeholder
+                and not self._key_has_placeholder(f)
                 and f.arg is not None
+                and not any(f is g for g in gates)
             ):
                 raise ReferenceException3(
                     f":{f.name}() does not take an argument in "
@@ -1267,6 +1372,10 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 )
             else:
                 manifest = self._apply_range(manifest, from_call, to_call)
+        # then the gates: a range comes before a filter, whatever the
+        # written order (compendium 6.28), and the pointer picks from what
+        # the gates leave (finding A, David 2026-10-29).
+        manifest = self._apply_gates(versions=manifest, gates=gates)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         if not pointers:
             return manifest
