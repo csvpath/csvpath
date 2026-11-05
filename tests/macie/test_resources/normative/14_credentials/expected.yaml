@@ -1,0 +1,77 @@
+#
+# Credentials: Macie's AWS_CREDENTIALS, GCP_API_KEY,
+# HTTP_BASIC_AUTH_HEADER, JSON_WEB_TOKEN, OPENSSH_PRIVATE_KEY,
+# PGP_PRIVATE_KEY, PKCS, PUTTY_PRIVATE_KEY and STRIPE_CREDENTIALS, as our
+# stand-ins. Only the AWS and Google Cloud keys require a keyword.
+#
+# Only harmless shapes are in this file: fake AWS-style strings, Macie's
+# AWS examples, Basic headers and JWTs. Key blocks, Google keys
+# and Stripe keys would look like leaked secrets to a secret scanner, so
+# test_macie_credentials builds those at run time; here those
+# identifiers must report nothing.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: credentials-config-dump.csvpath
+    data: config_dump.csv
+    finding_lines: [1, 4, 5, 7, 8, 10, 13, 14]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie AWS_CREDENTIALS: occurrence 1, line 1 (row 2), column 2 aws_secret_access_key" }
+      - { line: 4, message: "macie HTTP_BASIC_AUTH_HEADER: occurrence 1, line 4 (row 5), column 3 auth" }
+      - { line: 5, message: "macie HTTP_BASIC_AUTH_HEADER: occurrence 2, line 5 (row 6), column 3 auth" }
+      - { line: 7, message: "macie JSON_WEB_TOKEN: occurrence 1, line 7 (row 8), column 4 token" }
+      - { line: 8, message: "macie JSON_WEB_TOKEN: occurrence 2, line 8 (row 9), column 4 token" }
+      - { line: 10, message: "macie AWS_CREDENTIALS: occurrence 2, line 10 (row 11), column 5 notes" }
+    findings: findings.json
+    #
+    # Headers: "aws_secret_access_key" is an AWS keyword; the others hold
+    # no keyword, and only the AWS and Google keys need one.
+    #
+    #   line  cell                                    reported as
+    #   1     aws FAKEfake...fake123456               AWS: 40 characters, header keyword
+    #   2     aws je7MtGbClwBF/...EXAMPLEKEY          nothing: Macie's example
+    #   3     aws da39a3ee...afd80709                 nothing: 40 lower case hex is a
+    #                                                 hash (ours)
+    #   4     auth Authorization: Basic ...           Basic header (Macie's example)
+    #   5     auth Proxy-Authorization: Basic ...     Basic header (Macie's example)
+    #   6     auth Authorization: Bearer ...          nothing: not the Basic scheme
+    #   7     token eyJ...c2lnbmF0dXJl                JWT: signed
+    #   8     token eyJ...eyJ...                      JWT: unsigned, empty signature
+    #   9     token 1.2.3                             nothing: not JSON
+    #   10    notes "set secret key FAKE... now"      AWS: "secret key" before
+    #   11    notes "secret key wJalrXUtn..."       nothing: Macie's other AWS example,
+    #                                                 even with a keyword
+    #   12    notes FAKEfake...fake123456             nothing: no AWS keyword
+    #   13    notes "curl -H 'Authorization: Basic    Basic header and JWT, one cell
+    #         ...' -d eyJ..."
+    #   14    notes "credentials eyJ..."              JWT, but NOT an AWS key: the
+    #                                                 JWT's header is 40 base64
+    #                                                 characters near an AWS keyword,
+    #                                                 and a part of a dotted token is
+    #                                                 not a key
+    #
+    # On each line the identifiers run in the wrapper's resolved order.
+    # Totals: AWS 2 (lines 1, 10), Basic 3 (4, 5, 13), JWT 4 (7, 8, 13, 14);
+    # the other six 0, which still print a summary. Credentials are HIGH
+    # from one occurrence. All are CREDENTIALS: totalCount 9.

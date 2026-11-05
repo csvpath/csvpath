@@ -452,6 +452,31 @@
         "tin",
         "tin#"
       ]
+    },
+    "aws_secret": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-credentials.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "aws_secret_access_key",
+        "credentials",
+        "secret access key",
+        "secret key",
+        "set-awscredential"
+      ]
+    },
+    "gcp_api_key": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-credentials.html",
+      "retrieved": "2026-11-03",
+      "keywords": [
+        "G_PLACES_KEY",
+        "GCP api key",
+        "GCP key",
+        "google cloud key",
+        "google-api-key",
+        "google-cloud-apikeys",
+        "GOOGLEKEY",
+        "X-goog-api-key"
+      ]
     }
   },
   "identifiers": {
@@ -1348,6 +1373,105 @@
       "fidelity": "A",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
       "retrieved": "2026-11-03"
+    },
+    "AWS_CREDENTIALS": {
+      "category": "CREDENTIALS",
+      "detector": "aws_secret",
+      "keyword_mode": "required",
+      "keywords_from": "aws_secret",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-credentials.html",
+      "retrieved": "2026-11-03"
+    },
+    "GCP_API_KEY": {
+      "category": "CREDENTIALS",
+      "detector": "gcp_api_key",
+      "keyword_mode": "required",
+      "keywords_from": "gcp_api_key",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-credentials.html",
+      "retrieved": "2026-11-03"
+    },
+    "HTTP_BASIC_AUTH_HEADER": {
+      "category": "CREDENTIALS",
+      "detector": "http_basic",
+      "keyword_mode": "none",
+      "keywords_from": null,
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-credentials.html",
+      "retrieved": "2026-11-03"
+    },
+    "JSON_WEB_TOKEN": {
+      "category": "CREDENTIALS",
+      "detector": "jwt",
+      "keyword_mode": "none",
+      "keywords_from": null,
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-credentials.html",
+      "retrieved": "2026-11-03"
+    },
+    "OPENSSH_PRIVATE_KEY": {
+      "category": "CREDENTIALS",
+      "detector": "openssh",
+      "keyword_mode": "none",
+      "keywords_from": null,
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-credentials.html",
+      "retrieved": "2026-11-03"
+    },
+    "PGP_PRIVATE_KEY": {
+      "category": "CREDENTIALS",
+      "detector": "pgp",
+      "keyword_mode": "none",
+      "keywords_from": null,
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-credentials.html",
+      "retrieved": "2026-11-03"
+    },
+    "PKCS": {
+      "category": "CREDENTIALS",
+      "detector": "pkcs",
+      "keyword_mode": "none",
+      "keywords_from": null,
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-credentials.html",
+      "retrieved": "2026-11-03"
+    },
+    "PUTTY_PRIVATE_KEY": {
+      "category": "CREDENTIALS",
+      "detector": "putty",
+      "keyword_mode": "none",
+      "keywords_from": null,
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-credentials.html",
+      "retrieved": "2026-11-03"
+    },
+    "STRIPE_CREDENTIALS": {
+      "category": "CREDENTIALS",
+      "detector": "stripe",
+      "keyword_mode": "none",
+      "keywords_from": null,
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-credentials.html",
+      "retrieved": "2026-11-03"
     }
   },
   "detectors": {
@@ -2024,6 +2148,79 @@
         "9"
       ],
       "exclusions": []
+    },
+    "aws_secret": {
+      "notes": [
+        "Macie: AWS_CREDENTIALS needs a keyword, and its two fictitious examples are never reported.",
+        "The format is ours: 40 characters of A-Z a-z 0-9 / +. One that is all lower case hex (e.g. a SHA-1 hash) is not reported.",
+        "The examples are kept as SHA-256 hashes (exclusions_sha256): GitHub push protection rejects a repo holding even a published example key."
+      ],
+      "form": "aws_secret",
+      "exclusions_sha256": [
+        "e21b597ba6b9cafa59d9ebc4d65c0385f5eb3fa56abab2607fa76589ad849a33",
+        "78314b11be2e581549ac1c4f616563fad3fdf0c3b71678f6e2299182080e0598"
+      ]
+    },
+    "gcp_api_key": {
+      "notes": [
+        "Macie: GCP_API_KEY needs a keyword and detects only the key string (keyString).",
+        "The format is ours: AIza and 35 characters of A-Z a-z 0-9 _ -."
+      ],
+      "form": "gcp_api_key"
+    },
+    "http_basic": {
+      "notes": [
+        "Macie: HTTP_BASIC_AUTH_HEADER needs no keyword, and needs a complete header, the field name and the scheme, per RFC 7617, e.g. Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ== and Proxy-Authorization: Basic dGVzdDoxMjPCow==.",
+        "Ours: the field and scheme in any case, as HTTP allows; the base64 token is not decoded."
+      ],
+      "form": "http_basic"
+    },
+    "jwt": {
+      "notes": [
+        "Macie: JSON_WEB_TOKEN needs no keyword, and detects RFC 7519 JWS tokens, signed or unsigned.",
+        "Ours: three base64url parts; the header decodes to a JSON object with alg, the payload to a JSON object; the signature may be empty."
+      ],
+      "form": "jwt"
+    },
+    "openssh": {
+      "notes": [
+        "Macie: OPENSSH_PRIVATE_KEY needs no keyword; no other comments.",
+        "Ours: a whole BEGIN/END OPENSSH PRIVATE KEY block in one cell."
+      ],
+      "form": "openssh"
+    },
+    "pgp": {
+      "notes": [
+        "Macie: PGP_PRIVATE_KEY needs no keyword; no other comments.",
+        "Ours: a whole BEGIN/END PGP PRIVATE KEY BLOCK block in one cell, armor headers included."
+      ],
+      "form": "pgp"
+    },
+    "pkcs": {
+      "notes": [
+        "Macie: PKCS (private keys) needs no keyword; no other comments.",
+        "Ours: a whole PRIVATE KEY (PKCS #8), ENCRYPTED PRIVATE KEY or RSA PRIVATE KEY (PKCS #1) block in one cell, and also EC and DSA PRIVATE KEY blocks, the same exposure though not PKCS."
+      ],
+      "form": "pkcs"
+    },
+    "putty": {
+      "notes": [
+        "Macie: PUTTY_PRIVATE_KEY needs no keyword, and detects keys with the standard headers in order: PuTTY-User-Key-File, Encryption, Comment, Public-Lines, Private-Lines, Private-MAC; values of letters, digits, hyphens and newlines, with / + = in the key lines and + in Private-MAC; no spaces, underscores or custom headers.",
+        "Ours: exactly that."
+      ],
+      "form": "putty"
+    },
+    "stripe": {
+      "notes": [
+        "Macie: STRIPE_CREDENTIALS needs no keyword, and never reports its two code examples, a secret and a publishable test key, so test and publishable keys are reported.",
+        "The format is ours: sk_, pk_ or rk_, live_ or test_, and at least 24 letters and digits.",
+        "The examples are kept as SHA-256 hashes (exclusions_sha256): GitHub push protection rejects a repo holding even a published example key."
+      ],
+      "form": "stripe",
+      "exclusions_sha256": [
+        "2cafc0970149a84f3b9e62eaf169f36f59907a3b3e31f7b82e68c69cd27f7326",
+        "b1471f544ceeea31333bde7e1ecbaad6eac0d4a749412ad29bd66ef895b81c6b"
+      ]
     }
   }
 }

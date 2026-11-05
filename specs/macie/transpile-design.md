@@ -302,6 +302,7 @@ conversion.report.skipped   # what was not translated
 | `EsIdDetector` | Spain DNI, NIE, NIF and CIF: a control letter (mod 23) or a CIF control |
 | `MxRfcDetector` | Mexico RFC for people and organizations: letters, a real date, 3 characters |
 | `CoNitDetector` | Colombia NIT: body and mod 11 digit; 9 digits from 8 or 9 is an organization's |
+| `CredentialDetector` | the nine credentials: AWS and Google keys, Basic headers, JWTs, key blocks, PuTTY keys, Stripe keys |
 | `FrNirDetector` | France NIR (INSEE): 15 characters, Corsica's 2A and 2B, mod 97 key |
 | `MxCurpDetector` | Mexico CURP: 18 characters, birth date, state, check digit |
 | `ItCfDetector` | Italy Codice Fiscale: people's 16 characters (omocodia, birth date, check letter) and organizations' 11 digits (office code, Luhn) |
@@ -593,6 +594,42 @@ French one are fidelity B.
   id` and `tax number`, and Mexico's short `iva` matches inside words
   such as `private` (item 3).
 
+**Credentials**: Macie's nine credential identifiers, category
+CREDENTIALS, all HIGH from one occurrence. Only `AWS_CREDENTIALS` and
+`GCP_API_KEY` need a keyword. One class, `CredentialDetector`, has a form
+for each:
+- **`AWS_CREDENTIALS`**: a secret access key, 40 characters of A-Z a-z
+  0-9 / +. Macie's two fictitious examples are excluded. Ours: a string
+  that is all lower case hex (a SHA-1 hash) is not a key, and neither is
+  one part of a dotted token. A JWT whose header is 40 base64 characters
+  would otherwise be an AWS key whenever "credentials" is near; the
+  normative pair caught it.
+- **`GCP_API_KEY`**: the key string, `AIza` and 35 characters.
+- **`HTTP_BASIC_AUTH_HEADER`**: a complete `Authorization:` or
+  `Proxy-Authorization:` header with the Basic scheme (RFC 7617). The
+  field name and scheme may be in any case, and the token is not decoded
+  (ours: decoding could only miss real headers).
+- **`JSON_WEB_TOKEN`**: three base64url parts; the header decodes to a JSON
+  object with `alg` and the payload to a JSON object; the signature may be
+  empty (RFC 7519, signed or unsigned).
+- **`OPENSSH_PRIVATE_KEY`**, **`PGP_PRIVATE_KEY`** and **`PKCS`**: a whole
+  BEGIN ... END block in one cell. PKCS takes `PRIVATE KEY`, `ENCRYPTED
+  PRIVATE KEY` and `RSA PRIVATE KEY` blocks; ours, also `EC` and `DSA
+  PRIVATE KEY` blocks, the same exposure though not PKCS.
+- **`PUTTY_PRIVATE_KEY`**: exactly what Macie describes, the six headers in
+  order with the characters Macie allows; so no spaces in values and no
+  custom headers.
+- **`STRIPE_CREDENTIALS`**: `sk_`, `pk_` or `rk_`, `live_` or `test_`, and
+  24 or more letters and digits. Macie's two code examples, a secret and a
+  publishable test key, are excluded, which says it reports test and
+  publishable keys.
+- **Test data:** key blocks, Google keys and Stripe keys are built at run
+  time in `test_macie_credentials.py`, so no file in the repo looks like a
+  leaked secret to a secret scanner. The normative pair holds only
+  harmless shapes. The catalog holds Macie's example keys only as SHA-256
+  hashes (`exclusions_sha256`): GitHub push protection blocked a push of
+  Stripe's published test key, even as an exclusion.
+
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
 (Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
@@ -675,6 +712,10 @@ every detector the catalog names exists, and every detector is used.
 13. Does Macie's SPAIN_NIF_NUMBER also report NIEs and CIFs? Does it
     check the RFC check digit? How does it tell an individual's NIT from
     an organization's?
+14. Credentials: does Macie require whole key blocks, or only the BEGIN
+    line? Does it report AWS secret keys that are hex, or Basic headers
+    whose token does not decode to user:password? Does it report Stripe
+    restricted (rk_) keys?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

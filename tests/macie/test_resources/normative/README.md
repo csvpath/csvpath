@@ -97,3 +97,10 @@ Design decisions are in `specs/macie/transpile-design.md`.
   that is still reported; NITs split by the 9-digits-from-8-or-9 rule;
   an SPI and one starting 9; two identifiers in one cell twice; and no
   keyword.
+- `14_credentials`: all nine credential identifiers. AWS keys with a
+  header and an in-cell keyword, Macie's AWS examples, a hex
+  hash, Macie's Basic header examples, Bearer (not Basic), signed and
+  unsigned JWTs, a JWT whose 40 character header is near an AWS keyword
+  (a JWT, not an AWS key), and six identifiers with nothing to report.
+  Key blocks and Google and Stripe keys are only in the unit tests, built
+  at run time, so this file never looks like a leaked secret.

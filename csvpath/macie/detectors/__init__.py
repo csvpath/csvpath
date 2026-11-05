@@ -9,6 +9,7 @@ es_dni and es_nie."""
 from .bank_account_detector import BankAccountDetector
 from .cl_rut_detector import ClRutDetector
 from .co_nit_detector import CoNitDetector
+from .credential_detector import CredentialDetector
 from .credit_card_detector import CreditCardDetector
 from .es_id_detector import EsIdDetector
 from .fr_nir_detector import FrNirDetector
@@ -22,6 +23,15 @@ from .us_ssn_detector import UsSsnDetector
 from .vin_detector import VinDetector
 
 DETECTORS = {
+    "aws_secret": CredentialDetector,
+    "gcp_api_key": CredentialDetector,
+    "http_basic": CredentialDetector,
+    "jwt": CredentialDetector,
+    "openssh": CredentialDetector,
+    "pgp": CredentialDetector,
+    "pkcs": CredentialDetector,
+    "putty": CredentialDetector,
+    "stripe": CredentialDetector,
     "ar_cuit_individual": GroupedDigitsDetector,
     "ar_cuit_organization": GroupedDigitsDetector,
     "ar_sube": GroupedDigitsDetector,

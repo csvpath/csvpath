@@ -1,0 +1,15 @@
+id,aws_secret_access_key,auth,token,notes
+1,FAKEfakeFAKEfake/TESTtestTEST+fake123456,,,
+2,je7MtGbClwBF/2Zp9Utk/h3yCo8nvbEXAMPLEKEY,,,
+3,da39a3ee5e6b4b0d3255bfef95601890afd80709,,,
+4,,Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==,,
+5,,Proxy-Authorization: Basic dGVzdDoxMjPCow==,,
+6,,Authorization: Bearer QWxhZGRpbjpvcGVuIHNlc2FtZQ==,,
+7,,,eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCJ9.c2lnbmF0dXJl,
+8,,,eyJhbGciOiAibm9uZSJ9.eyJzdWIiOiAieCJ9.,
+9,,,1.2.3,
+10,,,,set secret key FAKEfake2FAKEfak/TESTtestTEST+fake123456 now
+11,,,,secret key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+12,,,,FAKEfakeFAKEfake/TESTtestTEST+fake123456
+13,,,,curl -H 'Authorization: Basic dGVzdDoxMjM=' -d eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCJ9.c2lnbmF0dXJl
+14,,,,credentials eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJzdWIiOiAiMTIzNDU2Nzg5MCJ9.c2lnbmF0dXJl

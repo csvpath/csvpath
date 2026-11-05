@@ -1,0 +1,15 @@
+macie AWS_CREDENTIALS: occurrence 1, line 1 (row 2), column 2 aws_secret_access_key
+macie HTTP_BASIC_AUTH_HEADER: occurrence 1, line 4 (row 5), column 3 auth
+macie HTTP_BASIC_AUTH_HEADER: occurrence 2, line 5 (row 6), column 3 auth
+macie JSON_WEB_TOKEN: occurrence 1, line 7 (row 8), column 4 token
+macie JSON_WEB_TOKEN: occurrence 2, line 8 (row 9), column 4 token
+macie AWS_CREDENTIALS: occurrence 2, line 10 (row 11), column 5 notes
+macie AWS_CREDENTIALS: 2 occurrences, severity HIGH, detail shown for all 2
+macie GCP_API_KEY: 0 occurrences, severity none (below 1), no detail
+macie HTTP_BASIC_AUTH_HEADER: 3 occurrences, severity HIGH, detail shown for first 2
+macie JSON_WEB_TOKEN: 4 occurrences, severity HIGH, detail shown for first 2
+macie OPENSSH_PRIVATE_KEY: 0 occurrences, severity none (below 1), no detail
+macie PGP_PRIVATE_KEY: 0 occurrences, severity none (below 1), no detail
+macie PKCS: 0 occurrences, severity none (below 1), no detail
+macie PUTTY_PRIVATE_KEY: 0 occurrences, severity none (below 1), no detail
+macie STRIPE_CREDENTIALS: 0 occurrences, severity none (below 1), no detail
