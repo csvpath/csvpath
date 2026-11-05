@@ -187,7 +187,7 @@ def test_macie_nie_not_a_nie(nie, cell: str) -> None:
 
 
 def test_macie_es_id_bad_config() -> None:
-    for bad in [{}, {"form": "nif"}, {"form": None}]:
+    for bad in [{}, {"form": "nip"}, {"form": None}]:
         with pytest.raises(MacieException):
             EsIdDetector(config=bad)
     with pytest.raises(TypeError):

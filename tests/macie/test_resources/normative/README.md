@@ -90,3 +90,10 @@ Design decisions are in `specs/macie/transpile-design.md`.
   digits; an 8 digit TFN (not detected, the entry is partial); a UTR's
   leading check digit; a keyword with a hyphen; two identifiers in one
   cell; and no keyword.
+- `13_tax_ids_2`: Spain NIF and CIF, Mexico RFC and Colombia NIT for
+  individuals and organizations, and France TIN. NIF's DNI and M forms
+  and a NIE it leaves to SPAIN_NIE_NUMBER; CIF control digit and letter;
+  RFCs with 4 and 3 letters, Macie's example, and a wrong check digit
+  that is still reported; NITs split by the 9-digits-from-8-or-9 rule;
+  an SPI and one starting 9; two identifiers in one cell twice; and no
+  keyword.

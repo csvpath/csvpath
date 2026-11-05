@@ -298,8 +298,10 @@ conversion.report.skipped   # what was not translated
 | `ManagedCatalog` | our managed identifier stand-ins, from `csvpath/macie/rulesbase/managed_identifiers.json`, checked on load |
 | `ManagedIdentifier` | occurrences of one managed identifier in one cell: detector, keyword mode, allow lists |
 | `CreditCardDetector` | 13-19 digits (or grouped), Luhn, issuer prefix and length, less issuer test numbers |
-| `GroupedDigitsDetector` | fixed-length digits, printed in groups or fixed formats, with a named check digit: SIN, NHS, CPF, CNPJ, SUBE, Aadhaar, IdNr, CUIT, TFN, UTR |
-| `EsIdDetector` | Spain DNI and NIE: digits and a mod 23 control letter |
+| `GroupedDigitsDetector` | fixed-length digits, printed in groups or fixed formats, with a named check digit: SIN, NHS, CPF, CNPJ, SUBE, Aadhaar, IdNr, CUIT, TFN, UTR, SPI |
+| `EsIdDetector` | Spain DNI, NIE, NIF and CIF: a control letter (mod 23) or a CIF control |
+| `MxRfcDetector` | Mexico RFC for people and organizations: letters, a real date, 3 characters |
+| `CoNitDetector` | Colombia NIT: body and mod 11 digit; 9 digits from 8 or 9 is an organization's |
 | `FrNirDetector` | France NIR (INSEE): 15 characters, Corsica's 2A and 2B, mod 97 key |
 | `MxCurpDetector` | Mexico CURP: 18 characters, birth date, state, check digit |
 | `ItCfDetector` | Italy Codice Fiscale: people's 16 characters (omocodia, birth date, check letter) and organizations' 11 digits (office code, Luhn) |
@@ -308,7 +310,7 @@ conversion.report.skipped   # what was not translated
 | `BankAccountDetector` | FR, DE, IT, ES, UK: IBANs (no keyword) and BBANs (keyword), plus UK sort code and account |
 | `IbanDetector` | one country's IBANs: length, printed layout, ISO 13616 mod 97 |
 | `UsSsnDetector`, `UsNpiDetector` | SSA's SSN rules; CMS's NPI check digit (Luhn over 80840) |
-| `ChecksumUtility` (`chut`) | check-digit algorithms: Luhn, mod 11s, mod 97, RUT, RIB, Verhoeff, the Spanish mod 23 letter, NIR key, CURP digit, Codice Fiscale letter, IdNr, CUIT, TFN, UTR |
+| `ChecksumUtility` (`chut`) | check-digit algorithms: Luhn, mod 11s, mod 97, RUT, RIB, Verhoeff, the Spanish mod 23 letter, NIR key, CURP digit, Codice Fiscale letter, IdNr, CUIT, TFN, UTR, CIF, NIT, SPI |
 | `MacieMdi` (`macie_mdi`) | applies a managed identifier to every cell |
 | `MacieRun` | one run's shared state (allow lists, tally) and outputs; limits from metadata, config, defaults; noisy setup failure |
 | `MacieAllowRegex` (`macie_allow_regex`) | registers a regex allow list before any line is read |
@@ -554,10 +556,48 @@ with a new named check:
   (`chut.gb_utr`). HIGH. **Partial:** TRNs (temporary reference
   numbers) are not detected; their format could not be confirmed.
 
+**Spain NIF and CIF, Mexico RFC, Colombia NIT and France TIN**: more
+taxpayer numbers, all PERSONAL_INFORMATION and keyword required. How the
+identifiers split was decided with David on 2026-11-03; all but the
+French one are fidelity B.
+- **`SPAIN_NIF_NUMBER`** and **`SPAIN_TAX_IDENTIFICATION_NUMBER`**:
+  Macie says it detects "CIF, NIE, and NIF numbers", with these two and
+  `SPAIN_NIE_NUMBER` sharing Spain's taxpayer keywords. NIF is a
+  person's NIF: the DNI form, or K, L or M, 7 digits and the DNI's letter
+  over the 7 digits. The CIF is `SPAIN_TAX_IDENTIFICATION_NUMBER`: a type
+  letter, 7 digits, and a control digit or letter from their Luhn digit
+  (`chut.es_cif`; either form is accepted, as sources disagree). NIEs
+  stay with `SPAIN_NIE_NUMBER`, so no number is counted twice under the
+  shared keywords. More forms of `EsIdDetector`. HIGH.
+- **`MEXICO_INDIVIDUAL_RFC_NUMBER`** and
+  **`MEXICO_ORGANIZATION_RFC_NUMBER`** (`MxRfcDetector`): 4 letters for
+  people, 3 for organizations, then a real YYMMDD date and 3 characters,
+  optionally separated by spaces or hyphens. Macie's examples
+  `XAXX010101000` and `XEXX010101000` are excluded. **The check digit is
+  not checked:** about 1.5% of RFCs in use have a wrong one
+  (python-stdnum's note), and a check would miss them. Individuals are
+  HIGH; organizations MEDIUM for 1-99, HIGH from 100.
+- **`COLOMBIA_INDIVIDUAL_NIT_NUMBER`** and
+  **`COLOMBIA_ORGANIZATION_NIT_NUMBER`** (`CoNitDetector`): a body and a
+  mod 11 check digit over prime weights (`chut.co_nit`), dotted,
+  hyphenated or contiguous. Nothing in a NIT says person or
+  organization, so: a 9 digit body starting 8 or 9 is an organization's
+  (the usual rule for personas juridicas), any other 6 to 10 digit body
+  a person's. A few old cedulas could be counted as organizations; they
+  are still reported, at MEDIUM. Individuals are HIGH; organizations
+  MEDIUM for 1-99, HIGH from 100.
+- **`FRANCE_TAX_IDENTIFICATION_NUMBER`**: the SPI, 13 digits printed
+  2-2-3-3-3, the first 0 to 3, the last three the first ten mod 511
+  (`chut.fr_spi`). `GroupedDigitsDetector` data. HIGH.
+- Keyword overlaps: France's and Spain's lists both have `tin`, `tax
+  id` and `tax number`, and Mexico's short `iva` matches inside words
+  such as `private` (item 3).
+
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
 (Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
-CURP, Codice Fiscale, IdNr, CUIT, TFN, UTR) and the partita IVA rules with stdnum, on seeded
+CURP, Codice Fiscale, IdNr, CUIT, TFN, UTR, CIF, NIT, SPI) and the
+partita IVA rules with stdnum, on seeded
 random inputs. python-stdnum is a dev dependency only (LGPL, not
 shipped). Reintroducing the mistyped Verhoeff row fails the test.
 - **`FRANCE_NATIONAL_IDENTIFICATION_NUMBER`** (`FrNirDetector`, INSEE
@@ -632,6 +672,9 @@ every detector the catalog names exists, and every detector is used.
 12. Taxpayer numbers: does Macie detect 8 digit TFNs, TRNs, or the
     German Steuernummer (its keywords include `steuernummer`)? Which
     CUIT types does it count as organizations?
+13. Does Macie's SPAIN_NIF_NUMBER also report NIEs and CIFs? Does it
+    check the RFC check digit? How does it tell an individual's NIT from
+    an organization's?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later
