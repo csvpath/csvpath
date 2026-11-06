@@ -1,0 +1,93 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "PERSONAL_INFORMATION",
+      "detections": [
+        {
+          "type": "DATE_OF_BIRTH",
+          "count": 4,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "dob",
+                "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "dob",
+                "row": 3
+              },
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "notes",
+                "row": 10
+              },
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "notes",
+                "row": 12
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 4
+    },
+    {
+      "category": "FINANCIAL_INFORMATION",
+      "detections": [
+        {
+          "type": "CREDIT_CARD_EXPIRATION",
+          "count": 4,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "expiry",
+                "row": 6
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "expiry",
+                "row": 7
+              },
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "notes",
+                "row": 9
+              },
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "notes",
+                "row": 12
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 4
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:us-west-2:123456789012:classification-job/3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}

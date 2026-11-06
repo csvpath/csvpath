@@ -1,0 +1,35 @@
+~
+  id: group-b-dates
+  macie-origin: job
+  macie-job-id: 3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a
+  macie-account: 123456789012
+  macie-region: us-west-2
+  macie-source-arn: arn|aws|macie2|us-west-2|123456789012|classification-job/3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a
+  macie-downloaded-at: 20261106T100000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "DATE_OF_BIRTH",
+        "PERSONAL_INFORMATION",
+        "birth_date",
+        "required",
+        "bday|b-day|birth date|birthday|date of birth|dob",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "CREDIT_CARD_EXPIRATION",
+        "FINANCIAL_INFORMATION",
+        "card_expiration",
+        "required",
+        "exp d|exp m|exp y|expiration|expiry",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

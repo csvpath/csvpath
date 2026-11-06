@@ -79,7 +79,8 @@ last. Add an item the moment something is deferred.
      17_group_b_first. Passports (7), pair 18_passports. Phone numbers
      (7), pair 19_phones; national numbers can be several countries'
      (accepted for the first release, David 2026-11-05). Next, in
-     `group-b-design.md` order: dates, driver's licenses, the rest.
+     `group-b-design.md` order: dates done (birth date, card expiration,
+     pair 20_dates); next driver's licenses, then the rest.
    - **Group B:** driver's licenses (32 identifiers; the US one covers
      50+ state formats), passports (7), phone numbers (7), UK NINO, UK
      electoral roll, Canada permanent resident card, India PAN, Brazil RG,

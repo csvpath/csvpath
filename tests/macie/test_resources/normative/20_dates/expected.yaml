@@ -1,0 +1,60 @@
+#
+# Dates, the fourth group B step: Macie's DATE_OF_BIRTH and
+# CREDIT_CARD_EXPIRATION, as our stand-ins on DateDetector. Both require a
+# keyword; Macie's keyword form expY=2026, expM=02 carries its own.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: group-b-dates.csvpath
+    data: cardholders.csv
+    finding_lines: [1, 2, 5, 6, 8, 9, 11]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie DATE_OF_BIRTH: occurrence 1, line 1 (row 2), column 2 dob" }
+      - { line: 2, message: "macie DATE_OF_BIRTH: occurrence 2, line 2 (row 3), column 2 dob" }
+      - { line: 5, message: "macie CREDIT_CARD_EXPIRATION: occurrence 1, line 5 (row 6), column 3 expiry" }
+      - { line: 6, message: "macie CREDIT_CARD_EXPIRATION: occurrence 2, line 6 (row 7), column 3 expiry" }
+    findings: findings.json
+    #
+    # Headers: "dob" is a birth date keyword, "expiry" an expiration
+    # keyword; "id" and "notes" hold none.
+    #
+    #   line  cell                                    reported as
+    #   1     dob 5/11/1985                           birth date
+    #   2     dob "November 5, 1985"                  birth date: month name first
+    #   3     dob 31/02/1985                          nothing: not a real date
+    #   4     dob 05.11.1985                          nothing: Macie lists spaces,
+    #                                                 slashes and hyphens, not dots
+    #   5     expiry 02/26                            expiration
+    #   6     expiry Feb 2026                         expiration
+    #   7     expiry 13/26                            nothing: no month 13
+    #   8     notes "expY=2026, expM=02"              expiration: Macie's keyword
+    #                                                 form, its keywords inside it
+    #   9     notes "date of birth 1985-11-05"        birth date: Y-M-D
+    #   10    notes 5/11/1985                         nothing: no keyword
+    #   11    notes "dob 19851105 card expiry         birth date (8 digits) and
+    #         26-Feb"                                 expiration (year, month name)
+    #
+    # Totals: birth date 4, expiration 4, each past the cap of 2. Both LOW
+    # for one occurrence and MEDIUM from 2. PERSONAL_INFORMATION totalCount
+    # 4, FINANCIAL_INFORMATION totalCount 4.

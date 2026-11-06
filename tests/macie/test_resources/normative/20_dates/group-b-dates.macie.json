@@ -1,0 +1,74 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "us-west-2",
+    "downloaded_at": "2026-11-06T10:00:00Z",
+    "job_id": "3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "DATE_OF_BIRTH",
+      "CREDIT_CARD_EXPIRATION"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "DATE_OF_BIRTH",
+      "CREDIT_CARD_EXPIRATION"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "DATE_OF_BIRTH"
+      },
+      {
+        "category": "FINANCIAL_INFORMATION",
+        "id": "CREDIT_CARD_EXPIRATION"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Cardholder records",
+      "jobArn": "arn:aws:macie2:us-west-2:123456789012:classification-job/3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a",
+      "jobId": "3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "DATE_OF_BIRTH",
+        "CREDIT_CARD_EXPIRATION"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "group-b-dates",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-cardholders"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}
