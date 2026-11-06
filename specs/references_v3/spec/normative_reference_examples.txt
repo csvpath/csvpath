@@ -1243,6 +1243,22 @@ $acme.csvpaths.:last():named_paths_name()
 $acme.csvpaths.:last():named_paths_identities()
 $acme.csvpaths.:last():named_paths_count()
 
+#### Field accessors as filters
+A field accessor with an argument filters the versions, as in the other data
+types (compendium 6.35). Filters are ANDed in any order; a range comes first
+(6.28), and a pointer picks from what the filters leave. A filter never
+supplies the value: the field accessor without an argument does.
+
+The last `acme` version that was loaded with a template
+$acme.csvpaths.:last():template(:has_value())
+
+The last version with a template among the first three `acme` versions
+$acme.csvpaths.:from(0):to(2):template(:has_value()):last()
+
+The uuid of every loaded version of `orders` in the loads ledger, deleted
+versions included
+$*.csvpaths.:manifest():named_paths_name("orders"):uuid()
+
 #### The path and contents of the `acme` manifest
 $acme.csvpaths.:manifest()
 

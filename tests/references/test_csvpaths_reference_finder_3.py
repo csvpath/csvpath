@@ -1284,13 +1284,11 @@ class TestStarTraversalFieldAccessor:
             ("b-v1", "beta_notify.py"),
         ]
 
-    def test_an_argument_on_the_field_accessor_is_rejected(self):
-        # added 2026-10-18, alongside :named_paths_name()'s own (and
-        # :uuid()'s own) ARG_TYPES widening -- this method has no GATE
-        # mechanism to consume a field accessor's own argument during
-        # '*' traversal (confirmed live before this guard existed: a
-        # bogus argument was silently ignored, returning the real
-        # field value regardless).
+    def test_an_argument_on_the_field_accessor_is_a_gate(self):
+        # changed 2026-11-05 (finding A). This raised when '*' traversal
+        # had no GATE mechanism; before that guard, the argument was
+        # silently ignored. Now an argued version-entry field filters:
+        # no version is named "x", so nothing comes back.
         by_name = {
             "alpha": [
                 {
@@ -1301,10 +1299,14 @@ class TestStarTraversalFieldAccessor:
                 }
             ],
         }
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$*.csvpaths.:last():named_paths_name("x")', by_name=by_name
-            ).query()
+        results = _finder(
+            '$*.csvpaths.:last():named_paths_name("x")', by_name=by_name
+        ).query()
+        assert results.results == []
+        results = _finder(
+            '$*.csvpaths.:last():named_paths_name("alpha")', by_name=by_name
+        ).query()
+        assert results.uuids == ["a-v1"]
 
     def test_a_templated_key_functions_own_argument_is_not_rejected(self):
         # the guard above must not catch EVERY argued field accessor --
@@ -1426,6 +1428,186 @@ def _root_group_finder(reference: str) -> CsvpathsReferenceFinder3:
         ledger=ROOT_GROUP_LEDGER,
         inputs_csvpaths_path="named_paths",
     )
+
+
+def _gate_entry(name: str, uuid: str, day: int, template: str, **extra) -> dict:
+    entry = {
+        "named_paths_name": name,
+        "group_file_path": f"named_paths/{name}/group.csvpaths",
+        "uuid": uuid,
+        "time": f"2026-01-0{day}T00:00:00+00:00",
+        "template": template,
+    }
+    entry.update(extra)
+    return entry
+
+
+#
+# finding A fixture. acme's four versions have templates "", ":1/:2", ":1"
+# and "", so a1 and a4 have none: a range, a gate and a pointer give
+# different answers depending on which goes first. beta has b1 ("") and
+# b2 (":x"). gone was deleted: its g1 is only in the root ledger, marked
+# deleted. Ledger order is arrival order.
+#
+GATE_BY_NAME = {
+    "acme": [
+        _gate_entry("acme", "a1", 1, ""),
+        _gate_entry("acme", "a2", 3, ":1/:2"),
+        _gate_entry("acme", "a3", 5, ":1"),
+        _gate_entry("acme", "a4", 7, ""),
+    ],
+    "beta": [
+        _gate_entry("beta", "b1", 2, ""),
+        _gate_entry("beta", "b2", 6, ":x"),
+    ],
+}
+GATE_LEDGER = sorted(
+    [
+        *(dict(e, lifecycle="active") for es in GATE_BY_NAME.values() for e in es),
+        _gate_entry("gone", "g1", 4, ":y", lifecycle="deleted"),
+    ],
+    key=lambda e: e["time"],
+)
+
+
+def _gate_finder(reference: str) -> CsvpathsReferenceFinder3:
+    return _finder(
+        reference,
+        by_name={name: [dict(e) for e in es] for name, es in GATE_BY_NAME.items()},
+        ledger=[dict(e) for e in GATE_LEDGER],
+        definitions_by_name={
+            "acme": {"destinations": {"myd": {"address": "ftp.acme.example"}}},
+            "beta": {},
+        },
+        inputs_csvpaths_path="named_paths",
+    )
+
+
+class TestCsvpathsGates:
+    # finding A (David 2026-10-29, built 2026-11-05): an argued version-
+    # entry field is a GATE in CSVPATHS too, as in FILES and RESULTS. Gates
+    # are ANDed in any written order (compendium 6.1, 6.35); a range comes
+    # first (6.28), then the gates, then the pointer picks from what is
+    # left. A gate never supplies the resolve value (finding D). Every
+    # reference below used to raise "does not take an argument".
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # the pointer picks from what the gate leaves, in either order:
+            # acme's versions with a template are a2 and a3
+            ("$acme.csvpaths.:last():template(:has_value())", ["a3"]),
+            ("$acme.csvpaths.:template(:has_value()):last()", ["a3"]),
+            ("$acme.csvpaths.:first():template(:has_value())", ["a2"]),
+            ("$acme.csvpaths.:last():template(:does_not_have_value())", ["a4"]),
+            # range first: a1, a2, then the gate: a2. Gate first would be
+            # a2, a3, then the range: a2, a3, and :last() a3
+            ("$acme.csvpaths.:from(0):to(1):template(:has_value()):last()", ["a2"]),
+            ("$acme.csvpaths.:template(:has_value()):from(0):to(1):last()", ["a2"]),
+            # gates are ANDed
+            (
+                "$acme.csvpaths.:last():template(:has_value())"
+                ':named_paths_name("acme")',
+                ["a3"],
+            ),
+            (
+                "$acme.csvpaths.:last():template(:has_value())"
+                ':named_paths_name("x")',
+                [],
+            ),
+            (
+                '$acme.csvpaths.:all():named_paths_name("acme")',
+                ["a1", "a2", "a3", "a4"],
+            ),
+            ('$acme.csvpaths.:all():named_paths_name("beta")', []),
+        ],
+    )
+    def test_a_literal_root_gate_filters(self, reference, expected):
+        assert _gate_finder(reference).query().uuids == expected
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # one per group (compendium 4.1b), each after its own gate
+            ("$*.csvpaths.:last():template(:has_value())", ["a3", "b2"]),
+            ("$*.csvpaths.:all():first():template(:has_value())", ["a2", "b2"]),
+            ('$*.csvpaths.:last():named_paths_name("beta")', ["b2"]),
+            # no pointer: the live groups' versions, in time order
+            ('$*.csvpaths.:named_paths_name("beta")', ["b1", "b2"]),
+            # the root ledger, the deleted g1 included
+            ('$*.csvpaths.:manifest():named_paths_name("gone")', ["g1"]),
+            ('$*.csvpaths.:manifest():last():named_paths_name("acme")', ["a4"]),
+            ('$*.csvpaths.:manifest():named_paths_name("acme"):last()', ["a4"]),
+            ("$*.csvpaths.:manifest():last():template(:has_value())", ["b2"]),
+            (
+                '$:regex(/^(acme|gone)$/).csvpaths.:manifest():template(:has_value())'
+                ":last()",
+                ["a3"],
+            ),
+        ],
+    )
+    def test_a_star_gate_filters(self, reference, expected):
+        assert _gate_finder(reference).query().uuids == expected
+
+    def test_a_ledger_gate_reads_a_deleted_versions_ledger_entry(self):
+        # g1's template is only in its ledger entry. In ledger order the
+        # versions with a template are a2, g1, a3 and b2.
+        results = _gate_finder(
+            "$*.csvpaths.:manifest():template(:has_value()):index(1)"
+        ).query()
+        assert results.uuids == ["g1"]
+
+    def test_a_gate_supplies_no_value(self):
+        # finding D: with only gates, resolve gives what the reference
+        # gives without them
+        gated = _gate_finder("$acme.csvpaths.:last():template(:has_value())")
+        plain = _gate_finder("$acme.csvpaths.:index(2)")
+        assert [r.data for r in gated.resolve().results] == [
+            r.data for r in plain.resolve().results
+        ]
+        ledger = _gate_finder('$*.csvpaths.:manifest():named_paths_name("gone")')
+        assert [r.data["uuid"] for r in ledger.resolve().results] == ["g1"]
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$acme.csvpaths.:last():template(:has_value()):uuid()",
+            "$acme.csvpaths.:last():uuid():template(:has_value())",
+        ],
+    )
+    def test_the_value_comes_from_the_unargued_field_in_either_order(
+        self, reference
+    ):
+        assert [r.data for r in _gate_finder(reference).resolve().results] == ["a3"]
+
+    def test_the_ledger_value_comes_from_the_unargued_field(self):
+        results = _gate_finder(
+            '$*.csvpaths.:manifest():named_paths_name("gone"):uuid()'
+        ).resolve()
+        assert [r.data for r in results.results] == ["g1"]
+
+    def test_a_key_argument_still_supplies_the_value(self):
+        # a "{}"-key field's argument picks the key; it is not a gate
+        results = _gate_finder(
+            '$acme.csvpaths.:last():named_paths_name("acme")'
+            ':destination_address("myd")'
+        ).resolve()
+        assert [r.data for r in results.results] == ["ftp.acme.example"]
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            # a definition.json field: bare ':template()' with no pointer
+            # is the group's default, and a gate on it would filter whole
+            # groups, which is not built
+            "$acme.csvpaths.:all():template(:has_value())",
+            "$*.csvpaths.:manifest():template(:has_value())",
+            # an argued selector beside a pointer is a pointer (6.44)
+            '$acme.csvpaths.:last():uuid("a1")',
+        ],
+    )
+    def test_an_argument_that_is_not_a_gate_still_raises(self, reference):
+        with pytest.raises(ReferenceException3):
+            _gate_finder(reference).query()
 
 
 class TestStarRootGroups:
