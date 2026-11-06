@@ -457,6 +457,41 @@ def test_star_manifest_set_keeps_the_deleted_run_in_both_modes(paths):
         assert _resolved("off", reference) == _resolved("on", reference), reference
 
 
+def test_the_lifecycle_gate_in_both_modes(paths):
+    #
+    # ':lifecycle()' (2026-11-05) reads the root ledgers, whose SQL mirrors
+    # mark deleted rows as the JSON ledgers mark deleted entries. Both
+    # modes give the same entries and values, and the deleted gone, xgone
+    # and rgone are exactly the 'deleted' ones.
+    #
+    deleted_names = {"files": "gone", "csvpaths": "xgone", "results": "rgone"}
+    name_fields = {
+        "files": "named_file_name",
+        "csvpaths": "named_paths_name",
+        "results": "named_paths_name",
+    }
+    for datatype, name in deleted_names.items():
+        for reference in [
+            f'$*.{datatype}.:manifest():lifecycle("active")',
+            f'$*.{datatype}.:manifest():lifecycle("deleted")',
+            f'$*.{datatype}.:manifest():lifecycle("active"):last()',
+            f"$*.{datatype}.:manifest():lifecycle()",
+            f'$*.{datatype}.:lifecycle("active")',
+        ]:
+            off, on = _both(paths, reference)
+            assert off == on, reference
+        off, _ = _both(paths, f'$*.{datatype}.:manifest():lifecycle("deleted")')
+        assert off[1].uuids
+        _mode(paths, "off")
+        finder = ReferenceFinderFactory3.for_reference(
+            reference=f'$*.{datatype}.:manifest():lifecycle("deleted")'
+            f":{name_fields[datatype]}()",
+            csvpaths=paths,
+        )
+        names = {r.data for r in finder.resolve().results}
+        assert name in names, (datatype, names)
+
+
 def test_re_registered_name_is_the_new_version_in_both_modes(paths):
     off, on = _both(paths, "$again.files.:all()")
     assert off == on

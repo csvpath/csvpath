@@ -1343,13 +1343,26 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         _extract_data()'s own field-accessor dispatch applies, so a
         future field accessor whose resolved value differs from its raw
         manifest value (the way :has_errors() does) is gated
-        consistently with however it actually resolves."""
+        consistently with however it actually resolves. A field the run
+        manifest doesn't hold falls back to the run's archive ledger entry
+        by its LEDGER_KEY, as resolve() does (2026-11-05): a ledger-only
+        field such as :lifecycle() otherwise read None here and its gate
+        matched nothing, while the same field resolved."""
         function_cls = ReferenceFunctionFactory.get_registered_class(
             field_call.name
         )
         entry = self.source.run_manifest(run_dir)
         key_path = function_cls.KEY.get(Reference3.RESULTS)
-        value = self._extract_field_value(entry, key_path)
+        value = self._extract_field_value_with_ledger_fallback(
+            entry=entry,
+            key_path=key_path,
+            function_cls=function_cls,
+            datatype=Reference3.RESULTS,
+            ledger_entry_getter=lambda: self._find_archive_ledger_entry(
+                ledger=self.source.results_ledger(),
+                run_uuid=entry.get("run_uuid") if entry else None,
+            ),
+        )
         return function_cls.transform_value(value)
 
     def _any_instance_matches_field(self, run_dir: str, field_call) -> bool:

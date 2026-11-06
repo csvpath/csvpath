@@ -279,6 +279,28 @@ Without `:manifest()`, `*` searches each live named-file in turn, so this
 reference is legal but never returns results:
 $*.files.:status("failed"):named_file_name("orders")
 
+#### Select by lifecycle: live or deleted
+A ledger manifest set keeps every record, deleted ones included. Each
+record's `:lifecycle()` is `active`, or `deleted` once its named-file,
+named-paths group or named-results is deleted (compendium 6.13b(vi)). The
+same references work in every datatype.
+
+Every registration of a named-file that has since been deleted
+$*.files.:manifest():lifecycle("deleted")
+
+The uuid of every load of a live named-paths group
+$*.csvpaths.:manifest():lifecycle("active"):uuid()
+
+The most recent run of a live named-results, by the archive ledger
+$*.results.:manifest():lifecycle("active"):last()
+
+The lifecycle of every record
+$*.files.:manifest():lifecycle()
+
+Without `:manifest()`, `*` searches each live name in turn, so this
+reference is legal but never returns results:
+$*.files.:lifecycle("deleted")
+
 
 
 #### Select the first run for each template for runs having the

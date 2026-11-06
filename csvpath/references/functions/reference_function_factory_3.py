@@ -137,6 +137,7 @@ class ReferenceFunctionFactory:
         from .fields.transfer_on_complete_valid_3 import TransferOnCompleteValid3
         from .fields.transfers_3 import Transfers3
         from .fields.type_3 import Type3
+        from .fields.lifecycle_3 import Lifecycle3
         from .fields.username_3 import Username3
         from .fields.uuid_3 import Uuid3
         from .fields.valid_3 import Valid3
@@ -216,6 +217,7 @@ class ReferenceFunctionFactory:
             Log3.NAME: Log3,
             Uuid3.NAME: Uuid3,
             Template3.NAME: Template3,
+            Lifecycle3.NAME: Lifecycle3,
             Time3.NAME: Time3,
             Fingerprint3.NAME: Fingerprint3,
             FileHome3.NAME: FileHome3,
