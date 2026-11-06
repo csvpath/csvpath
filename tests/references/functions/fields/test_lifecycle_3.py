@@ -27,7 +27,13 @@ def test_it_is_ledger_only_in_every_datatype():
     f = Lifecycle3()
     assert f.KEY == {}
     assert f.LEDGER_KEY == {dt: "lifecycle" for dt in ALL}
-    assert f.POSITIONS == {dt: (Reference3.NAME_ONE,) for dt in ALL}
+    # FILES also at name_three (2026-11-06): a registration's own ledger
+    # entry holds its lifecycle
+    assert f.POSITIONS == {
+        Reference3.FILES: (Reference3.NAME_ONE, Reference3.NAME_THREE),
+        Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+        Reference3.RESULTS: (Reference3.NAME_ONE,),
+    }
 
 
 def test_the_values_are_the_registrar_constants():

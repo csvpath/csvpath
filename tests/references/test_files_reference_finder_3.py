@@ -3408,6 +3408,88 @@ class TestStatusGate:
         assert results.files == ["inputs/named_files/finn/orders.csv"]
 
 
+#
+# name_three fixture (2026-11-06): orders.csv has two versions. Neither
+# per-name entry holds a status or lifecycle; each registration's arrivals
+# ledger entry does. o1 was registered before harmonization PR 6, so its
+# ledger entry has neither.
+#
+N3_HOME = "inputs/named_files/orders"
+N3_MANIFEST = [
+    {
+        "file": f"{N3_HOME}/orders.csv/{uuid}.csv",
+        "file_home": f"{N3_HOME}/orders.csv",
+        "uuid": uuid,
+        "time": f"2026-01-0{day}T00:00:00+00:00",
+    }
+    for uuid, day in (("o1", 1), ("o2", 2))
+]
+N3_LEDGER = [
+    {"named_file_name": "orders", "uuid": "o1", "file_path": N3_MANIFEST[0]["file"]},
+    {
+        "named_file_name": "orders",
+        "uuid": "o2",
+        "file_path": N3_MANIFEST[1]["file"],
+        "status": "complete",
+        "lifecycle": "active",
+    },
+]
+
+
+def _n3_finder(reference: str) -> FilesReferenceFinder3:
+    return _finder(
+        reference,
+        N3_HOME,
+        [dict(e) for e in N3_MANIFEST],
+        ledger=[dict(e) for e in N3_LEDGER],
+        by_name={"orders": (N3_HOME, [dict(e) for e in N3_MANIFEST])},
+        inputs_files_path="inputs/named_files",
+    )
+
+
+class TestLedgerOnlyFieldsAtNameThree:
+    # ':lifecycle()' and ':status()' at name_three (David, 2026-11-06): a
+    # registration's own value, read from its arrivals ledger entry by the
+    # version's uuid. Both raised "is not legal at name_three for files".
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ('$orders.files.:name("orders.csv").:last():lifecycle()', ["active"]),
+            ('$orders.files.:name("orders.csv").:last():status()', ["complete"]),
+            # absence implies nothing
+            ('$orders.files.:name("orders.csv").:first():lifecycle()', [None]),
+            ('$orders.files.:name("orders.csv").:first():status()', [None]),
+        ],
+    )
+    def test_a_version_reads_its_own_registration(self, reference, expected):
+        assert [r.data for r in _n3_finder(reference).resolve().results] == expected
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ('$orders.files.:name("orders.csv").:all():lifecycle("active")', ["o2"]),
+            ('$orders.files.:name("orders.csv").:lifecycle("active"):first()', ["o2"]),
+            ('$orders.files.:name("orders.csv").:first():lifecycle("active")', ["o2"]),
+            ('$orders.files.:name("orders.csv").:all():status("complete")', ["o2"]),
+            ('$orders.files.:name("orders.csv").:all():status("failed")', []),
+            (
+                '$orders.files.:name("orders.csv").:all():status("complete")'
+                ':lifecycle("active")',
+                ["o2"],
+            ),
+            ('$*.files.:flatten().:lifecycle("active")', ["o2"]),
+        ],
+    )
+    def test_a_name_three_gate(self, reference, expected):
+        assert _n3_finder(reference).query().uuids == expected
+
+    def test_a_gate_with_a_value(self):
+        results = _n3_finder(
+            '$orders.files.:name("orders.csv").:all():lifecycle("active"):uuid()'
+        ).resolve()
+        assert [r.data for r in results.results] == ["o2"]
+
+
 class TestLifecycleGateOnTheFilesLedger:
     # ':lifecycle()' (2026-11-05). STATUS_LEDGER's entries have no
     # lifecycle, as entries written before harmonization PR 6 don't:

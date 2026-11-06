@@ -127,6 +127,18 @@ def test_a_per_name_read(project, datatype):
     assert _names(project, datatype, gated) == []
 
 
+def test_a_files_version_reads_its_own_registration(project):
+    # FILES holds its pointers in name_three, so its per-name read is
+    # written with a dot (2026-11-06: ':lifecycle()' and ':status()' at
+    # name_three)
+    base = '$keep.files.:name("keep.csv").:last()'
+    for field, value in ((":lifecycle()", "active"), (":status()", "complete")):
+        finder = _finder(project, "files", f"{base}{field}")
+        assert [r.data for r in finder.resolve().results] == [value]
+    assert _names(project, "files", f'{base}:lifecycle("active")') == ["keep"]
+    assert _names(project, "files", f'{base}:lifecycle("deleted")') == []
+
+
 @pytest.mark.parametrize("datatype", list(FINDERS))
 @pytest.mark.parametrize(
     "reference",
