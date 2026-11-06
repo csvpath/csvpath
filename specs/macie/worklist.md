@@ -68,13 +68,12 @@ last. Add an item the moment something is deferred.
    ML or a gazetteer.
    - **Done:** US DEA, Medicare MBI, US ITIN, HICN (partial), NDC,
      HCPCS, pair 15_us_health.
+   - **Done:** Germany identity card, France health insurance number,
+     card magnetic stripe, pair 16_group_a_more.
    - **Group A, health and payments:** UDI (GS1,
-     HIBCC, ICCBBA formats with check characters), France health
-     insurance number (the NIR, reusing `fr_nir` with health keywords),
-     Canada health number (by province), EHIC card numbers (EU and
-     Finland), credit card magnetic stripe (tracks 1 and 2, Luhn PAN).
-   - **Group A, other:** Germany national id card (Personalausweis,
-     7-3-1 check digits).
+     HIBCC, ICCBBA formats with check characters), Canada health number
+     (by province; the checks need confirming), EHIC card numbers (EU and
+     Finland; the format needs confirming).
    - **Group B:** driver's licenses (32 identifiers; the US one covers
      50+ state formats), passports (7), phone numbers (7), UK NINO, UK
      electoral roll, Canada permanent resident card, India PAN, Brazil RG,

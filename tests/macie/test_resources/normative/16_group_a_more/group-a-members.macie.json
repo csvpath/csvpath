@@ -1,0 +1,81 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "eu-west-1",
+    "downloaded_at": "2026-11-05T10:00:00Z",
+    "job_id": "9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "GERMANY_NATIONAL_IDENTIFICATION_NUMBER",
+      "FRANCE_HEALTH_INSURANCE_NUMBER",
+      "CREDIT_CARD_MAGNETIC_STRIPE"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "GERMANY_NATIONAL_IDENTIFICATION_NUMBER",
+      "FRANCE_HEALTH_INSURANCE_NUMBER",
+      "CREDIT_CARD_MAGNETIC_STRIPE"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "GERMANY_NATIONAL_IDENTIFICATION_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "FRANCE_HEALTH_INSURANCE_NUMBER"
+      },
+      {
+        "category": "FINANCIAL_INFORMATION",
+        "id": "CREDIT_CARD_MAGNETIC_STRIPE"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Member records, Germany and France, with card swipes",
+      "jobArn": "arn:aws:macie2:eu-west-1:123456789012:classification-job/9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c",
+      "jobId": "9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "GERMANY_NATIONAL_IDENTIFICATION_NUMBER",
+        "FRANCE_HEALTH_INSURANCE_NUMBER",
+        "CREDIT_CARD_MAGNETIC_STRIPE"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "group-a-members",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-members"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

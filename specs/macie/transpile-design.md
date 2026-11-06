@@ -302,6 +302,8 @@ conversion.report.skipped   # what was not translated
 | `EsIdDetector` | Spain DNI, NIE, NIF and CIF: a control letter (mod 23) or a CIF control |
 | `MxRfcDetector` | Mexico RFC for people and organizations: letters, a real date, 3 characters |
 | `CoNitDetector` | Colombia NIT: body and mod 11 digit; 9 digits from 8 or 9 is an organization's |
+| `DeIdDetector` | Germany identity card: 9 characters and an ICAO 7-3-1 check digit |
+| `MagStripeDetector` | card magnetic stripe tracks 1 and 2, Luhn card number |
 | `UsIdDetector` | US DEA (check digit), MBI, ITIN, HICN, NDC and HCPCS |
 | `CredentialDetector` | the nine credentials: AWS and Google keys, Basic headers, JWTs, key blocks, PuTTY keys, Stripe keys |
 | `FrNirDetector` | France NIR (INSEE): 15 characters, Corsica's 2A and 2B, mod 97 key |
@@ -312,7 +314,7 @@ conversion.report.skipped   # what was not translated
 | `BankAccountDetector` | FR, DE, IT, ES, UK: IBANs (no keyword) and BBANs (keyword), plus UK sort code and account |
 | `IbanDetector` | one country's IBANs: length, printed layout, ISO 13616 mod 97 |
 | `UsSsnDetector`, `UsNpiDetector` | SSA's SSN rules; CMS's NPI check digit (Luhn over 80840) |
-| `ChecksumUtility` (`chut`) | check-digit algorithms: Luhn, mod 11s, mod 97, RUT, RIB, Verhoeff, the Spanish mod 23 letter, NIR key, CURP digit, Codice Fiscale letter, IdNr, CUIT, TFN, UTR, CIF, NIT, SPI, DEA |
+| `ChecksumUtility` (`chut`) | check-digit algorithms: Luhn, mod 11s, mod 97, RUT, RIB, Verhoeff, the Spanish mod 23 letter, NIR key, CURP digit, Codice Fiscale letter, IdNr, CUIT, TFN, UTR, CIF, NIT, SPI, DEA, ICAO 9303 |
 | `MacieMdi` (`macie_mdi`) | applies a managed identifier to every cell |
 | `MacieRun` | one run's shared state (allow lists, tally) and outputs; limits from metadata, config, defaults; noisy setup failure |
 | `MacieAllowRegex` (`macie_allow_regex`) | registers a regex allow list before any line is read |
@@ -658,6 +660,24 @@ keywords. One class, `UsIdDetector`, has a form for each:
   digit; fidelity B. The keyword does the work: `cpt` alone is not one
   of Macie's keywords.
 
+**Germany identity card, France health insurance number and magnetic
+stripe data**: keyword required, HIGH from one occurrence.
+- **`GERMANY_NATIONAL_IDENTIFICATION_NUMBER`** (`DeIdDetector`): the
+  Personalausweis, 9 characters of 0-9 and the consonants C F G H J K L M
+  N P R T V W X Y Z, and an ICAO 9303 check digit (`chut.icao_check`: 7 3
+  1 weights, letters 10 to 35). The check was confirmed on the ICAO 9303
+  specimen's fields and the official specimen card, T220001293. Some of
+  the keywords are broad (`id number`, `insurance number`) and an all
+  digit number passes one time in ten, so this can over-report; fidelity
+  B.
+- **`FRANCE_HEALTH_INSURANCE_NUMBER`**: the health insurance number is the
+  NIR, so this reuses `fr_nir` with Macie's health keywords (`carte
+  vitale`). The same number near INSEE keywords is the national
+  identification number instead; near both, it is both.
+- **`CREDIT_CARD_MAGNETIC_STRIPE`** (`MagStripeDetector`), FINANCIAL:
+  ISO/IEC 7813 tracks 1 and 2, with or without the sentinels, a card
+  number that passes Luhn and an expiry month 01-12.
+
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
 (Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
@@ -747,6 +767,8 @@ every detector the catalog names exists, and every detector is used.
 15. US health: does Macie accept any DEA registrant type letter, MBIs
     with dashes, NDCs without hyphens, and CPT codes for HCPCS? Does it
     detect Railroad Retirement Board HICNs?
+16. Does Macie need sentinels on magnetic stripe data, or both tracks?
+    Does it check the identity card's check digit?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

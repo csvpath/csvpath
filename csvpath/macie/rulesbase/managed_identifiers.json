@@ -533,6 +533,40 @@
         "hcpcs",
         "healthcare common procedure coding system"
       ]
+    },
+    "de_id": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "ausweisnummer",
+        "id number",
+        "identification number",
+        "identity number",
+        "insurance number",
+        "personal id",
+        "personalausweis"
+      ]
+    },
+    "fr_health": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "carte d'assuré social",
+        "carte vitale",
+        "insurance card"
+      ]
+    },
+    "mag_stripe": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "card data",
+        "iso7813",
+        "mag",
+        "magstripe",
+        "stripe",
+        "swipe"
+      ]
     }
   },
   "identifiers": {
@@ -1595,6 +1629,39 @@
       "fidelity": "B",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
       "retrieved": "2026-11-04"
+    },
+    "GERMANY_NATIONAL_IDENTIFICATION_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "de_id",
+      "keyword_mode": "required",
+      "keywords_from": "de_id",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "FRANCE_HEALTH_INSURANCE_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "fr_nir",
+      "keyword_mode": "required",
+      "keywords_from": "fr_health",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-05"
+    },
+    "CREDIT_CARD_MAGNETIC_STRIPE": {
+      "category": "FINANCIAL_INFORMATION",
+      "detector": "mag_stripe",
+      "keyword_mode": "required",
+      "keywords_from": "mag_stripe",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
+      "retrieved": "2026-11-05"
     }
   },
   "detectors": {
@@ -2097,7 +2164,8 @@
     "fr_nir": {
       "notes": [
         "Macie publishes only the keywords for FRANCE_NATIONAL_IDENTIFICATION_NUMBER (INSEE codes).",
-        "The format is ours, from INSEE: 15 characters, the department 2 digits or 2A or 2B, and a key of 97 minus the first 13 mod 97, with 2A and 2B as 19 and 18. Contiguous, 1-2-2-2-3-3-2 with spaces or dots, or with only the key apart. No rule on the sex digit or the month: a rule we cannot confirm would miss real numbers."
+        "The format is ours, from INSEE: 15 characters, the department 2 digits or 2A or 2B, and a key of 97 minus the first 13 mod 97, with 2A and 2B as 19 and 18. Contiguous, 1-2-2-2-3-3-2 with spaces or dots, or with only the key apart. No rule on the sex digit or the month: a rule we cannot confirm would miss real numbers.",
+        "FRANCE_HEALTH_INSURANCE_NUMBER uses this detector too: the health insurance number is the NIR, with health keywords (carte vitale)."
       ]
     },
     "mx_curp": {
@@ -2389,6 +2457,18 @@
         "The format is ours, from CMS and the AMA: HCPCS Level II, a letter A-V and 4 digits; and CPT, 5 digits, or 4 digits and F, T or U. There is no check digit. Fidelity B."
       ],
       "form": "hcpcs"
+    },
+    "de_id": {
+      "notes": [
+        "Macie publishes only the keywords for GERMANY_NATIONAL_IDENTIFICATION_NUMBER (German National Identity Card numbers).",
+        "The format is ours, from the BMI: 9 characters of 0-9 and C F G H J K L M N P R T V W X Y Z, then an ICAO 9303 check digit (7 3 1). The official specimen is T220001293. Some of Macie's keywords are broad (id number, insurance number), and an all digit number passes the check one time in ten, so this can over-report. Fidelity B."
+      ]
+    },
+    "mag_stripe": {
+      "notes": [
+        "Macie: CREDIT_CARD_MAGNETIC_STRIPE needs a keyword and supports tracks 1 and 2.",
+        "The format is ours, from ISO/IEC 7813: track 1 %B, card number, ^, name, ^, YYMM, service code, discretionary data, ?; track 2 ;, card number, =, YYMM, service code, discretionary digits, ?. Sentinels may be missing. The card number must pass Luhn and the month must be 01-12."
+      ]
     }
   }
 }

@@ -1,0 +1,44 @@
+~
+  id: group-a-members
+  macie-origin: job
+  macie-job-id: 9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c
+  macie-account: 123456789012
+  macie-region: eu-west-1
+  macie-source-arn: arn|aws|macie2|eu-west-1|123456789012|classification-job/9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c
+  macie-downloaded-at: 20261105T100000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "GERMANY_NATIONAL_IDENTIFICATION_NUMBER",
+        "PERSONAL_INFORMATION",
+        "de_id",
+        "required",
+        "ausweisnummer|id number|identification number|identity number|insurance number|personal id|personalausweis",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "FRANCE_HEALTH_INSURANCE_NUMBER",
+        "PERSONAL_INFORMATION",
+        "fr_nir",
+        "required",
+        "carte d'assuré social|carte vitale|insurance card",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "CREDIT_CARD_MAGNETIC_STRIPE",
+        "FINANCIAL_INFORMATION",
+        "mag_stripe",
+        "required",
+        "card data|iso7813|mag|magstripe|stripe|swipe",
+        30,
+        "1:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

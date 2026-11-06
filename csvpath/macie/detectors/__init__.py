@@ -11,11 +11,13 @@ from .cl_rut_detector import ClRutDetector
 from .co_nit_detector import CoNitDetector
 from .credential_detector import CredentialDetector
 from .credit_card_detector import CreditCardDetector
+from .de_id_detector import DeIdDetector
 from .es_id_detector import EsIdDetector
 from .fr_nir_detector import FrNirDetector
 from .grouped_digits_detector import GroupedDigitsDetector
 from .iban_detector import IbanDetector
 from .it_cf_detector import ItCfDetector
+from .mag_stripe_detector import MagStripeDetector
 from .mx_curp_detector import MxCurpDetector
 from .mx_rfc_detector import MxRfcDetector
 from .us_id_detector import UsIdDetector
@@ -45,6 +47,7 @@ DETECTORS = {
     "co_nit_individual": CoNitDetector,
     "co_nit_organization": CoNitDetector,
     "credit_card": CreditCardDetector,
+    "de_id": DeIdDetector,
     "de_idnr": GroupedDigitsDetector,
     "es_cif": EsIdDetector,
     "es_dni": EsIdDetector,
@@ -55,6 +58,7 @@ DETECTORS = {
     "iban": IbanDetector,
     "in_aadhaar": GroupedDigitsDetector,
     "it_cf": ItCfDetector,
+    "mag_stripe": MagStripeDetector,
     "mx_curp": MxCurpDetector,
     "mx_rfc_individual": MxRfcDetector,
     "mx_rfc_organization": MxRfcDetector,

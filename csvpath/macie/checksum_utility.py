@@ -380,6 +380,26 @@ class ChecksumUtility:
         return total % 10 == d[6]
 
     @classmethod
+    def icao_check(cls, *, text: str) -> str:
+        """the ICAO 9303 check digit of a machine readable field, as on
+        passports and the German identity card: digits are their value,
+        A to Z are 10 to 35 and the filler < is 0; weighted 7 3 1
+        repeating, the sum mod 10"""
+        if not isinstance(text, str):
+            raise TypeError(f"text must be a str, not {type(text)}")
+        value = text.upper()
+        if value == "" or not all(
+            c.isascii() and (c.isalnum() or c == "<") for c in value
+        ):
+            raise ValueError(f"text must be letters, digits and <, not {text!r}")
+        weights = (7, 3, 1)
+        total = 0
+        for i, c in enumerate(value):
+            v = 0 if c == "<" else int(c) if c.isdigit() else ord(c) - ord("A") + 10
+            total += v * weights[i % 3]
+        return str(total % 10)
+
+    @classmethod
     def _digits(cls, *, digits: str, length: int) -> None:
         if not isinstance(digits, str):
             raise TypeError(f"digits must be a str, not {type(digits)}")

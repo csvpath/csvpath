@@ -1,0 +1,90 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "PERSONAL_INFORMATION",
+      "detections": [
+        {
+          "type": "GERMANY_NATIONAL_IDENTIFICATION_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "ausweisnummer",
+                "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 8
+              }
+            ]
+          }
+        },
+        {
+          "type": "FRANCE_HEALTH_INSURANCE_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "carte_vitale",
+                "row": 4
+              },
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 9
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 4
+    },
+    {
+      "category": "FINANCIAL_INFORMATION",
+      "detections": [
+        {
+          "type": "CREDIT_CARD_MAGNETIC_STRIPE",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "swipe",
+                "row": 6
+              },
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "notes",
+                "row": 8
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 2
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:eu-west-1:123456789012:classification-job/9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}
