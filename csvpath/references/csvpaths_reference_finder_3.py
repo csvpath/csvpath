@@ -565,7 +565,21 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         having_call = next((f for f in built if f.name == "having"), None)
         # every field accessor, not just the first: argued ones are gates
         # and the last unargued one supplies the value (5.20b; finding A)
-        field_calls = [f for f in built if f.SOURCE is not None]
+        field_calls = [
+            f
+            for f in built
+            if f.SOURCE is not None and not isinstance(f, TimeWindowFunction3)
+        ]
+        # a range or a bare time window (2026-11-06): applied per group or
+        # on the pooled ledger by _narrow_versions(), as at the literal
+        # root. '*' used to reject a range and silently ignore a window.
+        lower_call, upper_call = self._range_calls_from_built(built)
+        windows = [f for f in built if isinstance(f, TimeWindowFunction3)]
+        date_bounds = (str, TimeWindowFunction3)
+        index_range = any(
+            c is not None and not isinstance(self._range_bound(c), date_bounds)
+            for c in (lower_call, upper_call)
+        )
         manifest_call = next((f for f in built if f.name == "manifest"), None)
         # '*' mimics grouping (finding I, David 2026-10-30 and 2026-11-03):
         # a pointer applies within each named-paths group, one result per
@@ -576,8 +590,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         # nothing to reduce per group, so the pooled, time-ordered list
         # is the same set in arrival order.
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
+        # an index range is a multi-valued pointer, so it groups too (4.1b)
         is_grouped = all_call is not None or (
-            manifest_call is None and len(pointers) > 0
+            manifest_call is None and (len(pointers) > 0 or index_range)
         )
         gates = self._gate_calls(built=built, pointer_present=len(pointers) > 0)
         # whitelist-based (settled 2026-08-19), replacing an earlier
@@ -602,6 +617,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             and f is not having_call
             and not any(f is c for c in field_calls)
             and f is not manifest_call
+            and f is not lower_call
+            and f is not upper_call
+            and not any(f is w for w in windows)
         ]
         if non_pointers:
             # exhaustive, not partial (not-yet-supported sweep #9) --
@@ -655,25 +673,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 if self._version_satisfies_having(entry, having_call)
             ]
 
-        def _filtered(manifest: list) -> list:
-            # ':having()', then the gates; the pointer picks from what is
-            # left (finding A, David 2026-10-29). '*' has no range here.
-            return self._apply_gates(versions=_having_filtered(manifest), gates=gates)
-
         if is_grouped:
             selected_versions = []
             for name in self._matching_names(
                 self.source.paths_names(), name_filter
             ):
-                manifest = _filtered(
-                    self.source.paths_manifest(name)
+                # ':having()', then a range or window, the gates and the
+                # pointer, within this group
+                manifest = _having_filtered(self.source.paths_manifest(name))
+                selected_versions.extend(
+                    self._narrow_versions(built=built, manifest=manifest)
                 )
-                if pointers:
-                    selected = self._apply_pointer(pointers[0], manifest)
-                    if selected is not None:
-                        selected_versions.append(selected)
-                else:
-                    selected_versions.extend(manifest)
         else:
             # a pointer is now OPTIONAL here too (settled 2026-08-19,
             # alongside RESULTS' own equivalent fix) -- absence means
@@ -701,7 +711,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # field with no pointer read the ledger too until
                 # 2026-11-01; it now reads each live group in turn, like
                 # every bare '*' read (compendium 6.19, agreed with David).
-                pooled = _filtered(
+                pooled = _having_filtered(
                     self._ledger_versions(name_filter=name_filter)
                 )
             else:
@@ -710,16 +720,12 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     self.source.paths_names(), name_filter
                 ):
                     pooled.extend(
-                        _filtered(
+                        _having_filtered(
                             self.source.paths_manifest(name)
                         )
                     )
                 pooled.sort(key=lambda e: e["time"])
-            if pointers:
-                selected = self._apply_pointer(pointers[0], pooled)
-                selected_versions = [selected] if selected is not None else []
-            else:
-                selected_versions = pooled
+            selected_versions = self._narrow_versions(built=built, manifest=pooled)
 
         manifest_source = None
         if manifest_call is not None:
@@ -1299,6 +1305,25 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 for entry in manifest
                 if self._version_satisfies_having(entry, having_call)
             ]
+        return self._narrow_versions(built=built, manifest=manifest)
+
+
+    def _narrow_versions(self, *, built: list, manifest: list) -> list:
+        """the versions a built name_one chain selects from one list:
+        a bare time window or a ':from()'/':to()' range, then the gates
+        (compendium 6.28: a range comes before a filter), then the
+        pointer picks from what is left. Shared by the literal root's
+        _resolve_versions() and '*' traversal, per named-paths group or
+        on the pooled ledger (2026-11-06: '*' used to reject a range and
+        ignore a bare time window)."""
+        if built is None:
+            raise ValueError("Built chain cannot be None")
+        if manifest is None:
+            raise ValueError("Manifest cannot be None")
+        gates = self._gate_calls(
+            built=built,
+            pointer_present=any(f.ROLE == Function3.POINTER for f in built),
+        )
         # from_call/to_call here mean LOWER/UPPER bound -- generalized
         # 2026-10-16 (compendium 6.28) via the shared
         # _range_calls_from_built(), which also recognizes ':after()'/

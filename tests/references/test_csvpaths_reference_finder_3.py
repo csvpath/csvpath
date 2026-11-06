@@ -560,13 +560,15 @@ class TestVersionRange:
         ).query()
         assert results.uuids == ["v4-uuid"]
 
-    def test_range_combined_with_star_traversal_is_not_yet_supported(self):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$*.csvpaths.:from(-2):last()",
-                VERSION_RANGE_MANIFEST,
-                by_name={"dater": VERSION_RANGE_MANIFEST},
-            ).query()
+    def test_range_combined_with_star_traversal(self):
+        # changed 2026-11-06: '*' used to reject a range. Within the one
+        # group, the last of the last two versions is v4.
+        results = _finder(
+            "$*.csvpaths.:from(-2):last()",
+            VERSION_RANGE_MANIFEST,
+            by_name={"dater": VERSION_RANGE_MANIFEST},
+        ).query()
+        assert results.uuids == [VERSION_RANGE_MANIFEST[-1]["uuid"]]
 
 
 class TestVersionDirectionFunctions:
@@ -1671,6 +1673,51 @@ def _status_finder(reference: str) -> CsvpathsReferenceFinder3:
         ledger=[dict(e) for e in STATUS_LEDGER],
         inputs_csvpaths_path="named_paths",
     )
+
+
+class TestStarRangesAndTimeWindows:
+    # 2026-11-06: under '*', CSVPATHS rejected a range ("does not support
+    # :from() combined with '*' traversal", a bug -- David) and silently
+    # ignored a bare time window, giving every version. Both now narrow as
+    # at the literal root: per named-paths group, since an index range is
+    # a multi-valued pointer (compendium 4.1b), or on the pooled ledger
+    # with ':manifest()'. Range first, then gates, then the pointer (6.28).
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$*.csvpaths.:from(0):to(1)", ["a1", "a2", "b1", "b2"]),
+            ("$*.csvpaths.:from(0):to(1):last()", ["a2", "b2"]),
+            ("$*.csvpaths.:all():from(0):to(0)", ["a1", "b1"]),
+            ("$*.csvpaths.:from(0):to(1):template(:has_value()):last()", ["a2", "b2"]),
+            # a date range is a match on each version's time: no grouping
+            # needed, so the pooled list in time order
+            ('$*.csvpaths.:from(:date("2026-01-03"))', ["a2", "a3", "b2", "a4"]),
+            ('$*.csvpaths.:from(:date("2026-01-03")):last()', ["a4", "b2"]),
+            # the ledger, in ledger order: a1, b1, a2, g1, ...
+            ("$*.csvpaths.:manifest():from(0):to(1)", ["a1", "b1"]),
+            (
+                '$*.csvpaths.:manifest():from(:date("2026-01-03"))'
+                ':to(:date("2026-01-05"))',
+                ["a2", "g1", "a3"],
+            ),
+            # every fixture version is from January 2026
+            ("$*.csvpaths.:yesterday()", []),
+            ("$*.csvpaths.:yesterday():last()", []),
+            ("$*.csvpaths.:manifest():yesterday()", []),
+        ],
+    )
+    def test_star_narrows_like_the_literal_root(self, reference, expected):
+        assert _gate_finder(reference).query().uuids == expected
+
+    def test_each_group_matches_its_literal_root(self):
+        for reference in ("{}.csvpaths.:from(0):to(1)", "{}.csvpaths.:from(1):last()"):
+            star = _gate_finder(reference.format("$*")).query().uuids
+            each = [
+                u
+                for name in ("$acme", "$beta")
+                for u in _gate_finder(reference.format(name)).query().uuids
+            ]
+            assert star == each, reference
 
 
 class TestCsvpathsStatus:
