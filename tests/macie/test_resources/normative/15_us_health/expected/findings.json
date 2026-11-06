@@ -1,0 +1,147 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "PERSONAL_INFORMATION",
+      "detections": [
+        {
+          "type": "US_DRUG_ENFORCEMENT_AGENCY_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "dea_number",
+                "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 8,
+                "columnName": "notes",
+                "row": 15
+              }
+            ]
+          }
+        },
+        {
+          "type": "USA_MEDICARE_BENEFICIARY_IDENTIFIER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "mbi",
+                "row": 4
+              },
+              {
+                "cellReference": null,
+                "column": 8,
+                "columnName": "notes",
+                "row": 15
+              }
+            ]
+          }
+        },
+        {
+          "type": "USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "itin",
+                "row": 6
+              },
+              {
+                "cellReference": null,
+                "column": 4,
+                "columnName": "itin",
+                "row": 7
+              }
+            ]
+          }
+        },
+        {
+          "type": "USA_HEALTH_INSURANCE_CLAIM_NUMBER",
+          "count": 1,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 5,
+                "columnName": "hicn",
+                "row": 9
+              }
+            ]
+          }
+        },
+        {
+          "type": "USA_NATIONAL_DRUG_CODE",
+          "count": 3,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 6,
+                "columnName": "ndc",
+                "row": 11
+              },
+              {
+                "cellReference": null,
+                "column": 6,
+                "columnName": "ndc",
+                "row": 12
+              },
+              {
+                "cellReference": null,
+                "column": 8,
+                "columnName": "notes",
+                "row": 17
+              }
+            ]
+          }
+        },
+        {
+          "type": "USA_HEALTHCARE_PROCEDURE_CODE",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 7,
+                "columnName": "hcpcs",
+                "row": 13
+              },
+              {
+                "cellReference": null,
+                "column": 8,
+                "columnName": "notes",
+                "row": 17
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 12
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:us-east-1:123456789012:classification-job/8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}

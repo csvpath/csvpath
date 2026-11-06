@@ -66,10 +66,9 @@ last. Add an item the moment something is deferred.
    PHI, financial and credentials pages, 2026-11-04). Group A has a check
    or a fixed structure; group B is format plus keyword; group C needs
    ML or a gazetteer.
-   - **Group A, health and payments:** US DEA number (check digit),
-     Medicare MBI (fixed positions), US ITIN (9xx with set middle
-     ranges), HICN (an SSN plus a beneficiary code), NDC (10 digits,
-     4-4-2 / 5-3-2 / 5-4-1), HCPCS (a letter and 4 digits), UDI (GS1,
+   - **Done:** US DEA, Medicare MBI, US ITIN, HICN (partial), NDC,
+     HCPCS, pair 15_us_health.
+   - **Group A, health and payments:** UDI (GS1,
      HIBCC, ICCBBA formats with check characters), France health
      insurance number (the NIR, reusing `fr_nir` with health keywords),
      Canada health number (by province), EHIC card numbers (EU and

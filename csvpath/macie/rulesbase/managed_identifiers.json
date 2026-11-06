@@ -477,6 +477,62 @@
         "GOOGLEKEY",
         "X-goog-api-key"
       ]
+    },
+    "us_dea": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-04",
+      "keywords": [
+        "dea number",
+        "dea registration"
+      ]
+    },
+    "us_mbi": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-04",
+      "keywords": [
+        "mbi",
+        "medicare beneficiary"
+      ]
+    },
+    "us_itin": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-04",
+      "keywords": [
+        "i.t.i.n.",
+        "individual taxpayer identification number",
+        "itin"
+      ]
+    },
+    "us_hicn": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-04",
+      "keywords": [
+        "health insurance claim number",
+        "hic no",
+        "hic no.",
+        "hic number",
+        "hic#",
+        "hicn",
+        "hicn#.",
+        "hicno#"
+      ]
+    },
+    "us_ndc": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-04",
+      "keywords": [
+        "national drug code",
+        "ndc"
+      ]
+    },
+    "us_hcpcs": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-04",
+      "keywords": [
+        "current procedural terminology",
+        "hcpcs",
+        "healthcare common procedure coding system"
+      ]
     }
   },
   "identifiers": {
@@ -1472,6 +1528,73 @@
       "fidelity": "A",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-credentials.html",
       "retrieved": "2026-11-03"
+    },
+    "US_DRUG_ENFORCEMENT_AGENCY_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "us_dea",
+      "keyword_mode": "required",
+      "keywords_from": "us_dea",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-04"
+    },
+    "USA_MEDICARE_BENEFICIARY_IDENTIFIER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "us_mbi",
+      "keyword_mode": "required",
+      "keywords_from": "us_mbi",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-04"
+    },
+    "USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "us_itin",
+      "keyword_mode": "required",
+      "keywords_from": "us_itin",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "A",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-04"
+    },
+    "USA_HEALTH_INSURANCE_CLAIM_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "us_hicn",
+      "keyword_mode": "required",
+      "keywords_from": "us_hicn",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-04",
+      "partial": "Only SSN-based HICNs are detected, not Railroad Retirement Board numbers"
+    },
+    "USA_NATIONAL_DRUG_CODE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "us_ndc",
+      "keyword_mode": "required",
+      "keywords_from": "us_ndc",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-04"
+    },
+    "USA_HEALTHCARE_PROCEDURE_CODE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "us_hcpcs",
+      "keyword_mode": "required",
+      "keywords_from": "us_hcpcs",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-04"
     }
   },
   "detectors": {
@@ -2221,6 +2344,51 @@
         "2cafc0970149a84f3b9e62eaf169f36f59907a3b3e31f7b82e68c69cd27f7326",
         "b1471f544ceeea31333bde7e1ecbaad6eac0d4a749412ad29bd66ef895b81c6b"
       ]
+    },
+    "us_dea": {
+      "notes": [
+        "Macie publishes only the keywords for US_DRUG_ENFORCEMENT_AGENCY_NUMBER.",
+        "The format is ours, from the DEA: a registrant type letter, the registrant's initial (or 9), 7 digits, the last a check digit: the 1st, 3rd and 5th digits plus twice the 2nd, 4th and 6th, last digit. Ours: any type letter, so new registrant types are not missed."
+      ],
+      "form": "dea"
+    },
+    "us_mbi": {
+      "notes": [
+        "Macie lists USA_MEDICARE_BENEFICIARY_IDENTIFIER with health insurance numbers and publishes only its keywords.",
+        "The format is ours, from CMS: 11 characters by position (1-9, letter, letter or digit, digit, letter, letter or digit, digit, letter, letter, digit, digit), letters never S L O I B Z, optional dashes after the 4th and 7th. CMS's published example 1EG4-TE5-MK73 is excluded (ours)."
+      ],
+      "form": "mbi",
+      "exclusions": [
+        "1EG4TE5MK73"
+      ]
+    },
+    "us_itin": {
+      "notes": [
+        "Macie publishes only the keywords for USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER.",
+        "The format is ours, from the IRS: 9, two digits, middle digits 50-65, 70-88, 90-92 or 94-99 (the ranges since 2011; python-stdnum still has only 70-99), four digits; hyphens or spaces, one separator, or none."
+      ],
+      "form": "itin"
+    },
+    "us_hicn": {
+      "notes": [
+        "Macie publishes only the keywords for USA_HEALTH_INSURANCE_CLAIM_NUMBER.",
+        "The format is ours, from CMS: an SSN, by the SSA rules, and a beneficiary identification code of a letter and an optional letter or digit. Railroad Retirement Board numbers are not detected, so the entry is partial. Fidelity B."
+      ],
+      "form": "hicn"
+    },
+    "us_ndc": {
+      "notes": [
+        "Macie publishes only the keywords for USA_NATIONAL_DRUG_CODE.",
+        "The format is ours, from the FDA: 10 digits as 4-4-2, 5-3-2 or 5-4-1, the 11 digit 5-4-2 billing form, or 10 or 11 digits contiguous. There is no check digit. Fidelity B."
+      ],
+      "form": "ndc"
+    },
+    "us_hcpcs": {
+      "notes": [
+        "Macie publishes only the keywords for USA_HEALTHCARE_PROCEDURE_CODE, which include current procedural terminology.",
+        "The format is ours, from CMS and the AMA: HCPCS Level II, a letter A-V and 4 digits; and CPT, 5 digits, or 4 digits and F, T or U. There is no check digit. Fidelity B."
+      ],
+      "form": "hcpcs"
     }
   }
 }

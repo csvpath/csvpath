@@ -370,6 +370,16 @@ class ChecksumUtility:
         return digits[0] in "0123" and int(digits[:10]) % 511 == int(digits[10:])
 
     @classmethod
+    def us_dea(cls, *, digits: str) -> bool:
+        """True if the 7 digits of a US DEA registration number pass its
+        check: the 1st, 3rd and 5th digits, plus twice the 2nd, 4th and
+        6th; the last digit of the sum is the 7th digit"""
+        cls._digits(digits=digits, length=7)
+        d = [int(c) for c in digits]
+        total = d[0] + d[2] + d[4] + 2 * (d[1] + d[3] + d[5])
+        return total % 10 == d[6]
+
+    @classmethod
     def _digits(cls, *, digits: str, length: int) -> None:
         if not isinstance(digits, str):
             raise TypeError(f"digits must be a str, not {type(digits)}")

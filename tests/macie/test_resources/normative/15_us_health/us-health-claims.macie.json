@@ -1,0 +1,102 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "us-east-1",
+    "downloaded_at": "2026-11-04T03:00:00Z",
+    "job_id": "8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "US_DRUG_ENFORCEMENT_AGENCY_NUMBER",
+      "USA_MEDICARE_BENEFICIARY_IDENTIFIER",
+      "USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER",
+      "USA_HEALTH_INSURANCE_CLAIM_NUMBER",
+      "USA_NATIONAL_DRUG_CODE",
+      "USA_HEALTHCARE_PROCEDURE_CODE"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "US_DRUG_ENFORCEMENT_AGENCY_NUMBER",
+      "USA_MEDICARE_BENEFICIARY_IDENTIFIER",
+      "USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER",
+      "USA_HEALTH_INSURANCE_CLAIM_NUMBER",
+      "USA_NATIONAL_DRUG_CODE",
+      "USA_HEALTHCARE_PROCEDURE_CODE"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "US_DRUG_ENFORCEMENT_AGENCY_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "USA_MEDICARE_BENEFICIARY_IDENTIFIER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "USA_HEALTH_INSURANCE_CLAIM_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "USA_NATIONAL_DRUG_CODE"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "USA_HEALTHCARE_PROCEDURE_CODE"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Claims extracts",
+      "jobArn": "arn:aws:macie2:us-east-1:123456789012:classification-job/8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b",
+      "jobId": "8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "US_DRUG_ENFORCEMENT_AGENCY_NUMBER",
+        "USA_MEDICARE_BENEFICIARY_IDENTIFIER",
+        "USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER",
+        "USA_HEALTH_INSURANCE_CLAIM_NUMBER",
+        "USA_NATIONAL_DRUG_CODE",
+        "USA_HEALTHCARE_PROCEDURE_CODE"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "us-health-claims",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-claims"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

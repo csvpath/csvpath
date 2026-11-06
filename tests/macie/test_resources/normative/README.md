@@ -104,3 +104,9 @@ Design decisions are in `specs/macie/transpile-design.md`.
   (a JWT, not an AWS key), and six identifiers with nothing to report.
   Key blocks and Google and Stripe keys are only in the unit tests, built
   at run time, so this file never looks like a leaked secret.
+- `15_us_health`: US DEA, Medicare MBI, ITIN, HICN, NDC and HCPCS. A DEA
+  check digit right and wrong; an MBI and CMS's example; ITINs in the
+  old and the 2011 ranges and one outside them; a HICN and one with no
+  valid SSN; NDCs in 10 and 11 digit forms; a Level II code and a letter
+  that is not one; two identifiers in one cell twice; and cpt, which is
+  not a keyword.
