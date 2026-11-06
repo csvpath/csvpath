@@ -29,6 +29,23 @@ from .us_ssn_detector import UsSsnDetector
 from .vin_detector import VinDetector
 
 DETECTORS = {
+    "australia_drivers_license": FormatDetector,
+    "austria_drivers_license": FormatDetector,
+    "belgium_drivers_license": FormatDetector,
+    "bulgaria_drivers_license": FormatDetector,
+    "canada_drivers_license": FormatDetector,
+    "croatia_drivers_license": FormatDetector,
+    "cyprus_drivers_license": FormatDetector,
+    "czechia_drivers_license": FormatDetector,
+    "denmark_drivers_license": FormatDetector,
+    "estonia_drivers_license": FormatDetector,
+    "france_drivers_license": FormatDetector,
+    "germany_drivers_license": FormatDetector,
+    "india_drivers_license": FormatDetector,
+    "italy_drivers_license": FormatDetector,
+    "spain_drivers_license": FormatDetector,
+    "uk_drivers_license": FormatDetector,
+    "us_drivers_license": FormatDetector,
     "birth_date": DateDetector,
     "card_expiration": DateDetector,
     "gb_phone": PhoneDetector,

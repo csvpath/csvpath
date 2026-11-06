@@ -1,0 +1,80 @@
+~
+  id: group-b-drivers-licenses
+  macie-origin: job
+  macie-job-id: 4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b
+  macie-account: 123456789012
+  macie-region: us-east-1
+  macie-source-arn: arn|aws|macie2|us-east-1|123456789012|classification-job/4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b
+  macie-downloaded-at: 20261106T130000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "DRIVERS_LICENSE",
+        "PERSONAL_INFORMATION",
+        "us_drivers_license",
+        "required",
+        "dl#|dl:|dlno#|driver licence|driver licences|driver license|driver licenses|driver permit|drivers lic.|drivers licence|driver's licence|drivers licences|driver's licences|drivers license|driver's license|drivers licenses|driver's licenses|drivers permit|driver's permit|drivers permit number|driving licence|driving license|driving permit",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "UK_DRIVERS_LICENSE",
+        "PERSONAL_INFORMATION",
+        "uk_drivers_license",
+        "required",
+        "dl#|dl:|dlno#|driver licence|driver licences|driver license|driver licenses|driver permit|drivers lic.|drivers licence|driver's licence|drivers licences|driver's licences|drivers license|driver's license|drivers licenses|driver's licenses|drivers permit|driver's permit|drivers permit number|driving licence|driving license|driving permit",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "CANADA_DRIVERS_LICENSE",
+        "PERSONAL_INFORMATION",
+        "canada_drivers_license",
+        "required",
+        "dl#|dl:|dlno#|driver licence|driver licences|driver license|driver licenses|driver permit|drivers lic.|drivers licence|driver's licence|drivers licences|driver's licences|drivers license|driver's license|drivers licenses|driver's licenses|drivers permit|driver's permit|drivers permit number|driving licence|driving license|driving permit|permis de conduire",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "AUSTRALIA_DRIVERS_LICENSE",
+        "PERSONAL_INFORMATION",
+        "australia_drivers_license",
+        "required",
+        "dl#|dl:|dlno#|driver licence|driver license|driver permit|drivers lic.|drivers licence|driver's licence|drivers license|driver's license|drivers permit|driver's permit|drivers permit number|driving licence|driving license|driving permit",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "GERMANY_DRIVERS_LICENSE",
+        "PERSONAL_INFORMATION",
+        "germany_drivers_license",
+        "required",
+        "fuehrerschein|fuehrerschein- nr|fuehrerscheinnummer|fuhrerschein|führerschein|fuhrerschein- nr|führerschein- nr|fuhrerscheinnummer|führerscheinnummer",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "FRANCE_DRIVERS_LICENSE",
+        "PERSONAL_INFORMATION",
+        "france_drivers_license",
+        "required",
+        "permis de conduire",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "ITALY_DRIVERS_LICENSE",
+        "PERSONAL_INFORMATION",
+        "italy_drivers_license",
+        "required",
+        "patente di guida|patente di guida numero|patente guida|patente guida numero",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

@@ -134,3 +134,9 @@ Design decisions are in `specs/macie/transpile-design.md`.
   card expiration (02/26, Feb 2026, 26-Feb and Macie's keyword form
   expY=2026, expM=02), a date that is not real, a dotted date, a month
   13, and no keyword.
+- `21_drivers_licenses`: 7 of the 17 driver's license stand-ins. US
+  states' formats (California, New Jersey, Washington), the UK's DVLA
+  structure with and without the issue number, 8 digits that are US,
+  Canadian and Australian, a New Jersey number that is also Ontario's,
+  German, French and Italian numbers with their own keywords, and no
+  keyword.

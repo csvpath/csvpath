@@ -75,14 +75,41 @@ def test_macie_format_notation_errors(fmt: str) -> None:
 
 def test_macie_format_compiles_once_and_dedupes() -> None:
     d = FormatDetector(config={"formats": ["#{3}", "###", {"format": "#{3}"}]})
-    assert d.candidates.pattern.count("[0-9]{3}") == 1
-    assert d.candidates.pattern.count("[0-9][0-9][0-9]") == 1
+    #
+    # "#{3}" twice is one regex; "###" is a different regex for the same
+    # shape
+    #
+    assert len(d.candidates) == 2
+
+
+def test_macie_format_longest_match_wins() -> None:
+    #
+    # overlapping formats: the longest at a position is the occurrence,
+    # whatever their order
+    #
+    for formats in [["A###-####", "A###-####-##"], ["A###-####-##", "A###-####"]]:
+        assert _finds(formats, "A123-4567-89") == [(0, 12)]
+    #
+    # on its own, the shorter format does not find a hyphen-joined piece
+    #
+    assert _finds(["A###-####"], "A123-4567-89") == []
 
 
 def test_macie_format_boundaries() -> None:
     assert _finds(["#{3}"], "x123") == []
     assert _finds(["#{3}"], "1234") == []
     assert _finds(["#{3}"], "id 123, 456.") == [(3, 6), (8, 11)]
+
+
+def test_macie_format_hyphen_joined_pieces() -> None:
+    #
+    # ours: a piece of a hyphen-joined token is not a number on its own;
+    # a space still separates
+    #
+    assert _finds(["#{5}"], "A1234-56789-07234") == []
+    assert _finds(["#{5}"], "12345-") == [(0, 5)]
+    assert _finds(["#{5}"], "ref 12345 - ok") == [(4, 9)]
+    assert _finds(["#{5}"], "12345 67890") == [(0, 5), (6, 11)]
 
 
 def test_macie_format_alternatives_backtrack() -> None:

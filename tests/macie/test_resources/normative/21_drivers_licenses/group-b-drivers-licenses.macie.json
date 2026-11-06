@@ -1,0 +1,109 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "us-east-1",
+    "downloaded_at": "2026-11-06T13:00:00Z",
+    "job_id": "4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "DRIVERS_LICENSE",
+      "UK_DRIVERS_LICENSE",
+      "CANADA_DRIVERS_LICENSE",
+      "AUSTRALIA_DRIVERS_LICENSE",
+      "GERMANY_DRIVERS_LICENSE",
+      "FRANCE_DRIVERS_LICENSE",
+      "ITALY_DRIVERS_LICENSE"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "DRIVERS_LICENSE",
+      "UK_DRIVERS_LICENSE",
+      "CANADA_DRIVERS_LICENSE",
+      "AUSTRALIA_DRIVERS_LICENSE",
+      "GERMANY_DRIVERS_LICENSE",
+      "FRANCE_DRIVERS_LICENSE",
+      "ITALY_DRIVERS_LICENSE"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "DRIVERS_LICENSE"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "UK_DRIVERS_LICENSE"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "CANADA_DRIVERS_LICENSE"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "AUSTRALIA_DRIVERS_LICENSE"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "GERMANY_DRIVERS_LICENSE"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "FRANCE_DRIVERS_LICENSE"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "ITALY_DRIVERS_LICENSE"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Driver records",
+      "jobArn": "arn:aws:macie2:us-east-1:123456789012:classification-job/4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b",
+      "jobId": "4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "DRIVERS_LICENSE",
+        "UK_DRIVERS_LICENSE",
+        "CANADA_DRIVERS_LICENSE",
+        "AUSTRALIA_DRIVERS_LICENSE",
+        "GERMANY_DRIVERS_LICENSE",
+        "FRANCE_DRIVERS_LICENSE",
+        "ITALY_DRIVERS_LICENSE"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "group-b-drivers-licenses",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-drivers"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

@@ -31,9 +31,13 @@ class FormatDetector:
         other    a space or punctuation stands for itself
 
     Any other letter must be written as a set, e.g. [L], so that a format
-    never reads as both a symbol and a literal. The formats are compiled
-    into one regex when the detector is created, identical formats once.
-    An occurrence must not touch other letters or digits."""
+    never reads as both a symbol and a literal. Each format is compiled
+    once, when the detector is created, identical formats once. Where
+    formats overlap, the longest match at a position is the occurrence: the
+    US driver's license's A###-####-####-## (Wisconsin) is not cut short to
+    A###-####-#### (Illinois). An occurrence must not touch other letters
+    or digits, nor be one piece of a hyphen-joined token (ours): 56789 in
+    A1234-56789-07234 is not a 5 digit number."""
 
     SYMBOLS = {"#": "[0-9]", "A": "[A-Za-z]", "X": "[A-Za-z0-9]"}
 
@@ -49,9 +53,14 @@ class FormatDetector:
             pattern = self.compile_format(text=text)
             if pattern not in patterns:
                 patterns.append(pattern)
-        self.candidates = re.compile(
-            r"(?<![A-Za-z0-9])(?:" + "|".join(patterns) + r")(?![A-Za-z0-9])"
-        )
+        self.candidates = [
+            re.compile(
+                r"(?<![A-Za-z0-9])(?<![A-Za-z0-9]-)(?:"
+                + p
+                + r")(?![A-Za-z0-9])(?!-[A-Za-z0-9])"
+            )
+            for p in patterns
+        ]
         self.exclusions = self._values(config=config, key="exclusions")
         self.exclude_prefixes = self._values(config=config, key="exclude_prefixes")
 
@@ -152,12 +161,21 @@ class FormatDetector:
     def matches(self, *, cell: str) -> list[tuple[int, int]]:
         if not isinstance(cell, str):
             raise TypeError(f"cell must be a str, not {type(cell)}")
+        spans = []
+        for pattern in self.candidates:
+            for m in pattern.finditer(cell):
+                value = self.compact(text=m.group(0))
+                if value in self.exclusions:
+                    continue
+                if any(value.startswith(p) for p in self.exclude_prefixes):
+                    continue
+                spans.append((m.start(), m.end()))
+        #
+        # one occurrence per position: the first, longest match
+        #
         found = []
-        for m in self.candidates.finditer(cell):
-            value = self.compact(text=m.group(0))
-            if value in self.exclusions:
+        for start, end in sorted(spans, key=lambda s: (s[0], -(s[1] - s[0]))):
+            if found and start < found[-1][1]:
                 continue
-            if any(value.startswith(p) for p in self.exclude_prefixes):
-                continue
-            found.append((m.start(), m.end()))
+            found.append((start, end))
         return found

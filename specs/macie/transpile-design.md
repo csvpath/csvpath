@@ -690,7 +690,9 @@ a letter or digit, `[...]` a set of letters, digits and ranges, `{n}` or
 must be in a set (`[L]`), so `AIza` is an error, not a literal. A format
 may be an object `{"format": ..., "used_by": [...]}` naming its issuers,
 for the US driver's license's state formats. All of a detector's formats
-compile into one regex when it is created, identical ones once.
+compile when it is created, identical ones once. Where formats overlap,
+the longest match at a position is the occurrence, and a piece of a
+hyphen-joined token is not one (ours): see driver's licenses.
 `exclusions` and `exclude_prefixes` are compared without separators, in
 upper case.
 - **`UK_NATIONAL_INSURANCE_NUMBER`**: HMRC's rules as sets: two prefix
@@ -767,6 +769,39 @@ LOW for one occurrence, MEDIUM from 2, HIGH from 100 (Macie). Fidelity B.
 - Ours: English month names; dots are not separators, as Macie lists
   spaces, slashes and hyphens; a date matching several shapes is one
   occurrence.
+
+**Driver's licenses** (group B step 5): 17 of Macie's 32 driver's license
+identifiers, all `FormatDetector` data, PERSONAL_INFORMATION, keyword
+required, LOW for one occurrence, MEDIUM from 2, HIGH from 100. Fidelity
+B. Scope agreed with David on 2026-11-06: the US, UK, Canada, Australia,
+India, Germany, France, Spain, Italy, Austria, Belgium, Bulgaria, Croatia,
+Cyprus, Czechia, Denmark and Estonia; the other 15 are on the worklist.
+- **Sources:** Macie publishes only keywords. The formats are Microsoft
+  Purview's detection patterns (a vendor's, not the issuers'), Skyhigh
+  Security's DLP table for the US states, and the DVLA's structure for the
+  UK. Each detector's notes say which.
+- **The US** is one identifier, as in Macie, so its formats are the union
+  of the states' formats, each tagged `used_by` with its states (David,
+  2026-11-05). A test checks that all 50 states and DC are covered. Many
+  states share a format, so there are 36 formats. Washington's is the
+  DOL's `WDL` format since 2018; older Washington numbers are not
+  detected (ours).
+- **Canada** is likewise a union of the provinces' formats.
+- **Ours:** the UK uses the DVLA's 16 characters (with the optional issue
+  number), not Microsoft's 18 character description; Germany's check
+  digit is not checked (Microsoft does not publish it); Spain's DNI and NIE
+  shapes are not letter checked here, as the DNI and NIE identifiers
+  check them.
+- **Two FormatDetector changes this needed.** Each format is now its own
+  regex and the longest match at a position wins: in one regex,
+  `A###-####-####` (Illinois) cut `A###-####-####-##` (Wisconsin) short,
+  because a hyphen does not stop a match. And a piece of a hyphen-joined
+  token is not an occurrence: `56789` in `A1234-56789-07234` is not a 5
+  digit Alberta number. Neither changes any earlier normative pair.
+- **Overlap:** the English speaking countries share Macie's English
+  keywords and many formats are digit runs, so `12345678` near "drivers
+  license" is American, Canadian and Australian, the same kind of overlap
+  accepted for phones. France's only keyword is French.
 
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
@@ -870,6 +905,8 @@ every detector the catalog names exists, and every detector is used.
     plans for Germany and Italy?
 20. Dates: does Macie accept dotted dates (05.11.1985), month names in
     other languages, or ambiguous 8 digit dates?
+21. Driver's licenses: how does Macie tell countries apart when their
+    formats and keywords overlap? Which US state formats does it accept?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

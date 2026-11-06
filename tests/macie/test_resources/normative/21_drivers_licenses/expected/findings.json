@@ -1,0 +1,156 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "PERSONAL_INFORMATION",
+      "detections": [
+        {
+          "type": "DRIVERS_LICENSE",
+          "count": 4,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "drivers_license",
+                "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "drivers_license",
+                "row": 4
+              },
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "drivers_license",
+                "row": 5
+              },
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "drivers_license",
+                "row": 6
+              }
+            ]
+          }
+        },
+        {
+          "type": "UK_DRIVERS_LICENSE",
+          "count": 2,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "drivers_license",
+                "row": 3
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 10
+              }
+            ]
+          }
+        },
+        {
+          "type": "CANADA_DRIVERS_LICENSE",
+          "count": 2,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "drivers_license",
+                "row": 4
+              },
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "drivers_license",
+                "row": 5
+              }
+            ]
+          }
+        },
+        {
+          "type": "AUSTRALIA_DRIVERS_LICENSE",
+          "count": 1,
+          "severity": "LOW",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "drivers_license",
+                "row": 4
+              }
+            ]
+          }
+        },
+        {
+          "type": "GERMANY_DRIVERS_LICENSE",
+          "count": 1,
+          "severity": "LOW",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 7
+              }
+            ]
+          }
+        },
+        {
+          "type": "FRANCE_DRIVERS_LICENSE",
+          "count": 1,
+          "severity": "LOW",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 8
+              }
+            ]
+          }
+        },
+        {
+          "type": "ITALY_DRIVERS_LICENSE",
+          "count": 1,
+          "severity": "LOW",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 9
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 12
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:us-east-1:123456789012:classification-job/4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}
