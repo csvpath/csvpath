@@ -54,6 +54,14 @@ class Status3(Function3):
     # failed"). none is implied by absence, so older entries with no
     # status match neither. still ledger-only: LEDGER_KEY, not KEY.
     #
+    # CSVPATHS added 2026-11-06 (David: "given we capture status on
+    # CSVPATHS, we should support accessing it"): every loads ledger entry
+    # has a status -- "complete" (Registrar.COMPLETE) for a load, or
+    # "unchanged" (PathsRegistrar.UNCHANGED) for a reload of a group whose
+    # file had not changed. ledger-only there too, as for FILES. an
+    # unchanged reload is not a new version, so it is reached through
+    # ':manifest()', the ledger set.
+    #
     NAME = "status"
     SUMMARY = (
         "RESULTS: the lifecycle status of the resolved run -- "
@@ -61,10 +69,12 @@ class Status3(Function3):
         "registration recorded in the global arrivals ledger -- "
         "'complete' or 'failed' -- always takes a string argument "
         "there, GATE-ing a bare chain read directly from that ledger "
-        "(e.g. ':status(\"failed\"):named_file_name(\"orders\")')."
+        "(e.g. ':status(\"failed\"):named_file_name(\"orders\")'). "
+        "CSVPATHS: the status of a load recorded in the loads ledger -- "
+        "'complete' or 'unchanged'."
     )
     ROLE = Function3.VALUE
-    DATATYPES = (Reference3.RESULTS, Reference3.FILES)
+    DATATYPES = (Reference3.RESULTS, Reference3.FILES, Reference3.CSVPATHS)
     ARG_TYPES = (str,)
     ARG_REQUIRED = False
     SOURCE = "manifest"
@@ -73,8 +83,10 @@ class Status3(Function3):
     }
     LEDGER_KEY = {
         Reference3.FILES: "status",
+        Reference3.CSVPATHS: "status",
     }
     POSITIONS = {
         Reference3.RESULTS: (Reference3.NAME_ONE,),
         Reference3.FILES: (Reference3.NAME_ONE,),
+        Reference3.CSVPATHS: (Reference3.NAME_ONE,),
     }

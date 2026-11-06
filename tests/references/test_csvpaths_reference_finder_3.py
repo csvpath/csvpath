@@ -1624,15 +1624,99 @@ class TestCsvpathsGates:
             # an argued selector beside a pointer is a pointer (6.44)
             '$acme.csvpaths.:last():uuid("a1")',
             # another datatype's field (2026-11-05): under '*' these read
-            # None and filtered everything out silently after #522
-            '$*.csvpaths.:status("complete")',
-            '$*.csvpaths.:last():status("complete")',
+            # None and filtered everything out silently after #522.
+            # (':status()' was one of these until it became a CSVPATHS
+            # field, 2026-11-06.)
+            '$*.csvpaths.:type("csv")',
+            '$*.csvpaths.:last():error_count(0)',
             '$*.csvpaths.:manifest():named_file_name("acme")',
         ],
     )
     def test_an_argument_that_is_not_a_gate_still_raises(self, reference):
         with pytest.raises(ReferenceException3):
             _gate_finder(reference).query()
+
+
+#
+# ':status()' fixture (2026-11-06). The loads ledger holds a status per load:
+# "complete", or "unchanged" for a reload of a group whose file had not
+# changed. acme's a2 was reloaded unchanged: a2-reload is its own ledger
+# entry, linked by version_uuid, and not a version in acme's manifest. b1
+# was written before loads had a status, so it has none.
+#
+STATUS_LEDGER = sorted(
+    [
+        *(
+            dict(e, status="complete", lifecycle="active")
+            for es in GATE_BY_NAME.values()
+            for e in es
+            if e["uuid"] != "b1"
+        ),
+        dict(GATE_BY_NAME["beta"][0], lifecycle="active"),
+        dict(
+            _gate_entry("acme", "a2-reload", 4, ":1/:2"),
+            status="unchanged",
+            lifecycle="active",
+            version_uuid="a2",
+        ),
+    ],
+    key=lambda e: e["time"],
+)
+
+
+def _status_finder(reference: str) -> CsvpathsReferenceFinder3:
+    return _finder(
+        reference,
+        by_name={name: [dict(e) for e in es] for name, es in GATE_BY_NAME.items()},
+        ledger=[dict(e) for e in STATUS_LEDGER],
+        inputs_csvpaths_path="named_paths",
+    )
+
+
+class TestCsvpathsStatus:
+    # ':status()' for CSVPATHS (David, 2026-11-06): a ledger-only field, as
+    # in FILES, read and gated through the same machinery as every other
+    # field (finding A). It used to raise "is not legal at name_one for
+    # csvpaths".
+    def test_the_field_reads_every_ledger_entry(self):
+        results = _status_finder("$*.csvpaths.:manifest():status()").resolve()
+        assert [(r.uuid, r.data) for r in results.results] == [
+            ("a1", "complete"),
+            ("b1", None),
+            ("a2", "complete"),
+            ("a2-reload", "unchanged"),
+            ("a3", "complete"),
+            ("b2", "complete"),
+            ("a4", "complete"),
+        ]
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ('$*.csvpaths.:manifest():status("unchanged")', ["a2-reload"]),
+            ('$*.csvpaths.:manifest():status("complete"):last()', ["a4"]),
+            ('$*.csvpaths.:manifest():last():status("unchanged")', ["a2-reload"]),
+            # an entry with no status matches neither value
+            ('$:regex(/^beta$/).csvpaths.:manifest():status("complete")', ["b2"]),
+            # a version reads its own load's ledger entry; an unchanged
+            # reload is not a version, so only the ledger set reaches it
+            ('$acme.csvpaths.:all():status("complete")', ["a1", "a2", "a3", "a4"]),
+            ('$acme.csvpaths.:all():status("unchanged")', []),
+            ('$*.csvpaths.:last():status("complete")', ["a4", "b2"]),
+        ],
+    )
+    def test_the_gate(self, reference, expected):
+        assert _status_finder(reference).query().uuids == expected
+
+    def test_a_version_reads_its_own_status(self):
+        results = _status_finder("$acme.csvpaths.:last():status()").resolve()
+        assert [r.data for r in results.results] == ["complete"]
+
+    def test_status_with_lifecycle(self):
+        results = _status_finder(
+            '$*.csvpaths.:manifest():status("complete"):lifecycle("active")'
+        ).query()
+        assert results.uuids == ["a1", "a2", "a3", "b2", "a4"]
 
 
 class TestStarRootGroups:

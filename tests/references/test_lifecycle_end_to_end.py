@@ -127,7 +127,7 @@ def test_a_per_name_read(project, datatype):
     assert _names(project, datatype, gated) == []
 
 
-@pytest.mark.parametrize("datatype", ["files", "results"])
+@pytest.mark.parametrize("datatype", list(FINDERS))
 @pytest.mark.parametrize(
     "reference",
     [
@@ -137,5 +137,5 @@ def test_a_per_name_read(project, datatype):
     ],
 )
 def test_lifecycle_with_status(project, datatype, reference):
-    # ':status()' is a FILES and RESULTS field
+    # ':status()' is a field in every datatype (CSVPATHS since 2026-11-06)
     assert _names(project, datatype, reference.format(dt=datatype)) == ["keep"]

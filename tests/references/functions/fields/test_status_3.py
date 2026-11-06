@@ -13,7 +13,9 @@ def test_metadata():
     # widened 2026-10-18 to also cover FILES -- the global arrivals
     # ledger's own "status" field (a failure message), distinct from
     # RESULTS' own lifecycle marker, same literal key by coincidence.
-    assert f.DATATYPES == (Reference3.RESULTS, Reference3.FILES)
+    # and CSVPATHS 2026-11-06: the loads ledger's own "status"
+    # ("complete" or "unchanged")
+    assert f.DATATYPES == (Reference3.RESULTS, Reference3.FILES, Reference3.CSVPATHS)
     assert f.SOURCE == "manifest"
     # KEY has NO FILES entry -- status is genuinely ledger-only there
     # (never written to any per-name manifest), so it goes in
@@ -24,10 +26,12 @@ def test_metadata():
     }
     assert f.LEDGER_KEY == {
         Reference3.FILES: "status",
+        Reference3.CSVPATHS: "status",
     }
     assert f.POSITIONS == {
         Reference3.RESULTS: (Reference3.NAME_ONE,),
         Reference3.FILES: (Reference3.NAME_ONE,),
+        Reference3.CSVPATHS: (Reference3.NAME_ONE,),
     }
 
 
