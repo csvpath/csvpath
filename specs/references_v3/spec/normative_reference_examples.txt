@@ -297,6 +297,10 @@ $*.results.:manifest():lifecycle("active"):last()
 The lifecycle of every record
 $*.files.:manifest():lifecycle()
 
+The lifecycle of the last registration of `orders.csv`, read from its own
+arrivals ledger entry
+$acme.files.:name("orders.csv").:last():lifecycle()
+
 Without `:manifest()`, `*` searches each live name in turn, so this
 reference is legal but never returns results:
 $*.files.:lifecycle("deleted")

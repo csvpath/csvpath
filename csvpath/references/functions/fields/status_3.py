@@ -47,6 +47,12 @@ class Status3(Function3):
     # new `_bare_status_gate_chain()` (see its own docstring), which
     # reads the global ledger directly rather than going through the
     # ordinary per-name-manifest candidate pipeline at all.
+    # REVISED 2026-11-06 (David: "if we have the data on a version by
+    # version basis ... we should offer access at the name_three level"):
+    # each registration's own arrivals ledger entry, found by its uuid,
+    # holds its status, and a name_three read falls back to it by
+    # LEDGER_KEY. So FILES now has NAME_THREE too. A live version always
+    # reads "complete": a failure is never a version.
     #
     # 2026-10-26 (harmonization, David): every FILES ledger entry now has
     # a status -- "complete" (Registrar.COMPLETE, the same string as
@@ -87,6 +93,6 @@ class Status3(Function3):
     }
     POSITIONS = {
         Reference3.RESULTS: (Reference3.NAME_ONE,),
-        Reference3.FILES: (Reference3.NAME_ONE,),
+        Reference3.FILES: (Reference3.NAME_ONE, Reference3.NAME_THREE),
         Reference3.CSVPATHS: (Reference3.NAME_ONE,),
     }

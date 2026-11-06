@@ -1157,6 +1157,8 @@ Fields
 - The root ledger lifecycle of a record, in every datatype: `active`
   when written, `deleted` once its named-file, named-paths group or
   named-results is deleted. Only the root ledgers hold it.
+- In FILES a version, in name_three, reads its own registration's:
+  `$acme.files.:name("orders.csv").:last():lifecycle()`.
 - Without an argument it is the field. With a string argument it is a
   filter: `$*.files.:manifest():lifecycle("active")` is every live
   registration in the ledger manifest set.
@@ -1171,7 +1173,8 @@ Fields
 `:status()`
 - What happened when a record was written, in every datatype:
   - FILES: `complete` or `failed`, per registration, in the arrivals
-    ledger. A failure is never a version.
+    ledger. A failure is never a version. A version, in name_three,
+    reads its own registration's, so a live one is always `complete`.
   - CSVPATHS: `complete` for a load, or `unchanged` for a reload of a
     group whose file had not changed, in the loads ledger. An unchanged
     reload is not a new version, so only `:manifest()` reaches it.

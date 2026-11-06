@@ -30,7 +30,9 @@ def test_metadata():
     }
     assert f.POSITIONS == {
         Reference3.RESULTS: (Reference3.NAME_ONE,),
-        Reference3.FILES: (Reference3.NAME_ONE,),
+        # FILES also at name_three (2026-11-06): a registration's own
+        # ledger entry holds its status
+        Reference3.FILES: (Reference3.NAME_ONE, Reference3.NAME_THREE),
         Reference3.CSVPATHS: (Reference3.NAME_ONE,),
     }
 

@@ -14,6 +14,10 @@ class Lifecycle3(Function3):
     # harmonization PR 6 has no lifecycle and matches neither: absence
     # implies nothing.
     #
+    # FILES has NAME_THREE too (2026-11-06): each registration's ledger
+    # entry holds its own lifecycle, read by the version's uuid, so
+    # '$x.files.:name("x.csv").:last():lifecycle()' is that registration's.
+    #
     NAME = "lifecycle"
     SUMMARY = (
         "The root ledger lifecycle of an entry -- 'active' or 'deleted'. "
@@ -31,7 +35,7 @@ class Lifecycle3(Function3):
         Reference3.RESULTS: "lifecycle",
     }
     POSITIONS = {
-        Reference3.FILES: (Reference3.NAME_ONE,),
+        Reference3.FILES: (Reference3.NAME_ONE, Reference3.NAME_THREE),
         Reference3.CSVPATHS: (Reference3.NAME_ONE,),
         Reference3.RESULTS: (Reference3.NAME_ONE,),
     }
