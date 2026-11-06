@@ -555,6 +555,12 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         # 3+-function chain reaches the guard below.
         calls = [name_one.path[0], *name_one.functions]
         built = self._build_chain(calls)
+        # the same position check the literal root's _resolve_versions()
+        # runs (2026-11-05): a field another datatype registers, e.g.
+        # ':status()', raises here too. Since the gates (#522) it would
+        # otherwise read None and silently filter everything out.
+        for f in built:
+            self._check_position(f, Reference3.NAME_ONE, Reference3.CSVPATHS)
         all_call = next((f for f in built if f.name == "all"), None)
         having_call = next((f for f in built if f.name == "having"), None)
         # every field accessor, not just the first: argued ones are gates

@@ -1585,6 +1585,26 @@ class TestCsvpathsGates:
         ).resolve()
         assert [r.data for r in results.results] == ["g1"]
 
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ('$*.csvpaths.:manifest():lifecycle("deleted")', ["g1"]),
+            ('$*.csvpaths.:manifest():lifecycle("deleted"):last()', ["g1"]),
+            (
+                '$*.csvpaths.:manifest():lifecycle("active")',
+                ["a1", "b1", "a2", "a3", "b2", "a4"],
+            ),
+            ('$*.csvpaths.:manifest():last():lifecycle("active")', ["a4"]),
+            # a live group's per-name entries have no lifecycle: the
+            # ledger supplies it
+            ('$acme.csvpaths.:last():lifecycle("active")', ["a4"]),
+            ('$*.csvpaths.:lifecycle("deleted")', []),
+        ],
+    )
+    def test_the_lifecycle_gate(self, reference, expected):
+        # ':lifecycle()' (2026-11-05) through the gate mechanism
+        assert _gate_finder(reference).query().uuids == expected
+
     def test_a_key_argument_still_supplies_the_value(self):
         # a "{}"-key field's argument picks the key; it is not a gate
         results = _gate_finder(
@@ -1603,6 +1623,11 @@ class TestCsvpathsGates:
             "$*.csvpaths.:manifest():template(:has_value())",
             # an argued selector beside a pointer is a pointer (6.44)
             '$acme.csvpaths.:last():uuid("a1")',
+            # another datatype's field (2026-11-05): under '*' these read
+            # None and filtered everything out silently after #522
+            '$*.csvpaths.:status("complete")',
+            '$*.csvpaths.:last():status("complete")',
+            '$*.csvpaths.:manifest():named_file_name("acme")',
         ],
     )
     def test_an_argument_that_is_not_a_gate_still_raises(self, reference):

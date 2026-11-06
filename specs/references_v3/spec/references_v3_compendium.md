@@ -1152,6 +1152,21 @@ Fields
   was read. If they disagree, the named-entity manifest wins for
   details and outcomes, and the manifest set wins for lifecycle.
 
+#### 6.13b(vi)
+`:lifecycle()`
+- The root ledger lifecycle of a record, in every datatype: `active`
+  when written, `deleted` once its named-file, named-paths group or
+  named-results is deleted. Only the root ledgers hold it.
+- Without an argument it is the field. With a string argument it is a
+  filter: `$*.files.:manifest():lifecycle("active")` is every live
+  registration in the ledger manifest set.
+- A ledger read returns the whole ledger, deleted records included;
+  `:lifecycle("active")` is the opt-in filter. A bare `*` read walks the
+  live names, which no longer hold a deleted one, so there
+  `:lifecycle("deleted")` finds nothing.
+- Absence implies nothing: a record written before lifecycles has none
+  and matches neither value.
+
 
 #### 6.14
 The `:manifest()` function's behavior is context-aware. It says: "get

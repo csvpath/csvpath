@@ -1828,7 +1828,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
         function flag -- there is currently no second ledger-only
         root trigger to generalize from (contrast `_matches_field_
         predicate()`'s own `KEY` check for ordinary chain MEMBERS,
-        which IS generic).
+        which IS generic). UPDATED 2026-11-05: ':lifecycle()' is that
+        second ledger-only field, so the trigger is now declarative --
+        any argued member with a FILES LEDGER_KEY and no FILES KEY
+        (_is_ledger_only_gate()), in any position, since gates commute.
 
         Every member (the leading ':status()' and any chained field
         accessors) must carry an argument and declare a real
@@ -1838,9 +1841,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
         dict."""
         if len(name_one.path) != 1 or not isinstance(name_one.path[0], FunctionCall3):
             return None
-        if name_one.path[0].name != "status" or name_one.path[0].arg is None:
-            return None
         calls = [name_one.path[0], *name_one.functions]
+        #
+        # 2026-11-05: any argued ledger-only member starts the chain, not
+        # just a leading ':status()'. ':lifecycle()' is the second ledger-
+        # only field, and gates commute (compendium 6.1), so
+        # ':named_file_name("orders"):status("failed")' is the same chain
+        # as ':status("failed"):named_file_name("orders")' -- it used to
+        # raise.
+        #
+        if not any(self._is_ledger_only_gate(call) for call in calls):
+            return None
         built = []
         for call in calls:
             function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
@@ -1858,6 +1869,24 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 return None
             built.append(self._build(call))
         return built
+
+    @staticmethod
+    def _is_ledger_only_gate(call: FunctionCall3) -> bool:
+        """true for an argued field that only the global arrivals ledger
+        holds for FILES and that is legal in name_one there: a LEDGER_KEY,
+        no KEY and a NAME_ONE position, e.g. ':status("failed")' and
+        ':lifecycle("deleted")'. ':named_file_name()' is ledger-keyed too,
+        but name_three-only in FILES, so it rides a chain, never starts one."""
+        if call is None:
+            raise ValueError("Call cannot be None")
+        function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+        if function_cls is None or call.arg is None:
+            return False
+        return (
+            function_cls.KEY.get(Reference3.FILES) is None
+            and function_cls.LEDGER_KEY.get(Reference3.FILES) is not None
+            and Reference3.NAME_ONE in function_cls.POSITIONS.get(Reference3.FILES, ())
+        )
 
     @staticmethod
     def _filter_ledger_by_gate_chain(ledger: list, chain: list) -> list:

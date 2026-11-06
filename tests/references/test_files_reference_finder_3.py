@@ -3408,6 +3408,41 @@ class TestStatusGate:
         assert results.files == ["inputs/named_files/finn/orders.csv"]
 
 
+class TestLifecycleGateOnTheFilesLedger:
+    # ':lifecycle()' (2026-11-05). STATUS_LEDGER's entries have no
+    # lifecycle, as entries written before harmonization PR 6 don't:
+    # absence implies nothing, so they match neither value (David,
+    # 2026-10-29). See test_lifecycle_end_to_end.py for the real ledgers.
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            '$*.files.:manifest():lifecycle("active")',
+            '$*.files.:manifest():lifecycle("deleted")',
+            '$*.files.:lifecycle("active")',
+            '$*.files.:status("complete"):lifecycle("active")',
+        ],
+    )
+    def test_an_entry_with_no_lifecycle_matches_neither(self, reference):
+        assert TestStatusGate._status_finder(reference).query().results == []
+
+    def test_the_field_reads_none_for_an_entry_with_no_lifecycle(self):
+        finder = TestStatusGate._status_finder("$*.files.:manifest():lifecycle()")
+        assert {r.data for r in finder.resolve().results} == {None}
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            '$*.files.:status("complete"):named_file_name("orders")',
+            # gates commute (compendium 6.1): any ledger-only gate starts
+            # the bare ledger chain, not just a leading ':status()'. This
+            # one used to raise.
+            '$*.files.:named_file_name("orders"):status("complete")',
+        ],
+    )
+    def test_a_ledger_gate_chain_in_either_order(self, reference):
+        assert TestStatusGate._status_finder(reference).query().uuids == ["ok-1"]
+
+
 class TestLiteralNameThreeBody:
     # a literal name_three body -- e.g. "orders.aaaa" -- names the
     # FINGERPRINT of the version, per compendium 3.19b/3.20. Added

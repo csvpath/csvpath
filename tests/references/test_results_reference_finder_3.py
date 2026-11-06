@@ -2813,6 +2813,44 @@ class TestErrorCountPredicateGate:
         assert sorted(r.data for r in results.results) == [0, 2, 5]
 
 
+class TestLifecycleGateOnRuns:
+    # ':lifecycle()' (2026-11-05) is ledger-only: no run manifest holds
+    # it. A run-dir gate reads it from the run's archive ledger entry, as
+    # resolve() does; it used to read only the run manifest, so a gate on
+    # it matched nothing while the same field resolved. The third run's
+    # entry has no lifecycle, as entries from before harmonization PR 6
+    # don't: it matches neither value.
+    @pytest.fixture
+    def runs(self, tmp_path):
+        entries = []
+        for i, lifecycle in enumerate(("active", "active", None)):
+            run_dir = tmp_path / "acme" / f"2026-01-0{i + 1}_00-00-00"
+            _write_json(run_dir / "manifest.json", {"run_uuid": f"r{i}"})
+            entry = _ledger_entry("acme", str(run_dir))
+            if lifecycle is not None:
+                entry["lifecycle"] = lifecycle
+            entries.append(entry)
+        _write_json(tmp_path / "manifest.json", entries)
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ('$acme.results.:flatten():lifecycle("active")', ["r0", "r1"]),
+            ('$acme.results.:last():lifecycle("active")', ["r1"]),
+            ('$acme.results.:lifecycle("active"):last()', ["r1"]),
+            ('$*.results.:lifecycle("active")', ["r0", "r1"]),
+            ('$acme.results.:flatten():lifecycle("deleted")', []),
+        ],
+    )
+    def test_a_run_gate_reads_the_ledger(self, runs, reference, expected):
+        assert _finder(reference, runs).query().uuids == expected
+
+    def test_the_field_resolves_from_the_ledger(self, runs):
+        results = _finder("$acme.results.:flatten():lifecycle()", runs).resolve()
+        assert [r.data for r in results.results] == ["active", "active", None]
+
+
 class TestHasValuePredicates:
     # compendium 6.36 (David, 2026-11-03): ':has_value()' and
     # ':does_not_have_value()' replace ':none()', ':not_none()', ':empty()'
