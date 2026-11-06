@@ -803,6 +803,36 @@ Cyprus, Czechia, Denmark and Estonia; the other 15 are on the worklist.
   license" is American, Canadian and Australian, the same kind of overlap
   accepted for phones. France's only keyword is French.
 
+**Group B, the rest of the shapes.** Seven more `FormatDetector`
+entries. Macie publishes only their keywords (and, for the Argentina DNI,
+its exclusions), so every format is ours:
+- `ARGENTINA_DNI_NUMBER`: 7 or 8 digits, contiguous or dotted
+  (12.345.678). Macie's exclusions, 99999999 and all zeroes, are
+  `exclusions` (compared without dots). Macie says it may report an
+  Argentine DNI as Spain's and the other way around; ours does not, as
+  Spain's DNI needs its check letter.
+- `BRAZIL_RG_NUMBER`: states issue RG numbers in their own shapes. We take
+  Sao Paulo's, 8 digits and a check character, a digit or X
+  (12.345.678-9); the check is not verified, as states compute it
+  differently.
+- `COLOMBIA_CITIZENSHIP_CARD_NUMBER`: 6 to 10 digits, contiguous or
+  dotted between thousands. No check digit.
+- `CANADA_NATIONAL_IDENTIFICATION_NUMBER` (Macie's permanent residence
+  number): the IRCC client identifier (UCI), 8 or 10 digits, as 1234-5678
+  or 12-3456-7890.
+- `INDIA_PERMANENT_ACCOUNT_NUMBER`: 5 letters, 4 digits, a letter; the
+  fourth letter is the holder type (A B C F G H J L P T). The last letter
+  is a check character with no published rule.
+- `UK_ELECTORAL_ROLL_NUMBER`: two letters and 1 to 4 digits, Microsoft
+  Purview's description.
+- `BRAZIL_CEP_CODE`: 8 digits, as 01310-100, 01310100 or 01.310-100.
+  Severity is Macie's mailing address row, LOW, MEDIUM from 2, HIGH from
+  100.
+The short keywords `rg` and `cep` match as substrings (item 3): `org`,
+a `cargo` header and `receptor` count. Keywords are matched as Macie
+lists them, so `cedula de ciudadania` without its accents is not
+Colombia's keyword (item 22).
+
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
 (Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
@@ -907,6 +937,9 @@ every detector the catalog names exists, and every detector is used.
     other languages, or ambiguous 8 digit dates?
 21. Driver's licenses: how does Macie tell countries apart when their
     formats and keywords overlap? Which US state formats does it accept?
+22. The rest of group B: which Brazil RG state formats does Macie
+    accept? Does it match keywords without their accents (`cedula`)? Does
+    it report an Argentine DNI as Spain's (it says it might)?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

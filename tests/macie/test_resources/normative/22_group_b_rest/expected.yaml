@@ -1,0 +1,63 @@
+#
+# The rest of group B's shapes: Macie's ARGENTINA_DNI_NUMBER,
+# BRAZIL_RG_NUMBER, BRAZIL_CEP_CODE, COLOMBIA_CITIZENSHIP_CARD_NUMBER,
+# CANADA_NATIONAL_IDENTIFICATION_NUMBER (the permanent residence number),
+# INDIA_PERMANENT_ACCOUNT_NUMBER and UK_ELECTORAL_ROLL_NUMBER. Macie
+# publishes only their keywords, and all require one; the formats are
+# ours, in the FormatDetector notation.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: group-b-rest.csvpath
+    data: people.csv
+    finding_lines: [1, 2, 3, 4, 5, 6, 7, 9]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie BRAZIL_CEP_CODE: occurrence 1, line 1 (row 2), column 2 cep" }
+      - { line: 2, message: "macie ARGENTINA_DNI_NUMBER: occurrence 1, line 2 (row 3), column 3 notes" }
+      - { line: 3, message: "macie BRAZIL_RG_NUMBER: occurrence 1, line 3 (row 4), column 3 notes" }
+      - { line: 4, message: "macie COLOMBIA_CITIZENSHIP_CARD_NUMBER: occurrence 1, line 4 (row 5), column 3 notes" }
+      - { line: 5, message: "macie CANADA_NATIONAL_IDENTIFICATION_NUMBER: occurrence 1, line 5 (row 6), column 3 notes" }
+      - { line: 6, message: "macie INDIA_PERMANENT_ACCOUNT_NUMBER: occurrence 1, line 6 (row 7), column 3 notes" }
+      - { line: 7, message: "macie UK_ELECTORAL_ROLL_NUMBER: occurrence 1, line 7 (row 8), column 3 notes" }
+      - { line: 9, message: "macie BRAZIL_CEP_CODE: occurrence 2, line 9 (row 10), column 3 notes" }
+    findings: findings.json
+    #
+    #   line  cell                                    reported as
+    #   1     cep column "01310-100"                  Brazil CEP: the header is
+    #                                                 its keyword
+    #   2     "DNI 12.345.678"                        Argentina DNI; not Spain's,
+    #                                                 which needs its check letter
+    #   3     "RG 12.345.678-9"                       Brazil RG, Sao Paulo's shape
+    #   4     "cédula de ciudadanía 1.234.567.890"    Colombia
+    #   5     "PR number 1234-5678"                   Canada: the UCI
+    #   6     "PAN card ABCPE1234F"                   India PAN
+    #   7     "electoral roll number AB123"           UK electoral roll
+    #   8     "dni 99.999.999"                        nothing: Macie's exclusion
+    #   9     "cep 04538-133"                         Brazil CEP
+    #   10    "12.345.678"                            nothing: no keyword
+    #
+    # On each line the identifiers run in the wrapper's resolved order.
+    # The CEP is a mailing address, LOW for one occurrence, MEDIUM from 2;
+    # the others are HIGH from one. Totals: CEP 2, each other 1. All
+    # PERSONAL_INFORMATION: totalCount 8.

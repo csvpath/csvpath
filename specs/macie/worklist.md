@@ -81,7 +81,10 @@ last. Add an item the moment something is deferred.
      (accepted for the first release, David 2026-11-05). Next, in
      `group-b-design.md` order: dates done (birth date, card expiration,
      pair 20_dates); driver's licenses done for 17 jurisdictions (pair
-     21_drivers_licenses). Next, the rest of group B.
+     21_drivers_licenses). The rest of group B's shapes done (Argentina
+     DNI, Brazil RG and CEP, Colombia cedula, Canada permanent resident,
+     India PAN, UK electoral roll, pair 22_group_b_rest). Next, GPS
+     coordinates and HTTP cookies, which need small validators.
    - **Backlog, driver's licenses** (David, 2026-11-06): Finland, Greece,
      Hungary, Ireland, Latvia, Lithuania, Luxembourg, Malta, Netherlands,
      Poland, Portugal, Romania, Slovakia, Slovenia, Sweden. Microsoft
@@ -103,6 +106,28 @@ last. Add an item the moment something is deferred.
 8. **One-time fidelity scan against real Macie** (billed; ask first) to
    confirm the interpretations in transpile-design.md: three for custom
    identifiers, nine for managed ones.
+
+## Ask road-testers about
+
+Known false positive and false negative risks, to ask people road-testing
+the stand-ins for specific feedback on (David, 2026-11-06). Each is also a
+fidelity item in transpile-design.md.
+
+- **Short keywords match inside words** (fidelity item 3). Brazil's `rg`
+  matches `org`, `large`, a `cargo` header; `cep` matches `receptor`,
+  `exception`; also `mc`, `pan`, `card` and France's `social`. A number
+  of the right shape next to such a word is reported.
+- **Keywords need their accents** (item 22). `cedula de ciudadania`
+  without accents is not Colombia's keyword, so a cedula labeled that way
+  is missed. Brazil's CEP list has both forms only because Macie lists
+  both.
+- **One value, several countries.** National phone numbers (item 19),
+  driver's licenses near English keywords (item 21) and digit runs
+  shared by the Argentina DNI, Colombia cedula and Canada PR number can
+  be reported for more than one identifier.
+- **Formats that are ours.** Brazil RG takes only Sao Paulo's shape, so
+  other states' RGs are missed; the Canada PR number is the UCI only, not
+  the card's document number.
 
 ## Decide at release planning
 

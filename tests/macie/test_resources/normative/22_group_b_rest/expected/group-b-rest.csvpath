@@ -1,0 +1,80 @@
+~
+  id: group-b-rest
+  macie-origin: job
+  macie-job-id: 5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c
+  macie-account: 123456789012
+  macie-region: us-east-1
+  macie-source-arn: arn|aws|macie2|us-east-1|123456789012|classification-job/5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c
+  macie-downloaded-at: 20261106T180000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "ARGENTINA_DNI_NUMBER",
+        "PERSONAL_INFORMATION",
+        "ar_dni",
+        "required",
+        "dni|dni#|d.n.i.|documento nacional de identidad",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "BRAZIL_RG_NUMBER",
+        "PERSONAL_INFORMATION",
+        "br_rg",
+        "required",
+        "registro geral|rg",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "BRAZIL_CEP_CODE",
+        "PERSONAL_INFORMATION",
+        "br_cep",
+        "required",
+        "cep|código de endereçamento postal|codigo de endereçamento postal|código postal|codigo postal",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "COLOMBIA_CITIZENSHIP_CARD_NUMBER",
+        "PERSONAL_INFORMATION",
+        "co_cedula",
+        "required",
+        "cédula de ciudadanía|documento de identificación",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "CANADA_NATIONAL_IDENTIFICATION_NUMBER",
+        "PERSONAL_INFORMATION",
+        "ca_pr",
+        "required",
+        "carte résident permanent|numéro carte résident permanent|numéro résident permanent|permanent resident card|permanent resident card number|permanent resident no|permanent resident no.|permanent resident number|pr no|pr no.|pr non|pr number|résident permanent no.|résident permanent non",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "INDIA_PERMANENT_ACCOUNT_NUMBER",
+        "PERSONAL_INFORMATION",
+        "in_pan",
+        "required",
+        "e-pan|pan card|pan number|permanent account number",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "UK_ELECTORAL_ROLL_NUMBER",
+        "PERSONAL_INFORMATION",
+        "gb_electoral",
+        "required",
+        "electoral #|electoral number|electoral roll #|electoral roll no.|electoral roll number|electoralrollno",
+        30,
+        "1:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

@@ -1037,6 +1037,85 @@
         "driving license",
         "driving permit"
       ]
+    },
+    "ar_dni": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "dni",
+        "dni#",
+        "d.n.i.",
+        "documento nacional de identidad"
+      ]
+    },
+    "br_rg": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "registro geral",
+        "rg"
+      ]
+    },
+    "co_cedula": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "cédula de ciudadanía",
+        "documento de identificación"
+      ]
+    },
+    "ca_pr": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "carte résident permanent",
+        "numéro carte résident permanent",
+        "numéro résident permanent",
+        "permanent resident card",
+        "permanent resident card number",
+        "permanent resident no",
+        "permanent resident no.",
+        "permanent resident number",
+        "pr no",
+        "pr no.",
+        "pr non",
+        "pr number",
+        "résident permanent no.",
+        "résident permanent non"
+      ]
+    },
+    "in_pan": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "e-pan",
+        "pan card",
+        "pan number",
+        "permanent account number"
+      ]
+    },
+    "gb_electoral": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "electoral #",
+        "electoral number",
+        "electoral roll #",
+        "electoral roll no.",
+        "electoral roll number",
+        "electoralrollno"
+      ]
+    },
+    "br_cep": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "cep",
+        "código de endereçamento postal",
+        "codigo de endereçamento postal",
+        "código postal",
+        "codigo postal"
+      ]
     }
   },
   "identifiers": {
@@ -2523,6 +2602,83 @@
       "detector": "us_drivers_license",
       "keyword_mode": "required",
       "keywords_from": "us_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "ARGENTINA_DNI_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "ar_dni",
+      "keyword_mode": "required",
+      "keywords_from": "ar_dni",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "BRAZIL_RG_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "br_rg",
+      "keyword_mode": "required",
+      "keywords_from": "br_rg",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "COLOMBIA_CITIZENSHIP_CARD_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "co_cedula",
+      "keyword_mode": "required",
+      "keywords_from": "co_cedula",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "CANADA_NATIONAL_IDENTIFICATION_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "ca_pr",
+      "keyword_mode": "required",
+      "keywords_from": "ca_pr",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "INDIA_PERMANENT_ACCOUNT_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "in_pan",
+      "keyword_mode": "required",
+      "keywords_from": "in_pan",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "UK_ELECTORAL_ROLL_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "gb_electoral",
+      "keyword_mode": "required",
+      "keywords_from": "gb_electoral",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "BRAZIL_CEP_CODE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "br_cep",
+      "keyword_mode": "required",
+      "keywords_from": "br_cep",
       "distance": 30,
       "severity": "1:LOW 2:MEDIUM 100:HIGH",
       "fidelity": "B",
@@ -4052,6 +4208,88 @@
             "WY"
           ]
         }
+      ]
+    },
+    "ar_dni": {
+      "notes": [
+        "Macie publishes the keywords for ARGENTINA_DNI_NUMBER, and that it does not report 99999999, 99.999.999 or numbers of only zeroes.",
+        "The format is ours (RENAPER): 7 or 8 digits, contiguous or with dots as 12.345.678.",
+        "Macie says it might report an Argentine DNI as a Spanish one, or the other way around. Ours: a Spanish DNI needs its check letter, so 8 digits alone are only Argentina's."
+      ],
+      "formats": [
+        "#{7,8}",
+        "#.###.###",
+        "##.###.###"
+      ],
+      "exclusions": [
+        "99999999",
+        "0000000",
+        "00000000"
+      ]
+    },
+    "br_rg": {
+      "notes": [
+        "Macie publishes only the keywords for BRAZIL_RG_NUMBER.",
+        "The format is ours: RG numbers are issued by each state. We take the common Sao Paulo shape, 8 digits and a check character (a digit or X), as 12.345.678-9, 12345678-9 or 123456789. The check character is not verified: it is not computed the same way in every state."
+      ],
+      "formats": [
+        "##.###.###-[0-9X]",
+        "#{8}-[0-9X]",
+        "#{8}[0-9X]"
+      ]
+    },
+    "co_cedula": {
+      "notes": [
+        "Macie publishes only the keywords for COLOMBIA_CITIZENSHIP_CARD_NUMBER.",
+        "The format is ours (Registraduria Nacional): 6 to 10 digits, contiguous or with dots between thousands as 1.234.567.890. The number has no check digit."
+      ],
+      "formats": [
+        "#{6,10}",
+        "###.###",
+        "#.###.###",
+        "##.###.###",
+        "#.###.###.###"
+      ]
+    },
+    "ca_pr": {
+      "notes": [
+        "Macie publishes only the keywords for CANADA_NATIONAL_IDENTIFICATION_NUMBER, its permanent residence number.",
+        "The format is ours: the IRCC client identifier (UCI) printed on the permanent resident card, 8 or 10 digits, as 1234-5678 or 12-3456-7890. The card's own document number is not included."
+      ],
+      "formats": [
+        "#{8}",
+        "####-####",
+        "#{10}",
+        "##-####-####"
+      ]
+    },
+    "in_pan": {
+      "notes": [
+        "Macie publishes only the keywords for INDIA_PERMANENT_ACCOUNT_NUMBER.",
+        "The format is ours (Income Tax Department): 5 letters, 4 digits and a letter, as ABCPE1234F. The fourth letter is the holder type: A B C F G H J L P or T. The last letter is a check character whose rule is not published, so it is not verified."
+      ],
+      "formats": [
+        "AAA[ABCFGHJLPT]A####A"
+      ]
+    },
+    "gb_electoral": {
+      "notes": [
+        "Macie publishes only the keywords for UK_ELECTORAL_ROLL_NUMBER.",
+        "The format is ours, as Microsoft Purview describes it: a polling district's two letters and an elector number of 1 to 4 digits, as AB123."
+      ],
+      "formats": [
+        "AA#{1,4}"
+      ]
+    },
+    "br_cep": {
+      "notes": [
+        "Macie publishes the keywords for BRAZIL_CEP_CODE, that it finds only the CEP part of an address, and scores mailing addresses LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours (Correios): 8 digits, as 01310-100, 01310100 or 01.310-100."
+      ],
+      "formats": [
+        "#####-###",
+        "#{8}",
+        "##.###-###"
       ]
     }
   }
