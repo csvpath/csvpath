@@ -27,6 +27,13 @@ from .us_ssn_detector import UsSsnDetector
 from .vin_detector import VinDetector
 
 DETECTORS = {
+    "canada_passport": FormatDetector,
+    "france_passport": FormatDetector,
+    "germany_passport": FormatDetector,
+    "italy_passport": FormatDetector,
+    "spain_passport": FormatDetector,
+    "uk_passport": FormatDetector,
+    "usa_passport": FormatDetector,
     "aws_secret": CredentialDetector,
     "gcp_api_key": CredentialDetector,
     "http_basic": CredentialDetector,

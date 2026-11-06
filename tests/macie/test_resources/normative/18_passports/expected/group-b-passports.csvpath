@@ -1,0 +1,80 @@
+~
+  id: group-b-passports
+  macie-origin: job
+  macie-job-id: 1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e
+  macie-account: 123456789012
+  macie-region: eu-central-1
+  macie-source-arn: arn|aws|macie2|eu-central-1|123456789012|classification-job/1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e
+  macie-downloaded-at: 20261105T180000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "CANADA_PASSPORT_NUMBER",
+        "PERSONAL_INFORMATION",
+        "canada_passport",
+        "required",
+        "passeport|passeport#|passport|passport#|passportno|passportno#",
+        30,
+        "1:MEDIUM 2:HIGH"
+    )
+    macie_mdi(
+        "FRANCE_PASSPORT_NUMBER",
+        "PERSONAL_INFORMATION",
+        "france_passport",
+        "required",
+        "numéro de passeport|passeport|passeport #|passeport n °|passeport non",
+        30,
+        "1:MEDIUM 2:HIGH"
+    )
+    macie_mdi(
+        "GERMANY_PASSPORT_NUMBER",
+        "PERSONAL_INFORMATION",
+        "germany_passport",
+        "required",
+        "ausstellungsdatum|ausstellungsort|geburtsdatum|passport|passports|reisepass|reisepass–nr|reisepassnummer",
+        30,
+        "1:MEDIUM 2:HIGH"
+    )
+    macie_mdi(
+        "ITALY_PASSPORT_NUMBER",
+        "PERSONAL_INFORMATION",
+        "italy_passport",
+        "required",
+        "italian passport number|numéro passeport|numéro passeport italien|passaporto|passaporto italiana|passaporto numero|passport number|repubblica italiana passaporto",
+        30,
+        "1:MEDIUM 2:HIGH"
+    )
+    macie_mdi(
+        "SPAIN_PASSPORT_NUMBER",
+        "PERSONAL_INFORMATION",
+        "spain_passport",
+        "required",
+        "españa pasaporte|libreta pasaporte|número pasaporte|pasaporte|passport|passport book|passport no|passport number|spain passport",
+        30,
+        "1:MEDIUM 2:HIGH"
+    )
+    macie_mdi(
+        "UK_PASSPORT_NUMBER",
+        "PERSONAL_INFORMATION",
+        "uk_passport",
+        "required",
+        "passeport #|passeport n °|passeport non|passeportn °|passport #|passport no|passport number|passport#|passportid",
+        30,
+        "1:MEDIUM 2:HIGH"
+    )
+    macie_mdi(
+        "USA_PASSPORT_NUMBER",
+        "PERSONAL_INFORMATION",
+        "usa_passport",
+        "required",
+        "passport|travel document",
+        30,
+        "1:MEDIUM 2:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

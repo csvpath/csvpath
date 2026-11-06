@@ -616,6 +616,95 @@
         "cvv2",
         "elo verification code"
       ]
+    },
+    "canada_passport": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "passeport",
+        "passeport#",
+        "passport",
+        "passport#",
+        "passportno",
+        "passportno#"
+      ]
+    },
+    "france_passport": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "numéro de passeport",
+        "passeport",
+        "passeport #",
+        "passeport n °",
+        "passeport non"
+      ]
+    },
+    "germany_passport": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "ausstellungsdatum",
+        "ausstellungsort",
+        "geburtsdatum",
+        "passport",
+        "passports",
+        "reisepass",
+        "reisepass–nr",
+        "reisepassnummer"
+      ]
+    },
+    "italy_passport": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "italian passport number",
+        "numéro passeport",
+        "numéro passeport italien",
+        "passaporto",
+        "passaporto italiana",
+        "passaporto numero",
+        "passport number",
+        "repubblica italiana passaporto"
+      ]
+    },
+    "spain_passport": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "españa pasaporte",
+        "libreta pasaporte",
+        "número pasaporte",
+        "pasaporte",
+        "passport",
+        "passport book",
+        "passport no",
+        "passport number",
+        "spain passport"
+      ]
+    },
+    "uk_passport": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "passeport #",
+        "passeport n °",
+        "passeport non",
+        "passeportn °",
+        "passport #",
+        "passport no",
+        "passport number",
+        "passport#",
+        "passportid"
+      ]
+    },
+    "usa_passport": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "passport",
+        "travel document"
+      ]
     }
   },
   "identifiers": {
@@ -1744,6 +1833,83 @@
       "fidelity": "B",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
       "retrieved": "2026-11-05"
+    },
+    "CANADA_PASSPORT_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "canada_passport",
+      "keyword_mode": "required",
+      "keywords_from": "canada_passport",
+      "distance": 30,
+      "severity": "1:MEDIUM 2:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "FRANCE_PASSPORT_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "france_passport",
+      "keyword_mode": "required",
+      "keywords_from": "france_passport",
+      "distance": 30,
+      "severity": "1:MEDIUM 2:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "GERMANY_PASSPORT_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "germany_passport",
+      "keyword_mode": "required",
+      "keywords_from": "germany_passport",
+      "distance": 30,
+      "severity": "1:MEDIUM 2:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "ITALY_PASSPORT_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "italy_passport",
+      "keyword_mode": "required",
+      "keywords_from": "italy_passport",
+      "distance": 30,
+      "severity": "1:MEDIUM 2:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "SPAIN_PASSPORT_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "spain_passport",
+      "keyword_mode": "required",
+      "keywords_from": "spain_passport",
+      "distance": 30,
+      "severity": "1:MEDIUM 2:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "UK_PASSPORT_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "uk_passport",
+      "keyword_mode": "required",
+      "keywords_from": "uk_passport",
+      "distance": 30,
+      "severity": "1:MEDIUM 2:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "USA_PASSPORT_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "usa_passport",
+      "keyword_mode": "required",
+      "keywords_from": "usa_passport",
+      "distance": 30,
+      "severity": "1:MEDIUM 2:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
     }
   },
   "detectors": {
@@ -2586,6 +2752,71 @@
       ],
       "formats": [
         "#{3,4}"
+      ]
+    },
+    "canada_passport": {
+      "notes": [
+        "Macie publishes only the keywords for CANADA_PASSPORT_NUMBER, and scores passport numbers MEDIUM for one occurrence, HIGH from two.",
+        "The format is ours: IRCC: a Canadian passport number has 8 characters, 2 letters then 6 digits (https://www.ircc.canada.ca/english/helpcentre/answer.asp?qnum=1446)."
+      ],
+      "formats": [
+        "AA######"
+      ]
+    },
+    "france_passport": {
+      "notes": [
+        "Macie publishes only the keywords for FRANCE_PASSPORT_NUMBER, and scores passport numbers MEDIUM for one occurrence, HIGH from two.",
+        "The format is ours: 2 digits, 2 letters, 5 digits (European Commission, OCS analysis, document number formats: https://interoperable-europe.ec.europa.eu/sites/default/files/document/2012-12/OCS%20Analysis%20-%20Document%20ID%20V1%203%202.pdf)."
+      ],
+      "formats": [
+        "##AA#####"
+      ]
+    },
+    "germany_passport": {
+      "notes": [
+        "Macie publishes only the keywords for GERMANY_PASSPORT_NUMBER, and scores passport numbers MEDIUM for one occurrence, HIGH from two.",
+        "The format is ours: 9 characters of digits and C F G H J K L M N P R T V W X Y Z; the Auswaertiges Amt leaves out vowels and B D Q S. Ours: the first is C F G H J or K, as detection rules for German passports have it. The MRZ check digit is not part of the printed number."
+      ],
+      "formats": [
+        "[CF-HJK][0-9CF-HJ-NPRTV-Z]{8}"
+      ]
+    },
+    "italy_passport": {
+      "notes": [
+        "Macie publishes only the keywords for ITALY_PASSPORT_NUMBER, and scores passport numbers MEDIUM for one occurrence, HIGH from two.",
+        "The format is ours: 2 letters, 7 digits (European Commission, OCS analysis, document number formats: https://interoperable-europe.ec.europa.eu/sites/default/files/document/2012-12/OCS%20Analysis%20-%20Document%20ID%20V1%203%202.pdf)."
+      ],
+      "formats": [
+        "AA#######"
+      ]
+    },
+    "spain_passport": {
+      "notes": [
+        "Macie publishes only the keywords for SPAIN_PASSPORT_NUMBER, and scores passport numbers MEDIUM for one occurrence, HIGH from two.",
+        "The format is ours: 3 letters and 6 digits (the Spanish consulates); ours, also the older 2 letters and 6 digits, as detection rules allow 8 or 9 characters."
+      ],
+      "formats": [
+        "AAA######",
+        "AA######"
+      ]
+    },
+    "uk_passport": {
+      "notes": [
+        "Macie publishes only the keywords for UK_PASSPORT_NUMBER, and scores passport numbers MEDIUM for one occurrence, HIGH from two.",
+        "The format is ours: 9 digits (HM Passport Office)."
+      ],
+      "formats": [
+        "#{9}"
+      ]
+    },
+    "usa_passport": {
+      "notes": [
+        "Macie publishes only the keywords for USA_PASSPORT_NUMBER, and scores passport numbers MEDIUM for one occurrence, HIGH from two.",
+        "The format is ours: 9 digits, or since 2021 a letter and 8 digits (the Next Generation Passport)."
+      ],
+      "formats": [
+        "#{9}",
+        "A#{8}"
       ]
     }
   }

@@ -1,0 +1,109 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "eu-central-1",
+    "downloaded_at": "2026-11-05T18:00:00Z",
+    "job_id": "1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "CANADA_PASSPORT_NUMBER",
+      "FRANCE_PASSPORT_NUMBER",
+      "GERMANY_PASSPORT_NUMBER",
+      "ITALY_PASSPORT_NUMBER",
+      "SPAIN_PASSPORT_NUMBER",
+      "UK_PASSPORT_NUMBER",
+      "USA_PASSPORT_NUMBER"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "CANADA_PASSPORT_NUMBER",
+      "FRANCE_PASSPORT_NUMBER",
+      "GERMANY_PASSPORT_NUMBER",
+      "ITALY_PASSPORT_NUMBER",
+      "SPAIN_PASSPORT_NUMBER",
+      "UK_PASSPORT_NUMBER",
+      "USA_PASSPORT_NUMBER"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "CANADA_PASSPORT_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "FRANCE_PASSPORT_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "GERMANY_PASSPORT_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "ITALY_PASSPORT_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "SPAIN_PASSPORT_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "UK_PASSPORT_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "USA_PASSPORT_NUMBER"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Traveler records",
+      "jobArn": "arn:aws:macie2:eu-central-1:123456789012:classification-job/1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e",
+      "jobId": "1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "CANADA_PASSPORT_NUMBER",
+        "FRANCE_PASSPORT_NUMBER",
+        "GERMANY_PASSPORT_NUMBER",
+        "ITALY_PASSPORT_NUMBER",
+        "SPAIN_PASSPORT_NUMBER",
+        "UK_PASSPORT_NUMBER",
+        "USA_PASSPORT_NUMBER"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "group-b-passports",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-travelers"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}
