@@ -1167,6 +1167,18 @@ Fields
 - Absence implies nothing: a record written before lifecycles has none
   and matches neither value.
 
+#### 6.13b(vii)
+`:status()`
+- What happened when a record was written, in every datatype:
+  - FILES: `complete` or `failed`, per registration, in the arrivals
+    ledger. A failure is never a version.
+  - CSVPATHS: `complete` for a load, or `unchanged` for a reload of a
+    group whose file had not changed, in the loads ledger. An unchanged
+    reload is not a new version, so only `:manifest()` reaches it.
+  - RESULTS: `started` or `complete`, per run.
+- Without an argument it is the field; with a string argument it is a
+  filter, as for `:lifecycle()`. Absence implies nothing.
+
 
 #### 6.14
 The `:manifest()` function's behavior is context-aware. It says: "get
