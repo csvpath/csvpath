@@ -45,6 +45,7 @@ The common qualifiers are available on multiple match components. In some cases 
 - `onmatch`
 - `renew`
 - `strict`
+- `tmp`
 
 ### asbool
 When `asbool` is set on a variable or header its value is interpreted as a bool rather than just a simple `is not None` test
@@ -114,6 +115,13 @@ Add `onchange` to a variable to indicate that a row should only match when the v
 
 ### renew
 `renew` resets variables at each line. The variable is set to None. If the variable has `latch` it latches only during each line, which can be a valuable distinction in certain cases.
+
+|Functions | Headers | Variables |
+|----------|---------|-----------|
+| No       | No      | Yes       |
+
+### tmp
+`tmp` blocks variables from being captured to `vars.json` at the end of a run. This is used to control sensitive information and prevent large variables from taking file space. At this time `tmp` only applies to user defined variables, not to automatically generated variables created by functions for their own bookkeeping. Adding tmp to functions to control internal variables is in the backlog.
 
 |Functions | Headers | Variables |
 |----------|---------|-----------|

@@ -10,10 +10,10 @@ instances do not write out data, so this value would be 0 for them.
 |:-----------|:------------------------------------------|
 | Main focus | count_bytes() produces a calculated value |
 
-| Context          | Qualifier                                                                          |
-|:-----------------|:-----------------------------------------------------------------------------------|
-| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
-| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Context          | Qualifier                                                                                                                                                                                                                                      |
+|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch)                                                                                                                                                             |
+| Value qualifiers | [tmp](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#tmp), [renew](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#renew), [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 
 [[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

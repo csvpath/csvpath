@@ -17,9 +17,9 @@ Note that wildcard() and wildcard("*") are functionally the same.
 |:---------------------------------------------------------------------------------------------------|
 | line( [function representing a data type: $${\color{green}None}$$ ǁ $${\color{green}Any}$$], ... ) |
 
-| Call signatures                                                                                                              |
-|:-----------------------------------------------------------------------------------------------------------------------------|
-| line( [function representing a data type: Wildcard ǁ String ǁ Boolean ǁ Decimal ǁ Date ǁ Nonef ǁ Blank ǁ Email ǁ Url], ... ) |
+| Call signatures                                                                                                                     |
+|:------------------------------------------------------------------------------------------------------------------------------------|
+| line( [function representing a data type: Wildcard ǁ String ǁ Boolean ǁ Decimal ǁ Date ǁ Nonef ǁ Blank ǁ Email ǁ Url ǁ Uuid], ... ) |
 
 | Purpose    | Value                            |
 |:-----------|:---------------------------------|

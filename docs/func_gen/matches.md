@@ -24,10 +24,10 @@ due to the language's grammar you would actually need to do:
 |:-----------|:----------------------------------------------------------|
 | Main focus | matches() produces a calculated value and decides matches |
 
-| Context          | Qualifier                                                                          |
-|:-----------------|:-----------------------------------------------------------------------------------|
-| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
-| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Context          | Qualifier                                                                                                                                                                                                                                      |
+|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch)                                                                                                                                                             |
+| Value qualifiers | [tmp](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#tmp), [renew](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#renew), [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 
 [[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

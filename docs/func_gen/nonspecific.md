@@ -11,10 +11,10 @@ Blank cannot be used outside a line()
 | Type       | Nonspecific is a line() schema type     |
 | Aliases    | blank, nonspecific, unspecified         |
 
-| Context          | Qualifier                                                                                                                                                                |
-|:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [distinct](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#distinct) |
-| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch)                                                                                       |
+| Context          | Qualifier                                                                                                                                                                                                                                      |
+|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [distinct](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#distinct)                                                                       |
+| Value qualifiers | [tmp](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#tmp), [renew](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#renew), [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 
 [[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

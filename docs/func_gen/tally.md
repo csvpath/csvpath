@@ -31,11 +31,11 @@ variable of birds with values like blue|bluebird,red|redbird.
 |:-----------|:-------------------------|
 | Main focus | tally() is a side-effect |
 
-| Context          | Qualifier                                                                          |
-|:-----------------|:-----------------------------------------------------------------------------------|
-| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
-| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
-| Name qualifier   | optionally expected                                                                |
+| Context          | Qualifier                                                                                                                                                                                                                                      |
+|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch)                                                                                                                                                             |
+| Value qualifiers | [tmp](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#tmp), [renew](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#renew), [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Name qualifier   | optionally expected                                                                                                                                                                                                                            |
 
 
 [[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]
