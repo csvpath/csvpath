@@ -833,6 +833,22 @@ a `cargo` header and `receptor` count. Keywords are matched as Macie
 lists them, so `cedula de ciudadania` without its accents is not
 Colombia's keyword (item 22).
 
+**Group B, GPS coordinates and HTTP cookies.** Two small detectors, as
+the notation cannot check a range or a header's grammar:
+- `LATITUDE_LONGITUDE` (`LatLongDetector`): Macie wants a pair in Decimal
+  Degrees, e.g. `41.948614,-87.655311`, and an English keyword; not DDM or
+  DMS. Ours: both numbers have a decimal part and an optional sign,
+  separated by a comma or spaces, the latitude within 90 and the longitude
+  within 180. A degree sign after a number makes it DDM or DMS. Severity
+  is LOW, then MEDIUM from 2, also from 100 (`1:LOW 2:MEDIUM`).
+- `HTTP_COOKIE` (`CookieDetector`): no keyword; a complete `Cookie` or
+  `Set-Cookie` header with name=value pairs. Ours, from RFC 6265: the
+  field name in any case, a token name and a non-empty value; a
+  Set-Cookie header's attributes (`Secure`, `Path=/`) are part of it. One
+  header is one occurrence, however many pairs it has.
+With these, every group B identifier has a stand-in, except the 15
+driver's license countries on the backlog.
+
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
 (Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
@@ -940,6 +956,9 @@ every detector the catalog names exists, and every detector is used.
 22. The rest of group B: which Brazil RG state formats does Macie
     accept? Does it match keywords without their accents (`cedula`)? Does
     it report an Argentine DNI as Spain's (it says it might)?
+23. GPS and cookies: does Macie accept coordinates without a decimal
+    part, or separated only by spaces? Does it count a Cookie header with
+    several pairs as one occurrence, or one per pair?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

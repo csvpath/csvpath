@@ -1,0 +1,6 @@
+macie LATITUDE_LONGITUDE: occurrence 1, line 1 (row 2), column 2 coordinates
+macie LATITUDE_LONGITUDE: occurrence 2, line 2 (row 3), column 3 notes
+macie HTTP_COOKIE: occurrence 1, line 3 (row 4), column 3 notes
+macie HTTP_COOKIE: occurrence 2, line 4 (row 5), column 3 notes
+macie LATITUDE_LONGITUDE: 2 occurrences, severity MEDIUM, detail shown for all 2
+macie HTTP_COOKIE: 4 occurrences, severity MEDIUM, detail shown for first 2
