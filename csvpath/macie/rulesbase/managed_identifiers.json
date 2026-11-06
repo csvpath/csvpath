@@ -705,6 +705,45 @@
         "passport",
         "travel document"
       ]
+    },
+    "phone": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "cell",
+        "contact",
+        "fax",
+        "fax number",
+        "mobile",
+        "phone",
+        "phone number",
+        "tel",
+        "telephone",
+        "telephone number"
+      ]
+    },
+    "br_phone": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05",
+      "keywords": [
+        "cell",
+        "contact",
+        "fax",
+        "fax number",
+        "mobile",
+        "phone",
+        "phone number",
+        "tel",
+        "telephone",
+        "telephone number",
+        "cel",
+        "celular",
+        "fone",
+        "móvel",
+        "número residencial",
+        "numero residencial",
+        "telefone"
+      ]
     }
   },
   "identifiers": {
@@ -1910,6 +1949,83 @@
       "fidelity": "B",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
       "retrieved": "2026-11-05"
+    },
+    "UK_PHONE_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "gb_phone",
+      "keyword_mode": "required",
+      "keywords_from": "phone",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "FRANCE_PHONE_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "fr_phone",
+      "keyword_mode": "required",
+      "keywords_from": "phone",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "GERMANY_PHONE_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "de_phone",
+      "keyword_mode": "required",
+      "keywords_from": "phone",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "ITALY_PHONE_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "it_phone",
+      "keyword_mode": "required",
+      "keywords_from": "phone",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "SPAIN_PHONE_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "es_phone",
+      "keyword_mode": "required",
+      "keywords_from": "phone",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "BRAZIL_PHONE_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "br_phone",
+      "keyword_mode": "required",
+      "keywords_from": "br_phone",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
+    },
+    "PHONE_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "us_phone",
+      "keyword_mode": "required",
+      "keywords_from": "phone",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-05"
     }
   },
   "detectors": {
@@ -2817,6 +2933,94 @@
       "formats": [
         "#{9}",
         "A#{8}"
+      ]
+    },
+    "gb_phone": {
+      "notes": [
+        "Macie: a phone number near a keyword need not include a country code; with no keyword near, it must include one. Keywords are shared, with more for Brazil. LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The numbering plan is ours, from the regulator, checked against Google's phonenumbers library in the tests: Ofcom: national numbers 0 and 9 or 10 digits, leading 1 2 3 5 7 8 9; some 0800 numbers 7 digits."
+      ],
+      "country_code": "44",
+      "trunk": "0",
+      "trunk_required": true,
+      "nsn_formats": [
+        "[1-35789]#{8,9}",
+        "800####"
+      ]
+    },
+    "fr_phone": {
+      "notes": [
+        "Macie: a phone number near a keyword need not include a country code; with no keyword near, it must include one. Keywords are shared, with more for Brazil. LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The numbering plan is ours, from the regulator, checked against Google's phonenumbers library in the tests: ARCEP: 0 and 9 digits."
+      ],
+      "country_code": "33",
+      "trunk": "0",
+      "trunk_required": true,
+      "nsn_formats": [
+        "[1-9]#{8}"
+      ]
+    },
+    "de_phone": {
+      "notes": [
+        "Macie: a phone number near a keyword need not include a country code; with no keyword near, it must include one. Keywords are shared, with more for Brazil. LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The numbering plan is ours, from the regulator, checked against Google's phonenumbers library in the tests: BNetzA: 0 and an area code and subscriber number of 5 to 15 digits in all."
+      ],
+      "country_code": "49",
+      "trunk": "0",
+      "trunk_required": true,
+      "nsn_formats": [
+        "[1-9]#{4,14}"
+      ]
+    },
+    "it_phone": {
+      "notes": [
+        "Macie: a phone number near a keyword need not include a country code; with no keyword near, it must include one. Keywords are shared, with more for Brazil. LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The numbering plan is ours, from the regulator, checked against Google's phonenumbers library in the tests: AGCOM: no trunk prefix; landlines keep their leading 0 (6 to 11 digits), mobiles start with 3 (9 or 10), toll free with 8."
+      ],
+      "country_code": "39",
+      "trunk": "",
+      "trunk_required": false,
+      "nsn_formats": [
+        "0#{5,10}",
+        "3#{8,9}",
+        "8#{5,8}"
+      ]
+    },
+    "es_phone": {
+      "notes": [
+        "Macie: a phone number near a keyword need not include a country code; with no keyword near, it must include one. Keywords are shared, with more for Brazil. LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The numbering plan is ours, from the regulator, checked against Google's phonenumbers library in the tests: CNMC: no trunk prefix; 9 digits."
+      ],
+      "country_code": "34",
+      "trunk": "",
+      "trunk_required": false,
+      "nsn_formats": [
+        "[5-9]#{8}"
+      ]
+    },
+    "br_phone": {
+      "notes": [
+        "Macie: a phone number near a keyword need not include a country code; with no keyword near, it must include one. Keywords are shared, with more for Brazil. LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The numbering plan is ours, from the regulator, checked against Google's phonenumbers library in the tests: Anatel: a 2 digit area code and 8 or 9 digits, the trunk 0 usually left off ((11) 96123-4567); toll free 0800."
+      ],
+      "country_code": "55",
+      "trunk": "0",
+      "trunk_required": false,
+      "nsn_formats": [
+        "[1-9][1-9]#{8,9}",
+        "800#{6,7}"
+      ]
+    },
+    "us_phone": {
+      "notes": [
+        "Macie: a phone number near a keyword need not include a country code; with no keyword near, it must include one. Keywords are shared, with more for Brazil. LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The numbering plan is ours, from the regulator, checked against Google's phonenumbers library in the tests: NANP, for the US and Canada: a 3 digit area code and 7 digits, each starting 2-9, the trunk 1 optional; toll free numbers included, as Macie says."
+      ],
+      "country_code": "1",
+      "trunk": "1",
+      "trunk_required": false,
+      "nsn_formats": [
+        "[2-9]##[2-9]######"
       ]
     }
   }

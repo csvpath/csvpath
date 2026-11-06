@@ -1,0 +1,109 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "eu-west-1",
+    "downloaded_at": "2026-11-05T21:00:00Z",
+    "job_id": "2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "UK_PHONE_NUMBER",
+      "FRANCE_PHONE_NUMBER",
+      "GERMANY_PHONE_NUMBER",
+      "ITALY_PHONE_NUMBER",
+      "SPAIN_PHONE_NUMBER",
+      "BRAZIL_PHONE_NUMBER",
+      "PHONE_NUMBER"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "UK_PHONE_NUMBER",
+      "FRANCE_PHONE_NUMBER",
+      "GERMANY_PHONE_NUMBER",
+      "ITALY_PHONE_NUMBER",
+      "SPAIN_PHONE_NUMBER",
+      "BRAZIL_PHONE_NUMBER",
+      "PHONE_NUMBER"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "UK_PHONE_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "FRANCE_PHONE_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "GERMANY_PHONE_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "ITALY_PHONE_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "SPAIN_PHONE_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "BRAZIL_PHONE_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "PHONE_NUMBER"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Contact records",
+      "jobArn": "arn:aws:macie2:eu-west-1:123456789012:classification-job/2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f",
+      "jobId": "2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "UK_PHONE_NUMBER",
+        "FRANCE_PHONE_NUMBER",
+        "GERMANY_PHONE_NUMBER",
+        "ITALY_PHONE_NUMBER",
+        "SPAIN_PHONE_NUMBER",
+        "BRAZIL_PHONE_NUMBER",
+        "PHONE_NUMBER"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "group-b-phones",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-contacts"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

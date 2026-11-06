@@ -1,0 +1,79 @@
+#
+# Phone numbers, the third group B step: Macie's UK_, FRANCE_, GERMANY_,
+# ITALY_, SPAIN_ and BRAZIL_PHONE_NUMBER, and PHONE_NUMBER for the US and
+# Canada, as our stand-ins, each a numbering plan in the catalog. Macie's
+# rule: a number near a keyword needs no country code, and a number with
+# no keyword near must have one.
+#
+# A national number (no country code) can fit more than one country's
+# plan, and the seven share their keywords, so near a keyword it is
+# reported for each country it fits. International numbers never are.
+# Accepted for the first release (David, 2026-11-05): customers can see
+# why, and it shows only when several countries are selected.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: group-b-phones.csvpath
+    data: contacts.csv
+    finding_lines: [1, 2, 3, 4, 5, 6, 8, 9, 10]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie UK_PHONE_NUMBER: occurrence 1, line 1 (row 2), column 2 phone" }
+      - { line: 1, message: "macie GERMANY_PHONE_NUMBER: occurrence 1, line 1 (row 2), column 2 phone" }
+      - { line: 1, message: "macie ITALY_PHONE_NUMBER: occurrence 1, line 1 (row 2), column 2 phone" }
+      - { line: 1, message: "macie BRAZIL_PHONE_NUMBER: occurrence 1, line 1 (row 2), column 2 phone" }
+      - { line: 2, message: "macie SPAIN_PHONE_NUMBER: occurrence 1, line 2 (row 3), column 2 phone" }
+      - { line: 3, message: "macie PHONE_NUMBER: occurrence 1, line 3 (row 4), column 2 phone" }
+      - { line: 4, message: "macie BRAZIL_PHONE_NUMBER: occurrence 2, line 4 (row 5), column 2 phone" }
+      - { line: 5, message: "macie FRANCE_PHONE_NUMBER: occurrence 1, line 5 (row 6), column 3 notes" }
+      - { line: 6, message: "macie GERMANY_PHONE_NUMBER: occurrence 2, line 6 (row 7), column 3 notes" }
+      - { line: 8, message: "macie ITALY_PHONE_NUMBER: occurrence 2, line 8 (row 9), column 3 notes" }
+      - { line: 9, message: "macie FRANCE_PHONE_NUMBER: occurrence 2, line 9 (row 10), column 3 notes" }
+      - { line: 10, message: "macie UK_PHONE_NUMBER: occurrence 2, line 10 (row 11), column 3 notes" }
+    findings: findings.json
+    #
+    # Header "phone" is a keyword of all seven; "id" and "notes" hold none.
+    #
+    #   line  cell                                    reported as
+    #   1     phone 0121 234 5678                     UK, Germany, Italy and Brazil:
+    #                                                 a UK national number that also
+    #                                                 fits their plans
+    #   2     phone 612 34 56 78                      Spain only
+    #   3     phone (201) 555-0123                    US/Canada only
+    #   4     phone (11) 96123-4567                   Brazil only
+    #   5     notes +33 1 23 45 67 89                 France: the country code, so no
+    #                                                 keyword needed
+    #   6     notes 0049 30 123456                    Germany: 00 and the code
+    #   7     notes 01 23 45 67 89                    nothing: no keyword, no code
+    #   8     notes +39 312 345 6789                  Italy
+    #   9     notes "tel 06 12 34 56 78"              France, Germany and Italy: a
+    #                                                 French national number, keyword
+    #                                                 before
+    #   10    notes "+44 20 7946 0958 /               UK once: the international
+    #         020 7946 0958"                          number; the national one has no
+    #                                                 keyword
+    #
+    # On each line the identifiers run in the wrapper's resolved order.
+    # Phone numbers are LOW for one occurrence, MEDIUM from 2, HIGH from
+    # 100. Totals: UK 2, France 2, Germany 3, Italy 3, Spain 1, Brazil 2,
+    # US/Canada 1. All PERSONAL_INFORMATION: totalCount 14.

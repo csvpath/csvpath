@@ -2476,6 +2476,18 @@ MarkupSafe = ">=1.1.1"
 pygments = ">=2.12.0"
 
 [[package]]
+name = "phonenumbers"
+version = "8.13.55"
+description = "Python version of Google's common library for parsing, formatting, storing and validating international phone numbers."
+optional = false
+python-versions = "*"
+groups = ["dev"]
+files = [
+    {file = "phonenumbers-8.13.55-py2.py3-none-any.whl", hash = "sha256:25feaf46135f0fb1e61b69513dc97c477285ba98a69204bf5a8cf241a844a718"},
+    {file = "phonenumbers-8.13.55.tar.gz", hash = "sha256:57c989dda3eabab1b5a9e3d24438a39ebd032fa0172bf68bfd90ab70b3d5e08b"},
+]
+
+[[package]]
 name = "platformdirs"
 version = "4.9.4"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
@@ -4471,4 +4483,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.10,<4.0"
-content-hash = "1529984c58d5c6aba64dd2664d53c23c826372be89f920a663c788481e89ac0f"
+content-hash = "70a268ca3fc1aa6519c8333c47940a52e93643b9649433988f12544e38cf8386"

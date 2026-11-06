@@ -76,9 +76,10 @@ last. Add an item the moment something is deferred.
      Finland; the format needs confirming).
    - **Group B, done:** `FormatDetector` and the format notation; UK
      NINO, US and Canada bank account, card security code, pair
-     17_group_b_first. Passports (7), pair 18_passports. Next, in
-     `group-b-design.md` order: phone numbers (new keyword mode, Macie's
-     rule), dates, driver's licenses, the rest.
+     17_group_b_first. Passports (7), pair 18_passports. Phone numbers
+     (7), pair 19_phones; national numbers can be several countries'
+     (accepted for the first release, David 2026-11-05). Next, in
+     `group-b-design.md` order: dates, driver's licenses, the rest.
    - **Group B:** driver's licenses (32 identifiers; the US one covers
      50+ state formats), passports (7), phone numbers (7), UK NINO, UK
      electoral roll, Canada permanent resident card, India PAN, Brazil RG,

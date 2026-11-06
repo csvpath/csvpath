@@ -83,6 +83,16 @@ These get small code validators, named in the data the way `check` names a
 | `HTTP_COOKIE` | a complete `Cookie:` or `Set-Cookie:` header with name=value pairs; no keyword |
 | phone numbers (7) | see below |
 
+## Phone numbers (built)
+
+As built: no new keyword mode. `ManagedIdentifier` already lets a
+detector mark matches keyword exempt (the bank detector's IBANs), and
+Macie's phone rule is that shape: a number with its country code needs
+no keyword. The numbering plans are catalog data. See
+`transpile-design.md`.
+
+The original proposal:
+
 ## Phone numbers need a new keyword mode
 
 Macie: "If a keyword is in proximity of the data, the number doesn't have to

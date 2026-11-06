@@ -124,3 +124,9 @@ Design decisions are in `specs/macie/transpile-design.md`.
   "passport", and 9 digits are British and American near "passport
   number"; a French shape near an English keyword is not French; and no
   keyword.
+- `19_phones`: the seven phone identifiers. A UK national number that
+  fits four countries' plans; national numbers that fit only their own;
+  international numbers with + and 00, found with no keyword; a national
+  number with no keyword (not found); a French national number near
+  "tel" (three countries); and an international and a national number in
+  one cell, only the first counted.

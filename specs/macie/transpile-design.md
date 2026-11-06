@@ -302,6 +302,7 @@ conversion.report.skipped   # what was not translated
 | `EsIdDetector` | Spain DNI, NIE, NIF and CIF: a control letter (mod 23) or a CIF control |
 | `MxRfcDetector` | Mexico RFC for people and organizations: letters, a real date, 3 characters |
 | `CoNitDetector` | Colombia NIT: body and mod 11 digit; 9 digits from 8 or 9 is an organization's |
+| `PhoneDetector` | one country's phone numbers from its numbering plan; a country code makes a number keyword exempt |
 | `FormatDetector` | group B: shapes in the catalog's format notation, compiled to one regex |
 | `DeIdDetector` | Germany identity card: 9 characters and an ICAO 7-3-1 check digit |
 | `MagStripeDetector` | card magnetic stripe tracks 1 and 2, Luhn card number |
@@ -723,6 +724,34 @@ US lists, among others), 9 digits are both British and American. We
 report what Macie's lists and the shapes imply, and the normative pair
 shows it.
 
+**Phone numbers** (group B step 3): Macie's seven phone identifiers
+(`PHONE_NUMBER` is the US and Canada), PERSONAL_INFORMATION, LOW for one
+occurrence, MEDIUM from 2, HIGH from 100.
+- **Macie's rule:** a number near a keyword need not include a country
+  code; a number with no keyword near must include one. `PhoneDetector`
+  marks a number written with its country code (`+44`, `0044`) keyword
+  exempt, through the same `keyword_exempt` hook the bank detector uses
+  for IBANs, and the entries are `required`. No new keyword mode was
+  needed after all.
+- **Numbering plans are catalog data** (David, 2026-11-05, option A):
+  `country_code`, `trunk`, `trunk_required` and `nsn_formats` in the
+  format notation. The trunk is required in the UK, France and Germany,
+  optional in the US (`1`) and Brazil (`0`), and there is none in Italy
+  and Spain. An international number may keep the trunk in parentheses,
+  `+44 (0)20 7946 0958`.
+- **Checked against Google's phonenumbers** (a dev dependency, Apache
+  2.0): each country's example fixed line, mobile and toll free numbers
+  are found in national, international, E.164 and 00 forms.
+- **National numbers can be more than one country's.** Without a country
+  code, `0121 234 5678` fits the UK, German, Italian and Brazilian plans,
+  and the seven share keywords, so near a keyword it is reported for
+  each. International numbers never are. Accepted for the first release
+  (David, 2026-11-05): customers can see why in their results, it shows
+  only when several countries' phone identifiers are selected, and the
+  normative pair shows it. Germany's and Italy's plans are the loosest.
+- Ours: two numbers with only a space between read as one and are not
+  found.
+
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
 (Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
@@ -820,6 +849,9 @@ every detector the catalog names exists, and every detector is used.
 18. Passports: does Macie report one number under two countries when
     their shapes and keywords overlap? Does it accept Spain's older two
     letter form?
+19. Phones: when a national number fits several countries' plans, does
+    Macie report it for each, or does it choose one? How tight are its
+    plans for Germany and Italy?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later
