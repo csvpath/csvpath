@@ -302,6 +302,7 @@ conversion.report.skipped   # what was not translated
 | `EsIdDetector` | Spain DNI, NIE, NIF and CIF: a control letter (mod 23) or a CIF control |
 | `MxRfcDetector` | Mexico RFC for people and organizations: letters, a real date, 3 characters |
 | `CoNitDetector` | Colombia NIT: body and mod 11 digit; 9 digits from 8 or 9 is an organization's |
+| `FormatDetector` | group B: shapes in the catalog's format notation, compiled to one regex |
 | `DeIdDetector` | Germany identity card: 9 characters and an ICAO 7-3-1 check digit |
 | `MagStripeDetector` | card magnetic stripe tracks 1 and 2, Luhn card number |
 | `UsIdDetector` | US DEA (check digit), MBI, ITIN, HICN, NDC and HCPCS |
@@ -678,6 +679,28 @@ stripe data**: keyword required, HIGH from one occurrence.
   ISO/IEC 7813 tracks 1 and 2, with or without the sentinels, a card
   number that passes Luhn and an expiry month 01-12.
 
+**Group B: `FormatDetector` and the format notation.** Group B
+identifiers have a shape but no check digit, so their shapes are catalog
+data (David, 2026-11-05; design in `group-b-design.md`). A detector's
+`formats` are written in a small notation: `#` a digit, `A` a letter, `X`
+a letter or digit, `[...]` a set of letters, digits and ranges, `{n}` or
+`{m,n}` a count, digits and punctuation as themselves. Any other letter
+must be in a set (`[L]`), so `AIza` is an error, not a literal. A format
+may be an object `{"format": ..., "used_by": [...]}` naming its issuers,
+for the US driver's license's state formats. All of a detector's formats
+compile into one regex when it is created, identical ones once.
+`exclusions` and `exclude_prefixes` are compared without separators, in
+upper case.
+- **`UK_NATIONAL_INSURANCE_NUMBER`**: HMRC's rules as sets: two prefix
+  letters (D F I Q U V never, O never second), 6 digits, suffix A to D,
+  contiguous or `AB 12 34 56 C`; prefixes BG GB KN NK NT TN ZZ excluded.
+  The short keyword `nin` matches inside `opening_balance` (item 3).
+- **`BANK_ACCOUNT_NUMBER`**: Macie documents it fully, US and Canada,
+  9-17 digits with no spaces: `#{9,17}`. FINANCIAL, HIGH.
+- **`CREDIT_CARD_SECURITY_CODE`**: `#{3,4}`, so the keyword does nearly
+  all the work (fidelity B). MEDIUM for one occurrence, HIGH from two,
+  per Macie.
+
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
 (Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
@@ -769,6 +792,9 @@ every detector the catalog names exists, and every detector is used.
     detect Railroad Retirement Board HICNs?
 16. Does Macie need sentinels on magnetic stripe data, or both tracks?
     Does it check the identity card's check digit?
+17. Group B: does Macie report a bank account number touching letters
+    (`acct123456789`)? Does it accept NINOs spaced other than
+    `AB 12 34 56 C`?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

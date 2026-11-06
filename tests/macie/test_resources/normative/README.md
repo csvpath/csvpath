@@ -114,3 +114,8 @@ Design decisions are in `specs/macie/transpile-design.md`.
   digit, lower case), the French health insurance number (a NIR near
   carte vitale and insurance card), and magnetic stripe tracks 1 and 2
   (and a card number that fails Luhn). Two categories in the findings.
+- `17_group_b_first`: the first group B stand-ins, in FormatDetector's
+  notation. UK NINOs contiguous and spaced, an unused prefix and a letter
+  HMRC never uses; bank accounts of 12 digits, 8 digits and with spaces;
+  security codes of 3, 4 and 5 digits; two identifiers in one cell; and
+  no keyword.

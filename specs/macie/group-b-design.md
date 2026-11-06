@@ -1,6 +1,10 @@
 # Group B managed identifiers: design proposal
 
-Status: **proposal for David's review** (2026-11-05). Nothing here is built.
+Status: **agreed** (David, 2026-11-05: the format notation in the catalog,
+and the US driver's license as one union of state formats, each tagged
+with its states). Phone numbers stay close to Macie: its own rule (a
+keyword, or a country code) needs a new keyword mode. Step 1 is built:
+`FormatDetector`, UK NINO, US and Canada bank account, card security code.
 
 Group B is "format plus keyword": identifiers with a recognizable shape but
 no check digit, where Macie's keyword does most of the work. There are about

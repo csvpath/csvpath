@@ -1,0 +1,44 @@
+~
+  id: group-b-accounts
+  macie-origin: job
+  macie-job-id: 0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d
+  macie-account: 123456789012
+  macie-region: eu-west-2
+  macie-source-arn: arn|aws|macie2|eu-west-2|123456789012|classification-job/0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d
+  macie-downloaded-at: 20261105T140000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "UK_NATIONAL_INSURANCE_NUMBER",
+        "PERSONAL_INFORMATION",
+        "gb_nino",
+        "required",
+        "insurance no.|insurance number|insurance#|national insurance number|nationalinsurance#|nationalinsurancenumber|nin|nino",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "BANK_ACCOUNT_NUMBER",
+        "FINANCIAL_INFORMATION",
+        "bank_account",
+        "required",
+        "bank account|bank acct|checking account|checking acct|deposit account|deposit acct|savings account|savings acct|chequing account|chequing acct",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "CREDIT_CARD_SECURITY_CODE",
+        "FINANCIAL_INFORMATION",
+        "card_security_code",
+        "required",
+        "card id|card identification code|card identification number|card security code|card validation code|card validation number|card verification data|card verification value|cvc|cvc2|cvv|cvv2|elo verification code",
+        30,
+        "1:MEDIUM 2:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

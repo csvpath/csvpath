@@ -1,0 +1,13 @@
+id,nino,bank_account,cvv,notes
+1,AB123456C,,,
+2,AB 12 34 56 C,,,
+3,GB123456A,,,
+4,DA123456A,,,
+5,,000123456789,,
+6,,12345678,,
+7,,1234 5678 9012,,
+8,,,123,
+9,,,12345,
+10,,,,"card security code 4321, chequing account 98765432101"
+11,,,,national insurance number CE 98 76 54 B
+12,,,,123456789

@@ -1,0 +1,81 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "eu-west-2",
+    "downloaded_at": "2026-11-05T14:00:00Z",
+    "job_id": "0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "UK_NATIONAL_INSURANCE_NUMBER",
+      "BANK_ACCOUNT_NUMBER",
+      "CREDIT_CARD_SECURITY_CODE"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "UK_NATIONAL_INSURANCE_NUMBER",
+      "BANK_ACCOUNT_NUMBER",
+      "CREDIT_CARD_SECURITY_CODE"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "UK_NATIONAL_INSURANCE_NUMBER"
+      },
+      {
+        "category": "FINANCIAL_INFORMATION",
+        "id": "BANK_ACCOUNT_NUMBER"
+      },
+      {
+        "category": "FINANCIAL_INFORMATION",
+        "id": "CREDIT_CARD_SECURITY_CODE"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Account records, UK and North America",
+      "jobArn": "arn:aws:macie2:eu-west-2:123456789012:classification-job/0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d",
+      "jobId": "0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "UK_NATIONAL_INSURANCE_NUMBER",
+        "BANK_ACCOUNT_NUMBER",
+        "CREDIT_CARD_SECURITY_CODE"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "group-b-accounts",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-accounts"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}
