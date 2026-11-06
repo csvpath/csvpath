@@ -107,6 +107,28 @@ last. Add an item the moment something is deferred.
    confirm the interpretations in transpile-design.md: three for custom
    identifiers, nine for managed ones.
 
+## Ask road-testers about
+
+Known false positive and false negative risks, to ask people road-testing
+the stand-ins for specific feedback on (David, 2026-11-06). Each is also a
+fidelity item in transpile-design.md.
+
+- **Short keywords match inside words** (fidelity item 3). Brazil's `rg`
+  matches `org`, `large`, a `cargo` header; `cep` matches `receptor`,
+  `exception`; also `mc`, `pan`, `card` and France's `social`. A number
+  of the right shape next to such a word is reported.
+- **Keywords need their accents** (item 22). `cedula de ciudadania`
+  without accents is not Colombia's keyword, so a cedula labeled that way
+  is missed. Brazil's CEP list has both forms only because Macie lists
+  both.
+- **One value, several countries.** National phone numbers (item 19),
+  driver's licenses near English keywords (item 21) and digit runs
+  shared by the Argentina DNI, Colombia cedula and Canada PR number can
+  be reported for more than one identifier.
+- **Formats that are ours.** Brazil RG takes only Sao Paulo's shape, so
+  other states' RGs are missed; the Canada PR number is the UCI only, not
+  the card's document number.
+
 ## Decide at release planning
 
 - **Alphanumeric CNPJs** (Brazil, issued from July 2026). Needs the
