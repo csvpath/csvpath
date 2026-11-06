@@ -1,0 +1,80 @@
+~
+  id: group-b-phones
+  macie-origin: job
+  macie-job-id: 2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f
+  macie-account: 123456789012
+  macie-region: eu-west-1
+  macie-source-arn: arn|aws|macie2|eu-west-1|123456789012|classification-job/2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f
+  macie-downloaded-at: 20261105T210000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "UK_PHONE_NUMBER",
+        "PERSONAL_INFORMATION",
+        "gb_phone",
+        "required",
+        "cell|contact|fax|fax number|mobile|phone|phone number|tel|telephone|telephone number",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "FRANCE_PHONE_NUMBER",
+        "PERSONAL_INFORMATION",
+        "fr_phone",
+        "required",
+        "cell|contact|fax|fax number|mobile|phone|phone number|tel|telephone|telephone number",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "GERMANY_PHONE_NUMBER",
+        "PERSONAL_INFORMATION",
+        "de_phone",
+        "required",
+        "cell|contact|fax|fax number|mobile|phone|phone number|tel|telephone|telephone number",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "ITALY_PHONE_NUMBER",
+        "PERSONAL_INFORMATION",
+        "it_phone",
+        "required",
+        "cell|contact|fax|fax number|mobile|phone|phone number|tel|telephone|telephone number",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "SPAIN_PHONE_NUMBER",
+        "PERSONAL_INFORMATION",
+        "es_phone",
+        "required",
+        "cell|contact|fax|fax number|mobile|phone|phone number|tel|telephone|telephone number",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "BRAZIL_PHONE_NUMBER",
+        "PERSONAL_INFORMATION",
+        "br_phone",
+        "required",
+        "cell|contact|fax|fax number|mobile|phone|phone number|tel|telephone|telephone number|cel|celular|fone|móvel|número residencial|numero residencial|telefone",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    macie_mdi(
+        "PHONE_NUMBER",
+        "PERSONAL_INFORMATION",
+        "us_phone",
+        "required",
+        "cell|contact|fax|fax number|mobile|phone|phone number|tel|telephone|telephone number",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

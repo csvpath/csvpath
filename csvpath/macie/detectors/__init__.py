@@ -21,12 +21,20 @@ from .it_cf_detector import ItCfDetector
 from .mag_stripe_detector import MagStripeDetector
 from .mx_curp_detector import MxCurpDetector
 from .mx_rfc_detector import MxRfcDetector
+from .phone_detector import PhoneDetector
 from .us_id_detector import UsIdDetector
 from .us_npi_detector import UsNpiDetector
 from .us_ssn_detector import UsSsnDetector
 from .vin_detector import VinDetector
 
 DETECTORS = {
+    "gb_phone": PhoneDetector,
+    "fr_phone": PhoneDetector,
+    "de_phone": PhoneDetector,
+    "it_phone": PhoneDetector,
+    "es_phone": PhoneDetector,
+    "br_phone": PhoneDetector,
+    "us_phone": PhoneDetector,
     "canada_passport": FormatDetector,
     "france_passport": FormatDetector,
     "germany_passport": FormatDetector,
