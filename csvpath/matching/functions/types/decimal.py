@@ -4,7 +4,6 @@ from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.productions import Header, Variable, Reference, Term
 from csvpath.matching.functions.function import Function
 from .nonef import Nonef
-from ..function_focus import ValueProducer
 from ..args import Args
 from .type import Type
 
@@ -134,7 +133,7 @@ class Decimal(Type):
         dmax: int | float = None,
         dmin: int | float = None,
     ) -> tuple[bool, str | None]:
-        if value is False or value is None or value.strip() == "":
+        if value is False or value is None or str(value).strip() == "":
             return (False, "Value is not a number")
         ret = cls._dot(name=name, h=value, strict=strict)
         if ret[0] is False:
