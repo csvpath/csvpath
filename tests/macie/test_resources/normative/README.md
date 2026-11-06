@@ -130,3 +130,7 @@ Design decisions are in `specs/macie/transpile-design.md`.
   number with no keyword (not found); a French national number near
   "tel" (three countries); and an international and a national number in
   one cell, only the first counted.
+- `20_dates`: birth dates (D/M/Y, month name first, Y-M-D, 8 digits),
+  card expiration (02/26, Feb 2026, 26-Feb and Macie's keyword form
+  expY=2026, expM=02), a date that is not real, a dotted date, a month
+  13, and no keyword.

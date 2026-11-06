@@ -302,6 +302,7 @@ conversion.report.skipped   # what was not translated
 | `EsIdDetector` | Spain DNI, NIE, NIF and CIF: a control letter (mod 23) or a CIF control |
 | `MxRfcDetector` | Mexico RFC for people and organizations: letters, a real date, 3 characters |
 | `CoNitDetector` | Colombia NIT: body and mod 11 digit; 9 digits from 8 or 9 is an organization's |
+| `DateDetector` | birth dates (full, real dates) and card expiration (month and year, and Macie's keyword form) |
 | `PhoneDetector` | one country's phone numbers from its numbering plan; a country code makes a number keyword exempt |
 | `FormatDetector` | group B: shapes in the catalog's format notation, compiled to one regex |
 | `DeIdDetector` | Germany identity card: 9 characters and an ICAO 7-3-1 check digit |
@@ -752,6 +753,21 @@ occurrence, MEDIUM from 2, HIGH from 100.
 - Ours: two numbers with only a space between read as one and are not
   found.
 
+**Dates** (group B step 4): `DATE_OF_BIRTH` (PERSONAL) and
+`CREDIT_CARD_EXPIRATION` (FINANCIAL) on `DateDetector`, keyword required,
+LOW for one occurrence, MEDIUM from 2, HIGH from 100 (Macie). Fidelity B.
+- **birth**: full dates that are real dates: D/M/Y or M/D/Y (either
+  reading), Y-M-D, `5 Nov 1985`, `November 5, 1985`, `1985-Nov-05`, and 8
+  digits (YYYYMMDD, DDMMYYYY or MMDDYYYY). One separator throughout.
+- **expiry**: `02/26`, `02/2026`, `Feb 2026`, `26-Feb`, and Macie's keyword
+  form `expY=2026, expM=02` in either order. A month and year inside a
+  full date (`12/25/2026`) is not an expiry date.
+- The keyword form carries its keywords inside the occurrence, where
+  nearness is not measured, so it is keyword exempt (the same hook).
+- Ours: English month names; dots are not separators, as Macie lists
+  spaces, slashes and hyphens; a date matching several shapes is one
+  occurrence.
+
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
 (Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
@@ -852,6 +868,8 @@ every detector the catalog names exists, and every detector is used.
 19. Phones: when a national number fits several countries' plans, does
     Macie report it for each, or does it choose one? How tight are its
     plans for Germany and Italy?
+20. Dates: does Macie accept dotted dates (05.11.1985), month names in
+    other languages, or ambiguous 8 digit dates?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

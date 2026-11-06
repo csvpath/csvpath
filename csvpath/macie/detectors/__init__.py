@@ -11,6 +11,7 @@ from .cl_rut_detector import ClRutDetector
 from .co_nit_detector import CoNitDetector
 from .credential_detector import CredentialDetector
 from .credit_card_detector import CreditCardDetector
+from .date_detector import DateDetector
 from .de_id_detector import DeIdDetector
 from .es_id_detector import EsIdDetector
 from .format_detector import FormatDetector
@@ -28,6 +29,8 @@ from .us_ssn_detector import UsSsnDetector
 from .vin_detector import VinDetector
 
 DETECTORS = {
+    "birth_date": DateDetector,
+    "card_expiration": DateDetector,
     "gb_phone": PhoneDetector,
     "fr_phone": PhoneDetector,
     "de_phone": PhoneDetector,

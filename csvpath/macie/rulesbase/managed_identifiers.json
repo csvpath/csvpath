@@ -744,6 +744,29 @@
         "numero residencial",
         "telefone"
       ]
+    },
+    "birth_date": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "bday",
+        "b-day",
+        "birth date",
+        "birthday",
+        "date of birth",
+        "dob"
+      ]
+    },
+    "card_expiration": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "exp d",
+        "exp m",
+        "exp y",
+        "expiration",
+        "expiry"
+      ]
     }
   },
   "identifiers": {
@@ -2026,6 +2049,28 @@
       "fidelity": "B",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
       "retrieved": "2026-11-05"
+    },
+    "DATE_OF_BIRTH": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "birth_date",
+      "keyword_mode": "required",
+      "keywords_from": "birth_date",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "CREDIT_CARD_EXPIRATION": {
+      "category": "FINANCIAL_INFORMATION",
+      "detector": "card_expiration",
+      "keyword_mode": "required",
+      "keywords_from": "card_expiration",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
+      "retrieved": "2026-11-06"
     }
   },
   "detectors": {
@@ -3022,6 +3067,20 @@
       "nsn_formats": [
         "[2-9]##[2-9]######"
       ]
+    },
+    "birth_date": {
+      "notes": [
+        "Macie: DATE_OF_BIRTH needs a keyword and supports most date formats, all digits or digits with month names, separated by spaces, slashes or hyphens. LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "Ours: full dates that are real dates, D/M/Y or M/D/Y (either reading), Y-M-D, day month-name year, month-name day year, year month-name day, and 8 digits; English month names; no dots as separators."
+      ],
+      "form": "birth"
+    },
+    "card_expiration": {
+      "notes": [
+        "Macie: CREDIT_CARD_EXPIRATION needs a keyword; examples 02/26, 02/2026, Feb 2026, 26-Feb and expY=2026, expM=02. LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "Ours: month and year by slash or hyphen, month name and year, year and month name, and the keyword form in either order; English month names; a month and year that is part of a full date is not an expiry date."
+      ],
+      "form": "expiry"
     }
   }
 }

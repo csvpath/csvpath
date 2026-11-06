@@ -1,0 +1,6 @@
+macie DATE_OF_BIRTH: occurrence 1, line 1 (row 2), column 2 dob
+macie DATE_OF_BIRTH: occurrence 2, line 2 (row 3), column 2 dob
+macie CREDIT_CARD_EXPIRATION: occurrence 1, line 5 (row 6), column 3 expiry
+macie CREDIT_CARD_EXPIRATION: occurrence 2, line 6 (row 7), column 3 expiry
+macie DATE_OF_BIRTH: 4 occurrences, severity MEDIUM, detail shown for first 2
+macie CREDIT_CARD_EXPIRATION: 4 occurrences, severity MEDIUM, detail shown for first 2
