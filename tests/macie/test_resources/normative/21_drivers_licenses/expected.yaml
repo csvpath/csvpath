@@ -1,0 +1,71 @@
+#
+# Driver's licenses, the fifth group B step: 7 of the 17 driver's license
+# stand-ins, Macie's DRIVERS_LICENSE (the US, the union of the states'
+# formats), UK_, CANADA_, AUSTRALIA_, GERMANY_, FRANCE_ and
+# ITALY_DRIVERS_LICENSE. All require a keyword. The English speaking
+# countries share Macie's English keywords, and many formats are digit
+# runs, so one number can be several countries'; this pair shows where.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: group-b-drivers-licenses.csvpath
+    data: drivers.csv
+    finding_lines: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie DRIVERS_LICENSE: occurrence 1, line 1 (row 2), column 2 drivers_license" }
+      - { line: 2, message: "macie UK_DRIVERS_LICENSE: occurrence 1, line 2 (row 3), column 2 drivers_license" }
+      - { line: 3, message: "macie DRIVERS_LICENSE: occurrence 2, line 3 (row 4), column 2 drivers_license" }
+      - { line: 3, message: "macie CANADA_DRIVERS_LICENSE: occurrence 1, line 3 (row 4), column 2 drivers_license" }
+      - { line: 3, message: "macie AUSTRALIA_DRIVERS_LICENSE: occurrence 1, line 3 (row 4), column 2 drivers_license" }
+      - { line: 4, message: "macie CANADA_DRIVERS_LICENSE: occurrence 2, line 4 (row 5), column 2 drivers_license" }
+      - { line: 6, message: "macie GERMANY_DRIVERS_LICENSE: occurrence 1, line 6 (row 7), column 3 notes" }
+      - { line: 7, message: "macie FRANCE_DRIVERS_LICENSE: occurrence 1, line 7 (row 8), column 3 notes" }
+      - { line: 8, message: "macie ITALY_DRIVERS_LICENSE: occurrence 1, line 8 (row 9), column 3 notes" }
+      - { line: 9, message: "macie UK_DRIVERS_LICENSE: occurrence 2, line 9 (row 10), column 3 notes" }
+    findings: findings.json
+    #
+    # Header "drivers_license" is "drivers license" (space as _), in the US,
+    # UK, Canada and Australia lists, not Germany's, France's or Italy's.
+    #
+    #   line  cell                                    reported as
+    #   1     A1234567                                US (California)
+    #   2     MORGA753116SM9IJ                        UK: the DVLA structure
+    #   3     12345678                                US (8 digits: PA, SD, TN, TX,
+    #                                                 VT), Canada (Saskatchewan,
+    #                                                 Alberta) and Australia
+    #   4     A1234-56789-01234                       US (New Jersey) and Canada
+    #                                                 (Ontario)
+    #   5     WDLAB12CD34E                            US (Washington)
+    #   6     notes "führerschein B072RRE2I55"        Germany
+    #   7     notes "permis de conduire               France: its only keyword
+    #         123456789012"                           is French
+    #   8     notes "patente di guida U1 2345678 X"   Italy
+    #   9     notes "driving licence                  UK: with the issue number
+    #         MORGA753116SM9IJ35"
+    #   10    notes A1234567                          nothing: no keyword
+    #
+    # On each line the identifiers run in the wrapper's resolved order.
+    # Driver's licenses are LOW for one occurrence, MEDIUM from 2. Totals:
+    # US 4, UK 2, Canada 2, Australia 1, Germany 1, France 1, Italy 1. All
+    # PERSONAL_INFORMATION: totalCount 12.

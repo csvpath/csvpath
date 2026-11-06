@@ -767,6 +767,276 @@
         "expiration",
         "expiry"
       ]
+    },
+    "australia_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "dl#",
+        "dl:",
+        "dlno#",
+        "driver licence",
+        "driver license",
+        "driver permit",
+        "drivers lic.",
+        "drivers licence",
+        "driver's licence",
+        "drivers license",
+        "driver's license",
+        "drivers permit",
+        "driver's permit",
+        "drivers permit number",
+        "driving licence",
+        "driving license",
+        "driving permit"
+      ]
+    },
+    "austria_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "führerschein",
+        "fuhrerschein",
+        "führerschein republik österreich",
+        "fuhrerschein republik osterreich"
+      ]
+    },
+    "belgium_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "fuehrerschein",
+        "fuehrerschein- nr",
+        "fuehrerscheinnummer",
+        "fuhrerschein",
+        "führerschein",
+        "fuhrerschein- nr",
+        "führerschein- nr",
+        "fuhrerscheinnummer",
+        "führerscheinnummer",
+        "numéro permis conduire",
+        "permis de conduire",
+        "rijbewijs",
+        "rijbewijsnummer"
+      ]
+    },
+    "bulgaria_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "превозно средство",
+        "свидетелство за управление на моторно",
+        "свидетелство за управление на мпс",
+        "сумпс",
+        "шофьорска книжка"
+      ]
+    },
+    "canada_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "dl#",
+        "dl:",
+        "dlno#",
+        "driver licence",
+        "driver licences",
+        "driver license",
+        "driver licenses",
+        "driver permit",
+        "drivers lic.",
+        "drivers licence",
+        "driver's licence",
+        "drivers licences",
+        "driver's licences",
+        "drivers license",
+        "driver's license",
+        "drivers licenses",
+        "driver's licenses",
+        "drivers permit",
+        "driver's permit",
+        "drivers permit number",
+        "driving licence",
+        "driving license",
+        "driving permit",
+        "permis de conduire"
+      ]
+    },
+    "croatia_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "vozačka dozvola"
+      ]
+    },
+    "cyprus_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "άδεια οδήγησης"
+      ]
+    },
+    "czechia_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "číslo licence",
+        "císlo licence řidiče",
+        "číslo řidičského průkazu",
+        "ovladače lic.",
+        "povolení k jízdě",
+        "povolení řidiče",
+        "řidiči povolení",
+        "řidičský prúkaz",
+        "řidičský průkaz"
+      ]
+    },
+    "denmark_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "kørekort",
+        "kørekortnummer"
+      ]
+    },
+    "estonia_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "juhi litsentsi number",
+        "juhiloa number",
+        "juhiluba",
+        "juhiluba number"
+      ]
+    },
+    "france_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "permis de conduire"
+      ]
+    },
+    "germany_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "fuehrerschein",
+        "fuehrerschein- nr",
+        "fuehrerscheinnummer",
+        "fuhrerschein",
+        "führerschein",
+        "fuhrerschein- nr",
+        "führerschein- nr",
+        "fuhrerscheinnummer",
+        "führerscheinnummer"
+      ]
+    },
+    "india_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "driver licence",
+        "driver licences",
+        "driver license",
+        "driver licenses",
+        "drivers lic.",
+        "drivers licence",
+        "driver's licence",
+        "drivers licences",
+        "driver's licences",
+        "drivers license",
+        "driver's license",
+        "drivers licenses",
+        "driver's licenses",
+        "driving licence",
+        "driving license"
+      ]
+    },
+    "italy_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "patente di guida",
+        "patente di guida numero",
+        "patente guida",
+        "patente guida numero"
+      ]
+    },
+    "spain_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "carnet conducer",
+        "el carnet de conducer",
+        "licencia conducer",
+        "licencia de manejo",
+        "número carnet conducer",
+        "número de carnet de conducer",
+        "número de permiso conducer",
+        "número de permiso de conducer",
+        "número licencia conducer",
+        "número permiso conducer",
+        "permiso conducción",
+        "permiso conducer",
+        "permiso de conducción"
+      ]
+    },
+    "uk_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "dl#",
+        "dl:",
+        "dlno#",
+        "driver licence",
+        "driver licences",
+        "driver license",
+        "driver licenses",
+        "driver permit",
+        "drivers lic.",
+        "drivers licence",
+        "driver's licence",
+        "drivers licences",
+        "driver's licences",
+        "drivers license",
+        "driver's license",
+        "drivers licenses",
+        "driver's licenses",
+        "drivers permit",
+        "driver's permit",
+        "drivers permit number",
+        "driving licence",
+        "driving license",
+        "driving permit"
+      ]
+    },
+    "us_drivers_license": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "dl#",
+        "dl:",
+        "dlno#",
+        "driver licence",
+        "driver licences",
+        "driver license",
+        "driver licenses",
+        "driver permit",
+        "drivers lic.",
+        "drivers licence",
+        "driver's licence",
+        "drivers licences",
+        "driver's licences",
+        "drivers license",
+        "driver's license",
+        "drivers licenses",
+        "driver's licenses",
+        "drivers permit",
+        "driver's permit",
+        "drivers permit number",
+        "driving licence",
+        "driving license",
+        "driving permit"
+      ]
     }
   },
   "identifiers": {
@@ -2071,6 +2341,193 @@
       "fidelity": "B",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-financial.html",
       "retrieved": "2026-11-06"
+    },
+    "AUSTRALIA_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "australia_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "australia_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "AUSTRIA_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "austria_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "austria_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "BELGIUM_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "belgium_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "belgium_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "BULGARIA_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "bulgaria_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "bulgaria_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "CANADA_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "canada_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "canada_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "CROATIA_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "croatia_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "croatia_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "CYPRUS_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "cyprus_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "cyprus_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "CZECHIA_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "czechia_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "czechia_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "DENMARK_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "denmark_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "denmark_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "ESTONIA_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "estonia_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "estonia_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "FRANCE_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "france_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "france_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "GERMANY_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "germany_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "germany_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "INDIA_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "india_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "india_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "ITALY_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "italy_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "italy_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "SPAIN_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "spain_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "spain_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "UK_DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "uk_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "uk_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "DRIVERS_LICENSE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "us_drivers_license",
+      "keyword_mode": "required",
+      "keywords_from": "us_drivers_license",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
     }
   },
   "detectors": {
@@ -3081,6 +3538,521 @@
         "Ours: month and year by slash or hyphen, month name and year, year and month name, and the keyword form in either order; English month names; a month and year that is part of a full date is not an expiry date."
       ],
       "form": "expiry"
+    },
+    "australia_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for AUSTRALIA_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: 6 to 10 digits, in groups 2-2-4, 3-3-3, 3-3-4 or 1-3-3-3, or a letter and 5 digits, 2 letters and 4 digits, 4 digits and 2 letters, for all states and territories."
+      ],
+      "formats": [
+        "#{6,10}",
+        "## ## ####",
+        "##-##-####",
+        "### ### ###",
+        "###-###-###",
+        "### ### ####",
+        "###-###-####",
+        "# ### ### ###",
+        "#-###-###-###",
+        "A#####",
+        "AA####",
+        "####AA"
+      ]
+    },
+    "austria_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for AUSTRIA_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: 8 digits."
+      ],
+      "formats": [
+        "#{8}"
+      ]
+    },
+    "belgium_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for BELGIUM_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: 10 digits."
+      ],
+      "formats": [
+        "#{10}"
+      ]
+    },
+    "bulgaria_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for BULGARIA_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: 9 digits."
+      ],
+      "formats": [
+        "#{9}"
+      ]
+    },
+    "canada_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for CANADA_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's, by province, each format tagged with its province."
+      ],
+      "formats": [
+        {
+          "format": "######-###",
+          "used_by": [
+            "Alberta"
+          ]
+        },
+        {
+          "format": "#{5,9}",
+          "used_by": [
+            "Alberta"
+          ]
+        },
+        {
+          "format": "#{7}",
+          "used_by": [
+            "British Columbia"
+          ]
+        },
+        {
+          "format": "AAAAAAA###AA",
+          "used_by": [
+            "Manitoba"
+          ]
+        },
+        {
+          "format": "AA-AA-AA-A###AA",
+          "used_by": [
+            "Manitoba"
+          ]
+        },
+        {
+          "format": "#{5,7}",
+          "used_by": [
+            "New Brunswick"
+          ]
+        },
+        {
+          "format": "A#{9}",
+          "used_by": [
+            "Newfoundland and Labrador"
+          ]
+        },
+        {
+          "format": "AAAAA[0-3]#[01]######",
+          "used_by": [
+            "Nova Scotia"
+          ]
+        },
+        {
+          "format": "AAAAA-[0-3]#[01]######",
+          "used_by": [
+            "Nova Scotia"
+          ]
+        },
+        {
+          "format": "A##########[0156]#[0-3]#",
+          "used_by": [
+            "Ontario"
+          ]
+        },
+        {
+          "format": "A####-######[0156]#[0-3]#",
+          "used_by": [
+            "Ontario"
+          ]
+        },
+        {
+          "format": "A####-#####-#[0156]#[0-3]#",
+          "used_by": [
+            "Ontario"
+          ]
+        },
+        {
+          "format": "#{5,6}",
+          "used_by": [
+            "Prince Edward Island"
+          ]
+        },
+        {
+          "format": "A#{12}",
+          "used_by": [
+            "Quebec"
+          ]
+        },
+        {
+          "format": "#{8}",
+          "used_by": [
+            "Saskatchewan"
+          ]
+        }
+      ]
+    },
+    "croatia_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for CROATIA_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: 8 digits."
+      ],
+      "formats": [
+        "#{8}"
+      ]
+    },
+    "cyprus_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for CYPRUS_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: 12 digits."
+      ],
+      "formats": [
+        "#{12}"
+      ]
+    },
+    "czechia_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for CZECHIA_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: E, a letter, an optional space, 6 digits."
+      ],
+      "formats": [
+        "[E]A######",
+        "[E]A ######"
+      ]
+    },
+    "denmark_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for DENMARK_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: 8 digits."
+      ],
+      "formats": [
+        "#{8}"
+      ]
+    },
+    "estonia_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for ESTONIA_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: ET and 6 digits."
+      ],
+      "formats": [
+        "[E][T]######"
+      ]
+    },
+    "france_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for FRANCE_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: 12 digits. Microsoft also screens out French phone numbers; we do not (ours)."
+      ],
+      "formats": [
+        "#{12}"
+      ]
+    },
+    "germany_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for GERMANY_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: 11 characters, a letter or digit, 2 digits, 6 letters or digits, a digit, a letter or digit. Microsoft checks a check digit it does not publish, so we do not (ours)."
+      ],
+      "formats": [
+        "X##X{6}#X"
+      ]
+    },
+    "india_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for INDIA_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: a 2 letter state code, a 2 digit RTO code, a 4 digit year, 7 digits, with optional spaces or hyphens."
+      ],
+      "formats": [
+        "AA#{13}",
+        "AA## #{11}",
+        "AA##-#{11}",
+        "AA-##-####-#######",
+        "AA ## #### #######",
+        "AA##-####-#######",
+        "AA## #### #######"
+      ]
+    },
+    "italy_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for ITALY_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: a letter, a letter or digit, 7 letters or digits, a letter, with optional spaces or hyphens."
+      ],
+      "formats": [
+        "AX{8}A",
+        "AX X{7} A",
+        "AX-X{7}-A"
+      ]
+    },
+    "spain_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for SPAIN_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: Microsoft Purview sensitive information type definitions (learn.microsoft.com/purview/sit-defn-<country>-drivers-license-number), a vendor's detection patterns, not the issuer's: the DNI (8 digits and a letter or digit) or the NIE of a foreigner. Microsoft checks the control letter; ours: the shape only, as the DNI and NIE identifiers already check the letter."
+      ],
+      "formats": [
+        "#{8}X",
+        "[XYZ]#{7}A"
+      ]
+    },
+    "uk_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for UK_DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: The DVLA's structure: 5 characters of the surname (9 for padding), a decade digit, the month (plus 50 for women, so its first digit is 0 1 5 or 6), the day, the year digit, 2 initials (9 for padding), a digit, 2 check letters, and an optional 2 digit issue number. Microsoft's 18 character description does not match the DVLA layout, so it is not used (ours)."
+      ],
+      "formats": [
+        "[A-Z9]{5}#[0156]####[A-Z9]{2}#AA",
+        "[A-Z9]{5}#[0156]####[A-Z9]{2}#AA##"
+      ]
+    },
+    "us_drivers_license": {
+      "notes": [
+        "Macie publishes only the keywords for DRIVERS_LICENSE, and scores driver's license numbers LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "The format is ours: The union of the states' formats (David, 2026-11-05: one identifier, as Macie has), each tagged with its states; from Skyhigh Security's DLP reference (success.skyhighsecurity.com, U.S. Driver's License Numbers), a vendor's table, not the DMVs'. Washington is the DOL's WDL format since 2018; older Washington numbers are not detected (ours)."
+      ],
+      "formats": [
+        {
+          "format": "#{7}",
+          "used_by": [
+            "AK",
+            "AL",
+            "DC",
+            "DE",
+            "ME",
+            "OR",
+            "RI",
+            "WV"
+          ]
+        },
+        {
+          "format": "A#{8}",
+          "used_by": [
+            "AZ",
+            "HI",
+            "KS",
+            "KY",
+            "NE",
+            "VA"
+          ]
+        },
+        {
+          "format": "#{9}",
+          "used_by": [
+            "AR",
+            "AZ",
+            "CO",
+            "CT",
+            "GA",
+            "IA",
+            "LA",
+            "MS",
+            "MT",
+            "NM",
+            "NY",
+            "SC",
+            "UT",
+            "WY"
+          ]
+        },
+        {
+          "format": "A#{7}",
+          "used_by": [
+            "CA"
+          ]
+        },
+        {
+          "format": "##-###-####",
+          "used_by": [
+            "CO"
+          ]
+        },
+        {
+          "format": "A#{12}",
+          "used_by": [
+            "FL",
+            "MD",
+            "MI",
+            "MN"
+          ]
+        },
+        {
+          "format": "A-###-###-##-###-#",
+          "used_by": [
+            "FL"
+          ]
+        },
+        {
+          "format": "AA######A",
+          "used_by": [
+            "ID"
+          ]
+        },
+        {
+          "format": "A#{11}",
+          "used_by": [
+            "IL"
+          ]
+        },
+        {
+          "format": "A###-####-####",
+          "used_by": [
+            "IL"
+          ]
+        },
+        {
+          "format": "#{10}",
+          "used_by": [
+            "IN",
+            "NV"
+          ]
+        },
+        {
+          "format": "####-##-####",
+          "used_by": [
+            "IN"
+          ]
+        },
+        {
+          "format": "###AA####",
+          "used_by": [
+            "IA"
+          ]
+        },
+        {
+          "format": "A##-##-####",
+          "used_by": [
+            "KS",
+            "VA"
+          ]
+        },
+        {
+          "format": "A##-###-###",
+          "used_by": [
+            "KY"
+          ]
+        },
+        {
+          "format": "A-###-###-###-###",
+          "used_by": [
+            "MD"
+          ]
+        },
+        {
+          "format": "A#{9}",
+          "used_by": [
+            "MA",
+            "MO",
+            "OK"
+          ]
+        },
+        {
+          "format": "A ### ### ### ###",
+          "used_by": [
+            "MI"
+          ]
+        },
+        {
+          "format": "###-##-####",
+          "used_by": [
+            "MS"
+          ]
+        },
+        {
+          "format": "#{13}",
+          "used_by": [
+            "MT"
+          ]
+        },
+        {
+          "format": "##AAA#####",
+          "used_by": [
+            "NH"
+          ]
+        },
+        {
+          "format": "A#{14}",
+          "used_by": [
+            "NJ"
+          ]
+        },
+        {
+          "format": "A####-#####-#####",
+          "used_by": [
+            "NJ"
+          ]
+        },
+        {
+          "format": "### ### ###",
+          "used_by": [
+            "NY"
+          ]
+        },
+        {
+          "format": "#{12}",
+          "used_by": [
+            "NC"
+          ]
+        },
+        {
+          "format": "AAA-##-####",
+          "used_by": [
+            "ND"
+          ]
+        },
+        {
+          "format": "AAA######",
+          "used_by": [
+            "ND"
+          ]
+        },
+        {
+          "format": "AA######",
+          "used_by": [
+            "OH"
+          ]
+        },
+        {
+          "format": "#{8}",
+          "used_by": [
+            "PA",
+            "SD",
+            "TN",
+            "TX",
+            "VT"
+          ]
+        },
+        {
+          "format": "## ### ###",
+          "used_by": [
+            "PA"
+          ]
+        },
+        {
+          "format": "#{7}A",
+          "used_by": [
+            "VT"
+          ]
+        },
+        {
+          "format": "A#{6}",
+          "used_by": [
+            "WV"
+          ]
+        },
+        {
+          "format": "[W][D][L]X{9}",
+          "used_by": [
+            "WA"
+          ]
+        },
+        {
+          "format": "A#{13}",
+          "used_by": [
+            "WI"
+          ]
+        },
+        {
+          "format": "A###-####-####-##",
+          "used_by": [
+            "WI"
+          ]
+        },
+        {
+          "format": "######-###",
+          "used_by": [
+            "WY"
+          ]
+        }
+      ]
     }
   }
 }

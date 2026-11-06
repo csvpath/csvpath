@@ -1,0 +1,17 @@
+macie DRIVERS_LICENSE: occurrence 1, line 1 (row 2), column 2 drivers_license
+macie UK_DRIVERS_LICENSE: occurrence 1, line 2 (row 3), column 2 drivers_license
+macie DRIVERS_LICENSE: occurrence 2, line 3 (row 4), column 2 drivers_license
+macie CANADA_DRIVERS_LICENSE: occurrence 1, line 3 (row 4), column 2 drivers_license
+macie AUSTRALIA_DRIVERS_LICENSE: occurrence 1, line 3 (row 4), column 2 drivers_license
+macie CANADA_DRIVERS_LICENSE: occurrence 2, line 4 (row 5), column 2 drivers_license
+macie GERMANY_DRIVERS_LICENSE: occurrence 1, line 6 (row 7), column 3 notes
+macie FRANCE_DRIVERS_LICENSE: occurrence 1, line 7 (row 8), column 3 notes
+macie ITALY_DRIVERS_LICENSE: occurrence 1, line 8 (row 9), column 3 notes
+macie UK_DRIVERS_LICENSE: occurrence 2, line 9 (row 10), column 3 notes
+macie DRIVERS_LICENSE: 4 occurrences, severity MEDIUM, detail shown for first 2
+macie UK_DRIVERS_LICENSE: 2 occurrences, severity MEDIUM, detail shown for all 2
+macie CANADA_DRIVERS_LICENSE: 2 occurrences, severity MEDIUM, detail shown for all 2
+macie AUSTRALIA_DRIVERS_LICENSE: 1 occurrence, severity LOW, detail shown for all 1
+macie GERMANY_DRIVERS_LICENSE: 1 occurrence, severity LOW, detail shown for all 1
+macie FRANCE_DRIVERS_LICENSE: 1 occurrence, severity LOW, detail shown for all 1
+macie ITALY_DRIVERS_LICENSE: 1 occurrence, severity LOW, detail shown for all 1

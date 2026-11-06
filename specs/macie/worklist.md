@@ -80,7 +80,13 @@ last. Add an item the moment something is deferred.
      (7), pair 19_phones; national numbers can be several countries'
      (accepted for the first release, David 2026-11-05). Next, in
      `group-b-design.md` order: dates done (birth date, card expiration,
-     pair 20_dates); next driver's licenses, then the rest.
+     pair 20_dates); driver's licenses done for 17 jurisdictions (pair
+     21_drivers_licenses). Next, the rest of group B.
+   - **Backlog, driver's licenses** (David, 2026-11-06): Finland, Greece,
+     Hungary, Ireland, Latvia, Lithuania, Luxembourg, Malta, Netherlands,
+     Poland, Portugal, Romania, Slovakia, Slovenia, Sweden. Microsoft
+     Purview's per-country pages have the patterns (about 4k tokens each
+     to fetch).
    - **Group B:** driver's licenses (32 identifiers; the US one covers
      50+ state formats), passports (7), phone numbers (7), UK NINO, UK
      electoral roll, Canada permanent resident card, India PAN, Brazil RG,
