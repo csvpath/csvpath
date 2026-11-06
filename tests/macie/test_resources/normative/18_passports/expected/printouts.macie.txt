@@ -1,0 +1,16 @@
+macie CANADA_PASSPORT_NUMBER: occurrence 1, line 1 (row 2), column 2 passport
+macie SPAIN_PASSPORT_NUMBER: occurrence 1, line 1 (row 2), column 2 passport
+macie USA_PASSPORT_NUMBER: occurrence 1, line 2 (row 3), column 2 passport
+macie GERMANY_PASSPORT_NUMBER: occurrence 1, line 3 (row 4), column 2 passport
+macie FRANCE_PASSPORT_NUMBER: occurrence 1, line 5 (row 6), column 3 notes
+macie ITALY_PASSPORT_NUMBER: occurrence 1, line 6 (row 7), column 3 notes
+macie UK_PASSPORT_NUMBER: occurrence 1, line 7 (row 8), column 3 notes
+macie USA_PASSPORT_NUMBER: occurrence 2, line 7 (row 8), column 3 notes
+macie SPAIN_PASSPORT_NUMBER: occurrence 2, line 9 (row 10), column 2 passport
+macie CANADA_PASSPORT_NUMBER: 1 occurrence, severity MEDIUM, detail shown for all 1
+macie FRANCE_PASSPORT_NUMBER: 1 occurrence, severity MEDIUM, detail shown for all 1
+macie GERMANY_PASSPORT_NUMBER: 1 occurrence, severity MEDIUM, detail shown for all 1
+macie ITALY_PASSPORT_NUMBER: 1 occurrence, severity MEDIUM, detail shown for all 1
+macie SPAIN_PASSPORT_NUMBER: 2 occurrences, severity HIGH, detail shown for all 2
+macie UK_PASSPORT_NUMBER: 1 occurrence, severity MEDIUM, detail shown for all 1
+macie USA_PASSPORT_NUMBER: 2 occurrences, severity HIGH, detail shown for all 2

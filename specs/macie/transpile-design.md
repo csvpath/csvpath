@@ -701,6 +701,28 @@ upper case.
   all the work (fidelity B). MEDIUM for one occurrence, HIGH from two,
   per Macie.
 
+**Passports** (group B step 2): Macie's seven passport identifiers, as
+`FormatDetector` formats. PERSONAL_INFORMATION, keyword required, MEDIUM
+for one occurrence and HIGH from two (Macie). Fidelity B: the keyword
+does most of the work.
+
+| Identifier | Formats | Source |
+|---|---|---|
+| `CANADA_PASSPORT_NUMBER` | `AA######` | IRCC |
+| `FRANCE_PASSPORT_NUMBER` | `##AA#####` | EC document format analysis |
+| `GERMANY_PASSPORT_NUMBER` | `[CF-HJK][0-9CF-HJ-NPRTV-Z]{8}` | Auswaertiges Amt (no vowels, no B D Q S); the first letter is ours |
+| `ITALY_PASSPORT_NUMBER` | `AA#######` | EC document format analysis |
+| `SPAIN_PASSPORT_NUMBER` | `AAA######`, and ours `AA######` (older) | Spanish consulates |
+| `UK_PASSPORT_NUMBER` | `#{9}` | HM Passport Office |
+| `USA_PASSPORT_NUMBER` | `#{9}`, `A#{8}` (since 2021) | US State Department |
+
+Macie's keyword lists overlap, so one number can be several countries'.
+Near the bare keyword `passport` (Canada, Germany, Spain and US lists),
+`AB123456` is both Canadian and Spanish; near `passport number` (UK and
+US lists, among others), 9 digits are both British and American. We
+report what Macie's lists and the shapes imply, and the normative pair
+shows it.
+
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
 (Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
@@ -795,6 +817,9 @@ every detector the catalog names exists, and every detector is used.
 17. Group B: does Macie report a bank account number touching letters
     (`acct123456789`)? Does it accept NINOs spaced other than
     `AB 12 34 56 C`?
+18. Passports: does Macie report one number under two countries when
+    their shapes and keywords overlap? Does it accept Spain's older two
+    letter form?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

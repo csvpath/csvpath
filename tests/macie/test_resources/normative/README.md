@@ -119,3 +119,8 @@ Design decisions are in `specs/macie/transpile-design.md`.
   HMRC never uses; bank accounts of 12 digits, 8 digits and with spaces;
   security codes of 3, 4 and 5 digits; two identifiers in one cell; and
   no keyword.
+- `18_passports`: the seven passport identifiers. Shapes shared by
+  countries whose keywords overlap: AB123456 is Canadian and Spanish near
+  "passport", and 9 digits are British and American near "passport
+  number"; a French shape near an English keyword is not French; and no
+  keyword.

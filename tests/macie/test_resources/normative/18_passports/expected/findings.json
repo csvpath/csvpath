@@ -1,0 +1,138 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "PERSONAL_INFORMATION",
+      "detections": [
+        {
+          "type": "CANADA_PASSPORT_NUMBER",
+          "count": 1,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "passport",
+                "row": 2
+              }
+            ]
+          }
+        },
+        {
+          "type": "FRANCE_PASSPORT_NUMBER",
+          "count": 1,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 6
+              }
+            ]
+          }
+        },
+        {
+          "type": "GERMANY_PASSPORT_NUMBER",
+          "count": 1,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "passport",
+                "row": 4
+              }
+            ]
+          }
+        },
+        {
+          "type": "ITALY_PASSPORT_NUMBER",
+          "count": 1,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 7
+              }
+            ]
+          }
+        },
+        {
+          "type": "SPAIN_PASSPORT_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "passport",
+                "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "passport",
+                "row": 10
+              }
+            ]
+          }
+        },
+        {
+          "type": "UK_PASSPORT_NUMBER",
+          "count": 1,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 8
+              }
+            ]
+          }
+        },
+        {
+          "type": "USA_PASSPORT_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "passport",
+                "row": 3
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 8
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 9
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:eu-central-1:123456789012:classification-job/1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}
