@@ -9,6 +9,7 @@ es_dni and es_nie."""
 from .bank_account_detector import BankAccountDetector
 from .cl_rut_detector import ClRutDetector
 from .co_nit_detector import CoNitDetector
+from .cookie_detector import CookieDetector
 from .credential_detector import CredentialDetector
 from .credit_card_detector import CreditCardDetector
 from .date_detector import DateDetector
@@ -19,6 +20,7 @@ from .fr_nir_detector import FrNirDetector
 from .grouped_digits_detector import GroupedDigitsDetector
 from .iban_detector import IbanDetector
 from .it_cf_detector import ItCfDetector
+from .lat_long_detector import LatLongDetector
 from .mag_stripe_detector import MagStripeDetector
 from .mx_curp_detector import MxCurpDetector
 from .mx_rfc_detector import MxRfcDetector
@@ -29,6 +31,8 @@ from .us_ssn_detector import UsSsnDetector
 from .vin_detector import VinDetector
 
 DETECTORS = {
+    "lat_long": LatLongDetector,
+    "http_cookie": CookieDetector,
     "ar_dni": FormatDetector,
     "br_cep": FormatDetector,
     "br_rg": FormatDetector,

@@ -1,0 +1,35 @@
+~
+  id: group-b-gps-cookie
+  macie-origin: job
+  macie-job-id: 6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d
+  macie-account: 123456789012
+  macie-region: us-east-1
+  macie-source-arn: arn|aws|macie2|us-east-1|123456789012|classification-job/6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d
+  macie-downloaded-at: 20261106T200000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "LATITUDE_LONGITUDE",
+        "PERSONAL_INFORMATION",
+        "lat_long",
+        "required",
+        "coordinate|coordinates|lat long|latitude longitude|position",
+        30,
+        "1:LOW 2:MEDIUM"
+    )
+    macie_mdi(
+        "HTTP_COOKIE",
+        "PERSONAL_INFORMATION",
+        "http_cookie",
+        "none",
+        "",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

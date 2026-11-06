@@ -83,8 +83,10 @@ last. Add an item the moment something is deferred.
      pair 20_dates); driver's licenses done for 17 jurisdictions (pair
      21_drivers_licenses). The rest of group B's shapes done (Argentina
      DNI, Brazil RG and CEP, Colombia cedula, Canada permanent resident,
-     India PAN, UK electoral roll, pair 22_group_b_rest). Next, GPS
-     coordinates and HTTP cookies, which need small validators.
+     India PAN, UK electoral roll, pair 22_group_b_rest). GPS
+     coordinates and HTTP cookies done (`LatLongDetector`,
+     `CookieDetector`, pair 23_gps_cookie). Group B is complete apart
+     from the driver's license backlog below.
    - **Backlog, driver's licenses** (David, 2026-11-06): Finland, Greece,
      Hungary, Ireland, Latvia, Lithuania, Luxembourg, Malta, Netherlands,
      Poland, Portugal, Romania, Slovakia, Slovenia, Sweden. Microsoft

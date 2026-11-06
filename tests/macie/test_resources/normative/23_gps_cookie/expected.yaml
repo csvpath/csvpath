@@ -1,0 +1,54 @@
+#
+# GPS coordinates and HTTP cookies, the last group B step: Macie's
+# LATITUDE_LONGITUDE, which requires an English keyword, and HTTP_COOKIE,
+# which needs none but must be a complete Cookie or Set-Cookie header.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: group-b-gps-cookie.csvpath
+    data: web.csv
+    finding_lines: [1, 2, 3, 4, 8]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie LATITUDE_LONGITUDE: occurrence 1, line 1 (row 2), column 2 coordinates" }
+      - { line: 2, message: "macie LATITUDE_LONGITUDE: occurrence 2, line 2 (row 3), column 3 notes" }
+      - { line: 3, message: "macie HTTP_COOKIE: occurrence 1, line 3 (row 4), column 3 notes" }
+      - { line: 4, message: "macie HTTP_COOKIE: occurrence 2, line 4 (row 5), column 3 notes" }
+    findings: findings.json
+    #
+    #   line  cell                                    reported as
+    #   1     coordinates "41.948614,-87.655311"      GPS: the header is a keyword
+    #   2     "position 51.5007, -0.1246"             GPS
+    #   3     "Cookie: session=3948; lang=en"         a cookie: one header, two
+    #                                                 pairs
+    #   4     "Set-Cookie: id=TWlrZQ; Secure"         a cookie
+    #   5     "41.948614,-87.655311"                  nothing: no keyword
+    #   6     "position 41°56.9168'N 87°39.3187'W"    nothing: DDM, which Macie
+    #                                                 does not support
+    #   7     "session=3948; lang=en"                 nothing: not a header
+    #   8     "Cookie: a=1 and Cookie: b=2"           two cookies, past the
+    #                                                 detail limit
+    #
+    # GPS coordinates are LOW for one occurrence, MEDIUM from 2 (and from
+    # 100); cookies LOW, MEDIUM from 2, HIGH from 100. Totals: GPS 2,
+    # cookies 4. Both PERSONAL_INFORMATION: totalCount 6.

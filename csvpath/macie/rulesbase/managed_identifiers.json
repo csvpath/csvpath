@@ -1116,6 +1116,17 @@
         "código postal",
         "codigo postal"
       ]
+    },
+    "lat_long": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06",
+      "keywords": [
+        "coordinate",
+        "coordinates",
+        "lat long",
+        "latitude longitude",
+        "position"
+      ]
     }
   },
   "identifiers": {
@@ -2679,6 +2690,28 @@
       "detector": "br_cep",
       "keyword_mode": "required",
       "keywords_from": "br_cep",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "LATITUDE_LONGITUDE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "lat_long",
+      "keyword_mode": "required",
+      "keywords_from": "lat_long",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-06"
+    },
+    "HTTP_COOKIE": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "http_cookie",
+      "keyword_mode": "none",
+      "keywords_from": null,
       "distance": 30,
       "severity": "1:LOW 2:MEDIUM 100:HIGH",
       "fidelity": "B",
@@ -4290,6 +4323,18 @@
         "#####-###",
         "#{8}",
         "##.###-###"
+      ]
+    },
+    "lat_long": {
+      "notes": [
+        "Macie: LATITUDE_LONGITUDE needs an English keyword, and a latitude and longitude stored as a pair in Decimal Degrees, e.g. 41.948614,-87.655311; not Degrees Decimal Minutes or Degrees, Minutes, Seconds. GPS coordinates are LOW for one occurrence and MEDIUM from 2, also from 100.",
+        "Ours: each number has a decimal part and an optional sign, the pair separated by a comma or spaces; the latitude within 90 and the longitude within 180 either way."
+      ]
+    },
+    "http_cookie": {
+      "notes": [
+        "Macie: HTTP_COOKIE needs no keyword, and a complete Cookie or Set-Cookie header with one or more name-value pairs, e.g. Set-Cookie: id=TWlrZQ and Cookie: session=3948; lang=en. Cookies are LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "Ours, from RFC 6265: the field name in any case, a name that is a token and a value that is not empty; a Set-Cookie header's attributes are part of it. One header is one occurrence."
       ]
     }
   }
