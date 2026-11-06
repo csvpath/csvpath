@@ -129,6 +129,25 @@ class Matchable(Qualified):  # pylint: disable=R0904
         if not self._id:
             thing = self if not child else child
             self._id = ExpressionUtility.get_id(thing=thing)
+            #
+            # collect the id name so that we can clear any variables with
+            # that name if the .tmp qualifier. there is no penality for
+            # capturing an ID that is not actually used to create a
+            # variable; regardless, at the moment there is no other use for
+            # _id (but this could possibly change in the future).
+            #
+            # this is not enough, though. some IDs may not name vars.
+            # this is because in many cases, the ID is just a part of the
+            # var name, allowing the function to create multiple vars.
+            # also, in some cases the user can add an arbitrary name
+            # qualifier that will be used instead of self._id.
+            #
+            if hasattr(self, "_register_internal_var_name"):
+                #
+                # if we're not .tmp there is no reason to capture
+                #
+                if self.temp:
+                    self._register_internal_var_name(self._id)
         return self._id
 
     # convenience method for one or two arg functions

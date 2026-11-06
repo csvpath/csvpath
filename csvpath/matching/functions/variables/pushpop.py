@@ -46,6 +46,9 @@ class Push(SideEffect):
             actuals=[None, Any],
         )
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -55,6 +58,7 @@ class Push(SideEffect):
         sibs = self.siblings()
         k = sibs[0].to_value(skip=skip)
         if len(sibs) == 1:
+            self._register_internal_var_name(k)
             v = self.matcher.get_variable(k, set_if_none=[])
             if not isinstance(v, (list, tuple)):
                 msg = f"Variable {k} must be a stack variable"
@@ -67,6 +71,7 @@ class Push(SideEffect):
         if isinstance(k, list):
             stack = k
         else:
+            self._register_internal_var_name(k)
             stack = self.matcher.get_variable(k, set_if_none=[])
         #
         # make sure we have a usable stack var
@@ -136,6 +141,7 @@ class Pop(ValueProducer):
 
     def _produce_value(self, skip=None) -> None:
         k = self.children[0].to_value(skip=skip)
+        self._register_internal_var_name(k)
         stack = self.matcher.get_variable(k, set_if_none=[])
         if len(stack) > 0:
             self.value = None if stack == [] else stack[len(stack) - 1]
@@ -174,6 +180,7 @@ class Stack(SideEffect):
 
     def _produce_value(self, skip=None) -> None:
         k = self.children[0].to_value(skip=skip)
+        self._register_internal_var_name(k)
         stack = self.matcher.get_variable(k, set_if_none=[])
         if not isinstance(stack, list):
             thelist = []
@@ -219,6 +226,8 @@ class Peek(ValueProducer):
             v = -1
         else:
             v = int(v)
+
+        self._register_internal_var_name(k)
         stack = self.matcher.get_variable(k, set_if_none=[])
         if v < len(stack):
             self.value = stack[v]
@@ -272,6 +281,7 @@ class PeekSize(ValueProducer):
             return
         stack = None
         if isinstance(k, str):
+            self._register_internal_var_name(k)
             stack = self.matcher.get_variable(k, set_if_none=[])
         elif isinstance(k, (list, tuple)):
             stack = k

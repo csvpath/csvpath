@@ -1,5 +1,5 @@
 # pylint: disable=C0114
-from csvpath.matching.productions import Equality, Variable, Term, Header, Matchable
+from csvpath.matching.productions import Variable, Term, Header
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import ValueProducer
 from ..function import Function
@@ -25,10 +25,14 @@ class Min(ValueProducer):
             actuals=[int, float],
         )
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
         name = self.first_non_term_qualifier("min")
+        self._register_internal_var_name(name)
         v = self._value_one(skip=skip)
         v = ExpressionUtility.ascompariable(v)
         e = self.matcher.get_variable(name)
@@ -61,10 +65,14 @@ class Max(ValueProducer):
             actuals=[int, float],
         )
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
         name = self.first_non_term_qualifier("max")
+        self._register_internal_var_name(name)
         v = self._value_one(skip=skip)
         v = ExpressionUtility.ascompariable(v)
         e = self.matcher.get_variable(name)

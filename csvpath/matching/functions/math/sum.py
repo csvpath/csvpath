@@ -35,10 +35,14 @@ class Sum(ValueProducer):
             actuals=[int, float],
         )
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
         var = self.first_non_term_qualifier(self.name)
+        self._register_internal_var_name(var)
         val = self.matcher.get_variable(var, set_if_none=0)
         self.value = val
         child = self.children[0]
@@ -48,11 +52,13 @@ class Sum(ValueProducer):
         else:
             cval = ExpressionUtility.to_float(cval)
         val += cval
+        self._register_internal_var_name(var)
         self.matcher.set_variable(var, value=val)
         self.value = val
 
     def _apply_default_value(self) -> None:
         var = self.first_non_term_qualifier(self.name)
+        self._register_internal_var_name(var)
         val = self.matcher.get_variable(var, set_if_none=0)
         self.value = val
 

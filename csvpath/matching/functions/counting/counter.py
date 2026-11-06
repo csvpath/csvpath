@@ -2,7 +2,6 @@
 from typing import Any
 from ..function_focus import ValueProducer
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from csvpath.matching.util.exceptions import MatchException
 from ..args import Args
 
 
@@ -34,10 +33,15 @@ class Counter(ValueProducer):
         )
         self.args.validate(self.siblings())
         name = self.first_non_term_qualifier(self.get_id())
+
         # initializing the counter to 0. if we don't do this and the counter is
         # never hit (e.g. it is behind a ->) a print returns the counter's name
         # which is confusing.
+        self._register_internal_var_name(name)
         self.matcher.get_variable(name, set_if_none=0)
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()  # pylint: disable=W0246
 
     def _produce_value(self, skip=None) -> None:
@@ -47,6 +51,7 @@ class Counter(ValueProducer):
         # probably useless, but better than a name collision on "counter"
         #
         name = self.first_non_term_qualifier(self.get_id())
+        self._register_internal_var_name(name)
         counter = self.matcher.get_variable(name, set_if_none=0)
         if v is None:
             counter += 1

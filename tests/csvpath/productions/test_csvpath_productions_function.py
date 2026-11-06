@@ -13,7 +13,25 @@ PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestCsvPathProductionsFunction(unittest.TestCase):
-    def test_bad_function_name_0(self):
+    def test_productions_function_has_internal_var_name(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[1]
+            [
+                push("a", 1, 2, 3, 4, 5)
+                push.tmp("b", 5, 4, 3, 2, 1)
+            ]"""
+        )
+        path.fast_forward()
+        assert "a" in path.variables
+        assert "b" in path.variables
+        path.clear_temp_vars()
+        assert "a" in path.variables
+        assert "b" not in path.variables
+        assert path.variables.get("a") == [1, 2, 3, 4, 5]
+
+    def test_productions_function_bad_function_name_0(self):
         c = CsvPath()
         c.add_to_config("errors", "csvpath", "raise, collect, print")
         c.parse(f"${PATH}[*][yes()]")
@@ -26,7 +44,7 @@ class TestCsvPathProductionsFunction(unittest.TestCase):
         with pytest.raises(InvalidNameException):
             FunctionFactory.add_function(name=None, function=count)
 
-    def test_bad_function_name_1(self):
+    def test_productions_function_bad_function_name_1(self):
         c = CsvPath()
         c.add_to_config("errors", "csvpath", "raise, collect, print")
         c.parse(f"${PATH}[*][yes()]")
@@ -38,7 +56,7 @@ class TestCsvPathProductionsFunction(unittest.TestCase):
         #
         FunctionFactory.add_function(name=None, function=count)
 
-    def test_bad_function_name_2(self):
+    def test_productions_function_bad_function_name_2(self):
         c = CsvPath()
         c.add_to_config("errors", "csvpath", "raise, collect, print")
         c.parse(f"${PATH}[*][yes()]")
@@ -47,7 +65,7 @@ class TestCsvPathProductionsFunction(unittest.TestCase):
         with pytest.raises(InvalidNameException):
             FunctionFactory.add_function(name=1, function=count)
 
-    def test_bad_function_name_3(self):
+    def test_productions_function_bad_function_name_3(self):
         c = CsvPath()
         c.add_to_config("errors", "csvpath", "raise, collect, print")
         c.parse(f"${PATH}[*][yes()]")
@@ -56,7 +74,7 @@ class TestCsvPathProductionsFunction(unittest.TestCase):
         with pytest.raises(InvalidNameException):
             FunctionFactory.add_function(name="", function=count)
 
-    def test_bad_name_4(self):
+    def test_productions_function_bad_name_4(self):
         #
         # we had not allowed numbers; however, the grammar always did and allowing
         # numbers makes sense.
@@ -68,7 +86,7 @@ class TestCsvPathProductionsFunction(unittest.TestCase):
         count = Count(matcher=c.matcher, name="count")
         FunctionFactory.add_function(name="A123", function=count)
 
-    def test_bad_function_name_5(self):
+    def test_productions_function_bad_function_name_5(self):
         #
         # we had not allowed _; however, _ makes a ton of sense. underscore as the
         # last char is ugly but might be useful. the grammar supports it and i don't
@@ -81,7 +99,7 @@ class TestCsvPathProductionsFunction(unittest.TestCase):
         count = Count(matcher=c.matcher, name="count")
         FunctionFactory.add_function(name="count_", function=count)
 
-    def test_bad_function_name_6(self):
+    def test_productions_function_function_name_6(self):
         #
         # we had not allowed _; however, _ makes a ton of sense. underscore as the
         # last char is ugly but might be useful. the grammar supports it and i don't
@@ -94,7 +112,7 @@ class TestCsvPathProductionsFunction(unittest.TestCase):
         count = Count(matcher=c.matcher, name="count")
         FunctionFactory.add_function(name="count.v2", function=count)
 
-    def test_bad_function_name_7(self):
+    def test_productions_function_function_name_7(self):
         c = CsvPath()
         c.add_to_config("errors", "csvpath", "raise, collect, print")
         c.parse(f"${PATH}[*][yes()]")
@@ -105,7 +123,7 @@ class TestCsvPathProductionsFunction(unittest.TestCase):
         #
         FunctionFactory.add_function(name="count", function=count)
 
-    def test_function_name(self):
+    def test_productions_function_function_name(self):
         c = CsvPath()
         c.add_to_config("errors", "csvpath", "raise, collect, print")
         c.parse(f"${PATH}[*][yes()]")

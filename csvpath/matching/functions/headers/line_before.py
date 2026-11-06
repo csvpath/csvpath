@@ -2,8 +2,6 @@
 from typing import Any
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Header
-from csvpath.matching.util.expression_utility import ExpressionUtility
-from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.functions.function import CheckedUnset
 from ..args import Args
 
@@ -23,6 +21,9 @@ class LineBefore(ValueProducer):
         self.args.argset(1).arg(name="header name", types=[Term], actuals=[str])
         self.args.argset(1).arg(name="header", types=[Header], actuals=[Any])
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()  # pylint: disable=W0246
 
     def _produce_value(self, skip=None) -> None:

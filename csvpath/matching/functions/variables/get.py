@@ -61,6 +61,7 @@ class Get(ValueProducer):
         if isinstance(varname, dict):
             v = varname
         else:
+            self._register_internal_var_name(f"{varname}")
             v = self.matcher.get_variable(f"{varname}", set_if_none={})
         if c2 is None:
             self.value = v

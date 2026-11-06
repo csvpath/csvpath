@@ -3,7 +3,6 @@ import csv
 from typing import NewType, List, Dict, Union
 from datetime import datetime
 from csvpath.matching.util.runtime_data_collector import RuntimeDataCollector
-from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 from csvpath.util.line_spooler import LineSpooler
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
@@ -151,6 +150,8 @@ class ResultSerializer:
         #
         # need to look for vars and functions that create vars that have a temp qualifier
         #
+        self.result.csvpath.clear_temp_vars()
+        """
         matcher = self.result.csvpath.matcher
         if hasattr(matcher, "expressions") and matcher.expressions:
             es = matcher.expressions
@@ -160,7 +161,17 @@ class ResultSerializer:
                     if m.temp:
                         name = m.first_non_term_qualifier(m.name)
                         variables.pop(name)
-
+                    #
+                    # if a function, need to loop on any captured var names most made from
+                    # (_id from get_id()) to clear internal variables
+                    #
+                    for n in m.internal_var_names:
+                        try:
+                            variables.pop(n)
+                        except:
+                            # may already have been popped
+                            ...
+        """
         #
         #
         #

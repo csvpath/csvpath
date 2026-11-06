@@ -65,6 +65,7 @@ class MinMax(ValueProducer):
         #
         t = f"{self._get_the_line()}"
         self.matcher.set_variable("min", tracking=t, value=v)
+        self._register_internal_var_name(min)
         #
         # find the least/most
         #
@@ -113,6 +114,9 @@ class Average(MinMax):
             actuals=[str],
         )
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def __init__(
@@ -133,6 +137,7 @@ class Average(MinMax):
         if self.is_match() and not self.line_matches():
             return
         n = self.first_non_term_qualifier(self.ave_or_med)
+        self._register_internal_var_name(n)
         # set the "average" or "median" variable tracking the value by line, scan, or match count
         self.matcher.set_variable(n, tracking=f"{self._get_the_line()}", value=v)
         # get value for all the line counts

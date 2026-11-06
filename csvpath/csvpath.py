@@ -35,6 +35,7 @@ from csvpath.managers.files.lines_and_headers_cacher import LinesAndHeadersCache
 from .matching.util.exceptions import MatchException
 from .managers.errors.error_collector import ErrorCollector
 from csvpath.util.date_util import DateUtility as daut
+from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 
 
 class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
@@ -289,6 +290,28 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         self._unmatched = None
         self._cacher = None
+
+    def clear_temp_vars(self) -> None:
+        if self.matcher is not None and self.variables is not None:
+            es = self.matcher.expressions
+            es = [_[0] for _ in es]
+            for _ in es:
+                for m in exut.get_my_descendents(_):
+                    if m.temp:
+                        try:
+                            name = m.first_non_term_qualifier(m.name)
+                            if name in self.variables:
+                                self.variables.pop(name)
+                            #
+                            # if a function, need to loop on any captured var names most made from
+                            # (_id from get_id()) to clear internal variables
+                            #
+                            for n in m.internal_var_names:
+                                if n in self.variables:
+                                    self.variables.pop(n)
+                        except Exception:
+                            # may already have been popped
+                            ...
 
     def rewind(self) -> None:
         #

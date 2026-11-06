@@ -90,6 +90,9 @@ class Track(SideEffect):
             if self.matcher.csvpath.do_i_raise():
                 raise ChildrenException(msg)
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -121,6 +124,7 @@ class Track(SideEffect):
 
         op = sibs[2].to_value(skip=skip) if len(sibs) > 2 else None
 
+        self._register_internal_var_name(varname)
         v = self.matcher.get_variable(varname, set_if_none={})
         if tracking not in v:
             v[tracking] = [] if op == "collect" else None

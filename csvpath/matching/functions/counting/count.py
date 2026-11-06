@@ -1,7 +1,6 @@
 # pylint: disable=C0114
 from typing import Any
 from ..function_focus import ValueProducer
-from ..function import Function
 from ..args import Args
 from csvpath.matching.productions import Matchable
 
@@ -60,6 +59,8 @@ class Count(ValueProducer):
         a.arg(name="eval", types=[None, Matchable], actuals=[None, Any])
         self.args.validate(self.siblings())
         #
+        self.has_internal_variables = True
+        #
         super().check_valid()  # pylint: disable=W0246
         # re: W0246: Matchable handles this class's children
 
@@ -110,4 +111,5 @@ class Count(ValueProducer):
         if not self.onmatch or self._function_or_equality.matches(skip=skip):
             cnt += 1
             self.matcher.set_variable(self._id, tracking=tracked_value, value=cnt)
+
         return 0 if cnt is None else cnt

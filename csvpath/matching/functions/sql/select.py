@@ -55,6 +55,9 @@ class Select(ValueProducer):
             actuals=[str],
         )
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -70,6 +73,7 @@ class Select(ValueProducer):
         v = self._query(table=table, column=column, where=where, conn=conn)
         name = self.first_non_term_qualifier()
         if name is not None:
+            self._register_internal_var_name(name)
             self.matcher.set_variable(name, value=v)
         self.value = v
 

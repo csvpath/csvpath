@@ -36,6 +36,9 @@ class ResetHeaders(SideEffect):
             name="evaluate this", types=[None, Function], actuals=[]
         )
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -79,12 +82,14 @@ class ResetHeaders(SideEffect):
         #
         v = self.matcher.get_variable(f"{name}_count", set_if_none=0)
         v += 1
+        self._register_internal_var_name(f"{name}_count")
         self.matcher.set_variable(f"{name}_count", value=v)
         #
         # track the line numbers
         #
         v = self.matcher.get_variable(f"{name}_lines", set_if_none=[])
         v.append(self.matcher.csvpath.line_monitor.physical_line_number)
+        self._register_internal_var_name(f"{name}_lines")
         self.matcher.set_variable(f"{name}_lines", value=v)
         #
         # let the log know

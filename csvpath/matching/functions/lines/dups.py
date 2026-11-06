@@ -1,9 +1,7 @@
 # pylint: disable=C0114
 import hashlib
 from typing import Any
-from csvpath.matching.productions import Header, Variable, Equality
-from csvpath.matching.functions.function import Function
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.productions import Header, Equality
 from ..function_focus import MatchDecider, ValueProducer
 from ..args import Args
 
@@ -65,6 +63,9 @@ class PercentDups(ValueProducer):
 
     def _produce_value(self, skip=None) -> None:
         name = self.first_non_term_qualifier(self.name)
+
+        self._register_internal_var_name(name)
+
         fingerprint, lines = FingerPrinter._capture_line(self, name, skip=skip)
         i = len(lines) - 1
         j = (
@@ -109,6 +110,7 @@ class CountDups(ValueProducer):
 
     def _produce_value(self, skip=None) -> None:
         name = self.first_non_term_qualifier(self.name)
+        self._register_internal_var_name(name)
         fingerprint, lines = FingerPrinter._capture_line(self, name, skip=skip)
         self.value = len(lines)
 
@@ -133,6 +135,7 @@ class HasDups(MatchDecider):
 
     def _decide_match(self, skip=None) -> None:
         name = self.first_non_term_qualifier(self.name)
+        self._register_internal_var_name(name)
         fingerprint, lines = FingerPrinter._capture_line(self, name, skip=skip)
         self.match = len(lines) > 1
 
@@ -160,6 +163,7 @@ class DupLines(ValueProducer):
 
     def _produce_value(self, skip=None) -> None:
         name = self.first_non_term_qualifier(self.name)
+        self._register_internal_var_name(name)
         fingerprint, lines = FingerPrinter._capture_line(self, name, skip=skip)
         lines = lines[:]
         if len(lines) == 1:

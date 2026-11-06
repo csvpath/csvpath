@@ -49,6 +49,7 @@ class IndexOf(ValueProducer):
         else:
             varname = self._value_one(skip=skip)
         v = self._value_two(skip=skip)
+        self._register_internal_var_name(f"{varname}")
         s = self.matcher.get_variable(f"{varname}", set_if_none=[])
         if isinstance(s, (list, tuple)):
             try:

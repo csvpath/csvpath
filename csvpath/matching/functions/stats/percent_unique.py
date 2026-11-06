@@ -24,11 +24,15 @@ class PercentUnique(ValueProducer):
         a = self.args.argset(1)
         a.arg(name="header to watch", types=[Header], actuals=[str])
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
         tracking = self.children[0].to_value()
         name = self.first_non_term_qualifier("percent_unique")
+        self._register_internal_var_name(name)
         v = self.matcher.get_variable(name, tracking=tracking, set_if_none=0)
         v += 1
         self.matcher.set_variable(name, tracking=tracking, value=v)
