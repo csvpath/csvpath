@@ -1,7 +1,8 @@
 
 ## last()
 
-Evaluates True on the last line to be scanned.
+Evaluates True on the last line to be scanned that has data. Trailing
+blank lines do not count.
 
 last() used by itself will always run, even if its line turns out to
 be blank and would otherwise be skipped. When last() is composed
@@ -29,10 +30,10 @@ be relied on.
 |:-----------|:---------------------------------|
 | Main focus | last() determines if lines match |
 
-| Context          | Qualifier                                                                          |
-|:-----------------|:-----------------------------------------------------------------------------------|
-| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
-| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Context          | Qualifier                                                                                                                                                                                                                                      |
+|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch)                                                                                                                                                             |
+| Value qualifiers | [tmp](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#tmp), [renew](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#renew), [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 
 [[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

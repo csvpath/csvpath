@@ -8,7 +8,8 @@ argument of “:.2f”
 
 Interpolates a complete Pythonic formatting string with one
 replacement value.                 Use {{ and }} to demarcate your
-replacement pattern.
+replacement pattern. For example, to set a variable                 to
+a value as a string, use: @a = interpolate(uuid(), "{}")
 
 | Data signatures                                                                                        |
 |:-------------------------------------------------------------------------------------------------------|
@@ -22,10 +23,10 @@ replacement pattern.
 |:-----------|:------------------------------------------|
 | Main focus | interpolate() produces a calculated value |
 
-| Context          | Qualifier                                                                          |
-|:-----------------|:-----------------------------------------------------------------------------------|
-| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
-| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Context          | Qualifier                                                                                                                                                                                                                                      |
+|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch)                                                                                                                                                             |
+| Value qualifiers | [tmp](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#tmp), [renew](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#renew), [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 
 [[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

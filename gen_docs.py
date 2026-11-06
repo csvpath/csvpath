@@ -13,7 +13,6 @@ class MyConst:
 
 
 if __name__ == "__main__":
-
     FunctionFactory.load()
     #
     # make pages
@@ -37,6 +36,7 @@ if __name__ == "__main__":
         "onmatch": "https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch",
         "renew": "https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#renew",
         "strict": "https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#strict",
+        "tmp": "https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#tmp",
         "str": "",
         "int": "",
         "float": "",

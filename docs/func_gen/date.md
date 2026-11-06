@@ -3,9 +3,9 @@
 
 date() has two purposes.
 
-First, it may indicate that a value must be a {self.name} to be valid. To do this, it must be an argument to a line() and have a header argument.
+First, it may indicate that a value must be a date to be valid. To do this, it must be an argument to a line() and have a header argument.
 
-Alternatively, it may generate a date from a string. Generally, {self.name}() recognizes {self.name}s without needing a format string.
+Alternatively, it may generate a date from a string. Generally, date() recognizes dates without needing a format string.
 
 | Data signatures                                                                                         |
 |:--------------------------------------------------------------------------------------------------------|
@@ -25,7 +25,7 @@ Alternatively, it may generate a date from a string. Generally, {self.name}() re
 | Context          | Qualifier                                                                                                                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [notnone](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#notnone), [strict](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#strict), [distinct](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#distinct) |
-| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [notnone](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#notnone)                                                                                                                                                                         |
+| Value qualifiers | [tmp](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#tmp), [renew](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#renew), [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [notnone](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#notnone)             |
 
 
 [[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

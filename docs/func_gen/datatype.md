@@ -7,9 +7,9 @@ datatype() returns the best fitting type for a header value on a given line.
               considered a none() match and "false" is considered a boolean() match.
             
 
-| Data signatures                                     |
-|:----------------------------------------------------|
-| datatype( header of value: $${\color{green}str}$$ ) |
+| Data signatures                                                                                        |
+|:-------------------------------------------------------------------------------------------------------|
+| datatype( header of value: $${\color{green}str}$$ ǁ $${\color{green}Any}$$ ǁ $${\color{green}None}$$ ) |
 
 | Call signatures                                                                                                                                                                                                                                                                       |
 |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -19,10 +19,10 @@ datatype() returns the best fitting type for a header value on a given line.
 |:-----------|:---------------------------------------|
 | Main focus | datatype() produces a calculated value |
 
-| Context          | Qualifier                                                                          |
-|:-----------------|:-----------------------------------------------------------------------------------|
-| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
-| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
+| Context          | Qualifier                                                                                                                                                                                                                                      |
+|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch)                                                                                                                                                             |
+| Value qualifiers | [tmp](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#tmp), [renew](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#renew), [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 
 [[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]

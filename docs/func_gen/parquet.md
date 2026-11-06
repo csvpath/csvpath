@@ -40,9 +40,9 @@ csvpath_instances property to flush each CsvPath in turn.
 |:------------------------------------------------------------------------------------------------------|
 | parquet( [function representing a data type: $${\color{green}None}$$ ǁ $${\color{green}Any}$$], ... ) |
 
-| Call signatures                                                                                                                 |
-|:--------------------------------------------------------------------------------------------------------------------------------|
-| parquet( [function representing a data type: Wildcard ǁ String ǁ Boolean ǁ Decimal ǁ Date ǁ Nonef ǁ Blank ǁ Email ǁ Url], ... ) |
+| Call signatures                                                                                                                        |
+|:---------------------------------------------------------------------------------------------------------------------------------------|
+| parquet( [function representing a data type: Wildcard ǁ String ǁ Boolean ǁ Decimal ǁ Date ǁ Nonef ǁ Blank ǁ Email ǁ Url ǁ Uuid], ... ) |
 
 | Purpose    | Value                               |
 |:-----------|:------------------------------------|

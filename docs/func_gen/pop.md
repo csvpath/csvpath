@@ -16,10 +16,10 @@ stack is created if not found.
 |:-----------|:----------------------------------|
 | Main focus | pop() produces a calculated value |
 
-| Context          | Qualifier                                                                                                                                                            |
-|:-----------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [asbool](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#asbool) |
-| Value qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch)                                                                                   |
+| Context          | Qualifier                                                                                                                                                                                                                                      |
+|:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Match qualifiers | [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch), [asbool](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#asbool)                                                                           |
+| Value qualifiers | [tmp](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#tmp), [renew](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#renew), [onmatch](https://github.com/csvpath/csvpath/blob/main/docs/qualifiers.md#onmatch) |
 
 
 [[Back to index](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/index.md)]
