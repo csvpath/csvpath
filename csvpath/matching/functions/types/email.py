@@ -1,8 +1,7 @@
 # pylint: disable=C0114
 from email_validator import validate_email, EmailNotValidError
-from csvpath.matching.productions import Term, Header, Variable, Reference
+from csvpath.matching.productions import Header, Variable, Reference
 from csvpath.matching.functions.function import Function
-from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..args import Args
 from .type import Type
 
@@ -49,5 +48,17 @@ class Email(Type):
         try:
             validate_email(value, check_deliverability=False)
             return True
-        except EmailNotValidError:
+        #
+        # we need to catch typeerror here, because datatype is
+        # using this method expecting that it always returns.
+        # we catch TypeError and ValueError in Function to_value
+        # and never raise. that is because Args does type and
+        # value testing. but here Args doesn't get a chance to
+        # help out. this problem highlights a risk. but for now
+        # our best bet in the near term is just to start logging
+        # those Value and Type errors, if any, rather than
+        # assuming they were already handled as Children or Match
+        # errors.
+        #
+        except (TypeError, EmailNotValidError):
             return False

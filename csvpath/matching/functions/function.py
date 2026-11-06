@@ -1,7 +1,6 @@
 # pylint: disable=C0114
 import time
 from textwrap import TextWrapper, dedent
-
 from typing import Any
 from ..productions.matchable import Matchable
 from csvpath.matching.util.exceptions import ChildrenException
@@ -138,12 +137,14 @@ class Function(Matchable):
                 )
                 try:
                     self._produce_value(skip=skip)
-                except (ValueError, TypeError):
+                except (ValueError, TypeError) as e:
                     #
                     # value and type should be alreadly handled as match or children exceptions
-                    # by Args.
+                    # by Args. however, that involves risk if we see situations that haven't been
+                    # tested for that cause value or type in another context other than args.
                     #
-                    ...
+                    self.matcher.csvpath.logger.exception(e)
+                    # raise
             else:
                 self._apply_default_value()
                 self.matcher.csvpath.logger.debug(

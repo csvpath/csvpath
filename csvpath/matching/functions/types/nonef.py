@@ -2,10 +2,9 @@
 from typing import Any
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from csvpath.matching.util.exceptions import ChildrenException, MatchException
-from csvpath.matching.productions import Variable, Header, Reference, Term, Equality
+from csvpath.matching.productions import Variable, Header, Reference, Term
 from csvpath.matching.functions.function import Function
 from ..args import Args
-from ..function import CheckedUnset
 from ..function_focus import ValueProducer
 from .type import Type
 
@@ -47,10 +46,9 @@ class Nonef(ValueProducer, Type):
             self.match = ExpressionUtility.is_none(self._value_one(skip=skip))
 
     @classmethod
-    def _is_match(
-        cls,
-        value: str,
-    ) -> tuple[bool, str | None]:
+    def _is_match(cls, value: str, *, strict: bool = False) -> tuple[bool, str | None]:
+        if strict is True and value is not None:
+            return False
         return ExpressionUtility.is_none(value)
 
 

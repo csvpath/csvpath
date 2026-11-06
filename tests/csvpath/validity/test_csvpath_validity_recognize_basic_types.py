@@ -1,5 +1,4 @@
 import unittest
-import pytest
 import os
 from csvpath import CsvPath
 from csvpath.matching.functions.types.decimal import Decimal
@@ -116,10 +115,9 @@ class TestCsvPathValidityRecognizeBasicTypes(unittest.TestCase):
 
     def test_validity_recognize_datatype(self) -> None:
         path = CsvPath()
-        path.config.add_to_config("errors", "csvpath", "raise")
+        path.config.add_to_config("errors", "csvpath", "raise, print")
         path.parse(
             f"""
-                ~  ~
                 ${PATH}[1*] [
                     push.distinct("c0", datatype(#decimal))
                     push.distinct("c1", datatype(#integer))
@@ -130,11 +128,22 @@ class TestCsvPathValidityRecognizeBasicTypes(unittest.TestCase):
                     push.distinct("c6", datatype(#email))
                     push.distinct("c7", datatype(#url))
                     push.distinct("c8", datatype(#string))
+                    push.distinct("c9", datatype(none()))
+
+                    ~ note that this next part puts a dict through the
+                    datatype() function, which means that all the other type
+                    checks see something they don't recognize. this flushed
+                    out a problem in email() because it was used via another
+                    method, other than to_value, and that method didn't
+                    watch for type error. since we swallow type error because
+                    Args is supposed to have converted it to children or
+                    match this is a risky area and a good lesson. ~
+                    put("adict")
+                    push.distinct("c10", datatype.strict(@adict) )
                 ]"""
         )
         path.fast_forward()
         vs = path.variables
-        print(f"vs: {vs}")
         assert "c0" in vs
         assert "c1" in vs
         assert "c2" in vs
@@ -144,6 +153,8 @@ class TestCsvPathValidityRecognizeBasicTypes(unittest.TestCase):
         assert "c6" in vs
         assert "c7" in vs
         assert "c8" in vs
+        assert "c9" in vs
+        assert "c10" in vs
 
         assert len(vs["c0"]) == 2
         assert "decimal" in vs["c0"]
@@ -175,3 +186,9 @@ class TestCsvPathValidityRecognizeBasicTypes(unittest.TestCase):
 
         assert len(vs["c8"]) == 1
         assert vs["c8"][0] == "string"
+
+        assert len(vs["c9"]) == 1
+        assert vs["c9"][0] == "none"
+
+        assert len(vs["c10"]) == 1
+        assert vs["c10"][0] == "unknown"

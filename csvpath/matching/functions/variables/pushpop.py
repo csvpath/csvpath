@@ -96,7 +96,6 @@ class Push(SideEffect):
                 pass
             else:
                 stack.append(v)
-
         self.match = self.default_match()
 
 

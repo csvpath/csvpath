@@ -1,5 +1,5 @@
-# pylint: disable=C0114
-from csvpath.matching.productions import Term, Variable, Header
+from typing import Any
+from csvpath.matching.productions import Variable, Header
 from csvpath.matching.functions.function import Function
 from csvpath.matching.functions.types.decimal import Decimal
 from csvpath.matching.functions.types.boolean import Boolean
@@ -24,7 +24,11 @@ class Datatype(ValueProducer):
         ]
         self.args = Args(matchable=self)
         a = self.args.argset(1)
-        a.arg(name="header of value", types=[Variable, Header, Function], actuals=[str])
+        a.arg(
+            name="header of value",
+            types=[Variable, Header, Function],
+            actuals=[str, Any, None],
+        )
         self.args.validate(self.siblings())
         super().check_valid()
 
@@ -38,13 +42,13 @@ class Datatype(ValueProducer):
             t = "decimal"
         elif Decimal._is_match(name="integer", value=v, strict=True)[0]:
             t = "integer"
-        elif Boolean._is_match(value=v)[0]:
+        elif Boolean._is_match(value=v, strict=True)[0]:
             t = "boolean"
         elif Date._is_match(is_datetime=True, value=v, strict=True):
             t = "datetime"
         elif Date._is_match(is_datetime=False, value=v, strict=True):
             t = "date"
-        elif Nonef._is_match(v):
+        elif Nonef._is_match(v, strict=self.strict):
             t = "none"
         elif Url._is_match(v):
             t = "url"
