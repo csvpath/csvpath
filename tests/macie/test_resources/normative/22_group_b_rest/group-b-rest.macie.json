@@ -1,0 +1,109 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "us-east-1",
+    "downloaded_at": "2026-11-06T18:00:00Z",
+    "job_id": "5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "ARGENTINA_DNI_NUMBER",
+      "BRAZIL_RG_NUMBER",
+      "BRAZIL_CEP_CODE",
+      "COLOMBIA_CITIZENSHIP_CARD_NUMBER",
+      "CANADA_NATIONAL_IDENTIFICATION_NUMBER",
+      "INDIA_PERMANENT_ACCOUNT_NUMBER",
+      "UK_ELECTORAL_ROLL_NUMBER"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "ARGENTINA_DNI_NUMBER",
+      "BRAZIL_RG_NUMBER",
+      "BRAZIL_CEP_CODE",
+      "COLOMBIA_CITIZENSHIP_CARD_NUMBER",
+      "CANADA_NATIONAL_IDENTIFICATION_NUMBER",
+      "INDIA_PERMANENT_ACCOUNT_NUMBER",
+      "UK_ELECTORAL_ROLL_NUMBER"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "ARGENTINA_DNI_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "BRAZIL_RG_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "BRAZIL_CEP_CODE"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "COLOMBIA_CITIZENSHIP_CARD_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "CANADA_NATIONAL_IDENTIFICATION_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "INDIA_PERMANENT_ACCOUNT_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "UK_ELECTORAL_ROLL_NUMBER"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Identity records",
+      "jobArn": "arn:aws:macie2:us-east-1:123456789012:classification-job/5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c",
+      "jobId": "5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "ARGENTINA_DNI_NUMBER",
+        "BRAZIL_RG_NUMBER",
+        "BRAZIL_CEP_CODE",
+        "COLOMBIA_CITIZENSHIP_CARD_NUMBER",
+        "CANADA_NATIONAL_IDENTIFICATION_NUMBER",
+        "INDIA_PERMANENT_ACCOUNT_NUMBER",
+        "UK_ELECTORAL_ROLL_NUMBER"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "group-b-rest",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-identity"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

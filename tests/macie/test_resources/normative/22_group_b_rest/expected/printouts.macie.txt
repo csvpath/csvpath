@@ -1,0 +1,15 @@
+macie BRAZIL_CEP_CODE: occurrence 1, line 1 (row 2), column 2 cep
+macie ARGENTINA_DNI_NUMBER: occurrence 1, line 2 (row 3), column 3 notes
+macie BRAZIL_RG_NUMBER: occurrence 1, line 3 (row 4), column 3 notes
+macie COLOMBIA_CITIZENSHIP_CARD_NUMBER: occurrence 1, line 4 (row 5), column 3 notes
+macie CANADA_NATIONAL_IDENTIFICATION_NUMBER: occurrence 1, line 5 (row 6), column 3 notes
+macie INDIA_PERMANENT_ACCOUNT_NUMBER: occurrence 1, line 6 (row 7), column 3 notes
+macie UK_ELECTORAL_ROLL_NUMBER: occurrence 1, line 7 (row 8), column 3 notes
+macie BRAZIL_CEP_CODE: occurrence 2, line 9 (row 10), column 3 notes
+macie ARGENTINA_DNI_NUMBER: 1 occurrence, severity HIGH, detail shown for all 1
+macie BRAZIL_RG_NUMBER: 1 occurrence, severity HIGH, detail shown for all 1
+macie BRAZIL_CEP_CODE: 2 occurrences, severity MEDIUM, detail shown for all 2
+macie COLOMBIA_CITIZENSHIP_CARD_NUMBER: 1 occurrence, severity HIGH, detail shown for all 1
+macie CANADA_NATIONAL_IDENTIFICATION_NUMBER: 1 occurrence, severity HIGH, detail shown for all 1
+macie INDIA_PERMANENT_ACCOUNT_NUMBER: 1 occurrence, severity HIGH, detail shown for all 1
+macie UK_ELECTORAL_ROLL_NUMBER: 1 occurrence, severity HIGH, detail shown for all 1

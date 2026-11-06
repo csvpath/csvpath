@@ -1,0 +1,132 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "PERSONAL_INFORMATION",
+      "detections": [
+        {
+          "type": "ARGENTINA_DNI_NUMBER",
+          "count": 1,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 3
+              }
+            ]
+          }
+        },
+        {
+          "type": "BRAZIL_RG_NUMBER",
+          "count": 1,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 4
+              }
+            ]
+          }
+        },
+        {
+          "type": "BRAZIL_CEP_CODE",
+          "count": 2,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "cep",
+                "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 10
+              }
+            ]
+          }
+        },
+        {
+          "type": "COLOMBIA_CITIZENSHIP_CARD_NUMBER",
+          "count": 1,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 5
+              }
+            ]
+          }
+        },
+        {
+          "type": "CANADA_NATIONAL_IDENTIFICATION_NUMBER",
+          "count": 1,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 6
+              }
+            ]
+          }
+        },
+        {
+          "type": "INDIA_PERMANENT_ACCOUNT_NUMBER",
+          "count": 1,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 7
+              }
+            ]
+          }
+        },
+        {
+          "type": "UK_ELECTORAL_ROLL_NUMBER",
+          "count": 1,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 8
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 8
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:us-east-1:123456789012:classification-job/5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}

@@ -29,6 +29,13 @@ from .us_ssn_detector import UsSsnDetector
 from .vin_detector import VinDetector
 
 DETECTORS = {
+    "ar_dni": FormatDetector,
+    "br_cep": FormatDetector,
+    "br_rg": FormatDetector,
+    "ca_pr": FormatDetector,
+    "co_cedula": FormatDetector,
+    "gb_electoral": FormatDetector,
+    "in_pan": FormatDetector,
     "australia_drivers_license": FormatDetector,
     "austria_drivers_license": FormatDetector,
     "belgium_drivers_license": FormatDetector,

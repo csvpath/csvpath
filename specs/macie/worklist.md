@@ -81,7 +81,10 @@ last. Add an item the moment something is deferred.
      (accepted for the first release, David 2026-11-05). Next, in
      `group-b-design.md` order: dates done (birth date, card expiration,
      pair 20_dates); driver's licenses done for 17 jurisdictions (pair
-     21_drivers_licenses). Next, the rest of group B.
+     21_drivers_licenses). The rest of group B's shapes done (Argentina
+     DNI, Brazil RG and CEP, Colombia cedula, Canada permanent resident,
+     India PAN, UK electoral roll, pair 22_group_b_rest). Next, GPS
+     coordinates and HTTP cookies, which need small validators.
    - **Backlog, driver's licenses** (David, 2026-11-06): Finland, Greece,
      Hungary, Ireland, Latvia, Lithuania, Luxembourg, Malta, Netherlands,
      Poland, Portugal, Romania, Slovakia, Slovenia, Sweden. Microsoft
