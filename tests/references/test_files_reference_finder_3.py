@@ -1227,6 +1227,30 @@ class TestManifestChainParts:
         assert [g.name for g in parts["gates"]] == ["status", "type"]
         assert [v.name for v in parts["values"]] == ["uuid"]
 
+    @pytest.mark.parametrize(
+        "reference, ranges, pointer",
+        [
+            # a range or a bare time window is claimed (2026-11-07);
+            # these two shapes used to be left to their old handling
+            ("$alpha.files.:manifest():last():from(1)", ["from"], "last"),
+            ("$alpha.files.:manifest():last():yesterday()", ["yesterday"], "last"),
+            # alone beside ':manifest()', in either order: not a field
+            ("$alpha.files.:manifest():yesterday()", ["yesterday"], None),
+            ("$alpha.files.:year():manifest()", ["year"], None),
+            ("$alpha.files.:manifest():from(1)", ["from"], None),
+            ("$*.files.:manifest():from(0):to(1)", ["from", "to"], None),
+        ],
+    )
+    def test_a_range_is_its_own_part(self, reference, ranges, pointer):
+        parts = self._parts(reference)
+        assert [r.name for r in parts["ranges"]] == ranges
+        assert (parts["pointer"] and parts["pointer"].name) == pointer
+        assert parts["gates"] == [] and parts["values"] == []
+
+    def test_a_chain_without_a_range_has_none(self):
+        parts = self._parts("$alpha.files.:manifest():last():uuid()")
+        assert parts["ranges"] == []
+
     def test_the_parts_when_manifest_is_not_first(self):
         parts = self._parts('$alpha.files.:type("csv"):manifest()')
         assert parts["pointer"] is None
@@ -1243,8 +1267,6 @@ class TestManifestChainParts:
             "$alpha.files.:last():manifest()",
             '$alpha.files.:name("one.csv"):manifest()',
             '$alpha.files.:name("one.csv"):last():manifest()',
-            "$alpha.files.:manifest():last():from(1)",
-            "$alpha.files.:manifest():last():yesterday()",
             "$alpha.files.:last():uuid()",
         ],
     )
@@ -1463,6 +1485,161 @@ def _g_values(reference: str, root, *, star: bool = False) -> list:
 
 
 ORDERS = '$orders.files.:name("orders.csv")'
+
+
+# a named-file with five versions a day apart, csv but for v3, and a
+# ledger whose entries interleave two named-files in time. "now" is pinned
+# to 2026-01-04, so yesterday is Jan 3.
+CHAIN_RANGE_MANIFEST = [
+    {
+        "file": f"inputs/named_files/ranger/orders.csv/v{i}.csv",
+        "file_home": "inputs/named_files/ranger/orders.csv",
+        "uuid": f"v{i}",
+        "type": "xlsx" if i == 3 else "csv",
+        "time": f"2026-01-0{i + 1}T00:00:00+00:00",
+    }
+    for i in range(5)
+]
+
+CHAIN_RANGE_LEDGER = [
+    {
+        "named_file_name": name,
+        "uuid": uuid,
+        "time": f"2026-01-0{day}T{hour}:00:00+00:00",
+    }
+    for name, uuid, day, hour in (
+        ("alpha", "l1", 1, "00"),
+        ("beta", "l2", 2, "00"),
+        ("alpha", "l3", 3, "00"),
+        ("beta", "l4", 3, "12"),
+        ("alpha", "l5", 5, "00"),
+    )
+]
+
+
+class TestManifestChainRanges:
+    # 2026-11-07: a range or a bare time window beside ':manifest()' in
+    # name_one narrows the entries, as CSVPATHS and RESULTS do. Before,
+    # ':manifest():yesterday()' took the window for a field (it queried
+    # every entry, then raised on resolve), ':manifest():yesterday():last()'
+    # raised calling it a field function, and ':manifest():from(1)'
+    # raised "functions attached directly to name_one". The range comes
+    # first, then the gates, then the pointer (6.28).
+    @pytest.fixture(autouse=True)
+    def pinned_now(self):
+        from datetime import date
+
+        daut.OFFSET_DAYS = (date(2026, 1, 4) - daut.now().date()).days
+        try:
+            yield
+        finally:
+            daut.OFFSET_DAYS = 0
+
+    @staticmethod
+    def _finder(reference: str) -> FilesReferenceFinder3:
+        return _finder(
+            reference,
+            RANGE_HOME,
+            CHAIN_RANGE_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=CHAIN_RANGE_LEDGER,
+        )
+
+    def _uuids(self, reference: str) -> list:
+        return self._finder(reference).query().uuids
+
+    def _data(self, reference: str) -> list:
+        return [r.data for r in self._finder(reference).resolve().results]
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$ranger.files.:manifest():yesterday()", ["v2"]),
+            ("$ranger.files.:yesterday():manifest()", ["v2"]),
+            ("$ranger.files.:manifest():today()", ["v3"]),
+            ("$ranger.files.:manifest():month()", ["v0", "v1", "v2", "v3", "v4"]),
+            ("$ranger.files.:manifest():month():first()", ["v0"]),
+            ("$ranger.files.:manifest():last():yesterday()", ["v2"]),
+            ("$ranger.files.:manifest():from(1):to(2)", ["v1", "v2"]),
+            ("$ranger.files.:manifest():from(-2)", ["v3", "v4"]),
+            ("$ranger.files.:manifest():before(2)", ["v0", "v1"]),
+            ("$ranger.files.:manifest():from(1):to(3):last()", ["v3"]),
+            ('$ranger.files.:manifest():after(:date("2026-01-03"))', ["v3", "v4"]),
+            (
+                '$ranger.files.:manifest():from(:date("2026-01-02"))'
+                ":to(:yesterday())",
+                ["v1", "v2"],
+            ),
+        ],
+    )
+    def test_the_literal_root_narrows(self, reference, expected):
+        assert self._uuids(reference) == expected
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$*.files.:manifest():yesterday()", ["l3", "l4"]),
+            ("$*.files.:manifest():yesterday():last()", ["l4"]),
+            ("$*.files.:manifest():from(1):to(2)", ["l2", "l3"]),
+            ('$*.files.:manifest():from(:date("2026-01-03"))', ["l3", "l4", "l5"]),
+            ("$:regex(/^b/).files.:manifest():yesterday()", ["l4"]),
+            ("$:regex(/^a/).files.:manifest():from(-2)", ["l3", "l5"]),
+        ],
+    )
+    def test_the_ledger_narrows(self, reference, expected):
+        # an index range is in ledger order, across named-files, as
+        # '$*.csvpaths.:manifest():from(0):to(1)' is
+        assert self._uuids(reference) == expected
+
+    def test_the_range_comes_before_the_gate_and_the_pointer(self):
+        # the range first keeps v3, v4, and the gate drops the xlsx v3.
+        # the gate first would keep v0, v1, v2, v4 and the range v2, v4
+        assert self._uuids('$ranger.files.:manifest():from(-2):type("csv")') == [
+            "v4"
+        ]
+        assert self._uuids(
+            '$ranger.files.:manifest():type("csv"):from(-2):first()'
+        ) == ["v4"]
+
+    def test_resolve_gives_each_entry(self):
+        assert self._data("$ranger.files.:manifest():yesterday()") == [
+            CHAIN_RANGE_MANIFEST[2]
+        ]
+        assert self._data("$*.files.:manifest():yesterday()") == [
+            CHAIN_RANGE_LEDGER[2],
+            CHAIN_RANGE_LEDGER[3],
+        ]
+
+    def test_a_field_reads_each_kept_entry(self):
+        assert self._data("$ranger.files.:manifest():yesterday():uuid()") == ["v2"]
+        assert self._data("$ranger.files.:manifest():from(1):to(2):type()") == [
+            "csv",
+            "csv",
+        ]
+        reference = "$*.files.:manifest():yesterday():named_file_name()"
+        assert self._data(reference) == ["alpha", "beta"]
+
+    def test_a_window_with_nothing_in_it_finds_nothing(self):
+        assert self._uuids("$ranger.files.:manifest():hour()") == []
+        assert self._data("$ranger.files.:manifest():hour()") == []
+
+    @pytest.mark.parametrize(
+        "reference, message",
+        [
+            ("$ranger.files.:manifest():yesterday():today()", "more than one"),
+            ("$ranger.files.:manifest():yesterday():from(1)", "bare time"),
+            (
+                '$ranger.files.:manifest():from(1):to(:date("2026-01-03"))',
+                "mixing index",
+            ),
+            ("$ranger.files.:manifest():from(1):after(2)", "two lower-bound"),
+            ('$ranger.files.:manifest():from("not-a-date")', "date-mode"),
+        ],
+    )
+    def test_a_bad_range_raises(self, reference, message):
+        with pytest.raises(ReferenceException3) as error:
+            self._uuids(reference)
+        assert message in str(error.value)
 
 
 class TestNameThreeGateParts:
