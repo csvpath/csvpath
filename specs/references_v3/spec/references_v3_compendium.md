@@ -1252,6 +1252,19 @@ ledger manifest set, which also holds the versions of deleted named-files
 `$*.files.:fingerprint("a28b1105c...")`
 `$*.files.:manifest():fingerprint("a28b1105c...")`
 
+A range or a time window beside `:manifest()` narrows the entries first,
+then any gate filters, then any pointer picks (6.28), as in `csvpaths` and
+`results`. A window or a date bound matches each entry's arrival time; an
+index bound counts entries in manifest order, or ledger order under `*`.
+Run on `2026-01-04`, with `acme` versions arriving `2026-01-01` through
+`2026-01-05`, one a day:
+- `$acme.files.:manifest():yesterday()` - the `2026-01-03` entry
+- `$acme.files.:manifest():from(1):to(2)` - the second and third entries
+- `$acme.files.:manifest():from(-2):type("csv"):last()` - the last of the
+  final two entries that is a csv, if either is
+- `$*.files.:manifest():yesterday():named_file_name()` - the name of each
+  named-file with a registration on `2026-01-03`, from the ledger
+
 The following reference returns the arrival activation field value. Using
 `:definition()` to indicate where the `:on_arrival()` field is found is not
 optional because it is a `definition.json` field, not a `manifest.json`

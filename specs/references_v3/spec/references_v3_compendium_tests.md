@@ -510,6 +510,10 @@ genuinely uncertain is marked below rather than guessed.
   `test_files_reference_finder_3.py::TestBareFingerprintLookup` (the
   bare-vs-`:manifest()`-prefixed equivalence pairs); `functions/fields/
   test_on_arrival_3.py` (the `:definition():on_arrival(...)` examples)
+- A range or window beside `:manifest()`:
+  `test_files_reference_finder_3.py::TestManifestChainRanges` (2026-11-07;
+  literal root and ledger, range before gate and pointer, bad ranges) and
+  `TestManifestChainParts::test_a_range_is_its_own_part`
 
 #### 6.20
 - Exercised implicitly wherever a finder test covers a missing/absent

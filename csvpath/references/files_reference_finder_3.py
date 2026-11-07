@@ -2321,17 +2321,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
         """the parts of a general chain on a bare ':manifest()' in
         name_one, e.g. ':manifest():last():uuid()' or
         ':manifest():status("failed"):named_file_name("orders")' (finding
-        E, 2026-11-02): {"pointer": the one pointer or None, "gates": the
-        argued fields, "values": the unargued fields}. The functions are
-        ANDed in any order (compendium 6.1).
+        E, 2026-11-02): {"pointer": the one pointer or None, "ranges": the
+        range bounds and bare time windows, "gates": the argued fields,
+        "values": the unargued fields}. The functions are ANDed in any
+        order (compendium 6.1).
 
         Returns None for any other shape, including the two-function
         shapes that have their own branches: ':manifest():<field>()'
         (_bare_manifest_field_call) and a pointer with ':manifest()' in
-        either order (_pointer_before_manifest). Only pointers and field
-        functions are claimed; a chain with anything else, e.g.
-        ':name()', ':from()' or ':yesterday()', keeps its old handling.
-        A field that does not read manifest.json raises."""
+        either order (_pointer_before_manifest). A lone range or window
+        beside ':manifest()' is claimed here, e.g. ':manifest():yesterday()'
+        (2026-11-07; it used to be taken for a field). Only pointers,
+        ranges and field functions are claimed; a chain with anything
+        else, e.g. ':name()', keeps its old handling. A field that does
+        not read manifest.json raises."""
         if name_one is None:
             raise ValueError("name_one cannot be None")
         if len(name_one.path) != 1:
@@ -2346,15 +2349,33 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if not others:
             return None
         pointer_names = ("first", "last", "index")
-        if len(others) == 1 and (
-            calls[0] is manifests[0] or others[0].name in pointer_names
+        range_names = ("from", "to", "before", "after")
+
+        def _is_range(call) -> bool:
+            # a range bound or a bare time window (compendium 6.27e),
+            # as CSVPATHS and RESULTS take beside ':manifest()'
+            if call.name in range_names:
+                return True
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            return function_cls is not None and issubclass(
+                function_cls, TimeWindowFunction3
+            )
+
+        if (
+            len(others) == 1
+            and not _is_range(others[0])
+            and (calls[0] is manifests[0] or others[0].name in pointer_names)
         ):
             return None
         pointers = []
+        ranges = []
         fields = []
         for call in others:
             if call.name in pointer_names:
                 pointers.append(call)
+                continue
+            if _is_range(call):
+                ranges.append(call)
                 continue
             function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
             if function_cls is None or function_cls.SOURCE not in (
@@ -2383,6 +2404,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
         return {
             "pointer": pointers[0] if pointers else None,
+            "ranges": ranges,
             "gates": [call for call, _ in fields if call.arg is not None],
             "values": [call for call, _ in fields if call.arg is None],
         }
@@ -2416,6 +2438,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 or re.search(name_filter, e.get("named_file_name") or "")
             ]
             path = self._files_ledger_path()
+        # the range first, then the gates, then the pointer (6.28)
+        entries = self._apply_manifest_chain_ranges(
+            ranges=chain["ranges"], entries=entries
+        )
         for gate in chain["gates"]:
             entries = self._filter_by_manifest_chain_gate(
                 reference=reference, call=gate, entries=entries
@@ -2435,6 +2461,54 @@ class FilesReferenceFinder3(ReferenceFinder3):
         return ReferenceResults3(
             results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in entries]
         )
+
+    def _apply_manifest_chain_ranges(self, *, ranges: list, entries: list) -> list:
+        """the entries a ':manifest()' chain's range or bare time window
+        keeps (2026-11-07), as CSVPATHS and RESULTS narrow beside
+        ':manifest()'. A window or a date bound matches each entry's own
+        time; an index bound slices the entries in their manifest order,
+        the ledger's order under '*'. With no range, every entry."""
+        if ranges is None:
+            raise ValueError("ranges cannot be None")
+        if entries is None:
+            raise ValueError("entries cannot be None")
+        if not ranges:
+            return entries
+        built = self._build_chain(ranges)
+        windows = [f for f in built if isinstance(f, TimeWindowFunction3)]
+        lower_call, upper_call = self._range_calls_from_built(built)
+        has_range = lower_call is not None or upper_call is not None
+        if len(windows) > 1:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not support combining more "
+                "than one bare time-component function (e.g. "
+                "':yesterday()') in the same ':manifest()' chain."
+            )
+        if windows and has_range:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not support combining a bare "
+                "time-component function (e.g. ':yesterday()') with an "
+                "explicit ':from()'/':to()'/':before()'/':after()' bound "
+                "in the same ':manifest()' chain -- the bare function "
+                "already means its own whole period, both ends included."
+            )
+        if windows:
+            return self._apply_bare_time_window_to_manifest(entries, windows[0])
+        bounds = [
+            self._range_bound(c) for c in (lower_call, upper_call) if c is not None
+        ]
+        is_date = [isinstance(b, (str, TimeWindowFunction3)) for b in bounds]
+        if len(set(is_date)) > 1:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not support mixing index-"
+                "mode and date-mode range bounds in the same range."
+            )
+        for bound in bounds:
+            if isinstance(bound, str):
+                self._validate_date_format(bound)
+        if is_date[0]:
+            return self._apply_manifest_date_range(entries, lower_call, upper_call)
+        return self._apply_range(entries, lower_call, upper_call)
 
     def _manifest_chain_field_value(
         self, *, reference: Reference3, function_cls: type, entry: dict | None
