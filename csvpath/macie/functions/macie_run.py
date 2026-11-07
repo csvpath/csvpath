@@ -8,6 +8,7 @@ from ..findings_tally import FindingsTally, IdentifierTally
 from ..macie_exceptions import MacieException
 from ..managed_catalog import ManagedCatalog
 from ..project_rulesbase import ProjectRulesbase
+from ..run_inputs import RunInputs
 
 
 class MacieRun:
@@ -24,6 +25,10 @@ class MacieRun:
 
     PRINTER = "macie"
     VARIABLE = "macie_findings"
+    STANDALONE = (
+        "macie: standalone run, not a reproducible record; run in a named-paths "
+        "group for an auditable one"
+    )
     MAX_FINDINGS = 10000
     MAX_DETAIL = 15
     #
@@ -48,6 +53,13 @@ class MacieRun:
         )
         self.reported = False
         self._catalog = None
+
+    @property
+    def standalone(self) -> bool:
+        """a run outside a named-paths group: fine for fast checks, but it
+        leaves no copy of its inputs, so it is not a reproducible record"""
+        csvpath = self.matcher.csvpath
+        return csvpath.csvpaths is None or csvpath.named_paths_name is None
 
     @property
     def catalog(self) -> ManagedCatalog:
@@ -119,6 +131,11 @@ class MacieRun:
         run = cls._RUNS.get(matcher)
         if run is None:
             run = MacieRun(matcher=matcher)
+            #
+            # a group run copies its Macie inputs into the run dir before
+            # anything is scanned; a failure here fails the run's setup
+            #
+            RunInputs.record(csvpath=matcher.csvpath)
             cls._RUNS[matcher] = run
         return run
 
@@ -196,6 +213,8 @@ class MacieRun:
         self.reported = True
         for msg in self.tally.summary_messages():
             self.matcher.csvpath.print_to(self.PRINTER, msg)
+        if self.standalone:
+            self.matcher.csvpath.print_to(self.PRINTER, self.STANDALONE)
         self.matcher.csvpath.set_variable(self.VARIABLE, value=self.tally.to_findings())
 
     def _source_arn(self) -> str | None:

@@ -13,6 +13,7 @@ import pytest
 import yaml
 
 from csvpath import CsvPath
+from csvpath.macie.functions.macie_run import MacieRun
 from csvpath.macie.macie_converter import MacieConversion, MacieConverter
 from csvpath.macie.macie_wrapper_loader import MacieWrapperLoader
 from csvpath.util.printer import Printer
@@ -155,7 +156,15 @@ def test_macie_normative_run(pair: str, run: dict, source: str, tmp_path) -> Non
 
     for stream, name in run["printouts"].items():
         with open(os.path.join(pair, "expected", name), encoding="utf-8") as f:
-            assert printer.streams.get(stream, []) == f.read().splitlines()
+            expected = f.read().splitlines()
+        #
+        # the expected printouts are a group run's. this run is standalone,
+        # so it ends with the line that says it is not a reproducible
+        # record (rulesbase-design.md, P2c)
+        #
+        if stream == MacieRun.PRINTER:
+            expected = expected + [MacieRun.STANDALONE]
+        assert printer.streams.get(stream, []) == expected
     #
     # the default stream gets nothing: errors are not echoed (no-print)
     #

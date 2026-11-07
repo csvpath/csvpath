@@ -19,6 +19,7 @@ so the expected run results are the ones the converter tests already verify.
 """
 
 import csv
+import hashlib
 import json
 import os
 import shutil
@@ -29,6 +30,7 @@ import pytest
 import yaml
 
 from csvpath import CsvPaths
+from csvpath.macie.functions.macie_run import MacieRun
 from csvpath.macie.macie_converter import MacieConverter
 from csvpath.macie.macie_exceptions import MacieException
 from csvpath.macie.macie_wrapper_loader import MacieWrapperLoader
@@ -597,3 +599,67 @@ def test_macie_group_run_without_its_snapshot_is_an_error(paths) -> None:
     assert result.csvpath.is_valid is False
     assert result.lines.to_list() == []
     assert any("reload the group" in e.message for e in result.errors)
+
+
+#
+# a group run's Macie inputs in its run dir (rulesbase-design.md, P2b)
+#
+
+
+def _macie_dir(result) -> str:
+    return os.path.join(result.run_dir, "_extra_data", "macie")
+
+
+def test_macie_group_run_copies_its_inputs(paths) -> None:
+    _add_text(paths)
+    data = os.path.join(TEXT_PAIR, "data", "employees.csv")
+    paths.file_manager.add_named_file(name=NAMED_FILE, path=data)
+    paths.collect_paths(filename=NAMED_FILE, pathsname=TEXT_GROUP)
+    result = paths.results_manager.get_named_results(TEXT_GROUP)[0]
+    d = _macie_dir(result)
+    home = paths.paths_manager.named_paths_home(TEXT_GROUP)
+    index = json.loads(_read(os.path.join(d, "inputs.json")))
+    assert index["group"] == TEXT_GROUP
+    assert sorted(index["files"]) == sorted(
+        [
+            TEXT_WRAPPER_FILE,
+            f"{TEXT_WRAPPER_FILE}.report.json",
+            "macie_catalog.json",
+            f"lists/{LIST_ID}.txt",
+        ]
+    )
+    #
+    # byte for byte what the group holds, with matching hashes
+    #
+    assert _read(os.path.join(d, TEXT_WRAPPER_FILE)) == _read(
+        os.path.join(home, TEXT_WRAPPER_FILE)
+    )
+    assert _read(os.path.join(d, "lists", f"{LIST_ID}.txt")).splitlines() == ENTRIES
+    assert json.loads(_read(os.path.join(d, "macie_catalog.json"))) == (
+        ManagedCatalog.load().catalog
+    )
+    for name, digest in index["files"].items():
+        text = _read(os.path.join(d, *name.split("/")))
+        assert hashlib.sha256(text.encode("utf-8")).hexdigest() == digest
+    #
+    # a group run is a record: no standalone line
+    #
+    assert MacieRun.STANDALONE not in result.get_printouts("macie")
+
+
+def test_macie_group_run_with_two_macie_csvpaths_copies_once(paths) -> None:
+    #
+    # two wrappers in one group: the first Macie csvpath copies, the second
+    # finds the same inputs and goes on
+    #
+    paths.paths_manager.add_named_paths_from_file(name=TEXT_GROUP, file_path=WRAPPER)
+    _add_text(paths, append=True)
+    data = os.path.join(TEXT_PAIR, "data", "employees.csv")
+    paths.file_manager.add_named_file(name=NAMED_FILE, path=data)
+    paths.collect_paths(filename=NAMED_FILE, pathsname=TEXT_GROUP)
+    results = paths.results_manager.get_named_results(TEXT_GROUP)
+    assert len(results) == 2
+    assert all(r.csvpath.is_valid for r in results)
+    index = json.loads(_read(os.path.join(_macie_dir(results[0]), "inputs.json")))
+    assert WRAPPER_FILE in index["files"]
+    assert TEXT_WRAPPER_FILE in index["files"]

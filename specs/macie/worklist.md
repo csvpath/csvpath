@@ -57,8 +57,8 @@ last. Add an item the moment something is deferred.
    `specs/macie/rulesbase-design.md` (an overrides file merged over the
    packaged catalog; the merged catalog snapshotted into the group; group
    runs copy their Macie inputs into `_extra_data/macie/`; `common.json`
-   deferred). PR 1 (merge, #549) and PR 2 (load and snapshot) built; PR 3
-   (run dir copies, the standalone line) and the docs page next.
+   deferred). PR 1 (merge, #549), PR 2 (load and snapshot, #550) and PR 3
+   (run dir copies, the standalone line) built; the docs page next.
 5. ~~**Text allow lists**~~ Done: `macie_allow_words` via `load_list()`
    (#499) and `configure_named_paths()` (#502); lists stored in the group's
    assets on load; a conflicting list on append is refused. Pair
