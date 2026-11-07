@@ -1,10 +1,13 @@
+import json
 import logging
 import weakref
 
 from ..allow_list_set import AllowListSet
 from ..util.arn_utility import ArnUtility as arut
 from ..findings_tally import FindingsTally, IdentifierTally
+from ..macie_exceptions import MacieException
 from ..managed_catalog import ManagedCatalog
+from ..project_rulesbase import ProjectRulesbase
 
 
 class MacieRun:
@@ -48,10 +51,34 @@ class MacieRun:
 
     @property
     def catalog(self) -> ManagedCatalog:
-        """the managed identifier catalog, read once per run"""
+        """the managed identifier catalog, read once per run. A group run
+        reads only the catalog the group was loaded with, in its assets, as
+        load_list() reads only the group's lists: no fallback, so a run
+        never uses rules from somewhere else. A standalone run reads the
+        project rulesbase, else the packaged catalog."""
         if self._catalog is None:
-            self._catalog = ManagedCatalog.load()
+            self._catalog = self._read_catalog()
         return self._catalog
+
+    def _read_catalog(self) -> ManagedCatalog:
+        csvpath = self.matcher.csvpath
+        group = csvpath.named_paths_name
+        if csvpath.csvpaths is None or group is None:
+            return ProjectRulesbase.catalog(config=csvpath.config)
+        am = csvpath.csvpaths.paths_manager.asset_manager
+        text = am.get_asset_file(group, ProjectRulesbase.CATALOG_ASSET)
+        where = f"named-paths group {group} assets/{ProjectRulesbase.CATALOG_ASSET}"
+        if text is None:
+            raise MacieException(
+                f"No {where}. The group was loaded before Macie groups kept their "
+                "catalog; reload the group"
+            )
+        try:
+            snapshot = json.loads(text)
+        except json.JSONDecodeError as e:
+            self.logger().exception("Cannot read %s", where)
+            raise MacieException(f"Cannot read {where}: {e}") from e
+        return ManagedCatalog.from_snapshot(catalog=snapshot, where=where)
 
     def scan(self, *, source, identifier) -> bool:
         """applies a custom or managed identifier to every cell of the

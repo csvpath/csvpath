@@ -5,7 +5,15 @@ for non-standard inputs, background and side-effects; P2c with standalone
 runs valued for fast API and pipeline checks). Worklist item 4a. PR 1
 (merge and validation) built: `RulesbaseOverrides`,
 `ManagedCatalog.load(overrides_path=...)`, and `CONFIG_KEYS` on every
-detector class, the keys an override may change.
+detector class, the keys an override may change. PR 2 (load and snapshot) built:
+`ProjectRulesbase`, `MacieGroupLoader.store_assets()`, the group's
+`assets/macie_catalog.json`, and `MacieRun` reading only that in a group
+run. One refinement in PR 2: the project opts in by creating
+`<rulesbase>/macie/`. We never create it, so a project that never
+customizes gets no new directory; once it exists, each load refreshes the
+reference copy in it. Identifier and keyword list overrides are written
+into the generated csvpath at conversion; the run reads detector data
+from the snapshot, so both come from the one merged catalog.
 
 ## Why now
 

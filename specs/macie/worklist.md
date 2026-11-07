@@ -53,11 +53,12 @@ last. Add an item the moment something is deferred.
    bank detector, pair 08_bban. The five identifiers are no longer
    partially translated. Italy's CIN letter is not checked (rule not
    confirmed from an authoritative source); if it is confirmed, add it.
-4a. **Project rulesbase for the stand-ins.** Copy the packaged catalog into
-   the project on load, never overwrite it, resolve a hierarchy (project,
-   then Framework, then a `common.json` shared with other rule systems).
-   From David's notes; deferred until there is more than one identifier
-   to customize (David, 2026-11-01).
+4a. **Project rulesbase for the stand-ins.** Design agreed 2026-11-07:
+   `specs/macie/rulesbase-design.md` (an overrides file merged over the
+   packaged catalog; the merged catalog snapshotted into the group; group
+   runs copy their Macie inputs into `_extra_data/macie/`; `common.json`
+   deferred). PR 1 (merge, #549) and PR 2 (load and snapshot) built; PR 3
+   (run dir copies, the standalone line) and the docs page next.
 5. ~~**Text allow lists**~~ Done: `macie_allow_words` via `load_list()`
    (#499) and `configure_named_paths()` (#502); lists stored in the group's
    assets on load; a conflicting list on append is refused. Pair

@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from collections import Counter
@@ -5,6 +6,7 @@ from collections import Counter
 from .macie_converter import MacieConverter
 from .macie_exceptions import MacieException
 from .macie_wrapper_loader import MacieWrapperLoader
+from .project_rulesbase import ProjectRulesbase
 
 
 class MacieGroupLoader:
@@ -12,7 +14,7 @@ class MacieGroupLoader:
     group, kept here so the paths manager stays a few lines. (The wrapper
     file itself is read by MacieWrapperLoader.)
 
-        paths, report, lists = MacieGroupLoader.convert_file(path=p, config=config)
+        paths, report, lists, catalog = MacieGroupLoader.convert_file(path=p, config=config)
 
     It also holds the one rule Macie adds to a group: a Macie csvpath's id
     is never shared with another csvpath in the group, since two csvpaths
@@ -23,6 +25,7 @@ class MacieGroupLoader:
     #
     ORIGIN_KEY = "macie-origin"
     SECTION = "macie"
+    CATALOG_ASSET = ProjectRulesbase.CATALOG_ASSET
 
     @classmethod
     def logger(cls) -> logging.Logger:
@@ -31,17 +34,20 @@ class MacieGroupLoader:
     @classmethod
     def convert_file(
         cls, *, path: str, config
-    ) -> tuple[list[str], dict, dict[str, list[str]]]:
+    ) -> tuple[list[str], dict, dict[str, list[str]], dict]:
         """the csvpath for a wrapper file, as a one-item list, the
-        conversion report as a dict, and the text allow lists the csvpath
-        loads, as {list name: entries}. The report has each list's name and
-        entry count, not its entries."""
+        conversion report as a dict, the text allow lists the csvpath
+        loads, as {list name: entries}, and the managed identifier catalog
+        it was converted with, the project rulesbase's overrides merged in.
+        The report has each list's name and entry count, not its entries,
+        and the overrides applied."""
         if not isinstance(path, str) or path.strip() == "":
             raise ValueError("path must be a non-empty str")
         if not MacieWrapperLoader.is_wrapper_path(path=path):
             raise ValueError(f"Not a Macie wrapper file: {path}")
         wrapper = MacieWrapperLoader.from_path(path=path)
-        converter = MacieConverter(wrapper=wrapper)
+        catalog = ProjectRulesbase.catalog(config=config, refresh_reference=True)
+        converter = MacieConverter(wrapper=wrapper, catalog=catalog)
         conversion = converter.convert(
             name=cls.name_for(wrapper=wrapper, path=path), **cls.limits(config=config)
         )
@@ -67,13 +73,70 @@ class MacieGroupLoader:
                 }
                 for s in conversion.report.skipped
             ],
+            "rulesbase": {
+                "overrides_path": catalog.overrides_path,
+                "applied": list(catalog.applied),
+            },
         }
         cls.logger().debug(
             "Converted Macie wrapper at %s, skipping %s items",
             path,
             len(report["skipped"]),
         )
-        return ([conversion.csvpath.strip()], report, dict(conversion.lists))
+        return (
+            [conversion.csvpath.strip()],
+            report,
+            dict(conversion.lists),
+            catalog.catalog,
+        )
+
+    @classmethod
+    def store_assets(
+        cls,
+        *,
+        paths_manager,
+        name: str,
+        lists: dict[str, list[str]],
+        catalog: dict,
+        append: bool,
+    ) -> None:
+        """writes a wrapper's text allow lists and the managed identifier
+        catalog it was converted with to the group's assets, creating the
+        group if needed.
+
+        When appending, a group whose catalog differs is refused before
+        anything is written, as for lists: replacing it would change what
+        the group's other Macie csvpaths detect. Reload the group without
+        append to use a changed project rulesbase."""
+        if paths_manager is None:
+            raise ValueError("paths_manager cannot be None")
+        if not isinstance(name, str) or name.strip() == "":
+            raise ValueError("name must be a non-empty str")
+        if not isinstance(catalog, dict):
+            raise TypeError(f"catalog must be a dict, not {type(catalog)}")
+        if not isinstance(append, bool):
+            raise TypeError(f"append must be a bool, not {type(append)}")
+        am = paths_manager.asset_manager
+        if append is True and paths_manager.has_named_paths(name):
+            have = am.get_asset_file(name, cls.CATALOG_ASSET)
+            if have is not None and json.loads(have) != catalog:
+                msg = (
+                    f"Cannot append to named-paths group {name}: it was loaded with "
+                    "a different managed identifier catalog (the packaged stand-ins "
+                    "or the project rulesbase changed since). Appending would change "
+                    "what the group's other Macie csvpaths detect. Reload the group "
+                    "without append"
+                )
+                cls.logger().error(msg)
+                raise MacieException(msg)
+        cls.store_lists(
+            paths_manager=paths_manager, name=name, lists=lists, append=append
+        )
+        am.store_asset_file(
+            name=name,
+            filename=cls.CATALOG_ASSET,
+            contents=json.dumps(catalog, indent=2, ensure_ascii=False) + "\n",
+        )
 
     @classmethod
     def store_lists(
