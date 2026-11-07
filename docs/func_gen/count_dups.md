@@ -15,7 +15,7 @@ there are duplicate subsets of header values.
 | Purpose                | Value                                    |
 |:-----------------------|:-----------------------------------------|
 | Main focus             | count_dups() produces a calculated value |
-| Has internal variables | False                                    |
+| Has internal variables | True                                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

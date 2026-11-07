@@ -30,7 +30,7 @@ variable of birds with values like blue|bluebird,red|redbird.
 | Purpose                | Value                    |
 |:-----------------------|:-------------------------|
 | Main focus             | tally() is a side-effect |
-| Has internal variables | False                    |
+| Has internal variables | True                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

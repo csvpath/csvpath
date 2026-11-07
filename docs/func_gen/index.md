@@ -223,4 +223,4 @@ These function docs are generated from the function code. They are also availabl
 * [yes](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/yes.md)
 
 
-Generated on: 2026-11-06 22:09:46.959085
+Generated on: 2026-11-06 22:24:57.231651

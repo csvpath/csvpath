@@ -28,7 +28,7 @@ a name qualifier as shown above to use another name.
 | Purpose                | Value                                  |
 |:-----------------------|:---------------------------------------|
 | Main focus             | subtotal() produces a calculated value |
-| Has internal variables | False                                  |
+| Has internal variables | True                                   |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

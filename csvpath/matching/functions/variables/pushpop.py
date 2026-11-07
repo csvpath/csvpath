@@ -144,6 +144,13 @@ class Pop(ValueProducer):
         self.args.validate(self.siblings())
         super().check_valid()
 
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
+
     def _produce_value(self, skip=None) -> None:
         k = self.children[0].to_value(skip=skip)
         self._register_internal_var_name(k)
@@ -182,6 +189,13 @@ class Stack(SideEffect):
         )
         self.args.validate(self.siblings())
         super().check_valid()
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
 
     def _produce_value(self, skip=None) -> None:
         k = self.children[0].to_value(skip=skip)
@@ -222,6 +236,13 @@ class Peek(ValueProducer):
         a.arg(name="index", types=[Term], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
 
     def _produce_value(self, skip=None) -> None:
         eq = self.children[0]
@@ -275,6 +296,13 @@ class PeekSize(ValueProducer):
         )
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
 
     def _produce_value(self, skip=None) -> None:
         k = self.children[0].to_value(skip=skip)

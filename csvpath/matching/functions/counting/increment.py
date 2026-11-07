@@ -37,6 +37,13 @@ class Increment(ValueProducer):
         #
         super().check_valid()
 
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
+
     def to_value(self, *, skip=None) -> Any:  # pylint: disable=R0912
         # re: R0912: not pretty, but tested. whole needs to be reworked in
         # any case so we can get it into _produce_value() -- current

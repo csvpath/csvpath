@@ -46,6 +46,13 @@ class Stdev(ValueProducer):
         self.args.validate(self.siblings_or_equality())
         super().check_valid()
 
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
+
     def _produce_value(self, skip=None) -> None:
         v = self.children[0].to_value(skip=skip)
         stack = None

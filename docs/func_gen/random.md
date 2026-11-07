@@ -14,7 +14,7 @@ Generates a random number from within an integer range.
 | Purpose                | Value                                |
 |:-----------------------|:-------------------------------------|
 | Main focus             | random() produces a calculated value |
-| Has internal variables | False                                |
+| Has internal variables | True                                 |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
