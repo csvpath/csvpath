@@ -7,7 +7,7 @@ the Ministerio del Interior's published examples."""
 import pytest
 
 from csvpath.macie.allow_list_set import AllowListSet
-from csvpath.macie.checksum_utility import ChecksumUtility as chut
+from csvpath.macie.util.checksum_utility import ChecksumUtility as chut
 from csvpath.macie.detectors.es_id_detector import EsIdDetector
 from csvpath.macie.detectors.grouped_digits_detector import GroupedDigitsDetector
 from csvpath.macie.macie_exceptions import MacieException

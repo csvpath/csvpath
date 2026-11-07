@@ -6,7 +6,7 @@ python-stdnum in test_macie_checksum_oracle.py."""
 import pytest
 
 from csvpath.macie.allow_list_set import AllowListSet
-from csvpath.macie.checksum_utility import ChecksumUtility as chut
+from csvpath.macie.util.checksum_utility import ChecksumUtility as chut
 from csvpath.macie.detectors.ehic_detector import EhicDetector
 from csvpath.macie.detectors.udi_detector import UdiDetector
 from csvpath.macie.macie_exceptions import MacieException

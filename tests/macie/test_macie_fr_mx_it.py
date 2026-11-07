@@ -7,7 +7,7 @@ stdnum's and the well-known RSSMRA85T10A562S."""
 import pytest
 
 from csvpath.macie.allow_list_set import AllowListSet
-from csvpath.macie.checksum_utility import ChecksumUtility as chut
+from csvpath.macie.util.checksum_utility import ChecksumUtility as chut
 from csvpath.macie.detectors.fr_nir_detector import FrNirDetector
 from csvpath.macie.detectors.it_cf_detector import ItCfDetector
 from csvpath.macie.detectors.mx_curp_detector import MxCurpDetector

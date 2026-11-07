@@ -1,6 +1,6 @@
 import re
 
-from ..checksum_utility import ChecksumUtility as chut
+from ..util.checksum_utility import ChecksumUtility as chut
 from ..macie_exceptions import MacieException
 from .us_ssn_detector import UsSsnDetector
 

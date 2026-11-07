@@ -1,6 +1,6 @@
 import re
 
-from .regex_utility import RegexUtility as reut
+from .util.regex_utility import RegexUtility as reut
 
 
 class AllowListSet:

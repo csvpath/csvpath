@@ -5,7 +5,7 @@ catalog entries. Example numbers were checked outside ChecksumUtility."""
 import pytest
 
 from csvpath.macie.allow_list_set import AllowListSet
-from csvpath.macie.checksum_utility import ChecksumUtility as chut
+from csvpath.macie.util.checksum_utility import ChecksumUtility as chut
 from csvpath.macie.detectors import DETECTORS
 from csvpath.macie.detectors.grouped_digits_detector import GroupedDigitsDetector
 from csvpath.macie.detectors.vin_detector import VinDetector

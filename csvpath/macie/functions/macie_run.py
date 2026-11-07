@@ -2,7 +2,7 @@ import logging
 import weakref
 
 from ..allow_list_set import AllowListSet
-from ..arn_utility import ArnUtility as arut
+from ..util.arn_utility import ArnUtility as arut
 from ..findings_tally import FindingsTally, IdentifierTally
 from ..managed_catalog import ManagedCatalog
 

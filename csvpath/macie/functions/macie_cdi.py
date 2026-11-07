@@ -2,7 +2,7 @@ from csvpath.matching.functions.function_focus import MatchDecider
 from csvpath.matching.functions.args import Args
 from csvpath.matching.productions import Term
 
-from ..arn_utility import ArnUtility as arut
+from ..util.arn_utility import ArnUtility as arut
 from ..custom_identifier import CustomIdentifier
 from ..macie_exceptions import MacieException
 from ..severity_levels import SeverityLevels

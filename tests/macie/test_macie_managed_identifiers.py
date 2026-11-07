@@ -8,10 +8,10 @@ import json
 import pytest
 
 from csvpath.macie.allow_list_set import AllowListSet
-from csvpath.macie.checksum_utility import ChecksumUtility as chut
+from csvpath.macie.util.checksum_utility import ChecksumUtility as chut
 from csvpath.macie.detectors import DETECTORS
 from csvpath.macie.detectors.credit_card_detector import CreditCardDetector
-from csvpath.macie.keyword_utility import KeywordUtility as keut
+from csvpath.macie.util.keyword_utility import KeywordUtility as keut
 from csvpath.macie.macie_exceptions import MacieException
 from csvpath.macie.managed_catalog import ManagedCatalog
 from csvpath.macie.managed_identifier import ManagedIdentifier

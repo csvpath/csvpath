@@ -7,7 +7,7 @@ specimen card's (T220001293)."""
 import pytest
 
 from csvpath.macie.allow_list_set import AllowListSet
-from csvpath.macie.checksum_utility import ChecksumUtility as chut
+from csvpath.macie.util.checksum_utility import ChecksumUtility as chut
 from csvpath.macie.detectors.de_id_detector import DeIdDetector
 from csvpath.macie.detectors.mag_stripe_detector import MagStripeDetector
 from csvpath.macie.managed_catalog import ManagedCatalog

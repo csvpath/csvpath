@@ -6,7 +6,7 @@ python-stdnum on random inputs; the published examples here are stdnum's."""
 import pytest
 
 from csvpath.macie.allow_list_set import AllowListSet
-from csvpath.macie.checksum_utility import ChecksumUtility as chut
+from csvpath.macie.util.checksum_utility import ChecksumUtility as chut
 from csvpath.macie.detectors.grouped_digits_detector import GroupedDigitsDetector
 from csvpath.macie.macie_converter import MacieConverter
 from csvpath.macie.macie_wrapper_loader import MacieWrapperLoader

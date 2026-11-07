@@ -29,7 +29,7 @@ from stdnum.iso7064 import mod_11_10, mod_97_10
 from stdnum.it import codicefiscale, iva
 from stdnum.mx import curp
 
-from csvpath.macie.checksum_utility import ChecksumUtility as chut
+from csvpath.macie.util.checksum_utility import ChecksumUtility as chut
 from csvpath.macie.detectors.it_cf_detector import ItCfDetector
 
 N = 2000

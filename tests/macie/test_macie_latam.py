@@ -6,7 +6,7 @@ ChecksumUtility."""
 import pytest
 
 from csvpath.macie.allow_list_set import AllowListSet
-from csvpath.macie.checksum_utility import ChecksumUtility as chut
+from csvpath.macie.util.checksum_utility import ChecksumUtility as chut
 from csvpath.macie.detectors.cl_rut_detector import ClRutDetector
 from csvpath.macie.detectors.grouped_digits_detector import GroupedDigitsDetector
 from csvpath.macie.macie_converter import MacieConverter

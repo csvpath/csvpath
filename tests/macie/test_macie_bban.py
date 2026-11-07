@@ -5,7 +5,7 @@ for IBANs. Example BBANs come from published IBANs that pass mod 97."""
 import pytest
 
 from csvpath.macie.allow_list_set import AllowListSet
-from csvpath.macie.checksum_utility import ChecksumUtility as chut
+from csvpath.macie.util.checksum_utility import ChecksumUtility as chut
 from csvpath.macie.detectors.bank_account_detector import BankAccountDetector
 from csvpath.macie.macie_exceptions import MacieException
 from csvpath.macie.managed_catalog import ManagedCatalog

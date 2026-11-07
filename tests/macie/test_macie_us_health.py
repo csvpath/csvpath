@@ -4,7 +4,7 @@ ITIN, HICN, NDC and HCPCS, the DEA check, and the catalog entries."""
 import pytest
 
 from csvpath.macie.allow_list_set import AllowListSet
-from csvpath.macie.checksum_utility import ChecksumUtility as chut
+from csvpath.macie.util.checksum_utility import ChecksumUtility as chut
 from csvpath.macie.detectors.us_id_detector import UsIdDetector
 from csvpath.macie.macie_converter import MacieConverter
 from csvpath.macie.macie_exceptions import MacieException
