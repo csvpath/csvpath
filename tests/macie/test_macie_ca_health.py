@@ -131,6 +131,11 @@ def test_macie_ca_health_catalog(catalog) -> None:
         "phn",
         "soins de santé",
     ]
+    #
+    # Macie says Canada; we cover three provinces, and the converter
+    # reports the shortfall
+    #
+    assert "Ontario" in e["partial"]
 
 
 @pytest.mark.parametrize(

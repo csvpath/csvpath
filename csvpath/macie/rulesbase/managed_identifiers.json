@@ -2821,7 +2821,8 @@
       "severity": "1:HIGH",
       "fidelity": "B",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
-      "retrieved": "2026-11-07"
+      "retrieved": "2026-11-07",
+      "partial": "Only British Columbia, Ontario and Quebec health numbers are detected"
     },
     "EUROPEAN_HEALTH_INSURANCE_CARD_NUMBER": {
       "category": "PERSONAL_INFORMATION",
@@ -2854,7 +2855,8 @@
       "severity": "1:LOW 2:MEDIUM 100:HIGH",
       "fidelity": "B",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
-      "retrieved": "2026-11-07"
+      "retrieved": "2026-11-07",
+      "partial": "Only GS1 and HIBCC UDIs are detected, not ICCBBA ISBT 128 UDIs"
     }
   },
   "detectors": {
