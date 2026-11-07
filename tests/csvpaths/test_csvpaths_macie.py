@@ -32,6 +32,7 @@ from csvpath import CsvPaths
 from csvpath.macie.macie_converter import MacieConverter
 from csvpath.macie.macie_exceptions import MacieException
 from csvpath.macie.macie_wrapper_loader import MacieWrapperLoader
+from csvpath.macie.managed_catalog import ManagedCatalog
 from csvpath.util.exceptions import InputException
 from csvpath.util.nos import Nos
 
@@ -48,6 +49,7 @@ GROUPS = [
     "macie_test_dir",
     "macie_test_text",
     "hr-employee-ids",
+    "macie_test_rulesbase",
 ]
 NAMED_FILE = "macie_test_employees"
 
@@ -455,3 +457,143 @@ def test_macie_text_list_reload_without_append_replaces_the_list(
     _add_text(paths, file_path=other)
     assert _ids(paths, TEXT_GROUP) == ["hr-other"]
     assert _list(paths) == ["EMP-111111"]
+
+
+#
+# the project rulesbase and the catalog snapshot (rulesbase-design.md, P1
+# to P3). Pair 22 has BRAZIL_CEP_CODE; its data has two hyphenated CEPs.
+#
+
+RB_PAIR = os.path.join(
+    "tests", "macie", "test_resources", "normative", "22_group_b_rest"
+)
+RB_WRAPPER = os.path.join(RB_PAIR, "group-b-rest.macie.json")
+RB_GROUP = "macie_test_rulesbase"
+
+
+def _rulesbase(paths: CsvPaths, tmp_path, overrides: dict | None) -> str:
+    d = tmp_path / "rulesbase" / "macie"
+    d.mkdir(parents=True)
+    if overrides is not None:
+        (d / "managed_identifiers.json").write_text(
+            json.dumps(overrides), encoding="utf-8"
+        )
+    paths.config.set(
+        section="macie", name="rulesbase", value=str(tmp_path / "rulesbase")
+    )
+    return str(d)
+
+
+def _cep_count(paths: CsvPaths) -> int:
+    data = os.path.join(RB_PAIR, "data", "people.csv")
+    paths.file_manager.add_named_file(name=NAMED_FILE, path=data)
+    paths.collect_paths(filename=NAMED_FILE, pathsname=RB_GROUP)
+    result = paths.results_manager.get_named_results(RB_GROUP)[0]
+    assert result.csvpath.is_valid
+    findings = result.csvpath.variables["macie_findings"]
+    counts = [
+        d["count"]
+        for s in findings["sensitiveData"]
+        for d in s["detections"]
+        if d["type"] == "BRAZIL_CEP_CODE"
+    ]
+    return counts[0] if counts else 0
+
+
+def _snapshot(paths: CsvPaths, name: str) -> dict:
+    am = paths.paths_manager.asset_manager
+    return json.loads(am.get_asset_file(name, "macie_catalog.json"))
+
+
+def test_macie_load_stores_the_catalog_snapshot(paths) -> None:
+    #
+    # every Macie group keeps the catalog it was loaded with, lists or not
+    #
+    _add_hr(paths)
+    assert _snapshot(paths, "macie_test_hr") == ManagedCatalog.load().catalog
+
+
+def test_macie_load_without_a_project_rulesbase(paths, tmp_path) -> None:
+    paths.config.set(section="macie", name="rulesbase", value=str(tmp_path / "rb"))
+    paths.paths_manager.add_named_paths_from_file(name=RB_GROUP, file_path=RB_WRAPPER)
+    assert _snapshot(paths, RB_GROUP) == ManagedCatalog.load().catalog
+    assert not (tmp_path / "rb").exists()
+    assert _cep_count(paths) == 2
+
+
+def test_macie_load_with_project_overrides(paths, tmp_path) -> None:
+    d = _rulesbase(
+        paths, tmp_path, {"version": 1, "detectors": {"br_cep": {"formats": ["#{8}"]}}}
+    )
+    paths.paths_manager.add_named_paths_from_file(name=RB_GROUP, file_path=RB_WRAPPER)
+    home = paths.paths_manager.named_paths_home(RB_GROUP)
+    report = json.loads(_read(Nos(home).join("group-b-rest.macie.json.report.json")))
+    assert report["rulesbase"] == {
+        "overrides_path": os.path.join(d, "managed_identifiers.json"),
+        "applied": ["detectors.br_cep"],
+    }
+    assert os.path.exists(os.path.join(d, "packaged_managed_identifiers.json"))
+    assert _snapshot(paths, RB_GROUP)["detectors"]["br_cep"]["formats"] == ["#{8}"]
+    #
+    # the hyphenated CEPs no longer match
+    #
+    assert _cep_count(paths) == 0
+
+
+def test_macie_group_run_uses_its_snapshot_not_the_project_file(
+    paths, tmp_path
+) -> None:
+    d = _rulesbase(
+        paths, tmp_path, {"version": 1, "detectors": {"br_cep": {"formats": ["#{8}"]}}}
+    )
+    paths.paths_manager.add_named_paths_from_file(name=RB_GROUP, file_path=RB_WRAPPER)
+    #
+    # the project file goes away; the group still runs with the rules it
+    # was loaded with, until it is reloaded
+    #
+    os.remove(os.path.join(d, "managed_identifiers.json"))
+    assert _cep_count(paths) == 0
+    paths.paths_manager.add_named_paths_from_file(name=RB_GROUP, file_path=RB_WRAPPER)
+    assert _cep_count(paths) == 2
+
+
+def test_macie_append_with_a_changed_rulesbase_is_refused(paths, tmp_path) -> None:
+    d = _rulesbase(paths, tmp_path, None)
+    paths.paths_manager.add_named_paths_from_file(name=RB_GROUP, file_path=RB_WRAPPER)
+    (tmp_path / "rulesbase" / "macie" / "managed_identifiers.json").write_text(
+        json.dumps({"version": 1, "detectors": {"br_cep": {"formats": ["#{8}"]}}}),
+        encoding="utf-8",
+    )
+    with pytest.raises(MacieException, match="different managed identifier catalog"):
+        paths.paths_manager.add_named_paths_from_file(
+            name=RB_GROUP, file_path=WRAPPER, append=True
+        )
+    assert _snapshot(paths, RB_GROUP) == ManagedCatalog.load().catalog
+    assert len(_group(paths, RB_GROUP)) == 1
+    assert d
+
+
+def test_macie_bad_project_overrides_stop_the_load(paths, tmp_path) -> None:
+    _rulesbase(paths, tmp_path, {"version": 1, "detectors": {"br_cep": {"formts": []}}})
+    with pytest.raises(MacieException, match="cannot override formts"):
+        paths.paths_manager.add_named_paths_from_file(
+            name=RB_GROUP, file_path=RB_WRAPPER
+        )
+    assert not paths.paths_manager.has_named_paths(RB_GROUP)
+
+
+def test_macie_group_run_without_its_snapshot_is_an_error(paths) -> None:
+    #
+    # no fallback to the packaged catalog: a group loaded before groups kept
+    # their catalog must be reloaded. (A group with only custom identifiers
+    # never reads the catalog, so it runs either way.)
+    #
+    paths.paths_manager.add_named_paths_from_file(name=RB_GROUP, file_path=RB_WRAPPER)
+    paths.paths_manager.asset_manager.delete_asset_file(RB_GROUP, "macie_catalog.json")
+    data = os.path.join(RB_PAIR, "data", "people.csv")
+    paths.file_manager.add_named_file(name=NAMED_FILE, path=data)
+    paths.collect_paths(filename=NAMED_FILE, pathsname=RB_GROUP)
+    result = paths.results_manager.get_named_results(RB_GROUP)[0]
+    assert result.csvpath.is_valid is False
+    assert result.lines.to_list() == []
+    assert any("reload the group" in e.message for e in result.errors)

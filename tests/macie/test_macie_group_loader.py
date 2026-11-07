@@ -11,6 +11,7 @@ from csvpath.macie.macie_converter import MacieConverter
 from csvpath.macie.macie_exceptions import MacieException
 from csvpath.macie.macie_group_loader import MacieGroupLoader
 from csvpath.macie.macie_wrapper_loader import MacieWrapperLoader
+from csvpath.macie.managed_catalog import ManagedCatalog
 
 PAIR = os.path.join("tests", "macie", "test_resources", "normative", "01_employee_ids")
 WRAPPER = os.path.join(PAIR, "hr-employee-ids.macie.json")
@@ -28,7 +29,9 @@ class FakeConfig:
 
 
 def test_macie_group_loader_convert_file() -> None:
-    paths, report, lists = MacieGroupLoader.convert_file(path=WRAPPER, config=None)
+    paths, report, lists, catalog = MacieGroupLoader.convert_file(
+        path=WRAPPER, config=None
+    )
     wrapper = MacieWrapperLoader.from_path(path=WRAPPER)
     assert paths == [MacieConverter(wrapper=wrapper).convert().csvpath.strip()]
     assert report == {
@@ -42,20 +45,25 @@ def test_macie_group_loader_convert_file() -> None:
         "downloaded_at": "2026-10-29T17:40:00Z",
         "lists": [],
         "skipped": [],
+        "rulesbase": {"overrides_path": None, "applied": []},
     }
     assert lists == {}
+    #
+    # without a project rulesbase, the packaged catalog
+    #
+    assert catalog == ManagedCatalog.load().catalog
 
 
 def test_macie_group_loader_limits_reach_the_csvpath() -> None:
     config = FakeConfig({("macie", "max_findings"): "50", ("macie", "max_detail"): "3"})
-    paths, _, _ = MacieGroupLoader.convert_file(path=WRAPPER, config=config)
+    paths, _, _, _ = MacieGroupLoader.convert_file(path=WRAPPER, config=config)
     assert "  macie-max-findings: 50\n" in paths[0]
     assert "  macie-max-detail: 3\n" in paths[0]
 
 
 def test_macie_group_loader_report_lists_skipped_items() -> None:
     path = os.path.join(WRAPPERS, "job_download.macie.json")
-    _, report, lists = MacieGroupLoader.convert_file(path=path, config=None)
+    _, report, lists, _ = MacieGroupLoader.convert_file(path=path, config=None)
     assert report["name"] == "hr-exports-weekly"
     #
     # its text allow list is unreadable: nothing to store
@@ -71,7 +79,7 @@ def test_macie_group_loader_report_lists_skipped_items() -> None:
 
 def test_macie_group_loader_handcrafted_is_named_for_its_file() -> None:
     path = os.path.join(WRAPPERS, "handcrafted_minimal.macie.json")
-    paths, report, _ = MacieGroupLoader.convert_file(path=path, config=None)
+    paths, report, _, _ = MacieGroupLoader.convert_file(path=path, config=None)
     assert report["name"] == "handcrafted_minimal"
     assert "  id: handcrafted_minimal\n" in paths[0]
 
@@ -85,7 +93,9 @@ ENTRIES = ["emp-234567", "EMP-678901", "EMP-456789"]
 
 
 def test_macie_group_loader_convert_file_returns_text_lists() -> None:
-    paths, report, lists = MacieGroupLoader.convert_file(path=TEXT_WRAPPER, config=None)
+    paths, report, lists, _ = MacieGroupLoader.convert_file(
+        path=TEXT_WRAPPER, config=None
+    )
     assert lists == {LIST_ID: ENTRIES}
     assert f'load_list("{LIST_ID}")' in paths[0]
     #
@@ -283,4 +293,107 @@ def test_macie_group_loader_store_lists_bad_input(paths_manager, args, error) ->
     kwargs.update(args)
     with pytest.raises(error):
         MacieGroupLoader.store_lists(**kwargs)
+    assert not paths_manager.has_named_paths(GROUP)
+
+
+#
+# storing the catalog a group was loaded with (rulesbase-design.md, P2)
+#
+
+
+def _catalog() -> dict:
+    return ManagedCatalog.load().catalog
+
+
+def _snapshot(pm) -> dict | None:
+    text = pm.asset_manager.get_asset_file(GROUP, MacieGroupLoader.CATALOG_ASSET)
+    return None if text is None else json.loads(text)
+
+
+def test_macie_group_loader_store_assets_without_lists(paths_manager) -> None:
+    #
+    # the catalog is stored even when the wrapper has no allow lists
+    #
+    pm = paths_manager
+    MacieGroupLoader.store_assets(
+        paths_manager=pm, name=GROUP, lists={}, catalog=_catalog(), append=False
+    )
+    assert pm.has_named_paths(GROUP)
+    assert _snapshot(pm) == _catalog()
+    assert _stored(pm) is None
+
+
+def test_macie_group_loader_store_assets_with_lists(paths_manager) -> None:
+    pm = paths_manager
+    MacieGroupLoader.store_assets(
+        paths_manager=pm,
+        name=GROUP,
+        lists={LIST_ID: ENTRIES},
+        catalog=_catalog(),
+        append=False,
+    )
+    assert _stored(pm) == ENTRIES
+    assert _snapshot(pm) == _catalog()
+
+
+def test_macie_group_loader_store_assets_append_same_catalog(paths_manager) -> None:
+    pm = paths_manager
+    for _ in range(2):
+        MacieGroupLoader.store_assets(
+            paths_manager=pm, name=GROUP, lists={}, catalog=_catalog(), append=True
+        )
+    assert _snapshot(pm) == _catalog()
+
+
+def test_macie_group_loader_store_assets_append_different_catalog_is_refused(
+    paths_manager,
+) -> None:
+    pm = paths_manager
+    MacieGroupLoader.store_assets(
+        paths_manager=pm, name=GROUP, lists={}, catalog=_catalog(), append=False
+    )
+    changed = _catalog()
+    changed["keyword_lists"]["br_rg"]["keywords"] = ["registro geral"]
+    with pytest.raises(MacieException, match="different managed identifier catalog"):
+        MacieGroupLoader.store_assets(
+            paths_manager=pm,
+            name=GROUP,
+            lists={LIST_ID: ENTRIES},
+            catalog=changed,
+            append=True,
+        )
+    #
+    # nothing written: neither the list nor the catalog
+    #
+    assert _stored(pm) is None
+    assert _snapshot(pm) == _catalog()
+    #
+    # without append the group's catalog is replaced
+    #
+    MacieGroupLoader.store_assets(
+        paths_manager=pm, name=GROUP, lists={}, catalog=changed, append=False
+    )
+    assert _snapshot(pm) == changed
+
+
+@pytest.mark.parametrize(
+    "args, error",
+    [
+        ({"paths_manager": None}, ValueError),
+        ({"name": ""}, ValueError),
+        ({"catalog": None}, TypeError),
+        ({"append": "yes"}, TypeError),
+    ],
+)
+def test_macie_group_loader_store_assets_bad_input(paths_manager, args, error) -> None:
+    kwargs = {
+        "paths_manager": paths_manager,
+        "name": GROUP,
+        "lists": {},
+        "catalog": _catalog(),
+        "append": False,
+    }
+    kwargs.update(args)
+    with pytest.raises(error):
+        MacieGroupLoader.store_assets(**kwargs)
     assert not paths_manager.has_named_paths(GROUP)

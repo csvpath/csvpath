@@ -98,6 +98,16 @@ class ManagedCatalog:
             catalog=merged, path=path, overrides_path=overrides_path, applied=applied
         )
 
+    @classmethod
+    def from_snapshot(cls, *, catalog: dict, where: str) -> "ManagedCatalog":
+        """a catalog from a snapshot already merged and stored, e.g. a
+        named-paths group's assets/macie_catalog.json; validated again, as
+        the file may have been edited since it was written"""
+        if not isinstance(where, str) or where.strip() == "":
+            raise ValueError("where must be a non-empty str")
+        cls.validate(catalog=catalog, path=where)
+        return ManagedCatalog(catalog=catalog, path=where)
+
     @property
     def names(self) -> list[str]:
         return list(self.catalog["identifiers"].keys())
