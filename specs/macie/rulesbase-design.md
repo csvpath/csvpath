@@ -13,7 +13,12 @@ run. One refinement in PR 2: the project opts in by creating
 customizes gets no new directory; once it exists, each load refreshes the
 reference copy in it. Identifier and keyword list overrides are written
 into the generated csvpath at conversion; the run reads detector data
-from the snapshot, so both come from the one merged catalog.
+from the snapshot, so both come from the one merged catalog. PR 3 (P2b and
+P2c) built: `RunInputs` copies a group run's Macie inputs into
+`_extra_data/macie/` when the run's first Macie function is set up, and
+`MacieRun` prints the standalone line last on the `macie` stream. A
+custom-identifier-only group copies its catalog snapshot too: every Macie
+group has one.
 
 ## Why now
 

@@ -77,7 +77,15 @@ def _run(text: str, *, config: dict | None = None):
     printer = StreamPrinter()
     path.set_printers([printer])
     matched = path.collect(text)
-    return path, printer.streams.get("macie", []), [m[0] for m in matched]
+    macie = printer.streams.get("macie", [])
+    #
+    # these runs are standalone, so a reported run ends with the
+    # standalone line, tested on its own below; the tests here are about
+    # what comes before it
+    #
+    if macie and macie[-1] == MacieRun.STANDALONE:
+        macie = macie[:-1]
+    return path, macie, [m[0] for m in matched]
 
 
 def _cdi(cap: int | None = None) -> str:
@@ -427,3 +435,19 @@ def test_macie_mdi_bad_arguments_cannot_run(tmp_path, body: str, message: str) -
     assert path.stopped is True
     assert macie[0].startswith("macie: cannot run: ")
     assert message in macie[0]
+
+
+def test_macie_functions_standalone_run_says_so(tmp_path) -> None:
+    #
+    # rulesbase-design.md, P2c: a standalone run is fine for fast checks,
+    # and says once, last, that it is not a reproducible record
+    #
+    path = CsvPath()
+    printer = StreamPrinter()
+    path.set_printers([printer])
+    data = _write(tmp_path, "1,EMP-123456,")
+    path.collect(_csvpath(data=data, body=_cdi()))
+    macie = printer.streams["macie"]
+    assert macie[-1] == MacieRun.STANDALONE
+    assert macie.count(MacieRun.STANDALONE) == 1
+    assert MacieRun.STANDALONE.startswith("macie: standalone run")

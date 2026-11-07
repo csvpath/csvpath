@@ -22,9 +22,12 @@ piece in detail. The steps:
        the findings, a Macie-style JSON document in the macie_findings
        variable
 
-Step 4's run dir listing shows a known gap: the run dir has no copy of the
-wrapper, the allow list or the managed identifier catalog the run used.
-specs/macie/rulesbase-design.md, P2b, puts them in _extra_data/macie/.
+Step 4's run dir listing includes _extra_data/macie/: the run's copy of
+the wrapper, its conversion report, the managed identifier catalog
+snapshot and the allow list, with each file's sha256 in inputs.json, so
+the run can be replicated with the exact rules it used
+(specs/macie/rulesbase-design.md, P2b). A standalone CsvPath run copies
+nothing and says so on the macie stream (P2c).
 """
 
 import json
@@ -104,6 +107,14 @@ class TestMacieWalkthrough:
         result = paths.results_manager.get_named_results(GROUP)[0]
         print("    run dir:", result.run_dir)
         _tree(result.run_dir)
+        #
+        # the run's copy of its Macie inputs, for replication
+        #
+        inputs = os.path.join(result.run_dir, "_extra_data", "macie", "inputs.json")
+        with open(inputs, encoding="utf-8") as f:
+            recorded = json.load(f)
+        print("    _extra_data/macie/inputs.json records:", sorted(recorded["files"]))
+        assert recorded["group"] == GROUP
 
         _step("5. the results")
         print("    valid:", result.csvpath.is_valid)
