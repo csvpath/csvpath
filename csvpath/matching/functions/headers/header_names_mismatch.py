@@ -49,9 +49,14 @@ class HeaderNamesMismatch(ValueProducer):
         a.arg(name="pipe delimited headers", types=[Term], actuals=[str])
         self.args.validate(self.siblings())
         #
-        self.has_internal_variables = True
-        #
         super().check_valid()
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
 
     def _produce_value(self, skip=None) -> None:  # pylint: disable=R0912
         # re: R0912: not pretty, but tested, can come back

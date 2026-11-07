@@ -12,7 +12,7 @@ FILE = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}March-2024.csv"
 
 
 class TestCsvPathExpressionUtil(unittest.TestCase):
-    def test_expression_utility_is_one_of(self):
+    def test_csvpath_expression_utility_is_one_of(self):
         assert not ExpressionUtility.is_one_of([None], [])
         assert not ExpressionUtility.is_one_of([], [])
         assert not ExpressionUtility.is_one_of({}, [])
@@ -48,7 +48,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.is_one_of({"a": "b"}, [dict])
         assert ExpressionUtility.is_one_of((), [tuple, dict, int, str, bool])
 
-    def test_exp_util_empty1(self):
+    def test_csvpath_exp_util_empty1(self):
         assert ExpressionUtility.is_empty([None])
         assert ExpressionUtility.is_empty([None, None])
         assert ExpressionUtility.is_empty([])
@@ -65,7 +65,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert not ExpressionUtility.is_empty({"a": 1})
         assert not ExpressionUtility.is_empty(("a"))
 
-    def test_expression_utility_my_expression1(self):
+    def test_csvpath_expression_utility_my_expression1(self):
         csvpath = f"""${FILE}[*][
                 skip( lt(count_headers_in_line(), 9) )
                 @header_change = mismatch("signed")
@@ -84,7 +84,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         e = ExpressionUtility.get_my_expression(last)
         assert e == path.matcher.expressions[4][0]
 
-    def test_expression_utility_get_ancestor1(self):
+    def test_csvpath_expression_utility_get_ancestor1(self):
         csvpath = f"""${FILE}[*][
                 skip( lt(count_headers_in_line(), 9) )
                 @header_change = mismatch("signed")
@@ -107,7 +107,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert a is not None
         assert isinstance(a, Print)
 
-    def test_expression_utility_any_of_my_descendants(self):
+    def test_csvpath_expression_utility_any_of_my_descendants(self):
         csvpath = f"""${FILE}[*][
                 skip( lt(count_headers_in_line(), 9) )
                 @header_change = mismatch("signed")
@@ -128,7 +128,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert e == path.matcher.expressions[4][0]
         assert ExpressionUtility.any_of_my_descendants(e, [last])
 
-    def test_exp_util_to_int1(self):
+    def test_csvpath_exp_util_to_int1(self):
         assert ExpressionUtility.to_int(1) == 1
         assert ExpressionUtility.to_int(1.0) == 1
         assert ExpressionUtility.to_int(None) == 0
@@ -145,12 +145,12 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         )  # convert to float() rounds down
         assert ExpressionUtility.to_int("1,550") == 1550
 
-    def test_exp_util_to_int2(self):
+    def test_csvpath_exp_util_to_int2(self):
         assert not isinstance(ExpressionUtility.to_int(CsvPath()), int)
         assert not isinstance(ExpressionUtility.to_int("five"), int)
         assert ExpressionUtility.to_int("five") == "five"
 
-    def test_is_number(self):
+    def test_csvpath_is_number(self):
         assert ExpressionUtility.is_number(1)
         assert ExpressionUtility.is_number(1.01)
         assert not ExpressionUtility.is_number("")
@@ -162,7 +162,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.is_number("$1,000.00")
         assert not ExpressionUtility.is_number("no")
 
-    def test_exp_util_to_float1(self):
+    def test_csvpath_exp_util_to_float1(self):
         assert ExpressionUtility.to_float(1) == 1.0
         assert ExpressionUtility.to_float(1.0) == 1.0
         assert ExpressionUtility.to_float(None) == 0.0
@@ -179,12 +179,12 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         )  # convert to float() rounds down
         assert ExpressionUtility.to_float("1,550") == 1550.00
 
-    def test_exp_util_to_float2(self):
+    def test_csvpath_exp_util_to_float2(self):
         assert not isinstance(ExpressionUtility.to_float(CsvPath()), float)
         assert not isinstance(ExpressionUtility.to_float("five"), float)
         assert "five" == ExpressionUtility.to_float("five")
 
-    def test_exp_util_all(self):
+    def test_csvpath_exp_util_all(self):
         assert ExpressionUtility.all(None) is False
         assert ExpressionUtility.all([]) is True
         assert ExpressionUtility.all(CsvPath) is True
@@ -201,7 +201,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         )
         assert ExpressionUtility.all([True, False]) is True
 
-    def test_exp_util_is_none(self):
+    def test_csvpath_exp_util_is_none(self):
         assert ExpressionUtility.is_none(None) is True
         assert ExpressionUtility.is_none("None") is True
         assert ExpressionUtility.is_none("nan") is True
@@ -213,7 +213,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.is_none(0) is False
         assert ExpressionUtility.is_none(1) is False
 
-    def test_exp_util_bool_1(self):
+    def test_csvpath_exp_util_bool_1(self):
         assert ExpressionUtility.asbool(True) is True
         assert ExpressionUtility.asbool(False) is False
         assert ExpressionUtility.asbool(None) is False
@@ -234,7 +234,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.asbool("Nan") is True
         assert ExpressionUtility.asbool("NaN") is False
 
-    def test_exp_util_bool_2(self):
+    def test_csvpath_exp_util_bool_2(self):
         assert ExpressionUtility.asbool([]) is True
         assert ExpressionUtility.asbool([], strict=True) is False
         assert ExpressionUtility.asbool({}) is True
@@ -242,7 +242,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.asbool(()) is True
         assert ExpressionUtility.asbool((), strict=True) is False
 
-    def test_exp_util_ascomparable(self):
+    def test_csvpath_exp_util_ascomparable(self):
         assert ExpressionUtility.ascompariable(None) is None
         assert ExpressionUtility.ascompariable(True) is True
         assert ExpressionUtility.ascompariable(False) is False
@@ -252,7 +252,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.ascompariable(2.0) == 2.0
         assert ExpressionUtility.ascompariable("-1") == -1
 
-    def test_exp_util_chain_1(self):
+    def test_csvpath_exp_util_chain_1(self):
         path = CsvPath()
         path.parse(
             f"""${PATH}[*][
@@ -266,7 +266,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         chain = ExpressionUtility.my_chain(c)
         assert chain == "any[0].length[0].concat[0].a"
 
-    def test_exp_util_chain_2(self):
+    def test_csvpath_exp_util_chain_2(self):
         path = CsvPath()
         path.parse(
             f"""~ validation-mode:collect,no-raise ~
@@ -295,7 +295,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
             del x[x.index(e.source)]
         assert len(x) == 0
 
-    def test_exp_util_safe_isinstance(self):
+    def test_csvpath_exp_util_safe_isinstance(self):
         assert ExpressionUtility.safe_isinstance(1, int)
         assert ExpressionUtility.safe_isinstance(1, (int, str))
         assert not ExpressionUtility.safe_isinstance("1", int)
@@ -303,7 +303,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         # swallows that and returns False rather than propagating
         assert not ExpressionUtility.safe_isinstance(1, "not a type")
 
-    def test_exp_util_isa_none(self):
+    def test_csvpath_exp_util_isa_none(self):
         assert ExpressionUtility.isa(None, None)
         # None cross-casts to int via to_int(None) == 0, so this is True,
         # not the False you might expect -- documenting actual behavior
@@ -311,7 +311,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         # a non-None obj with no classlist at all has nothing to match against
         assert not ExpressionUtility.isa(1, None)
 
-    def test_exp_util_isa_direct_and_cross_cast(self):
+    def test_csvpath_exp_util_isa_direct_and_cross_cast(self):
         assert ExpressionUtility.isa(1, (int,))
         assert ExpressionUtility.isa("1", (int,))
         assert ExpressionUtility.isa("1.5", (float,))
@@ -320,7 +320,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.isa(datetime.datetime.now(), (datetime.date,))
         assert not ExpressionUtility.isa("not a number", (int,))
 
-    def test_exp_util_isa_datetime(self):
+    def test_csvpath_exp_util_isa_datetime(self):
         #
         # issue #312: isa() compared against the datetime module instead of
         # the datetime class, so nothing ever matched datetime
@@ -335,19 +335,19 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
             [dt],
         )
 
-    def test_exp_util_isa_classlist_with_instances_not_types(self):
+    def test_csvpath_exp_util_isa_classlist_with_instances_not_types(self):
         # non-type entries in classes are converted to their own type()
         assert ExpressionUtility.isa(1, (1,))
         assert not ExpressionUtility.isa(1, ("a string",))
 
-    def test_exp_util_is_date_type(self):
+    def test_csvpath_exp_util_is_date_type(self):
         assert ExpressionUtility.is_date_type(datetime.date(2024, 1, 1))
         assert ExpressionUtility.is_date_type(datetime.datetime(2024, 1, 1))
         assert ExpressionUtility.is_date_type("2024-01-01")
         assert not ExpressionUtility.is_date_type("not a date")
         assert not ExpressionUtility.is_date_type(None)
 
-    def test_exp_util_to_date(self):
+    def test_csvpath_exp_util_to_date(self):
         d = datetime.date(2024, 3, 4)
         assert ExpressionUtility.to_date(d) == d
         dt = datetime.datetime(2024, 3, 4, 5, 6, 7)
@@ -357,7 +357,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.to_date("not a date") == "not a date"
         assert ExpressionUtility.to_date(None) is None
 
-    def test_exp_util_to_datetime(self):
+    def test_csvpath_exp_util_to_datetime(self):
         dt = datetime.datetime(2024, 3, 4, 5, 6, 7)
         assert ExpressionUtility.to_datetime(dt) == dt
         parsed = ExpressionUtility.to_datetime("2024-03-04T05:06:07")
@@ -365,7 +365,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.to_datetime("not a date") == "not a date"
         assert ExpressionUtility.to_datetime(None) is None
 
-    def test_exp_util_is_date_or_datetime_str(self):
+    def test_csvpath_exp_util_is_date_or_datetime_str(self):
         assert ExpressionUtility.is_date_or_datetime_str("2024-03-04") == "date"
         assert (
             ExpressionUtility.is_date_or_datetime_str("2024-03-04T05:06:07")
@@ -373,7 +373,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         )
         assert ExpressionUtility.is_date_or_datetime_str("not a date") == "unknown"
 
-    def test_exp_util_is_date_or_datetime_obj(self):
+    def test_csvpath_exp_util_is_date_or_datetime_obj(self):
         assert (
             ExpressionUtility.is_date_or_datetime_obj(datetime.date(2024, 3, 4))
             == "date"
@@ -395,7 +395,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
             == "unknown"
         )
 
-    def test_exp_util_to_simple_bool(self):
+    def test_csvpath_exp_util_to_simple_bool(self):
         assert ExpressionUtility.to_simple_bool(True) is True
         assert ExpressionUtility.to_simple_bool(False) is False
         assert ExpressionUtility.to_simple_bool("true") is True
@@ -406,7 +406,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.to_simple_bool("maybe") == "maybe"
         assert ExpressionUtility.to_simple_bool(3) == 3
 
-    def test_exp_util_numeric_string(self):
+    def test_csvpath_exp_util_numeric_string(self):
         assert ExpressionUtility._numeric_string(1) == "1st"
         assert ExpressionUtility._numeric_string(2) == "2nd"
         assert ExpressionUtility._numeric_string(3) == "3rd"
@@ -419,26 +419,26 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility._numeric_string(12) == "12nd"
         assert ExpressionUtility._numeric_string(13) == "13rd"
 
-    def test_exp_util_get_name_and_qualifiers_simple(self):
+    def test_csvpath_exp_util_get_name_and_qualifiers_simple(self):
         name, quals = ExpressionUtility.get_name_and_qualifiers("plain")
         assert name == "plain"
         assert quals == []
 
-    def test_exp_util_get_name_and_qualifiers_dotted(self):
+    def test_csvpath_exp_util_get_name_and_qualifiers_dotted(self):
         name, quals = ExpressionUtility.get_name_and_qualifiers("test.onmatch.onchange")
         assert name == "test"
         assert quals == ["onmatch", "onchange"]
 
-    def test_exp_util_get_name_and_qualifiers_quoted(self):
+    def test_csvpath_exp_util_get_name_and_qualifiers_quoted(self):
         name, quals = ExpressionUtility.get_name_and_qualifiers('"a.b".onmatch')
         assert name == "a.b"
         assert quals == ["onmatch"]
 
-    def test_exp_util_get_name_and_qualifiers_empty_raises(self):
+    def test_csvpath_exp_util_get_name_and_qualifiers_empty_raises(self):
         with pytest.raises(ValueError):
             ExpressionUtility.get_name_and_qualifiers("")
 
-    def test_exp_util_get_id_and_expressions_index(self):
+    def test_csvpath_exp_util_get_id_and_expressions_index(self):
         path = CsvPath()
         path.parse(
             f"""${PATH}[*][
@@ -456,7 +456,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert id1 == id2
         assert id1.startswith("_intx_")
 
-    def test_exp_util_name_or_class_and_simple_class_name(self):
+    def test_csvpath_exp_util_name_or_class_and_simple_class_name(self):
         path = CsvPath()
         path.parse(
             f"""${PATH}[*][
@@ -473,7 +473,7 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert ExpressionUtility.name_or_class(any_func) == "any[0]"
         assert ExpressionUtility.simple_class_name(any_func) == "Any"
 
-    def test_exp_util_descendents(self):
+    def test_csvpath_exp_util_descendents(self):
         path = CsvPath()
         path.parse(
             f"""${PATH}[*][

@@ -7,7 +7,7 @@ from csvpath.util.log_utility import LogUtility, LogException
 
 
 class TestCsvPathLogger(unittest.TestCase):
-    def test_logger_wrong_log_level(self):
+    def test_csvpath_logger_wrong_log_level(self):
         path = CsvPath()
         path.config.csvpath_errors_policy = ["raise"]
         config = path.config
@@ -15,7 +15,7 @@ class TestCsvPathLogger(unittest.TestCase):
         with pytest.raises(LogException):
             LogUtility.logger(path)
 
-    def test_logger_wrong_component(self):
+    def test_csvpath_logger_wrong_component(self):
         matcher = Matcher(csvpath=None, data="[]", headers=[])
         #
         # the error of an incorrect component -- i.e. not csvpaths, csvpath, or config
@@ -28,7 +28,7 @@ class TestCsvPathLogger(unittest.TestCase):
         with pytest.raises(LogException):
             LogUtility.logger(None, "error")
 
-    def test_logger_brief_stack_trace(self):
+    def test_csvpath_logger_brief_stack_trace(self):
         path = CsvPath()
         string = LogUtility.log_brief_trace(logger=path.logger)
         assert string.find(f"{os.sep}util{os.sep}log_utility.py") > -1

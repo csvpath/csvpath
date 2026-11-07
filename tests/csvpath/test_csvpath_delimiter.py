@@ -1,15 +1,12 @@
 import unittest
-import pytest
 import os
 from csvpath import CsvPath
-from csvpath.util.printer import LogPrinter
-from csvpath.matching.util.exceptions import MatchException
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}bar.csv"
 
 
 class TestCsvPathDelimiter(unittest.TestCase):
-    def test_delimiter_from_metadata(self):
+    def test_csvpath_delimiter_from_metadata(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(

@@ -40,9 +40,14 @@ class Counter(ValueProducer):
         self._register_internal_var_name(name)
         self.matcher.get_variable(name, set_if_none=0)
         #
-        self.has_internal_variables = True
-        #
         super().check_valid()  # pylint: disable=W0246
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
 
     def _produce_value(self, skip=None) -> None:
         v = self._value_one(skip=skip)

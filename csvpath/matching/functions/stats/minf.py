@@ -114,10 +114,14 @@ class Average(MinMax):
             actuals=[str],
         )
         self.args.validate(self.siblings())
-        #
-        self.has_internal_variables = True
-        #
         super().check_valid()
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
 
     def __init__(
         self, matcher: Any, name: str, child: Matchable = None, ave_or_med="average"

@@ -9,7 +9,7 @@ PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestCsvPathComments(unittest.TestCase):
-    def test_update_settings_from_metadata(self):
+    def test_csvpath_update_settings_from_metadata(self):
         path = CsvPath()
         assert path.OR is False
         assert path.collect_when_not_matched is False
@@ -39,7 +39,7 @@ class TestCsvPathComments(unittest.TestCase):
         assert path.has_default_printer is False
         assert path.print_validation_errors is False
 
-    def test_update_settings_from_metadata2(self):
+    def test_csvpath_update_settings_from_metadata2(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.add_printer(LogPrinter(path.logger))
@@ -62,7 +62,7 @@ class TestCsvPathComments(unittest.TestCase):
         for p in path.printers:
             assert p.last_line and p.last_line.find("abc") > -1
 
-    def test_update_settings_from_metadata3(self):
+    def test_csvpath_update_settings_from_metadata3(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise, collect")
         assert path.raise_validation_errors is None
@@ -85,7 +85,7 @@ class TestCsvPathComments(unittest.TestCase):
             assert p.last_line and p.last_line.find("add requires") > -1
         assert path.has_errors() is True
 
-    def test_update_settings_from_metadata_match_error_1(self):
+    def test_csvpath_update_settings_from_metadata_match_error_1(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         assert path.raise_validation_errors is None
@@ -109,7 +109,7 @@ class TestCsvPathComments(unittest.TestCase):
         assert len(lines) == 8
         assert path.has_errors() is True
 
-    def test_update_settings_from_metadata_match_error_2(self):
+    def test_csvpath_update_settings_from_metadata_match_error_2(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -126,7 +126,7 @@ class TestCsvPathComments(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 4
 
-    def test_comments_below(self):
+    def test_csvpath_comments_below(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -149,7 +149,7 @@ class TestCsvPathComments(unittest.TestCase):
         assert "original_comment" in path.metadata
         assert path.metadata["original_comment"].find("fizzbats") > -1
 
-    def test_comments1(self):
+    def test_csvpath_comments1(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -163,7 +163,7 @@ class TestCsvPathComments(unittest.TestCase):
         path.fast_forward()
         assert path.variables["cnt"] == [2, 3, 4, 7, 8, 9]
 
-    def test_comments2(self):
+    def test_csvpath_comments2(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -179,7 +179,7 @@ class TestCsvPathComments(unittest.TestCase):
         path.fast_forward()
         assert path.variables["cnt"] == [2, 3, 4, 7, 8, 9]
 
-    def test_comments_everything_except_tilde_and_right_bracket(self):
+    def test_csvpath_comments_everything_except_tilde_and_right_bracket(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -194,7 +194,7 @@ class TestCsvPathComments(unittest.TestCase):
         path.fast_forward()
         assert len(path.variables["d"]) == 8
 
-    def test_comments_back_to_back_and_empty(self):
+    def test_csvpath_comments_back_to_back_and_empty(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(

@@ -80,9 +80,13 @@ class Regex(MatchDecider):
         self.is_regex_if(left)
         right = self._function_or_equality.right
         self.is_regex_if(right)
-        #
-        self.has_internal_variables = True
-        #
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
 
     def is_regex_if(self, t):
         if isinstance(t, Term):

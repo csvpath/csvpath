@@ -100,7 +100,7 @@ def _check(p: CsvPaths):
 # ===================
 
 
-def test_the_menu_offers_the_item_before_cancel():
+def test_cli_the_menu_offers_the_item_before_cancel():
     cli = _Cli(csvpaths=None, answers=[Const.CANCEL2])
     ReferenceRunner(cli).menu()
     assert cli.offered == [
@@ -114,7 +114,7 @@ def test_the_menu_offers_the_item_before_cancel():
     ]
 
 
-def test_the_item_comes_back_to_the_references_menu(monkeypatch):
+def test_cli_the_item_comes_back_to_the_references_menu(monkeypatch):
     calls = []
     monkeypatch.setattr(
         ReferenceRunner, "_check_sql_coverage", lambda self: calls.append(1)
@@ -132,7 +132,7 @@ def test_the_item_comes_back_to_the_references_menu(monkeypatch):
         ("new expression", "_edit_and_run"),
     ],
 )
-def test_the_other_choices_are_unchanged(monkeypatch, choice, method):
+def test_cli_the_other_choices_are_unchanged(monkeypatch, choice, method):
     calls = []
     monkeypatch.setattr(ReferenceRunner, method, lambda self, *a: calls.append(a))
     monkeypatch.setattr(
@@ -149,7 +149,7 @@ def test_the_other_choices_are_unchanged(monkeypatch, choice, method):
     assert len(cli.offered) == 1
 
 
-def test_browse_functions_is_unchanged(monkeypatch):
+def test_cli_browse_functions_is_unchanged(monkeypatch):
     calls = []
     monkeypatch.setattr(
         rr.ReferenceFunctionLister, "list_functions", lambda self: calls.append(1)
@@ -165,7 +165,7 @@ def test_browse_functions_is_unchanged(monkeypatch):
 # ===================
 
 
-def test_a_covered_config(real, prompts, capsys):
+def test_cli_a_covered_config(real, prompts, capsys):
     p = _paths(real)
     _register(p, real, n=0)
     cli = _check(p)
@@ -177,7 +177,7 @@ def test_a_covered_config(real, prompts, capsys):
     assert prompts == ["\nHit return to continue. "]
 
 
-def test_a_late_start(real, prompts, capsys):
+def test_cli_a_late_start(real, prompts, capsys):
     p = _paths(real, groups="")
     _register(p, real, n=0)
     p.config.add_to_config(section="listeners", key="groups", value="sql")
@@ -189,7 +189,7 @@ def test_a_late_start(real, prompts, capsys):
     assert "by name: orders 1" in out
 
 
-def test_a_config_without_sql(real, prompts, capsys):
+def test_cli_a_config_without_sql(real, prompts, capsys):
     p = _paths(real, groups="")
     p.config.add_to_config(section="sql", key="dialect", value="")
     _check(p)
@@ -199,7 +199,7 @@ def test_a_config_without_sql(real, prompts, capsys):
     assert "NOT READY" in out
 
 
-def test_the_printed_report_is_the_format_of_the_report(real, prompts, capsys):
+def test_cli_the_printed_report_is_the_format_of_the_report(real, prompts, capsys):
     p = _paths(real)
     _register(p, real, n=0)
     _check(p)
@@ -215,7 +215,7 @@ def test_the_printed_report_is_the_format_of_the_report(real, prompts, capsys):
 # ===================
 
 
-def test_an_error_goes_to_the_error_menu(monkeypatch, prompts):
+def test_cli_an_error_goes_to_the_error_menu(monkeypatch, prompts):
     boom = RuntimeError("boom")
 
     def report(self):
@@ -236,7 +236,7 @@ def test_an_error_goes_to_the_error_menu(monkeypatch, prompts):
     assert len(cli.offered) == 2
 
 
-def test_the_error_menu_logs_the_error(monkeypatch):
+def test_cli_the_error_menu_logs_the_error(monkeypatch):
     def report(self):
         raise RuntimeError("boom")
 
@@ -260,7 +260,7 @@ class _Logger:
         self.logged.append(e)
 
 
-def test_ctrl_c_cancels_back_to_the_menu(monkeypatch, prompts, capsys):
+def test_cli_ctrl_c_cancels_back_to_the_menu(monkeypatch, prompts, capsys):
     def report(self):
         raise KeyboardInterrupt()
 

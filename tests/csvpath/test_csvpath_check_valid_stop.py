@@ -39,7 +39,7 @@ def _run(*, body: str, mode: str = NO_RAISE):
 #
 
 
-def test_check_valid_blank_outside_line_is_reported() -> None:
+def test_csvpath_check_valid_blank_outside_line_is_reported() -> None:
     path, _, out = _run(body='blank(#firstname) push("seen", line_number())')
     messages = [e.message for e in path.errors]
     assert messages == ["Blank can only be used within a line schema"]
@@ -47,7 +47,7 @@ def test_check_valid_blank_outside_line_is_reported() -> None:
     assert path.is_valid is False
 
 
-def test_check_valid_blank_outside_line_run_continues() -> None:
+def test_csvpath_check_valid_blank_outside_line_run_continues() -> None:
     #
     # like other reported language errors in no-raise mode
     #
@@ -56,12 +56,12 @@ def test_check_valid_blank_outside_line_run_continues() -> None:
     assert path.stopped is False
 
 
-def test_check_valid_blank_outside_line_raise_mode() -> None:
+def test_csvpath_check_valid_blank_outside_line_raise_mode() -> None:
     with pytest.raises(ChildrenException, match="within a line schema"):
         _run(body="blank(#firstname)", mode="print, raise")
 
 
-def test_check_valid_blank_inside_line_unaffected() -> None:
+def test_csvpath_check_valid_blank_inside_line_unaffected() -> None:
     path, lines, _ = _run(
         body="line(string(#firstname), string(#lastname), blank(#say))"
     )
@@ -70,7 +70,7 @@ def test_check_valid_blank_inside_line_unaffected() -> None:
     assert len(lines) == len(DATA_LINES)
 
 
-def test_check_valid_line_language_error_run_continues() -> None:
+def test_csvpath_check_valid_line_language_error_run_continues() -> None:
     path, _, _ = _run(
         body='line(string(#firstname), count()) push("seen", line_number())'
     )
@@ -92,7 +92,7 @@ def broken_yes(monkeypatch):
     monkeypatch.setattr(Yes, "check_valid", check_valid)
 
 
-def test_check_valid_failure_stops_the_run(broken_yes) -> None:
+def test_csvpath_check_valid_failure_stops_the_run(broken_yes) -> None:
     path, lines, out = _run(body='yes() push("seen", line_number())')
     assert path.stopped is True
     #
@@ -105,6 +105,6 @@ def test_check_valid_failure_stops_the_run(broken_yes) -> None:
     assert path.is_valid is False
 
 
-def test_check_valid_failure_raise_mode(broken_yes) -> None:
+def test_csvpath_check_valid_failure_raise_mode(broken_yes) -> None:
     with pytest.raises(RuntimeError, match="validation blew up"):
         _run(body='yes() push("seen", line_number())', mode="print, raise")

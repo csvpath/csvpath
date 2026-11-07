@@ -67,9 +67,14 @@ class Put(SideEffect):
         )
         self.args.validate(self.siblings())
         #
-        self.has_internal_variables = True
-        #
         super().check_valid()
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
 
     def _produce_value(self, skip=None) -> None:
         sibs = self.siblings()

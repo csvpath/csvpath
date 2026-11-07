@@ -17,18 +17,18 @@ def _parsed(scan: str) -> CsvPath:
     return path
 
 
-def test_parsed_but_not_run_has_a_line_monitor_with_no_line():
+def test_csvpath_parsed_but_not_run_has_a_line_monitor_with_no_line():
     path = _parsed("0-3")
     assert path.scanner.to_line == 3
     assert path.line_monitor is not None
     assert path.line_monitor.physical_line_number is None
 
 
-def test_not_completed_before_any_line_is_read():
+def test_csvpath_not_completed_before_any_line_is_read():
     assert _parsed("0-3").completed is False
 
 
-def test_star_scan_not_completed_before_any_line_is_read():
+def test_csvpath_star_scan_not_completed_before_any_line_is_read():
     #
     # [*] resolves to_line to the last line of the file
     #
@@ -37,7 +37,7 @@ def test_star_scan_not_completed_before_any_line_is_read():
     assert path.completed is False
 
 
-def test_completed_after_a_full_run():
+def test_csvpath_completed_after_a_full_run():
     path = _parsed("0-3")
     path.fast_forward()
     assert path.completed is True
