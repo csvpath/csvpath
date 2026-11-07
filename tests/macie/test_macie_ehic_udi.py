@@ -164,6 +164,10 @@ def test_macie_ehic_udi_catalog(catalog) -> None:
     #
     assert udi["severity"] == "1:LOW 2:MEDIUM 100:HIGH"
     assert "med" in udi["keywords"]
+    #
+    # Macie names ISBT 128 too; the converter reports the shortfall
+    #
+    assert "ISBT 128" in udi["partial"]
 
 
 @pytest.mark.parametrize(

@@ -69,8 +69,9 @@ $[1*][
   Macie ARN, so the swap is unambiguous; it also keeps the partition
   (`aws-us-gov`, `aws-cn`) that rebuilding an ARN from its id would lose.
   Anything reading the raw metadata outside our code sees the `|` form.
-  The full wrapper is kept in the group's `_extra_data`. Descriptions are
-  left out: they may contain `~` or `:`.
+  The full wrapper is kept in the group home, and each group run copies
+  it into the run's `_extra_data/macie/` (rulesbase-design.md, P2b).
+  Descriptions are left out: they may contain `~` or `:`.
 - **Identifier ARNs go in the body, not metadata.** Metadata holds one value
   per csvpath, so each custom identifier's ARN is `macie_cdi`'s second
   argument. Quoted strings in the body keep their colons. A handcrafted
@@ -266,8 +267,9 @@ conversion.report.skipped   # what was not translated
   word with `|`. Skipping part of an identifier would silently change what
   it detects, so we don't. A regex that doesn't translate and compile as
   `macie_cdi()` will compile it also fails, as does a malformed ARN, a
-  name that can't be a csvpath id and group name, or a wrapper with no
-  custom identifiers.
+  name that can't be a csvpath id and group name. (A wrapper with only
+  managed identifiers is fine; early drafts refused one with no custom
+  identifiers.)
 
   This is stricter than the ODCS converter, which reports what it skips,
   and on purpose. A wrong ODCS translation is a data validation error. A
