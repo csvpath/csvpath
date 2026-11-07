@@ -37,6 +37,12 @@ class UdiDetector:
     )
     HIBCC_PRIMARY = re.compile(r"[A-Z][A-Z0-9]{3}[A-Z0-9]{1,18}[0-9]", re.ASCII)
 
+    #
+    # the catalog data keys this detector reads; a project rulesbase may
+    # override these and no others
+    #
+    CONFIG_KEYS = ()
+
     def __init__(self, *, config: dict) -> None:
         if not isinstance(config, dict):
             raise TypeError(f"config must be a dict, not {type(config)}")

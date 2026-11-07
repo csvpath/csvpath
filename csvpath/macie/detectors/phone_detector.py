@@ -41,6 +41,12 @@ class PhoneDetector:
     MIN_DIGITS = 6
     MAX_DIGITS = 16
 
+    #
+    # the catalog data keys this detector reads; a project rulesbase may
+    # override these and no others
+    #
+    CONFIG_KEYS = ("country_code", "trunk", "trunk_required", "nsn_formats")
+
     def __init__(self, *, config: dict) -> None:
         if not isinstance(config, dict):
             raise TypeError(f"config must be a dict, not {type(config)}")
