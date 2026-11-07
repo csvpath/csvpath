@@ -2325,8 +2325,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # _star_run_selector_chain()'s own 2026-10-18 comment).
             # Only an unargued field competes (2026-10-30, see
             # _last_value_field_call()); with none, resolve gives the
-            # whole entry, the same as a bare ':manifest()'.
-            manifest_field_call = self._last_value_field_call(name_one_calls)
+            # whole entry, the same as a bare ':manifest()'. Built, so a
+            # bare time window (":year()") is the range it is (6.27e),
+            # not taken for a value field (2026-11-07).
+            manifest_field_call = self._last_value_field_call(
+                self._build_chain(name_one_calls)
+            )
             if manifest_field_call is not None:
                 # ':manifest():named_file_uuid()'-style -- added
                 # 2026-08-28, David's own worked example ("get all the
@@ -2369,7 +2373,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # as manifest_field_call's own identical change just above.
         # With only argued fields (filters) there is no value to read,
         # so this falls through to "no default" below (compendium 5.21).
-        run_field_call = self._last_value_field_call(name_one_calls)
+        # Built, for the same bare time window reason as just above.
+        run_field_call = self._last_value_field_call(
+            self._build_chain(name_one_calls)
+        )
         if run_field_call is not None:
             # a registered field-accessor (e.g. :run_uuid()) riding
             # beside the run-selecting pointer in name_one, the same

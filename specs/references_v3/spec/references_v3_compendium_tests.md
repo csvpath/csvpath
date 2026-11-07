@@ -572,6 +572,12 @@ genuinely uncertain is marked below rather than guessed.
 #### 6.27e
 - Same time-component tests as 6.27/6.27c — all three usage shapes
   (range, pointer-context, directional anchor) exercised.
+- On resolve, a bare window is a range and never a value field:
+  `test_results_reference_finder_3.py::TestBareTimeWindowIsNotAField`
+  (2026-11-07), with a name_three field, beside `:manifest()`, before
+  and after a run-level field, at `*` and under `:flatten()`; and
+  `test_normative_examples_results.py::TestGlobalArchiveLedgerSection`
+  (NRE 703, and the "last instance run yesterday" pair as written).
 
 #### 6.27f
 - Covered by the same date-range comparison tests — the datetime-vs-

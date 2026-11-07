@@ -1621,6 +1621,182 @@ class TestTimeWindowFunctionAnchors:
             ).query()
 
 
+class TestBareTimeWindowIsNotAField:
+    # a bare time-component function (":yesterday()", ":year()", etc.)
+    # in name_one is a range, a context for the pointer (compendium
+    # 6.27e), never a value field. Resolve took it for a run-level field
+    # until 2026-11-07: with name_three it raised "does not support
+    # combining a run-level field accessor on name_one with name_three",
+    # beside :manifest() it gave None, and placed after a field it won
+    # 5.20b's last-wins over that field. Found from the NRE pair "Two
+    # ways to get the last instance run yesterday".
+    #
+    # "now" is pinned to 2026-06-15. acme has runs in January, yesterday
+    # and today, so a window that was ignored would give today's run;
+    # beta has one run yesterday, later in the day than acme's.
+    @pytest.fixture
+    def pinned_now(self):
+        from datetime import date
+
+        target = date(2026, 6, 15)
+        daut.OFFSET_DAYS = (target - daut.now().date()).days
+        daut.OFFSET_MONTHS = 0
+        daut.OFFSET_YEARS = 0
+        try:
+            yield target
+        finally:
+            daut.OFFSET_DAYS = 0
+            daut.OFFSET_MONTHS = 0
+            daut.OFFSET_YEARS = 0
+
+    @staticmethod
+    def _run(*, base, name: str, run_name: str, run_uuid: str, ids: tuple) -> str:
+        run_home = base / name / run_name
+        _write_json(
+            run_home / "manifest.json",
+            {
+                "run_uuid": run_uuid,
+                "run_home": str(run_home),
+                "named_paths_name": name,
+                "template": "",
+            },
+        )
+        for index, identity in enumerate(ids):
+            _write_json(
+                run_home / identity / "manifest.json",
+                {
+                    "uuid": f"{run_uuid}-{identity}",
+                    "instance_identity": identity,
+                    "instance_index": index,
+                    "time": f"{run_name[:10]} 00:00:0{index}+00:00",
+                },
+            )
+        return str(run_home)
+
+    @pytest.fixture
+    def archive(self, tmp_path, pinned_now):
+        _write_archive_manifest_multi(
+            tmp_path,
+            {
+                "acme": [
+                    self._run(
+                        base=tmp_path,
+                        name="acme",
+                        run_name="2026-01-10_00-00-00",
+                        run_uuid="run-jan",
+                        ids=("j1", "j2"),
+                    ),
+                    self._run(
+                        base=tmp_path,
+                        name="acme",
+                        run_name="2026-06-14_00-00-00",
+                        run_uuid="run-yesterday",
+                        ids=("y1", "y2"),
+                    ),
+                    self._run(
+                        base=tmp_path,
+                        name="acme",
+                        run_name="2026-06-15_00-00-00",
+                        run_uuid="run-today",
+                        ids=("t1", "t2"),
+                    ),
+                ],
+                "beta": [
+                    self._run(
+                        base=tmp_path,
+                        name="beta",
+                        run_name="2026-06-14_12-00-00",
+                        run_uuid="beta-yesterday",
+                        ids=("b1", "b2"),
+                    ),
+                ],
+            },
+        )
+        return str(tmp_path)
+
+    @staticmethod
+    def _data(reference: str, archive: str) -> list:
+        return [r.data for r in _finder(reference, archive).resolve().results]
+
+    @pytest.mark.parametrize(
+        "window, expected",
+        [
+            (":yesterday()", ["y2"]),
+            (":today()", ["t2"]),
+            (":month()", ["t2"]),
+            (":year()", ["t2"]),
+        ],
+    )
+    def test_a_name_three_field_after_a_window(self, archive, window, expected):
+        ref = f"$acme.results.{window}:last().:last():identity()"
+        assert self._data(ref, archive) == expected
+
+    def test_the_window_decides_which_run(self, archive):
+        ref = "$acme.results.:yesterday():first().:first():identity()"
+        assert self._data(ref, archive) == ["y1"]
+        ref = "$acme.results.:last().:last():identity()"
+        assert self._data(ref, archive) == ["t2"]
+
+    def test_a_window_with_no_run_finds_nothing(self, archive):
+        ref = "$beta.results.:today():last().:last():identity()"
+        assert self._data(ref, archive) == []
+
+    def test_a_star_root_gives_each_named_results_pick(self, archive):
+        ref = "$*.results.:yesterday():last().:last():identity()"
+        assert sorted(self._data(ref, archive)) == ["b2", "y2"]
+
+    def test_flatten_pools_the_window(self, archive):
+        # the NRE's direct form: beta's run is the later one yesterday
+        ref = "$*.results.:flatten():yesterday():last().:last():identity()"
+        assert self._data(ref, archive) == ["b2"]
+
+    def test_a_name_three_time_field(self, archive):
+        ref = "$acme.results.:yesterday():last().:last():time()"
+        assert self._data(ref, archive) == ["2026-06-14 00:00:01+00:00"]
+
+    def test_manifest_beside_a_window_is_the_whole_manifest(self, archive):
+        for ref in (
+            "$acme.results.:yesterday():last():manifest()",
+            "$acme.results.:last():manifest():yesterday()",
+        ):
+            (entry,) = self._data(ref, archive)
+            assert entry["run_uuid"] == "run-yesterday", ref
+
+    def test_a_field_before_a_window_still_gives_its_value(self, archive):
+        ref = "$acme.results.:last():run_uuid():yesterday()"
+        assert self._data(ref, archive) == ["run-yesterday"]
+        ref = "$acme.results.:last():manifest():run_uuid():yesterday()"
+        assert self._data(ref, archive) == ["run-yesterday"]
+
+    def test_a_field_after_a_window_gives_its_value(self, archive):
+        ref = "$acme.results.:yesterday():last():run_uuid()"
+        assert self._data(ref, archive) == ["run-yesterday"]
+
+    def test_an_argued_field_still_filters(self, archive):
+        ref = (
+            '$acme.results.:yesterday():run_uuid("run-yesterday"):last()'
+            ".:last():identity()"
+        )
+        assert self._data(ref, archive) == ["y2"]
+        ref = (
+            '$acme.results.:yesterday():run_uuid("run-today"):last()'
+            ".:last():identity()"
+        )
+        assert self._data(ref, archive) == []
+
+    def test_a_window_and_a_pointer_alone_have_no_default(self, archive):
+        # unchanged: the same "no default" as :last() alone (5.21)
+        assert self._data("$acme.results.:yesterday():last()", archive) == [None]
+        assert self._data("$acme.results.:last()", archive) == [None]
+
+    def test_two_windows_still_raise(self, archive):
+        with pytest.raises(ReferenceException3):
+            self._data(
+                "$acme.results.:yesterday():today():last().:last():identity()",
+                archive,
+            )
+
+
 class TestRunLevelDirectionFunctions:
     # ':before()'/':after()' as a run-level range -- compendium 6.28/
     # 6.28b/6.28c, built 2026-10-16, the EXCLUSIVE siblings of ':to()'/
