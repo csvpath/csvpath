@@ -2902,6 +2902,16 @@ FINGERPRINT_MANIFEST = [
     },
 ]
 
+# orders.csv registered twice, for a filter that leaves the pointer a choice
+TWO_ORDERS_MANIFEST = FINGERPRINT_MANIFEST + [
+    {
+        "file": "inputs/named_files/finn/orders.csv/bbbb.csv",
+        "file_home": "inputs/named_files/finn/orders.csv",
+        "uuid": "u-orders-2",
+        "fingerprint": "bbbb",
+    },
+]
+
 
 REGEX_HOME = "inputs/named_files/alpha"
 REGEX_MANIFEST = [
@@ -3014,16 +3024,34 @@ class TestBareFingerprintLookup:
         ).resolve()
         assert results.results[0].data == "aaaa"
 
-    def test_an_argument_in_the_field_accessor_position_is_rejected(self):
-        # ARG_TYPES now allows a str arg (for the bare lookup form) --
-        # confirm it does NOT get silently ignored when :fingerprint()
-        # rides in its ordinary field-accessor position instead.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$finn.files.:name("orders.csv").:first():fingerprint("x")',
-                FINGERPRINT_HOME,
-                FINGERPRINT_MANIFEST,
-            ).query()
+    # in name_three an argued ':fingerprint()' filters the versions, then
+    # the pointer picks, as in RESULTS (David, 2026-11-06; 6.44). It used
+    # to raise, which kept the argument from being ignored.
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            (
+                '$finn.files.:name("orders.csv").:last():fingerprint("aaaa")',
+                ["u-orders-1"],
+            ),
+            (
+                '$finn.files.:name("orders.csv").:fingerprint("aaaa"):last()',
+                ["u-orders-1"],
+            ),
+            (
+                '$finn.files.:name("orders.csv").:first():fingerprint("bbbb")',
+                ["u-orders-2"],
+            ),
+            (
+                '$finn.files.:name("orders.csv").:all():fingerprint("bbbb")',
+                ["u-orders-2"],
+            ),
+            ('$finn.files.:name("orders.csv").:last():fingerprint("cccc")', []),
+        ],
+    )
+    def test_an_argument_in_name_three_filters(self, reference, expected):
+        results = _finder(reference, FINGERPRINT_HOME, TWO_ORDERS_MANIFEST).query()
+        assert results.uuids == expected
 
     def test_two_different_logical_files_sharing_one_fingerprint_both_come_back(self):
         # confirms the "at most one match is expected in practice... not
@@ -3053,8 +3081,8 @@ class TestBareUuidLookup:
     # bare ':uuid("u-returns-1")' -- added 2026-10-18, the compendium's
     # own worked example ("select a registered version of an acme file
     # by its UUID"). Same SELECTOR_WHEN_ARGUED mechanism :fingerprint()
-    # already has (see test_an_argument_in_the_field_accessor_position_
-    # is_rejected above for that one's own version of this guard) --
+    # already has (see test_an_argument_in_name_three_filters above for
+    # what an argument beside a pointer does) --
     # the registry-driven dispatch/guard are both shared code, this is
     # the second function to exercise them, not a parallel copy.
     def test_finds_the_matching_version_with_real_path_and_uuid(self):
@@ -3089,17 +3117,36 @@ class TestBareUuidLookup:
         ).resolve()
         assert results.results[0].data == "u-orders-1"
 
-    def test_an_argument_in_the_field_accessor_position_is_rejected(self):
-        # ARG_TYPES now allows a str arg (for the bare lookup form) --
-        # confirm it does NOT get silently ignored when :uuid() rides
-        # in its ordinary field-accessor position instead (the exact
-        # footgun confirmed live before this guard existed).
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$finn.files.:name("orders.csv").:first():uuid("x")',
-                FINGERPRINT_HOME,
-                FINGERPRINT_MANIFEST,
-            ).query()
+    # in name_three it filters, the same as ':fingerprint()' (2026-11-06)
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            (
+                '$finn.files.:name("orders.csv").:last():uuid("u-orders-1")',
+                ["u-orders-1"],
+            ),
+            (
+                '$finn.files.:name("orders.csv").:uuid("u-orders-1"):last()',
+                ["u-orders-1"],
+            ),
+            (
+                '$finn.files.:name("orders.csv").:first():uuid("u-orders-2")',
+                ["u-orders-2"],
+            ),
+            ('$finn.files.:name("orders.csv").:last():uuid("x")', []),
+        ],
+    )
+    def test_an_argument_in_name_three_filters(self, reference, expected):
+        results = _finder(reference, FINGERPRINT_HOME, TWO_ORDERS_MANIFEST).query()
+        assert results.uuids == expected
+
+    def test_a_filter_and_a_value_field_together(self):
+        ref = (
+            '$finn.files.:name("orders.csv").:last()'
+            ':uuid("u-orders-1"):fingerprint()'
+        )
+        results = _finder(ref, FINGERPRINT_HOME, TWO_ORDERS_MANIFEST).resolve()
+        assert [r.data for r in results.results] == ["aaaa"]
 
 
 TYPE_HOME = "inputs/named_files/finn"

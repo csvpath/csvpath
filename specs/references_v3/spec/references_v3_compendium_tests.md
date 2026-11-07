@@ -687,6 +687,11 @@ genuinely uncertain is marked below rather than guessed.
   item describes — **UPDATED from "no test yet, dual selector behavior
   not built beyond `:fingerprint()`" (2026-08-24); `:uuid()` now has it
   too, built this week via `SELECTOR_WHEN_ARGUED`**)
+- The argued form as a filter (2026-11-06):
+  `test_csvpaths_reference_finder_3.py::TestArguedUuidFilters`, the
+  `test_an_argument_beside_a_pointer_filters` tests in both of its bare
+  lookup classes, and `test_files_reference_finder_3.py`'s
+  `test_an_argument_in_name_three_filters` tests
 
 #### 6.45
 - Exercised throughout all three finders' own name_one pointer-
