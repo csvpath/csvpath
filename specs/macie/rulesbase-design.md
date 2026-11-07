@@ -1,6 +1,11 @@
 # Project rulesbase for the Macie stand-ins — design (DRAFT, for David)
 
-Status: proposal, 2026-11-07. Worklist item 4a. Nothing built yet.
+Status: agreed 2026-11-07 (David: P1 yes; P2b in `_extra_data`, the place
+for non-standard inputs, background and side-effects; P2c with standalone
+runs valued for fast API and pipeline checks). Worklist item 4a. PR 1
+(merge and validation) built: `RulesbaseOverrides`,
+`ManagedCatalog.load(overrides_path=...)`, and `CONFIG_KEYS` on every
+detector class, the keys an override may change.
 
 ## Why now
 

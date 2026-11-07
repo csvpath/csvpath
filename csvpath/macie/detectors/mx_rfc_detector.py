@@ -29,6 +29,12 @@ class MxRfcDetector:
     LETTERS = {"individual": 4, "organization": 3}
     EXCLUSIONS = frozenset({"XAXX010101000", "XEXX010101000"})
 
+    #
+    # the catalog data keys this detector reads; a project rulesbase may
+    # override these and no others
+    #
+    CONFIG_KEYS = ("form",)
+
     def __init__(self, *, config: dict) -> None:
         if not isinstance(config, dict):
             raise TypeError(f"config must be a dict, not {type(config)}")

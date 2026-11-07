@@ -33,6 +33,12 @@ class BankAccountDetector:
     SHAPES = {"#": r"\d", "A": "[A-Za-z]", "C": "[A-Za-z0-9]"}
     CHECKS = {"fr_rib_key": "fr_rib_key", "es_bban": "es_bban"}
 
+    #
+    # the catalog data keys this detector reads; a project rulesbase may
+    # override these and no others
+    #
+    CONFIG_KEYS = ("bban", "iban_lengths")
+
     def __init__(self, *, config: dict, parameter: str | None = None) -> None:
         if not isinstance(config, dict):
             raise TypeError(f"config must be a dict, not {type(config)}")

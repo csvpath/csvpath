@@ -22,6 +22,12 @@ class EhicDetector:
     different shape in every country, and is not detected. Numbers must
     not touch other letters or digits."""
 
+    #
+    # the catalog data keys this detector reads; a project rulesbase may
+    # override these and no others
+    #
+    CONFIG_KEYS = ("countries",)
+
     def __init__(self, *, config: dict) -> None:
         if not isinstance(config, dict):
             raise TypeError(f"config must be a dict, not {type(config)}")

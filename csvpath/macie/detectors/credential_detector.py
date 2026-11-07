@@ -100,6 +100,12 @@ class CredentialDetector:
     HEX = re.compile(r"[0-9a-f]+")
     SHA256 = re.compile(r"[0-9a-f]{64}")
 
+    #
+    # the catalog data keys this detector reads; a project rulesbase may
+    # override these and no others
+    #
+    CONFIG_KEYS = ("form", "exclusions_sha256")
+
     def __init__(self, *, config: dict) -> None:
         if not isinstance(config, dict):
             raise TypeError(f"config must be a dict, not {type(config)}")

@@ -46,6 +46,12 @@ class DateDetector:
     LEFT = r"(?<![A-Za-z0-9/-])"
     RIGHT = r"(?![A-Za-z0-9]|[/-][0-9])"
 
+    #
+    # the catalog data keys this detector reads; a project rulesbase may
+    # override these and no others
+    #
+    CONFIG_KEYS = ("form",)
+
     def __init__(self, *, config: dict) -> None:
         if not isinstance(config, dict):
             raise TypeError(f"config must be a dict, not {type(config)}")

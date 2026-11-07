@@ -3,18 +3,21 @@ import logging
 import os
 
 from .macie_exceptions import MacieException
+from .rulesbase_overrides import RulesbaseOverrides
 from .severity_levels import SeverityLevels
 
 
 class ManagedCatalog:
     """our stand-ins for Macie's managed data identifiers, from a catalog
     file. The packaged catalog is csvpath/macie/rulesbase/
-    managed_identifiers.json; a project rulesbase with user customizations
-    may come later.
+    managed_identifiers.json. A project rulesbase's overrides can be merged
+    over it (RulesbaseOverrides):
 
         catalog = ManagedCatalog.load()
+        catalog = ManagedCatalog.load(overrides_path="rulesbase/macie/managed_identifiers.json")
         catalog.identifier(name="CREDIT_CARD_NUMBER")
         catalog.detector(name="credit_card")
+        catalog.applied          # e.g. ["keyword_lists.br_rg"]
 
     The file is checked when it is loaded, so a bad entry fails before any
     conversion or run."""
@@ -36,19 +39,42 @@ class ManagedCatalog:
         "retrieved",
     }
 
-    def __init__(self, *, catalog: dict, path: str) -> None:
+    def __init__(
+        self,
+        *,
+        catalog: dict,
+        path: str,
+        overrides_path: str | None = None,
+        applied: list[str] | None = None,
+    ) -> None:
         self.path = path
         self.catalog = catalog
+        self.overrides_path = overrides_path
+        #
+        # the project overrides applied, as section.name, e.g.
+        # keyword_lists.br_rg; empty with no project rulesbase
+        #
+        self.applied = list(applied or [])
 
     @classmethod
     def logger(cls) -> logging.Logger:
         return logging.getLogger(cls.__name__)
 
     @classmethod
-    def load(cls, *, path: str | None = None) -> "ManagedCatalog":
+    def load(
+        cls, *, path: str | None = None, overrides_path: str | None = None
+    ) -> "ManagedCatalog":
+        """the catalog at path, the packaged one by default, with a project
+        rulesbase's overrides merged over it when overrides_path is given
+        (RulesbaseOverrides). Both the catalog and the merged result are
+        validated."""
         path = cls.DEFAULT if path is None else path
         if not isinstance(path, str) or path.strip() == "":
             raise ValueError("path must be a non-empty str, or None for the default")
+        if overrides_path is not None and (
+            not isinstance(overrides_path, str) or overrides_path.strip() == ""
+        ):
+            raise ValueError("overrides_path must be a non-empty str when given")
         try:
             with open(path, encoding="utf-8") as f:
                 catalog = json.load(f)
@@ -58,7 +84,19 @@ class ManagedCatalog:
                 f"Cannot read managed identifier catalog {path}: {e}"
             ) from e
         cls.validate(catalog=catalog, path=path)
-        return ManagedCatalog(catalog=catalog, path=path)
+        if overrides_path is None:
+            return ManagedCatalog(catalog=catalog, path=path)
+        overrides = RulesbaseOverrides.read(path=overrides_path)
+        merged, applied = RulesbaseOverrides.merge(
+            base=catalog, overrides=overrides, path=overrides_path
+        )
+        cls.validate(catalog=merged, path=f"{path} with {overrides_path}")
+        RulesbaseOverrides.check_detectors(
+            catalog=merged, applied=applied, path=overrides_path
+        )
+        return ManagedCatalog(
+            catalog=merged, path=path, overrides_path=overrides_path, applied=applied
+        )
 
     @property
     def names(self) -> list[str]:

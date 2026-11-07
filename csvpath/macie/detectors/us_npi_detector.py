@@ -15,6 +15,12 @@ class UsNpiDetector:
     CANDIDATES = re.compile(r"(?<!\d)[12]\d{9}(?!\d)", re.ASCII)
     PREFIX = "80840"
 
+    #
+    # the catalog data keys this detector reads; a project rulesbase may
+    # override these and no others
+    #
+    CONFIG_KEYS = ("exclusions",)
+
     def __init__(self, *, config: dict) -> None:
         if not isinstance(config, dict):
             raise TypeError(f"config must be a dict, not {type(config)}")

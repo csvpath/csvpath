@@ -41,6 +41,12 @@ class FormatDetector:
 
     SYMBOLS = {"#": "[0-9]", "A": "[A-Za-z]", "X": "[A-Za-z0-9]"}
 
+    #
+    # the catalog data keys this detector reads; a project rulesbase may
+    # override these and no others
+    #
+    CONFIG_KEYS = ("formats", "exclusions", "exclude_prefixes")
+
     def __init__(self, *, config: dict) -> None:
         if not isinstance(config, dict):
             raise TypeError(f"config must be a dict, not {type(config)}")

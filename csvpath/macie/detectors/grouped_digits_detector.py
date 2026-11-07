@@ -25,6 +25,21 @@ class GroupedDigitsDetector:
     The digits may always be contiguous too. Numbers must not touch other
     digits."""
 
+    #
+    # the catalog data keys this detector reads; a project rulesbase may
+    # override these and no others
+    #
+    CONFIG_KEYS = (
+        "length",
+        "check",
+        "layouts",
+        "formats",
+        "first_digit_not",
+        "prefixes",
+        "reject_repeated",
+        "exclusions",
+    )
+
     def __init__(self, *, config: dict) -> None:
         if not isinstance(config, dict):
             raise TypeError(f"config must be a dict, not {type(config)}")
