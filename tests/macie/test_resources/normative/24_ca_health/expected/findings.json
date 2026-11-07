@@ -1,0 +1,54 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "PERSONAL_INFORMATION",
+      "detections": [
+        {
+          "type": "CANADA_HEALTH_NUMBER",
+          "count": 4,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "phn",
+                "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 3
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 5
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 7
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 4
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:us-east-1:123456789012:classification-job/7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}

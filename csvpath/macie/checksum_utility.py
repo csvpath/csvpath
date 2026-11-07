@@ -312,6 +312,20 @@ class ChecksumUtility:
         return sum(int(c) * w for c, w in zip(digits, weights)) % 11 == 0
 
     @classmethod
+    def ca_bc_phn(cls, *, digits: str) -> bool:
+        """True if 10 ASCII digits are a valid British Columbia PHN: the
+        first digit is 9, and the second to ninth, each times 2 4 8 5 10 9
+        7 3 mod 11, sum to s, with (11 - s) mod 11 the tenth digit. A
+        result of 10 means the number is never issued."""
+        cls._digits(digits=digits, length=10)
+        if digits[0] != "9":
+            return False
+        weights = (2, 4, 8, 5, 10, 9, 7, 3)
+        total = sum((int(c) * w) % 11 for c, w in zip(digits[1:9], weights))
+        check = (11 - total) % 11
+        return check != 10 and check == int(digits[9])
+
+    @classmethod
     def gb_utr(cls, *, digits: str) -> bool:
         """True if 10 ASCII digits are a valid UK UTR: the FIRST digit
         checks the other nine, weighted 6 7 8 9 10 5 4 3 2, as

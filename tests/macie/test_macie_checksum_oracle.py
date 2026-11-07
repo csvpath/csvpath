@@ -17,6 +17,7 @@ from stdnum import luhn, verhoeff
 from stdnum.ar import cuit
 from stdnum.au import tfn
 from stdnum.br import cnpj, cpf
+from stdnum.ca import bc_phn
 from stdnum.cl import rut
 from stdnum.co import nit
 from stdnum.de import idnr
@@ -177,6 +178,17 @@ def test_macie_oracle_au_tfn() -> None:
     for _ in range(N):
         s = _digits(rng, 9)
         assert chut.au_tfn(digits=s) == tfn.is_valid(s), s
+
+
+def test_macie_oracle_ca_bc_phn() -> None:
+    rng = random.Random(21)
+    for _ in range(N):
+        body = "9" + _digits(rng, 8)
+        last = bc_phn.calc_check_digit(body[1:]) if rng.random() < 0.5 else ""
+        s = body + (last if len(last) == 1 else _digits(rng, 1))
+        if rng.random() < 0.1:
+            s = _digits(rng, 10)
+        assert chut.ca_bc_phn(digits=s) == bc_phn.is_valid(s), s
 
 
 def test_macie_oracle_gb_utr() -> None:

@@ -1,0 +1,67 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "us-east-1",
+    "downloaded_at": "2026-11-07T10:00:00Z",
+    "job_id": "7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "CANADA_HEALTH_NUMBER"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "CANADA_HEALTH_NUMBER"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "CANADA_HEALTH_NUMBER"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Patient records",
+      "jobArn": "arn:aws:macie2:us-east-1:123456789012:classification-job/7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e",
+      "jobId": "7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "CANADA_HEALTH_NUMBER"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "group-a-ca-health",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-clinic"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

@@ -1127,6 +1127,17 @@
         "latitude longitude",
         "position"
       ]
+    },
+    "ca_health": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-07",
+      "keywords": [
+        "canada healthcare number",
+        "msp number",
+        "personal healthcare number",
+        "phn",
+        "soins de santé"
+      ]
     }
   },
   "identifiers": {
@@ -2717,6 +2728,17 @@
       "fidelity": "B",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
       "retrieved": "2026-11-06"
+    },
+    "CANADA_HEALTH_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "ca_health",
+      "keyword_mode": "required",
+      "keywords_from": "ca_health",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-07"
     }
   },
   "detectors": {
@@ -4335,6 +4357,12 @@
       "notes": [
         "Macie: HTTP_COOKIE needs no keyword, and a complete Cookie or Set-Cookie header with one or more name-value pairs, e.g. Set-Cookie: id=TWlrZQ and Cookie: session=3948; lang=en. Cookies are LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
         "Ours, from RFC 6265: the field name in any case, a name that is a token and a value that is not empty; a Set-Cookie header's attributes are part of it. One header is one occurrence."
+      ]
+    },
+    "ca_health": {
+      "notes": [
+        "Macie publishes only the keywords for CANADA_HEALTH_NUMBER (Personal Health Numbers for Canada).",
+        "The forms are ours, for the provinces with a published structure: British Columbia's PHN (10 digits, the first 9, a mod 11 check digit), Ontario's health number (10 digits, a Luhn check digit, an optional version code) and Quebec's RAMQ number (4 letters, a birth date with 50 added to the month for women, 2 digits). Other provinces' numbers have no published check and are not included."
       ]
     }
   }

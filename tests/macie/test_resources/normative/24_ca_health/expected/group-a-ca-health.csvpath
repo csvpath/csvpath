@@ -1,0 +1,26 @@
+~
+  id: group-a-ca-health
+  macie-origin: job
+  macie-job-id: 7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e
+  macie-account: 123456789012
+  macie-region: us-east-1
+  macie-source-arn: arn|aws|macie2|us-east-1|123456789012|classification-job/7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e
+  macie-downloaded-at: 20261107T100000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "CANADA_HEALTH_NUMBER",
+        "PERSONAL_INFORMATION",
+        "ca_health",
+        "required",
+        "canada healthcare number|msp number|personal healthcare number|phn|soins de santé",
+        30,
+        "1:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

@@ -849,6 +849,18 @@ the notation cannot check a range or a header's grammar:
 With these, every group B identifier has a stand-in, except the 15
 driver's license countries on the backlog.
 
+**Group A leftovers: `CANADA_HEALTH_NUMBER`** (`CaHealthDetector`).
+Macie publishes only the keywords, which point at British Columbia (MSP,
+PHN) and Quebec (soins de sante). Our forms are the provinces with a
+published structure: British Columbia's PHN, 10 digits starting 9 with a
+mod 11 check digit (`chut.ca_bc_phn`, compared with python-stdnum);
+Ontario's health number, 10 digits with a Luhn check digit and an optional
+version code; Quebec's RAMQ number, 4 letters, a real birth date as
+YYMMDD with 50 added to the month for women, and 2 digits. The other
+provinces' numbers are digit runs with no published check, which near a
+keyword like `phn` would match any number of that length, so they are
+missed (item 24). A BC PHN can also pass Luhn; it is one occurrence.
+
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
 (Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
@@ -959,6 +971,9 @@ every detector the catalog names exists, and every detector is used.
 23. GPS and cookies: does Macie accept coordinates without a decimal
     part, or separated only by spaces? Does it count a Cookie header with
     several pairs as one occurrence, or one per pair?
+24. Canada health numbers: which provinces does Macie detect, and with
+    what checks? Ours misses Alberta, Manitoba, Saskatchewan, the
+    Atlantic provinces and the territories.
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

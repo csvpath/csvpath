@@ -70,10 +70,11 @@ last. Add an item the moment something is deferred.
      HCPCS, pair 15_us_health.
    - **Done:** Germany identity card, France health insurance number,
      card magnetic stripe, pair 16_group_a_more.
+   - **Done:** Canada health number (British Columbia, Ontario, Quebec;
+     pair 24_ca_health).
    - **Group A, health and payments:** UDI (GS1,
-     HIBCC, ICCBBA formats with check characters), Canada health number
-     (by province; the checks need confirming), EHIC card numbers (EU and
-     Finland; the format needs confirming).
+     HIBCC, ICCBBA formats with check characters), EHIC card numbers (EU
+     and Finland; the format needs confirming).
    - **Group B, done:** `FormatDetector` and the format notation; UK
      NINO, US and Canada bank account, card security code, pair
      17_group_b_first. Passports (7), pair 18_passports. Phone numbers
@@ -130,6 +131,9 @@ fidelity item in transpile-design.md.
 - **Formats that are ours.** Brazil RG takes only Sao Paulo's shape, so
   other states' RGs are missed; the Canada PR number is the UCI only, not
   the card's document number.
+- **Provinces left out.** Canada health numbers are detected only for
+  British Columbia, Ontario and Quebec (item 24); other provinces' numbers
+  have no published check and are missed.
 
 ## Decide at release planning
 

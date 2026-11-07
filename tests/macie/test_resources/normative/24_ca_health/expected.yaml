@@ -1,0 +1,49 @@
+#
+# Canada health numbers, a group A leftover: Macie's CANADA_HEALTH_NUMBER,
+# which requires a keyword. Our forms are British Columbia's PHN (mod 11
+# check), Ontario's health number (Luhn, optional version code) and
+# Quebec's RAMQ number (a real birth date).
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: group-a-ca-health.csvpath
+    data: patients.csv
+    finding_lines: [1, 2, 4, 6]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie CANADA_HEALTH_NUMBER: occurrence 1, line 1 (row 2), column 2 phn" }
+      - { line: 2, message: "macie CANADA_HEALTH_NUMBER: occurrence 2, line 2 (row 3), column 3 notes" }
+    findings: findings.json
+    #
+    #   line  cell                                    reported as
+    #   1     phn column "9698 658 215"               BC PHN: the header is a keyword
+    #   2     "msp number 9698658215"                 BC PHN
+    #   3     "Ontario health card 1234-567-897 AB"   nothing: "health card" is not
+    #                                                 one of Macie's Canada keywords
+    #   4     "soins de santé TREJ 6553 1512"         Quebec RAMQ
+    #   5     "phn 9698658216"                        nothing: the check fails
+    #   6     "personal healthcare number             Ontario
+    #         1234567897"
+    #
+    # HIGH from one occurrence. Total 4, past the detail limit of 2.
+    # PERSONAL_INFORMATION: totalCount 4.
