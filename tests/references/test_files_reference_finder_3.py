@@ -697,22 +697,23 @@ def _star_finder(reference: str) -> FilesReferenceFinder3:
 
 
 class TestStarTraversalFlatten:
-    # bare '*'/path narrowing pools every named-file's matches into one
-    # combined list, sorted by true chronological order (each entry's
-    # own "time"), reduced by one terminal pointer.
-    def test_last_across_every_named_file_is_the_true_most_recent(self):
-        # beta's two.csv v2 (2026-01-05) is the global most-recent, not
-        # alpha's own last entry (2026-01-03) -- proves pooling crosses
-        # named-files and is truly time-sorted, not just concatenated.
+    # a '$*' root groups by named-file (compendium 4.1b, David
+    # 2026-11-06; pooled across every named-file until then). The '*' in
+    # name_one pools that named-file's one-level files, time-sorted, and
+    # the pointer picks within each named-file. ':flatten()' is the
+    # pooled form. Times: zero-1, one-1, one-2 (alpha), two-1, two-2
+    # (beta).
+    def test_last_is_each_named_files_most_recent(self):
+        # alpha's last is one-2, from a different file than its first
         results = _star_finder("$*.files.*.:last()").query()
-        assert results.uuids == ["u-two-2"]
+        assert results.uuids == ["u-one-2", "u-two-2"]
 
-    def test_first_across_every_named_file_is_the_true_earliest(self):
+    def test_first_is_each_named_files_earliest(self):
         results = _star_finder("$*.files.*.:first()").query()
-        assert results.uuids == ["u-zero-1"]
+        assert results.uuids == ["u-zero-1", "u-two-1"]
 
     def test_index_selects_by_chronological_position(self):
-        # chronological order: zero-1, one-1, one-2, two-1, two-2
+        # beta has no third version
         results = _star_finder("$*.files.*.:index(2)").query()
         assert results.uuids == ["u-one-2"]
 
@@ -732,7 +733,7 @@ class TestStarTraversalFlatten:
         # accessor guard this session; this specific shape happens to
         # never actually trip it.
         results = _star_finder("$*.files.*.:last():manifest()").resolve()
-        assert results.results[0].uuid == "u-two-2"
+        assert [r.data["uuid"] for r in results.results] == ["u-one-2", "u-two-2"]
 
     def test_combining_with_a_field_accessor_now_works(self):
         # narrowed 2026-08-29 -- POOL mode always reduces to exactly one
@@ -740,24 +741,21 @@ class TestStarTraversalFlatten:
         # pointer is unambiguous the same way it already was for every
         # other pointer+field-accessor position in this file.
         results = _star_finder("$*.files.*.:last():uuid()").resolve()
-        assert results.results[0].data == "u-two-2"
+        assert [r.data for r in results.results] == ["u-one-2", "u-two-2"]
 
     def test_functions_directly_on_name_one_not_yet_supported(self):
         with pytest.raises(ReferenceException3):
             _star_finder("$*.files.*:last().v1").query()
 
-    def test_range_with_no_pointer_pools_across_every_named_file(self):
-        # built 2026-10-21 -- '*' traversal had no range support at all
-        # before this (not just a grouping-interaction restriction, the
-        # way query()'s own literal-root path had); chronological order
-        # across every named-file is zero-1, one-1, one-2, two-1,
-        # two-2, so the last 2 pooled are two-1/two-2.
+    def test_an_index_range_is_within_each_named_file(self):
+        # built 2026-10-21; pooled until 2026-11-06. A range is a
+        # multi-valued pointer, so it groups too (4.1b).
         results = _star_finder("$*.files.*.:from(-2)").query()
-        assert set(results.uuids) == {"u-two-1", "u-two-2"}
+        assert results.uuids == ["u-one-1", "u-one-2", "u-two-1", "u-two-2"]
 
     def test_a_pointer_reduces_the_range_not_the_full_candidate_set(self):
-        results = _star_finder("$*.files.*.:from(-2):last()").query()
-        assert results.uuids == ["u-two-2"]
+        results = _star_finder("$*.files.*.:from(0):to(1):last()").query()
+        assert results.uuids == ["u-one-1", "u-two-2"]
 
 
 class TestStarTraversalLiteralNameThreeBody:
@@ -2144,8 +2142,9 @@ class TestStarTraversalFlattenAnyDepth:
     # into one combined list, time-sorted, same as '*' traversal's own
     # pool branch -- just without the exact-one-level restriction.
     def test_last_reaches_a_two_level_entry_star_cannot(self):
+        # gamma has no one-level file, so '*' gives it no group
         star_results = _flatten_star_finder("$*.files.*.:last()").query()
-        assert star_results.uuids == ["u-two-2"]
+        assert star_results.uuids == ["u-one-2", "u-two-2"]
         flatten_results = _flatten_star_finder("$*.files.:flatten().:last()").query()
         assert flatten_results.uuids == ["u-gamma-deep-1"]
 
@@ -5498,7 +5497,10 @@ class TestManifestEntryQueryPaths:
     @pytest.mark.parametrize(
         "reference,expected",
         [
-            ("$*.files.*.:last():manifest()", [(BETA_MANIFEST_JSON, "u-two-2")]),
+            (
+                "$*.files.*.:last():manifest()",
+                [(ALPHA_MANIFEST_JSON, "u-one-2"), (BETA_MANIFEST_JSON, "u-two-2")],
+            ),
             (
                 "$*.files.:flatten().:last():manifest()",
                 [(BETA_MANIFEST_JSON, "u-two-2")],
@@ -5538,7 +5540,10 @@ class TestManifestEntryQueryPaths:
 
     def test_star_traversal_without_manifest_keeps_the_version_file(self):
         results = _entry_star_finder("$*.files.*.:last()").query()
-        assert results.files == ["inputs/named_files/beta/two.csv/eee.csv"]
+        assert results.files == [
+            "inputs/named_files/alpha/one.csv/ccc.csv",
+            "inputs/named_files/beta/two.csv/eee.csv",
+        ]
 
     def test_star_traversal_resolve_reads_the_named_files_entry(self):
         # R1, fixed 2026-11-01: it read the ledger entry. STAR_LEDGER's
@@ -5715,3 +5720,109 @@ class TestLedgerSetListsFailures:
     def test_a_name_filter_passes_over_a_nameless_failure(self):
         results = self._query("$:regex(/^al/).files.:manifest():uuid()")
         assert results.uuids == ["u-ledger-1"]
+
+
+class TestStarRootGroupsByNamedFile:
+    # a '$*' root groups by named-file (compendium 4.1b; David,
+    # 2026-11-06): a pointer or an index range picks within each named-
+    # file, as '$*.csvpaths.:last()' and '$*.results.:last()' do.
+    # ':flatten()' pools (so does the ledger ':manifest()', tested with
+    # the ledger fixtures). The star fixture:
+    # alpha zero-1, one-1, one-2; beta two-1, two-2, in time order.
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$*.files.*.:last()", ["u-one-2", "u-two-2"]),
+            ("$*.files.*.:index(-2)", ["u-one-1", "u-two-1"]),
+            ("$*.files.*.:from(1):to(1)", ["u-one-1", "u-two-2"]),
+            # a lone pointer in name_one, each named-file's own pick
+            ("$*.files.:last()", ["u-one-2", "u-two-2"]),
+            ("$*.files.:first()", ["u-zero-1", "u-two-1"]),
+            # a gate filters within each group, then the pointer picks
+            ('$*.files.*.:last():fingerprint("bbb")', ["u-one-1"]),
+            ('$*.files.*.:fingerprint("ddd"):last()', ["u-two-1"]),
+            # a regex root groups the same way
+            ("$:regex(/a/).files.*.:last()", ["u-one-2", "u-two-2"]),
+            ("$:regex(/^b/).files.*.:last()", ["u-two-2"]),
+        ],
+    )
+    def test_one_result_per_named_file(self, reference, expected):
+        assert _star_finder(reference).query().uuids == expected
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # a date range matches each version's own time, so it keeps
+            # the pooled time order
+            (
+                '$*.files.*.:from(:date("2026-01-03"))',
+                ["u-one-2", "u-two-1", "u-two-2"],
+            ),
+            ("$*.files.:flatten().:last()", ["u-two-2"]),
+            ("$*.files.:flatten().:from(-2)", ["u-two-1", "u-two-2"]),
+        ],
+    )
+    def test_the_pooled_forms(self, reference, expected):
+        assert _star_finder(reference).query().uuids == expected
+
+    @pytest.mark.parametrize(
+        "pointer", [":last()", ":first()", ":index(1)", ":from(0):to(1)"]
+    )
+    def test_each_group_is_its_literal_roots_answer(self, pointer):
+        grouped = _star_finder(f"$*.files.*.{pointer}").query().uuids
+        literal = []
+        for name in ("alpha", "beta"):
+            literal.extend(_star_finder(f"${name}.files.*.{pointer}").query().uuids)
+        assert grouped == literal
+
+    def test_a_lone_pointer_resolves_each_named_files_entry(self):
+        # as '$alpha.files.:last()' does, the implied ':manifest()' (5.21)
+        results = _star_finder("$*.files.:last()").resolve()
+        assert [r.data for r in results.results] == [
+            STAR_ALPHA_MANIFEST[2],
+            STAR_BETA_MANIFEST[1],
+        ]
+
+    def test_a_lone_pointer_queries_to_the_version_files(self):
+        results = _star_finder("$*.files.:last()").query()
+        assert results.files == [
+            "inputs/named_files/alpha/one.csv/ccc.csv",
+            "inputs/named_files/beta/two.csv/eee.csv",
+        ]
+
+    def test_a_field_reads_each_groups_pick(self):
+        results = _star_finder("$*.files.*.:last():fingerprint()").resolve()
+        assert [r.data for r in results.results] == ["ccc", "eee"]
+
+    def test_a_date_range_keeps_the_pooled_time_order(self):
+        # alpha's and beta's versions interleave in time, so grouping
+        # would reorder them; a pointer still groups
+        def _entry(name, file, uuid, day):
+            home = f"inputs/named_files/{name}/{file}"
+            return {
+                "file": f"{home}/{uuid}.csv",
+                "file_home": home,
+                "uuid": uuid,
+                "time": f"2026-01-0{day}T00:00:00+00:00",
+            }
+
+        by_name = {
+            "alpha": (
+                "inputs/named_files/alpha",
+                [_entry("alpha", "a.csv", "a1", 1), _entry("alpha", "a.csv", "a2", 3)],
+            ),
+            "beta": ("inputs/named_files/beta", [_entry("beta", "b.csv", "b1", 2)]),
+        }
+
+        def _uuids(reference):
+            finder = _finder(
+                reference,
+                "inputs/named_files/alpha",
+                by_name["alpha"][1],
+                by_name=by_name,
+                ledger=[],
+            )
+            return finder.query().uuids
+
+        assert _uuids('$*.files.*.:from(:date("2026-01-01"))') == ["a1", "b1", "a2"]
+        assert _uuids('$*.files.*.:from(:date("2026-01-01")):last()') == ["a2", "b1"]

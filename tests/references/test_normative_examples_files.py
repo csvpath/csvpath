@@ -553,11 +553,13 @@ def _star_finder(reference: str) -> FilesReferenceFinder3:
 
 
 class TestStarTraversalPool:
-    # doc line "### '*' traversal, POOL -- single true-latest version
-    # across every named-file, each match still exactly one level deep"
-    def test_last_across_every_named_file(self):
+    # a '$*' root groups by named-file (compendium 4.1b, 2026-11-06): the
+    # '*' pools each named-file's one-level files, and the pointer picks
+    # within each named-file. Was one pooled result across every
+    # named-file.
+    def test_last_of_each_named_file(self):
         results = _star_finder("$*.files.*.:last()").query()
-        assert results.uuids == ["u-two-2"]
+        assert results.uuids == ["u-one-2", "u-two-2"]
 
 
 class TestStarTraversalGroup:
@@ -592,7 +594,7 @@ class TestStarTraversalFlattenAnyDepth:
     # not by '*' (exactly one level).
     def test_last_reaches_a_two_level_entry_star_cannot(self):
         star_results = _flatten_star_finder("$*.files.*.:last()").query()
-        assert star_results.uuids == ["u-two-2"]
+        assert star_results.uuids == ["u-one-2", "u-two-2"]
         flatten_results = _flatten_star_finder("$*.files.:flatten().:last()").query()
         assert flatten_results.uuids == ["u-gamma-deep-1"]
 
