@@ -1127,6 +1127,100 @@
         "latitude longitude",
         "position"
       ]
+    },
+    "ca_health": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-07",
+      "keywords": [
+        "canada healthcare number",
+        "msp number",
+        "personal healthcare number",
+        "phn",
+        "soins de santé"
+      ]
+    },
+    "eu_ehic": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-07",
+      "keywords": [
+        "assicurazione sanitaria numero",
+        "carta assicurazione numero",
+        "carte d’assurance maladie",
+        "carte européenne d'assurance maladie",
+        "ceam",
+        "ehic",
+        "ehic#",
+        "finlandehicnumber#",
+        "gesundheitskarte",
+        "hälsokort",
+        "health card",
+        "health card number",
+        "health insurance card",
+        "health insurance number",
+        "insurance card number",
+        "krankenversicherungskarte",
+        "krankenversicherungsnummer",
+        "medical account number",
+        "numero conto medico",
+        "numéro d’assurance maladie",
+        "numéro de carte d’assurance",
+        "numéro de compte medical",
+        "número de cuenta médica",
+        "número de seguro de salud",
+        "número de tarjeta de seguro",
+        "sairaanhoitokortin",
+        "sairausvakuutuskortti",
+        "sairausvakuutusnumero",
+        "sjukförsäkring nummer",
+        "sjukförsäkringskort",
+        "suomi ehic-numero",
+        "tarjeta de salud",
+        "terveyskortti",
+        "tessera sanitaria assicurazione numero",
+        "versicherungsnummer"
+      ]
+    },
+    "fi_ehic": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-07",
+      "keywords": [
+        "ehic",
+        "ehic#",
+        "finland health insurance card",
+        "finlandehicnumber#",
+        "finska sjukförsäkringskort",
+        "hälsokort",
+        "health card",
+        "health card number",
+        "health insurance card",
+        "health insurance number",
+        "sairaanhoitokortin",
+        "sairausvakuutuskortti",
+        "sairausvakuutusnumero",
+        "sjukförsäkring nummer",
+        "sjukförsäkringskort",
+        "suomen sairausvakuutuskortti",
+        "suomi ehic-numero",
+        "terveyskortti"
+      ]
+    },
+    "udi": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-07",
+      "keywords": [
+        "blood",
+        "blood bag",
+        "dev id",
+        "device id",
+        "device identifier",
+        "gs1",
+        "hibcc",
+        "iccbba",
+        "med",
+        "udi",
+        "unique device id",
+        "unique device identifier"
+      ]
     }
   },
   "identifiers": {
@@ -2717,6 +2811,50 @@
       "fidelity": "B",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
       "retrieved": "2026-11-06"
+    },
+    "CANADA_HEALTH_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "ca_health",
+      "keyword_mode": "required",
+      "keywords_from": "ca_health",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-07"
+    },
+    "EUROPEAN_HEALTH_INSURANCE_CARD_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "eu_ehic",
+      "keyword_mode": "required",
+      "keywords_from": "eu_ehic",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-07"
+    },
+    "FINLAND_EUROPEAN_HEALTH_INSURANCE_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "fi_ehic",
+      "keyword_mode": "required",
+      "keywords_from": "fi_ehic",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-07"
+    },
+    "MEDICAL_DEVICE_UDI": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "udi",
+      "keyword_mode": "required",
+      "keywords_from": "udi",
+      "distance": 30,
+      "severity": "1:LOW 2:MEDIUM 100:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
+      "retrieved": "2026-11-07"
     }
   },
   "detectors": {
@@ -4335,6 +4473,68 @@
       "notes": [
         "Macie: HTTP_COOKIE needs no keyword, and a complete Cookie or Set-Cookie header with one or more name-value pairs, e.g. Set-Cookie: id=TWlrZQ and Cookie: session=3948; lang=en. Cookies are LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
         "Ours, from RFC 6265: the field name in any case, a name that is a token and a value that is not empty; a Set-Cookie header's attributes are part of it. One header is one occurrence."
+      ]
+    },
+    "ca_health": {
+      "notes": [
+        "Macie publishes only the keywords for CANADA_HEALTH_NUMBER (Personal Health Numbers for Canada).",
+        "The forms are ours, for the provinces with a published structure: British Columbia's PHN (10 digits, the first 9, a mod 11 check digit), Ontario's health number (10 digits, a Luhn check digit, an optional version code) and Quebec's RAMQ number (4 letters, a birth date with 50 added to the month for women, 2 digits). Other provinces' numbers have no published check and are not included."
+      ]
+    },
+    "eu_ehic": {
+      "notes": [
+        "Macie publishes only the keywords for EUROPEAN_HEALTH_INSURANCE_CARD_NUMBER.",
+        "The format is ours: the card's 20 digit identification number, an ISO/IEC 7812 health card number of 80, the issuing country's ISO 3166 numeric code and 15 digits; contiguous, two blocks of 10 (Microsoft Purview's description of Finland's) or four of 5. No check digit is verified. The personal identification number on the card differs by country and is not detected.",
+        "Countries: the EU, Iceland, Liechtenstein, Norway, Switzerland and the UK (AT 040 BE 056 BG 100 HR 191 CY 196 CZ 203 DK 208 EE 233 FI 246 FR 250 DE 276 GR 300 HU 348 IS 352 IE 372 IT 380 LV 428 LI 438 LT 440 LU 442 MT 470 NL 528 NO 578 PL 616 PT 620 RO 642 SK 703 SI 705 ES 724 SE 752 CH 756 GB 826)."
+      ],
+      "countries": [
+        "040",
+        "056",
+        "100",
+        "191",
+        "196",
+        "203",
+        "208",
+        "233",
+        "246",
+        "250",
+        "276",
+        "300",
+        "348",
+        "352",
+        "372",
+        "380",
+        "428",
+        "438",
+        "440",
+        "442",
+        "470",
+        "528",
+        "578",
+        "616",
+        "620",
+        "642",
+        "703",
+        "705",
+        "724",
+        "752",
+        "756",
+        "826"
+      ]
+    },
+    "fi_ehic": {
+      "notes": [
+        "Macie publishes only the keywords for FINLAND_EUROPEAN_HEALTH_INSURANCE_NUMBER. Its list has sairaanhoitokortin twice; it is here once.",
+        "The format is ours: the card's 20 digit identification number, an ISO/IEC 7812 health card number of 80, the issuing country's ISO 3166 numeric code and 15 digits; contiguous, two blocks of 10 (Microsoft Purview's description of Finland's) or four of 5. No check digit is verified. The personal identification number on the card differs by country and is not detected."
+      ],
+      "countries": [
+        "246"
+      ]
+    },
+    "udi": {
+      "notes": [
+        "Macie: MEDICAL_DEVICE_UDI detects UDIs in the formats the US FDA accepts, GS1, HIBCC and ICCBBA (ISBT 128), near a keyword. UDIs are LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
+        "Ours, human readable forms: GS1 as (01) and a GTIN-14 with its GS1 check digit, then optional (11) (17) (10) (21) parts; HIBCC as + and a labeler code, product code and unit of measure digit, with any secondary data after /, ending in the HIBCC mod 43 check character. ISBT 128 is not detected yet (David, 2026-11-07)."
       ]
     }
   }

@@ -7,6 +7,7 @@ e.g. GroupedDigitsDetector for ca_sin and uk_nhs, and EsIdDetector for
 es_dni and es_nie."""
 
 from .bank_account_detector import BankAccountDetector
+from .ca_health_detector import CaHealthDetector
 from .cl_rut_detector import ClRutDetector
 from .co_nit_detector import CoNitDetector
 from .cookie_detector import CookieDetector
@@ -14,6 +15,7 @@ from .credential_detector import CredentialDetector
 from .credit_card_detector import CreditCardDetector
 from .date_detector import DateDetector
 from .de_id_detector import DeIdDetector
+from .ehic_detector import EhicDetector
 from .es_id_detector import EsIdDetector
 from .format_detector import FormatDetector
 from .fr_nir_detector import FrNirDetector
@@ -27,10 +29,15 @@ from .mx_rfc_detector import MxRfcDetector
 from .phone_detector import PhoneDetector
 from .us_id_detector import UsIdDetector
 from .us_npi_detector import UsNpiDetector
+from .udi_detector import UdiDetector
 from .us_ssn_detector import UsSsnDetector
 from .vin_detector import VinDetector
 
 DETECTORS = {
+    "ca_health": CaHealthDetector,
+    "eu_ehic": EhicDetector,
+    "fi_ehic": EhicDetector,
+    "udi": UdiDetector,
     "lat_long": LatLongDetector,
     "http_cookie": CookieDetector,
     "ar_dni": FormatDetector,

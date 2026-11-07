@@ -1,0 +1,81 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "us-east-1",
+    "downloaded_at": "2026-11-07T12:00:00Z",
+    "job_id": "8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "EUROPEAN_HEALTH_INSURANCE_CARD_NUMBER",
+      "FINLAND_EUROPEAN_HEALTH_INSURANCE_NUMBER",
+      "MEDICAL_DEVICE_UDI"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "EUROPEAN_HEALTH_INSURANCE_CARD_NUMBER",
+      "FINLAND_EUROPEAN_HEALTH_INSURANCE_NUMBER",
+      "MEDICAL_DEVICE_UDI"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "EUROPEAN_HEALTH_INSURANCE_CARD_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "FINLAND_EUROPEAN_HEALTH_INSURANCE_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "MEDICAL_DEVICE_UDI"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Claims",
+      "jobArn": "arn:aws:macie2:us-east-1:123456789012:classification-job/8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f",
+      "jobId": "8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "EUROPEAN_HEALTH_INSURANCE_CARD_NUMBER",
+        "FINLAND_EUROPEAN_HEALTH_INSURANCE_NUMBER",
+        "MEDICAL_DEVICE_UDI"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "group-a-ehic-udi",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-claims"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

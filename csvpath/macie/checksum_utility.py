@@ -312,6 +312,51 @@ class ChecksumUtility:
         return sum(int(c) * w for c, w in zip(digits, weights)) % 11 == 0
 
     @classmethod
+    def ca_bc_phn(cls, *, digits: str) -> bool:
+        """True if 10 ASCII digits are a valid British Columbia PHN: the
+        first digit is 9, and the second to ninth, each times 2 4 8 5 10 9
+        7 3 mod 11, sum to s, with (11 - s) mod 11 the tenth digit. A
+        result of 10 means the number is never issued."""
+        cls._digits(digits=digits, length=10)
+        if digits[0] != "9":
+            return False
+        weights = (2, 4, 8, 5, 10, 9, 7, 3)
+        total = sum((int(c) * w) % 11 for c, w in zip(digits[1:9], weights))
+        check = (11 - total) % 11
+        return check != 10 and check == int(digits[9])
+
+    @classmethod
+    def gs1_check(cls, *, digits: str) -> bool:
+        """True if ASCII digits (a GTIN-8, 12, 13 or 14) pass the GS1 mod
+        10 check: from the right, excluding the check digit, weight the
+        digits 3 1 3 1 ...; the sum plus the check digit is a multiple of
+        10"""
+        if not isinstance(digits, str):
+            raise TypeError(f"digits must be a str, not {type(digits)}")
+        if len(digits) < 2 or not (digits.isascii() and digits.isdigit()):
+            raise ValueError(f"digits must be 2 or more ASCII digits, not {digits!r}")
+        body = digits[:-1]
+        total = sum(
+            int(c) * (3 if i % 2 == 0 else 1) for i, c in enumerate(reversed(body))
+        )
+        return (total + int(digits[-1])) % 10 == 0
+
+    HIBCC_CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%"
+
+    @classmethod
+    def hibcc_mod43(cls, *, text: str) -> str:
+        """the HIBCC check character for text, everything before it
+        including the leading +: each character's value is its place in
+        0-9 A-Z - . space $ / + %, and the check is the character at the
+        sum mod 43"""
+        if not isinstance(text, str):
+            raise TypeError(f"text must be a str, not {type(text)}")
+        if text == "" or any(c not in cls.HIBCC_CHARACTERS for c in text):
+            raise ValueError(f"text must be one or more HIBCC characters, not {text!r}")
+        total = sum(cls.HIBCC_CHARACTERS.index(c) for c in text)
+        return cls.HIBCC_CHARACTERS[total % 43]
+
+    @classmethod
     def gb_utr(cls, *, digits: str) -> bool:
         """True if 10 ASCII digits are a valid UK UTR: the FIRST digit
         checks the other nine, weighted 6 7 8 9 10 5 4 3 2, as

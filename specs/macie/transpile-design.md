@@ -849,6 +849,42 @@ the notation cannot check a range or a header's grammar:
 With these, every group B identifier has a stand-in, except the 15
 driver's license countries on the backlog.
 
+**Group A leftovers: `CANADA_HEALTH_NUMBER`** (`CaHealthDetector`).
+Macie publishes only the keywords, which point at British Columbia (MSP,
+PHN) and Quebec (soins de sante). Our forms are the provinces with a
+published structure: British Columbia's PHN, 10 digits starting 9 with a
+mod 11 check digit (`chut.ca_bc_phn`, compared with python-stdnum);
+Ontario's health number, 10 digits with a Luhn check digit and an optional
+version code; Quebec's RAMQ number, 4 letters, a real birth date as
+YYMMDD with 50 added to the month for women, and 2 digits. The other
+provinces' numbers are digit runs with no published check, which near a
+keyword like `phn` would match any number of that length, so they are
+missed (item 24). A BC PHN can also pass Luhn; it is one occurrence.
+
+**EHIC and UDI** (David, 2026-11-07: the card ID only, and GS1 + HIBCC
+with their checks).
+- `EUROPEAN_HEALTH_INSURANCE_CARD_NUMBER` and
+  `FINLAND_EUROPEAN_HEALTH_INSURANCE_NUMBER` (`EhicDetector`): Macie
+  publishes only keywords, and we found no official EU-wide format. Ours
+  is the card's 20 digit identification number, read as an ISO/IEC 7812
+  health card number: 80, the issuing country's ISO 3166 numeric code,
+  15 digits. Contiguous, two blocks of 10 (Microsoft Purview's Finland
+  description) or four of 5. The countries are catalog data: the EU,
+  Iceland, Liechtenstein, Norway, Switzerland and the UK for the EU
+  identifier; 246 for Finland's. No check digit is verified. The
+  personal ID also printed on the card differs by country and is not
+  detected (item 25). Macie lists `sairaanhoitokortin` twice for Finland;
+  the catalog has it once.
+- `MEDICAL_DEVICE_UDI` (`UdiDetector`), human readable forms: GS1, `(01)`
+  and a GTIN-14 with its GS1 check digit (`chut.gs1_check`, compared with
+  python-stdnum), then optional `(11)` `(17)` dates and `(10)` `(21)` lot
+  and serial; HIBCC, `+`, a labeler code, product code and unit of measure
+  digit, optional secondary data after `/`, and the mod 43 check character
+  over the whole (`chut.hibcc_mod43`, checked against two HIBCC
+  specification examples). ISBT 128 is not detected yet. Macie's keywords
+  include `med` and `blood`, which match widely as substrings (item 3);
+  the check characters keep the false positives down.
+
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
 (Luhn, Verhoeff, CPF, CNPJ, RUT, NHS, mod 97, the Spanish letter, NIR,
@@ -959,6 +995,12 @@ every detector the catalog names exists, and every detector is used.
 23. GPS and cookies: does Macie accept coordinates without a decimal
     part, or separated only by spaces? Does it count a Cookie header with
     several pairs as one occurrence, or one per pair?
+24. Canada health numbers: which provinces does Macie detect, and with
+    what checks? Ours misses Alberta, Manitoba, Saskatchewan, the
+    Atlantic provinces and the territories.
+25. EHIC and UDI: does Macie read the EHIC card number as 80 and a
+    country code, and does it detect the personal ID on the card? Does it
+    detect UDIs without their parentheses, or ISBT 128?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later

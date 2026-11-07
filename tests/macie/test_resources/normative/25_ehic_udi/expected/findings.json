@@ -1,0 +1,78 @@
+{
+  "customDataIdentifiers": {
+    "detections": [],
+    "totalCount": 0
+  },
+  "sensitiveData": [
+    {
+      "category": "PERSONAL_INFORMATION",
+      "detections": [
+        {
+          "type": "EUROPEAN_HEALTH_INSURANCE_CARD_NUMBER",
+          "count": 2,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "ehic",
+                "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 3
+              }
+            ]
+          }
+        },
+        {
+          "type": "FINLAND_EUROPEAN_HEALTH_INSURANCE_NUMBER",
+          "count": 1,
+          "severity": "HIGH",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 3
+              }
+            ]
+          }
+        },
+        {
+          "type": "MEDICAL_DEVICE_UDI",
+          "count": 2,
+          "severity": "MEDIUM",
+          "occurrences": {
+            "cells": [
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 5
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 6
+              }
+            ]
+          }
+        }
+      ],
+      "totalCount": 5
+    }
+  ],
+  "csvpath": {
+    "source_arn": "arn:aws:macie2:us-east-1:123456789012:classification-job/8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f",
+    "stopped": false,
+    "stopped_at_line": null,
+    "max_findings": 10000,
+    "max_detail": 2
+  }
+}

@@ -1,0 +1,3 @@
+macie CANADA_HEALTH_NUMBER: occurrence 1, line 1 (row 2), column 2 phn
+macie CANADA_HEALTH_NUMBER: occurrence 2, line 2 (row 3), column 3 notes
+macie CANADA_HEALTH_NUMBER: 4 occurrences, severity HIGH, detail shown for first 2
