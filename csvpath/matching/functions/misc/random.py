@@ -1,7 +1,7 @@
 # pylint: disable=C0114
 from random import randrange
 from random import sample
-from csvpath.matching.util.exceptions import DataException, MatchException
+from csvpath.matching.util.exceptions import DataException
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Header, Variable
 from csvpath.matching.util.expression_utility import ExpressionUtility
@@ -33,6 +33,9 @@ class Random(ValueProducer):
             actuals=[int],
         )
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -96,7 +99,9 @@ class Shuffle(ValueProducer):
         elif order == []:
             return
         self.value = order.pop()
-        self.matcher.set_variable(self.first_non_term_qualifier(self.name), value=order)
+        varname = self.first_non_term_qualifier(self.name)
+        self._register_internal_var_name(varname)
+        self.matcher.set_variable(varname, value=order)
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.default_match()  # pragma: no cover

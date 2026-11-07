@@ -1,9 +1,6 @@
 import unittest
-import pytest
 import os
-import traceback
 from csvpath import CsvPath
-from csvpath.scanning.scanner2 import Scanner2 as Scanner
 from csvpath.util.config import OnError
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
@@ -12,8 +9,7 @@ EMPTY = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}empty2.csv"
 
 
 class TestCsvPathA(unittest.TestCase):
-
-    def test_acsvpath_a_lot_of_csvpaths(self):
+    def test_csvpath_a_lot_of_csvpaths(self):
         #
         # we had an open files bug due to too many loggers. this test catches it. problem
         # resulted in for e.g.:
@@ -24,16 +20,15 @@ class TestCsvPathA(unittest.TestCase):
         #
         config = None
         path = None
-        configpath = None
         for i in range(0, 1000):
             path = CsvPath()
             config = path.config
-            configpath = config.configpath
+            config.configpath
             path.logger
             del config
             del path
 
-    def test_acsvpath_matcher_get_header(self):
+    def test_csvpath_matcher_get_header(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[3][ yes() ]")
@@ -43,7 +38,7 @@ class TestCsvPathA(unittest.TestCase):
         assert v1 == v2
         assert v1 == "ribbit..."
 
-    def test_acsvpath_matcher_get_header2(self):
+    def test_csvpath_matcher_get_header2(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -70,7 +65,7 @@ class TestCsvPathA(unittest.TestCase):
         assert len(lines) == 1
         assert path.variables["dob"] == "May 12, 1962"
 
-    def test_acsvpath_stop_when_last(self):
+    def test_csvpath_stop_when_last(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -81,14 +76,14 @@ class TestCsvPathA(unittest.TestCase):
         path.fast_forward()
         assert path.line_monitor.physical_line_number == 5
 
-    def test_acsvpath_total_lines_check(self):
+    def test_csvpath_total_lines_check(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[*][yes()]")
         path.fast_forward()
         assert path.line_monitor.data_line_count == 9
 
-    def test_acsvpath_has_errors(self):
+    def test_csvpath_has_errors(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.config.csvpath_errors_policy = [OnError.COLLECT.value]
@@ -100,7 +95,7 @@ class TestCsvPathA(unittest.TestCase):
         path.fast_forward()
         assert path.has_errors()
 
-    def test_acsvpath_vars_frozen(self):
+    def test_csvpath_vars_frozen(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -118,7 +113,7 @@ class TestCsvPathA(unittest.TestCase):
         assert "line" in path.variables
         assert path.variables["line"] == [0, 1, 2]
 
-    def test_acsvpath_collect_when_not_matched1(self):
+    def test_csvpath_collect_when_not_matched1(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -140,20 +135,20 @@ class TestCsvPathA(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 1
 
-    def test_acsvpath_variables(self):
+    def test_csvpath_variables(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[2-4][@me = count()]")
         for i, ln in enumerate(path.next()):
             assert path.get_variable("me") == i + 1
 
-    def test_acsvpath_header_counting(self):
+    def test_csvpath_header_counting(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[2-4][@me = count()]")
         assert path.header_index("lastname") == 1
 
-    def test_acsvpath_header_index1(self):
+    def test_csvpath_header_index1(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[1][yes()]")
@@ -163,7 +158,7 @@ class TestCsvPathA(unittest.TestCase):
         assert path.matcher.header_index(1) == 1
         assert path.matcher.header_index("foo") is None
 
-    def test_acsvpath_ff(self):
+    def test_csvpath_ff(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(f"${PATH}[*][@me = count()]")

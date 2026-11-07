@@ -43,6 +43,33 @@ class Function(Matchable):
         self.name_qualifier = False
         self.aliases = []
         self.wrapper = TextWrapper(drop_whitespace=True)
+        self.internal_var_names = []
+        self._has_internal_variables = False
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return self._has_internal_variables
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None:
+        self._has_internal_variables = b
+
+    def _register_internal_var_name(self, name: str) -> None:
+        if self.internal_var_names is None:
+            raise ValueError(f"internal_function_names of {self.name} cannot be None")
+        if name is None:
+            raise ValueError(f"Function {self.name} var name cannot be None")
+        if name.strip() == "":
+            raise ValueError(f"Function {self.name} var name cannot be empty")
+        if name in self.internal_var_names:
+            return
+        #
+        # we should already have set has_internal_variables in the validate method
+        # however, atm we're gunning for correctness, not efficency, so we'll do it
+        # here as well.
+        #
+        self.has_internal_variables = True
+        self.internal_var_names.append(name)
 
     def _add_default_value_qualifiers(self) -> None:
         if self.value_qualifiers is None:
@@ -218,7 +245,8 @@ class Function(Matchable):
                     #
                     # why did vvvv break counter() and other funcs? answer:
                     # in the case of gt() we were disallowing None. not validating on
-                    # matches allowed us to never see a None. however, None > x is                                  # a valid comparison, for us, equaling False. had to adjust the
+                    # matches allowed us to never see a None. however, None > x is
+                    # a valid comparison, for us, equaling False. had to adjust the
                     # validation. the missing matches validation was in equality --
                     # the -> only called matches allowing some match components to
                     # never be validated.

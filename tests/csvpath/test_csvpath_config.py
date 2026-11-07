@@ -18,7 +18,7 @@ BAD_INI = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}bad_config.ini"
 
 
 class TestCsvPathConfig(unittest.TestCase):
-    def test_config_env(self):
+    def test_csvpath_config_env(self):
         #
         # this tests the ability to allow or disallow var sub of all caps var values
         # in system env vars or a vars json dict.
@@ -95,7 +95,7 @@ class TestCsvPathConfig(unittest.TestCase):
         v = configenv.get(name="BLUEFISH")
         assert v == "ha"
 
-    def test_config_no_load(self):
+    def test_csvpath_config_no_load(self):
         config = Config(load=False)
         assert config.csvpaths_log_level is None
         config.csvpaths_log_level = "debug"
@@ -109,21 +109,21 @@ class TestCsvPathConfig(unittest.TestCase):
         assert config.csvpaths_log_level == "info"
         assert os.path.exists(TEST_INI)
 
-    def test_config_default_file_by_path(self):
+    def test_csvpath_config_default_file_by_path(self):
         if os.path.exists(TEST_INI):
             os.remove(TEST_INI)
         c = Config()
         c.configpath = TEST_INI
         assert os.path.exists(TEST_INI)
 
-    def test_config_assure_log_dir(self):
+    def test_csvpath_config_assure_log_dir(self):
         cfg = f"tests{os.sep}test_resources{os.sep}config-1"
         path = CsvPath()
         config = path.config
         dirpath = config._get_dir_path(f"{cfg}{os.sep}config-1.ini")
         assert dirpath == cfg
 
-    def test_config1(self):
+    def test_csvpath_config1(self):
         path = CsvPath()
         config = path.config
         assert config is not None
@@ -143,7 +143,7 @@ class TestCsvPathConfig(unittest.TestCase):
         with pytest.raises(ConfigurationException):
             config.set_config_path_and_reload(BAD_INI)
 
-    def test_config2(self):
+    def test_csvpath_config2(self):
         path = CsvPath()
         config = path.config
         #

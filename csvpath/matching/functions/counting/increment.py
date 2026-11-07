@@ -3,7 +3,6 @@ from typing import Any
 from csvpath.matching.util.exceptions import DataException
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Matchable
-from ..function import Function
 from ..args import Args
 
 
@@ -33,6 +32,9 @@ class Increment(ValueProducer):
         a.arg(name="Match component", types=[Matchable], actuals=[Any])
         a.arg(name="Ratio", types=[Term], actuals=[int])
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def to_value(self, *, skip=None) -> Any:  # pylint: disable=R0912
@@ -67,6 +69,8 @@ class Increment(ValueProducer):
                     v2 += 1
             r = 0
             incname = f"{varname}_increment"
+            self._register_internal_var_name(incname)
+            self._register_internal_var_name(varname)
             if v != v2:
                 r = v2 % tv
                 self.match = r == 0

@@ -66,12 +66,21 @@ class Put(SideEffect):
             actuals=[Any],
         )
         self.args.validate(self.siblings())
+        #
         super().check_valid()
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
 
     def _produce_value(self, skip=None) -> None:
         sibs = self.siblings()
         varname = None
         varname = sibs[0].to_value(skip=skip)
+        self._register_internal_var_name(varname)
         if len(sibs) == 1:
             self.matcher.set_variable(varname, value={})
         else:

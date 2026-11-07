@@ -81,6 +81,13 @@ class Regex(MatchDecider):
         right = self._function_or_equality.right
         self.is_regex_if(right)
 
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
+
     def is_regex_if(self, t):
         if isinstance(t, Term):
             v = t.to_value()
@@ -129,10 +136,14 @@ class Regex(MatchDecider):
                     m = re.search(theregex, _)
                     if not m:
                         self.value = False
-                        self.matcher.set_variable(self.get_id(), value=False)
+                        n = self.get_id()
+                        self._register_internal_var_name(n)
+                        self.matcher.set_variable(n, value=False)
                         break
                 if self.value is True:
-                    self.matcher.set_variable(self.get_id(), value=True)
+                    n = self.get_id()
+                    self._register_internal_var_name(n)
+                    self.matcher.set_variable(n, value=True)
             if self.value is False:
                 self.value = None
         else:

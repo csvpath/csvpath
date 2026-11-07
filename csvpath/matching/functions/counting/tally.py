@@ -1,7 +1,6 @@
 # pylint: disable=C0114
 from typing import Any
 from ..function_focus import SideEffect
-from csvpath.matching.productions import Equality
 from csvpath.matching.productions import Variable, Header
 from csvpath.matching.util.exceptions import MatchException
 from ..function import Function
@@ -40,6 +39,9 @@ class Tally(SideEffect):
         a = self.args.argset()
         a.arg(name="Value to count", types=[Header, Variable, Function], actuals=[Any])
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -79,6 +81,7 @@ class Tally(SideEffect):
             if self.matcher.csvpath.do_i_raise():
                 raise MatchException(msg)
         count += 1
+        self._register_internal_var_name(name)
         self.matcher.set_variable(
             name,
             tracking=value,

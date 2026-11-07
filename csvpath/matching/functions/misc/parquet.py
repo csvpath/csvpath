@@ -1,28 +1,25 @@
-import traceback
 import tempfile
 import os
 import shutil
 
-from smart_open import open as smart_open
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
-from csvpath.matching.productions import Term, Variable, Header
 from csvpath.matching.functions.validity.line import Line
-from csvpath.matching.functions.function import Function
 from ..function_focus import MatchDecider, SideEffect
-from ..args import Args
 from csvpath.matching.util.exceptions import ChildrenException, MatchException
-from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 from csvpath.matching.util.parquet_utility import ParquetUtility as paut
 
 
 class Parquet(Line, SideEffect, MatchDecider):
     def check_valid(self) -> None:
         super().check_valid()
+        #
+        self.has_internal_variables = True
+        #
         #
         # overwrite the description
         #
@@ -124,6 +121,7 @@ class Parquet(Line, SideEffect, MatchDecider):
         if guard is True:
             self._assure_writer()
             ename = f"_{self.first_non_term_qualifier()}_entity"
+            self._register_internal_var_name(ename)
             #
             # capture lines to a list var buffer
             #
@@ -134,6 +132,7 @@ class Parquet(Line, SideEffect, MatchDecider):
             # less than the batch size -- if not, the batch is written out.
             #
             index_name = f"_{self.first_non_term_qualifier()}_index"
+            self._register_internal_var_name(index_name)
             row = {}
             for i, s in enumerate(sibs):
                 #
@@ -165,14 +164,16 @@ class Parquet(Line, SideEffect, MatchDecider):
 
     def _flush(self) -> None:
         ename = f"_{self.first_non_term_qualifier()}_entity"
+        self._register_internal_var_name(ename)
         entity = self.matcher.get_variable(ename, set_if_none=[])
         if len(entity) > 0:
             self._write(entity)
         try:
             self.writer.close()
-            with open(self.tmp_path, "rb") as src, DataFileWriter(
-                path=self.parquet_file_path, mode="wb"
-            ) as dst:
+            with (
+                open(self.tmp_path, "rb") as src,
+                DataFileWriter(path=self.parquet_file_path, mode="wb") as dst,
+            ):
                 shutil.copyfileobj(src, dst.sink)
         except Exception as e:
             msg = f"Cannot save parquet file: {e}"

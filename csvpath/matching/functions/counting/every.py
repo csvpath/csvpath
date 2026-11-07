@@ -1,10 +1,8 @@
 # pylint: disable=C0114
 from typing import Any
-from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function_focus import ValueProducer
 from csvpath.matching.productions import Term, Matchable
-from ..function import Function
 from ..args import Args
 
 
@@ -30,11 +28,15 @@ class Every(ValueProducer):
         a.arg(name="watch", types=[Matchable], actuals=[None, Any])
         a.arg(name="pick every N", types=[Term], actuals=[int, float])
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
         child = self.children[0]
         tracked_value = child.left.to_value(skip=skip)
+        self._register_internal_var_name(self.me())
         cnt = self.matcher.get_variable(
             self.me(), tracking=tracked_value, set_if_none=0
         )

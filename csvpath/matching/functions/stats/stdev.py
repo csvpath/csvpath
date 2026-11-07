@@ -56,6 +56,7 @@ class Stdev(ValueProducer):
         # frozen vars at end of run may be tupleized due to a blank end line
         #
         elif isinstance(v, (str, tuple)):
+            self._register_internal_var_name(v)
             stack = self.matcher.get_variable(v, set_if_none=[])
         else:
             # this could be a data or structure / children exception. since

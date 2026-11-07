@@ -1,5 +1,4 @@
 # pylint: disable=C0114
-import textwrap
 from tabulate import tabulate
 from csvpath.matching.functions.function import Function
 from csvpath.matching.functions.types.type import Type
@@ -8,7 +7,6 @@ from .const import Const
 
 
 class FunctionDescriber:
-
     CONST = Const
 
     @classmethod
@@ -214,6 +212,9 @@ class FunctionDescriber:
         for v in stmts:
             v = str(v)
             rows.append(["Aliases", v])
+
+        rows.append(["Has internal variables", function.has_internal_variables])
+
         if len(rows) > 0:
             print(
                 tabulate(

@@ -8,7 +8,7 @@ PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 
 
 class TestCsvPathFunctionsAdvance(unittest.TestCase):
-    def test_function_advance1(self):
+    def test_csvpath_function_advance1(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -34,13 +34,13 @@ class TestCsvPathFunctionsAdvance(unittest.TestCase):
         assert len(lines) == 6
         assert path.variables["cnt"] == [2, 3, 4, 7, 8, 9]
 
-    def test_function_advance2(self):
+    def test_csvpath_function_advance2(self):
         path = CsvPath().parse(f""" ${PATH}[1*] [ advance("please") ]""")
         path.config.add_to_config("errors", "csvpath", "raise")
         with pytest.raises(MatchException):
             path.collect()
 
-    def test_function_advance_all1(self):
+    def test_csvpath_function_advance_all1(self):
         path = CsvPath()
         path.config.add_to_config("errors", "csvpath", "raise")
         path.parse(
@@ -53,7 +53,7 @@ class TestCsvPathFunctionsAdvance(unittest.TestCase):
         assert len(lines) == 6
         assert path.variables["cnt"] == [2, 3, 4, 7, 8, 9]
 
-    def test_function_advance_all2(self):
+    def test_csvpath_function_advance_all2(self):
         path = CsvPath()
         path.parse(f""" ${PATH}[1*] [ advance_all("please") ]""")
         path.config.add_to_config("errors", "csvpath", "raise")

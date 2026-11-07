@@ -1,6 +1,6 @@
 from typing import Any
 from csvpath.matching.util.expression_utility import ExpressionUtility
-from csvpath.matching.productions import Term, Variable, Header
+from csvpath.matching.productions import Variable, Header
 from ..function_focus import ValueProducer
 from ..function import Function
 from ..args import Args
@@ -43,6 +43,9 @@ class Subtotal(ValueProducer):
             actuals=[float, int],
         )
         self.args.validate(self.siblings())
+        #
+        self.has_internal_variables = True
+        #
         super().check_valid()
 
     def _produce_value(self, skip=None) -> None:
@@ -52,6 +55,7 @@ class Subtotal(ValueProducer):
         val = self.matcher.get_variable(varname, tracking=t, set_if_none=0)
         # this may blow up if c is not convertable, but that is fine
         val += ExpressionUtility.to_float(c)
+        self._register_internal_var_name(varname)
         self.matcher.set_variable(varname, tracking=t, value=val)
         self.value = val
 

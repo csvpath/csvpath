@@ -55,7 +55,7 @@ def _error(msg: str = "m") -> Error:
     return Error(source="test", msg=msg, error_manager=_error_manager())
 
 
-def test_error_trace_defaults_to_none_and_is_not_serialized() -> None:
+def test_csvpath_error_trace_defaults_to_none_and_is_not_serialized() -> None:
     e = _error()
     assert e.trace is None
     assert e.expanded_message is None
@@ -64,7 +64,7 @@ def test_error_trace_defaults_to_none_and_is_not_serialized() -> None:
     assert "expanded_message" not in j
 
 
-def test_error_trace_and_expanded_message_round_trip() -> None:
+def test_csvpath_error_trace_and_expanded_message_round_trip() -> None:
     e = _error()
     e.trace = "Traceback (most recent call last): ..."
     e.expanded_message = "time:file:0:::chain: m"
@@ -77,7 +77,7 @@ def test_error_trace_and_expanded_message_round_trip() -> None:
     assert f.expanded_message == e.expanded_message
 
 
-def test_error_trace_is_not_part_of_equality() -> None:
+def test_csvpath_error_trace_is_not_part_of_equality() -> None:
     em = _error_manager()
     e = Error(source="test", msg="m", error_manager=em)
     f = Error(source="test", msg="m", error_manager=em)
@@ -91,7 +91,7 @@ def test_error_trace_is_not_part_of_equality() -> None:
 #
 
 
-def test_handle_error_sets_trace() -> None:
+def test_csvpath_handle_error_sets_trace() -> None:
     path, _ = _run(file=GOOD_JSON, body="yes()")
     with contextlib.redirect_stdout(io.StringIO()):
         path.error_manager.handle_error(source="test", msg="with trace", trace="T")
@@ -102,7 +102,7 @@ def test_handle_error_sets_trace() -> None:
     assert by_message["with trace"].expanded_message.endswith("with trace")
 
 
-def test_handle_error_rejects_non_str_trace() -> None:
+def test_csvpath_handle_error_rejects_non_str_trace() -> None:
     path, _ = _run(file=GOOD_JSON, body="yes()")
     with pytest.raises(TypeError):
         path.error_manager.handle_error(source="test", msg="m", trace=1)
@@ -129,7 +129,9 @@ def test_handle_error_rejects_non_str_trace() -> None:
         ("xsd missing xsd", GOOD_XML, 'xsd("nope/missing.xsd")'),
     ],
 )
-def test_unexpected_exception_trace_in_error_not_console(label, file, body) -> None:
+def test_csvpath_unexpected_exception_trace_in_error_not_console(
+    label, file, body
+) -> None:
     path, out = _run(file=file, body=body)
     assert "Traceback" not in out
     assert path.is_valid is False
@@ -151,12 +153,12 @@ def test_unexpected_exception_trace_in_error_not_console(label, file, body) -> N
         (GOOD_XML, 'xsd("nope/missing.xsd")'),
     ],
 )
-def test_unexpected_exception_raise_mode(file, body) -> None:
+def test_csvpath_unexpected_exception_raise_mode(file, body) -> None:
     with pytest.raises(MatchException):
         _run(file=file, body=body, mode="print, raise")
 
 
-def test_validation_failure_has_no_trace() -> None:
+def test_csvpath_validation_failure_has_no_trace() -> None:
     schema = os.path.join(JSON_DIR, "automobiles.jsonschema")
     path, _ = _run(file=BAD_JSON, body=f'jsonschema("{schema}")')
     assert path.is_valid is False
@@ -194,7 +196,7 @@ def _errors_json(
         paths.file_manager.remove_named_file(name)
 
 
-def test_errors_json_has_trace_and_expanded_message() -> None:
+def test_csvpath_errors_json_has_trace_and_expanded_message() -> None:
     errors = _errors_json(
         name="error_trace_test",
         file=GOOD_JSON,
@@ -205,7 +207,7 @@ def test_errors_json_has_trace_and_expanded_message() -> None:
     assert errors[0]["expanded_message"].endswith(errors[0]["message"])
 
 
-def test_errors_json_validation_failure_has_no_trace() -> None:
+def test_csvpath_errors_json_validation_failure_has_no_trace() -> None:
     errors = _errors_json(
         name="error_trace_test",
         file=BAD_JSON,
