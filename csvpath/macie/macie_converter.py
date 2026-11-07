@@ -7,12 +7,12 @@ from csvpath.managers.paths.paths_asset_manager import PathsAssetManager
 from csvpath.odcs.conversion_report import ConversionReport
 from csvpath.odcs.csvpath_text_utility import CsvPathTextUtility as csut
 
-from .arn_utility import ArnUtility as arut
+from .util.arn_utility import ArnUtility as arut
 from .custom_identifier import CustomIdentifier
 from .macie_exceptions import MacieException
 from .macie_wrapper_loader import MacieWrapperLoader
 from .managed_catalog import ManagedCatalog
-from .regex_utility import RegexUtility as reut
+from .util.regex_utility import RegexUtility as reut
 
 
 @dataclass

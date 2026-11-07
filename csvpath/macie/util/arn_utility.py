@@ -1,7 +1,7 @@
 import logging
 import re
 
-from .macie_exceptions import MacieException
+from ..macie_exceptions import MacieException
 
 
 class ArnUtility:

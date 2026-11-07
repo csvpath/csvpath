@@ -6,7 +6,7 @@ checked outside ChecksumUtility."""
 import pytest
 
 from csvpath.macie.allow_list_set import AllowListSet
-from csvpath.macie.checksum_utility import ChecksumUtility as chut
+from csvpath.macie.util.checksum_utility import ChecksumUtility as chut
 from csvpath.macie.detectors.iban_detector import IbanDetector
 from csvpath.macie.macie_converter import MacieConverter
 from csvpath.macie.macie_exceptions import MacieException

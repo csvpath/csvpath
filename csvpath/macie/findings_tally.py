@@ -1,4 +1,4 @@
-from .arn_utility import ArnUtility as arut
+from .util.arn_utility import ArnUtility as arut
 from .severity_levels import SeverityLevels
 
 

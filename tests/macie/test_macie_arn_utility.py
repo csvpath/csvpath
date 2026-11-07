@@ -1,7 +1,7 @@
 import pytest
 
 from csvpath import CsvPath
-from csvpath.macie.arn_utility import ArnUtility as arut
+from csvpath.macie.util.arn_utility import ArnUtility as arut
 from csvpath.macie.macie_exceptions import MacieException
 
 JOB = "arn:aws:macie2:us-east-1:123456789012:classification-job/5d0c4a1e8b7f"

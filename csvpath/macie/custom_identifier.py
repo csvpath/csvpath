@@ -1,6 +1,6 @@
 from .allow_list_set import AllowListSet
-from .keyword_utility import KeywordUtility as keut
-from .regex_utility import RegexUtility as reut
+from .util.keyword_utility import KeywordUtility as keut
+from .util.regex_utility import RegexUtility as reut
 from .severity_levels import SeverityLevels
 
 

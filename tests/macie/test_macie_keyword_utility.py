@@ -1,6 +1,6 @@
 import pytest
 
-from csvpath.macie.keyword_utility import KeywordUtility as keut
+from csvpath.macie.util.keyword_utility import KeywordUtility as keut
 
 
 def _patterns(*keywords: str) -> list:

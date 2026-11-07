@@ -1,6 +1,6 @@
 from .allow_list_set import AllowListSet
 from .detectors import DETECTORS
-from .keyword_utility import KeywordUtility as keut
+from .util.keyword_utility import KeywordUtility as keut
 from .macie_exceptions import MacieException
 from .managed_catalog import ManagedCatalog
 from .severity_levels import SeverityLevels

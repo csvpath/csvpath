@@ -1,6 +1,6 @@
 import pytest
 
-from csvpath.macie.regex_utility import RegexUtility as reut
+from csvpath.macie.util.regex_utility import RegexUtility as reut
 from csvpath.macie.macie_exceptions import MacieException
 
 
