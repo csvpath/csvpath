@@ -17,12 +17,6 @@ from csvpath.matching.util.parquet_utility import ParquetUtility as paut
 class Parquet(Line, SideEffect, MatchDecider):
     def check_valid(self) -> None:
         super().check_valid()
-        #
-        self.has_internal_variables = True
-        #
-        #
-        # overwrite the description
-        #
         self.description = [
             self.wrap(
                 """\
