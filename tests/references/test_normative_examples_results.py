@@ -107,7 +107,6 @@ from pathlib import Path
 
 import pytest
 
-from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.results_reference_finder_3 import ResultsReferenceFinder3
 
@@ -834,14 +833,18 @@ class TestGlobalArchiveLedgerSection:
         ref = "$*.results.:manifest():yesterday():last().:last():identity()"
         assert self._data(ref, archive) == ["second"]
 
-    @pytest.mark.xfail(
-        strict=True,
-        raises=ReferenceException3,
-        reason="run-dir branch takes a bare :yesterday() for a run-level "
-        "field (lifecycle note, clock-field follow-up)",
-    )
     def test_703_the_last_instance_run_yesterday_by_direct_access(self, archive):
+        # was a strict xfail: the run-dir branch took the bare
+        # :yesterday() for a run-level field (fixed 2026-11-07, 6.27e)
         ref = "$*.results.:yesterday():last().:last():identity()"
+        assert self._data(ref, archive) == ["second"]
+
+    def test_the_last_instance_run_yesterday_as_the_nre_writes_it(self, archive):
+        # NRE "Two ways to get the last instance run yesterday", the
+        # direct form exactly as written, beside its set form
+        ref = "$*.results.:flatten():yesterday():last().:last():identity()"
+        assert self._data(ref, archive) == ["second"]
+        ref = "$*.results.:manifest():yesterday():last().:last():identity()"
         assert self._data(ref, archive) == ["second"]
 
     def test_707_708_instances_of_orders_runs_yesterday(self, archive):
