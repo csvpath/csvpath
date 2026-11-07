@@ -14,9 +14,10 @@ will evaluate it as a side-effect if not() evaluates to True.
 |:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | not( value applied to: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ Equality, [A function to invoke if not() is True: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function)] ) |
 
-| Purpose    | Value                           |
-|:-----------|:--------------------------------|
-| Main focus | not() determines if lines match |
+| Purpose                | Value                           |
+|:-----------------------|:--------------------------------|
+| Main focus             | not() determines if lines match |
+| Has internal variables | False                           |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

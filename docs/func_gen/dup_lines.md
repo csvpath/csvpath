@@ -12,9 +12,10 @@ with duplicate subsets of header values.
 |:----------------------------------------------------------------------------------------------------------|
 | dup_lines( [check: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header)], ... ) |
 
-| Purpose    | Value                                   |
-|:-----------|:----------------------------------------|
-| Main focus | dup_lines() produces a calculated value |
+| Purpose                | Value                                   |
+|:-----------------------|:----------------------------------------|
+| Main focus             | dup_lines() produces a calculated value |
+| Has internal variables | False                                   |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

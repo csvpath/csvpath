@@ -11,9 +11,10 @@ median() returns the running  from the first to the current line
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | median( value to average: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function), [match, scan, or line: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function)] ) |
 
-| Purpose    | Value                                |
-|:-----------|:-------------------------------------|
-| Main focus | median() produces a calculated value |
+| Purpose                | Value                                |
+|:-----------------------|:-------------------------------------|
+| Main focus             | median() produces a calculated value |
+| Has internal variables | True                                 |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

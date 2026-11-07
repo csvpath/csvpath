@@ -3,9 +3,10 @@
 
 Indicates that a csvpath statement considers a data file valid, regardless of errors. 
 
-| Purpose    | Value                                |
-|:-----------|:-------------------------------------|
-| Main focus | validate() determines if lines match |
+| Purpose                | Value                                |
+|:-----------------------|:-------------------------------------|
+| Main focus             | validate() determines if lines match |
+| Has internal variables | False                                |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

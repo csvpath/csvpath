@@ -3,9 +3,10 @@
 
 Matches when the current file is in the failed/invalid state.
 
-| Purpose    | Value                             |
-|:-----------|:----------------------------------|
-| Main focus | valid() determines if lines match |
+| Purpose                | Value                             |
+|:-----------------------|:----------------------------------|
+| Main focus             | valid() determines if lines match |
+| Has internal variables | False                             |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -28,9 +28,10 @@ line numbers where the reset calls happened.
 |:---------------------------------------------------------------------------------------------------------------------|
 | reset_headers( [evaluate this: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function)] ) |
 
-| Purpose    | Value                            |
-|:-----------|:---------------------------------|
-| Main focus | reset_headers() is a side-effect |
+| Purpose                | Value                            |
+|:-----------------------|:---------------------------------|
+| Main focus             | reset_headers() is a side-effect |
+| Has internal variables | True                             |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

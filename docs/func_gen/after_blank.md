@@ -4,9 +4,10 @@
 Evaluates to True if the immediately preceding physical line was blank
 or had no header values.
 
-| Purpose    | Value                                   |
-|:-----------|:----------------------------------------|
-| Main focus | after_blank() determines if lines match |
+| Purpose                | Value                                   |
+|:-----------------------|:----------------------------------------|
+| Main focus             | after_blank() determines if lines match |
+| Has internal variables | False                                   |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

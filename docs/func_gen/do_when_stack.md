@@ -7,9 +7,10 @@ line.
 Those when/do operators that were triggered have a True. Those that
 didn't fire have a False.
 
-| Purpose    | Value                            |
-|:-----------|:---------------------------------|
-| Main focus | do_when_stack() is a side-effect |
+| Purpose                | Value                            |
+|:-----------------------|:---------------------------------|
+| Main focus             | do_when_stack() is a side-effect |
+| Has internal variables | False                            |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

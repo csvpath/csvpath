@@ -19,9 +19,10 @@ The resulting stack does not persist from line to line.
 | empty_stack()                                                                                                                                                                                            |
 | empty_stack( [header or var: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header)], ... ) |
 
-| Purpose    | Value                                     |
-|:-----------|:------------------------------------------|
-| Main focus | empty_stack() produces a calculated value |
+| Purpose                | Value                                     |
+|:-----------------------|:------------------------------------------|
+| Main focus             | empty_stack() produces a calculated value |
+| Has internal variables | False                                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

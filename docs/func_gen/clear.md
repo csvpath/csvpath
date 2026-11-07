@@ -13,9 +13,10 @@ Clears a variable by removing it.
 | clear( var name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) )    |
 | clear( var: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ) |
 
-| Purpose    | Value                    |
-|:-----------|:-------------------------|
-| Main focus | clear() is a side-effect |
+| Purpose                | Value                    |
+|:-----------------------|:-------------------------|
+| Main focus             | clear() is a side-effect |
+| Has internal variables | False                    |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

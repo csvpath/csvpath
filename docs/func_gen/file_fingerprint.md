@@ -22,9 +22,10 @@ csvpath and different from the original data file.
 |:-------------------|
 | file_fingerprint() |
 
-| Purpose    | Value                               |
-|:-----------|:------------------------------------|
-| Main focus | file_fingerprint() is a side-effect |
+| Purpose                | Value                               |
+|:-----------------------|:------------------------------------|
+| Main focus             | file_fingerprint() is a side-effect |
+| Has internal variables | False                               |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

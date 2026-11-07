@@ -4,9 +4,10 @@
 count_headers_in_line() returns the number of headers in the current
 line.
 
-| Purpose    | Value                                               |
-|:-----------|:----------------------------------------------------|
-| Main focus | count_headers_in_line() produces a calculated value |
+| Purpose                | Value                                               |
+|:-----------------------|:----------------------------------------------------|
+| Main focus             | count_headers_in_line() produces a calculated value |
+| Has internal variables | False                                               |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -17,9 +17,10 @@ I.e., if the last header is #11, end(3) returns the value of header
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | end( [positions to the left of end: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ Equality] ) |
 
-| Purpose    | Value                             |
-|:-----------|:----------------------------------|
-| Main focus | end() produces a calculated value |
+| Purpose                | Value                             |
+|:-----------------------|:----------------------------------|
+| Main focus             | end() produces a calculated value |
+| Has internal variables | False                             |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

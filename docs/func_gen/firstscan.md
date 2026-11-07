@@ -21,10 +21,11 @@ matches
 |:------------------------------------------------------------------------------------------------------------------------|
 | firstscan( [eval this: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ Equality] ) |
 
-| Purpose    | Value                                 |
-|:-----------|:--------------------------------------|
-| Main focus | firstscan() determines if lines match |
-| Aliases    | firstscan, first_scan                 |
+| Purpose                | Value                                 |
+|:-----------------------|:--------------------------------------|
+| Main focus             | firstscan() determines if lines match |
+| Aliases                | firstscan, first_scan                 |
+| Has internal variables | False                                 |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -3,10 +3,11 @@
 
 no() always evaluates to False. It is similar to yes() and none().
 
-| Purpose    | Value                          |
-|:-----------|:-------------------------------|
-| Main focus | no() determines if lines match |
-| Aliases    | no, false                      |
+| Purpose                | Value                          |
+|:-----------------------|:-------------------------------|
+| Main focus             | no() determines if lines match |
+| Aliases                | no, false                      |
+| Has internal variables | False                          |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

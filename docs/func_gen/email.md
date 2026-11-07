@@ -11,10 +11,11 @@ A line() schema type indicating that the value it represents must be an email
 |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | email( address: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ) |
 
-| Purpose    | Value                             |
-|:-----------|:----------------------------------|
-| Main focus | email() determines if lines match |
-| Type       | Email is a line() schema type     |
+| Purpose                | Value                             |
+|:-----------------------|:----------------------------------|
+| Main focus             | email() determines if lines match |
+| Type                   | Email is a line() schema type     |
+| Has internal variables | False                             |
 
 | Context          | Qualifier                                                                                                                                                                                                                                                                                                                          |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

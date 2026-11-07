@@ -19,9 +19,10 @@ sets the value for each line of output to the @critter variable.
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | insert( insert at index: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), insert header name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), data: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ) |
 
-| Purpose    | Value                     |
-|:-----------|:--------------------------|
-| Main focus | insert() is a side-effect |
+| Purpose                | Value                     |
+|:-----------------------|:--------------------------|
+| Main focus             | insert() is a side-effect |
+| Has internal variables | False                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

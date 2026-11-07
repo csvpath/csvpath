@@ -11,9 +11,10 @@
 | take()                                                                                                           |
 | take( eval this: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ Equality ) |
 
-| Purpose    | Value                   |
-|:-----------|:------------------------|
-| Main focus | take() is a side-effect |
+| Purpose                | Value                   |
+|:-----------------------|:------------------------|
+| Main focus             | take() is a side-effect |
+| Has internal variables | False                   |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -9,9 +9,10 @@ yet voted will return None, rather than True or False. This is most
 noticable when you are printing the vote stack. The print function,
 not having voted until it is complete, always returns None.
 
-| Purpose    | Value                         |
-|:-----------|:------------------------------|
-| Main focus | vote_stack() is a side-effect |
+| Purpose                | Value                         |
+|:-----------------------|:------------------------------|
+| Main focus             | vote_stack() is a side-effect |
+| Has internal variables | False                         |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

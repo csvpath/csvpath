@@ -35,9 +35,10 @@ csvpath will only see the even lines.
 |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | advance_all( lines to advance: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ) |
 
-| Purpose    | Value                          |
-|:-----------|:-------------------------------|
-| Main focus | advance_all() is a side-effect |
+| Purpose                | Value                          |
+|:-----------------------|:-------------------------------|
+| Main focus             | advance_all() is a side-effect |
+| Has internal variables | False                          |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

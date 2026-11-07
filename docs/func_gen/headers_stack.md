@@ -11,9 +11,10 @@ Returns the current header names as a stack variable.
 |:------------------|
 | headers_stack()   |
 
-| Purpose    | Value                                       |
-|:-----------|:--------------------------------------------|
-| Main focus | headers_stack() produces a calculated value |
+| Purpose                | Value                                       |
+|:-----------------------|:--------------------------------------------|
+| Main focus             | headers_stack() produces a calculated value |
+| Has internal variables | False                                       |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

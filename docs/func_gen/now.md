@@ -14,9 +14,10 @@ return is a string matching the format.
 | now()                                                                                                                                                                                                                                                                                                                                                  |
 | now( [format: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable)] ) |
 
-| Purpose    | Value                             |
-|:-----------|:----------------------------------|
-| Main focus | now() produces a calculated value |
+| Purpose                | Value                             |
+|:-----------------------|:----------------------------------|
+| Main focus             | now() produces a calculated value |
+| Has internal variables | False                             |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

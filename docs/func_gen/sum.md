@@ -21,9 +21,10 @@ using integer() or another approach.
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | sum( sum this: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ) |
 
-| Purpose    | Value                             |
-|:-----------|:----------------------------------|
-| Main focus | sum() produces a calculated value |
+| Purpose                | Value                             |
+|:-----------------------|:----------------------------------|
+| Main focus             | sum() produces a calculated value |
+| Has internal variables | True                              |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

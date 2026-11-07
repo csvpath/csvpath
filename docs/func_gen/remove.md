@@ -16,9 +16,10 @@ the header(s) indicated in the argument to remove().
 | remove( header identifier: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), ... ) |
 | remove( header: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header), ... )        |
 
-| Purpose    | Value                     |
-|:-----------|:--------------------------|
-| Main focus | remove() is a side-effect |
+| Purpose                | Value                     |
+|:-----------------------|:--------------------------|
+| Main focus             | remove() is a side-effect |
+| Has internal variables | False                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

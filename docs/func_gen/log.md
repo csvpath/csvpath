@@ -11,9 +11,10 @@ Writes a message to the CsvPath Framework log at a certain log level.
 |:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | log( log this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [info, debug, warn, error: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
 
-| Purpose    | Value                  |
-|:-----------|:-----------------------|
-| Main focus | log() is a side-effect |
+| Purpose                | Value                  |
+|:-----------------------|:-----------------------|
+| Main focus             | log() is a side-effect |
+| Has internal variables | False                  |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -21,9 +21,10 @@ every N-times a value is seen, matching or not.
 |:---------------------------------------------------------------------------------------------------------------------------|
 | increment( Match component: Matchable, Ratio: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 
-| Purpose    | Value                                   |
-|:-----------|:----------------------------------------|
-| Main focus | increment() produces a calculated value |
+| Purpose                | Value                                   |
+|:-----------------------|:----------------------------------------|
+| Main focus             | increment() produces a calculated value |
+| Has internal variables | False                                   |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

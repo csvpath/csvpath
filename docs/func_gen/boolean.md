@@ -17,10 +17,11 @@ header name.
 |:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | boolean( value: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ) |
 
-| Purpose    | Value                                                     |
-|:-----------|:----------------------------------------------------------|
-| Main focus | boolean() produces a calculated value and decides matches |
-| Type       | Boolean is a line() schema type                           |
+| Purpose                | Value                                                     |
+|:-----------------------|:----------------------------------------------------------|
+| Main focus             | boolean() produces a calculated value and decides matches |
+| Type                   | Boolean is a line() schema type                           |
+| Has internal variables | False                                                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                                                                                                          |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -20,10 +20,11 @@ string(none(), 5).
 |:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | string( value: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference), [max len: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)], [min len: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
 
-| Purpose    | Value                              |
-|:-----------|:-----------------------------------|
-| Main focus | string() determines if lines match |
-| Type       | String is a line() schema type     |
+| Purpose                | Value                              |
+|:-----------------------|:-----------------------------------|
+| Main focus             | string() determines if lines match |
+| Type                   | String is a line() schema type     |
+| Has internal variables | False                              |
 
 | Context          | Qualifier                                                                                                                                                                                                                                                    |
 |:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

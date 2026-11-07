@@ -11,9 +11,10 @@ Checks a contained value to see if it is even.
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | even( check this: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ Equality ) |
 
-| Purpose    | Value                            |
-|:-----------|:---------------------------------|
-| Main focus | even() determines if lines match |
+| Purpose                | Value                            |
+|:-----------------------|:---------------------------------|
+| Main focus             | even() determines if lines match |
+| Has internal variables | False                            |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

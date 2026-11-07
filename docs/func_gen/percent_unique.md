@@ -15,9 +15,10 @@ to allow for more than one percent unique function.
 |:------------------------------------------------------------------------------------------------------------------|
 | percent_unique( header to watch: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ) |
 
-| Purpose    | Value                                        |
-|:-----------|:---------------------------------------------|
-| Main focus | percent_unique() produces a calculated value |
+| Purpose                | Value                                        |
+|:-----------------------|:---------------------------------------------|
+| Main focus             | percent_unique() produces a calculated value |
+| Has internal variables | True                                         |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

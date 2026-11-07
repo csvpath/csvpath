@@ -18,9 +18,10 @@ prevents push() from adding a None to the stack.
 | push( new stack name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) )                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | push( stack name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference), push this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference), ... ) |
 
-| Purpose    | Value                   |
-|:-----------|:------------------------|
-| Main focus | push() is a side-effect |
+| Purpose                | Value                   |
+|:-----------------------|:------------------------|
+| Main focus             | push() is a side-effect |
+| Has internal variables | True                    |
 
 | Context          | Qualifier                                                                                                                                                                                                                                                              |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

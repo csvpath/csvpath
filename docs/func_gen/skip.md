@@ -22,9 +22,10 @@ has an embedded when/do operator.
 | skip()                                                                                                           |
 | skip( eval this: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ Equality ) |
 
-| Purpose    | Value                   |
-|:-----------|:------------------------|
-| Main focus | skip() is a side-effect |
+| Purpose                | Value                   |
+|:-----------------------|:------------------------|
+| Main focus             | skip() is a side-effect |
+| Has internal variables | False                   |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

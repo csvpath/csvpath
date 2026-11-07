@@ -8,9 +8,10 @@ Keep in mind that the number of headers in a file can change at any
 time. Each time we call reset_headers() the return from
 count_headers() is also reset.
 
-| Purpose    | Value                                       |
-|:-----------|:--------------------------------------------|
-| Main focus | count_headers() produces a calculated value |
+| Purpose                | Value                                       |
+|:-----------------------|:--------------------------------------------|
+| Main focus             | count_headers() produces a calculated value |
+| Has internal variables | False                                       |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -51,9 +51,10 @@ that case, onmatch would add nothing.
 | count()                         |
 | count( [eval: Matchable], ... ) |
 
-| Purpose    | Value                               |
-|:-----------|:------------------------------------|
-| Main focus | count() produces a calculated value |
+| Purpose                | Value                               |
+|:-----------------------|:------------------------------------|
+| Main focus             | count() produces a calculated value |
+| Has internal variables | True                                |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
