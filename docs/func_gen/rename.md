@@ -44,9 +44,10 @@ are run in serial or breadth-first.
 | rename( header index: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), new name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) )    |
 | rename( new header name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), ... )                                                                                  |
 
-| Purpose    | Value                     |
-|:-----------|:--------------------------|
-| Main focus | rename() is a side-effect |
+| Purpose                | Value                     |
+|:-----------------------|:--------------------------|
+| Main focus             | rename() is a side-effect |
+| Has internal variables | False                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

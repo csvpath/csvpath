@@ -22,9 +22,10 @@ For example, $[*][@a = line_number() replace(#order_number, @a)]
 | replace( replace value: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header), replacement: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) )          |
 | replace( replace by header identity: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), replacement: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ) |
 
-| Purpose    | Value                      |
-|:-----------|:---------------------------|
-| Main focus | replace() is a side-effect |
+| Purpose                | Value                      |
+|:-----------------------|:---------------------------|
+| Main focus             | replace() is a side-effect |
+| Has internal variables | False                      |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

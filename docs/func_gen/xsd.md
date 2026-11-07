@@ -41,9 +41,10 @@ paths group.
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | xsd( XSD file name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ) |
 
-| Purpose    | Value                           |
-|:-----------|:--------------------------------|
-| Main focus | xsd() determines if lines match |
+| Purpose                | Value                           |
+|:-----------------------|:--------------------------------|
+| Main focus             | xsd() determines if lines match |
+| Has internal variables | False                           |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

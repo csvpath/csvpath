@@ -17,9 +17,10 @@ or missing.
 | missing( [a function indicating all headers or all variables: Variables ǁ Headers] )                                                                                                                                                                                                                         |
 | missing( [one of a set of match components: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header)], ... ) |
 
-| Purpose    | Value                               |
-|:-----------|:------------------------------------|
-| Main focus | missing() determines if lines match |
+| Purpose                | Value                               |
+|:-----------------------|:------------------------------------|
+| Main focus             | missing() determines if lines match |
+| Has internal variables | False                               |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

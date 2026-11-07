@@ -15,10 +15,11 @@ matches
 |:------------------------------------------------------------------------------------------------------------------------|
 | firstline( [eval this: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ Equality] ) |
 
-| Purpose    | Value                                 |
-|:-----------|:--------------------------------------|
-| Main focus | firstline() determines if lines match |
-| Aliases    | firstline, first_line                 |
+| Purpose                | Value                                 |
+|:-----------------------|:--------------------------------------|
+| Main focus             | firstline() determines if lines match |
+| Aliases                | firstline, first_line                 |
+| Has internal variables | False                                 |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

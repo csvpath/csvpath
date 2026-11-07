@@ -35,9 +35,10 @@ variables generated in the results of the run.
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | metaphone( transform this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference), [lookup data: [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference)] ) |
 
-| Purpose    | Value                                   |
-|:-----------|:----------------------------------------|
-| Main focus | metaphone() produces a calculated value |
+| Purpose                | Value                                   |
+|:-----------------------|:----------------------------------------|
+| Main focus             | metaphone() produces a calculated value |
+| Has internal variables | False                                   |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

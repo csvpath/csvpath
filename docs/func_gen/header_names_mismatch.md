@@ -35,10 +35,11 @@ match value being false if the headers do not meet expectations.
 |:----------------------------------------------------------------------------------------------------------------------------|
 | header_names_mismatch( pipe delimited headers: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 
-| Purpose    | Value                                               |
-|:-----------|:----------------------------------------------------|
-| Main focus | header_names_mismatch() produces a calculated value |
-| Aliases    | header_names_mismatch, header_names_match           |
+| Purpose                | Value                                               |
+|:-----------------------|:----------------------------------------------------|
+| Main focus             | header_names_mismatch() produces a calculated value |
+| Aliases                | header_names_mismatch, header_names_match           |
+| Has internal variables | True                                                |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

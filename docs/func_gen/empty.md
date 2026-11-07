@@ -20,9 +20,10 @@ empty.
 | empty( Points to the headers: Headers )                                                                                                                                                                                                                                                    |
 | empty( Component to check: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header), ... ) |
 
-| Purpose    | Value                             |
-|:-----------|:----------------------------------|
-| Main focus | empty() determines if lines match |
+| Purpose                | Value                             |
+|:-----------------------|:----------------------------------|
+| Main focus             | empty() determines if lines match |
+| Has internal variables | False                             |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

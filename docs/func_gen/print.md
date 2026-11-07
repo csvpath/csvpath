@@ -32,9 +32,10 @@ available fields.
 | print( print this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [print to specific Printer stream: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
 | print( print this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [eval after: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ Equality] )    |
 
-| Purpose    | Value                    |
-|:-----------|:-------------------------|
-| Main focus | print() is a side-effect |
+| Purpose                | Value                    |
+|:-----------------------|:-------------------------|
+| Main focus             | print() is a side-effect |
+| Has internal variables | False                    |
 
 | Context          | Qualifier                                                                                                                                                                                                                                              |
 |:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

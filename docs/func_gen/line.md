@@ -21,9 +21,10 @@ Note that wildcard() and wildcard("*") are functionally the same.
 |:------------------------------------------------------------------------------------------------------------------------------------|
 | line( [function representing a data type: Wildcard ǁ String ǁ Boolean ǁ Decimal ǁ Date ǁ Nonef ǁ Blank ǁ Email ǁ Url ǁ Uuid], ... ) |
 
-| Purpose    | Value                            |
-|:-----------|:---------------------------------|
-| Main focus | line() determines if lines match |
+| Purpose                | Value                            |
+|:-----------------------|:---------------------------------|
+| Main focus             | line() determines if lines match |
+| Has internal variables | False                            |
 
 | Context          | Qualifier                                                                                                                                                                |
 |:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

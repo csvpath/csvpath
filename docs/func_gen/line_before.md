@@ -14,9 +14,10 @@ current value.
 | line_before( header name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 | line_before( header: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) )  |
 
-| Purpose    | Value                                     |
-|:-----------|:------------------------------------------|
-| Main focus | line_before() produces a calculated value |
+| Purpose                | Value                                     |
+|:-----------------------|:------------------------------------------|
+| Main focus             | line_before() produces a calculated value |
+| Has internal variables | False                                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

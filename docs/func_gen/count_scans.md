@@ -13,9 +13,10 @@ to skip blank lines (the default), when we're done scanning we will
 have a count_scans() total of 2, not 3, because we skipped a blank
 line.
 
-| Purpose    | Value                                     |
-|:-----------|:------------------------------------------|
-| Main focus | count_scans() produces a calculated value |
+| Purpose                | Value                                     |
+|:-----------------------|:------------------------------------------|
+| Main focus             | count_scans() produces a calculated value |
+| Has internal variables | False                                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

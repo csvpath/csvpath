@@ -5,9 +5,10 @@ Directs certain functions, such as any() or all(), to search in the
 variables. headers() has the same function, but directing the search
 to the headers.
 
-| Purpose    | Value                        |
-|:-----------|:-----------------------------|
-| Main focus | variables() is a side-effect |
+| Purpose                | Value                        |
+|:-----------------------|:-----------------------------|
+| Main focus             | variables() is a side-effect |
+| Has internal variables | False                        |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

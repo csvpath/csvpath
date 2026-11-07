@@ -42,9 +42,10 @@ the same named-paths group.
 |:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | jsonschema( JSONSchema file name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ) |
 
-| Purpose    | Value                                  |
-|:-----------|:---------------------------------------|
-| Main focus | jsonschema() determines if lines match |
+| Purpose                | Value                                  |
+|:-----------------------|:---------------------------------------|
+| Main focus             | jsonschema() determines if lines match |
+| Has internal variables | False                                  |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

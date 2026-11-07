@@ -17,10 +17,11 @@ minus() subtracts two or more numbers.
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | minus( term: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function), ... ) |
 
-| Purpose    | Value                               |
-|:-----------|:------------------------------------|
-| Main focus | minus() produces a calculated value |
-| Aliases    | subtract, minus                     |
+| Purpose                | Value                               |
+|:-----------------------|:------------------------------------|
+| Main focus             | minus() produces a calculated value |
+| Aliases                | subtract, minus                     |
+| Has internal variables | False                               |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

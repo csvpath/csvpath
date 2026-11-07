@@ -6,9 +6,10 @@ known as the physical line number.
 
 count_lines() is similar but is 1-based and excludes blank lines.
 
-| Purpose    | Value                                     |
-|:-----------|:------------------------------------------|
-| Main focus | line_number() produces a calculated value |
+| Purpose                | Value                                     |
+|:-----------------------|:------------------------------------------|
+| Main focus             | line_number() produces a calculated value |
+| Has internal variables | False                                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

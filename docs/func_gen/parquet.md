@@ -44,9 +44,10 @@ csvpath_instances property to flush each CsvPath in turn.
 |:---------------------------------------------------------------------------------------------------------------------------------------|
 | parquet( [function representing a data type: Wildcard ǁ String ǁ Boolean ǁ Decimal ǁ Date ǁ Nonef ǁ Blank ǁ Email ǁ Url ǁ Uuid], ... ) |
 
-| Purpose    | Value                               |
-|:-----------|:------------------------------------|
-| Main focus | parquet() determines if lines match |
+| Purpose                | Value                               |
+|:-----------------------|:------------------------------------|
+| Main focus             | parquet() determines if lines match |
+| Has internal variables | True                                |
 
 | Context          | Qualifier                                                                                                                                                                |
 |:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

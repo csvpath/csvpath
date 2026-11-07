@@ -51,9 +51,10 @@ mode of the imported csvpaths to no-run.
 |:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | import( import this: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ) |
 
-| Purpose    | Value                     |
-|:-----------|:--------------------------|
-| Main focus | import() is a side-effect |
+| Purpose                | Value                     |
+|:-----------------------|:--------------------------|
+| Main focus             | import() is a side-effect |
+| Has internal variables | False                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

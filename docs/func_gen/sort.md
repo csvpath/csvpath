@@ -12,9 +12,10 @@ it is a descending sort.
 |:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | sort( stack var name: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), ['desc' or True for descending: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
 
-| Purpose    | Value                   |
-|:-----------|:------------------------|
-| Main focus | sort() is a side-effect |
+| Purpose                | Value                   |
+|:-----------------------|:------------------------|
+| Main focus             | sort() is a side-effect |
+| Has internal variables | False                   |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

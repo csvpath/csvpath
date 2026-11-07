@@ -20,10 +20,11 @@ Note that wildcard() can represent 0 headers. Essentially, a wildcard by itself 
 | wildcard( , ... )                                                                      |
 | wildcard( [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 
-| Purpose    | Value                                |
-|:-----------|:-------------------------------------|
-| Main focus | wildcard() determines if lines match |
-| Type       | Wildcard is a line() schema type     |
+| Purpose                | Value                                |
+|:-----------------------|:-------------------------------------|
+| Main focus             | wildcard() determines if lines match |
+| Type                   | Wildcard is a line() schema type     |
+| Has internal variables | False                                |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

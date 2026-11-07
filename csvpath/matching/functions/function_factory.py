@@ -88,6 +88,7 @@ from .print.print_queue import PrintQueue
 from .lines.stop import Stop, Skip, StopAll, SkipAll
 from .lines.first import First
 from .lines.last import Last
+from .lines.at_line import AtLine
 from .lines.dups import HasDups, DupLines, CountDups, PercentDups, Fingerprint
 from .lines.first_line import FirstLine
 from .lines.advance import Advance, AdvanceAll
@@ -493,6 +494,8 @@ class FunctionFactory:
         fs["wildcard"] = Wildcard
         fs["line"] = Line
         fs["last"] = Last
+        fs["at_line"] = AtLine
+        fs["not_line"] = AtLine
         fs["exists"] = Exists
         fs["mod"] = Mod
         #

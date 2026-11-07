@@ -15,9 +15,10 @@ using push() or other functions.
 |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | stdev( stack var name: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 
-| Purpose    | Value                               |
-|:-----------|:------------------------------------|
-| Main focus | stdev() produces a calculated value |
+| Purpose                | Value                               |
+|:-----------------------|:------------------------------------|
+| Main focus             | stdev() produces a calculated value |
+| Has internal variables | False                               |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

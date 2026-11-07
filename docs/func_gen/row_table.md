@@ -12,9 +12,10 @@ table is text formatted.
 |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | row_table( [from header: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)], [to header: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
 
-| Purpose    | Value                        |
-|:-----------|:-----------------------------|
-| Main focus | row_table() is a side-effect |
+| Purpose                | Value                        |
+|:-----------------------|:-----------------------------|
+| Main focus             | row_table() is a side-effect |
+| Has internal variables | False                        |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

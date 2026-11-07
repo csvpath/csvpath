@@ -16,10 +16,11 @@ found.
 | peek_size( stack name: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) ǁ [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 | peek_size( stack: [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Reference](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#reference) )                                                                                                                                                                    |
 
-| Purpose    | Value                                   |
-|:-----------|:----------------------------------------|
-| Main focus | peek_size() produces a calculated value |
-| Aliases    | peek_size, size                         |
+| Purpose                | Value                                   |
+|:-----------------------|:----------------------------------------|
+| Main focus             | peek_size() produces a calculated value |
+| Aliases                | peek_size, size                         |
+| Has internal variables | False                                   |
 
 | Context          | Qualifier                                                                                                                                                                                                                                                                                                                          |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

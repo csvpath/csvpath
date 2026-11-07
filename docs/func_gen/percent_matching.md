@@ -12,9 +12,10 @@ data lines scanned in the denominator.
 |:-------------------|
 | percent_matching() |
 
-| Purpose    | Value                                          |
-|:-----------|:-----------------------------------------------|
-| Main focus | percent_matching() produces a calculated value |
+| Purpose                | Value                                          |
+|:-----------------------|:-----------------------------------------------|
+| Main focus             | percent_matching() produces a calculated value |
+| Has internal variables | False                                          |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

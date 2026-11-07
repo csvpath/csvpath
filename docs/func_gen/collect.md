@@ -16,9 +16,10 @@ two values.
 | collect( header identifier: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), ... ) |
 | collect( header: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header), ... )        |
 
-| Purpose    | Value                      |
-|:-----------|:---------------------------|
-| Main focus | collect() is a side-effect |
+| Purpose                | Value                      |
+|:-----------------------|:---------------------------|
+| Main focus             | collect() is a side-effect |
+| Has internal variables | False                      |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

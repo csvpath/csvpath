@@ -30,9 +30,10 @@ printers' printouts are more clearly separated.
 | print_line()                                                                                                                                                                                                                                                                        |
 | print_line( printer: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term), [delimiter: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)], [quotechar: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
 
-| Purpose    | Value                         |
-|:-----------|:------------------------------|
-| Main focus | print_line() is a side-effect |
+| Purpose                | Value                         |
+|:-----------------------|:------------------------------|
+| Main focus             | print_line() is a side-effect |
+| Has internal variables | False                         |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

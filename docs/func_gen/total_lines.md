@@ -5,9 +5,10 @@ Total lines
 
 Returns the total data lines count for the file (1-based).
 
-| Purpose    | Value                                     |
-|:-----------|:------------------------------------------|
-| Main focus | total_lines() produces a calculated value |
+| Purpose                | Value                                     |
+|:-----------------------|:------------------------------------------|
+| Main focus             | total_lines() produces a calculated value |
+| Has internal variables | False                                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

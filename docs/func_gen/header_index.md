@@ -22,9 +22,10 @@ header, not a check for the line having a value for the header.
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | header_index( header identity: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable), [value check: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term)] ) |
 
-| Purpose    | Value                                      |
-|:-----------|:-------------------------------------------|
-| Main focus | header_index() produces a calculated value |
+| Purpose                | Value                                      |
+|:-----------------------|:-------------------------------------------|
+| Main focus             | header_index() produces a calculated value |
+| Has internal variables | False                                      |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

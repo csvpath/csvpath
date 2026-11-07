@@ -50,9 +50,10 @@ whitespace because in reality the line is blank and has zero headers.
 | mismatch( a literal: signed: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 | mismatch( signed: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) )            |
 
-| Purpose    | Value                                  |
-|:-----------|:---------------------------------------|
-| Main focus | mismatch() produces a calculated value |
+| Purpose                | Value                                  |
+|:-----------------------|:---------------------------------------|
+| Main focus             | mismatch() produces a calculated value |
+| Has internal variables | False                                  |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

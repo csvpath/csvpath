@@ -20,9 +20,10 @@ due to the language's grammar you would actually need to do:
 |:------------------|
 | matches()         |
 
-| Purpose    | Value                                                     |
-|:-----------|:----------------------------------------------------------|
-| Main focus | matches() produces a calculated value and decides matches |
+| Purpose                | Value                                                     |
+|:-----------------------|:----------------------------------------------------------|
+| Main focus             | matches() produces a calculated value and decides matches |
+| Has internal variables | False                                                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

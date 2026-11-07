@@ -12,9 +12,10 @@ there are duplicate subsets of header values.
 |:----------------------------------------------------------------------------------------------------------------|
 | count_dups( [check this: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header)], ... ) |
 
-| Purpose    | Value                                    |
-|:-----------|:-----------------------------------------|
-| Main focus | count_dups() produces a calculated value |
+| Purpose                | Value                                    |
+|:-----------------------|:-----------------------------------------|
+| Main focus             | count_dups() produces a calculated value |
+| Has internal variables | False                                    |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

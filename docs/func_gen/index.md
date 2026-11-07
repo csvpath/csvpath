@@ -15,6 +15,7 @@ These function docs are generated from the function code. They are also availabl
 * [and](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/and.md)
 * [any](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/any.md)
 * [append](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/append.md)
+* [at_line](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/at_line.md)
 * [average](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/average.md)
 * [before](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/before.md)
 * [before_after](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/before_after.md)
@@ -141,6 +142,7 @@ These function docs are generated from the function code. They are also availabl
 * [nor](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/nor.md)
 * [not](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/not.md)
 * [not_equal_to](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/not_equal_to.md)
+* [not_line](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/not_line.md)
 * [now](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/now.md)
 * [odd](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/odd.md)
 * [or](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/or.md)
@@ -221,4 +223,4 @@ These function docs are generated from the function code. They are also availabl
 * [yes](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/yes.md)
 
 
-Generated on: 2026-11-06 14:32:07.769347
+Generated on: 2026-11-06 22:09:46.959085

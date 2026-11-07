@@ -19,9 +19,10 @@ See stop() for more behavior details.
 |:-----------------------------------------------------------------------------------------------------------------------|
 | stop_all( [eval this: [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function) ǁ Equality] ) |
 
-| Purpose    | Value                       |
-|:-----------|:----------------------------|
-| Main focus | stop_all() is a side-effect |
+| Purpose                | Value                       |
+|:-----------------------|:----------------------------|
+| Main focus             | stop_all() is a side-effect |
+| Has internal variables | False                       |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

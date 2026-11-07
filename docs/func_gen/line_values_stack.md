@@ -11,9 +11,10 @@ Returns the current line values as a stack variable.
 |:--------------------|
 | line_values_stack() |
 
-| Purpose    | Value                                           |
-|:-----------|:------------------------------------------------|
-| Main focus | line_values_stack() produces a calculated value |
+| Purpose                | Value                                           |
+|:-----------------------|:------------------------------------------------|
+| Main focus             | line_values_stack() produces a calculated value |
+| Has internal variables | False                                           |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

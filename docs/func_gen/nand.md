@@ -11,9 +11,10 @@ nand() is False if its contained match components evaluate to True.
 |:------------------------------------------------------------|
 | nand( Eval this: Matchable, And eval this: Matchable, ... ) |
 
-| Purpose    | Value                            |
-|:-----------|:---------------------------------|
-| Main focus | nand() determines if lines match |
+| Purpose                | Value                            |
+|:-----------------------|:---------------------------------|
+| Main focus             | nand() determines if lines match |
+| Has internal variables | False                            |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

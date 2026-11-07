@@ -27,9 +27,10 @@ variable of birds with values like blue|bluebird,red|redbird.
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | tally( Value to count: [Header](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#header) ǁ [Variable](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#variable) ǁ [Function](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#function), ... ) |
 
-| Purpose    | Value                    |
-|:-----------|:-------------------------|
-| Main focus | tally() is a side-effect |
+| Purpose                | Value                    |
+|:-----------------------|:-------------------------|
+| Main focus             | tally() is a side-effect |
+| Has internal variables | False                    |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

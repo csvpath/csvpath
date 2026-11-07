@@ -11,9 +11,10 @@ Matches every N times a value is seen.
 |:--------------------------------------------------------------------------------------------------------------------|
 | every( watch: Matchable, pick every N: [Term](https://github.com/csvpath/csvpath/blob/main/docs/matching.md#term) ) |
 
-| Purpose    | Value                               |
-|:-----------|:------------------------------------|
-| Main focus | every() produces a calculated value |
+| Purpose                | Value                               |
+|:-----------------------|:------------------------------------|
+| Main focus             | every() produces a calculated value |
+| Has internal variables | False                               |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -3,10 +3,11 @@
 
 yes() always evaluates to True. It is similar to no() and none().
 
-| Purpose    | Value                              |
-|:-----------|:-----------------------------------|
-| Main focus | true() produces a calculated value |
-| Aliases    | yes, true                          |
+| Purpose                | Value                              |
+|:-----------------------|:-----------------------------------|
+| Main focus             | true() produces a calculated value |
+| Aliases                | yes, true                          |
+| Has internal variables | False                              |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
