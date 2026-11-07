@@ -1,0 +1,44 @@
+~
+  id: group-a-ehic-udi
+  macie-origin: job
+  macie-job-id: 8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f
+  macie-account: 123456789012
+  macie-region: us-east-1
+  macie-source-arn: arn|aws|macie2|us-east-1|123456789012|classification-job/8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f
+  macie-downloaded-at: 20261107T120000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "EUROPEAN_HEALTH_INSURANCE_CARD_NUMBER",
+        "PERSONAL_INFORMATION",
+        "eu_ehic",
+        "required",
+        "assicurazione sanitaria numero|carta assicurazione numero|carte d’assurance maladie|carte européenne d'assurance maladie|ceam|ehic|ehic#|finlandehicnumber#|gesundheitskarte|hälsokort|health card|health card number|health insurance card|health insurance number|insurance card number|krankenversicherungskarte|krankenversicherungsnummer|medical account number|numero conto medico|numéro d’assurance maladie|numéro de carte d’assurance|numéro de compte medical|número de cuenta médica|número de seguro de salud|número de tarjeta de seguro|sairaanhoitokortin|sairausvakuutuskortti|sairausvakuutusnumero|sjukförsäkring nummer|sjukförsäkringskort|suomi ehic-numero|tarjeta de salud|terveyskortti|tessera sanitaria assicurazione numero|versicherungsnummer",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "FINLAND_EUROPEAN_HEALTH_INSURANCE_NUMBER",
+        "PERSONAL_INFORMATION",
+        "fi_ehic",
+        "required",
+        "ehic|ehic#|finland health insurance card|finlandehicnumber#|finska sjukförsäkringskort|hälsokort|health card|health card number|health insurance card|health insurance number|sairaanhoitokortin|sairausvakuutuskortti|sairausvakuutusnumero|sjukförsäkring nummer|sjukförsäkringskort|suomen sairausvakuutuskortti|suomi ehic-numero|terveyskortti",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "MEDICAL_DEVICE_UDI",
+        "PERSONAL_INFORMATION",
+        "udi",
+        "required",
+        "blood|blood bag|dev id|device id|device identifier|gs1|hibcc|iccbba|med|udi|unique device id|unique device identifier",
+        30,
+        "1:LOW 2:MEDIUM 100:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

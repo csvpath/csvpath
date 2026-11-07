@@ -71,10 +71,9 @@ last. Add an item the moment something is deferred.
    - **Done:** Germany identity card, France health insurance number,
      card magnetic stripe, pair 16_group_a_more.
    - **Done:** Canada health number (British Columbia, Ontario, Quebec;
-     pair 24_ca_health).
-   - **Group A, health and payments:** UDI (GS1,
-     HIBCC, ICCBBA formats with check characters), EHIC card numbers (EU
-     and Finland; the format needs confirming).
+     pair 24_ca_health). EHIC card numbers (EU and Finland) and medical
+     device UDIs (GS1 and HIBCC), pair 25_ehic_udi. Group A is complete
+     apart from ISBT 128 UDIs.
    - **Group B, done:** `FormatDetector` and the format notation; UK
      NINO, US and Canada bank account, card security code, pair
      17_group_b_first. Passports (7), pair 18_passports. Phone numbers
@@ -134,6 +133,13 @@ fidelity item in transpile-design.md.
 - **Provinces left out.** Canada health numbers are detected only for
   British Columbia, Ontario and Quebec (item 24); other provinces' numbers
   have no published check and are missed.
+- **EHIC: the card number only** (item 25). We read it as 20 digits, 80
+  and a country code, which no official source confirmed; the personal ID
+  on the card is not detected. Ask testers with real cards whether
+  theirs are found.
+- **UDI: GS1 and HIBCC only.** ISBT 128 (blood and tissue products) is
+  missed, as are GS1 UDIs written without their parentheses. The
+  keywords `med` and `blood` match inside many words.
 
 ## Decide at release planning
 

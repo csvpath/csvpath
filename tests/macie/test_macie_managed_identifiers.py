@@ -90,7 +90,7 @@ def test_macie_catalog_packaged(catalog) -> None:
     #
     banks = [n for n in catalog.names if n.endswith("_BANK_ACCOUNT_NUMBER")]
     assert len(banks) == 52
-    assert len(catalog.names) == 145
+    assert len(catalog.names) == 148
     cc = catalog.identifier(name="CREDIT_CARD_NUMBER")
     assert cc["category"] == "FINANCIAL_INFORMATION"
     assert cc["keyword_mode"] == "required"
@@ -103,6 +103,9 @@ def test_macie_catalog_packaged(catalog) -> None:
     assert len(catalog.detector(name="credit_card")["exclusions"]) == 55
     assert set(DETECTORS) == {
         "ca_health",
+        "eu_ehic",
+        "fi_ehic",
+        "udi",
         "lat_long",
         "http_cookie",
         "ar_dni",

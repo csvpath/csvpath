@@ -13,7 +13,7 @@ import random
 import string
 
 import pytest
-from stdnum import luhn, verhoeff
+from stdnum import ean, luhn, verhoeff
 from stdnum.ar import cuit
 from stdnum.au import tfn
 from stdnum.br import cnpj, cpf
@@ -189,6 +189,13 @@ def test_macie_oracle_ca_bc_phn() -> None:
         if rng.random() < 0.1:
             s = _digits(rng, 10)
         assert chut.ca_bc_phn(digits=s) == bc_phn.is_valid(s), s
+
+
+def test_macie_oracle_gs1_check() -> None:
+    rng = random.Random(22)
+    for _ in range(N):
+        s = _digits(rng, rng.choice([8, 12, 13, 14]))
+        assert chut.gs1_check(digits=s) == ean.is_valid(s), s
 
 
 def test_macie_oracle_gb_utr() -> None:
