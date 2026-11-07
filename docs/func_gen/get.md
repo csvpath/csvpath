@@ -26,7 +26,7 @@ unless there is no simplier solution based on more specific functions.
 | Purpose                | Value                             |
 |:-----------------------|:----------------------------------|
 | Main focus             | get() produces a calculated value |
-| Has internal variables | False                             |
+| Has internal variables | True                              |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

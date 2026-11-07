@@ -14,7 +14,7 @@ Returns a stack variable. The stack is created if not found.
 | Purpose                | Value                    |
 |:-----------------------|:-------------------------|
 | Main focus             | stack() is a side-effect |
-| Has internal variables | False                    |
+| Has internal variables | True                     |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

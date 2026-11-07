@@ -38,6 +38,13 @@ class Random(ValueProducer):
         #
         super().check_valid()
 
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
+
     def _produce_value(self, skip=None) -> None:
         lower = self.children[0].left.to_value(skip=skip)
         upper = self.children[0].right.to_value(skip=skip)
@@ -78,6 +85,13 @@ class Shuffle(ValueProducer):
         a.arg(name="to this", types=[Term, Variable, Header, Function], actuals=[int])
         self.args.validate(self.siblings())
         super().check_valid()
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
 
     def _produce_value(self, skip=None) -> None:
         order = self.matcher.get_variable(self.first_non_term_qualifier(self.name))

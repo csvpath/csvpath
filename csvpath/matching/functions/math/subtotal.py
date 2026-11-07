@@ -48,6 +48,13 @@ class Subtotal(ValueProducer):
         #
         super().check_valid()
 
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
+
     def _produce_value(self, skip=None) -> None:
         t = self._value_one(skip=skip)
         c = self._value_two(skip=skip)

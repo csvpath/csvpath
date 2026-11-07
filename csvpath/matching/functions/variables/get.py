@@ -53,6 +53,13 @@ class Get(ValueProducer):
         # self.name_qualifier = True
         super().check_valid()
 
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
+
     def _produce_value(self, skip=None) -> None:
         varname = None
         varname = self._value_one(skip=skip)

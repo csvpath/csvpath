@@ -105,6 +105,13 @@ class CountDups(ValueProducer):
         self.args.validate(self.siblings())
         super().check_valid()
 
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
+
     def _decide_match(self, skip=None) -> None:
         self.match = self.default_match()
 
@@ -133,6 +140,13 @@ class HasDups(MatchDecider):
         self.args.validate(self.siblings())
         super().check_valid()
 
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
+
     def _decide_match(self, skip=None) -> None:
         name = self.first_non_term_qualifier(self.name)
         self._register_internal_var_name(name)
@@ -160,6 +174,13 @@ class DupLines(ValueProducer):
         self.args.argset().arg(name="check", types=[None, Header], actuals=[None, Any])
         self.args.validate(self.siblings())
         super().check_valid()
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
 
     def _produce_value(self, skip=None) -> None:
         name = self.first_non_term_qualifier(self.name)

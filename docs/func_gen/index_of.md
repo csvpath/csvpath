@@ -16,7 +16,7 @@ Finds the position of a value within a stack, if present.
 | Purpose                | Value                                  |
 |:-----------------------|:---------------------------------------|
 | Main focus             | index_of() produces a calculated value |
-| Has internal variables | False                                  |
+| Has internal variables | True                                   |
 
 | Context          | Qualifier                                                                                                                                                                                                                                      |
 |:-----------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
