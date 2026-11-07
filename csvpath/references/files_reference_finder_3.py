@@ -1201,6 +1201,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
         is_flattened = self._is_bare_flatten_reference(name_one)
         is_deep_grouped = self._is_bare_groups_reference(name_one)
         partitioned = is_grouped or is_deep_grouped
+        #
+        # the named-file of each candidate, by its file_home, for the
+        # plain-path branch: a '$*' root groups by named-file (compendium
+        # 4.1b), so a pointer or an index range picks within each one.
+        # None for the forms that pool (':flatten()') or that already
+        # partition by file_home (':all()', ':groups()').
+        #
+        named_file_of = None
+        name_one_pointer = None
         if is_grouped:
             candidates = []
             for name in self._matching_names(
@@ -1276,7 +1285,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
             self._apply_implied_star(name_one)
             if field_call is None:
                 field_call = self._extract_gate_field_call(name_one)
-            if name_one.functions:
+            if reference.name_three is None:
+                # a lone pointer, e.g. '$*.files.:last()': each named-
+                # file's own "name_one, file pointer" (5.21), as the
+                # literal root reads '$alpha.files.:last()'
+                name_one_pointer = self._name_one_pointer(name_one)
+            if name_one.functions and name_one_pointer is None:
                 # same settled restriction as query()'s own literal-root
                 # branch (not-yet-supported sweep #3), for '*' traversal.
                 raise ReferenceException3(
@@ -1284,12 +1298,23 @@ class FilesReferenceFinder3(ReferenceFinder3):
                         name_one=name_one, star_traversal=True
                     )
                 )
+            if name_one_pointer is not None and name_one.name_two is not None:
+                raise ReferenceException3(
+                    "FilesReferenceFinder3 does not yet support a version-"
+                    "selecting pointer directly in name_one (e.g. ':last()') "
+                    "combined with the '#worksheet' marker (name_two) -- put "
+                    "the pointer in name_three instead."
+                )
             pattern = self._compile_path_pattern(name_one.path)
             candidates = []
+            named_file_of = {}
             for name in self._matching_names(
                 self.source.file_names(), name_filter
             ):
-                candidates.extend(self._candidates_for_name(name, pattern))
+                found = self._candidates_for_name(name, pattern)
+                for entry in found:
+                    named_file_of[entry["file_home"]] = name
+                candidates.extend(found)
 
         if field_call is not None:
             # issue #438: same universal, post-candidate-gathering GATE
@@ -1303,6 +1328,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
             ]
 
         name_three = reference.name_three
+        if name_three is None and name_one_pointer is not None:
+            selected_candidates = []
+            for group in self._by_named_file(
+                candidates=candidates, named_file_of=named_file_of
+            ):
+                selected = self._apply_pointer(name_one_pointer, group)
+                if selected is not None:
+                    selected_candidates.append(selected)
+            return ReferenceResults3(
+                results=[
+                    ReferenceResult3(path=c["file"], uuid=c["uuid"])
+                    for c in selected_candidates
+                ]
+            )
         if name_three is None:
             file_homes = []
             for entry in candidates:
@@ -1405,6 +1444,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "already means its own whole period, both ends included."
             )
 
+        #
+        # a '$*' root groups by named-file for a pointer or an index range
+        # (compendium 4.1b). A date range or a time window matches each
+        # version's own time, so with no pointer it keeps the pooled,
+        # time-ordered list.
+        #
+        index_range = has_range and not (from_is_date or to_is_date)
+        by_named_file = named_file_of is not None
+
         def _narrow(cands: list) -> list:
             # the range or time window, then the gates (finding G,
             # compendium 6.28); the pointer picks from what is left.
@@ -1473,6 +1521,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     candidates = []
                     for file_home in sorted(by_file_home):
                         candidates.extend(_narrow(by_file_home[file_home]))
+                elif by_named_file and index_range:
+                    # an index range is a multi-valued pointer: within each
+                    # named-file (4.1b)
+                    candidates = [
+                        c
+                        for group in self._by_named_file(
+                            candidates=candidates, named_file_of=named_file_of
+                        )
+                        for c in _narrow(sorted(group, key=lambda e: e["time"]))
+                    ]
                 else:
                     candidates = _narrow(sorted(candidates, key=lambda e: e["time"]))
             return ReferenceResults3(
@@ -1494,6 +1552,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
             for file_home in sorted(by_file_home):
                 group_candidates = _narrow(by_file_home[file_home])
                 selected = self._apply_pointer(pointer, group_candidates)
+                if selected is not None:
+                    selected_candidates.append(selected)
+        elif by_named_file:
+            selected_candidates = []
+            for group in self._by_named_file(
+                candidates=candidates, named_file_of=named_file_of
+            ):
+                narrowed = _narrow(sorted(group, key=lambda e: e["time"]))
+                selected = self._apply_pointer(pointer, narrowed)
                 if selected is not None:
                     selected_candidates.append(selected)
         else:
@@ -1540,8 +1607,23 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 and not has_value_field
                 and len(selected_candidates) > 1
                 and not partitioned
+                and not by_named_file
             ),
         )
+
+    @staticmethod
+    def _by_named_file(*, candidates: list, named_file_of: dict) -> list:
+        """`candidates` split into one list per named-file, in the order
+        the named-files were enumerated, each keeping its own order.
+        `named_file_of` maps a candidate's file_home to its named-file."""
+        if candidates is None:
+            raise ValueError("candidates cannot be None")
+        if named_file_of is None:
+            raise ValueError("named_file_of cannot be None")
+        groups = {}
+        for entry in candidates:
+            groups.setdefault(named_file_of[entry["file_home"]], []).append(entry)
+        return list(groups.values())
 
     def _candidates_for_name(self, name: str, pattern: list) -> list:
         """every manifest entry for one named-file whose file_home
@@ -2696,7 +2778,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         if (
             reference.name_three is None
-            and not isinstance(reference.root_major, Star3)
             and result.uuid is not None
             and self._name_one_pointer(reference.name_one) is not None
         ):
@@ -2712,6 +2793,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # FIRST_PARTY and never reach the re-derive-by-uuid logic
             # the kind == METADATA_FILE block below uses for every
             # other shape that selects one manifest entry this way.
+            if isinstance(reference.root_major, Star3):
+                # each named-file's own pick (4.1b), in its own manifest
+                return self._live_manifest_entry_by_uuid(result.uuid)
             manifest = self.source.file_manifest(reference.root_major)
             return self._find_manifest_entry_by_uuid(manifest, result.uuid)
         kind = reference.resolve_kind

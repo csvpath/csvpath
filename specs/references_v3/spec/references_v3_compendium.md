@@ -564,15 +564,20 @@ each fully occupy their `name_one` or `name_three` segment:
 As the root, `$*` (every named-file, named-paths group or named-results
 name) mimics grouping: a pointer or range applies within each named entity,
 so the reference gives one result per named entity. `$*.csvpaths.:last()`
-is the last loaded version of every named-paths group, and
-`$*.results.:last()` the last no-template run of every named-results name.
+is the last loaded version of every named-paths group,
+`$*.results.:last()` the last no-template run of every named-results name,
+and `$*.files.:last()` the last registration of every named-file.
 `:regex()` and `:choice()` roots group the same way. A `*` inside the
 reference still pools its own position (4.1): `$*.results.beta/*:last()` is
-each named-results name's last run under a one-level `beta` template.
+each named-results name's last run under a one-level `beta` template, and
+`$*.files.*.:last()` each named-file's last registration among its
+one-level files.
 
-Two forms pool across every named entity instead: `:flatten()` in
-`results` (`$*.results.:flatten():last()` is the most recent run of any
-named-results name, at any depth) and the ledger or logical manifest set,
+Two forms pool across every named entity instead: `:flatten()` in `files`
+and `results` (`$*.files.:flatten().:last()` is the most recent
+registration of any named-file, and `$*.results.:flatten():last()` the most
+recent run of any named-results name, at any depth) and the ledger or
+logical manifest set,
 `:manifest()` (`$*.csvpaths.:manifest():last()`, `$*.results.:manifest():last()`).
 With no pointer or range there is nothing to reduce per named entity, so
 grouping and pooling give the same set.
@@ -654,10 +659,14 @@ And named-file `cappa`:
 - `three.csv` [1 version]
 - `orders/2026/four.csv` [2 versions]
 
+The registrations arrived in the order listed: `zero.csv`, both versions of
+`one.csv`, both of `two.csv`, `three.csv`, then both of `four.csv`.
+
 Expect the following results from these references:
-- `$*.files.*.:last()` → 1 most-recent registration, considering all named-files
+- `$*.files.*.:last()` → 3 registrations, one per named-file (4.1b): `one.csv`'s second version, `two.csv`'s second and `three.csv`'s. The one-level `*` does not reach `orders/2026/four.csv`
+- `$*.files.:flatten().:last()` → 1 most-recent registration, considering all named-files at any depth: `four.csv`'s second version
 - `$*.files.:all().:last()` → 4 most-recent registrations, one per 0-length template file home
-- `$alpha.files.*.:last()` → 1 most-recent registration from `alpha`
+- `$alpha.files.*.:last()` → 1 most-recent registration from `alpha`: `one.csv`'s second version
 - `$alpha.files.:all().:last()` → 2 most-recent registrations, one per file home
 - `$*.files.:groups().:last()` → 5 most-recent registrations, one per file home
 - `$*.files.:flatten().:from(4):to(:index(-1))` → last 4 most-recent registrations of all 8

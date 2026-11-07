@@ -223,6 +223,13 @@ genuinely uncertain is marked below rather than guessed.
 - `test_files_reference_finder_3.py::TestStarFlattensAcrossAllFiles`/
   `test_results_reference_finder_3.py` bare-`*` pooling tests
 
+#### 4.1b
+- `TestStarRootGroups` in `test_csvpaths_reference_finder_3.py` and
+  `test_results_reference_finder_3.py` (#518);
+  `test_files_reference_finder_3.py::TestStarRootGroupsByNamedFile`
+  (2026-11-06), with `TestStarTraversalFlatten` and
+  `TestManifestEntryQueryPaths` for the grouped `$*.files.*.:last()`
+
 #### 4.2
 - `test_files_reference_finder_3.py::TestAllGrouping`,
   `TestAllGroupingAtAMiddlePosition`; `test_results_reference_finder_3.py`
