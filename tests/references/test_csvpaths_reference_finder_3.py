@@ -239,13 +239,25 @@ class TestBareUuidLookup:
         results = _finder("$acme.csvpaths.:last():uuid()").resolve()
         assert results.results[0].data == "v1-uuid"
 
-    def test_an_argument_in_the_field_accessor_position_is_rejected(self):
-        # ARG_TYPES now allows a str arg (for the bare lookup form) --
-        # confirm it does NOT get silently ignored when :uuid() rides
-        # alongside a pointer instead (the exact footgun confirmed
-        # live before this guard existed).
-        with pytest.raises(ReferenceException3):
-            _finder('$acme.csvpaths.:last():uuid("x")').query()
+    # beside a pointer an argued ':uuid()' filters the versions, then the
+    # pointer picks, as in RESULTS (David, 2026-11-06; 6.44). It used to
+    # raise, which kept the argument from being ignored.
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ('$acme.csvpaths.:last():uuid("v0-uuid")', ["v0-uuid"]),
+            ('$acme.csvpaths.:uuid("v0-uuid"):last()', ["v0-uuid"]),
+            ('$acme.csvpaths.:first():uuid("v1-uuid")', ["v1-uuid"]),
+            ('$acme.csvpaths.:all():uuid("v1-uuid")', ["v1-uuid"]),
+            ('$acme.csvpaths.:last():uuid("x")', []),
+        ],
+    )
+    def test_an_argument_beside_a_pointer_filters(self, reference, expected):
+        assert _finder(reference).query().uuids == expected
+
+    def test_a_filter_and_a_value_field_together(self):
+        results = _finder('$acme.csvpaths.:last():uuid("v0-uuid"):uuid()').resolve()
+        assert [r.data for r in results.results] == ["v0-uuid"]
 
 
 FINGERPRINT_MANIFEST = [
@@ -312,15 +324,19 @@ class TestBareFingerprintLookup:
         ).query()
         assert results.results == []
 
-    def test_an_argument_in_the_field_accessor_position_is_rejected(self):
-        # same guard :uuid()'s own ordinary-position case already has
-        # -- riding alongside a pointer instead of bare, an argument
-        # is rejected rather than silently ignored.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$acme.csvpaths.:last():fingerprint("x")',
-                manifest=FINGERPRINT_MANIFEST,
-            ).query()
+    # beside a pointer it filters, the same as ':uuid()' (2026-11-06)
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ('$acme.csvpaths.:last():fingerprint("aaaa")', ["v0-uuid"]),
+            ('$acme.csvpaths.:fingerprint("aaaa"):last()', ["v0-uuid"]),
+            ('$acme.csvpaths.:all():fingerprint("cccc")', ["v1-uuid"]),
+            ('$acme.csvpaths.:last():fingerprint("x")', []),
+        ],
+    )
+    def test_an_argument_beside_a_pointer_filters(self, reference, expected):
+        results = _finder(reference, manifest=FINGERPRINT_MANIFEST).query()
+        assert results.uuids == expected
 
 
 class TestNoPointerReturnsEveryVersion:
@@ -1623,8 +1639,6 @@ class TestCsvpathsGates:
             # groups, which is not built
             "$acme.csvpaths.:all():template(:has_value())",
             "$*.csvpaths.:manifest():template(:has_value())",
-            # an argued selector beside a pointer is a pointer (6.44)
-            '$acme.csvpaths.:last():uuid("a1")',
             # another datatype's field (2026-11-05): under '*' these read
             # None and filtered everything out silently after #522.
             # (':status()' was one of these until it became a CSVPATHS
@@ -3184,3 +3198,32 @@ class TestBareStarFieldReadsLiveGroups:
             "also-v1",
             "keep-v1",
         ]
+
+
+class TestArguedUuidFilters:
+    # an argued ':uuid()' beside a pointer is a filter, then the pointer
+    # picks, as in RESULTS (David, 2026-11-06; compendium 6.44). The
+    # finding A fixture: acme a1-a4, beta b1-b2, gone's g1 deleted.
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ('$acme.csvpaths.:last():uuid("a1")', ["a1"]),
+            ('$acme.csvpaths.:uuid("a1"):last()', ["a1"]),
+            ('$acme.csvpaths.:last():uuid("b1")', []),
+            ('$*.csvpaths.:last():uuid("a1")', ["a1"]),
+            ('$*.csvpaths.:uuid("b1"):first()', ["b1"]),
+            ('$*.csvpaths.:uuid("a1")', ["a1"]),
+            ('$*.csvpaths.:all():uuid("b2")', ["b2"]),
+            ('$*.csvpaths.:manifest():uuid("g1")', ["g1"]),
+            ('$*.csvpaths.:manifest():last():uuid("g1")', ["g1"]),
+            # with another gate, ANDed in either order
+            ('$acme.csvpaths.:last():uuid("a1"):lifecycle("active")', ["a1"]),
+            ('$*.csvpaths.:manifest():lifecycle("active"):uuid("g1")', []),
+            ('$*.csvpaths.:manifest():uuid("g1"):lifecycle("deleted")', ["g1"]),
+        ],
+    )
+    def test_a_filter_then_the_pointer(self, reference, expected):
+        assert _gate_finder(reference).query().uuids == expected
+
+    def test_the_bare_lookup_is_unchanged(self):
+        assert _gate_finder('$acme.csvpaths.:uuid("a2")').query().uuids == ["a2"]

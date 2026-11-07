@@ -749,14 +749,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # recognized at all" case unreachable now, not just
             # redundant.
             self._check_position(f, Reference3.NAME_THREE, Reference3.FILES)
-            # generalized 2026-10-18 (was: a ':fingerprint()'-specific,
-            # hand-written check, settled 2026-08-13) -- :uuid() became
-            # a second SELECTOR_WHEN_ARGUED function needing the
-            # identical guard once its own ARG_TYPES widened, so this
-            # is now registry-driven instead of hardcoding a function
-            # name. See _reject_selector_arg_outside_its_bare_form()'s
-            # own docstring.
-            self._reject_selector_arg_outside_its_bare_form(f)
+            # an argued ':uuid()'/':fingerprint()' here is a gate, as in
+            # RESULTS (David, 2026-11-06; compendium 6.44). It used to be
+            # rejected (2026-08-13, generalized 2026-10-18); '*' already
+            # filtered by it.
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         gates = [f for f in built if self._is_name_three_gate(f)]
         if name_one.name_two is not None and not pointers:
@@ -2590,8 +2586,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
         in '.:last():type("csv")' (finding G, 2026-11-02). Only a
         manifest.json field with a FILES key can filter. A definition.json
         field is not a gate; some of those use the argument to pick a key
-        (':source_port("email")'). Argued ':uuid()'/':fingerprint()' never
-        get here; they are rejected in name_three."""
+        (':source_port("email")'). Argued ':uuid()'/':fingerprint()' are
+        gates too (2026-11-06, compendium 6.44)."""
         if function is None:
             raise ValueError("function cannot be None")
         if function.arg is None or isinstance(function, TimeWindowFunction3):

@@ -1631,6 +1631,13 @@ What a pointer or value resolves to depends on where it sits and how it is used:
   value as a field accessor. E.g. $acme.files.:first():uuid() returns a UUID
   value; whereas, $acme.files.:uuid("ab37-fef3...") returns a path to the item
   without resolving to a more specific value. Likewise :fingerprint().
+- Anywhere else, an argued `:uuid()` or `:fingerprint()` is a filter, the
+  same in every datatype: it narrows the items, then the pointer picks from
+  what is left, whatever the written order (6.28). So
+  `$acme.csvpaths.:last():uuid("a1")` is a1 even when a1 is not the last
+  version, `$acme.files.:name("orders.csv").:last():uuid("b2")` is `[]`
+  when b2 is not a version of orders.csv, and
+  `$acme.results.:last():uuid("r0")` is the run r0.
 #### 6.45
 - In name_one, a pointer resolves to a physical file, a named-paths group
   version, or a run.

@@ -1132,18 +1132,19 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     def _gate_calls(self, *, built: list, pointer_present: bool) -> list:
         """the argued field accessors in `built` that filter versions, a
         GATE (finding A, David 2026-10-29; compendium 6.1, 6.35): a
-        version-entry field (SOURCE "manifest") with an argument. Not a
-        gate: :uuid()/:fingerprint() (an argued selector is a pointer,
-        6.44), a "{}"-key field (its argument picks the key), and a field
-        that reads definition.json -- SOURCE "definition", or a
-        BARE_SOURCE "definition" field such as :template() with no
-        pointer -- which would filter whole groups and is not built. Those
-        still raise where an argument has no use."""
+        version-entry field (SOURCE "manifest") with an argument,
+        including :uuid()/:fingerprint() beside a pointer, which filter as
+        in RESULTS (David, 2026-11-06; 6.44). Their bare form is a lookup,
+        dispatched earlier in query(). Not a gate: a "{}"-key field (its
+        argument picks the key), and a field that reads definition.json --
+        SOURCE "definition", or a BARE_SOURCE "definition" field such as
+        :template() with no pointer -- which would filter whole groups and
+        is not built. Those still raise where an argument has no use."""
         if built is None:
             raise ValueError("Built chain cannot be None")
         gates = []
         for f in built:
-            if f.arg is None or f.SOURCE != "manifest" or f.SELECTOR_WHEN_ARGUED:
+            if f.arg is None or f.SOURCE != "manifest":
                 continue
             if self._key_has_placeholder(f):
                 continue
@@ -1258,11 +1259,12 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # alongside a pointer, is NOT the bare-selector shape (that
             # already returned earlier, before _resolve_versions() was
             # ever reached) -- it is the ordinary ride-along-a-pointer
-            # field-accessor position instead, which takes no argument.
-            # See _reject_selector_arg_outside_its_bare_form()'s own
-            # docstring (shared with FilesReferenceFinder3's identical
-            # guard).
-            self._reject_selector_arg_outside_its_bare_form(f)
+            # field-accessor position instead. There an argued one is a
+            # gate (2026-11-06, as in RESULTS), so only a non-gate is
+            # rejected. See _reject_selector_arg_outside_its_bare_form()'s
+            # own docstring.
+            if not any(f is g for g in gates):
+                self._reject_selector_arg_outside_its_bare_form(f)
             # added 2026-10-18, alongside :named_paths_name()'s own
             # ARG_TYPES widening (RESULTS' worked example) -- at the
             # time CSVPATHS had no GATE mechanism at all (unlike RESULTS'
