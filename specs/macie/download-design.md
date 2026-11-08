@@ -1,6 +1,8 @@
 # Downloading a Macie wrapper — design (DRAFT, for David)
 
-Status: proposal, 2026-11-08. Worklist item 7. Nothing built yet.
+Status: proposal, 2026-11-08; open questions 1-4 agreed by David the same
+day, question 5 revised (no wrapper file written; see below) and awaiting
+his confirmation. Worklist item 7. Nothing built yet.
 
 The wrapper format (`wrapper-format.md`) was designed for this from the
 start: one file holding a Macie job's (or automated-discovery template's)
@@ -18,12 +20,20 @@ import boto3
 from csvpath.macie.macie_downloader import MacieDownloader
 
 session = boto3.Session(profile_name="compliance", region_name="us-east-1")
-downloader = MacieDownloader(session=session)
-path = downloader.download_job(
+paths.paths_manager.add_named_paths_from_macie(
+    name="hr",
+    session=session,
     job_id="3ce05dbb7ec5505def334104bf1b3bca",
-    path="wrappers/hr-employee-ids.macie.json",
 )
 ```
+
+The download writes no file. The wrapper is built and validated in
+memory and handed to the existing load, so it lands only in the group
+home, a place the Framework controls, and from there in each run's
+`_extra_data/macie/` (David, 2026-11-08: files written outside the
+Framework's own directories are a risk in multi-project, multi-user
+setups). Conversion still never calls AWS, and reloading the group uses
+the stored wrapper, offline.
 
 What it calls, in order, all read-only:
 
@@ -38,19 +48,21 @@ macie2    ListFindingsFilters (all pages)
 macie2    GetFindingsFilter(id), each              -> findingsFilters[]
 ```
 
-Then it builds the wrapper, **validates it with `MacieWrapperLoader`
-before writing** (a download that produces a wrapper we would refuse to
-load is a bug, and fails here), and writes it. Loading is the existing
-step:
+Then it builds the wrapper and **validates it with `MacieWrapperLoader`**
+(a download that produces a wrapper we would refuse to load is a bug, and
+fails here) before the load converts it.
+
+To look before loading, the downloader returns the wrapper as a dict,
+and nothing is written:
 
 ```python
-paths.paths_manager.add_named_paths_from_file(name="hr", file_path=path)
+wrapper = MacieDownloader(session=session).download_job(job_id="3ce05...")
 ```
 
 ### 2. The account's automated-discovery template
 
 ```python
-path = downloader.download_template(path="wrappers/discovery.macie.json")
+paths.paths_manager.add_named_paths_from_macie(name="discovery", session=session, template=True)
 ```
 
 ```
@@ -180,23 +192,38 @@ A later convenience (not in this step): `[macie] aws_profile` and
 
 ## Open questions
 
-1. **Templates have no ARN.** `GetSensitivityInspectionTemplate` returns
+1. **Templates have no ARN.** (Agreed.) `GetSensitivityInspectionTemplate` returns
    no ARN (unlike `DescribeClassificationJob`'s `jobArn`), so a
    template-based csvpath has no `macie-source-arn` and its findings'
    `csvpath.source_arn` is null. Proposal: leave it null rather than
    build an ARN AWS does not issue; `macie-template-id` identifies it.
-2. **Findings filters are account-wide**, not per job. Proposal: download
-   all, as wrapper-format.md says; they are recorded, not applied.
+2. **Findings filters are account-wide**, not per job. Download all, as
+   wrapper-format.md says; they are recorded, not applied. (Agreed: pull
+   in what is plainly important to a customer's operations.)
 3. **Soft-deleted custom identifiers** a job still uses: kept, with the
    existing `CDI_DELETED_BUT_SELECTED` warning, as Macie keeps using them.
+   (Agreed, on condition there is no confusion between deleted and
+   unreachable.) There cannot be: AWS reports a deleted identifier with
+   `"deleted": true`, kept verbatim, and the warning says it was deleted
+   in Macie and the job still uses it. An identifier we cannot fetch (not
+   found, access denied, throttled past retries) stops the download, so it
+   never appears in a wrapper at all.
 4. **Large words lists.** Macie caps a words list (we believe 100,000
    entries and 35 MB; to confirm from the AWS docs when building).
-   Proposal: read it whole, record its sha256, and refuse an object over
-   Macie's limit (Macie itself could not use it).
-5. **Where the wrapper file goes.** Proposal: the caller's `path`; a
-   `.macie.json` suffix required; an existing file is not overwritten
-   unless `overwrite=True`, so an earlier download is never lost by
-   accident.
+   Read it whole, record its sha256, and refuse an object over Macie's
+   limit (Macie itself could not use it). (Agreed.) **Performance** of
+   large lists, many identifiers and big files is to be measured in the
+   live check; expect it to be soft. Tuning is post-MVP work, not a
+   blocker (David, 2026-11-08).
+5. **Where the wrapper goes.** Revised after David's concern about files
+   outside the Framework's directories: nowhere but the group.
+   `add_named_paths_from_macie()` downloads into memory and loads, so the
+   wrapper lands only in the group home and the run dirs. Transfers and
+   `transfer-mode` were considered: they copy a run's results out on
+   completion, so they suit exporting findings later, not bringing an
+   input in. A staging directory under a `[macie] downloads` setting
+   would also be confined, but adds a second place for sensitive allow
+   list entries; not proposed unless a need appears. **To confirm.**
 
 ## Testing
 
@@ -219,6 +246,9 @@ A later convenience (not in this step): `[macie] aws_profile` and
 
 1. The recommended-list assets, with their sources and dates.
 2. `MacieDownloader` with the Stubber tests and the round trip.
-3. The docs: a "Getting a wrapper" page with the policy, and the
+3. `PathsManager.add_named_paths_from_macie()`: a core addition, a thin
+   method beside `add_named_paths_from_file()`; exact lines to David
+   first.
+4. The docs: a "Getting a wrapper" page with the policy, and the
    quickstart's step 1 updated.
-4. The live check, when the account is ready.
+5. The live check, when the account is ready.
