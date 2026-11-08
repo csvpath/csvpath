@@ -1642,6 +1642,87 @@ class TestManifestChainRanges:
         assert message in str(error.value)
 
 
+class TestManifestChainRuleOne:
+    # Rule 1 (manifest_field_functions_proposal.md): several whole manifest
+    # entries of one named-file cannot be resolved at once; a pointer must
+    # pick one. Rule 3: a field can be read for several. Rule 1a: the
+    # ledger under '*' is one file. Before 2026-11-08 the name_one
+    # ':manifest()' chain resolved several whole entries, where
+    # ':name("x").:manifest()' and CSVPATHS raise. Same fixture as
+    # TestManifestChainRanges, "now" pinned to 2026-01-04.
+    @pytest.fixture(autouse=True)
+    def pinned_now(self):
+        from datetime import date
+
+        daut.OFFSET_DAYS = (date(2026, 1, 4) - daut.now().date()).days
+        try:
+            yield
+        finally:
+            daut.OFFSET_DAYS = 0
+
+    @staticmethod
+    def _finder(reference: str) -> FilesReferenceFinder3:
+        return TestManifestChainRanges._finder(reference)
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$ranger.files.:manifest():from(1):to(2)", ["v1", "v2"]),
+            ("$ranger.files.:manifest():month()", ["v0", "v1", "v2", "v3", "v4"]),
+            ('$ranger.files.:manifest():type("csv")', ["v0", "v1", "v2", "v4"]),
+            ('$ranger.files.:manifest():type("csv"):from(0)', ["v0", "v1", "v2", "v4"]),
+        ],
+    )
+    def test_several_whole_entries_raise(self, reference, expected):
+        finder = self._finder(reference)
+        results = finder.query()
+        assert results.uuids == expected
+        assert results.ambiguous_content_read
+        with pytest.raises(ReferenceException3) as error:
+            finder.resolve()
+        assert "more than one match" in str(error.value)
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # a pointer picks one
+            (
+                "$ranger.files.:manifest():from(1):to(2):last()",
+                [CHAIN_RANGE_MANIFEST[2]],
+            ),
+            # only one matches
+            ("$ranger.files.:manifest():yesterday()", [CHAIN_RANGE_MANIFEST[2]]),
+            ('$ranger.files.:manifest():type("xlsx")', [CHAIN_RANGE_MANIFEST[3]]),
+            # a field, one value per entry (Rule 3)
+            ("$ranger.files.:manifest():from(1):to(2):uuid()", ["v1", "v2"]),
+            ('$ranger.files.:manifest():type("csv"):type()', ["csv"] * 4),
+            ("$ranger.files.:manifest():uuid()", ["v0", "v1", "v2", "v3", "v4"]),
+            # the ledger (Rule 1a)
+            (
+                "$*.files.:manifest():yesterday()",
+                [CHAIN_RANGE_LEDGER[2], CHAIN_RANGE_LEDGER[3]],
+            ),
+            (
+                '$:regex("a").files.:manifest():yesterday()',
+                [CHAIN_RANGE_LEDGER[2], CHAIN_RANGE_LEDGER[3]],
+            ),
+        ],
+    )
+    def test_these_still_resolve(self, reference, expected):
+        finder = self._finder(reference)
+        assert not finder.query().ambiguous_content_read
+        assert [r.data for r in finder.resolve().results] == expected
+
+    def test_the_name_three_form_agrees(self, tmp_path):
+        # the same shapes on ':name("orders.csv").' already raised
+        for reference in (
+            f"{ORDERS}.:manifest():from(1):to(2)",
+            f'{ORDERS}.:manifest():type("csv")',
+        ):
+            with pytest.raises(ReferenceException3):
+                _g_finder(reference, tmp_path).resolve()
+
+
 class TestTimeWindowExamples:
     # compendium 6.27d/6.27e/6.27g's FILES examples as written, on 6.27f's
     # own date ("now" is 2026-01-02). In FILES name_one is the path and

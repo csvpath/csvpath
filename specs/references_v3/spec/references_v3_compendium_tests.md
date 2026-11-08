@@ -518,6 +518,9 @@ genuinely uncertain is marked below rather than guessed.
   while whole entries still raise:
   `test_csvpaths_reference_finder_3.py::TestManifestFieldOverSeveralVersions`
   (2026-11-08)
+- Several whole entries from a FILES name_one `:manifest()` chain raise on
+  resolve (Rule 1); a pointer, a field or the ledger still resolve:
+  `test_files_reference_finder_3.py::TestManifestChainRuleOne` (2026-11-08)
 
 #### 6.20
 - Exercised implicitly wherever a finder test covers a missing/absent

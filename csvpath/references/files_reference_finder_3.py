@@ -337,8 +337,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 reference=reference, call=manifest_field_call, entries=manifest
             )
             path = self._root_manifest_path(root_major)
+            # an argued field is a gate: it supplies no value, so resolve
+            # gives whole entries, and several at once is a Rule 1 read
+            # (2026-11-08), as ':name("x").:manifest():type("csv")' is
             return ReferenceResults3(
-                results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in manifest]
+                results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in manifest],
+                ambiguous_content_read=(
+                    manifest_field_call.arg is not None and len(manifest) > 1
+                ),
             )
 
         pointer_call = self._pointer_before_manifest(reference, "manifest")
@@ -2458,8 +2464,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 values[-1].name,
                 "(), :".join(f.name for f in values[:-1]),
             )
+        # several whole entries of one named-file cannot be resolved at
+        # once (Rule 1, 2026-11-08); a field can (Rule 3), and so can the
+        # ledger under '*', ':regex()' or ':choice()' (Rule 1a)
         return ReferenceResults3(
-            results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in entries]
+            results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in entries],
+            ambiguous_content_read=(
+                isinstance(root_major, str) and not values and len(entries) > 1
+            ),
         )
 
     def _apply_manifest_chain_ranges(self, *, ranges: list, entries: list) -> list:
