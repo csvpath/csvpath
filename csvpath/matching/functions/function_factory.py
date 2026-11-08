@@ -95,7 +95,7 @@ from .lines.advance import Advance, AdvanceAll
 from .lines.after_blank import AfterBlank
 from .lines.line_values import LineValuesStack
 from .variables.variables import Variables
-from .variables.pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack
+from .variables.pushpop import Push, PushDistinct, Pop, Peek, PeekSize, Stack, PeekEq
 from .variables.get import Get
 from .variables.put import Put
 from .variables.track import Track
@@ -522,6 +522,12 @@ class FunctionFactory:
         fs["push_distinct"] = PushDistinct
         fs["pop"] = Pop
         fs["peek"] = Peek
+        fs["peek_eq"] = PeekEq
+        fs["peek_neq"] = PeekEq
+        fs["peek_lt"] = PeekEq
+        fs["peek_lte"] = PeekEq
+        fs["peek_gt"] = PeekEq
+        fs["peek_gte"] = PeekEq
         fs["peek_size"] = PeekSize
         fs["size"] = PeekSize
         fs["date"] = Date
