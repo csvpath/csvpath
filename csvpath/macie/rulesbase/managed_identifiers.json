@@ -1221,6 +1221,18 @@
         "unique device id",
         "unique device identifier"
       ]
+    },
+    "es_ssn": {
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-08",
+      "keywords": [
+        "número de la seguridad social",
+        "social security no.",
+        "social security number",
+        "socialsecurityno#",
+        "ssn",
+        "ssn#"
+      ]
     }
   },
   "identifiers": {
@@ -2857,6 +2869,17 @@
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
       "retrieved": "2026-11-07",
       "partial": "Only GS1 and HIBCC UDIs are detected, not ICCBBA ISBT 128 UDIs"
+    },
+    "SPAIN_SOCIAL_SECURITY_NUMBER": {
+      "category": "PERSONAL_INFORMATION",
+      "detector": "es_ssn",
+      "keyword_mode": "required",
+      "keywords_from": "es_ssn",
+      "distance": 30,
+      "severity": "1:HIGH",
+      "fidelity": "B",
+      "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-pii.html",
+      "retrieved": "2026-11-08"
     }
   },
   "detectors": {
@@ -4537,6 +4560,21 @@
       "notes": [
         "Macie: MEDICAL_DEVICE_UDI detects UDIs in the formats the US FDA accepts, GS1, HIBCC and ICCBBA (ISBT 128), near a keyword. UDIs are LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
         "Ours, human readable forms: GS1 as (01) and a GTIN-14 with its GS1 check digit, then optional (11) (17) (10) (21) parts; HIBCC as + and a labeler code, product code and unit of measure digit, with any secondary data after /, ending in the HIBCC mod 43 check character. ISBT 128 is not detected yet (David, 2026-11-07)."
+      ]
+    },
+    "es_ssn": {
+      "notes": [
+        "Macie publishes only the keywords for SPAIN_SOCIAL_SECURITY_NUMBER, and scores Social Security numbers HIGH from one occurrence.",
+        "The format is ours (Tesoreria General de la Seguridad Social): the 12 digit affiliation number (NAF), a 2 digit province code, an 8 digit number and 2 control digits, contiguous or written 28/12345678/40, with slashes, spaces or hyphens. The control digits are commonly described as mod 97 of the first 10, but we found no authoritative statement of the rule, so they are not verified (format only, like Brazil's RG)."
+      ],
+      "formats": [
+        "#{12}",
+        "##/#{8}/##",
+        "## #{8} ##",
+        "##-#{8}-##"
+      ],
+      "exclude_prefixes": [
+        "00"
       ]
     }
   }

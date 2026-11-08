@@ -107,10 +107,11 @@ last. Add an item the moment something is deferred.
    done): finish group A first, as it reuses the existing detectors,
    then group B after a design pass with David on a generic pattern
    detector.
-6b. **`SPAIN_SOCIAL_SECURITY_NUMBER`** has no stand-in: missed by the item
-   6 inventory, found 2026-11-08 when building the recommended-list
-   assets. It is in Macie's jobs and automated discovery recommended sets,
-   so it matters. Next stand-in (Spain's NSS: 12 digits, mod 97 control).
+6b. ~~**`SPAIN_SOCIAL_SECURITY_NUMBER`**~~ Done: missed by the item 6
+   inventory, found 2026-11-08 when building the recommended-list assets
+   (it is in every recommended set). Format only, fidelity B: the NAF's
+   control digits are not checked, as no authoritative rule was found.
+   Pair 26_es_ssn.
 7. **boto3 download** into a wrapper. Design draft:
    `specs/macie/download-design.md` (2026-11-08). Offline first with
    botocore's Stubber; one live check in David's account later (one
@@ -147,6 +148,9 @@ fidelity item in transpile-design.md.
   and a country code, which no official source confirmed; the personal ID
   on the card is not detected. Ask testers with real cards whether
   theirs are found.
+- **Spain SSN: format only.** The control digits of a NAF are not
+  checked (item 26), so any 12 digits of the right layout near a keyword
+  count. Ask testers with Spanish payroll data for false positives.
 - **UDI: GS1 and HIBCC only.** ISBT 128 (blood and tissue products) is
   missed, as are GS1 UDIs written without their parentheses. The
   keywords `med` and `blood` match inside many words.

@@ -1,0 +1,74 @@
+{
+  "csvpath_macie": 1,
+  "source": {
+    "origin": "job",
+    "account_id": "123456789012",
+    "region": "us-east-1",
+    "downloaded_at": "2026-11-08T12:00:00Z",
+    "job_id": "9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a"
+  },
+  "selection": {
+    "managedDataIdentifierSelector": "INCLUDE",
+    "managedDataIdentifierIds": [
+      "SPAIN_SOCIAL_SECURITY_NUMBER",
+      "USA_SOCIAL_SECURITY_NUMBER"
+    ],
+    "excludedManagedDataIdentifierIds": [],
+    "customDataIdentifierIds": [],
+    "allowListIds": []
+  },
+  "managedDataIdentifiers": {
+    "resolved": [
+      "SPAIN_SOCIAL_SECURITY_NUMBER",
+      "USA_SOCIAL_SECURITY_NUMBER"
+    ],
+    "resolution": {
+      "method": "selector",
+      "recommended_list": null
+    },
+    "available": [
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "SPAIN_SOCIAL_SECURITY_NUMBER"
+      },
+      {
+        "category": "PERSONAL_INFORMATION",
+        "id": "USA_SOCIAL_SECURITY_NUMBER"
+      }
+    ]
+  },
+  "customDataIdentifiers": [],
+  "allowLists": [],
+  "findingsFilters": [],
+  "aws": {
+    "classificationJob": {
+      "allowListIds": [],
+      "createdAt": "2026-11-02T08:00:00Z",
+      "customDataIdentifierIds": [],
+      "description": "Staff",
+      "jobArn": "arn:aws:macie2:us-east-1:123456789012:classification-job/9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a",
+      "jobId": "9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a",
+      "jobStatus": "COMPLETE",
+      "jobType": "ONE_TIME",
+      "managedDataIdentifierIds": [
+        "SPAIN_SOCIAL_SECURITY_NUMBER",
+        "USA_SOCIAL_SECURITY_NUMBER"
+      ],
+      "managedDataIdentifierSelector": "INCLUDE",
+      "name": "es-ssn",
+      "s3JobDefinition": {
+        "bucketDefinitions": [
+          {
+            "accountId": "123456789012",
+            "buckets": [
+              "acme-staff"
+            ]
+          }
+        ]
+      },
+      "samplingPercentage": 100,
+      "tags": {}
+    }
+  },
+  "warnings": []
+}

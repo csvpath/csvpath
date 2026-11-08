@@ -1,0 +1,46 @@
+#
+# Spain's Social Security number (the NAF) beside the US one: Macie's
+# SPAIN_SOCIAL_SECURITY_NUMBER and USA_SOCIAL_SECURITY_NUMBER, both
+# requiring a keyword, both with "ssn" among their keywords. The shapes
+# differ (12 digits vs 9), so one value is never both.
+#
+#   conversion:     MacieConverter.convert() arguments (see below)
+#   csvpath:        file in expected/ to run; the converter's exact output
+#   finding_lines:  0-based physical line numbers (header is line 0) that
+#                   must match, i.e. lines with at least one finding.
+#                   Every other data line must not match.
+#   printouts:      expected printouts of the "macie" print stream, exact
+#   errors:         the run's collected errors (errors.json): line and
+#                   message, in order. One per detailed occurrence.
+#   findings:       expected/findings.json, compared with the run's
+#                   macie_findings variable (vars.json)
+#
+# Macie numbering in findings: row = line + 1 (header is row 1), column is
+# 1-based.
+#
+# Arguments the normative tests pass to MacieConverter.convert() to
+# produce expected/<csvpath>. The converter's defaults are used for
+# anything not listed.
+#
+conversion:
+  max_detail: 2
+runs:
+  - csvpath: es-ssn.csvpath
+    data: staff.csv
+    finding_lines: [1, 2, 3]
+    printouts:
+      macie: printouts.macie.txt
+    errors:
+      - { line: 1, message: "macie SPAIN_SOCIAL_SECURITY_NUMBER: occurrence 1, line 1 (row 2), column 2 ssn" }
+      - { line: 2, message: "macie USA_SOCIAL_SECURITY_NUMBER: occurrence 1, line 2 (row 3), column 2 ssn" }
+      - { line: 3, message: "macie SPAIN_SOCIAL_SECURITY_NUMBER: occurrence 2, line 3 (row 4), column 3 notes" }
+    findings: findings.json
+    #
+    #   line  cell                                            reported as
+    #   1     ssn column "28/12345678/40"                     Spain
+    #   2     ssn column "123-45-6789"                        US
+    #   3     "número de la seguridad social 41 87654321 12"  Spain
+    #   4     "28/12345678/40"                                nothing: no keyword
+    #
+    # Both HIGH from one occurrence. Totals: Spain 2, US 1.
+    # PERSONAL_INFORMATION: totalCount 3.

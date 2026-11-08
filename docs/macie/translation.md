@@ -24,8 +24,8 @@ you can read exactly what will be checked.
 | Macie | CsvPath | Notes |
 |---|---|---|
 | Custom data identifier | `macie_cdi(...)` | regex, keywords, ignore words, `maximumMatchDistance`, severity levels |
-| Managed data identifier with a stand-in | `macie_mdi(...)` | 148 of them; see the [reference](managed-identifiers.md) |
-| Managed data identifier without one | reported, not translated | `NAME`, `ADDRESS`, `SPAIN_SOCIAL_SECURITY_NUMBER` (planned), 15 driver's license countries |
+| Managed data identifier with a stand-in | `macie_mdi(...)` | 149 of them; see the [reference](managed-identifiers.md) |
+| Managed data identifier without one | reported, not translated | `NAME`, `ADDRESS`, 15 driver's license countries |
 | Regex allow list | `macie_allow_regex(...)` | |
 | Text (S3 words) allow list | `macie_allow_words(...)` with `load_list()` | entries stored in the group's assets |
 | Text allow list unreadable at download | reported, not translated | its identifiers still run, without it |

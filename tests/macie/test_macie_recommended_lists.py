@@ -13,13 +13,11 @@ UTC = datetime.timezone.utc
 #
 # Macie identifiers we have no stand-in for. A recommended id outside the
 # catalog must be one of these, so a new gap fails here rather than in a
-# customer's conversion report. SPAIN_SOCIAL_SECURITY_NUMBER was found
-# missing from our inventory on 2026-11-08: worklist, next stand-in.
+# customer's conversion report.
 #
 NO_STAND_IN = {
     "NAME",
     "ADDRESS",
-    "SPAIN_SOCIAL_SECURITY_NUMBER",
 } | {
     f"{c}_DRIVERS_LICENSE"
     for c in (

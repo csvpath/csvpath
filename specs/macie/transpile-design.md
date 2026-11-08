@@ -1003,6 +1003,9 @@ every detector the catalog names exists, and every detector is used.
 25. EHIC and UDI: does Macie read the EHIC card number as 80 and a
     country code, and does it detect the personal ID on the card? Does it
     detect UDIs without their parentheses, or ISBT 128?
+26. Spain SSN: does Macie check the NAF's control digits (commonly
+    described as mod 97 of the first 10; no authoritative source found),
+    and which layouts does it accept?
 
 **Customizing the stand-ins**, via a project `rulesbase` copied in on load
 and never overwritten, with a hierarchy and `common.json`, is a later
