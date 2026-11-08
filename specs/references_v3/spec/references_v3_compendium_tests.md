@@ -514,6 +514,10 @@ genuinely uncertain is marked below rather than guessed.
   `test_files_reference_finder_3.py::TestManifestChainRanges` (2026-11-07;
   literal root and ledger, range before gate and pointer, bad ranges) and
   `TestManifestChainParts::test_a_range_is_its_own_part`
+- A field beside a several-version `:manifest()`, one value per version,
+  while whole entries still raise:
+  `test_csvpaths_reference_finder_3.py::TestManifestFieldOverSeveralVersions`
+  (2026-11-08)
 
 #### 6.20
 - Exercised implicitly wherever a finder test covers a missing/absent
