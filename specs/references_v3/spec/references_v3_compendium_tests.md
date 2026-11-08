@@ -572,6 +572,9 @@ genuinely uncertain is marked below rather than guessed.
   tests (context form); range-anchor and string-interpolation forms
   each covered by their own respective mechanism's tests (6.27c, 3.7b)
   — not against this exact three-example set verbatim.
+- `test_files_reference_finder_3.py::TestTimeWindowExamples`
+  (2026-11-07): the 6.27d/6.27e/6.27g FILES examples as written, on
+  6.27f's date, and a window in name_one read as a path segment.
 
 #### 6.27e
 - Same time-component tests as 6.27/6.27c — all three usage shapes

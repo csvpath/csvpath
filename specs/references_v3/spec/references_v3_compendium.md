@@ -1388,10 +1388,10 @@ context for that function.
 
 #### 6.27d
 Examples:
-- `$acme.files.:yesterday():last()` - within the context of yesterday,
-  what was the last registration?
-- `$acme.files.:before(:yesterday())` - in the direction of earlier,
-  starting from yesterday, what were the registrations?
+- `$acme.files.:flatten().:yesterday():last()` - within the context of
+  yesterday, what was the last registration?
+- `$acme.files.:flatten().:before(:yesterday())` - in the direction of
+  earlier, starting from yesterday, what were the registrations?
 - `$acme.files.:name("{:yesterday()}.csv")` - the file home, if any,
   where the file name was like `2026-01-01.csv`.
 
@@ -1400,15 +1400,25 @@ time function is stringified as the most coarse-grained value the
 function indicates. E.g. `:day()` is an int `1`-`31`, `:year()` is an int
 equal to the current year, etc.
 
+In `files`, name_one is the path and name_three is the version (E2). So a
+time function that narrows registrations goes in name_three, after
+`:flatten()` (any depth), `*` (one level) or a file, e.g.
+`$acme.files.:name("orders.csv").:yesterday()`. In name_one a time
+function is a path segment, stringified as above:
+`$acme.files.:yesterday()` is the file home `acme/2026-01-01`, and
+`$acme.files.:yesterday():last()` is the last registration in that home,
+whenever it arrived.
+
 ### Behavior of time components
 #### 6.27e
 A time component function informs a direction or range function as a
 context for a starting or ending point or as the starting or ending
 point.
-- Use as a range: `$acme.files.:yesterday()`
-- Use as a context for a pointer: `$acme.files.:yesterday():last()`
+- Use as a range: `$acme.files.:flatten().:yesterday()`
+- Use as a context for a pointer:
+  `$acme.files.:flatten().:yesterday():last()`
 - Use as a point-in-time directional anchor:
-  `$acme.files.:from(:yesterday()):before(:today())`
+  `$acme.files.:flatten().:from(:yesterday()):before(:today())`
 
 #### 6.27f
 If interpreted on the date `2026-01-02`, the use of `:yesterday()`
@@ -1426,7 +1436,7 @@ Examples:
 - `:yesterday()` indicates:
    - The first moment of the prior day to the last moment of the
      prior day, when used as a range. For e.g.
-     `$alpha.files.:yesterday()` lists all file homes with changes
+     `$alpha.files.:flatten().:yesterday()` lists every registration
      from the first moment of the day prior to the last moment of
      that day.
    - The first moment of the day prior when used as a direction

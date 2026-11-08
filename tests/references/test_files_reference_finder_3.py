@@ -1642,6 +1642,79 @@ class TestManifestChainRanges:
         assert message in str(error.value)
 
 
+class TestTimeWindowExamples:
+    # compendium 6.27d/6.27e/6.27g's FILES examples as written, on 6.27f's
+    # own date ("now" is 2026-01-02). In FILES name_one is the path and
+    # name_three the version (E2), so a window that narrows registrations
+    # goes in name_three; in name_one it is a path segment (David,
+    # 2026-11-07). acme's orders.csv has versions on Dec 31, Jan 1 (two)
+    # and Jan 2; a home named for yesterday, 2026-01-01, has one version
+    # from Dec 30.
+    MANIFEST = [
+        {
+            "file": f"inputs/named_files/acme/{home}/{uuid}.csv",
+            "file_home": f"inputs/named_files/acme/{home}",
+            "uuid": uuid,
+            "time": time,
+        }
+        for home, uuid, time in (
+            ("2026-01-01", "d1", "2025-12-30T09:00:00+00:00"),
+            ("orders.csv", "o1", "2025-12-31T09:00:00+00:00"),
+            ("orders.csv", "o2", "2026-01-01T09:00:00+00:00"),
+            ("orders.csv", "o3", "2026-01-01T17:00:00+00:00"),
+            ("orders.csv", "o4", "2026-01-02T09:00:00+00:00"),
+        )
+    ]
+
+    @pytest.fixture(autouse=True)
+    def pinned_now(self):
+        from datetime import date
+
+        daut.OFFSET_DAYS = (date(2026, 1, 2) - daut.now().date()).days
+        try:
+            yield
+        finally:
+            daut.OFFSET_DAYS = 0
+
+    def _query(self, reference: str):
+        return _finder(reference, "inputs/named_files/acme", self.MANIFEST).query()
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # 6.27e, the range; 6.27g's own example in the same form
+            ("$acme.files.:flatten().:yesterday()", ["o2", "o3"]),
+            # 6.27d and 6.27e, the context for a pointer
+            ("$acme.files.:flatten().:yesterday():last()", ["o3"]),
+            # 6.27d, the direction: before excludes the whole of yesterday
+            ("$acme.files.:flatten().:before(:yesterday())", ["d1", "o1"]),
+            # 6.27e, the anchor
+            (
+                "$acme.files.:flatten().:from(:yesterday()):before(:today())",
+                ["o2", "o3"],
+            ),
+            # one level and one file give the same here
+            ("$acme.files.*.:yesterday()", ["o2", "o3"]),
+            ('$acme.files.:name("orders.csv").:yesterday()', ["o2", "o3"]),
+        ],
+    )
+    def test_the_examples_as_written(self, reference, expected):
+        assert self._query(reference).uuids == expected
+
+    def test_in_name_one_a_window_is_a_path_segment(self):
+        results = self._query("$acme.files.:yesterday()")
+        assert results.files == [pathu.resep("inputs/named_files/acme/2026-01-01")]
+
+    def test_a_pointer_after_it_picks_in_that_home(self):
+        # d1 arrived on Dec 30, not yesterday: the window named the home
+        assert self._query("$acme.files.:yesterday():last()").uuids == ["d1"]
+
+    def test_the_old_range_form_in_name_one_raises(self):
+        with pytest.raises(ReferenceException3) as error:
+            self._query("$acme.files.:before(:yesterday())")
+        assert "attached directly to name_one" in str(error.value)
+
+
 class TestNameThreeGateParts:
     def _built(self, reference: str, tmp_path) -> list:
         finder = _g_finder(reference, tmp_path)
@@ -4256,10 +4329,11 @@ class TestNameThreeRange:
     ):
         # Gap 1 of compendium 6.27/TimeWindowFunction3, added 2026-10-17
         # -- a BARE time-component function riding in the chain, no
-        # explicit :from()/:to(). The compendium's own FLAGSHIP worked
-        # example for this entire mechanism is literally
-        # "$acme.files.:yesterday()" (6.27d/6.27e/6.27f) -- confirmed
-        # here with a real version pinned to "yesterday" via
+        # explicit :from()/:to(). The compendium's flagship example was
+        # "$acme.files.:yesterday()" (6.27d/6.27e/6.27f), rewritten
+        # 2026-11-07 as "$acme.files.:flatten().:yesterday()": in FILES
+        # the window goes in name_three (see TestTimeWindowExamples).
+        # Confirmed here with a real version pinned to "yesterday" via
         # DateUtility.OFFSET_DAYS.
         from datetime import date
 
