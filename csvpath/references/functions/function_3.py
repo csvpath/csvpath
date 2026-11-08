@@ -111,9 +111,9 @@ class Function3:
     # genuinely the same literal field name in both resources, just
     # captured at a different moment (registration/load time vs. right
     # now). None for every function that does not need this distinction
-    # -- the common case. See ReferenceFinder3._pointer_present() for how
-    # a finder decides which resource applies, and Template3's own
-    # docstring for the full worked example.
+    # -- the common case. Bare means the field is the whole of name_one
+    # (2026-11-08); anything else there selects versions. See Template3's
+    # own docstring for the full worked example.
     #
     BARE_SOURCE: str = None
 

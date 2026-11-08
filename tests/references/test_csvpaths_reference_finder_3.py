@@ -2575,11 +2575,13 @@ class TestDefinitionSubFieldAccessorFunctions:
 
 class TestTemplateBareVsPointerDualSource:
     # :template() (built 2026-08-26) is the first field accessor using
-    # Function3.BARE_SOURCE -- bare (no pointer at all) reads
-    # definition.json's current default; alongside a real pointer, it
-    # reads that specific matched version's own manifest snapshot
-    # instead. See ReferenceFinder3._pointer_present()/Template3's own
-    # docstring for the full design.
+    # Function3.BARE_SOURCE -- bare (the whole of name_one) reads
+    # definition.json's current default; with anything that selects
+    # versions beside it, it reads each matched version's own manifest
+    # snapshot instead. Until 2026-11-08 only a pointer counted, so a
+    # range, ':all()' or ':manifest()' gave the current default for every
+    # version (David: "we need to return the versions' templates").
+    # See Template3's own docstring for the full design.
     MANIFEST = [
         {**RICH_MANIFEST[0], "template": "snapshot-v0"},
         {**RICH_MANIFEST[1], "template": "snapshot-v1"},
@@ -2614,6 +2616,41 @@ class TestTemplateBareVsPointerDualSource:
             "$acme.csvpaths.:template()", self.MANIFEST
         ).resolve()
         assert [r.data for r in results.results] == [None, None]
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$acme.csvpaths.:all():template()", ["snapshot-v0", "snapshot-v1"]),
+            (
+                "$acme.csvpaths.:from(0):to(1):template()",
+                ["snapshot-v0", "snapshot-v1"],
+            ),
+            ("$acme.csvpaths.:from(-1):template()", ["snapshot-v1"]),
+            ("$acme.csvpaths.:manifest():template()", ["snapshot-v0", "snapshot-v1"]),
+            (
+                "$acme.csvpaths.:manifest():from(1):template()",
+                ["snapshot-v1"],
+            ),
+        ],
+    )
+    def test_selecting_versions_reads_each_versions_own_snapshot(
+        self, reference, expected
+    ):
+        results = _finder(reference, self.MANIFEST, self.DEFINITION).resolve()
+        assert [r.data for r in results.results] == expected
+
+    def test_the_ledger_reads_each_versions_own_snapshot(self):
+        # every load in the root ledger, a deleted group's (g1) included
+        results = _gate_finder("$*.csvpaths.:manifest():template()").resolve()
+        assert [(r.uuid, r.data) for r in results.results] == [
+            ("a1", ""),
+            ("b1", ""),
+            ("a2", ":1/:2"),
+            ("g1", ":y"),
+            ("a3", ":1"),
+            ("b2", ":x"),
+            ("a4", ""),
+        ]
 
 
 class TestScopeLimits:
