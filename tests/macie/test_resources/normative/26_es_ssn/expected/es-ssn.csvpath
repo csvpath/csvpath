@@ -1,0 +1,35 @@
+~
+  id: es-ssn
+  macie-origin: job
+  macie-job-id: 9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a
+  macie-account: 123456789012
+  macie-region: us-east-1
+  macie-source-arn: arn|aws|macie2|us-east-1|123456789012|classification-job/9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a
+  macie-downloaded-at: 20261108T120000Z
+  macie-max-findings: 10000
+  macie-max-detail: 2
+  logic-mode: OR
+  print-mode: separate
+  validation-mode: collect, match, no-print, no-raise, no-fail, no-stop
+~
+$[1*][
+    macie_mdi(
+        "SPAIN_SOCIAL_SECURITY_NUMBER",
+        "PERSONAL_INFORMATION",
+        "es_ssn",
+        "required",
+        "número de la seguridad social|social security no.|social security number|socialsecurityno#|ssn|ssn#",
+        30,
+        "1:HIGH"
+    )
+    macie_mdi(
+        "USA_SOCIAL_SECURITY_NUMBER",
+        "PERSONAL_INFORMATION",
+        "us_ssn",
+        "required",
+        "social security|ss#|ssn",
+        30,
+        "1:HIGH"
+    )
+    last.nocontrib() -> macie_report()
+]

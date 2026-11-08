@@ -22,7 +22,6 @@ from people running it against real data.
 |---|---|
 | `NAME` | Macie uses machine learning to find names. |
 | `ADDRESS` | An address needs a gazetteer of places and postal codes. |
-| `SPAIN_SOCIAL_SECURITY_NUMBER` | Planned next. Found missing from our inventory on 2026-11-08; it is in Macie's recommended sets. |
 | Driver's licenses for Finland, Greece, Hungary, Ireland, Latvia, Lithuania, Luxembourg, Malta, the Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia, Sweden | Planned. The other 17 driver's license identifiers, including the US one (the union of the states' formats), are supported. |
 
 A wrapper that selects one of these still loads. The conversion report
@@ -75,7 +74,9 @@ description of the value (not the value), and the column name.
   Paulo's shape; the Canada PR number is the immigration client number
   (UCI), not the card's document number; an EHIC is its 20 digit card
   number (80 and a country code), not the personal id on the card; a GS1
-  UDI must be written with its parentheses.
+  UDI must be written with its parentheses; a Spanish Social Security
+  number's control digits are not checked (we found no authoritative
+  statement of the rule).
 - **Separators and layouts.** We accept the common printed layouts of
   card numbers, IBANs, national ids and phone numbers. Macie's own
   documentation is sometimes narrower (for example, it describes card

@@ -65,7 +65,7 @@ Managed data identifiers are AWS's own code, which AWS does not publish.
 AWS does publish each one's keywords, its severity table, and sometimes
 its rules. For each we built a **stand-in**: a detector that follows what
 AWS documents and the issuer's published rules (check digits, formats).
-**148 managed identifiers have a stand-in.** Each carries a fidelity tier
+**149 managed identifiers have a stand-in.** Each carries a fidelity tier
 and is listed in [the managed identifier reference](managed-identifiers.md).
 
 Where a stand-in detects less than Macie says Macie detects, the catalog

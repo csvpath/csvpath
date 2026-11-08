@@ -29,8 +29,7 @@ and regenerates it.
 - **Partial**: what the stand-in does not detect that Macie says Macie
   does.
 
-Not supported: `NAME`, `ADDRESS` and `SPAIN_SOCIAL_SECURITY_NUMBER`
-(planned), and driver's licenses for Finland,
+Not supported: `NAME` and `ADDRESS`, and driver's licenses for Finland,
 Greece, Hungary, Ireland, Latvia, Lithuania, Luxembourg, Malta, the
 Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia and Sweden
 (see [limitations](limitations.md)).

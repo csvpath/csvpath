@@ -15,8 +15,7 @@ and regenerates it.
 - **Partial**: what the stand-in does not detect that Macie says Macie
   does.
 
-Not supported: `NAME`, `ADDRESS` and `SPAIN_SOCIAL_SECURITY_NUMBER`
-(planned), and driver's licenses for Finland,
+Not supported: `NAME` and `ADDRESS`, and driver's licenses for Finland,
 Greece, Hungary, Ireland, Latvia, Lithuania, Luxembourg, Malta, the
 Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia and Sweden
 (see [limitations](limitations.md)).
@@ -85,7 +84,7 @@ Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia and Sweden
 | `UNITED_ARAB_EMIRATES_BANK_ACCOUNT_NUMBER` | none | `iban:AE` | 1:HIGH | A |  |
 | `VIRGIN_ISLANDS_BANK_ACCOUNT_NUMBER` | none | `iban:VG` | 1:HIGH | A |  |
 
-## PERSONAL_INFORMATION (81)
+## PERSONAL_INFORMATION (82)
 
 | Identifier | Keywords | Detector | Severity | Fidelity | Partial |
 |---|---|---|---|---|---|
@@ -152,6 +151,7 @@ Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia and Sweden
 | `SPAIN_NIF_NUMBER` | required, `es_tax` | `es_nif` | 1:HIGH | B |  |
 | `SPAIN_PASSPORT_NUMBER` | required, `spain_passport` | `spain_passport` | 1:MEDIUM 2:HIGH | B |  |
 | `SPAIN_PHONE_NUMBER` | required, `phone` | `es_phone` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
+| `SPAIN_SOCIAL_SECURITY_NUMBER` | required, `es_ssn` | `es_ssn` | 1:HIGH | B |  |
 | `SPAIN_TAX_IDENTIFICATION_NUMBER` | required, `es_tax` | `es_cif` | 1:HIGH | B |  |
 | `UK_DRIVERS_LICENSE` | required, `uk_drivers_license` | `uk_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `UK_ELECTORAL_ROLL_NUMBER` | required, `gb_electoral` | `gb_electoral` | 1:HIGH | B |  |
@@ -185,4 +185,4 @@ Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia and Sweden
 | `PUTTY_PRIVATE_KEY` | none | `putty` | 1:HIGH | A |  |
 | `STRIPE_CREDENTIALS` | none | `stripe` | 1:HIGH | A |  |
 
-148 identifiers.
+149 identifiers.
