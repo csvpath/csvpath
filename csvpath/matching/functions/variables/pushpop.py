@@ -266,6 +266,104 @@ class Peek(ValueProducer):
             self.match = self.default_match()  # pragma: no cover
 
 
+#
+# ==============================
+#
+
+
+class PeekEq(ValueProducer):
+    EQ = "True if the stack value equals the provided argument"
+    NEQ = "True if the stack value does not equal the provided argument"
+    LT = "True if the stack value is less than the provided argument"
+    LTE = "True if the stack value is less than or equal to the provided argument"
+    GT = "True if the stack value is greater than the provided argument"
+    GTE = "True if the stack value is greater than or equal to the provided argument"
+
+    def check_valid(self) -> None:
+        txt = PeekEq.EQ
+        if self.name == "peek_eq":
+            ...
+        elif self.name == "peek_neq":
+            txt = PeekEq.NEQ
+        elif self.name == "peek_lt":
+            txt = PeekEq.LT
+        elif self.name == "peek_lte":
+            txt = PeekEq.LTE
+        elif self.name == "peek_gt":
+            txt = PeekEq.GT
+        elif self.name == "peek_gte":
+            txt = PeekEq.GTE
+        else:
+            raise ValueError(f"Unknown function name: {self.name}")
+
+        self.description = [
+            "Compares a value at a stack variable index against another value.",
+            txt,
+            "The stack is created if not found.",
+        ]
+        self.args = Args(matchable=self)
+        a = self.args.argset(3)
+        a.arg(
+            name="stack name",
+            types=[Term, Variable, Header, Function, Reference],
+            actuals=[str],
+        )
+        a.arg(name="index", types=[Term], actuals=[int])
+        a.arg(
+            name="value",
+            types=[Term, Function, Variable, Header, Reference],
+            actuals=[None, Any],
+        )
+        self.args.validate(self.siblings())
+        super().check_valid()
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
+
+    def _produce_value(self, skip=None) -> None:
+        sibs = self.siblings()
+        s = sibs[0].to_value(skip=skip)
+        i = sibs[1].to_value(skip=skip)
+        v = sibs[2].to_value(skip=skip)
+
+        i = int(i)
+
+        self._register_internal_var_name(s)
+        stack = self.matcher.get_variable(s, set_if_none=[])
+        siv = None
+        if abs(i) < len(stack):
+            siv = stack[i]
+            if self.name == "peek_eq":
+                self.value = v == siv
+            elif self.name == "peek_neq":
+                self.value = v != siv
+            elif self.name == "peek_lt":
+                self.value = siv < v
+            elif self.name == "peek_lte":
+                self.value = siv <= v
+            elif self.name == "peek_gt":
+                self.value = siv > v
+            elif self.name == "peek_gte":
+                self.value = siv >= v
+        else:
+            if self.name == "peek_eq" and v is None:
+                self.value = True
+            else:
+                self.value = False
+
+    def _decide_match(self, skip=None) -> None:
+        self.match = self.to_value(skip=skip)
+
+
+#
+# ===============================
+#
+
+
 class PeekSize(ValueProducer):
     """gets the number of items in a stack variable"""
 

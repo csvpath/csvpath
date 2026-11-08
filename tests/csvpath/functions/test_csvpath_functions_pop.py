@@ -9,6 +9,82 @@ FOOD = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}food.csv"
 
 
 class TestCsvPathFunctionsPop(unittest.TestCase):
+    def test_function_peek_eq(self):
+        path = CsvPath()
+        path.parse(
+            f"""
+            ${PATH}[1]
+            [
+                push("pushed", #lastname, 1, 2, 3, 4, 5 )
+                ~ print("pushed: $.variables.pushed") ~
+
+                @a = peek_eq("pushed", 1, 1)
+                @b = peek_eq("pushed", 0, 1)
+
+                @c = peek_neq("pushed", 0, "Kermit")
+                @d = peek_neq("pushed", 1, "Kermit")
+
+                @e = peek_gt("pushed", 3, 3)
+                @f = peek_gt("pushed", 3, 4)
+                @g = peek_gt("pushed", 3, 2)
+
+                @h = peek_gte("pushed", 3, 3)
+                @i = peek_gte("pushed", 3, 4)
+                @j = peek_gte("pushed", 3, 2)
+
+                @k = peek_lt("pushed", 3, 3)
+                @l = peek_lt("pushed", 3, 4)
+                @m = peek_lt("pushed", 3, 2)
+
+                @n = peek_lte("pushed", 3, 3)
+                @o = peek_lte("pushed", 3, 4)
+                @p = peek_lte("pushed", 3, 2)
+
+                @q = peek_neq("pushed", 10, none())
+                @r = peek_eq("pushed", 10, none())
+
+                @adate = now()
+                push("date", @adate)
+                @s = peek_eq("date", 0, @adate)
+                @t = peek_eq("date", 0, now())
+                @u = peek_gt("date", 0, now())
+                @v = peek_lt("date", 0, now())
+
+
+            ]"""
+        )
+        path.fast_forward()
+        vs = path.variables
+        assert vs["a"] is True
+        assert vs["b"] is False
+
+        assert vs["c"] is False
+        assert vs["d"] is True
+
+        assert vs["e"] is False
+        assert vs["f"] is False
+        assert vs["g"] is True
+
+        assert vs["h"] is True
+        assert vs["i"] is False
+        assert vs["j"] is True
+
+        assert vs["k"] is False
+        assert vs["l"] is True
+        assert vs["m"] is False
+
+        assert vs["n"] is True
+        assert vs["o"] is True
+        assert vs["p"] is False
+
+        assert vs["q"] is False
+        assert vs["r"] is True
+
+        assert vs["s"] is True
+        assert vs["t"] is False
+        assert vs["u"] is False
+        assert vs["v"] is True
+
     def test_function_push1(self):
         path = CsvPath()
         path.parse(
