@@ -107,6 +107,10 @@ last. Add an item the moment something is deferred.
    done): finish group A first, as it reuses the existing detectors,
    then group B after a design pass with David on a generic pattern
    detector.
+6b. **`SPAIN_SOCIAL_SECURITY_NUMBER`** has no stand-in: missed by the item
+   6 inventory, found 2026-11-08 when building the recommended-list
+   assets. It is in Macie's jobs and automated discovery recommended sets,
+   so it matters. Next stand-in (Spain's NSS: 12 digits, mod 97 control).
 7. **boto3 download** into a wrapper. Design draft:
    `specs/macie/download-design.md` (2026-11-08). Offline first with
    botocore's Stubber; one live check in David's account later (one

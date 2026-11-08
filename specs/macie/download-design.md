@@ -124,16 +124,25 @@ The wrapper pins the concrete managed identifier list at download time
 | `ALL` | everything `ListManagedDataIdentifiers` returns |
 | `NONE` | nothing |
 | `RECOMMENDED` (or none given) | the jobs recommended list asset, as of its date |
-| template | the automated-discovery recommended list asset, plus includes, less excludes |
+| template | the automated-discovery list asset for the account (below), plus includes, less excludes |
 
 **The recommended lists** are published only in the Macie documentation,
 not through the API. The Framework ships each as a dated asset:
 
 ```
 csvpath/macie/rulesbase/recommended/
-  jobs.json                 { "source": <AWS page>, "retrieved": "2026-11-08", "ids": [...] }
-  automated_discovery.json
+  jobs.json                        jobs: 35 ids, unchanged since 2023-06-27
+  automated_discovery.json         templates, accounts first enabled on or
+                                   after 2023-08-02: the same 35, "dynamic"
+  automated_discovery_static.json  templates, accounts first enabled before
+                                   2023-08-02: a static set of 100
 ```
+
+Each holds its AWS source page, the date we retrieved it and its ids
+(`RecommendedLists`). Macie keeps accounts that first enabled automated
+discovery before 2023-08-02 on the static set, so the template download
+reads `firstEnabledAt` from `GetAutomatedDiscoveryConfiguration` and picks
+the list by it.
 
 `resolution.recommended_list` records which, e.g.
 `"jobs-recommended@2026-11-08"`. A resolved id that

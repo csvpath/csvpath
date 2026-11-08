@@ -22,6 +22,7 @@ from people running it against real data.
 |---|---|
 | `NAME` | Macie uses machine learning to find names. |
 | `ADDRESS` | An address needs a gazetteer of places and postal codes. |
+| `SPAIN_SOCIAL_SECURITY_NUMBER` | Planned next. Found missing from our inventory on 2026-11-08; it is in Macie's recommended sets. |
 | Driver's licenses for Finland, Greece, Hungary, Ireland, Latvia, Lithuania, Luxembourg, Malta, the Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia, Sweden | Planned. The other 17 driver's license identifiers, including the US one (the union of the states' formats), are supported. |
 
 A wrapper that selects one of these still loads. The conversion report
