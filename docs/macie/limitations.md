@@ -6,10 +6,10 @@ from people running it against real data.
 
 ## Not built yet
 
-- **Downloading a wrapper from AWS.** The wrapper format is designed for
-  a download from your account (the Macie API and S3, with the AWS
-  responses kept verbatim), but the download is not built yet. Today a
-  wrapper is a file you provide. Loading and running never call AWS.
+- **A live test of the download.** Reading a job from AWS
+  ([getting the rules from AWS](aws.md)) is tested against AWS's own API
+  definitions, offline. It has not yet been run against a live account;
+  that check is planned. Loading a group and running it never call AWS.
 - **A comparison with real Macie.** Our reading of Macie's documentation
   has not yet been checked by running the same files through Macie. The
   questions that comparison will answer are listed in

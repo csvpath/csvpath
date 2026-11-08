@@ -3,7 +3,11 @@ import logging
 import os
 from collections import Counter
 
+from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.nos import Nos
+
 from .macie_converter import MacieConverter
+from .macie_downloader import MacieDownloader
 from .macie_exceptions import MacieException
 from .macie_wrapper_loader import MacieWrapperLoader
 from .project_rulesbase import ProjectRulesbase
@@ -46,6 +50,20 @@ class MacieGroupLoader:
         if not MacieWrapperLoader.is_wrapper_path(path=path):
             raise ValueError(f"Not a Macie wrapper file: {path}")
         wrapper = MacieWrapperLoader.from_path(path=path)
+        return cls.convert_wrapper(wrapper=wrapper, path=path, config=config)
+
+    @classmethod
+    def convert_wrapper(
+        cls, *, wrapper: dict, path: str, config
+    ) -> tuple[list[str], dict, dict[str, list[str]], dict]:
+        """as convert_file(), for a wrapper already read: from a file, or
+        downloaded. path names the wrapper, as its file or, for a download,
+        the name it will have in the group home; it is the fallback csvpath
+        name and the report's source_path."""
+        if not isinstance(wrapper, dict):
+            raise TypeError(f"wrapper must be a dict, not {type(wrapper)}")
+        if not isinstance(path, str) or path.strip() == "":
+            raise ValueError("path must be a non-empty str")
         catalog = ProjectRulesbase.catalog(config=config, refresh_reference=True)
         converter = MacieConverter(wrapper=wrapper, catalog=catalog)
         conversion = converter.convert(
@@ -89,6 +107,84 @@ class MacieGroupLoader:
             dict(conversion.lists),
             catalog.catalog,
         )
+
+    @classmethod
+    def download_and_load(
+        cls,
+        *,
+        paths_manager,
+        name: str,
+        session,
+        job_id: str | None = None,
+        template: bool = False,
+        append: bool = False,
+    ) -> str:
+        """downloads a Macie job's setup, or the account's automated-discovery
+        template's, and loads it into a named-paths group as
+        PathsManager.add_named_paths_from_file() loads a wrapper file, in the
+        same order and with the same refusals (specs/macie/download-design.md).
+        The wrapper is written nowhere but the group home, as
+        <csvpath name>.macie.json, with its conversion report beside it. The
+        group's manifest records where the rules came from as source_path,
+        e.g. aws:macie2:us-east-1:123456789012:classification-job/<job id>.
+        Returns what add_named_paths() returns."""
+        if paths_manager is None:
+            raise ValueError("paths_manager cannot be None")
+        if not isinstance(name, str) or name.strip() == "":
+            raise ValueError("name must be a non-empty str")
+        if not isinstance(template, bool):
+            raise TypeError(f"template must be a bool, not {type(template)}")
+        if not isinstance(append, bool):
+            raise TypeError(f"append must be a bool, not {type(append)}")
+        if template == (job_id is not None):
+            raise ValueError(
+                "Give either a job_id or template=True, not both or neither"
+            )
+        downloader = MacieDownloader(session=session)
+        if template:
+            wrapper = downloader.download_template()
+        else:
+            wrapper = downloader.download_job(job_id=job_id)
+        source = wrapper["source"]
+        source_id = source.get("job_id") or source.get("template_id")
+        paths, report, lists, catalog = cls.convert_wrapper(
+            wrapper=wrapper,
+            path=f"{source_id}{MacieWrapperLoader.SUFFIX}",
+            config=paths_manager.csvpaths.config,
+        )
+        provenance = cls.provenance(source=source)
+        report["source_path"] = provenance
+        file_name = f"{report['name']}{MacieWrapperLoader.SUFFIX}"
+        #
+        # the order and refusals of a file load: shared ids and conflicting
+        # lists or catalogs are refused before anything is written
+        #
+        paths_manager._refuse_shared_macie_ids(name=name, paths=paths, append=append)
+        paths_manager._store_macie_assets(
+            name=name, lists=lists, catalog=catalog, append=append
+        )
+        ref = paths_manager.add_named_paths(
+            name=name, paths=paths, source_path=provenance, append=append
+        )
+        if ref is not None:
+            home = paths_manager.named_paths_home(name)
+            with DataFileWriter(path=Nos(home).join(file_name), mode="w") as writer:
+                writer.write(json.dumps(wrapper, indent=2, ensure_ascii=False) + "\n")
+            paths_manager._write_conversion_report(
+                name=name, file_path=file_name, report=report
+            )
+        return ref
+
+    @classmethod
+    def provenance(cls, *, source: dict) -> str:
+        """where downloaded rules came from, for the group's manifest. Not
+        an ARN: a template has none, and we do not invent one."""
+        kind, ident = (
+            ("classification-job", source["job_id"])
+            if source["origin"] == "job"
+            else ("sensitivity-inspection-template", source["template_id"])
+        )
+        return f"aws:macie2:{source['region']}:{source['account_id']}:{kind}/{ident}"
 
     @classmethod
     def store_assets(
