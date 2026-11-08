@@ -107,8 +107,10 @@ last. Add an item the moment something is deferred.
    done): finish group A first, as it reuses the existing detectors,
    then group B after a design pass with David on a generic pattern
    detector.
-7. **boto3 download** into a wrapper. Needs an AWS account, region and
-   permissions agreed with David first.
+7. **boto3 download** into a wrapper. Design draft:
+   `specs/macie/download-design.md` (2026-11-08). Offline first with
+   botocore's Stubber; one live check in David's account later (one
+   bucket, 5 to 10 small files, under a dollar a month).
 8. **One-time fidelity scan against real Macie** (billed; ask first) to
    confirm the interpretations in transpile-design.md: three for custom
    identifiers, nine for managed ones.
@@ -154,6 +156,12 @@ fidelity item in transpile-design.md.
   target market, and the users most exposed to the gap would be unlikely
   to rely on the MVP for such sensitive use. A gap to close, with a final
   decision when deciding on a first release (David, 2026-11-02).
+
+## After the MVP release
+
+- **Jev as a double check on warnings** (David, 2026-11-08). David is
+  adding Jev functions to CVL first (issue #558) to get a feel for it;
+  if it works as hoped, consider how Macie could use it.
 
 ## Clean-ups (not blockers)
 
