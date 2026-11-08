@@ -902,6 +902,77 @@ class TestManifestFunction:
         assert results.results[0].data == single_version[0]
 
 
+class TestManifestFieldOverSeveralVersions:
+    # Rule 3 (manifest_field_functions_proposal.md): a field is a small
+    # value, so it can be read for several versions at once; Rule 1 still
+    # stops whole entries. Before 2026-11-08 a field beside a multi-version
+    # ':manifest()' raised on resolve, where FILES gives one value per
+    # version.
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            (
+                "$dater.csvpaths.:manifest():from(1):to(2):uuid()",
+                ["v1-uuid", "v2-uuid"],
+            ),
+            (
+                "$dater.csvpaths.:from(1):to(2):manifest():uuid()",
+                ["v1-uuid", "v2-uuid"],
+            ),
+            (
+                "$dater.csvpaths.:all():manifest():uuid()",
+                ["v0-uuid", "v1-uuid", "v2-uuid", "v3-uuid", "v4-uuid"],
+            ),
+            (
+                "$dater.csvpaths.:manifest():from(-2):named_paths_identities()",
+                [["3"], ["4"]],
+            ),
+            (
+                "$dater.csvpaths.:manifest():from(1):to(2):time()",
+                ["2026-01-02T00:00:00+00:00", "2026-01-03T00:00:00+00:00"],
+            ),
+        ],
+    )
+    def test_a_field_resolves_one_value_per_version(self, reference, expected):
+        finder = _finder(reference, VERSION_RANGE_MANIFEST)
+        assert not finder.query().ambiguous_content_read
+        assert [r.data for r in finder.resolve().results] == expected
+
+    def test_a_keyed_field_resolves_one_value_per_version(self):
+        # a "{}"-key field's argument picks the key; it is not a gate
+        reference = (
+            '$acme.csvpaths.:manifest():from(0):to(2):destination_address("myd")'
+        )
+        results = _gate_finder(reference).resolve().results
+        assert [r.data for r in results] == ["ftp.acme.example"] * 3
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$dater.csvpaths.:manifest():from(1):to(2)",
+            "$dater.csvpaths.:from(1):to(2):manifest()",
+            "$dater.csvpaths.:all():manifest()",
+        ],
+    )
+    def test_whole_entries_for_several_versions_still_raise(self, reference):
+        finder = _finder(reference, VERSION_RANGE_MANIFEST)
+        results = finder.query()
+        assert len(results) > 1
+        assert results.ambiguous_content_read
+        with pytest.raises(ReferenceException3) as error:
+            finder.resolve()
+        assert "more than one match" in str(error.value)
+
+    def test_a_pointer_after_the_range_still_gives_the_whole_entry(self):
+        finder = _finder(
+            "$dater.csvpaths.:manifest():from(1):to(2):last()",
+            VERSION_RANGE_MANIFEST,
+        )
+        assert [r.data for r in finder.resolve().results] == [
+            VERSION_RANGE_MANIFEST[2]
+        ]
+
+
 class TestGlobalLoadsLedger:
     # Rule 1a: "*" at root_major combined with a bare :manifest() is the
     # one exception to root_major=="*" being unsupported -- it resolves
