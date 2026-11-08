@@ -149,6 +149,12 @@ These function docs are generated from the function code. They are also availabl
 * [outside](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/outside.md)
 * [parquet](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/parquet.md)
 * [peek](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/peek.md)
+* [peek_eq](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/peek_eq.md)
+* [peek_gt](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/peek_gt.md)
+* [peek_gte](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/peek_gte.md)
+* [peek_lt](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/peek_lt.md)
+* [peek_lte](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/peek_lte.md)
+* [peek_neq](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/peek_neq.md)
 * [peek_size](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/peek_size.md)
 * [percent](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/percent.md)
 * [percent_dups](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/percent_dups.md)
@@ -223,4 +229,4 @@ These function docs are generated from the function code. They are also availabl
 * [yes](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/yes.md)
 
 
-Generated on: 2026-11-06 22:33:46.580119
+Generated on: 2026-11-07 22:31:45.351600
