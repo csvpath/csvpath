@@ -216,7 +216,7 @@
       "additionalProperties": false,
       "properties": {
         "code": {
-          "enum": ["ALLOW_LIST_UNREADABLE", "MACIE_ALLOW_LIST_STATUS", "CDI_DELETED_BUT_SELECTED"]
+          "enum": ["ALLOW_LIST_UNREADABLE", "MACIE_ALLOW_LIST_STATUS", "CDI_DELETED_BUT_SELECTED", "RECOMMENDED_ID_UNAVAILABLE"]
         },
         "subject": { "type": "string" },
         "message": { "$ref": "#/$defs/nonEmptyString" }

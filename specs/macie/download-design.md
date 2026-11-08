@@ -2,7 +2,12 @@
 
 Status: proposal, 2026-11-08; open questions 1-4 agreed by David the same
 day, question 5 revised (no wrapper file written; see below) and awaiting
-his confirmation. Worklist item 7. Nothing built yet.
+his confirmation; David confirmed Option A. Worklist item 7. PR 1 (#560:
+the recommended-list assets) merged. PR 2 built: `MacieDownloader`,
+offline-tested with botocore's Stubber, which validates every request and
+response against AWS's service models (a bogus field or a misspelled
+parameter raises `ParamValidationError`). Next: the core
+`add_named_paths_from_macie()`.
 
 The wrapper format (`wrapper-format.md`) was designed for this from the
 start: one file holding a Macie job's (or automated-discovery template's)
