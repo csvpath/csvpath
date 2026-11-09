@@ -198,7 +198,10 @@ schedules) has no effect on transpiling.
 ```
 
 Codes so far: `ALLOW_LIST_UNREADABLE`, `MACIE_ALLOW_LIST_STATUS`
-(Macie itself reports a non-`OK` status), `CDI_DELETED_BUT_SELECTED`.
+(Macie itself reports a non-`OK` status), `CDI_DELETED_BUT_SELECTED`,
+`RECOMMENDED_ID_UNAVAILABLE` (an id in our recommended list asset that the
+account's `ListManagedDataIdentifiers` does not offer; left out of
+`resolved`).
 
 ## Load-time checks (fail fast)
 
