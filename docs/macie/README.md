@@ -42,8 +42,8 @@ becomes one csvpath in a named-paths group:
 ## How it works, in short
 
 1. **A wrapper.** Macie's configuration is spread over several AWS
-   resources. The Framework's `.macie.json` wrapper holds all of it in
-   one file: the job, its custom identifiers, its resolved managed
+   resources. The Framework reads them from your account (read-only) into
+   a `.macie.json` wrapper that holds all of it in one file: the job, its custom identifiers, its resolved managed
    identifiers and its allow lists, with the AWS responses kept verbatim
    (format: `specs/macie/wrapper-format.md`).
 2. **Load.** `add_named_paths_from_file()` converts the wrapper to one
@@ -81,6 +81,7 @@ national id can become a legal problem, so a shortfall must be visible.
 | Page | What it covers |
 |---|---|
 | [Quickstart](quickstart.md) | Load a wrapper, run it, read the findings |
+| [Getting the rules from AWS](aws.md) | Read a Macie job from your account into a group; the IAM policy |
 | [What gets translated](translation.md) | Custom and managed identifiers, allow lists, keywords, severity, the conversion report |
 | [Results and findings](results.md) | Printouts, errors, the `macie_findings` document, limits |
 | [Reproducibility](reproducibility.md) | Group runs as an auditable record; standalone runs for fast checks |

@@ -412,6 +412,33 @@ class PathsManager:
                 raise
             return None
 
+    def add_named_paths_from_macie(
+        self,
+        *,
+        name: NamedPathsName,
+        session,
+        job_id: str | None = None,
+        template: bool = False,
+        append: bool = False,
+    ) -> str:
+        #
+        # downloads a Macie job's (or the account's automated-discovery
+        # template's) setup from AWS and loads it as add_named_paths_from_file()
+        # loads a wrapper file. the wrapper is written nowhere but the group
+        # home. imported here so that CsvPaths does not load the Macie
+        # package unless needed.
+        #
+        from csvpath.macie.macie_group_loader import MacieGroupLoader
+
+        return MacieGroupLoader.download_and_load(
+            paths_manager=self,
+            name=name,
+            session=session,
+            job_id=job_id,
+            template=template,
+            append=append,
+        )
+
     def add_named_paths_from_json(self, file_path: str) -> list[str]:
         if file_path is None:
             raise ValueError(

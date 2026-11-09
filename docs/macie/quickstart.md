@@ -11,10 +11,11 @@ The same steps are a runnable test you can step through:
 
 ## 1. A wrapper
 
-A `.macie.json` wrapper holds one Macie job's whole setup. The Framework
-will download it from your AWS account (planned; see
-[limitations](limitations.md)); today you start from a wrapper file. Its
-format is in `specs/macie/wrapper-format.md`.
+A `.macie.json` wrapper holds one Macie job's whole setup. Usually the
+Framework reads it from your AWS account and loads it in one step, with
+`add_named_paths_from_macie()` (see [getting the rules from AWS](aws.md)).
+This walkthrough starts from a wrapper file instead, so it runs without an
+AWS account. The format is in `specs/macie/wrapper-format.md`.
 
 ## 2. Load it into a named-paths group
 

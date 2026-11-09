@@ -115,7 +115,10 @@ last. Add an item the moment something is deferred.
 7. **boto3 download** into a wrapper. Design draft:
    `specs/macie/download-design.md` (2026-11-08). Offline first with
    botocore's Stubber; one live check in David's account later (one
-   bucket, 5 to 10 small files, under a dollar a month).
+   bucket, 5 to 10 small files, under a dollar a month). Built: the
+   recommended sets (#560), `MacieDownloader`, and
+   `add_named_paths_from_macie()` with `docs/macie/aws.md`. Left: the
+   live check.
 8. **One-time fidelity scan against real Macie** (billed; ask first) to
    confirm the interpretations in transpile-design.md: three for custom
    identifiers, nine for managed ones.

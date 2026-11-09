@@ -6,8 +6,10 @@ his confirmation; David confirmed Option A. Worklist item 7. PR 1 (#560:
 the recommended-list assets) merged. PR 2 built: `MacieDownloader`,
 offline-tested with botocore's Stubber, which validates every request and
 response against AWS's service models (a bogus field or a misspelled
-parameter raises `ParamValidationError`). Next: the core
-`add_named_paths_from_macie()`.
+parameter raises `ParamValidationError`). PR 3 built: the core
+`add_named_paths_from_macie()` (approved by David) delegating to
+`MacieGroupLoader.download_and_load()`, and the docs page
+`docs/macie/aws.md`. Next: the live check.
 
 The wrapper format (`wrapper-format.md`) was designed for this from the
 start: one file holding a Macie job's (or automated-discovery template's)
