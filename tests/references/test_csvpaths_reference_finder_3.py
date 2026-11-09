@@ -2617,6 +2617,28 @@ class TestTemplateBareVsPointerDualSource:
         ).resolve()
         assert [r.data for r in results.results] == [None, None]
 
+    def test_definition_beside_it_is_still_bare(self):
+        # ':definition()' names the bare source, so it does not select
+        # versions: a regression in #565 read each version's snapshot here
+        results = _finder(
+            "$acme.csvpaths.:definition():template()",
+            self.MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert [r.data for r in results.results] == [
+            "current-default",
+            "current-default",
+        ]
+
+    def test_definition_with_a_pointer_reads_that_versions_snapshot(self):
+        # the pointer still selects a version, as it did before #565
+        results = _finder(
+            "$acme.csvpaths.:definition():last():template()",
+            self.MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert [r.data for r in results.results] == ["snapshot-v1"]
+
     @pytest.mark.parametrize(
         "reference, expected",
         [

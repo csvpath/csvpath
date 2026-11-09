@@ -876,10 +876,15 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # a BARE_SOURCE field is bare only when it is all of
                 # name_one: a pointer, range, ':all()', ':manifest()',
                 # window or ':having()' selects versions, and each reads
-                # its own value (David, 2026-11-08)
+                # its own value (David, 2026-11-08). A ':definition()'
+                # beside it names the bare source, so it does not count:
+                # ':definition():template()' is bare too.
+                selecting_calls = [
+                    seg for seg in combined_for_path if seg.name != "definition"
+                ]
                 use_definition = function_cls.SOURCE == "definition" or (
                     function_cls.BARE_SOURCE == "definition"
-                    and len(combined_for_path) == 1
+                    and len(selecting_calls) == 1
                 )
                 if use_definition:
                     # a definition.json-backed field (e.g. :scripts(),
