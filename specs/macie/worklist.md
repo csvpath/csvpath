@@ -118,7 +118,7 @@ last. Add an item the moment something is deferred.
    bucket, 5 to 10 small files, under a dollar a month). Built: the
    recommended sets (#560), `MacieDownloader`, and
    `add_named_paths_from_macie()` with `docs/macie/aws.md`. Left: the
-   live check.
+   live check; its files and checklist are in `tests/macie/live/`.
 8. **One-time fidelity scan against real Macie** (billed; ask first) to
    confirm the interpretations in transpile-design.md: three for custom
    identifiers, nine for managed ones.
