@@ -16,7 +16,12 @@ class Template3(Function3):
     #     stored on that version's own manifest entry (Table 1/Table 3).
     #     Ordinary SOURCE == "manifest" behavior, unchanged from every
     #     other per-version field accessor.
-    #   - bare, no pointer at all -- the entity's CURRENT default
+    #     Since 2026-11-08 anything that selects versions counts, not
+    #     only a pointer: a range, ':all()', ':manifest()', a window or
+    #     ':having()' reads each matched version's own snapshot (David:
+    #     "we need to return the versions' templates, not the named-paths
+    #     group template").
+    #   - bare, the whole of name_one -- the entity's CURRENT default
     #     template, read from definition.json instead (Table 8/Table 9).
     #     BARE_SOURCE == "definition". Table 9's own docstring is
     #     explicit about this being the real distinction: "This is the
@@ -42,9 +47,9 @@ class Template3(Function3):
     #
     NAME = "template"
     SUMMARY = (
-        "The template in effect for the resolved entity -- the "
-        "specific version's own historical snapshot when a real "
-        "pointer selected one, or the entity's current default from "
+        "The template in effect for the resolved entity -- each "
+        "selected version's own historical snapshot when name_one "
+        "selects versions, or the entity's current default from "
         "definition.json when used bare. For RESULTS, simply the "
         "run's own template, no bare/current distinction."
     )

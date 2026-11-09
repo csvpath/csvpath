@@ -873,9 +873,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     return self._compute_field(field_call.name, reference)
                 key_path = function_cls.KEY.get(reference.datatype)
                 key_path = self._apply_key_arg(key_path, field_call.arg)
+                # a BARE_SOURCE field is bare only when it is all of
+                # name_one: a pointer, range, ':all()', ':manifest()',
+                # window or ':having()' selects versions, and each reads
+                # its own value (David, 2026-11-08)
                 use_definition = function_cls.SOURCE == "definition" or (
                     function_cls.BARE_SOURCE == "definition"
-                    and not self._pointer_present(combined_for_path)
+                    and len(combined_for_path) == 1
                 )
                 if use_definition:
                     # a definition.json-backed field (e.g. :scripts(),
@@ -885,9 +889,10 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     # (added 2026-08-18, see that method's own docstring).
                     # A BARE_SOURCE field (":template()" -- added
                     # 2026-08-26, see Template3's own docstring) only
-                    # takes this path when no real pointer rode alongside
-                    # it -- with one, it means the matched version's own
-                    # historical snapshot instead, falling through below.
+                    # takes this path when it is the whole of name_one --
+                    # with anything selecting versions beside it, it means
+                    # each matched version's own historical snapshot
+                    # instead, falling through below.
                     group_name, _ = self._group_manifest_entry(
                         reference.root_major, result.uuid
                     )
