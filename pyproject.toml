@@ -76,6 +76,7 @@ psutil = "^7.2.2"
 xmlschema = "^4.3.2"
 jsonschema = "^4.26.0"
 pyyaml = "^6.0.3"
+typesafe-sdk = "^0.7.5"
 
 [tool.poetry.extras]
 #pandas = ["pandas"]
