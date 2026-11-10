@@ -26,6 +26,7 @@ These function docs are generated from the function code. They are also availabl
 * [boolean](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/boolean.md)
 * [brief_stack_trace](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/brief_stack_trace.md)
 * [caps](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/caps.md)
+* [choice](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/choice.md)
 * [clear](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/clear.md)
 * [collect](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/collect.md)
 * [collect_original](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/collect_original.md)
@@ -39,6 +40,7 @@ These function docs are generated from the function code. They are also availabl
 * [count_lines](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/count_lines.md)
 * [count_scans](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/count_scans.md)
 * [counter](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/counter.md)
+* [criteria](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/criteria.md)
 * [datatype](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/datatype.md)
 * [date](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/date.md)
 * [datetime](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/datetime.md)
@@ -104,6 +106,7 @@ These function docs are generated from the function code. They are also availabl
 * [int](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/int.md)
 * [integer](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/integer.md)
 * [interpolate](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/interpolate.md)
+* [jev](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/jev.md)
 * [jinja](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/jinja.md)
 * [jsonpath](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/jsonpath.md)
 * [jsonschema](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/jsonschema.md)
@@ -143,6 +146,7 @@ These function docs are generated from the function code. They are also availabl
 * [not](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/not.md)
 * [not_equal_to](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/not_equal_to.md)
 * [not_line](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/not_line.md)
+* [noul](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/noul.md)
 * [now](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/now.md)
 * [odd](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/odd.md)
 * [or](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/or.md)
@@ -180,6 +184,7 @@ These function docs are generated from the function code. They are also availabl
 * [row_table](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/row_table.md)
 * [run_table](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/run_table.md)
 * [runtime](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/runtime.md)
+* [score](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/score.md)
 * [select](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/select.md)
 * [shuffle](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/shuffle.md)
 * [size](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/size.md)
@@ -229,4 +234,4 @@ These function docs are generated from the function code. They are also availabl
 * [yes](https://github.com/csvpath/csvpath/blob/main/docs/func_gen/yes.md)
 
 
-Generated on: 2026-11-07 22:31:45.351600
+Generated on: 2026-11-09 21:11:20.539042

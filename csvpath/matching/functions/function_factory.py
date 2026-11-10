@@ -3,6 +3,11 @@ from csvpath.matching.productions.expression import Matchable
 from .function import Function
 from .function_finder import FunctionFinder
 from .internal_functions import InternalFunctions
+from .jev.jev import Jev
+from .jev.jev_noul import JevNoul
+from .jev.jev_choice import JevChoice
+from .jev.jev_score import JevScore
+from .jev.jev_criteria import JevCriteria
 from .dates.now import Now
 from .dates.roll import Roll
 from .dates.part import DateFormat
@@ -388,6 +393,11 @@ class FunctionFactory:
         fs["today"] = Now
         fs["format_date"] = DateFormat
         fs["in"] = In
+        fs["jev"] = Jev
+        fs["noul"] = JevNoul
+        fs["choice"] = JevChoice
+        fs["score"] = JevScore
+        fs["criteria"] = JevCriteria
         fs["sql_in"] = SqlIn
         fs["select"] = Select
         fs["concat"] = Concat
