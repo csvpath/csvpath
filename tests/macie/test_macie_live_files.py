@@ -134,3 +134,53 @@ def test_macie_live_clean_file_has_nothing(written) -> None:
                 if ident.occurrences(cell=cell, header=headers[i], allow_lists=allow):
                     found.append((ident.name, cell))
     assert found == []
+
+
+#
+# the second probe (tests/macie/live/make_probe_files.py): the three
+# differences the first live check left open
+#
+import make_probe_files as mpf  # noqa: E402
+
+
+@pytest.fixture(scope="module")
+def probed(tmp_path_factory):
+    out = tmp_path_factory.mktemp("probe")
+    doc = mpf.write_all(out=str(out))
+    return str(out), doc
+
+
+def test_macie_probe_files_written(probed) -> None:
+    out, doc = probed
+    names = sorted(os.listdir(os.path.join(out, "probe")))
+    assert names == ["probe_de_id.csv", "probe_it_cf.csv", "probe_phones.csv"]
+    assert len(doc["expected"]) == 24
+
+
+def test_macie_probe_files_are_deterministic(probed, tmp_path) -> None:
+    out, _ = probed
+    mpf.write_all(out=str(tmp_path))
+    for n in os.listdir(os.path.join(out, "probe")):
+        with open(os.path.join(out, "probe", n), "rb") as a:
+            with open(os.path.join(tmp_path, "probe", n), "rb") as b:
+                assert a.read() == b.read(), n
+
+
+def test_macie_probe_expectations_hold_for_the_stand_ins(probed) -> None:
+    out, doc = probed
+    catalog = ManagedCatalog.load()
+    wrong = []
+    for e in doc["expected"]:
+        with open(
+            os.path.join(out, "probe", e["file"]), encoding="utf-8", newline=""
+        ) as f:
+            rows = list(csv.reader(f))
+        headers, row = rows[0], rows[e["row"] - 1]
+        i = e["column_number"] - 1
+        assert headers[i] == e["column"]
+        n = _identifier(catalog, e["identifier"]).occurrences(
+            cell=row[i], header=headers[i], allow_lists=AllowListSet()
+        )
+        if n != e["count"]:
+            wrong.append((e["file"], e["row"], e["count"], n, e["note"]))
+    assert wrong == []

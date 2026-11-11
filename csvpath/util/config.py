@@ -898,7 +898,7 @@ shell = /bin/bash
             )
         if self.csvpath_log_level not in [s.value for s in LogLevels]:
             raise ConfigurationException(
-                f"CsvPath log level {_} is wrong in {self.configpath}"
+                f"CsvPath log level {self.csvpath_log_level} is wrong in {self.configpath}"
             )
         if self.csvpaths_log_level is None or not isinstance(
             self.csvpaths_log_level, str

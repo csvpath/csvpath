@@ -35,7 +35,8 @@ def test_macie_tally_zero_detail() -> None:
 
 def test_macie_tally_keeps_at_most_15_cells() -> None:
     t = _tally(max_detail=100)
-    _record(t, 20)
+    for row in range(2, 22):
+        _record(t, 1, row=row)
     assert t.count == 20
     assert len(t.cells) == IdentifierTally.MAX_CELLS == 15
     assert t.cells[0] == {
@@ -44,6 +45,20 @@ def test_macie_tally_keeps_at_most_15_cells() -> None:
         "columnName": "employee_id",
         "row": 2,
     }
+    assert t.cells[-1]["row"] == 16
+
+
+def test_macie_tally_lists_a_cell_once() -> None:
+    #
+    # the live check (2026-11-11): Macie lists a cell holding two
+    # occurrences once, and counts both
+    #
+    t = _tally(max_detail=100)
+    assert _record(t, 2) == [True, True]
+    _record(t, 1, row=3)
+    assert t.count == 3
+    assert t.detailed == 3
+    assert [c["row"] for c in t.cells] == [2, 3]
 
 
 def test_macie_tally_custom_and_managed_detection_shapes() -> None:
