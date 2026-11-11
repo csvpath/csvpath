@@ -17,7 +17,6 @@
               { "cellReference": null, "column": 2, "columnName": "ssn", "row": 3 },
               { "cellReference": null, "column": 4, "columnName": "notes", "row": 4 },
               { "cellReference": null, "column": 2, "columnName": "ssn", "row": 12 },
-              { "cellReference": null, "column": 2, "columnName": "ssn", "row": 12 },
               { "cellReference": null, "column": 4, "columnName": "notes", "row": 13 }
             ]
           }

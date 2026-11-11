@@ -191,7 +191,9 @@ location (row, column, column name). Macie's findings do the same.
 - stores the findings in the variable `macie_findings`, so they land in
   the run's `vars.json` with no new file mechanism. The structure follows
   Macie's own `customDataIdentifiers` / `sensitiveData` detections shape:
-  exact `count`, plus up to 15 `cells`, the cap Macie itself uses.
+  exact `count`, plus up to 15 `cells`, the cap Macie itself uses. A cell
+  is listed once however many occurrences it holds (live check,
+  2026-11-11).
 
 Severity is per identifier per file. Below the lowest threshold there is no
 finding at all, as in Macie: the identifier is reported with count `n` and

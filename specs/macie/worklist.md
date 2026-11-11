@@ -117,11 +117,15 @@ last. Add an item the moment something is deferred.
    botocore's Stubber; one live check in David's account later (one
    bucket, 5 to 10 small files, under a dollar a month). Built: the
    recommended sets (#560), `MacieDownloader`, and
-   `add_named_paths_from_macie()` with `docs/macie/aws.md`. Left: the
-   live check; its files and checklist are in `tests/macie/live/`.
-8. **One-time fidelity scan against real Macie** (billed; ask first) to
-   confirm the interpretations in transpile-design.md: three for custom
-   identifiers, nine for managed ones.
+   `add_named_paths_from_macie()` with `docs/macie/aws.md`. Live check
+   done (2026-11-11): the download needs nothing beyond the docs policy.
+   Report: `specs/macie/live-check-2026-11-11.md`.
+8. **Fidelity scan against real Macie** (billed; ask first) to confirm
+   the interpretations in transpile-design.md. First scan done with the
+   live check: 34 of 43 identifier-file comparisons match exactly, and
+   the one difference on our side (a cell listed once per occurrence) is
+   fixed. Next: a second probe for the three open items in the report
+   (phones with a country code, the German ID, the Codice Fiscale).
 
 ## Ask road-testers about
 
@@ -157,6 +161,12 @@ fidelity item in transpile-design.md.
 - **UDI: GS1 and HIBCC only.** ISBT 128 (blood and tissue products) is
   missed, as are GS1 UDIs written without their parentheses. The
   keywords `med` and `blood` match inside many words.
+- **Seen against real Macie, pending a probe** (live check, 2026-11-11).
+  We report each of these and Macie did not: a phone number with a
+  country code and no keyword (`+1 212 555 0148`), a German ID card number
+  in the 2010 format under a `personalausweis` header, and the textbook
+  Codice Fiscale `RSSMRA85T10A562S` under a `codice_fiscale` header.
+  Possible false positives until the probe settles why.
 
 ## Decide at release planning
 

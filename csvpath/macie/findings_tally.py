@@ -55,15 +55,18 @@ class IdentifierTally:
         if not isinstance(column_name, str):
             raise TypeError(f"column_name must be a str, not {type(column_name)}")
         self.count += 1
-        if len(self.cells) < self.MAX_CELLS:
-            self.cells.append(
-                {
-                    "cellReference": None,
-                    "column": column,
-                    "columnName": column_name,
-                    "row": row,
-                }
-            )
+        #
+        # Macie lists a cell once, however many occurrences it holds; the
+        # count stays per occurrence (live check, 2026-11-11)
+        #
+        cell = {
+            "cellReference": None,
+            "column": column,
+            "columnName": column_name,
+            "row": row,
+        }
+        if len(self.cells) < self.MAX_CELLS and cell not in self.cells:
+            self.cells.append(cell)
         if self.detailed < self.max_detail:
             self.detailed += 1
             return True

@@ -40,12 +40,6 @@
             },
             {
               "cellReference": null,
-              "column": 4,
-              "columnName": "manager_note",
-              "row": 8
-            },
-            {
-              "cellReference": null,
               "column": 3,
               "columnName": "employee_id",
               "row": 10

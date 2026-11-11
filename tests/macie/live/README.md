@@ -127,3 +127,32 @@ jobs show **Complete**.
 **Cost:** Macie bucket inventory about $0.10 a month, jobs about $1 per GB
 scanned (these files are about 1.4 MB), automated discovery fractions of a
 cent, S3 pennies. Well under a dollar; the 30-day trial covers most of it.
+
+## 5. The second probe (2026-11-11)
+
+The first check (`specs/macie/live-check-2026-11-11.md`) left three
+differences open: a phone number with a country code and no keyword, a
+German ID card number, and a Codice Fiscale, all reported by us and not
+by Macie. The probe puts one variant per row, so Macie's cell locations
+show which variants it reports.
+
+```
+poetry run python tests/macie/live/make_probe_files.py ~/macie-live
+```
+
+writes `~/macie-live/probe/` (`probe_phones.csv`, `probe_de_id.csv`,
+`probe_it_cf.csv`, under 1 KB each) and `~/macie-live/expected_probe.json`
+(do not upload).
+
+**Set up (David):**
+
+- upload `probe/*.csv` under `probe/` in the same bucket;
+- create one one-time job, **`csvpath-probe-1`**:
+  - object criterion: key prefix `probe/`;
+  - managed data identifiers **Custom**, *include* these 3:
+    `PHONE_NUMBER`, `GERMANY_NATIONAL_IDENTIFICATION_NUMBER`,
+    `ITALY_NATIONAL_IDENTIFICATION_NUMBER`;
+  - no custom identifiers, no allow lists.
+
+**Hand over** the job id once it shows **Complete**. The reader profile
+needs nothing new.

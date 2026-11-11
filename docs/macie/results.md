@@ -88,7 +88,8 @@ identifiers under `customDataIdentifiers`, managed identifiers under
 }
 ```
 
-- `count` is exact; `cells` holds up to 15 locations, the cap Macie uses.
+- `count` is exact, one per occurrence; `cells` holds up to 15 locations,
+  the cap Macie uses, each cell once however many occurrences it holds.
 - `csvpath` is ours: the Macie job or template the rules came from, and
   whether the run stopped early (below).
 
