@@ -15,6 +15,16 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     # path -- see _apply_name_three_to_versions().
     GROUP_MANIFEST = "group"
     LEDGER_MANIFEST = "ledger"
+    DEFINITION_OWNER = "named-paths group"
+
+    def _definition_names(self) -> list:
+        return self.source.paths_names()
+
+    def _definition_home(self, name: str) -> str:
+        return self.csvpaths.paths_manager.named_paths_home(name, assure=False)
+
+    def _definition_config(self, name: str):
+        return self.csvpaths.paths_manager.describer.get_config(name)
 
     #
     # first pass, deliberately narrow, mirroring FilesReferenceFinder3's
@@ -169,6 +179,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             raise ReferenceException3(
                 "CsvpathsReferenceFinder3 does not support the '#worksheet' "
                 "marker (name_two) -- it is files-only."
+            )
+
+        # a definition read is one result per group, never one per version
+        # (David, 2026-11-10): ':definition()' with fields, or a bare
+        # definition field, e.g. ':destination_address("myd")', as FILES
+        # reads one per named-file (E3)
+        self._check_definition_field_has_no_version(name_one)
+        definition_calls = self._definition_chain(name_one=name_one)
+        if definition_calls is not None:
+            return self._query_definition_chain(
+                reference=reference, calls=definition_calls, name_filter=None
             )
 
         if self._is_bare_pointer_reference(
@@ -555,6 +576,23 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 "selecting function chain (e.g. :last(), :all()) when "
                 "traversing every named-paths group with '*'."
             )
+        # a definition read: one result per live group (David, 2026-11-10)
+        self._check_definition_field_has_no_version(name_one)
+        definition_calls = self._definition_chain(name_one=name_one)
+        if definition_calls is not None:
+            return self._query_definition_chain(
+                reference=reference, calls=definition_calls, name_filter=name_filter
+            )
+        if self._is_bare_definition_reference(name_one):
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    "CsvpathsReferenceFinder3 does not support combining "
+                    "':definition()' with name_three -- definition.json is "
+                    "not versioned, there is no version to select."
+                )
+            return self._query_definition_files(
+                names=self._matching_names(self._definition_names(), name_filter)
+            )
         # a plain pointer + :manifest() (e.g. ":last():manifest()") never
         # reaches this method at all -- query()'s own _pointer_before_
         # manifest() check above already claims that exact shape as
@@ -749,6 +787,12 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         log_call = self._bare_log_call(reference)
         if log_call is not None:
             return self._read_log_file(result.path, log_call.arg)
+        if reference.name_three is None:
+            definition_calls = self._definition_chain(name_one=reference.name_one)
+            if definition_calls is not None:
+                return self._definition_chain_data(
+                    reference=reference, calls=definition_calls, path=result.path
+                )
         name_one = reference.name_one
         combined_for_path = [
             seg
@@ -847,9 +891,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         if kind == Reference3.METADATA_FIELD:
             # a registered field-accessor function (e.g. :uuid()) in the
             # same combined chain :manifest() itself rides in -- extracts
-            # one key from the matched version's manifest entry (or, for
-            # a definition.json-backed field, the group's definition
-            # config) instead of the whole entry.
+            # one key from the matched version's manifest entry instead of
+            # the whole entry. A definition.json field is a definition
+            # chain, read above (2026-11-10).
             # last-wins (compendium 5.20b, added 2026-10-18) -- was
             # _find_field_function_call() (first match), confirmed wrong
             # live: "$acme.csvpaths.:last():uuid():named_paths_name()"
@@ -873,46 +917,16 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     return self._compute_field(field_call.name, reference)
                 key_path = function_cls.KEY.get(reference.datatype)
                 key_path = self._apply_key_arg(key_path, field_call.arg)
-                # a BARE_SOURCE field is bare only when it is all of
-                # name_one: a pointer, range, ':all()', ':manifest()',
-                # window or ':having()' selects versions, and each reads
-                # its own value (David, 2026-11-08)
-                use_definition = function_cls.SOURCE == "definition" or (
-                    function_cls.BARE_SOURCE == "definition"
-                    and len(combined_for_path) == 1
-                )
-                if use_definition:
-                    # a definition.json-backed field (e.g. :scripts(),
-                    # :webhooks()) is keyed by group NAME, not uuid --
-                    # _group_manifest_entry() re-derives which real group
-                    # this is even when root_major is the '*' token
-                    # (added 2026-08-18, see that method's own docstring).
-                    # A BARE_SOURCE field (":template()" -- added
-                    # 2026-08-26, see Template3's own docstring) only
-                    # takes this path when it is the whole of name_one --
-                    # with anything selecting versions beside it, it means
-                    # each matched version's own historical snapshot
-                    # instead, falling through below.
-                    group_name, _ = self._group_manifest_entry(
-                        reference.root_major, result.uuid
+                if function_cls.SOURCE == "definition":
+                    # a definition read is one result per group and never
+                    # reaches here: query() reads it as a definition chain,
+                    # or raises when a version is selected beside it
+                    # (David, 2026-11-10). ':template()' beside a version
+                    # selector reads each version's own snapshot, below.
+                    raise ReferenceException3(
+                        f"':{field_call.name}()' reads definition.json, "
+                        "which has no version to read it from."
                     )
-                    if group_name is None and self._is_traversal_root(
-                        reference.root_major
-                    ):
-                        # an entry from a '*' ledger read with no per-name
-                        # entry (2026-10-30): an unchanged reload's group
-                        # still has its definition.json; a deleted
-                        # group's went with its folder.
-                        ledger_entry = self._ledger_entry(result.uuid) or {}
-                        name = ledger_entry.get("named_paths_name")
-                        if name not in self.source.paths_names():
-                            return None
-                        group_name = name
-                    config = self.csvpaths.paths_manager.describer.get_config(
-                        group_name
-                    )
-                    entry = config.model_dump(exclude_none=True)
-                    return self._extract_field_value(entry, key_path)
                 _, entry = self._group_manifest_entry(
                     reference.root_major, result.uuid
                 )
@@ -1131,6 +1145,33 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         if isinstance(having_call.arg, list):
             return any(identity in identities for identity in having_call.arg)
         return having_call.arg in identities
+
+    @staticmethod
+    def _check_definition_field_has_no_version(name_one) -> None:
+        """raises for a definition-only field beside a version selector,
+        e.g. ':last():destination_address("myd")' (David, 2026-11-10:
+        "there is no such thing as a last destination"). definition.json
+        is not versioned. ':template()' is not definition-only: beside a
+        selector it reads each version's own snapshot. A ':definition()'
+        chain gets the same raise from _definition_chain()."""
+        if name_one is None:
+            raise ValueError("name_one cannot be None")
+        calls = [
+            seg
+            for seg in (*name_one.path, *name_one.functions)
+            if isinstance(seg, FunctionCall3)
+        ]
+        if len(calls) < 2 or any(c.name == "definition" for c in calls):
+            return
+        for call in calls:
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            if function_cls is not None and function_cls.SOURCE == "definition":
+                raise ReferenceException3(
+                    f"':{call.name}()' reads the named-paths group's "
+                    "definition.json, which is not versioned -- there is no "
+                    "version to select. Use it alone in name_one, or in a "
+                    "':definition()' chain."
+                )
 
     @staticmethod
     def _key_has_placeholder(f: Function3) -> bool:

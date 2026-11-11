@@ -81,6 +81,10 @@ class _FakePathsManager:
         return self._manifest
 
     def named_paths_home(self, name, *, assure=True):
+        # one home per group when there are several, so a definition.json
+        # path names its own group (2026-11-10)
+        if self._by_name is not None:
+            return f"named_paths/{name}"
         return self._home
 
     @property
@@ -938,13 +942,19 @@ class TestManifestFieldOverSeveralVersions:
         assert not finder.query().ambiguous_content_read
         assert [r.data for r in finder.resolve().results] == expected
 
-    def test_a_keyed_field_resolves_one_value_per_version(self):
-        # a "{}"-key field's argument picks the key; it is not a gate
+    def test_a_keyed_definition_field_is_not_read_per_version(self):
+        # a "{}"-key field's argument picks the key; it is not a gate.
+        # It reads definition.json, which has no versions, so a range
+        # beside it raises (David, 2026-11-10). Gave the same address
+        # three times.
         reference = (
             '$acme.csvpaths.:manifest():from(0):to(2):destination_address("myd")'
         )
-        results = _gate_finder(reference).resolve().results
-        assert [r.data for r in results] == ["ftp.acme.example"] * 3
+        with pytest.raises(ReferenceException3) as error:
+            _gate_finder(reference).query()
+        assert "definition.json, which is not versioned" in str(error.value)
+        results = _gate_finder('$acme.csvpaths.:destination_address("myd")').resolve()
+        assert [r.data for r in results.results] == ["ftp.acme.example"]
 
     @pytest.mark.parametrize(
         "reference",
@@ -998,13 +1008,20 @@ class TestGlobalLoadsLedger:
         results = finder.resolve()
         assert results.results[0].data == content
 
-    def test_star_with_definition_is_still_not_supported(self):
-        finder = _finder(
-            "$*.csvpaths.:definition()",
-            inputs_csvpaths_path="inputs/named_paths",
-        )
+    def test_star_with_definition_is_one_file_per_group(self):
+        # raised until 2026-11-10; now each live group's definition.json,
+        # as FILES gives each named-file's. Several whole files cannot be
+        # resolved at once (Rule 1), so the result is flagged.
+        finder = _gate_finder("$*.csvpaths.:definition()")
+        results = finder.query()
+        assert results.files == [
+            pathu.resep("named_paths/acme/definition.json"),
+            pathu.resep("named_paths/beta/definition.json"),
+        ]
+        assert results.uuids == [None, None]
+        assert results.ambiguous_content_read
         with pytest.raises(ReferenceException3):
-            finder.query()
+            finder.resolve()
 
     def test_star_root_major_with_no_named_paths_groups_gives_empty_results(self):
         # '*' traversal is supported now (see TestStarTraversal below) --
@@ -1363,14 +1380,16 @@ class TestStarTraversalFieldAccessor:
             "alpha": {"scripts": {"on_complete_all": "alpha_notify.py"}},
             "beta": {"scripts": {"on_complete_all": "beta_notify.py"}},
         }
+        # one result per group with no version: definition.json is not
+        # versioned (2026-11-10). Read through ':last()' until then.
         results = _finder(
-            "$*.csvpaths.:last():scripts()",
+            "$*.csvpaths.:scripts()",
             by_name=by_name,
             definitions_by_name=definitions_by_name,
         ).resolve()
-        assert sorted((r.uuid, r.data["on_complete_all"]) for r in results.results) == [
-            ("a-v1", "alpha_notify.py"),
-            ("b-v1", "beta_notify.py"),
+        assert [(r.uuid, r.data["on_complete_all"]) for r in results.results] == [
+            (None, "alpha_notify.py"),
+            (None, "beta_notify.py"),
         ]
 
     def test_an_argument_on_the_field_accessor_is_a_gate(self):
@@ -1417,19 +1436,19 @@ class TestStarTraversalFieldAccessor:
             "alpha": {"destinations": {"myd": {"address": "ftp.example.com"}}}
         }
         results = _finder(
-            '$*.csvpaths.:last():destination_address("myd")',
+            '$*.csvpaths.:destination_address("myd")',
             by_name=by_name,
             definitions_by_name=definitions_by_name,
         ).resolve()
-        assert results.results[0].data == "ftp.example.com"
+        assert [r.data for r in results.results] == ["ftp.example.com"]
 
 
 class TestGroupManifestEntry:
     # _group_manifest_entry() -- added 2026-08-18 alongside the field-
-    # accessor exemption above, so both the METADATA_FIELD manifest-
-    # sourced branch and the :scripts()/:webhooks()/:transfers()/
-    # :destinations() definition-sourced branch can re-derive which real
-    # group a star-traversal result came from, tested directly here
+    # accessor exemption above, so the METADATA_FIELD manifest-sourced
+    # branch can re-derive which real group a star-traversal result came
+    # from (the definition-sourced fields used it too until 2026-11-10,
+    # when they became a definition chain), tested directly here
     # rather than only indirectly through resolve().
     def test_star_root_major_finds_the_correct_group(self):
         by_name = {
@@ -1694,13 +1713,15 @@ class TestCsvpathsGates:
         # ':lifecycle()' (2026-11-05) through the gate mechanism
         assert _gate_finder(reference).query().uuids == expected
 
-    def test_a_key_argument_still_supplies_the_value(self):
-        # a "{}"-key field's argument picks the key; it is not a gate
-        results = _gate_finder(
-            '$acme.csvpaths.:last():named_paths_name("acme")'
-            ':destination_address("myd")'
-        ).resolve()
-        assert [r.data for r in results.results] == ["ftp.acme.example"]
+    def test_a_definition_field_beside_a_gate_raises(self):
+        # a gate selects versions, and definition.json has none
+        # (2026-11-10). Read the definition beside the gate until then.
+        with pytest.raises(ReferenceException3) as error:
+            _gate_finder(
+                '$acme.csvpaths.:last():named_paths_name("acme")'
+                ':destination_address("myd")'
+            ).query()
+        assert "definition.json, which is not versioned" in str(error.value)
 
     @pytest.mark.parametrize(
         "reference",
@@ -2382,11 +2403,21 @@ class TestNamedPathsHomeFunction:
             ).resolve()
 
 
+def _one(results) -> object:
+    """the data of the only result: a definition read is one result per
+    group, never one per version (David, 2026-11-10)"""
+    assert len(results.results) == 1
+    return results.results[0].data
+
+
 class TestDefinitionFieldAccessorFunctions:
     # :scripts()/:webhooks()/:transfers()/:destinations() are
     # SOURCE="definition" -- resolved against the named-paths group's
-    # definition.json config, not a manifest entry, and not affected by
-    # which version a pointer happens to select.
+    # definition.json config, not a manifest entry. definition.json is
+    # not versioned, so the group gives one result, and a version
+    # selector beside the field raises (David, 2026-11-10: "there is no
+    # such thing as a last destination"). These read through ':first()'
+    # until then.
     DEFINITION = {
         "scripts": {"on_complete_all": "notify.sh"},
         "webhooks": {"on_complete_valid": {"url": "https://example.com/hook"}},
@@ -2402,25 +2433,25 @@ class TestDefinitionFieldAccessorFunctions:
 
     def test_scripts(self):
         results = _finder(
-            "$acme.csvpaths.:first():scripts()", RICH_MANIFEST, self.DEFINITION
+            "$acme.csvpaths.:scripts()", RICH_MANIFEST, self.DEFINITION
         ).resolve()
-        assert results.results[0].data == {"on_complete_all": "notify.sh"}
+        assert _one(results) == {"on_complete_all": "notify.sh"}
 
     def test_webhooks(self):
         # headers defaults to [], not None, so exclude_none leaves it in
         # -- an empty list is not the same as an unset field.
         results = _finder(
-            "$acme.csvpaths.:first():webhooks()", RICH_MANIFEST, self.DEFINITION
+            "$acme.csvpaths.:webhooks()", RICH_MANIFEST, self.DEFINITION
         ).resolve()
-        assert results.results[0].data == {
+        assert _one(results) == {
             "on_complete_valid": {"url": "https://example.com/hook", "headers": []}
         }
 
     def test_transfers_reads_the_nested_path_transfers_key(self):
         results = _finder(
-            "$acme.csvpaths.:first():transfers()", RICH_MANIFEST, self.DEFINITION
+            "$acme.csvpaths.:transfers()", RICH_MANIFEST, self.DEFINITION
         ).resolve()
-        assert results.results[0].data == {
+        assert _one(results) == {
             "company_names": {
                 "on_complete_all": [{"file": "data", "transfer_to": "@out"}]
             }
@@ -2428,24 +2459,38 @@ class TestDefinitionFieldAccessorFunctions:
 
     def test_destinations(self):
         results = _finder(
-            "$acme.csvpaths.:last():destinations()", RICH_MANIFEST, self.DEFINITION
+            "$acme.csvpaths.:destinations()", RICH_MANIFEST, self.DEFINITION
         ).resolve()
-        assert results.results[0].data == {"main": {"address": "example.com", "port": 22}}
+        assert _one(results) == {"main": {"address": "example.com", "port": 22}}
 
     def test_never_configured_gives_none_not_an_error(self):
         results = _finder(
-            "$acme.csvpaths.:first():scripts()", RICH_MANIFEST
+            "$acme.csvpaths.:scripts()", RICH_MANIFEST
         ).resolve()
-        assert results.results[0].data is None
+        assert _one(results) is None
 
-    def test_same_value_regardless_of_which_version_is_selected(self):
-        first = _finder(
-            "$acme.csvpaths.:first():scripts()", RICH_MANIFEST, self.DEFINITION
-        ).resolve()
-        last = _finder(
-            "$acme.csvpaths.:last():scripts()", RICH_MANIFEST, self.DEFINITION
-        ).resolve()
-        assert first.results[0].data == last.results[0].data
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$acme.csvpaths.:first():scripts()",
+            "$acme.csvpaths.:scripts():last()",
+            "$acme.csvpaths.:index(0):scripts()",
+            "$acme.csvpaths.:all():scripts()",
+            "$acme.csvpaths.:from(0):to(1):scripts()",
+            "$acme.csvpaths.:manifest():scripts()",
+            '$acme.csvpaths.:having("company_names"):scripts()',
+            '$acme.csvpaths.:last():destination_address("main")',
+            "$*.csvpaths.:last():scripts()",
+            "$*.csvpaths.:all():scripts()",
+            "$*.csvpaths.:manifest():scripts()",
+        ],
+    )
+    def test_a_version_selector_beside_it_raises(self, reference):
+        with pytest.raises(ReferenceException3) as error:
+            _finder(reference, RICH_MANIFEST, self.DEFINITION).query()
+        message = str(error.value)
+        assert "definition.json, which is not versioned" in message
+        assert "Use it alone in name_one" in message
 
 
 class TestDefinitionSubFieldAccessorFunctions:
@@ -2481,96 +2526,96 @@ class TestDefinitionSubFieldAccessorFunctions:
 
     def test_script_on_complete_all(self):
         results = _finder(
-            "$acme.csvpaths.:first():script_on_complete_all()",
+            "$acme.csvpaths.:script_on_complete_all()",
             RICH_MANIFEST,
             self.DEFINITION,
         ).resolve()
-        assert results.results[0].data == "notify.sh"
+        assert _one(results) == "notify.sh"
 
     def test_script_on_complete_error(self):
         results = _finder(
-            "$acme.csvpaths.:first():script_on_complete_error()",
+            "$acme.csvpaths.:script_on_complete_error()",
             RICH_MANIFEST,
             self.DEFINITION,
         ).resolve()
-        assert results.results[0].data == "alert.sh"
+        assert _one(results) == "alert.sh"
 
     def test_script_on_complete_valid_not_configured_gives_none(self):
         results = _finder(
-            "$acme.csvpaths.:first():script_on_complete_valid()",
+            "$acme.csvpaths.:script_on_complete_valid()",
             RICH_MANIFEST,
             self.DEFINITION,
         ).resolve()
-        assert results.results[0].data is None
+        assert _one(results) is None
 
     def test_webhooks_on_complete_valid(self):
         results = _finder(
-            "$acme.csvpaths.:first():webhooks_on_complete_valid()",
+            "$acme.csvpaths.:webhooks_on_complete_valid()",
             RICH_MANIFEST,
             self.DEFINITION,
         ).resolve()
-        assert results.results[0].data == {
+        assert _one(results) == {
             "url": "https://example.com/hook",
             "headers": [],
         }
 
     def test_destination_address_by_name(self):
         results = _finder(
-            '$acme.csvpaths.:first():destination_address("main")',
+            '$acme.csvpaths.:destination_address("main")',
             RICH_MANIFEST,
             self.DEFINITION,
         ).resolve()
-        assert results.results[0].data == "example.com"
+        assert _one(results) == "example.com"
 
     def test_destination_port_by_name(self):
         results = _finder(
-            '$acme.csvpaths.:first():destination_port("main")',
+            '$acme.csvpaths.:destination_port("main")',
             RICH_MANIFEST,
             self.DEFINITION,
         ).resolve()
-        assert results.results[0].data == 22
+        assert _one(results) == 22
 
     def test_destination_username_by_name(self):
         results = _finder(
-            '$acme.csvpaths.:first():destination_username("main")',
+            '$acme.csvpaths.:destination_username("main")',
             RICH_MANIFEST,
             self.DEFINITION,
         ).resolve()
-        assert results.results[0].data == "bot"
+        assert _one(results) == "bot"
 
     def test_destination_password_by_name(self):
         results = _finder(
-            '$acme.csvpaths.:first():destination_password("main")',
+            '$acme.csvpaths.:destination_password("main")',
             RICH_MANIFEST,
             self.DEFINITION,
         ).resolve()
-        assert results.results[0].data == "secret"
+        assert _one(results) == "secret"
 
     def test_destination_unknown_name_gives_none_not_an_error(self):
         results = _finder(
-            '$acme.csvpaths.:first():destination_address("nope")',
+            '$acme.csvpaths.:destination_address("nope")',
             RICH_MANIFEST,
             self.DEFINITION,
         ).resolve()
-        assert results.results[0].data is None
+        assert _one(results) is None
 
     def test_transfer_on_complete_all_by_identity(self):
         results = _finder(
-            '$acme.csvpaths.:first():transfer_on_complete_all("company_names")',
+            '$acme.csvpaths.:transfer_on_complete_all("company_names")',
             RICH_MANIFEST,
             self.DEFINITION,
         ).resolve()
-        assert results.results[0].data == [
+        assert _one(results) == [
             {"file": "data", "transfer_to": "@out"}
         ]
 
     def test_transfer_on_complete_unknown_identity_gives_none(self):
         results = _finder(
-            '$acme.csvpaths.:first():transfer_on_complete_all("nope")',
+            '$acme.csvpaths.:transfer_on_complete_all("nope")',
             RICH_MANIFEST,
             self.DEFINITION,
         ).resolve()
-        assert results.results[0].data is None
+        assert _one(results) is None
 
 
 class TestTemplateBareVsPointerDualSource:
@@ -2581,6 +2626,7 @@ class TestTemplateBareVsPointerDualSource:
     # snapshot instead. Until 2026-11-08 only a pointer counted, so a
     # range, ':all()' or ':manifest()' gave the current default for every
     # version (David: "we need to return the versions' templates").
+    # Bare is a definition read, one result for the group (2026-11-10).
     # See Template3's own docstring for the full design.
     MANIFEST = [
         {**RICH_MANIFEST[0], "template": "snapshot-v0"},
@@ -2592,12 +2638,32 @@ class TestTemplateBareVsPointerDualSource:
         results = _finder(
             "$acme.csvpaths.:template()", self.MANIFEST, self.DEFINITION
         ).resolve()
-        # no pointer -- pools every version, each reading the SAME
-        # current default (definition.json is not versioned).
-        assert [r.data for r in results.results] == [
-            "current-default",
-            "current-default",
-        ]
+        # one result: definition.json is not versioned. Was one per
+        # version, each the same current default.
+        assert _one(results) == "current-default"
+
+    def test_definition_beside_it_reads_the_same_default(self):
+        # a regression in #565 read each version's snapshot here
+        results = _finder(
+            "$acme.csvpaths.:definition():template()",
+            self.MANIFEST,
+            self.DEFINITION,
+        ).resolve()
+        assert _one(results) == "current-default"
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$acme.csvpaths.:definition():last():template()",
+            "$acme.csvpaths.:definition():all():template()",
+            "$acme.csvpaths.:definition():from(0):to(1):template()",
+        ],
+    )
+    def test_definition_with_a_version_selector_raises(self, reference):
+        # one source or a set of sources, not both (David, 2026-11-10)
+        with pytest.raises(ReferenceException3) as error:
+            _finder(reference, self.MANIFEST, self.DEFINITION).query()
+        assert "definition.json is not versioned" in str(error.value)
 
     def test_first_reads_that_versions_own_manifest_snapshot(self):
         results = _finder(
@@ -2615,7 +2681,7 @@ class TestTemplateBareVsPointerDualSource:
         results = _finder(
             "$acme.csvpaths.:template()", self.MANIFEST
         ).resolve()
-        assert [r.data for r in results.results] == [None, None]
+        assert _one(results) is None
 
     @pytest.mark.parametrize(
         "reference, expected",
@@ -2650,6 +2716,140 @@ class TestTemplateBareVsPointerDualSource:
             ("a3", ":1"),
             ("b2", ":x"),
             ("a4", ""),
+        ]
+
+
+#
+# a definition read (David, 2026-11-10): definition.json is one record per
+# named-paths group, not versioned, so ':definition()' with fields, or a
+# bare definition field, gives one result per group -- the FILES E3 rules
+# (TestDefinitionChain there), shared in ReferenceFinder3.
+#
+DEF_BY_NAME = {
+    "acme": {
+        "template": ":1/:2",
+        "destinations": {"myd": {"address": "ftp.acme.example"}},
+        "scripts": {"on_complete_all": "acme.sh"},
+    },
+    "beta": {"scripts": {"on_complete_all": "beta.sh"}},
+}
+
+
+def _def_chain_finder(reference: str) -> CsvpathsReferenceFinder3:
+    return _finder(
+        reference,
+        by_name={name: [dict(e) for e in es] for name, es in GATE_BY_NAME.items()},
+        ledger=[dict(e) for e in GATE_LEDGER],
+        definitions_by_name=DEF_BY_NAME,
+        inputs_csvpaths_path="named_paths",
+    )
+
+
+def _def_chain_values(reference: str) -> list:
+    return [r.data for r in _def_chain_finder(reference).resolve().results]
+
+
+class TestDefinitionChain:
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            '$acme.csvpaths.:destination_address("myd")',
+            '$acme.csvpaths.:definition():destination_address("myd")',
+            '$acme.csvpaths.:destination_address("myd"):definition()',
+        ],
+    )
+    def test_a_field_value_is_one_result(self, reference):
+        assert _def_chain_values(reference) == ["ftp.acme.example"]
+
+    def test_the_query_path_is_the_definition_file(self):
+        results = _def_chain_finder("$acme.csvpaths.:definition():scripts()").query()
+        assert results.files == [pathu.resep("named_paths/acme/definition.json")]
+        assert results.uuids == [None]
+        assert not results.ambiguous_content_read
+
+    @pytest.mark.parametrize(
+        "root, expected",
+        [
+            ("$*", ["acme.sh", "beta.sh"]),
+            ('$:regex("^b")', ["beta.sh"]),
+            ('$:choice("acme|beta")', ["acme.sh", "beta.sh"]),
+        ],
+    )
+    def test_each_live_group_under_a_traversal_root(self, root, expected):
+        # one per live group: the deleted g1 has no definition.json
+        values = _def_chain_values(f"{root}.csvpaths.:scripts()")
+        assert [v["on_complete_all"] for v in values] == expected
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$*.csvpaths.:definition(:template(:has_value()))",
+            "$*.csvpaths.:definition():template(:has_value())",
+            "$*.csvpaths.:template(:has_value())",
+        ],
+    )
+    def test_a_predicate_filters_nested_or_chained(self, reference):
+        results = _def_chain_finder(reference).query()
+        assert results.files == [pathu.resep("named_paths/acme/definition.json")]
+
+    def test_a_filter_with_a_value(self):
+        reference = "$*.csvpaths.:definition():template(:has_value()):scripts()"
+        assert _def_chain_values(reference) == [{"on_complete_all": "acme.sh"}]
+
+    def test_two_filters_are_anded(self):
+        base = "$*.csvpaths.:definition():template(:has_value())"
+        both = _def_chain_finder(f"{base}:template(:has_value())").query()
+        assert both.files == [pathu.resep("named_paths/acme/definition.json")]
+        none = _def_chain_finder(f"{base}:template(:does_not_have_value())")
+        assert none.query().results == []
+
+    def test_the_last_value_field_wins_with_a_warning(self):
+        finder = _def_chain_finder("$acme.csvpaths.:definition():scripts():template()")
+        assert [r.data for r in finder.resolve().results] == [":1/:2"]
+        assert len(finder.csvpaths.logger.warnings) == 1
+
+    def test_with_no_value_field_resolves_the_file(self):
+        # a filter only: the whole definition.json, one group, so it
+        # resolves (compendium 6.19)
+        results = _def_chain_finder(
+            '$:regex("^a").csvpaths.:definition(:template(:has_value()))'
+        ).query()
+        assert results.files == [pathu.resep("named_paths/acme/definition.json")]
+        assert not results.ambiguous_content_read
+
+    @pytest.mark.parametrize("field", ["uuid()", "time()", "named_paths_name()"])
+    def test_a_field_not_in_definition_json_raises(self, field):
+        with pytest.raises(ReferenceException3) as error:
+            _def_chain_finder(f"$acme.csvpaths.:definition():{field}").query()
+        message = str(error.value)
+        assert "does not read a named-paths group's definition.json" in message
+
+    @pytest.mark.parametrize(
+        "function", ["last()", "index(1)", "all()", "from(1)", "manifest()"]
+    )
+    def test_a_version_selector_in_the_chain_raises(self, function):
+        with pytest.raises(ReferenceException3) as error:
+            _def_chain_finder(f"$acme.csvpaths.:definition():{function}").query()
+        assert "definition.json is not versioned" in str(error.value)
+
+    def test_name_three_raises(self):
+        with pytest.raises(ReferenceException3) as error:
+            _def_chain_finder("$acme.csvpaths.:scripts().company_names").query()
+        assert "':definition()' chain with name_three" in str(error.value)
+
+    def test_a_bare_star_definition_with_name_three_raises(self):
+        with pytest.raises(ReferenceException3) as error:
+            _def_chain_finder("$*.csvpaths.:definition().company_names").query()
+        assert "definition.json is not versioned" in str(error.value)
+
+    def test_the_template_beside_a_selector_is_still_a_version_read(self):
+        # ':template()' is in the version records too: beside a selector
+        # it reads each version's own (#565), not the definition
+        assert _def_chain_values("$acme.csvpaths.:all():template()") == [
+            "",
+            ":1/:2",
+            ":1",
+            "",
         ]
 
 
@@ -3052,15 +3252,13 @@ class TestStarLedgerReadKeepsDeletedEntries:
             None,
         ]
 
-    def test_definition_field_is_none_for_the_deleted_entry(self):
-        # gone has no definition: reading one would raise KeyError in
-        # the fake describer.
-        assert self._data("$*.csvpaths.:manifest():scripts()") == [
-            {"on_complete_all": "keep.py"},
-            {"on_complete_all": "also.py"},
-            None,
-            {"on_complete_all": "keep.py"},
-        ]
+    def test_a_definition_field_on_the_ledger_raises(self):
+        # the ledger is a set of versions, and definition.json has none
+        # (2026-11-10). Gave each entry's group definition, None for the
+        # deleted group's.
+        with pytest.raises(ReferenceException3) as error:
+            self._data("$*.csvpaths.:manifest():scripts()")
+        assert "definition.json, which is not versioned" in str(error.value)
 
     def test_having_drops_the_deleted_entry(self):
         results = self._c1_finder('$*.csvpaths.:manifest():having("s"):uuid()').query()
