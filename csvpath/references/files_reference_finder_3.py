@@ -5,7 +5,6 @@ from csvpath.util.nos import Nos
 from csvpath.util.path_util import PathUtility as pathu
 from csvpath.util.xlsx.xlsx_reader_helper import XlsxReaderHelper
 
-from .functions.filters.predicate_function_3 import PredicateFunction3
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .functions.values.time_window_function_3 import TimeWindowFunction3
@@ -124,6 +123,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
     # version of the same logical file; arrival order is simply array
     # order (not sorted by the "time" field).
     #
+    DEFINITION_OWNER = "named-file"
+
+    def _definition_names(self) -> list:
+        return self.source.file_names()
+
+    def _definition_home(self, name: str) -> str:
+        return self.csvpaths.file_manager.named_file_home(name)
+
+    def _definition_config(self, name: str):
+        return self.csvpaths.file_manager.describer.get_config(name)
 
     def query(self) -> ReferenceResults3:
         reference = self.ref.parsed
@@ -1161,25 +1170,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "-- definition.json is not versioned, there is no "
                     "version to select."
                 )
-            names = self._matching_names(
-                self.source.file_names(), name_filter
-            )
-            results = []
-            for name in names:
-                home = self.csvpaths.file_manager.named_file_home(name)
-                path = Nos(home).join("definition.json")
-                results.append(ReferenceResult3(path=path, uuid=None))
-            return ReferenceResults3(
-                results=results,
-                # Rule 1 (manifest_field_functions_proposal.md): resolving
-                # full METADATA_FILE content for more than one entity at
-                # once is illegal -- more than one named-file's own
-                # definition.json is exactly that case, same as :manifest()
-                # already flags via has_manifest/len(selected_candidates)
-                # below. query() itself still returns every match; only
-                # resolve_from() raises if a caller actually tries to
-                # resolve more than one of these at once.
-                ambiguous_content_read=len(results) > 1,
+            # one definition.json per named-file, flagged when there are
+            # several (Rule 1)
+            return self._query_definition_files(
+                names=self._matching_names(self._definition_names(), name_filter)
             )
 
         # issue #438: the '*'-traversal counterpart to query()'s own
@@ -2194,46 +2188,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
         )
 
     @staticmethod
-    def _is_bare_definition_reference(name_one) -> bool:
-        """true when name_one's entire content is a single, argument-
-        less ':definition()' call, with no trailing function chain --
-        the '*'-traversal counterpart to _is_bare_pointer_reference's
-        identical literal-root check (added 2026-08-27, see
-        _query_star_traversal's own early METADATA_FILE branch)."""
-        return (
-            not name_one.functions
-            and len(name_one.path) == 1
-            and isinstance(name_one.path[0], FunctionCall3)
-            and name_one.path[0].name == "definition"
-            and name_one.path[0].arg is None
-        )
-
-    def _matches_definition_field_predicate(self, name: str, field_call) -> bool:
-        """true if `name`'s own definition.json has `field_call`'s own
-        field, and that value satisfies `field_call.arg`'s own predicate
-        (e.g. ':has_value()') -- the generic predicate-argument filtering
-        mechanism, added 2026-10-17 (deferred-work bucket list's own
-        "Predicate-argument field accessors" entry). `field_call` is
-        already a real, validated Function3 instance by the time this
-        is called (Definition3.check_valid() already confirmed it is
-        SOURCE == "definition" with a PredicateFunction3 arg, see
-        _query_definition_chain()) -- this just reads the value and
-        tests it, the same KEY-driven extraction _extract_data() uses for
-        a SOURCE == "definition" field, reused here rather than
-        duplicated.
-        Deliberately NOT bespoke to ':on_arrival()' -- any current or
-        future SOURCE == "definition" field accessor works here for
-        free, since nothing about this method's own logic names one."""
-        function_cls = ReferenceFunctionFactory.get_registered_class(
-            field_call.name
-        )
-        key_path = function_cls.KEY.get(Reference3.FILES)
-        config = self.csvpaths.file_manager.describer.get_config(name)
-        entry = config.model_dump(exclude_none=True)
-        value = self._extract_field_value(entry, key_path)
-        return field_call.arg.matches(value)
-
-    @staticmethod
     def _is_flatten_prefixed_reference(name_one) -> bool:
         """true when name_one's path STARTS with a bare ':flatten()'
         followed by at least one more segment -- the mirror image of
@@ -2575,179 +2529,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
         ]
 
     @staticmethod
-    def _definition_chain(*, name_one) -> "list | None":
-        """the definition.json field calls of a ':definition()' chain in
-        name_one, chained or nested as its argument, e.g.
-        ':definition():on_arrival()' or
-        ':definition(:on_arrival(:has_value()))' (E3, 2026-11-02). Like
-        ':manifest()', ':definition()' names one file per named-file, and
-        definition.json has no file home or version, so the chain only
-        reads and filters that one record.
-
-        A bare definition field is the same one-field chain:
-        ':template(:has_value())' is ':definition(:template(:has_value()))'
-        and ':template()' is ':definition():template()' (2026-11-03). A
-        filter then resolves to the definition.json (D) and a value is
-        read per named-file under every root.
-
-        Returns None for any other shape: bare ':definition()', and a
-        chain with a path-building function, which keep their own
-        branches. Raises for a field that does not read
-        definition.json, and for a pointer, range or time window, which
-        have no version to select."""
-        if name_one is None:
-            raise ValueError("name_one cannot be None")
-        bare = FilesReferenceFinder3._bare_definition_field_call(name_one)
-        if bare is not None:
-            return [bare]
-        if len(name_one.path) != 1:
-            return None
-        calls = [name_one.path[0], *name_one.functions]
-        if not all(isinstance(c, FunctionCall3) for c in calls):
-            return None
-        definitions = [c for c in calls if c.name == "definition"]
-        if len(definitions) != 1:
-            return None
-        definition = definitions[0]
-        others = [c for c in calls if c is not definition]
-        if isinstance(definition.arg, FunctionCall3):
-            others.insert(0, definition.arg)
-        elif definition.arg is not None:
-            return None
-        if not others:
-            return None
-        if any(c.name in ("name", "regex", "choice") for c in others):
-            return None
-        for call in others:
-            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
-            if function_cls is not None and (
-                function_cls.SOURCE == "definition"
-                or function_cls.BARE_SOURCE == "definition"
-            ):
-                continue
-            if function_cls is not None and function_cls.SOURCE in (
-                "manifest",
-                "computed",
-            ):
-                raise ReferenceException3(
-                    f"':{call.name}()' does not read a named-file's "
-                    "definition.json, so it is not supported in a "
-                    "':definition()' chain."
-                )
-            raise ReferenceException3(
-                f"':{call.name}()' is not supported in a ':definition()' "
-                "chain -- definition.json is not versioned, so there is no "
-                "version to select."
-            )
-        return others
-
-    def _split_definition_fields(self, *, calls: list) -> tuple:
-        """(filters, values) of a ':definition()' chain's field calls. A
-        field with a predicate argument (':on_arrival(:has_value())') is a
-        filter, built; any other field is a value, as written. Its
-        argument, if any, picks a key (':source_port("email")'). The same
-        test the bare definition fields use."""
-        if calls is None:
-            raise ValueError("calls cannot be None")
-        filters = []
-        values = []
-        for call in calls:
-            if call.arg is not None:
-                built = self._build(call)
-                if isinstance(built.arg, PredicateFunction3):
-                    filters.append(built)
-                    continue
-            values.append(call)
-        return filters, values
-
-    def _query_definition_chain(
-        self, *, reference: Reference3, calls: list, name_filter: "str | None"
-    ) -> ReferenceResults3:
-        """query() for a ':definition()' chain (_definition_chain()): the
-        definition.json of each named-file that passes every filter, one
-        named-file for a literal root, each live one for '*', ':regex()'
-        and ':choice()'. Several whole files at once cannot be resolved
-        (compendium 5.8), so that case is flagged."""
-        if calls is None:
-            raise ValueError("calls cannot be None")
-        if reference.name_three is not None:
-            raise ReferenceException3(
-                "FilesReferenceFinder3 does not support combining a "
-                "':definition()' chain with name_three -- definition.json is "
-                "not versioned, there is no version to select."
-            )
-        filters, values = self._split_definition_fields(calls=calls)
-        if len(values) > 1:
-            self.csvpaths.logger.warning(
-                "Reference resolves to the value of the last field-accessor "
-                "function in its chain (:%s()) -- :%s() earlier in the same "
-                "chain could also have provided a value; see compendium 5.20b.",
-                values[-1].name,
-                "(), :".join(f.name for f in values[:-1]),
-            )
-        if isinstance(reference.root_major, str):
-            names = [reference.root_major]
-        else:
-            names = self._matching_names(self.source.file_names(), name_filter)
-        names = [
-            name
-            for name in names
-            if all(self._matches_definition_field_predicate(name, f) for f in filters)
-        ]
-        results = [
-            ReferenceResult3(
-                path=Nos(self.csvpaths.file_manager.named_file_home(name)).join(
-                    "definition.json"
-                ),
-                uuid=None,
-            )
-            for name in names
-        ]
-        return ReferenceResults3(
-            results=results,
-            ambiguous_content_read=not values and len(results) > 1,
-        )
-
-    def _definition_chain_data(
-        self, *, reference: Reference3, calls: list, path: str
-    ) -> object:
-        """resolve() for a ':definition()' chain: the last value field's
-        value from the named-file's definition.json, or with no value
-        field the definition.json itself (compendium 6.19)."""
-        if calls is None:
-            raise ValueError("calls cannot be None")
-        if path is None or path == "":
-            raise ValueError("path cannot be None or empty")
-        _, values = self._split_definition_fields(calls=calls)
-        if not values:
-            return self._read_well_known_file(path)
-        if isinstance(reference.root_major, str):
-            name = reference.root_major
-        else:
-            name = next(
-                (
-                    n
-                    for n in self.source.file_names()
-                    if Nos(self.csvpaths.file_manager.named_file_home(n)).join(
-                        "definition.json"
-                    )
-                    == path
-                ),
-                None,
-            )
-            if name is None:
-                raise ReferenceException3(
-                    f"FilesReferenceFinder3 found no named-file for {path!r}."
-                )
-        field_call = values[-1]
-        function_cls = ReferenceFunctionFactory.get_registered_class(field_call.name)
-        key_path = self._apply_key_arg(
-            function_cls.KEY.get(Reference3.FILES), field_call.arg
-        )
-        config = self.csvpaths.file_manager.describer.get_config(name)
-        return self._extract_field_value(config.model_dump(exclude_none=True), key_path)
-
-    @staticmethod
     def _is_name_three_gate(function) -> bool:
         """true when `function` is a field with an argument that filters
         the versions it rides with in name_three, e.g. ':type("csv")'
@@ -2793,41 +2574,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
             ]
         return candidates
-
-    @staticmethod
-    def _bare_definition_field_call(name_one) -> "FunctionCall3 | None":
-        """returns the field-accessor FunctionCall3 when name_one's
-        entire content is a single function whose registered class is
-        SOURCE == "definition" (":on_arrival()"/":sources()"/etc.), OR
-        whose BARE_SOURCE == "definition" (currently only ":template()"
-        -- added 2026-08-26, see Template3's own docstring: bare/no-
-        pointer means "the current default," genuinely a different
-        resource than SOURCE == "manifest"'s own matched-version
-        snapshot) -- these values live in the named-file's own
-        definition.json, not any particular file/version's manifest
-        entry, so (like ":definition()" itself) they need no
-        :name(...)/matched-version context to resolve. An argument is
-        fine here too (e.g. ":source_port(\"email\")" -- added
-        2026-08-26 for the arg-keyed sources.<name>.* fields, see
-        SourcePort3's own KEY docstring): the arg parameterizes the KEY
-        lookup itself, not which version matched, so it does not need a
-        candidate any more than an argument-less definition field does.
-        None for every other shape, including a plain SOURCE ==
-        "manifest" field accessor with no BARE_SOURCE (":uuid()"/
-        ":time()"/etc.), which DOES vary by which version matched and
-        still needs a real candidate."""
-        if name_one.functions or len(name_one.path) != 1:
-            return None
-        segment = name_one.path[0]
-        if not isinstance(segment, FunctionCall3):
-            return None
-        function_cls = ReferenceFunctionFactory.get_registered_class(segment.name)
-        if function_cls is not None and (
-            function_cls.SOURCE == "definition"
-            or function_cls.BARE_SOURCE == "definition"
-        ):
-            return segment
-        return None
 
     def _extract_data(self, result: ReferenceResult3):
         reference = self.ref.parsed

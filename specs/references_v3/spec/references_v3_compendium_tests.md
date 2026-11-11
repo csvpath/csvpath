@@ -521,6 +521,13 @@ genuinely uncertain is marked below rather than guessed.
 - Several whole entries from a FILES name_one `:manifest()` chain raise on
   resolve (Rule 1); a pointer, a field or the ledger still resolve:
   `test_files_reference_finder_3.py::TestManifestChainRuleOne` (2026-11-08)
+- A CSVPATHS definition read is one result per group, never per version
+  (`:definition()` with fields, or a bare definition field, under a literal
+  root, `'*'`, `:regex()` and `:choice()`); a version selector beside a
+  definition-only field or in a `:definition()` chain raises:
+  `test_csvpaths_reference_finder_3.py::TestDefinitionChain`,
+  `TestDefinitionFieldAccessorFunctions` and
+  `TestTemplateBareVsPointerDualSource` (2026-11-10)
 
 #### 6.20
 - Exercised implicitly wherever a finder test covers a missing/absent

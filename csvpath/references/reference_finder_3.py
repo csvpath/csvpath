@@ -674,6 +674,281 @@ class ReferenceFinder3(ABC):
         path = Nos(home).join(filename)
         return ReferenceResults3(results=[ReferenceResult3(path=path, uuid=None)])
 
+    #
+    # the definition chain (E3, 2026-11-02 for FILES; shared with CSVPATHS
+    # 2026-11-10). definition.json is one record per named-file or
+    # named-paths group, and it is not versioned, so a definition read
+    # gives one result per entity, never one per version. A subclass
+    # that reads definitions supplies DEFINITION_OWNER and the three
+    # hooks below.
+    #
+    DEFINITION_OWNER: str | None = None
+
+    def _definition_names(self) -> list:
+        """every live entity that can have a definition.json, by name"""
+        raise NotImplementedError(
+            f"{type(self).__name__} does not read definition.json"
+        )
+
+    def _definition_home(self, name: str) -> str:
+        """the home directory of `name`, where its definition.json is"""
+        raise NotImplementedError(
+            f"{type(self).__name__} does not read definition.json"
+        )
+
+    def _definition_config(self, name: str):
+        """the describer's parsed definition.json for `name`"""
+        raise NotImplementedError(
+            f"{type(self).__name__} does not read definition.json"
+        )
+
+    def _definition_path(self, name: str) -> str:
+        if name is None or name == "":
+            raise ValueError("name cannot be None or empty")
+        return Nos(self._definition_home(name)).join("definition.json")
+
+    @staticmethod
+    def _is_bare_definition_reference(name_one) -> bool:
+        """true when name_one's entire content is a single, argument-
+        less ':definition()' call, with no trailing function chain --
+        the '*'-traversal counterpart to _is_bare_pointer_reference's
+        identical literal-root check (added 2026-08-27)."""
+        return (
+            not name_one.functions
+            and len(name_one.path) == 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == "definition"
+            and name_one.path[0].arg is None
+        )
+
+    @staticmethod
+    def _bare_definition_field_call(name_one) -> "FunctionCall3 | None":
+        """returns the field-accessor FunctionCall3 when name_one's
+        entire content is a single function whose registered class is
+        SOURCE == "definition" (":on_arrival()", ":scripts()", etc.), OR
+        whose BARE_SOURCE == "definition" (":template()" -- added
+        2026-08-26, see Template3's own docstring: bare means the current
+        default, a different resource than a version's own snapshot).
+        These values live in the entity's definition.json, not in any
+        version's manifest entry. An argument is fine here too (e.g.
+        ':source_port("email")'): it picks the key, not a version. None
+        for every other shape, including a plain SOURCE == "manifest"
+        field accessor (":uuid()"/":time()"/etc.), which varies by
+        version."""
+        if name_one.functions or len(name_one.path) != 1:
+            return None
+        segment = name_one.path[0]
+        if not isinstance(segment, FunctionCall3):
+            return None
+        function_cls = ReferenceFunctionFactory.get_registered_class(segment.name)
+        if function_cls is not None and (
+            function_cls.SOURCE == "definition"
+            or function_cls.BARE_SOURCE == "definition"
+        ):
+            return segment
+        return None
+
+    @classmethod
+    def _definition_chain(cls, *, name_one) -> "list | None":
+        """the definition.json field calls of a ':definition()' chain in
+        name_one, chained or nested as its argument, e.g.
+        ':definition():on_arrival()' or
+        ':definition(:on_arrival(:has_value()))' (E3, 2026-11-02). Like
+        ':manifest()', ':definition()' names one file per entity, and
+        definition.json has no version, so the chain only reads and
+        filters that one record.
+
+        A bare definition field is the same one-field chain:
+        ':template(:has_value())' is ':definition(:template(:has_value()))'
+        and ':template()' is ':definition():template()' (2026-11-03). A
+        filter then resolves to the definition.json (D) and a value is
+        read per entity under every root.
+
+        Returns None for any other shape: bare ':definition()', and a
+        chain with a path-building function, which keep their own
+        branches. Raises for a field that does not read
+        definition.json, and for a pointer, range or time window, which
+        have no version to select."""
+        if name_one is None:
+            raise ValueError("name_one cannot be None")
+        bare = cls._bare_definition_field_call(name_one)
+        if bare is not None:
+            return [bare]
+        if len(name_one.path) != 1:
+            return None
+        calls = [name_one.path[0], *name_one.functions]
+        if not all(isinstance(c, FunctionCall3) for c in calls):
+            return None
+        definitions = [c for c in calls if c.name == "definition"]
+        if len(definitions) != 1:
+            return None
+        definition = definitions[0]
+        others = [c for c in calls if c is not definition]
+        if isinstance(definition.arg, FunctionCall3):
+            others.insert(0, definition.arg)
+        elif definition.arg is not None:
+            return None
+        if not others:
+            return None
+        if any(c.name in ("name", "regex", "choice") for c in others):
+            return None
+        for call in others:
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            if function_cls is not None and (
+                function_cls.SOURCE == "definition"
+                or function_cls.BARE_SOURCE == "definition"
+            ):
+                continue
+            if function_cls is not None and function_cls.SOURCE in (
+                "manifest",
+                "computed",
+            ):
+                raise ReferenceException3(
+                    f"':{call.name}()' does not read a {cls.DEFINITION_OWNER}'s "
+                    "definition.json, so it is not supported in a "
+                    "':definition()' chain."
+                )
+            raise ReferenceException3(
+                f"':{call.name}()' is not supported in a ':definition()' "
+                "chain -- definition.json is not versioned, so there is no "
+                "version to select."
+            )
+        return others
+
+    def _split_definition_fields(self, *, calls: list) -> tuple:
+        """(filters, values) of a ':definition()' chain's field calls. A
+        field with a predicate argument (':on_arrival(:has_value())') is a
+        filter, built; any other field is a value, as written. Its
+        argument, if any, picks a key (':source_port("email")'). The same
+        test the bare definition fields use."""
+        if calls is None:
+            raise ValueError("calls cannot be None")
+        filters = []
+        values = []
+        for call in calls:
+            if call.arg is not None:
+                built = self._build(call)
+                if isinstance(built.arg, PredicateFunction3):
+                    filters.append(built)
+                    continue
+            values.append(call)
+        return filters, values
+
+    def _matches_definition_field_predicate(self, name: str, field_call) -> bool:
+        """true if `name`'s own definition.json has `field_call`'s own
+        field, and that value satisfies `field_call.arg`'s own predicate
+        (e.g. ':has_value()') -- the generic predicate-argument filtering
+        mechanism, added 2026-10-17. `field_call` is already a built
+        Function3 with a PredicateFunction3 arg (_split_definition_
+        fields()); this reads the value by the field's KEY and tests it.
+        Not bespoke to any one field: every SOURCE == "definition" field
+        works here."""
+        function_cls = ReferenceFunctionFactory.get_registered_class(
+            field_call.name
+        )
+        key_path = function_cls.KEY.get(self.ref.parsed.datatype)
+        config = self._definition_config(name)
+        entry = config.model_dump(exclude_none=True)
+        value = self._extract_field_value(entry, key_path)
+        return field_call.arg.matches(value)
+
+    def _query_definition_chain(
+        self, *, reference: Reference3, calls: list, name_filter: "str | None"
+    ) -> ReferenceResults3:
+        """query() for a ':definition()' chain (_definition_chain()): the
+        definition.json of each entity that passes every filter, one for
+        a literal root, each live one for '*', ':regex()' and ':choice()'.
+        Several whole files at once cannot be resolved (compendium 5.8),
+        so that case is flagged."""
+        if calls is None:
+            raise ValueError("calls cannot be None")
+        if reference.name_three is not None:
+            raise ReferenceException3(
+                f"{type(self).__name__} does not support combining a "
+                "':definition()' chain with name_three -- definition.json is "
+                "not versioned, there is no version to select."
+            )
+        filters, values = self._split_definition_fields(calls=calls)
+        if len(values) > 1:
+            self.csvpaths.logger.warning(
+                "Reference resolves to the value of the last field-accessor "
+                "function in its chain (:%s()) -- :%s() earlier in the same "
+                "chain could also have provided a value; see compendium 5.20b.",
+                values[-1].name,
+                "(), :".join(f.name for f in values[:-1]),
+            )
+        if isinstance(reference.root_major, str):
+            names = [reference.root_major]
+        else:
+            names = self._matching_names(self._definition_names(), name_filter)
+        names = [
+            name
+            for name in names
+            if all(self._matches_definition_field_predicate(name, f) for f in filters)
+        ]
+        results = [
+            ReferenceResult3(path=self._definition_path(name), uuid=None)
+            for name in names
+        ]
+        return ReferenceResults3(
+            results=results,
+            ambiguous_content_read=not values and len(results) > 1,
+        )
+
+    def _query_definition_files(self, *, names: list) -> ReferenceResults3:
+        """query() for a bare ':definition()' over several entities ('*',
+        ':regex()', ':choice()'): each one's definition.json, one result
+        each. Rule 1 (manifest_field_functions_proposal.md): resolving
+        more than one whole file at once is illegal, so more than one is
+        flagged; query() still returns them all, and resolve_from() raises
+        only if a caller resolves more than one."""
+        if names is None:
+            raise ValueError("names cannot be None")
+        results = [
+            ReferenceResult3(path=self._definition_path(name), uuid=None)
+            for name in names
+        ]
+        return ReferenceResults3(
+            results=results, ambiguous_content_read=len(results) > 1
+        )
+
+    def _definition_chain_data(
+        self, *, reference: Reference3, calls: list, path: str
+    ) -> object:
+        """resolve() for a ':definition()' chain: the last value field's
+        value from the entity's definition.json, or with no value field
+        the definition.json itself (compendium 6.19)."""
+        if calls is None:
+            raise ValueError("calls cannot be None")
+        if path is None or path == "":
+            raise ValueError("path cannot be None or empty")
+        _, values = self._split_definition_fields(calls=calls)
+        if not values:
+            return self._read_well_known_file(path)
+        if isinstance(reference.root_major, str):
+            name = reference.root_major
+        else:
+            name = next(
+                (
+                    n
+                    for n in self._definition_names()
+                    if self._definition_path(n) == path
+                ),
+                None,
+            )
+            if name is None:
+                raise ReferenceException3(
+                    f"{type(self).__name__} found no {self.DEFINITION_OWNER} "
+                    f"for {path!r}."
+                )
+        field_call = values[-1]
+        function_cls = ReferenceFunctionFactory.get_registered_class(field_call.name)
+        key_path = self._apply_key_arg(
+            function_cls.KEY.get(reference.datatype), field_call.arg
+        )
+        config = self._definition_config(name)
+        return self._extract_field_value(config.model_dump(exclude_none=True), key_path)
+
     @staticmethod
     def _read_well_known_file(path: str):
         """reads a well-known, home-directory-scoped JSON resource
