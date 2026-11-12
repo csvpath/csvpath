@@ -1181,6 +1181,71 @@ class TestStarTraversalFlatten:
         assert results.results == []
 
 
+class TestTraversalRootStatementResolve:
+    # a name_three statement read under '*', ':regex()' or ':choice()'
+    # resolves to that statement's text in the version's own group, as
+    # under a literal root. Until 2026-11-12 _extract_data() passed
+    # root_major to paths_manifest() and raised TypeError on resolve,
+    # though the query was right. The star fixtures with statement texts.
+    BY_NAME = {
+        "alpha": [
+            dict(
+                STAR_ALPHA_MANIFEST[0],
+                named_paths=["alpha orders"],
+                named_paths_identities=["orders"],
+            ),
+            dict(
+                STAR_ALPHA_MANIFEST[1],
+                named_paths=["alpha x"],
+                named_paths_identities=["x"],
+            ),
+        ],
+        "beta": [
+            dict(STAR_BETA_MANIFEST[0], named_paths=["beta orders", "beta one"])
+        ],
+    }
+
+    def _resolve(self, reference: str) -> list:
+        results = _finder(
+            reference, by_name=self.BY_NAME, inputs_csvpaths_path="inputs/named_paths"
+        ).resolve()
+        return [(r.uuid, r.identity, r.data) for r in results.results]
+
+    @pytest.mark.parametrize(
+        "root", ["$*", '$:regex("a")', '$:choice("alpha|beta")']
+    )
+    @pytest.mark.parametrize(
+        "tail, expected",
+        [
+            # alpha's last version (a-v2) has no "orders"
+            (".csvpaths.:last().orders", [("b-v1", "orders", "beta orders")]),
+            (
+                ".csvpaths.:first().orders",
+                [("a-v1", "orders", "alpha orders"), ("b-v1", "orders", "beta orders")],
+            ),
+            (
+                ".csvpaths.:all().orders",
+                [("a-v1", "orders", "alpha orders"), ("b-v1", "orders", "beta orders")],
+            ),
+            # a stringified index identity
+            (".csvpaths.:last().1", [("b-v1", "1", "beta one")]),
+            (".csvpaths.:last().nope", []),
+        ],
+    )
+    def test_a_statement_resolves_in_its_own_group(self, root, tail, expected):
+        assert self._resolve(root + tail) == expected
+
+    def test_a_regex_root_filters_by_group(self):
+        assert self._resolve('$:regex("^al").csvpaths.:all().orders') == [
+            ("a-v1", "orders", "alpha orders")
+        ]
+
+    def test_a_literal_root_reads_the_same(self):
+        assert self._resolve("$beta.csvpaths.:last().orders") == [
+            ("b-v1", "orders", "beta orders")
+        ]
+
+
 class TestStarTraversalPoolNoPointerIsOptional:
     # a pointer is now optional in POOL/FLATTEN mode too (settled
     # 2026-08-19) -- previously the one place csvpaths' own star
