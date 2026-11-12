@@ -614,6 +614,58 @@ class TestGlobalArrivalsLedgerOrdinalIndexing:
         results = finder.query()
         assert results.results[0].uuid == "u-ledger-3"
 
+    @pytest.mark.parametrize(
+        "pointer, expected",
+        [(":last()", -1), (":first()", 0), (":index(1)", 1)],
+    )
+    @pytest.mark.parametrize("manifest_first", [True, False])
+    def test_both_orders_resolve_the_ledger_record(
+        self, pointer, expected, manifest_first
+    ):
+        # ':manifest():last()' resolved None until 2026-11-12, though its
+        # query was right: the name_one file-pointer branch (5.21) read
+        # the live entry, and a ledger-only record (none of LEDGER's has a
+        # live manifest here) has none. ':last():manifest()' gave it.
+        chain = f":manifest(){pointer}" if manifest_first else f"{pointer}:manifest()"
+        finder = _finder(
+            f"$*.files.{chain}",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=LEDGER,
+        )
+        assert [r.data for r in finder.resolve().results] == [LEDGER[expected]]
+
+    @pytest.mark.parametrize(
+        "chain",
+        [":manifest():last()", ":last():manifest()", ":manifest():index(4)"],
+    )
+    def test_a_live_record_resolves_its_live_entry_in_both_orders(self, chain):
+        # D6: live first, the ledger for a ledger-only record. The ledger
+        # fingerprints differ ("L-"), so a ledger read cannot pass.
+        ledger = [dict(e, fingerprint="L-" + e["fingerprint"]) for e in STAR_LEDGER]
+        finder = _finder(
+            f"$*.files.{chain}",
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=STAR_BY_NAME,
+            ledger=ledger,
+            inputs_files_path="inputs/named_files",
+        )
+        assert [r.data for r in finder.resolve().results] == [STAR_BETA_MANIFEST[1]]
+
+    def test_a_literal_root_reads_its_own_manifest_in_both_orders(self):
+        # unchanged: '$alpha' reads alpha's own manifest.json
+        for chain in (":manifest():last()", ":last():manifest()"):
+            finder = _finder(
+                f"$alpha.files.{chain}",
+                ALPHA_HOME,
+                ALPHA_MANIFEST,
+                inputs_files_path="inputs/named_files",
+                ledger=LEDGER,
+            )
+            assert [r.data for r in finder.resolve().results] == [ALPHA_MANIFEST[-1]]
+
 
 #
 # matches the spec compendium's own EXAMPLE SCENARIO exactly ("Why a
@@ -859,8 +911,7 @@ class TestTraversalFieldReadsLiveFirst:
     # Every ledger value differs from the live one, so a ledger-first read
     # cannot pass. The live entries carry a stale "lifecycle" and
     # "status" that must not win: both are the ledger's (6.13b(v), (vi),
-    # (vii)). u-gone-1 is a
-    # ledger-only record of a deleted named-file.
+    # (vii)). u-gone-1 is a ledger-only record of a deleted named-file.
     LEDGER = [
         {
             "uuid": e["uuid"],
@@ -6183,14 +6234,18 @@ class TestManifestEntryQueryPaths:
             "inputs/named_files/beta/two.csv/eee.csv",
         ]
 
-    def test_rule_1b_still_gives_and_reads_the_ledger(self):
+    def test_rule_1b_gives_the_ledger_and_reads_the_live_entry(self):
+        # the query names the ledger set (5.7); a live record resolves to
+        # its named-file's own entry, as CSVPATHS does under C1 (6.13b(v),
+        # decision D6, 2026-11-12). It resolved to the ledger record
+        # {"uuid": "u-two-2", "fingerprint": "eee"} until then.
         finder = _entry_star_finder("$*.files.:last():manifest()")
         results = finder.query()
         assert [(r.path, r.uuid) for r in results.results] == [
             (LEDGER_MANIFEST_JSON, "u-two-2")
         ]
         data = _entry_star_finder("$*.files.:last():manifest()").resolve()
-        assert data.results[0].data == {"uuid": "u-two-2", "fingerprint": "eee"}
+        assert data.results[0].data == STAR_BETA_MANIFEST[1]
 
     def test_a_star_ledger_field_read_gives_the_ledger(self):
         finder = _finder(

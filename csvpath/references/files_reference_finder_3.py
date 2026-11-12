@@ -2618,6 +2618,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
             reference.name_three is None
             and result.uuid is not None
             and self._name_one_pointer(reference.name_one) is not None
+            # ':manifest():last()' is Rule 1b, as ':last():manifest()' is:
+            # under '*' a record of the ledger set, resolved below. This
+            # branch read the live entry for it and gave None for a
+            # ledger-only record (2026-11-12).
+            and self._pointer_before_manifest(reference, "manifest") is None
         ):
             # compendium 5.21's "name_one, file pointer" shape -- a lone
             # pointer (:first()/:last()/:index(n)) directly in name_one
@@ -2727,9 +2732,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 and self._pointer_before_manifest(reference, "manifest") is not None
             ):
                 # Rule 1b -- a pointer already reduced the global ledger
-                # to one entry in query(); re-derive it the same way the
-                # per-entity branch below does, just against the ledger
-                # instead of a named-file's own manifest.
+                # to one entry in query(). A live record reads its
+                # named-file's own entry first, a ledger-only one (a failed
+                # arrival, a deleted named-file) its ledger record, as
+                # CSVPATHS does under C1 (6.13b(v): the named-entity
+                # manifest wins for details; decision D6, 2026-11-12). It
+                # read the ledger record alone until then.
+                entry = self._live_manifest_entry_by_uuid(result.uuid)
+                if entry is not None:
+                    return entry
                 ledger = self.source.files_ledger()
                 return self._find_manifest_entry_by_uuid(ledger, result.uuid)
             if (
