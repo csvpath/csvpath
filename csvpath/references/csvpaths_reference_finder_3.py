@@ -980,10 +980,10 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # defensively rather than assumed.
             return None
 
-        manifest = self.source.paths_manifest(
-            reference.root_major
-        )
-        selected = self._find_manifest_entry_by_uuid(manifest, result.uuid)
+        # the version's own group: under '*', ':regex()' or ':choice()'
+        # root_major is not a name. Was paths_manifest(root_major), which
+        # raised TypeError for those roots (2026-11-12).
+        _, selected = self._group_manifest_entry(reference.root_major, result.uuid)
         if selected is None:
             return None
         identities = selected.get("named_paths_identities") or []
