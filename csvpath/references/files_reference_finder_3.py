@@ -1265,7 +1265,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 or re.search(name_filter, e.get("named_file_name") or "")
             ]
             entries = self._filter_by_manifest_chain_gate(
-                reference=reference, call=manifest_field_call, entries=entries
+                reference=reference,
+                call=manifest_field_call,
+                entries=entries,
+                live_by_uuid=(
+                    None
+                    if manifest_field_call.arg is None
+                    else self._live_entries_by_uuid()
+                ),
             )
             #
             # ledger records: query() gives the ledger's own path
@@ -2100,7 +2107,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
         manifest holds it, or None."""
         return self._live_named_file_entry(uuid)[1]
 
-    def _with_live_times(self, entries: list) -> list:
+    def _live_entries_by_uuid(self) -> dict:
+        """every live named-file's manifest entries by uuid, read once.
+        A query over the ledger set reads each record's live entry; one
+        map per query keeps that to one read of each manifest instead of
+        a walk per record per gate (reviewer on #585: on a cloud backend
+        every read costs)."""
+        return {
+            e.get("uuid"): e
+            for name in self.source.file_names()
+            for e in self.source.file_manifest(name)
+        }
+
+    def _with_live_times(self, *, entries: list, live_by_uuid: dict) -> list:
         """the ledger set records with each live record's time taken from
         its named-file's own entry, so a date range or time window beside
         ':manifest()' filters on the time ':time()' resolves (decision D7,
@@ -2108,17 +2127,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
         order are the ledger's."""
         if entries is None:
             raise ValueError("entries cannot be None")
-        live_times = {
-            e.get("uuid"): e.get("time")
-            for name in self.source.file_names()
-            for e in self.source.file_manifest(name)
-        }
-        return [
-            {**e, "time": live_times[e.get("uuid")]}
-            if live_times.get(e.get("uuid")) is not None
-            else e
-            for e in entries
-        ]
+        if live_by_uuid is None:
+            raise ValueError("live_by_uuid cannot be None")
+        timed = []
+        for e in entries:
+            live = live_by_uuid.get(e.get("uuid"))
+            time = None if live is None else live.get("time")
+            timed.append(e if time is None else {**e, "time": time})
+        return timed
 
     def _live_named_file_entry(self, uuid: str) -> tuple:
         """(name, entry) for the live named-file whose own manifest holds
@@ -2423,15 +2439,25 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 if name_filter is None
                 or re.search(name_filter, e.get("named_file_name") or "")
             ]
-            entries = self._with_live_times(entries)
             path = self._files_ledger_path()
+        # the live entries, read once, when a range or gate will read the
+        # records' values (decision D7)
+        live_by_uuid = None
+        if not isinstance(root_major, str) and (chain["ranges"] or chain["gates"]):
+            live_by_uuid = self._live_entries_by_uuid()
+            entries = self._with_live_times(
+                entries=entries, live_by_uuid=live_by_uuid
+            )
         # the range first, then the gates, then the pointer (6.28)
         entries = self._apply_manifest_chain_ranges(
             ranges=chain["ranges"], entries=entries
         )
         for gate in chain["gates"]:
             entries = self._filter_by_manifest_chain_gate(
-                reference=reference, call=gate, entries=entries
+                reference=reference,
+                call=gate,
+                entries=entries,
+                live_by_uuid=live_by_uuid,
             )
         if chain["pointer"] is not None:
             selected = self._apply_pointer(chain["pointer"], entries)
@@ -2504,7 +2530,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
         return self._apply_range(entries, lower_call, upper_call)
 
     def _manifest_chain_field_value(
-        self, *, reference: Reference3, function_cls: type, entry: dict | None
+        self,
+        *,
+        reference: Reference3,
+        function_cls: type,
+        entry: dict | None,
+        live_by_uuid: dict | None = None,
     ) -> object:
         """the value of a ':manifest():<field>()' field on one manifest
         entry: a ledger entry under '*', the named-file's own manifest
@@ -2528,7 +2559,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # so '$*' and '$alpha' could disagree. A gate reads through
             # here too, so it matches on the value resolve() shows.
             #
-            live = self._live_manifest_entry_by_uuid(entry["uuid"])
+            # one map per query when a gate passes it; else one lookup
+            live = (
+                live_by_uuid.get(entry["uuid"])
+                if live_by_uuid is not None
+                else self._live_manifest_entry_by_uuid(entry["uuid"])
+            )
             value = self._extract_field_value(live, key_path)
             if value is not None:
                 return value
@@ -2543,7 +2579,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
         )
 
     def _filter_by_manifest_chain_gate(
-        self, *, reference: Reference3, call: FunctionCall3, entries: list
+        self,
+        *,
+        reference: Reference3,
+        call: FunctionCall3,
+        entries: list,
+        live_by_uuid: dict | None = None,
     ) -> list:
         """the entries whose field matches `call`'s argument, for a
         ':manifest():<field>(arg)' gate, e.g. ':manifest():status("failed")'.
@@ -2564,7 +2605,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
             for e in entries
             if self._matches_field_predicate(
                 self._manifest_chain_field_value(
-                    reference=reference, function_cls=function_cls, entry=e
+                    reference=reference,
+                    function_cls=function_cls,
+                    entry=e,
+                    live_by_uuid=live_by_uuid,
                 ),
                 built.arg,
             )
@@ -2642,6 +2686,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
             entry = self._find_manifest_entry_by_uuid(entries, result.uuid)
             values = manifest_chain["values"]
             if not values:
+                # a live record of the ledger set is its live entry, as
+                # for Rule 1b (D6) and the bare filter-only read (D7)
+                if not isinstance(reference.root_major, str):
+                    live = self._live_manifest_entry_by_uuid(result.uuid)
+                    if live is not None:
+                        return live
                 return entry
             return self._manifest_chain_field_value(
                 reference=reference,

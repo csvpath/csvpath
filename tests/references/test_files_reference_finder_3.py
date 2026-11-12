@@ -1077,6 +1077,48 @@ class TestTraversalFieldReadsLiveFirst:
         live = dict(STAR_ALPHA_MANIFEST[2], lifecycle="stale", status="stale")
         assert values == [live]
 
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # a chain with no field resolves whole records: a live record
+            # is its live entry ("ccc", not "L-ccc"), a ledger-only one its
+            # ledger record. It gave the ledger record (reviewer on #585).
+            ('$*.files.:manifest():fingerprint("ccc"):last()', ["ccc"]),
+            ('$*.files.:manifest():lifecycle("active"):last()', ["eee"]),
+            ("$*.files.:manifest():from(1):to(2)", ["bbb", "ccc"]),
+            ("$*.files.:manifest():from(4)", ["eee", "L-gone"]),
+            ('$*.files.:manifest():from(:date("2026-01-03")):first()', ["ccc"]),
+            ("$:regex(/^al/).files.:manifest():from(1):to(2)", ["bbb", "ccc"]),
+        ],
+    )
+    def test_a_whole_record_read_gives_the_live_entry(self, reference, expected):
+        assert [e["fingerprint"] for e in self._values(reference)] == expected
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            # the bare one-gate form and the general chain take two paths
+            '$*.files.:manifest():fingerprint("ccc")',
+            '$*.files.:manifest():fingerprint("ccc"):type("csv")',
+        ],
+    )
+    def test_a_gate_reads_each_manifest_once(self, reference):
+        # one map of live entries per query, not a walk of every manifest
+        # per record (reviewer on #585, cost on a cloud backend)
+        finder = _finder(
+            reference,
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=self.BY_NAME,
+            ledger=self.LEDGER,
+            inputs_files_path="inputs/named_files",
+        )
+        reads = []
+        real = finder.source.file_manifest
+        finder.source.file_manifest = lambda name: reads.append(name) or real(name)
+        finder.query()
+        assert sorted(reads) == ["alpha", "beta"]
+
     def test_a_date_bound_and_time_agree(self):
         reference = '$*.files.:manifest():from(:date("2026-01-03")):time()'
         assert self._values(reference) == [
