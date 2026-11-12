@@ -2799,10 +2799,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     field_call.name
                 )
                 if is_manifest_chain and function_cls.SOURCE == "manifest":
-                    if isinstance(reference.root_major, Star3):
-                        manifest = self.source.files_ledger()
-                    else:
+                    # the ledger for '*', ':regex()' and ':choice()', as
+                    # in _query_manifest_chain(). Was Star3 only, so a
+                    # ':regex()' root passed its FunctionCall3 to
+                    # file_manifest() and raised TypeError (2026-11-12).
+                    if isinstance(reference.root_major, str):
                         manifest = self.source.file_manifest(reference.root_major)
+                    else:
+                        manifest = self.source.files_ledger()
                     entry = self._find_manifest_entry_by_uuid(manifest, result.uuid)
                     if field_call.arg is not None:
                         #

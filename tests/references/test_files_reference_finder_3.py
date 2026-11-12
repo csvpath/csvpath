@@ -834,6 +834,101 @@ class TestStarBareManifestFieldAccessor:
         ).query()
         assert results.uuids == ["u-ledger-1"]
 
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$:regex(/^al.*/).files.:manifest():uuid()", ["u-ledger-1"]),
+            ("$:regex(/^al.*/).files.:manifest():named_file_name()", ["alpha"]),
+            ("$:regex(/^.*/).files.:manifest():named_file_name()", ["alpha", "beta"]),
+            ("$:regex(/^zz/).files.:manifest():uuid()", []),
+            ('$:choice("alpha").files.:manifest():uuid()', ["u-ledger-1"]),
+            (
+                '$:choice("alpha|beta").files.:manifest():named_file_name()',
+                ["alpha", "beta"],
+            ),
+        ],
+    )
+    def test_a_regex_or_choice_root_resolves_from_the_ledger(
+        self, reference, expected
+    ):
+        # resolve read the named-file's own manifest for any root but '*',
+        # so ':regex()' and ':choice()' passed their FunctionCall3 to
+        # file_manifest() and raised TypeError (2026-11-12). Like '*',
+        # they read the ledger, as their query does.
+        results = _finder(
+            reference,
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=MANIFEST_FIELD_LEDGER,
+        ).resolve()
+        assert [r.data for r in results.results] == expected
+
+    # the ledger holds every record, deleted and failed ones included
+    # (compendium 6.13b(i), (vi)): what separates the Rule 1a read from a
+    # live-name traversal. "alfa" was deleted; alpha's second arrival
+    # failed.
+    REGEX_LEDGER = [
+        {
+            "named_file_name": "alpha",
+            "uuid": "u-a1",
+            "lifecycle": "active",
+            "status": "complete",
+        },
+        {
+            "named_file_name": "alpha",
+            "uuid": "u-a2",
+            "lifecycle": "active",
+            "status": "failed",
+        },
+        {
+            "named_file_name": "alfa",
+            "uuid": "u-d1",
+            "lifecycle": "deleted",
+            "status": "complete",
+        },
+        {
+            "named_file_name": "beta",
+            "uuid": "u-b1",
+            "lifecycle": "active",
+            "status": "complete",
+        },
+    ]
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            (
+                "$:regex(/^al/).files.:manifest():lifecycle()",
+                ["active", "active", "deleted"],
+            ),
+            (
+                "$:regex(/^al/).files.:manifest():status()",
+                ["complete", "failed", "complete"],
+            ),
+            (
+                '$:regex(/^al/).files.:manifest():lifecycle("deleted"):uuid()',
+                ["u-d1"],
+            ),
+            ('$:regex(/^al/).files.:manifest():status("failed"):uuid()', ["u-a2"]),
+            (
+                '$:choice("alfa|beta").files.:manifest():lifecycle()',
+                ["deleted", "active"],
+            ),
+        ],
+    )
+    def test_a_regex_or_choice_root_reads_deleted_and_failed_entries(
+        self, reference, expected
+    ):
+        results = _finder(
+            reference,
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=self.REGEX_LEDGER,
+        ).resolve()
+        assert [r.data for r in results.results] == expected
+
     def test_combined_with_name_three_is_not_yet_supported(self):
         with pytest.raises(ReferenceException3):
             _finder(
