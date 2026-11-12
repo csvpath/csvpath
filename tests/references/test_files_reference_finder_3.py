@@ -1119,6 +1119,33 @@ class TestTraversalFieldReadsLiveFirst:
         finder.query()
         assert sorted(reads) == ["alpha", "beta"]
 
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$*.files.:manifest():fingerprint()",
+            "$*.files.:manifest():from(0):to(4)",
+            "$*.files.:manifest():from(0):to(4):fingerprint()",
+            "$*.files.:manifest():last():fingerprint()",
+        ],
+    )
+    def test_resolve_reads_each_manifest_once(self, reference):
+        # resolve_from() reads the live entries once for all its results,
+        # not once per result (reviewer on #585)
+        finder = _finder(
+            reference,
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=self.BY_NAME,
+            ledger=self.LEDGER,
+            inputs_files_path="inputs/named_files",
+        )
+        selection = finder.query()
+        reads = []
+        real = finder.source.file_manifest
+        finder.source.file_manifest = lambda name: reads.append(name) or real(name)
+        finder.resolve_from(selection)
+        assert sorted(reads) == ["alpha", "beta"]
+
     def test_a_date_bound_and_time_agree(self):
         reference = '$*.files.:manifest():from(:date("2026-01-03")):time()'
         assert self._values(reference) == [

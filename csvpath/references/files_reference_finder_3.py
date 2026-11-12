@@ -135,6 +135,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
         return self.csvpaths.file_manager.describer.get_config(name)
 
     def query(self) -> ReferenceResults3:
+        # the live entries are read at most once per call (_live_index())
+        self._live_entries = None
         reference = self.ref.parsed
         log_results = self._query_log_call(reference)
         if log_results is not None:
@@ -1265,14 +1267,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 or re.search(name_filter, e.get("named_file_name") or "")
             ]
             entries = self._filter_by_manifest_chain_gate(
-                reference=reference,
-                call=manifest_field_call,
-                entries=entries,
-                live_by_uuid=(
-                    None
-                    if manifest_field_call.arg is None
-                    else self._live_entries_by_uuid()
-                ),
+                reference=reference, call=manifest_field_call, entries=entries
             )
             #
             # ledger records: query() gives the ledger's own path
@@ -2107,19 +2102,28 @@ class FilesReferenceFinder3(ReferenceFinder3):
         manifest holds it, or None."""
         return self._live_named_file_entry(uuid)[1]
 
-    def _live_entries_by_uuid(self) -> dict:
-        """every live named-file's manifest entries by uuid, read once.
-        A query over the ledger set reads each record's live entry; one
-        map per query keeps that to one read of each manifest instead of
-        a walk per record per gate (reviewer on #585: on a cloud backend
-        every read costs)."""
-        return {
-            e.get("uuid"): e
-            for name in self.source.file_names()
-            for e in self.source.file_manifest(name)
-        }
+    def resolve_from(self, selection: ReferenceResults3 | list) -> ReferenceResults3:
+        # the live entries are read at most once per call (_live_index())
+        self._live_entries = None
+        return super().resolve_from(selection)
 
-    def _with_live_times(self, *, entries: list, live_by_uuid: dict) -> list:
+    def _live_index(self) -> dict:
+        """uuid -> (named-file name, entry) for every live named-file's
+        manifest entries, read once per query() or resolve_from() call and
+        reset at the start of each. Reads of a ledger set record's live
+        entry, in a gate, a date bound or resolve, would otherwise walk
+        every manifest once per record: on a cloud backend every read
+        costs (reviewer on #585)."""
+        index = getattr(self, "_live_entries", None)
+        if index is None:
+            index = {}
+            for name in self.source.file_names():
+                for e in self.source.file_manifest(name):
+                    index.setdefault(e.get("uuid"), (name, e))
+            self._live_entries = index
+        return index
+
+    def _with_live_times(self, entries: list) -> list:
         """the ledger set records with each live record's time taken from
         its named-file's own entry, so a date range or time window beside
         ':manifest()' filters on the time ':time()' resolves (decision D7,
@@ -2127,11 +2131,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
         order are the ledger's."""
         if entries is None:
             raise ValueError("entries cannot be None")
-        if live_by_uuid is None:
-            raise ValueError("live_by_uuid cannot be None")
         timed = []
         for e in entries:
-            live = live_by_uuid.get(e.get("uuid"))
+            _, live = self._live_index().get(e.get("uuid"), (None, None))
             time = None if live is None else live.get("time")
             timed.append(e if time is None else {**e, "time": time})
         return timed
@@ -2142,13 +2144,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         _group_manifest_entry() under a traversal root."""
         if not uuid:
             raise ValueError("uuid cannot be None or empty")
-        for name in self.source.file_names():
-            entry = self._find_manifest_entry_by_uuid(
-                self.source.file_manifest(name), uuid
-            )
-            if entry is not None:
-                return name, entry
-        return None, None
+        return self._live_index().get(uuid, (None, None))
 
     def _root_manifest_path(self, name: str) -> str:
         """the manifest.json of the one named-file a literal root_major
@@ -2440,24 +2436,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 or re.search(name_filter, e.get("named_file_name") or "")
             ]
             path = self._files_ledger_path()
-        # the live entries, read once, when a range or gate will read the
-        # records' values (decision D7)
-        live_by_uuid = None
-        if not isinstance(root_major, str) and (chain["ranges"] or chain["gates"]):
-            live_by_uuid = self._live_entries_by_uuid()
-            entries = self._with_live_times(
-                entries=entries, live_by_uuid=live_by_uuid
-            )
+        # a live record's time is its live entry's, when a range will read
+        # it (decision D7)
+        if not isinstance(root_major, str) and chain["ranges"]:
+            entries = self._with_live_times(entries)
         # the range first, then the gates, then the pointer (6.28)
         entries = self._apply_manifest_chain_ranges(
             ranges=chain["ranges"], entries=entries
         )
         for gate in chain["gates"]:
             entries = self._filter_by_manifest_chain_gate(
-                reference=reference,
-                call=gate,
-                entries=entries,
-                live_by_uuid=live_by_uuid,
+                reference=reference, call=gate, entries=entries
             )
         if chain["pointer"] is not None:
             selected = self._apply_pointer(chain["pointer"], entries)
@@ -2530,12 +2519,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         return self._apply_range(entries, lower_call, upper_call)
 
     def _manifest_chain_field_value(
-        self,
-        *,
-        reference: Reference3,
-        function_cls: type,
-        entry: dict | None,
-        live_by_uuid: dict | None = None,
+        self, *, reference: Reference3, function_cls: type, entry: dict | None
     ) -> object:
         """the value of a ':manifest():<field>()' field on one manifest
         entry: a ledger entry under '*', the named-file's own manifest
@@ -2559,12 +2543,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # so '$*' and '$alpha' could disagree. A gate reads through
             # here too, so it matches on the value resolve() shows.
             #
-            # one map per query when a gate passes it; else one lookup
-            live = (
-                live_by_uuid.get(entry["uuid"])
-                if live_by_uuid is not None
-                else self._live_manifest_entry_by_uuid(entry["uuid"])
-            )
+            live = self._live_manifest_entry_by_uuid(entry["uuid"])
             value = self._extract_field_value(live, key_path)
             if value is not None:
                 return value
@@ -2579,12 +2558,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         )
 
     def _filter_by_manifest_chain_gate(
-        self,
-        *,
-        reference: Reference3,
-        call: FunctionCall3,
-        entries: list,
-        live_by_uuid: dict | None = None,
+        self, *, reference: Reference3, call: FunctionCall3, entries: list
     ) -> list:
         """the entries whose field matches `call`'s argument, for a
         ':manifest():<field>(arg)' gate, e.g. ':manifest():status("failed")'.
@@ -2605,10 +2579,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             for e in entries
             if self._matches_field_predicate(
                 self._manifest_chain_field_value(
-                    reference=reference,
-                    function_cls=function_cls,
-                    entry=e,
-                    live_by_uuid=live_by_uuid,
+                    reference=reference, function_cls=function_cls, entry=e
                 ),
                 built.arg,
             )
