@@ -883,6 +883,10 @@ class TestResolve:
         assert "v0-uuid" in message
         assert "'1'" in message
         assert "disagree" in message
+        if statements is None:
+            assert "has no named_paths" in message
+        else:
+            assert "has only 1 statement(s)" in message
 
 
 class TestManifestFunction:
