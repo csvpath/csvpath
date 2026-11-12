@@ -2625,8 +2625,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # FIRST_PARTY and never reach the re-derive-by-uuid logic
             # the kind == METADATA_FILE block below uses for every
             # other shape that selects one manifest entry this way.
-            if isinstance(reference.root_major, Star3):
-                # each named-file's own pick (4.1b), in its own manifest
+            if self._is_traversal_root(reference.root_major):
+                # each named-file's own pick (4.1b), in its own manifest.
+                # ':regex()' and ':choice()' are a filtered '*' (6.13b(iv));
+                # they were Star3 only until 2026-11-12 and passed their
+                # FunctionCall3 to file_manifest().
                 return self._live_manifest_entry_by_uuid(result.uuid)
             manifest = self.source.file_manifest(reference.root_major)
             return self._find_manifest_entry_by_uuid(manifest, result.uuid)
@@ -2724,14 +2727,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 ledger = self.source.files_ledger()
                 return self._find_manifest_entry_by_uuid(ledger, result.uuid)
             if (
-                isinstance(reference.root_major, Star3)
+                self._is_traversal_root(reference.root_major)
                 and result.uuid is not None
                 and reference.name_three is not None
             ):
                 # '*' traversal selected a live version from one
                 # named-file (6.13b(iv)); its entry is in that
                 # named-file's own manifest, the path query() gave. Was
-                # read from the ledger before 2026-11-01.
+                # read from the ledger before 2026-11-01. ':regex()' and
+                # ':choice()' too since 2026-11-12 (Star3 only before).
                 return self._live_manifest_entry_by_uuid(result.uuid)
             if (
                 not isinstance(reference.root_major, Star3)
@@ -2824,8 +2828,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     # resolved reference, no manifest/definition read at
                     # all. see function_3.py's SOURCE comment.
                     return self._compute_field(field_call.name, reference)
-                if field_call.name == "named_file_name" and not isinstance(
-                    reference.root_major, Star3
+                if field_call.name == "named_file_name" and not (
+                    self._is_traversal_root(reference.root_major)
                 ):
                     # a real, stored field at RESULTS/RESULT scope, but at
                     # FILES scope this is just the already-known resolved
@@ -2843,7 +2847,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     )
                     entry = config.model_dump(exclude_none=True)
                     return self._extract_field_value(entry, key_path)
-                if isinstance(reference.root_major, Star3):
+                if self._is_traversal_root(reference.root_major):
+                    # ':regex()'/':choice()' as for '*' since 2026-11-12:
+                    # they passed their FunctionCall3 to file_manifest().
                     # ':manifest():uuid()' during '*' traversal -- added
                     # 2026-08-28. root_major is the '*' token itself
                     # here, not a real name, so get_manifest() cannot be

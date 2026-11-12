@@ -784,6 +784,70 @@ class TestStarTraversalLiteralNameThreeBody:
         assert results.results[0].data == "bbb"
 
 
+class TestTraversalRootResolve:
+    # ':regex()' and ':choice()' at root_major are a filtered '*'
+    # (compendium 6.13b(iv)), so they resolve as '*' does. Until
+    # 2026-11-12 _extract_data() tested for Star3 alone: a name_one
+    # pointer or a name_three field or ':manifest()' passed the
+    # FunctionCall3 to file_manifest() and raised TypeError, and
+    # ':named_file_name()' returned the FunctionCall3 itself as the value.
+    # The ledger carries the names, so ':named_file_name()' reads each.
+    LEDGER = [{**e, "named_file_name": "alpha"} for e in STAR_LEDGER[:3]] + [
+        {**e, "named_file_name": "beta"} for e in STAR_LEDGER[3:]
+    ]
+    ROOTS = ["$*", "$:regex(/^.*/)", '$:choice("alpha|beta")']
+
+    def _resolve(self, reference: str) -> list:
+        results = _finder(
+            reference,
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=STAR_BY_NAME,
+            ledger=self.LEDGER,
+        ).resolve()
+        return [(r.uuid, r.data) for r in results.results]
+
+    @pytest.mark.parametrize("root", ROOTS)
+    @pytest.mark.parametrize(
+        "tail, expected",
+        [
+            (".files.:flatten().:last():fingerprint()", [("u-two-2", "eee")]),
+            (".files.:flatten().:last():uuid()", [("u-two-2", "u-two-2")]),
+            (".files.:flatten().:last():named_file_name()", [("u-two-2", "beta")]),
+            (".files.:flatten().:last():manifest():uuid()", [("u-two-2", "u-two-2")]),
+            (
+                ".files.*.:last():named_file_name()",
+                [("u-one-2", "alpha"), ("u-two-2", "beta")],
+            ),
+            (
+                ".files.*.:last():fingerprint()",
+                [("u-one-2", "ccc"), ("u-two-2", "eee")],
+            ),
+        ],
+    )
+    def test_a_field_reads_as_under_star(self, root, tail, expected):
+        assert self._resolve(root + tail) == expected
+
+    @pytest.mark.parametrize("root", ROOTS)
+    @pytest.mark.parametrize(
+        "tail, expected",
+        [
+            (".files.:last()", [("u-one-2", "ccc"), ("u-two-2", "eee")]),
+            (".files.*.:last():manifest()", [("u-one-2", "ccc"), ("u-two-2", "eee")]),
+            (".files.:flatten().:last():manifest()", [("u-two-2", "eee")]),
+        ],
+    )
+    def test_a_manifest_entry_reads_as_under_star(self, root, tail, expected):
+        # the live entry from each named-file's own manifest
+        assert [
+            (uuid, entry["fingerprint"]) for uuid, entry in self._resolve(root + tail)
+        ] == expected
+
+    def test_a_regex_root_filters_by_name(self):
+        reference = "$:regex(/^al/).files.*.:last():named_file_name()"
+        assert self._resolve(reference) == [("u-one-2", "alpha")]
+
+
 MANIFEST_FIELD_LEDGER = [
     {
         "named_file_name": "alpha",
