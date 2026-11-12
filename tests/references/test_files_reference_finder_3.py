@@ -671,12 +671,9 @@ STAR_BY_NAME = {
 }
 
 # a field accessor riding alongside a pointer during '*' traversal --
-# narrowed 2026-08-29 -- resolves via _extract_data()'s Star3-aware
-# branch, which reads the global arrivals ledger (result.uuid alone does
-# not say which named-file a candidate came from) -- these tests need a
-# ledger entry for every uuid any of them might resolve, unlike every
-# OTHER star-traversal test in this file, which never reads the ledger
-# at all.
+# narrowed 2026-08-29 -- read the global arrivals ledger until 2026-11-12;
+# it now reads the holding named-file's own manifest first (decision D4),
+# with this ledger as the fallback for ledger-only fields.
 STAR_LEDGER = [
     {"uuid": "u-zero-1", "fingerprint": "aaa"},
     {"uuid": "u-one-1", "fingerprint": "bbb"},
@@ -850,6 +847,117 @@ class TestTraversalRootResolve:
     def test_a_regex_root_filters_by_name(self):
         reference = "$:regex(/^al/).files.*.:last():named_file_name()"
         assert self._resolve(reference) == [("u-one-2", "alpha")]
+
+
+class TestTraversalFieldReadsLiveFirst:
+    # decision D4 (2026-11-12): a name_three field after a traversal root
+    # reads as the literal reference does, the holding named-file's own
+    # manifest first and the ledger as fallback (6.13b(iv), (v)). It read
+    # the ledger first, so '$*' and '$alpha' disagreed when the two did.
+    # A name_one read under '*' stays on the ledger (ruling C Q1).
+    #
+    # Every ledger value differs from the live one, so a ledger-first read
+    # cannot pass. The live entries carry a stale "lifecycle" that must
+    # not win: lifecycle is the ledger's (6.13b(v), (vi)). u-gone-1 is a
+    # ledger-only record of a deleted named-file.
+    LEDGER = [
+        {
+            "uuid": e["uuid"],
+            "fingerprint": "L-" + e["fingerprint"],
+            "time": "2030-01-01T00:00:00+00:00",
+            "named_file_name": "beta" if e["uuid"].startswith("u-two") else "alpha",
+            "lifecycle": "active",
+        }
+        for e in STAR_LEDGER
+    ] + [
+        {
+            "uuid": "u-gone-1",
+            "fingerprint": "L-gone",
+            "time": "2030-01-02T00:00:00+00:00",
+            "named_file_name": "alfa",
+            "lifecycle": "deleted",
+        }
+    ]
+    BY_NAME = {
+        name: (home, [dict(e, lifecycle="stale") for e in manifest])
+        for name, (home, manifest) in STAR_BY_NAME.items()
+    }
+    ROOTS = ["$*", "$:regex(/^.*/)", '$:choice("alpha|beta")']
+
+    def _values(self, reference: str, *, ledger: list | None = None) -> list:
+        results = _finder(
+            reference,
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=self.BY_NAME,
+            ledger=self.LEDGER if ledger is None else ledger,
+            inputs_files_path="inputs/named_files",
+        ).resolve()
+        return [r.data for r in results.results]
+
+    @pytest.mark.parametrize("root", ROOTS)
+    @pytest.mark.parametrize(
+        "tail, expected",
+        [
+            (".files.*.:last():fingerprint()", ["ccc", "eee"]),
+            (".files.*.:last():manifest():fingerprint()", ["ccc", "eee"]),
+            (
+                ".files.*.:last():time()",
+                ["2026-01-03T00:00:00+00:00", "2026-01-05T00:00:00+00:00"],
+            ),
+            (".files.:flatten().:last():fingerprint()", ["eee"]),
+            (".files.*.:last():lifecycle()", ["active", "active"]),
+            (".files.*.:last():named_file_name()", ["alpha", "beta"]),
+        ],
+    )
+    def test_a_name_three_field_reads_the_live_entry_first(
+        self, root, tail, expected
+    ):
+        assert self._values(root + tail) == expected
+
+    @pytest.mark.parametrize(
+        "tail",
+        [
+            ".files.*.:last():fingerprint()",
+            ".files.*.:last():time()",
+            ".files.*.:last():lifecycle()",
+            ".files.*.:last():named_file_name()",
+        ],
+    )
+    def test_star_agrees_with_the_literal_root_for_each_name(self, tail):
+        # 6.13b(iv): '$*' is the same reference for every live name
+        literal = self._values("$alpha" + tail) + self._values("$beta" + tail)
+        assert self._values("$*" + tail) == literal
+
+    @pytest.mark.parametrize("root", ROOTS)
+    def test_the_name_comes_from_the_live_named_file(self, root):
+        # never None under a traversal root, even when the ledger has no
+        # names, as the literal root never is
+        nameless = [
+            {k: v for k, v in e.items() if k != "named_file_name"}
+            for e in self.LEDGER
+        ]
+        reference = root + ".files.*.:last():named_file_name()"
+        assert self._values(reference, ledger=nameless) == ["alpha", "beta"]
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            (
+                "$*.files.:manifest():fingerprint()",
+                ["L-aaa", "L-bbb", "L-ccc", "L-ddd", "L-eee", "L-gone"],
+            ),
+            ("$*.files.:manifest():last():fingerprint()", ["L-gone"]),
+            ('$*.files.:manifest():lifecycle("deleted"):fingerprint()', ["L-gone"]),
+            (
+                "$:regex(/^al/).files.:manifest():fingerprint()",
+                ["L-aaa", "L-bbb", "L-ccc", "L-gone"],
+            ),
+        ],
+    )
+    def test_a_name_one_read_stays_on_the_ledger(self, reference, expected):
+        # ruling C Q1 (2026-10-30), unchanged by D4: deleted records too
+        assert self._values(reference) == expected
 
 
 MANIFEST_FIELD_LEDGER = [
