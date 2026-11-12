@@ -834,6 +834,36 @@ class TestStarBareManifestFieldAccessor:
         ).query()
         assert results.uuids == ["u-ledger-1"]
 
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$:regex(/^al.*/).files.:manifest():uuid()", ["u-ledger-1"]),
+            ("$:regex(/^al.*/).files.:manifest():named_file_name()", ["alpha"]),
+            ("$:regex(/^.*/).files.:manifest():named_file_name()", ["alpha", "beta"]),
+            ("$:regex(/^zz/).files.:manifest():uuid()", []),
+            ('$:choice("alpha").files.:manifest():uuid()', ["u-ledger-1"]),
+            (
+                '$:choice("alpha|beta").files.:manifest():named_file_name()',
+                ["alpha", "beta"],
+            ),
+        ],
+    )
+    def test_a_regex_or_choice_root_resolves_from_the_ledger(
+        self, reference, expected
+    ):
+        # resolve read the named-file's own manifest for any root but '*',
+        # so ':regex()' and ':choice()' passed their FunctionCall3 to
+        # file_manifest() and raised TypeError (2026-11-12). Like '*',
+        # they read the ledger, as their query does.
+        results = _finder(
+            reference,
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=MANIFEST_FIELD_LEDGER,
+        ).resolve()
+        assert [r.data for r in results.results] == expected
+
     def test_combined_with_name_three_is_not_yet_supported(self):
         with pytest.raises(ReferenceException3):
             _finder(
