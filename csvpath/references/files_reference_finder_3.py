@@ -2618,6 +2618,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
             reference.name_three is None
             and result.uuid is not None
             and self._name_one_pointer(reference.name_one) is not None
+            # ':manifest():last()' is Rule 1b, as ':last():manifest()' is:
+            # under '*' a record of the ledger set, resolved below. This
+            # branch read the live entry for it and gave None for a
+            # ledger-only record (2026-11-12).
+            and self._pointer_before_manifest(reference, "manifest") is None
         ):
             # compendium 5.21's "name_one, file pointer" shape -- a lone
             # pointer (:first()/:last()/:index(n)) directly in name_one
