@@ -3322,6 +3322,36 @@ class TestStarLedgerReadKeepsDeletedEntries:
         results = self._c1_finder("$*.csvpaths.:manifest():uuid()").query()
         assert results.uuids == _C1_LEDGER_UUIDS
 
+    @pytest.mark.parametrize(
+        "root", ["$*", '$:regex("^(keep|gone)$")', '$:choice("keep|gone")']
+    )
+    @pytest.mark.parametrize(
+        "tail, expected",
+        [
+            # keep-v1, gone-v1, keep-reload under the filtered roots
+            (".csvpaths.:manifest():last()", "keep-reload"),
+            (".csvpaths.:last():manifest()", "keep-reload"),
+            (".csvpaths.:manifest():first()", "keep-v1"),
+        ],
+    )
+    def test_a_ledger_record_resolves_under_every_traversal_root(
+        self, root, tail, expected
+    ):
+        # a ledger-only record (the unchanged reload keep-reload, the
+        # deleted gone-v1) resolves to its ledger entry under ':regex()'
+        # and ':choice()' as under '*' (6.13b, 6.13b(i), C1). It resolved
+        # to None there until 2026-11-12: the ledger fallback was Star3
+        # only.
+        assert [e["uuid"] for e in self._data(root + tail)] == [expected]
+
+    @pytest.mark.parametrize(
+        "root", ['$:regex("^(keep|gone)$")', '$:choice("keep|gone")']
+    )
+    def test_a_deleted_record_resolves_under_a_filtered_root(self, root):
+        # gone-v1 is index 1 of the name-filtered set
+        data = self._data(root + ".csvpaths.:manifest():index(1)")
+        assert [e["uuid"] for e in data] == ["gone-v1"]
+
     def test_deleted_entry_path_is_the_ledger(self):
         # changed 2026-11-01 (was: its group file). Every record of the
         # '*' manifest set gives the ledger's path (compendium 5.7).
