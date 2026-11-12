@@ -640,7 +640,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         is_grouped = all_call is not None or (
             manifest_call is None and (len(pointers) > 0 or index_range)
         )
-        gates = self._gate_calls(built=built, pointer_present=len(pointers) > 0)
+        gates = self._gate_calls(built=built)
         # whitelist-based (settled 2026-08-19), replacing an earlier
         # blacklist-based check (any(name=="manifest") or any(name in
         # ("from","to"))) that only ever rejected those two specific
@@ -1183,17 +1183,20 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         key_path = f.KEY.get(Reference3.CSVPATHS) if f.KEY else None
         return key_path is not None and "{}" in key_path
 
-    def _gate_calls(self, *, built: list, pointer_present: bool) -> list:
+    def _gate_calls(self, *, built: list) -> list:
         """the argued field accessors in `built` that filter versions, a
         GATE (finding A, David 2026-10-29; compendium 6.1, 6.35): a
         version-entry field (SOURCE "manifest") with an argument,
         including :uuid()/:fingerprint() beside a pointer, which filter as
         in RESULTS (David, 2026-11-06; 6.44). Their bare form is a lookup,
         dispatched earlier in query(). Not a gate: a "{}"-key field (its
-        argument picks the key), and a field that reads definition.json --
-        SOURCE "definition", or a BARE_SOURCE "definition" field such as
-        :template() with no pointer -- which would filter whole groups and
-        is not built. Those still raise where an argument has no use."""
+        argument picks the key), and a SOURCE "definition" field, which
+        reads definition.json and has no version to filter. Those still
+        raise where an argument has no use. A bare ':template()' is a
+        ':definition()' chain, read before this (2026-11-10), so one here
+        sits beside a version selector and gates on each version's own
+        template, including ':all()', a range and ':manifest()' (David,
+        2026-11-11)."""
         if built is None:
             raise ValueError("Built chain cannot be None")
         gates = []
@@ -1201,8 +1204,6 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             if f.arg is None or f.SOURCE != "manifest":
                 continue
             if self._key_has_placeholder(f):
-                continue
-            if f.BARE_SOURCE == "definition" and not pointer_present:
                 continue
             gates.append(f)
         return gates
@@ -1257,8 +1258,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         if calls is None:
             raise ValueError("Calls cannot be None")
         built = self._build_chain(calls)
-        pointer_present = any(f.ROLE == Function3.POINTER for f in built)
-        gates = self._gate_calls(built=built, pointer_present=pointer_present)
+        gates = self._gate_calls(built=built)
         values = [c for c, b in zip(calls, built) if not any(b is g for g in gates)]
         return self._last_field_function_call(values)
 
@@ -1301,10 +1301,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             )
         calls = [name_one.path[0], *name_one.functions]
         built = self._build_chain(calls)
-        gates = self._gate_calls(
-            built=built,
-            pointer_present=any(f.ROLE == Function3.POINTER for f in built),
-        )
+        gates = self._gate_calls(built=built)
         for f in built:
             self._check_position(f, Reference3.NAME_ONE, Reference3.CSVPATHS)
             # added 2026-10-18, alongside :uuid()'s own bare-selector
@@ -1376,10 +1373,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             raise ValueError("Built chain cannot be None")
         if manifest is None:
             raise ValueError("Manifest cannot be None")
-        gates = self._gate_calls(
-            built=built,
-            pointer_present=any(f.ROLE == Function3.POINTER for f in built),
-        )
+        gates = self._gate_calls(built=built)
         # from_call/to_call here mean LOWER/UPPER bound -- generalized
         # 2026-10-16 (compendium 6.28) via the shared
         # _range_calls_from_built(), which also recognizes ':after()'/

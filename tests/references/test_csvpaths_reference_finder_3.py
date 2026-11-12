@@ -1627,6 +1627,22 @@ class TestCsvpathsGates:
                 ["a1", "a2", "a3", "a4"],
             ),
             ('$acme.csvpaths.:all():named_paths_name("beta")', []),
+            # a version set gates on each version's own template too, not
+            # only a pointer (David, 2026-11-11). These used to raise "does
+            # not take an argument"
+            ("$acme.csvpaths.:all():template(:has_value())", ["a2", "a3"]),
+            (
+                "$acme.csvpaths.:all():template(:does_not_have_value())",
+                ["a1", "a4"],
+            ),
+            ("$acme.csvpaths.:from(0):to(3):template(:has_value())", ["a2", "a3"]),
+            # range first: a1, a2, then the gate
+            ("$acme.csvpaths.:from(0):to(1):template(:has_value())", ["a2"]),
+            ("$acme.csvpaths.:template(:has_value()):from(0):to(1)", ["a2"]),
+            (
+                "$acme.csvpaths.:manifest():template(:has_value()):uuid()",
+                ["a2", "a3"],
+            ),
         ],
     )
     def test_a_literal_root_gate_filters(self, reference, expected):
@@ -1650,6 +1666,12 @@ class TestCsvpathsGates:
                 '$:regex(/^(acme|gone)$/).csvpaths.:manifest():template(:has_value())'
                 ":last()",
                 ["a3"],
+            ),
+            # a version set, per group and on the ledger (2026-11-11)
+            ("$*.csvpaths.:all():template(:has_value())", ["a2", "a3", "b2"]),
+            (
+                "$*.csvpaths.:manifest():template(:has_value())",
+                ["a2", "g1", "a3", "b2"],
             ),
         ],
     )
@@ -1686,6 +1708,36 @@ class TestCsvpathsGates:
         self, reference
     ):
         assert [r.data for r in _gate_finder(reference).resolve().results] == ["a3"]
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$acme.csvpaths.:all():template(:has_value()):uuid()", ["a2", "a3"]),
+            (
+                "$acme.csvpaths.:all():template(:has_value()):template()",
+                [":1/:2", ":1"],
+            ),
+            (
+                "$acme.csvpaths.:from(0):to(3):template():template(:has_value())",
+                [":1/:2", ":1"],
+            ),
+            (
+                "$acme.csvpaths.:manifest():template(:has_value()):template()",
+                [":1/:2", ":1"],
+            ),
+            (
+                "$*.csvpaths.:all():template(:has_value()):uuid()",
+                ["a2", "a3", "b2"],
+            ),
+        ],
+    )
+    def test_a_version_set_gate_takes_its_value_from_the_unargued_field(
+        self, reference, expected
+    ):
+        # each version's own template, read beside :all(), a range or
+        # :manifest() (2026-11-11)
+        results = _gate_finder(reference).resolve().results
+        assert [r.data for r in results] == expected
 
     def test_the_ledger_value_comes_from_the_unargued_field(self):
         results = _gate_finder(
@@ -1726,13 +1778,11 @@ class TestCsvpathsGates:
     @pytest.mark.parametrize(
         "reference",
         [
-            # a definition.json field: bare ':template()' with no pointer
-            # is the group's default, and a gate on it would filter whole
-            # groups, which is not built
-            "$acme.csvpaths.:all():template(:has_value())",
-            "$*.csvpaths.:manifest():template(:has_value())",
-            # another datatype's field (2026-11-05): under '*' these read
-            # None and filtered everything out silently after #522.
+            # (':all():template(:has_value())' and the ledger's
+            # ':manifest():template(:has_value())' were here until they
+            # became gates, 2026-11-11.) Another datatype's field
+            # (2026-11-05): under '*' these read None and filtered
+            # everything out silently after #522.
             # (':status()' was one of these until it became a CSVPATHS
             # field, 2026-11-06.)
             '$*.csvpaths.:type("csv")',
