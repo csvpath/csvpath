@@ -828,19 +828,23 @@ class TestTraversalRootResolve:
     def test_a_field_reads_as_under_star(self, root, tail, expected):
         assert self._resolve(root + tail) == expected
 
+    ONE_2 = "inputs/named_files/alpha/one.csv/ccc.csv"
+    TWO_2 = "inputs/named_files/beta/two.csv/eee.csv"
+
     @pytest.mark.parametrize("root", ROOTS)
     @pytest.mark.parametrize(
         "tail, expected",
         [
-            (".files.:last()", [("u-one-2", "ccc"), ("u-two-2", "eee")]),
-            (".files.*.:last():manifest()", [("u-one-2", "ccc"), ("u-two-2", "eee")]),
-            (".files.:flatten().:last():manifest()", [("u-two-2", "eee")]),
+            (".files.:last()", [("u-one-2", ONE_2), ("u-two-2", TWO_2)]),
+            (".files.*.:last():manifest()", [("u-one-2", ONE_2), ("u-two-2", TWO_2)]),
+            (".files.:flatten().:last():manifest()", [("u-two-2", TWO_2)]),
         ],
     )
     def test_a_manifest_entry_reads_as_under_star(self, root, tail, expected):
-        # the live entry from each named-file's own manifest
+        # the live entry from each named-file's own manifest (6.13b(iv)):
+        # only a live entry has "file"; the ledger's entries do not
         assert [
-            (uuid, entry["fingerprint"]) for uuid, entry in self._resolve(root + tail)
+            (uuid, entry.get("file")) for uuid, entry in self._resolve(root + tail)
         ] == expected
 
     def test_a_regex_root_filters_by_name(self):
