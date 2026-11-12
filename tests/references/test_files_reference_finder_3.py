@@ -1525,15 +1525,21 @@ class TestManifestChainRanges:
     # raised calling it a field function, and ':manifest():from(1)'
     # raised "functions attached directly to name_one". The range comes
     # first, then the gates, then the pointer (6.28).
+    #
+    # "now" is pinned to 2026-01-04 12:30 UTC, the whole instant. It was
+    # the date only (DateUtility.OFFSET_DAYS), with the real time of day,
+    # so an ':hour()' window found v3 (00:00 UTC) whenever the suite ran
+    # between 00:00 and 00:59 UTC (2026-11-11).
     @pytest.fixture(autouse=True)
-    def pinned_now(self):
-        from datetime import date
+    def pinned_now(self, monkeypatch):
+        self._pin_clock(monkeypatch=monkeypatch, hour=12)
 
-        daut.OFFSET_DAYS = (date(2026, 1, 4) - daut.now().date()).days
-        try:
-            yield
-        finally:
-            daut.OFFSET_DAYS = 0
+    @staticmethod
+    def _pin_clock(*, monkeypatch: pytest.MonkeyPatch, hour: int) -> None:
+        from datetime import datetime, timezone
+
+        pinned = datetime(2026, 1, 4, hour, 30, tzinfo=timezone.utc)
+        monkeypatch.setattr(daut, "now", classmethod(lambda cls: pinned))
 
     @staticmethod
     def _finder(reference: str) -> FilesReferenceFinder3:
@@ -1620,8 +1626,17 @@ class TestManifestChainRanges:
         assert self._data(reference) == ["alpha", "beta"]
 
     def test_a_window_with_nothing_in_it_finds_nothing(self):
+        # 12:30, an hour with no entry
         assert self._uuids("$ranger.files.:manifest():hour()") == []
         assert self._data("$ranger.files.:manifest():hour()") == []
+
+    def test_an_hour_window_finds_the_entry_in_that_hour(self, monkeypatch):
+        # the same window, in the hour v3 arrived: not empty by accident
+        self._pin_clock(monkeypatch=monkeypatch, hour=0)
+        assert self._uuids("$ranger.files.:manifest():hour()") == ["v3"]
+        assert self._data("$ranger.files.:manifest():hour()") == [
+            CHAIN_RANGE_MANIFEST[3]
+        ]
 
     @pytest.mark.parametrize(
         "reference, message",
