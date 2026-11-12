@@ -2876,20 +2876,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     # fallback, so ':lifecycle()' (LEDGER_KEY only) still
                     # reads the ledger (6.13b(iv), (v); decision D4,
                     # 2026-11-12). It read the ledger first until then, so
-                    # '$*' and '$alpha' could disagree. A name_one read
-                    # under '*' stays on the ledger (ruling C Q1,
-                    # 2026-10-30). No known shape reaches this branch
-                    # without name_three: a bare ':manifest():<field>()'
-                    # takes the is_manifest_chain branch above, and query()
-                    # rejects any other name_one field here. The ledger
-                    # read is kept as that ruling's meaning.
+                    # '$*' and '$alpha' could disagree. No supported shape
+                    # reaches here without name_three: a bare
+                    # ':manifest():<field>()' takes the is_manifest_chain
+                    # branch above, and query() rejects any other name_one
+                    # field. If one ever does, it must read the ledger
+                    # (ruling C Q1, 2026-10-30), so fail loudly rather than
+                    # guess.
                     #
-                    if reference.name_three is not None:
-                        entry = self._live_manifest_entry_by_uuid(result.uuid)
-                    else:
-                        entry = self._find_manifest_entry_by_uuid(
-                            self.source.files_ledger(), result.uuid
+                    if reference.name_three is None:
+                        raise ReferenceException3(
+                            "FilesReferenceFinder3 reached a name_one field "
+                            "read under a traversal root, which no supported "
+                            "shape does -- it should read the ledger (ruling "
+                            "C Q1)."
                         )
+                    entry = self._live_manifest_entry_by_uuid(result.uuid)
                 else:
                     manifest = self.source.file_manifest(
                         reference.root_major

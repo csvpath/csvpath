@@ -857,8 +857,9 @@ class TestTraversalFieldReadsLiveFirst:
     # A name_one read under '*' stays on the ledger (ruling C Q1).
     #
     # Every ledger value differs from the live one, so a ledger-first read
-    # cannot pass. The live entries carry a stale "lifecycle" that must
-    # not win: lifecycle is the ledger's (6.13b(v), (vi)). u-gone-1 is a
+    # cannot pass. The live entries carry a stale "lifecycle" and
+    # "status" that must not win: both are the ledger's (6.13b(v), (vi),
+    # (vii)). u-gone-1 is a
     # ledger-only record of a deleted named-file.
     LEDGER = [
         {
@@ -867,6 +868,7 @@ class TestTraversalFieldReadsLiveFirst:
             "time": "2030-01-01T00:00:00+00:00",
             "named_file_name": "beta" if e["uuid"].startswith("u-two") else "alpha",
             "lifecycle": "active",
+            "status": "complete",
         }
         for e in STAR_LEDGER
     ] + [
@@ -879,7 +881,7 @@ class TestTraversalFieldReadsLiveFirst:
         }
     ]
     BY_NAME = {
-        name: (home, [dict(e, lifecycle="stale") for e in manifest])
+        name: (home, [dict(e, lifecycle="stale", status="stale") for e in manifest])
         for name, (home, manifest) in STAR_BY_NAME.items()
     }
     ROOTS = ["$*", "$:regex(/^.*/)", '$:choice("alpha|beta")']
@@ -907,6 +909,8 @@ class TestTraversalFieldReadsLiveFirst:
             ),
             (".files.:flatten().:last():fingerprint()", ["eee"]),
             (".files.*.:last():lifecycle()", ["active", "active"]),
+            # ':status()' is the ledger's in FILES too (6.13b(vii))
+            (".files.*.:last():status()", ["complete", "complete"]),
             (".files.*.:last():named_file_name()", ["alpha", "beta"]),
         ],
     )
@@ -921,6 +925,7 @@ class TestTraversalFieldReadsLiveFirst:
             ".files.*.:last():fingerprint()",
             ".files.*.:last():time()",
             ".files.*.:last():lifecycle()",
+            ".files.*.:last():status()",
             ".files.*.:last():named_file_name()",
         ],
     )
