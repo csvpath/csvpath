@@ -827,7 +827,12 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # worked example demonstrates or requires it there; see
                 # the bucket list).
                 return self._read_well_known_file(result.path)
-            if isinstance(reference.root_major, Star3):
+            if self._is_traversal_root(reference.root_major):
+                # ':regex()'/':choice()' too since 2026-11-12: they reach
+                # the same set, filtered by name (6.13b), but a ledger-only
+                # record (a deleted group, an unchanged reload) resolved to
+                # None under them, the ledger fallback below being Star3
+                # only.
                 # Rule 1a/1b vs. a genuine traversal-selected version
                 # both reach here now (fixed 2026-08-26) -- both carry a
                 # real, non-None uuid once _query_star_traversal supports
