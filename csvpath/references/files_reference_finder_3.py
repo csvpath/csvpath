@@ -2100,6 +2100,26 @@ class FilesReferenceFinder3(ReferenceFinder3):
         manifest holds it, or None."""
         return self._live_named_file_entry(uuid)[1]
 
+    def _with_live_times(self, entries: list) -> list:
+        """the ledger set records with each live record's time taken from
+        its named-file's own entry, so a date range or time window beside
+        ':manifest()' filters on the time ':time()' resolves (decision D7,
+        2026-11-12). A ledger-only record keeps its own. Membership and
+        order are the ledger's."""
+        if entries is None:
+            raise ValueError("entries cannot be None")
+        live_times = {
+            e.get("uuid"): e.get("time")
+            for name in self.source.file_names()
+            for e in self.source.file_manifest(name)
+        }
+        return [
+            {**e, "time": live_times[e.get("uuid")]}
+            if live_times.get(e.get("uuid")) is not None
+            else e
+            for e in entries
+        ]
+
     def _live_named_file_entry(self, uuid: str) -> tuple:
         """(name, entry) for the live named-file whose own manifest holds
         `uuid`, or (None, None). The FILES counterpart of CSVPATHS'
@@ -2403,6 +2423,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 if name_filter is None
                 or re.search(name_filter, e.get("named_file_name") or "")
             ]
+            entries = self._with_live_times(entries)
             path = self._files_ledger_path()
         # the range first, then the gates, then the pointer (6.28)
         entries = self._apply_manifest_chain_ranges(
@@ -2496,9 +2517,24 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # at FILES scope the name is the literal root itself. under
             # '*', ':regex()' or ':choice()' it is read from each entry.
             return reference.root_major
+        key_path = function_cls.KEY.get(Reference3.FILES)
+        if self._is_traversal_root(reference.root_major) and entry is not None:
+            #
+            # a ledger set record: the set decides membership and order,
+            # but a live record's details come from its named-file's own
+            # entry, the ledger's only where that has none (lifecycle,
+            # status, the name). 6.13b(v); C1, as CSVPATHS reads it;
+            # decision D7, 2026-11-12. The ledger record alone until then,
+            # so '$*' and '$alpha' could disagree. A gate reads through
+            # here too, so it matches on the value resolve() shows.
+            #
+            live = self._live_manifest_entry_by_uuid(entry["uuid"])
+            value = self._extract_field_value(live, key_path)
+            if value is not None:
+                return value
         return self._extract_field_value_with_ledger_fallback(
             entry=entry,
-            key_path=function_cls.KEY.get(Reference3.FILES),
+            key_path=key_path,
             function_cls=function_cls,
             datatype=Reference3.FILES,
             ledger_entry_getter=lambda: self._find_manifest_entry_by_uuid(
@@ -2835,7 +2871,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
                         # applied in query() and supplies no value, so
                         # the result is the matching manifest entry itself
                         # (compendium 5.21, name_one with a file pointer).
+                        # a live record of the ledger set is its live entry,
+                        # as for Rule 1b (decision D6).
                         #
+                        if not isinstance(reference.root_major, str):
+                            live = self._live_manifest_entry_by_uuid(result.uuid)
+                            if live is not None:
+                                return live
                         return entry
                     return self._manifest_chain_field_value(
                         reference=reference, function_cls=function_cls, entry=entry

@@ -996,24 +996,95 @@ class TestTraversalFieldReadsLiveFirst:
         reference = root + ".files.*.:last():named_file_name()"
         assert self._values(reference, ledger=nameless) == ["alpha", "beta"]
 
+    # a name_one read under '*' reaches the ledger set (ruling C Q1): its
+    # records, deleted ones too, in ledger order. A live record's values
+    # come from its live entry, the ledger's only where that has none
+    # (6.13b(v); C1; decision D7, 2026-11-12). This test pinned the
+    # ledger's values until then (see D6's correction to D4).
+    def _uuids(self, reference: str) -> list:
+        return _finder(
+            reference,
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=self.BY_NAME,
+            ledger=self.LEDGER,
+            inputs_files_path="inputs/named_files",
+        ).query().uuids
+
     @pytest.mark.parametrize(
         "reference, expected",
         [
             (
                 "$*.files.:manifest():fingerprint()",
-                ["L-aaa", "L-bbb", "L-ccc", "L-ddd", "L-eee", "L-gone"],
+                ["aaa", "bbb", "ccc", "ddd", "eee", "L-gone"],
             ),
+            ("$*.files.:manifest():first():fingerprint()", ["aaa"]),
+            # the deleted, ledger-only record keeps its ledger values
             ("$*.files.:manifest():last():fingerprint()", ["L-gone"]),
             ('$*.files.:manifest():lifecycle("deleted"):fingerprint()', ["L-gone"]),
             (
                 "$:regex(/^al/).files.:manifest():fingerprint()",
-                ["L-aaa", "L-bbb", "L-ccc", "L-gone"],
+                ["aaa", "bbb", "ccc", "L-gone"],
+            ),
+            (
+                '$:choice("alpha|alfa").files.:manifest():fingerprint()',
+                ["aaa", "bbb", "ccc", "L-gone"],
+            ),
+            # lifecycle and status are the ledger's, not the stale live keys
+            (
+                "$*.files.:manifest():lifecycle()",
+                ["active"] * 5 + ["deleted"],
+            ),
+            ("$:regex(/^al/).files.:manifest():status()", ["complete"] * 3 + [None]),
+            (
+                "$*.files.:manifest():named_file_name()",
+                ["alpha", "alpha", "alpha", "beta", "beta", "alfa"],
             ),
         ],
     )
-    def test_a_name_one_read_stays_on_the_ledger(self, reference, expected):
-        # ruling C Q1 (2026-10-30), unchanged by D4: deleted records too
+    def test_a_name_one_read_takes_the_set_and_live_values(self, reference, expected):
         assert self._values(reference) == expected
+
+    def test_star_values_agree_with_the_literal_root(self):
+        star = self._values("$*.files.:manifest():fingerprint()")
+        literal = self._values("$alpha.files.:manifest():fingerprint()")
+        literal += self._values("$beta.files.:manifest():fingerprint()")
+        assert star[:5] == literal
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # a gate matches the value resolve shows, the live one
+            ('$*.files.:manifest():fingerprint("ccc")', ["u-one-2"]),
+            ('$*.files.:manifest():fingerprint("L-ccc")', []),
+            ('$:regex(/^al/).files.:manifest():fingerprint("ccc")', ["u-one-2"]),
+            ('$*.files.:manifest():fingerprint("L-gone")', ["u-gone-1"]),
+            # a date bound filters on the live time ':time()' resolves
+            (
+                '$*.files.:manifest():from(:date("2026-01-03"))',
+                ["u-one-2", "u-two-1", "u-two-2", "u-gone-1"],
+            ),
+            # an index range counts in ledger order
+            ("$*.files.:manifest():from(2):to(3)", ["u-one-2", "u-two-1"]),
+        ],
+    )
+    def test_a_name_one_gate_sees_the_values_resolve_shows(self, reference, expected):
+        assert self._uuids(reference) == expected
+
+    def test_a_filter_only_read_resolves_the_live_entry(self):
+        # as for Rule 1b (D6): a live record is its live entry
+        values = self._values('$*.files.:manifest():fingerprint("ccc")')
+        live = dict(STAR_ALPHA_MANIFEST[2], lifecycle="stale", status="stale")
+        assert values == [live]
+
+    def test_a_date_bound_and_time_agree(self):
+        reference = '$*.files.:manifest():from(:date("2026-01-03")):time()'
+        assert self._values(reference) == [
+            "2026-01-03T00:00:00+00:00",
+            "2026-01-04T00:00:00+00:00",
+            "2026-01-05T00:00:00+00:00",
+            "2030-01-02T00:00:00+00:00",
+        ]
 
 
 MANIFEST_FIELD_LEDGER = [
