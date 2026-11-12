@@ -2098,6 +2098,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
     def _live_manifest_entry_by_uuid(self, uuid: str) -> "dict | None":
         """the entry for `uuid` in whichever live named-file's own
         manifest holds it, or None."""
+        return self._live_named_file_entry(uuid)[1]
+
+    def _live_named_file_entry(self, uuid: str) -> tuple:
+        """(name, entry) for the live named-file whose own manifest holds
+        `uuid`, or (None, None). The FILES counterpart of CSVPATHS'
+        _group_manifest_entry() under a traversal root."""
         if not uuid:
             raise ValueError("uuid cannot be None or empty")
         for name in self.source.file_names():
@@ -2105,8 +2111,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 self.source.file_manifest(name), uuid
             )
             if entry is not None:
-                return entry
-        return None
+                return name, entry
+        return None, None
 
     def _root_manifest_path(self, name: str) -> str:
         """the manifest.json of the one named-file a literal root_major
@@ -2839,6 +2845,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     # under '*' root_major is the '*' itself, not a name,
                     # so the name is read from each ledger entry below.
                     return reference.root_major
+                if (
+                    field_call.name == "named_file_name"
+                    and reference.name_three is not None
+                ):
+                    # a version a traversal selected: the name of the live
+                    # named-file that holds it, as the literal root gives
+                    # (6.13b(iv)). The ledger, below, could lack it
+                    # (decision D4, 2026-11-12).
+                    name, _ = self._live_named_file_entry(result.uuid)
+                    if name is not None:
+                        return name
                 key_path = function_cls.KEY.get(reference.datatype)
                 key_path = self._apply_key_arg(key_path, field_call.arg)
                 if function_cls.SOURCE == "definition":
@@ -2848,26 +2865,38 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     entry = config.model_dump(exclude_none=True)
                     return self._extract_field_value(entry, key_path)
                 if self._is_traversal_root(reference.root_major):
-                    # ':regex()'/':choice()' as for '*' since 2026-11-12:
-                    # they passed their FunctionCall3 to file_manifest().
-                    # ':manifest():uuid()' during '*' traversal -- added
-                    # 2026-08-28. root_major is the '*' token itself
-                    # here, not a real name, so get_manifest() cannot be
-                    # called with it -- read the same global arrivals
-                    # ledger query()'s own '*'-traversal branch built
-                    # these results from instead (this shape is the
-                    # only way a name_three-less, root_major-is-Star3
-                    # METADATA_FIELD read reaches this far -- the
-                    # ordinary name_three field-accessor position still
-                    # unconditionally rejects '*' traversal in
-                    # _query_star_traversal(), so this branch is never
-                    # reached for that shape).
-                    manifest = self.source.files_ledger()
+                    # root_major is '*', ':regex()' or ':choice()' here, not
+                    # a name, so file_manifest() cannot be called with it
+                    # (added 2026-08-28 for '*'; ':regex()'/':choice()'
+                    # 2026-11-12, which passed their FunctionCall3 to it).
+                    #
+                    # a name_three field reads the version a traversal
+                    # selected the way the literal reference does: its
+                    # live named-file's own manifest first, the ledger as
+                    # fallback, so ':lifecycle()' (LEDGER_KEY only) still
+                    # reads the ledger (6.13b(iv), (v); decision D4,
+                    # 2026-11-12). It read the ledger first until then, so
+                    # '$*' and '$alpha' could disagree. No supported shape
+                    # reaches here without name_three: a bare
+                    # ':manifest():<field>()' takes the is_manifest_chain
+                    # branch above, and query() rejects any other name_one
+                    # field. If one ever does, it must read the ledger
+                    # (ruling C Q1, 2026-10-30), so fail loudly rather than
+                    # guess.
+                    #
+                    if reference.name_three is None:
+                        raise ReferenceException3(
+                            "FilesReferenceFinder3 reached a name_one field "
+                            "read under a traversal root, which no supported "
+                            "shape does -- it should read the ledger (ruling "
+                            "C Q1)."
+                        )
+                    entry = self._live_manifest_entry_by_uuid(result.uuid)
                 else:
                     manifest = self.source.file_manifest(
                         reference.root_major
                     )
-                entry = self._find_manifest_entry_by_uuid(manifest, result.uuid)
+                    entry = self._find_manifest_entry_by_uuid(manifest, result.uuid)
                 return self._extract_field_value_with_ledger_fallback(
                     entry=entry,
                     key_path=key_path,
