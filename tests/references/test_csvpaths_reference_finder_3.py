@@ -853,6 +853,37 @@ class TestResolve:
         results = _finder("$acme.csvpaths.:last()").resolve()
         assert results.results[0].data is None
 
+    @pytest.mark.parametrize(
+        "statements",
+        [
+            # no named_paths at all, and one shorter than the identities
+            None,
+            ["stmt text A"],
+        ],
+    )
+    @pytest.mark.parametrize(
+        "reference", ["$acme.csvpaths.:first().1", "$*.csvpaths.:first().1"]
+    )
+    def test_a_statement_list_shorter_than_its_identities_raises(
+        self, reference, statements
+    ):
+        # named_paths_identities and named_paths are parallel lists. When
+        # they disagree, resolve raised a bare IndexError (2026-11-12).
+        entry = {k: v for k, v in ACME_MANIFEST[0].items() if k != "named_paths"}
+        if statements is not None:
+            entry["named_paths"] = statements
+        finder = _finder(
+            reference,
+            by_name={"acme": [entry]},
+            inputs_csvpaths_path="inputs/named_paths",
+        )
+        with pytest.raises(ReferenceException3) as error:
+            finder.resolve()
+        message = str(error.value)
+        assert "v0-uuid" in message
+        assert "'1'" in message
+        assert "disagree" in message
+
 
 class TestManifestFunction:
     # ":manifest()" is a name_one-terminal, bare/sole-content shape --

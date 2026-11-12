@@ -1003,6 +1003,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         if index is None:
             return None
         statements = selected.get("named_paths") or []
+        if index >= len(statements):
+            # the two lists are parallel; a manifest entry where they
+            # disagree is malformed. Fail loudly, not with a bare
+            # IndexError (2026-11-12, reviewer on #580).
+            raise ReferenceException3(
+                f"Version {result.uuid!r} lists the identity "
+                f"{result.identity!r} at position {index} of "
+                "named_paths_identities, but its named_paths has only "
+                f"{len(statements)} statement(s) -- the two lists in its "
+                "manifest entry disagree."
+            )
         return statements[index]
 
     @staticmethod
