@@ -666,6 +666,10 @@ genuinely uncertain is marked below rather than guessed.
   including its own GATE and the generalized version every other field
   accessor's own GATE (`:named_file_name()`, `:type()`, `:status()`,
   `:named_paths_name()`, etc.) reuses.**
+- A CSVPATHS `:template()` gate beside `:all()`, a range or `:manifest()`
+  filters on each version's own template, as beside a pointer, under a
+  literal root and `'*'`:
+  `test_csvpaths_reference_finder_3.py::TestCsvpathsGates` (2026-11-11)
 
 #### 6.36
 - `functions/filters/test_true_3.py`, `test_false_3.py`,
