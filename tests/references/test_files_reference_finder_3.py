@@ -1619,9 +1619,26 @@ class TestManifestChainRanges:
         reference = "$*.files.:manifest():yesterday():named_file_name()"
         assert self._data(reference) == ["alpha", "beta"]
 
-    def test_a_window_with_nothing_in_it_finds_nothing(self):
+    @staticmethod
+    def _pin_clock(monkeypatch, hour: int) -> None:
+        # pinned_now fixes only the date; the time of day stays real. v3
+        # is at 00:00 UTC, so an ':hour()' window found it whenever the
+        # suite ran between 00:00 and 00:59 UTC (2026-11-11). Pin the
+        # whole instant instead.
+        from datetime import datetime, timezone
+
+        pinned = datetime(2026, 1, 4, hour, 30, tzinfo=timezone.utc)
+        monkeypatch.setattr(daut, "now", classmethod(lambda cls: pinned))
+
+    def test_a_window_with_nothing_in_it_finds_nothing(self, monkeypatch):
+        self._pin_clock(monkeypatch, 12)
         assert self._uuids("$ranger.files.:manifest():hour()") == []
         assert self._data("$ranger.files.:manifest():hour()") == []
+
+    def test_an_hour_window_finds_the_entry_in_that_hour(self, monkeypatch):
+        # the same window, in the hour v3 arrived: not empty by accident
+        self._pin_clock(monkeypatch, 0)
+        assert self._uuids("$ranger.files.:manifest():hour()") == ["v3"]
 
     @pytest.mark.parametrize(
         "reference, message",
