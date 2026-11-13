@@ -7246,3 +7246,48 @@ class TestRunDirNameThreeGates:
     def test_a_run_level_valid_gate_filters_runs(self, runs, reference, expected):
         # ':valid()' at run scope is 'all_valid'
         assert _finder(reference, runs).query().uuids == expected
+
+
+class TestRunDirNameThreeTwoFields:
+    # two unargued fields in a run-dir name_three: the last supplies the
+    # value, with a warning (compendium 5.20b), as in name_one. The
+    # first one raised "does not support :uuid() as a name_three
+    # function" until 2026-11-12 (reviewer on #589).
+    @pytest.fixture
+    def runs(self, tmp_path):
+        run_dir = tmp_path / "widgets" / "2026-01-01_00-00-00"
+        _write_json(
+            run_dir / "manifest.json", {"run_uuid": "run-1", "all_valid": False}
+        )
+        for name, valid in (("checks", True), ("rules", False)):
+            _write_json(
+                run_dir / name / "manifest.json",
+                {"uuid": f"{name}-1", "valid": valid},
+            )
+        _write_archive_manifest(tmp_path, "widgets", [str(run_dir)])
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            (".:all():uuid():valid()", [True, False]),
+            (".:all():valid():uuid()", ["checks-1", "rules-1"]),
+            (".checks:uuid():valid()", [True]),
+            (".:last():uuid():valid()", [False]),
+            (".:all():manifest():uuid():valid()", [True, False]),
+            # with a gate too: it filters, the last unargued field is the value
+            (".:all():uuid():valid(:false()):valid()", [False]),
+        ],
+    )
+    def test_the_last_unargued_field_supplies_the_value(
+        self, runs, reference, expected
+    ):
+        results = _finder(f"$widgets.results.:first(){reference}", runs).resolve()
+        assert [r.data for r in results.results] == expected
+
+    def test_two_value_fields_warn(self, runs):
+        finder = _finder("$widgets.results.:first().checks:uuid():valid()", runs)
+        finder.resolve()
+        # query and resolve each read the selector, so it may warn twice
+        warnings = finder.csvpaths.logger.warnings
+        assert warnings and all("5.20b" in w for w in warnings)
