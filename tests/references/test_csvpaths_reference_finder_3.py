@@ -504,6 +504,25 @@ class TestVersionRange:
         ).query()
         assert results.uuids == ["v4-uuid"]
 
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # directionals set the range before an anchor does (NRE;
+            # David, spec review item 4): ':last()' is the range's last
+            ("$dater.csvpaths.:from(-4):to(-2):last()", ["v3-uuid"]),
+            ("$dater.csvpaths.:from(-4):to(-2):first()", ["v1-uuid"]),
+        ],
+    )
+    def test_a_pointer_selects_within_a_two_directional_range(
+        self, reference, expected
+    ):
+        assert _finder(reference, VERSION_RANGE_MANIFEST).query().uuids == expected
+
+    def test_a_pointer_selects_within_each_groups_range_under_star(self):
+        # '*' groups (4.1b): each group's own range, then its own pick
+        results = _star_finder("$*.csvpaths.:from(-2):to(-1):first()").query()
+        assert sorted(results.uuids) == ["a-v1", "b-v1"]
+
     def test_date_mode_from_filters_by_the_versions_own_load_time(self):
         results = _finder(
             '$dater.csvpaths.:from(:date("2026-01-03"))', VERSION_RANGE_MANIFEST

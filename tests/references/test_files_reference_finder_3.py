@@ -4984,6 +4984,20 @@ class TestNameThreeRange:
         ).query()
         assert results.uuids == ["v4"]
 
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # directionals set the range before an anchor does (NRE;
+            # David, spec review item 4): ':last()' is the range's last
+            ('$ranger.files.:name("orders.csv").:from(-4):to(-2):last()', ["v3"]),
+            ('$ranger.files.:name("orders.csv").:from(-4):to(-2):first()', ["v1"]),
+        ],
+    )
+    def test_a_pointer_selects_within_a_two_directional_range(
+        self, reference, expected
+    ):
+        assert _finder(reference, RANGE_HOME, RANGE_MANIFEST).query().uuids == expected
+
     def test_date_mode_from_filters_by_the_versions_own_arrival_time(self):
         # broadened from RESULTS-only 2026-08-13 -- David: a named-file
         # version's own registration/load "time" is a real arrival-date
