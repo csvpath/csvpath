@@ -1906,7 +1906,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if selector is None or not isinstance(selector, dict):
             raise TypeError("Selector must be a dict")
         entries = record["instances"]
-        if selector["range_bounds"] is not None and selector["pointer"] is None:
+        if selector["range_bounds"] is not None:
             lower_call, upper_call = selector["range_bounds"]
             # identity, index or (raising) date bounds, as in CSVPATHS
             entries = self._apply_identity_range(
@@ -2800,7 +2800,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
 
         instances = self._list_instance_identities(run_dir)
         ranged = False
-        if gates:
+        if gates or (range_bounds is not None and instance_pointer is not None):
             # a range first, then the gates, then the pointer or the
             # identity picks from what is left (6.28; as in
             # _manifest_set_select_instances())
@@ -2813,7 +2813,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
                 ranged = True
             instances = self._gate_instances(
-                run_dir=run_dir, instances=instances, gates=gates
+                run_dir=run_dir, instances=instances, gates=gates or []
             )
         if match_all:
             matched = instances
@@ -3329,17 +3329,20 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 [
                     body is not None,
                     match_all,
-                    range_bounds is not None,
-                    pointer_call is not None,
+                    # a pointer picks from what a range leaves (6.28; NRE "a
+                    # pointer that is not a directional alongside a range
+                    # ... selects within the range"), so the two together
+                    # are one selection, as in FILES (2026-11-12)
+                    range_bounds is not None or pointer_call is not None,
                 ]
             )
             > 1
         ):
             raise ReferenceException3(
                 "ResultsReferenceFinder3 cannot combine a literal "
-                "identity, a pointer (:first()/:last()/:index(n)), "
-                ":all(), and ':from()'/':to()' -- each selects instances "
-                "a different, contradictory way; use only one."
+                "identity, :all(), and a pointer (:first()/:last()/"
+                ":index(n)) or ':from()'/':to()' range -- each selects "
+                "instances a different, contradictory way; use only one."
             )
         if (
             body is None

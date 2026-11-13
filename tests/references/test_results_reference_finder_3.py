@@ -2139,10 +2139,33 @@ class TestStatementLevelPointer:
                 one_run_five_statements,
             ).query()
 
-    def test_cannot_combine_with_a_range(self, one_run_five_statements):
+    @pytest.mark.parametrize(
+        "name_three, expected",
+        [
+            # a pointer picks from what a range leaves (6.28; the NRE's "a
+            # pointer that is not a directional alongside a range ...
+            # selects within the range"), in either written order, as in
+            # FILES. It raised "cannot combine" until 2026-11-12.
+            (".:from(1):to(3):last()", ["th-uuid"]),
+            (".:from(1):to(3):first()", ["o-uuid"]),
+            (".:last():from(1):to(3)", ["th-uuid"]),
+            ('.:from("one"):to("three"):last()', ["th-uuid"]),
+            (".:from(1):to(3):index(1)", ["t-uuid"]),
+        ],
+    )
+    def test_a_pointer_picks_within_a_range(
+        self, one_run_five_statements, name_three, expected
+    ):
+        reference = f"$acme.results.customers/2025:first(){name_three}"
+        assert _finder(reference, one_run_five_statements).query().uuids == expected
+
+    @pytest.mark.parametrize("name_three", [".one:last()", ".:all():last()"])
+    def test_a_pointer_still_cannot_join_an_identity_or_all(
+        self, one_run_five_statements, name_three
+    ):
         with pytest.raises(ReferenceException3):
             _finder(
-                "$acme.results.customers/2025:first().:from(1):last()",
+                f"$acme.results.customers/2025:first(){name_three}",
                 one_run_five_statements,
             ).query()
 
@@ -6417,6 +6440,12 @@ class TestStarManifestSetInstanceRecords:
         uuids = self._uuids("$*.results.:manifest():last().:from(1)", archive)
         assert uuids == ["k3-t"]
         uuids = self._uuids("$*.results.:manifest():last().:to(0)", archive)
+        assert uuids == ["k3-s"]
+
+    def test_a_pointer_picks_within_an_instance_range(self, archive):
+        # the ledger set, as a run dir (6.28): the range is s alone, so its
+        # last is s, not the run's last instance, t (2026-11-12)
+        uuids = self._uuids("$*.results.:manifest():last().:to(0):last()", archive)
         assert uuids == ["k3-s"]
 
     @pytest.mark.parametrize(
