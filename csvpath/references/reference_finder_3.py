@@ -289,11 +289,12 @@ class ReferenceFinder3(ABC):
         _slice_by_position() already had."""
         start = cls._range_bound(lower_call) if lower_call is not None else None
         end = cls._range_bound(upper_call) if upper_call is not None else None
-        # an index range takes integer positions. A string or date bound
-        # is resolved before this (_apply_identity_range(),
-        # _apply_mixed_range()); one that still reaches here raised a bare
-        # TypeError from the slice until 2026-11-12. (A bool is an int in
-        # Python, so it is excluded explicitly; the grammar gives none.)
+        # an index range takes integer positions. Its callers hand it only
+        # index bounds (_apply_mixed_range() filters date bounds itself, and
+        # name_three ranges use _apply_identity_range() instead); a bound
+        # that still reaches here raised a bare TypeError from the slice
+        # until 2026-11-12. (A bool is an int in Python, so it is excluded
+        # explicitly; the grammar gives none.)
         for call, bound in ((lower_call, start), (upper_call, end)):
             if bound is not None and (
                 isinstance(bound, bool) or not isinstance(bound, int)
@@ -331,19 +332,33 @@ class ReferenceFinder3(ABC):
             raise ValueError("items and identities cannot be None")
         if len(items) != len(identities):
             raise ValueError("items and identities must be the same length")
-        positions = []
-        for call in (lower_call, upper_call):
+        # every bound is checked before any identity is looked up, so an
+        # illegal bound raises even beside an identity that does not match
+        # (as CSVPATHS, which checks its bounds up front; reviewer on #596)
+        bounds = [
+            None if call is None else cls._range_bound(call)
+            for call in (lower_call, upper_call)
+        ]
+        for call, bound in zip((lower_call, upper_call), bounds):
             if call is None:
-                positions.append(None)
                 continue
-            bound = cls._range_bound(call)
             if isinstance(bound, TimeWindowFunction3):
+                shown = f'"{bound.arg}"' if isinstance(bound.arg, str) else ""
                 raise ReferenceException3(
                     f"':{call.name}()' does not support a date-mode bound "
-                    f"(:{bound.NAME}()) in name_three -- statements have no "
-                    "arrival date of their own. A bare string bound selects "
-                    "by statement identity instead."
+                    f"(:{bound.NAME}({shown})) in name_three -- statements "
+                    "have no arrival date of their own. A bare string bound "
+                    "selects by statement identity instead."
                 )
+            if not isinstance(bound, str) and (
+                isinstance(bound, bool) or not isinstance(bound, int)
+            ):
+                raise ReferenceException3(
+                    f"':{call.name}({bound!r})' is neither a statement identity "
+                    "nor an index position."
+                )
+        positions = []
+        for bound in bounds:
             if isinstance(bound, str):
                 bound = cls._find_by_identity(bound, identities)
                 if bound is None:
