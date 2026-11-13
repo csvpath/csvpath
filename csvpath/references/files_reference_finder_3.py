@@ -2176,8 +2176,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
     def _live_index(self) -> dict:
         """uuid -> (named-file name, entry) for every live named-file's
-        manifest entries, read once per query() or resolve_from() call and
-        reset at the start of each. Reads of a ledger set record's live
+        manifest entries, read once per query(), resolve() or resolve_from()
+        call (query() and resolve_from() reset it; resolve() keeps the one
+        its query() built). Reads of a ledger set record's live
         entry, in a gate, a date bound or resolve, would otherwise walk
         every manifest once per record: on a cloud backend every read
         costs (reviewer on #585)."""

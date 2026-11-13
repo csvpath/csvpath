@@ -4301,6 +4301,34 @@ class TestStatusGate:
     ):
         assert self._status_finder(reference).query().uuids == expected
 
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # the same branch takes any ledger-only gate, ':lifecycle()'
+            # too (_is_ledger_only_gate()); a bare read walks the live
+            # names, so "deleted" finds nothing (6.13b(vi))
+            ('$:regex(/^ord/).files.:lifecycle("active")', ["ok-1"]),
+            ('$:choice("orders").files.:lifecycle("active")', ["ok-1"]),
+            ('$:regex(/^inv/).files.:lifecycle("active")', []),
+            ('$:regex(/^ord/).files.:lifecycle("deleted")', []),
+            ('$*.files.:lifecycle("active")', ["ok-1"]),
+        ],
+    )
+    def test_a_filtered_root_bare_lifecycle_gates_its_live_versions(
+        self, reference, expected
+    ):
+        ledger = [dict(e, lifecycle="active") for e in STATUS_LEDGER]
+        ledger.append(dict(STATUS_GONE, lifecycle="deleted"))
+        finder = _finder(
+            reference,
+            TYPE_HOME,
+            [],
+            ledger=ledger,
+            by_name=STATUS_BY_NAME,
+            inputs_files_path="inputs/named_files",
+        )
+        assert finder.query().uuids == expected
+
     def test_name_three_pointer_star_root(self):
         # not-yet-supported sweep #2, 2026-10-20: a lone version-
         # selecting pointer in name_three reduces the status-filtered
