@@ -1046,6 +1046,31 @@ class TestTraversalRootNamedFileReads:
         with pytest.raises(ReferenceException3):
             self._values(reference)
 
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            # ':named_file_home()' is computed, not a manifest.json field,
+            # and name_three only (POSITIONS); the general chain already
+            # rejected it. The bare one-field form raised TypeError under
+            # '*' and read the root's home at a literal root.
+            "$*.files.:manifest():named_file_home()",
+            "$:regex(/^al/).files.:manifest():named_file_home()",
+            "$alpha.files.:manifest():named_file_home()",
+            "$*.files.:manifest():last():named_file_home()",
+        ],
+    )
+    def test_a_computed_field_on_manifest_raises(self, reference):
+        with pytest.raises(ReferenceException3) as error:
+            _finder(
+                reference,
+                STAR_ALPHA_HOME,
+                STAR_ALPHA_MANIFEST,
+                by_name=STAR_BY_NAME,
+                ledger=STAR_LEDGER,
+                inputs_files_path="inputs/named_files",
+            ).query()
+        assert "manifest.json" in str(error.value)
+
 
 class TestTraversalFieldReadsLiveFirst:
     # decision D4 (2026-11-12): a name_three field after a traversal root

@@ -2367,6 +2367,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "so it is not supported on ':manifest()' -- use "
                 f"':{call.name}()' on its own."
             )
+        if function_cls.SOURCE == "computed":
+            # e.g. ':named_file_home()': not a manifest.json field, and
+            # name_three only (its POSITIONS), as the general chain already
+            # rejects it (':manifest():last():named_file_home()'). Under
+            # '*' it raised TypeError, and since #593 read each record's
+            # home; at a literal root it read the root's (2026-11-12).
+            raise ReferenceException3(
+                f"':{call.name}()' is not a manifest.json field, so it is not "
+                "supported on ':manifest()' -- read it from a version in "
+                f"name_three, e.g. '.:last():{call.name}()'."
+            )
         return call
 
     @staticmethod
