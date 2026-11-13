@@ -457,6 +457,47 @@ class TestVersionRange:
         ).query()
         assert results.uuids == ["v1-uuid", "v2-uuid", "v3-uuid"]
 
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # the normative example, verbatim: ":date("2026-01-31")"
+            # expands to the very first moment of the 31st, so this
+            # reference effectively misses one day (6.27b, 6.27g;
+            # decision D8, 2026-11-12). It kept the whole 31st until then.
+            (
+                '$dater.csvpaths.:from(:date("2026-01-01"))'
+                ':to(:date("2026-01-31"))',
+                ["jan-1", "jan-15", "jan-15-noon", "jan-31-midnight"],
+            ),
+            # ':after()' a day keeps the rest of that day; the day's last
+            # moment is needed to mean after it (the normative note)
+            (
+                '$dater.csvpaths.:after(:date("2026-01-15"))',
+                ["jan-15-noon", "jan-31-midnight", "jan-31-noon"],
+            ),
+            (
+                '$dater.csvpaths.:after(:date("2026-01-15_23-59-59"))',
+                ["jan-31-midnight", "jan-31-noon"],
+            ),
+            (
+                '$dater.csvpaths.:before(:date("2026-01-31"))',
+                ["jan-1", "jan-15", "jan-15-noon"],
+            ),
+        ],
+    )
+    def test_a_date_anchor_is_its_first_moment(self, reference, expected):
+        manifest = [
+            {"group_file_path": GROUP_FILE_PATH, "uuid": uuid, "time": time}
+            for uuid, time in (
+                ("jan-1", "2026-01-01T00:00:00+00:00"),
+                ("jan-15", "2026-01-15T00:00:00+00:00"),
+                ("jan-15-noon", "2026-01-15T12:00:00+00:00"),
+                ("jan-31-midnight", "2026-01-31T00:00:00+00:00"),
+                ("jan-31-noon", "2026-01-31T12:00:00+00:00"),
+            )
+        ]
+        assert _finder(reference, manifest).query().uuids == expected
+
     def test_a_pointer_reduces_the_range_not_the_full_candidate_set(self):
         results = _finder(
             "$dater.csvpaths.:from(-3):last()", VERSION_RANGE_MANIFEST

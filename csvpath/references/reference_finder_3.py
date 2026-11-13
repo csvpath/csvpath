@@ -371,12 +371,12 @@ class ReferenceFinder3(ABC):
         string (see _date_window()) or a TimeWindowFunction3 instance
         (":year()"/":date(...)"/etc), each of which already knows its
         own [start, end] window at whatever granularity it represents.
-        See TimeWindowFunction3's own docstring for the four-way
-        directional rule (_apply_manifest_date_range()/
+        See TimeWindowFunction3's own docstring for the directional
+        rule (_apply_manifest_date_range()/
         ResultsReferenceFinder3._apply_date_range()) that consumes this
-        pair -- which side a given directional function actually uses
-        depends on its own inclusive/exclusive, lower/upper role, not
-        on this method."""
+        pair -- every directional bound uses the start (decision D8,
+        2026-11-12); a bare window uses both. The caller decides which,
+        not this method."""
         bound = cls._range_bound(call)
         if isinstance(bound, TimeWindowFunction3):
             return bound.start_datetime(), bound.end_datetime()
@@ -429,25 +429,21 @@ class ReferenceFinder3(ABC):
         so far (:date()/:yesterday()/:today(), all day-granular); once
         :hour()/:minute()/:second() exist as real bounds, a fixed day-
         level truncation would silently flatten them to mean the same
-        thing as :today(), which has no principled basis. The four-way
-        rule below (reconciling compendium 6.27b's literal "first
-        moment" text against 6.27f's own worked example and this
-        method's OWN already-shipped day-granular ":before()"/":after()"
-        "excludes the whole day it names" behavior) generalizes cleanly
-        to any granularity and reproduces the exact prior behavior for
-        day-granular bounds (both ends of a single calendar day), so no
-        existing passing reference should resolve any differently:
+        thing as :today(), which has no principled basis. Every bound is
+        its first moment (compendium 6.27b, 6.27g; decision D8,
+        2026-11-12; ':to()' and ':after()' used X's end until then):
             ':from(X)'   keeps candidates >= X.start
-            ':to(X)'     keeps candidates <= X.end
+            ':to(X)'     keeps candidates <= X.start
             ':before(X)' keeps candidates <  X.start
-            ':after(X)'  keeps candidates >  X.end
+            ':after(X)'  keeps candidates >  X.start
         See TimeWindowFunction3's own docstring for the full reasoning."""
-        lower_start = lower_end = upper_start = upper_end = None
+        # every bound is its first moment (6.27b, 6.27g; decision D8)
+        lower_start = upper_start = None
         if lower_call is not None:
-            lower_start, lower_end = cls._bound_window(lower_call)
+            lower_start, _ = cls._bound_window(lower_call)
         lower_inclusive = lower_call is None or lower_call.name == "from"
         if upper_call is not None:
-            upper_start, upper_end = cls._bound_window(upper_call)
+            upper_start, _ = cls._bound_window(upper_call)
         upper_inclusive = upper_call is None or upper_call.name == "to"
         result = []
         for entry in entries:
@@ -455,10 +451,10 @@ class ReferenceFinder3(ABC):
             if lower_start is not None:
                 if lower_inclusive and d < lower_start:
                     continue
-                if not lower_inclusive and d <= lower_end:
+                if not lower_inclusive and d <= lower_start:
                     continue
-            if upper_end is not None:
-                if upper_inclusive and d > upper_end:
+            if upper_start is not None:
+                if upper_inclusive and d > upper_start:
                     continue
                 if not upper_inclusive and d >= upper_start:
                     continue
