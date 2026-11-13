@@ -155,10 +155,13 @@ class Average(MinMax):
                 m.append(v)
             except (ValueError, TypeError):
                 pass
-            if self.ave_or_med == "average":
-                self.value = mean(m)
-            else:
-                self.value = median(m)
+        #
+        # once per line, over all the numeric values so far (#572)
+        #
+        if self.ave_or_med == "average":
+            self.value = mean(m)
+        else:
+            self.value = median(m)
 
     def _decide_match(self, skip=None) -> None:
         self.match = self._noop_value()
