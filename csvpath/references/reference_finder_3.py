@@ -410,9 +410,9 @@ class ReferenceFinder3(ABC):
         """a range whose bounds may mix index-mode and date-mode
         (compendium 6.32; NRE: '$alpha.results.*:from(2):to(:date(...))'
         is "the 3rd ... through the last result that happened before" the
-        date). An index bound is a position in the whole ordered list, a
-        date bound a filter on each entry's time, so the range is both:
-        the index bound slices, then the date bound filters. Only a
+        date). An index bound is a position in the ordered list, a date
+        bound a filter on each entry's time, so the range is both: the
+        index bound slices, then the date bound filters. Only a
         non-negative index lower bound with a date upper bound is mixed
         (the NRE's shape): there an index counted from the start and one
         counted from the date anchor agree. The other mixes raise until
@@ -435,7 +435,9 @@ class ReferenceFinder3(ABC):
         index_upper = None if is_date(upper_call) else upper_call
         date_lower = lower_call if is_date(lower_call) else None
         date_upper = upper_call if is_date(upper_call) else None
-        mixed = (index_lower or index_upper) and (date_lower or date_upper)
+        mixed = (index_lower is not None or index_upper is not None) and (
+            date_lower is not None or date_upper is not None
+        )
         if mixed and not (
             index_lower is not None
             and isinstance(cls._range_bound(index_lower), int)
