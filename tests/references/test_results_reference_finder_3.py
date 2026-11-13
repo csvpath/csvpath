@@ -7285,6 +7285,23 @@ class TestRunDirNameThreeTwoFields:
         results = _finder(f"$widgets.results.:first(){reference}", runs).resolve()
         assert [r.data for r in results.results] == expected
 
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            # a field that is not legal in name_three raises (POSITIONS),
+            # beside another field, alone, or as a gate. These read None
+            # or filtered everything out silently.
+            ".checks:host():uuid()",
+            ".checks:uuid():host()",
+            ".checks:uuid():lifecycle()",
+            ".checks:status()",
+            '.:all():status("complete")',
+        ],
+    )
+    def test_a_field_not_legal_in_name_three_raises(self, runs, reference):
+        with pytest.raises(ReferenceException3):
+            _finder(f"$widgets.results.:first(){reference}", runs).query()
+
     def test_two_value_fields_warn(self, runs):
         finder = _finder("$widgets.results.:first().checks:uuid():valid()", runs)
         finder.resolve()

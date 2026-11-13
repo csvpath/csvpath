@@ -3225,6 +3225,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             fields = self._find_field_function_calls(
                 built, self.ref.parsed.datatype
             )
+            # each must be legal in name_three (its POSITIONS): a name_one-
+            # only field such as ':host()' or ':status()' read None here,
+            # silently, or filtered everything out as a gate (reviewer on
+            # #590; CSVPATHS checks the same since 2026-11-05)
+            for f in fields:
+                self._check_position(f, Reference3.NAME_THREE, Reference3.RESULTS)
             # from_call/to_call here mean LOWER/UPPER bound, not
             # literally ":from()'/':to()' -- generalized 2026-10-16
             # (compendium 6.28) to also recognize their exclusive
