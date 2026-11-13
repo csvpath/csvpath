@@ -7099,9 +7099,19 @@ class TestRunDirNameThreeGates:
                 {"run_uuid": f"run-{stamp[:10]}", "all_valid": all_valid},
             )
             for name, valid in instances:
+                errors = 0 if valid else 3
                 _write_json(
                     run_dir / name / "manifest.json",
-                    {"uuid": f"{name}-{stamp[:10]}", "valid": valid},
+                    {
+                        "uuid": f"{name}-{stamp[:10]}",
+                        "valid": valid,
+                        "error_count": errors,
+                        "run_uuid": f"run-{stamp[:10]}",
+                    },
+                )
+                _write_json(
+                    run_dir / name / "errors.json",
+                    [{"message": f"e{i}"} for i in range(errors)],
                 )
             homes.append(str(run_dir))
         _write_archive_manifest(tmp_path, "widgets", homes)
@@ -7131,6 +7141,66 @@ class TestRunDirNameThreeGates:
         uuids = _finder(f"$widgets.results.:first(){reference}", runs).query().uuids
         assert uuids == expected
 
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # every argued RESULTS field is a gate here, not only ':valid()'
+            # (reviewer on #589). An argued ':uuid()' is a filter (6.44):
+            # alone it gives the same 0 or 1; beside a pointer the pointer
+            # picks from what it leaves. It was a value field whose
+            # argument was ignored.
+            ('.:uuid("rules-2026-01-01")', ["rules-2026-01-01"]),
+            ('.:last():uuid("checks-2026-01-01")', ["checks-2026-01-01"]),
+            # compendium 6.40's own example: the content accessor is read
+            # only for the instances the gate keeps
+            (".:all():errors():error_count(:above(2))", ["rules-2026-01-01"]),
+            (".:all():error_count(3)", ["rules-2026-01-01"]),
+            (".:all():error_count(2)", []),
+            # a string-argued field
+            (
+                '.:all():run_uuid("run-2026-01-01")',
+                ["checks-2026-01-01", "rules-2026-01-01"],
+            ),
+            ('.:all():run_uuid("run-2026-01-02")', []),
+        ],
+    )
+    def test_every_argued_field_is_a_gate(self, runs, reference, expected):
+        uuids = _finder(f"$widgets.results.:first(){reference}", runs).query().uuids
+        assert uuids == expected
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # an argued uuid alone resolves as the identity form does: no
+            # default payload (5.21). It gave both instances' uuids.
+            ('.:uuid("rules-2026-01-01")', [None]),
+            (
+                ".:all():errors():error_count(:above(2))",
+                [[{"message": "e0"}, {"message": "e1"}, {"message": "e2"}]],
+            ),
+            (".:all():error_count(:above(2)):error_count()", [3]),
+        ],
+    )
+    def test_other_gates_supply_no_value(self, runs, reference, expected):
+        results = _finder(f"$widgets.results.:first(){reference}", runs).resolve()
+        assert [r.data for r in results.results] == expected
+
+    def test_more_gates_do_not_read_more_manifests(self, runs):
+        # each instance's manifest is read once for all its gates, not
+        # once per gate (reviewer on #589: on a cloud backend every read
+        # costs). Listing the instances reads them too, before this.
+        def reads(reference: str) -> int:
+            finder = _finder(reference, runs)
+            seen = []
+            real = finder.source.instance_manifest
+            finder.source.instance_manifest = lambda d: seen.append(d) or real(d)
+            assert finder.query().uuids == ["rules-2026-01-01"]
+            return len(seen)
+
+        one = reads("$widgets.results.:first().:all():valid(:false())")
+        two = reads("$widgets.results.:first().:all():valid(:false()):error_count(3)")
+        assert two == one
+
     def test_a_run_with_every_instance_valid_has_nothing_invalid(self, runs):
         reference = "$widgets.results.:last().:all():manifest():valid(:false())"
         assert _finder(reference, runs).query().uuids == []
@@ -7145,7 +7215,14 @@ class TestRunDirNameThreeGates:
             # beside ':manifest()', the instance's own manifest entry
             (
                 ".:all():manifest():valid(:false())",
-                [{"uuid": "rules-2026-01-01", "valid": False}],
+                [
+                    {
+                        "uuid": "rules-2026-01-01",
+                        "valid": False,
+                        "error_count": 3,
+                        "run_uuid": "run-2026-01-01",
+                    }
+                ],
             ),
             # only gates: as without them, no default payload (finding D)
             (".:all():valid(:false())", [None]),
