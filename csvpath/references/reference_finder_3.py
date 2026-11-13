@@ -422,8 +422,9 @@ class ReferenceFinder3(ABC):
         `end` are int positions already resolved from string identity
         bounds via _find_by_identity(), not raw ':from()'/':to()'
         function calls, so _range_bound()'s own str/int unwrapping does
-        not apply, and `end_inclusive` is always left at its default
-        (that range has no ':before()' concept of its own)."""
+        not apply. `_apply_identity_range()` (shared by CSVPATHS and
+        RESULTS since 2026-11-12) passes `end_inclusive=False` for a
+        ':before()' upper bound, as _apply_range() does."""
         if end is None:
             return items[start:]
         if not end_inclusive:

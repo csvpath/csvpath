@@ -5201,6 +5201,47 @@ class TestStarTraversalPathNarrowingAndNameThree:
             == literal_results.ambiguous_content_read
         )
 
+    @pytest.mark.parametrize(
+        "gate, expected",
+        [
+            (":valid(:false())", ["acme-bad", "widgets-bad"]),
+            (":valid(:true())", ["acme-ok", "widgets-ok"]),
+        ],
+    )
+    def test_star_gate_beside_a_content_accessor_matches_the_literal_roots(
+        self, tmp_path, gate, expected
+    ):
+        # a gate beside a content accessor under '*' raised at query until
+        # #599 (D11); '*' is every group, so it gives the union of the
+        # literal roots (verified on the corpus 2026-11-13)
+        runs = {}
+        for group, day in (("acme", "01"), ("widgets", "02")):
+            run_dir = tmp_path / group / f"2026-01-{day}_00-00-00"
+            _write_json(run_dir / "manifest.json", {"run_uuid": f"{group}-run"})
+            for index, (name, valid) in enumerate((("ok", True), ("bad", False))):
+                _write_json(
+                    run_dir / name / "manifest.json",
+                    {
+                        "uuid": f"{group}-{name}",
+                        "instance_index": index,
+                        "valid": valid,
+                    },
+                )
+            runs[group] = [str(run_dir)]
+        _write_archive_manifest_multi(tmp_path, runs)
+        # the gate alone in name_three (the worklist shape) and beside ':all()'
+        for name_three in (f".{gate}:errors()", f".:all(){gate}:errors()"):
+            star = _finder(f"$*.results.:first(){name_three}", str(tmp_path))
+            literal = []
+            for group in ("acme", "widgets"):
+                literal.extend(
+                    _finder(
+                        f"${group}.results.:first(){name_three}", str(tmp_path)
+                    ).query().uuids
+                )
+            assert sorted(literal) == expected
+            assert sorted(star.query().uuids) == expected
+
     def test_star_all_one_statement_with_a_content_accessor_is_not_ambiguous(
         self, tmp_path
     ):

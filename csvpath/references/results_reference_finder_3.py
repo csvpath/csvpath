@@ -682,12 +682,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # ':all()' combined with a content accessor") -- that case has
         # now arrived (":errors(:count(:above(10)))", normative examples
         # 489-491, needs every instance pooled so each one's own count
-        # can be gated independently). Relaxed 2026-10-17 to the same
-        # deferred Rule 1 pattern _star_pool_and_reduce() already uses
-        # for the identical match_all+accessor combination reached via
-        # '*'-root traversal -- query() itself never raises for this,
-        # only resolve()/resolve_from() do, and only when more than one
-        # of the pooled results is actually asked for at once.
+        # can be gated independently). Relaxed 2026-10-17 to the
+        # deferred Rule 1 pattern -- query() itself never raises for
+        # this, only resolve()/resolve_from() do, and only when more
+        # than one of the pooled results is actually asked for at once.
+        # The '*'-root traversal raised at query until 2026-11-13 (D11)
+        # and now defers the same way.
         results = []
         instance_gates = self._name_three_gates(self.ref.parsed.name_three)
         for run_dir in selected_runs:
@@ -2087,7 +2087,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         MOST one selected run per group, and `_results_for_run()`'s own
         internal guards (checked below) already guarantee AT MOST one
         `ReferenceResult3` per run whenever `accessor is not None`
-        with a single statement identity. `:all()` or a range of more
+        with an identity or a pointer. `:all()` or a range of more
         than one statement with an accessor gives several per run
         (both deferred since 2026-11-13). So `len(results) > 1` here
         is either several statements or several groups' winners;
