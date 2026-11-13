@@ -1384,6 +1384,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "fingerprint) or absent."
             )
         built = self._build_chain(name_three.functions)
+        # each must be legal in name_three, as at a literal root: under
+        # '*' a ':definition()' here read the version's manifest entry, or
+        # a definition field, where the literal form raises (6.13b(iv);
+        # reviewer on #593)
+        for f in built:
+            self._check_position(f, Reference3.NAME_THREE, Reference3.FILES)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         gates = [f for f in built if self._is_name_three_gate(f)]
         has_manifest = any(f.name == "manifest" for f in built)

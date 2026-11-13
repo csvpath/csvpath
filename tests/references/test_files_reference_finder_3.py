@@ -1030,6 +1030,22 @@ class TestTraversalRootNamedFileReads:
     def test_the_holding_named_file_is_read(self, reference, expected):
         assert self._values(reference) == expected
 
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            # ':definition()' is name_one only (POSITIONS). The literal form
+            # raises; under a traversal root it read a manifest entry or a
+            # definition field (reviewer on #593)
+            "$alpha.files.*.:last():definition():on_arrival()",
+            "$*.files.*.:last():definition():on_arrival()",
+            "$*.files.*.:last():definition()",
+            '$:choice("alpha").files.*.:last():definition():on_arrival()',
+        ],
+    )
+    def test_a_function_not_legal_in_name_three_raises(self, reference):
+        with pytest.raises(ReferenceException3):
+            self._values(reference)
+
 
 class TestTraversalFieldReadsLiveFirst:
     # decision D4 (2026-11-12): a name_three field after a traversal root
