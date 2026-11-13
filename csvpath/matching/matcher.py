@@ -371,7 +371,7 @@ class Matcher:  # pylint: disable=R0902
             self.csvpath.logger.debug(
                 "Matcher.matches: ready to adjudicate %s component %s match: ret: %s, failed: %s",
                 "AND" if self._AND else "OR",
-                str(et[0]),
+                et[0],
                 ret,
                 failed,
             )
