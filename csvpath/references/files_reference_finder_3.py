@@ -186,14 +186,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # (e.g. "$*.files.:last():manifest()") selects one entry
                 # out of the global ledger by ordinal position, instead
                 # of dumping the whole thing.
-                home = self.csvpaths.config.inputs_files_path
-                path = Nos(home).join("manifest.json")
-                ledger = self.source.files_ledger()
-                selected = self._apply_pointer(pointer_call, ledger)
-                if selected is None:
-                    return ReferenceResults3(results=[])
-                return ReferenceResults3(
-                    results=[ReferenceResult3(path=path, uuid=selected["uuid"])]
+                return self._query_ledger_pointer(
+                    pointer_call=pointer_call, name_filter=None
                 )
             return self._query_star_traversal(reference)
 
@@ -216,6 +210,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "function -- only :regex()/:choice() are supported."
                 )
             built = self._build(root_major)
+            pointer_call = self._pointer_before_manifest(reference, "manifest")
+            if pointer_call is not None:
+                # Rule 1b on the ledger set filtered by name (6.13b), as
+                # for '*' above. It raised "Does not yet support
+                # :manifest() as a name_one path segment" until
+                # 2026-11-12. A bare ':manifest()' here is still not
+                # supported (decision log W1).
+                return self._query_ledger_pointer(
+                    pointer_call=pointer_call, name_filter=built.pattern
+                )
             return self._query_star_traversal(reference, name_filter=built.pattern)
 
         name_one = reference.name_one
@@ -2107,6 +2111,30 @@ class FilesReferenceFinder3(ReferenceFinder3):
         self._live_entries = None
         return super().resolve_from(selection)
 
+    def _query_ledger_pointer(
+        self, *, pointer_call: FunctionCall3, name_filter: "str | None"
+    ) -> ReferenceResults3:
+        """Rule 1b: the one record a pointer picks from the ledger set, in
+        ledger order, the set filtered by name for ':regex()' or
+        ':choice()' (6.13b, 6.13b(ii)). The result is the ledger's path
+        with the record's uuid (5.7)."""
+        if pointer_call is None:
+            raise ValueError("pointer_call cannot be None")
+        ledger = [
+            e
+            for e in self.source.files_ledger()
+            if name_filter is None
+            or re.search(name_filter, e.get("named_file_name") or "")
+        ]
+        selected = self._apply_pointer(pointer_call, ledger)
+        if selected is None:
+            return ReferenceResults3(results=[])
+        return ReferenceResults3(
+            results=[
+                ReferenceResult3(path=self._files_ledger_path(), uuid=selected["uuid"])
+            ]
+        )
+
     def _live_index(self) -> dict:
         """uuid -> (named-file name, entry) for every live named-file's
         manifest entries, read once per query() or resolve_from() call and
@@ -2768,7 +2796,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # requires it there; see the bucket list).
                 return self._read_well_known_file(result.path)
             if (
-                not isinstance(reference.root_major, Star3)
+                isinstance(reference.root_major, str)
                 and reference.name_three is None
                 and self._name_one_manifest_call(reference.name_one) is not None
                 and result.uuid is not None
@@ -2784,10 +2812,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
                 return self._find_manifest_entry_by_uuid(manifest, result.uuid)
             if (
-                isinstance(reference.root_major, Star3)
+                self._is_traversal_root(reference.root_major)
                 and result.uuid is not None
                 and self._pointer_before_manifest(reference, "manifest") is not None
             ):
+                # ':regex()'/':choice()' too since 2026-11-12.
                 # Rule 1b -- a pointer already reduced the global ledger
                 # to one entry in query(). A live record reads its
                 # named-file's own entry first, a ledger-only one (a failed
@@ -2812,7 +2841,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # ':choice()' too since 2026-11-12 (Star3 only before).
                 return self._live_manifest_entry_by_uuid(result.uuid)
             if (
-                not isinstance(reference.root_major, Star3)
+                isinstance(reference.root_major, str)
                 and self._pointer_before_manifest(reference, "manifest") is not None
                 and result.uuid is not None
             ):

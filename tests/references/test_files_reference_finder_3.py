@@ -654,6 +654,68 @@ class TestGlobalArrivalsLedgerOrdinalIndexing:
         )
         assert [r.data for r in finder.resolve().results] == [STAR_BETA_MANIFEST[1]]
 
+    # Rule 1b under ':regex()'/':choice()': the ledger set filtered by
+    # name (6.13b), in ledger order. It raised at query until 2026-11-12.
+    # "alfa" is a deleted named-file, so u-alfa-1 is ledger-only.
+    @staticmethod
+    def _regex_ledger() -> list:
+        names = ["alpha", "alpha", "alpha", "beta", "beta"]
+        ledger = [
+            dict(e, fingerprint="L-" + e["fingerprint"], named_file_name=name)
+            for e, name in zip(STAR_LEDGER, names)
+        ]
+        alfa = {"uuid": "u-alfa-1", "fingerprint": "L-alfa", "named_file_name": "alfa"}
+        return ledger + [alfa]
+
+    def _regex_data(self, reference: str) -> list:
+        finder = _finder(
+            reference,
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=STAR_BY_NAME,
+            ledger=self._regex_ledger(),
+            inputs_files_path="inputs/named_files",
+        )
+        return [r.data["fingerprint"] for r in finder.resolve().results]
+
+    @pytest.mark.parametrize("root", ["$:regex(/^alpha$/)", '$:choice("alpha")'])
+    @pytest.mark.parametrize(
+        "chain, expected",
+        [
+            # live records give their live entry (D6)
+            (":manifest():last()", ["ccc"]),
+            (":last():manifest()", ["ccc"]),
+            (":manifest():first()", ["aaa"]),
+            (":first():manifest()", ["aaa"]),
+            (":manifest():index(1)", ["bbb"]),
+            (":manifest():index(9)", []),
+        ],
+    )
+    def test_a_filtered_root_picks_from_its_own_records(self, root, chain, expected):
+        assert self._regex_data(f"{root}.files.{chain}") == expected
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # the ledger order of the filtered set: alpha's three, then
+            # the deleted alfa's record, which only the ledger holds
+            ("$:regex(/^al/).files.:manifest():last()", ["L-alfa"]),
+            ("$:regex(/^al/).files.:last():manifest()", ["L-alfa"]),
+            ('$:choice("alfa|beta").files.:manifest():first()', ["ddd"]),
+            ('$:choice("alfa|beta").files.:manifest():index(2)', ["L-alfa"]),
+        ],
+    )
+    def test_a_filtered_root_keeps_ledger_order_and_ledger_records(
+        self, reference, expected
+    ):
+        assert self._regex_data(reference) == expected
+
+    def test_a_bare_manifest_under_a_filtered_root_still_raises(self):
+        # what a bare ':manifest()' returns under ':regex()' waits for
+        # David (decision log W1); the pointer forms above do not
+        with pytest.raises(ReferenceException3):
+            self._regex_data("$:regex(/^al/).files.:manifest()")
+
     def test_a_literal_root_reads_its_own_manifest_in_both_orders(self):
         # unchanged: '$alpha' reads alpha's own manifest.json
         for chain in (":manifest():last()", ":last():manifest()"):
