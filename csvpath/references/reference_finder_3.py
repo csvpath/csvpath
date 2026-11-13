@@ -289,9 +289,11 @@ class ReferenceFinder3(ABC):
         _slice_by_position() already had."""
         start = cls._range_bound(lower_call) if lower_call is not None else None
         end = cls._range_bound(upper_call) if upper_call is not None else None
-        # an index range takes integer positions only; a date bound reaching
-        # here (e.g. a RESULTS name_three instance range, which has no date
-        # mode) raised a bare TypeError from the slice (2026-11-12)
+        # an index range takes integer positions. A string or date bound
+        # is resolved before this (_apply_identity_range(),
+        # _apply_mixed_range()); one that still reaches here raised a bare
+        # TypeError from the slice until 2026-11-12. (A bool is an int in
+        # Python, so it is excluded explicitly; the grammar gives none.)
         for call, bound in ((lower_call, start), (upper_call, end)):
             if bound is not None and (
                 isinstance(bound, bool) or not isinstance(bound, int)
@@ -299,6 +301,8 @@ class ReferenceFinder3(ABC):
                 shown = (
                     f":{bound.NAME}()"
                     if isinstance(bound, TimeWindowFunction3)
+                    else f'"{bound}"'
+                    if isinstance(bound, str)
                     else repr(bound)
                 )
                 raise ReferenceException3(
@@ -306,6 +310,46 @@ class ReferenceFinder3(ABC):
                     "-- this range takes integer positions only (e.g. "
                     f"':{call.name}(2)')."
                 )
+        if lower_call is not None and lower_call.name == "after" and start is not None:
+            start = start + 1
+        end_inclusive = upper_call is None or upper_call.name == "to"
+        return cls._slice_by_position(items, start, end, end_inclusive=end_inclusive)
+
+    @classmethod
+    def _apply_identity_range(
+        cls, *, items: list, identities: list, lower_call, upper_call
+    ) -> list:
+        """a name_three statement range (compendium 3.19b: name_three is a
+        statement identity; NRE "Identities": "the directional/range
+        functions can work on identities"): an int bound is a position, a
+        string bound the position of that identity in `identities` (in the
+        same order as `items`). An identity that does not match gives no
+        results, no error (the NRE). A date bound raises: statements have no
+        arrival date of their own (as CSVPATHS, 2026-09-22). Added for
+        RESULTS 2026-11-12, mirroring CSVPATHS' identity mode."""
+        if items is None or identities is None:
+            raise ValueError("items and identities cannot be None")
+        if len(items) != len(identities):
+            raise ValueError("items and identities must be the same length")
+        positions = []
+        for call in (lower_call, upper_call):
+            if call is None:
+                positions.append(None)
+                continue
+            bound = cls._range_bound(call)
+            if isinstance(bound, TimeWindowFunction3):
+                raise ReferenceException3(
+                    f"':{call.name}()' does not support a date-mode bound "
+                    f"(:{bound.NAME}()) in name_three -- statements have no "
+                    "arrival date of their own. A bare string bound selects "
+                    "by statement identity instead."
+                )
+            if isinstance(bound, str):
+                bound = cls._find_by_identity(bound, identities)
+                if bound is None:
+                    return []
+            positions.append(bound)
+        start, end = positions
         if lower_call is not None and lower_call.name == "after" and start is not None:
             start = start + 1
         end_inclusive = upper_call is None or upper_call.name == "to"

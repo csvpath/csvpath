@@ -1908,7 +1908,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         entries = record["instances"]
         if selector["range_bounds"] is not None and selector["pointer"] is None:
             lower_call, upper_call = selector["range_bounds"]
-            entries = self._apply_range(entries, lower_call, upper_call)
+            # identity, index or (raising) date bounds, as in CSVPATHS
+            entries = self._apply_identity_range(
+                items=entries,
+                identities=[e.get("identity") for e in entries],
+                lower_call=lower_call,
+                upper_call=upper_call,
+            )
         for field_call in selector["filters"]:
             entries = [
                 e
@@ -2799,7 +2805,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # identity picks from what is left (6.28; as in
             # _manifest_set_select_instances())
             if range_bounds is not None:
-                instances = self._apply_range(instances, *range_bounds)
+                instances = self._apply_identity_range(
+                    items=instances,
+                    identities=instances,
+                    lower_call=range_bounds[0],
+                    upper_call=range_bounds[1],
+                )
                 ranged = True
             instances = self._gate_instances(
                 run_dir=run_dir, instances=instances, gates=gates
@@ -2834,7 +2845,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             matched = (
                 instances
                 if ranged
-                else self._apply_range(instances, from_call, to_call)
+                else self._apply_identity_range(
+                    items=instances,
+                    identities=instances,
+                    lower_call=from_call,
+                    upper_call=to_call,
+                )
             )
             if len(matched) > 1 and accessor is not None:
                 raise ReferenceException3(
