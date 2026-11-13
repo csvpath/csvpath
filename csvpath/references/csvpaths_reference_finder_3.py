@@ -419,17 +419,11 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # statement in ONE version, CSVPATHS has no per-
                 # statement uuid at all).
                 #
-                # index-mode (int/:index(n)) bounds slice by position
-                # directly, same as always. identity-mode (a bare string
-                # bound, added 2026-09-22) resolves each bound to its own
-                # position via _find_by_identity() first -- "the position
-                # of the statement with this identity" -- then slices the
-                # same way. Per normative_reference_examples.txt's own
-                # "Select sequential statements" example: if a string
-                # bound does not match any identity in THIS version, this
-                # version contributes no results at all (not an error,
-                # not a partial match) -- skip straight to the next
-                # selected version.
+                # an index bound is a position; a bare string bound (added
+                # 2026-09-22) is the position of the statement with that
+                # identity. Per the NRE's "Select sequential statements": a
+                # string bound that matches no identity in THIS version
+                # gives it no results, not an error.
                 # the shared ReferenceFinder3._apply_identity_range() (RESULTS
                 # uses it too, since 2026-11-12): a non-matching identity
                 # gives this version no results, and ':after()' moves one

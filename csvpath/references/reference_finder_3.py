@@ -332,12 +332,16 @@ class ReferenceFinder3(ABC):
             raise ValueError("items and identities cannot be None")
         if len(items) != len(identities):
             raise ValueError("items and identities must be the same length")
-        positions = []
-        for call in (lower_call, upper_call):
+        # every bound is checked before any identity is looked up, so an
+        # illegal bound raises even beside an identity that does not match
+        # (as CSVPATHS, which checks its bounds up front; reviewer on #596)
+        bounds = [
+            None if call is None else cls._range_bound(call)
+            for call in (lower_call, upper_call)
+        ]
+        for call, bound in zip((lower_call, upper_call), bounds):
             if call is None:
-                positions.append(None)
                 continue
-            bound = cls._range_bound(call)
             if isinstance(bound, TimeWindowFunction3):
                 shown = f'"{bound.arg}"' if isinstance(bound.arg, str) else ""
                 raise ReferenceException3(
@@ -346,15 +350,19 @@ class ReferenceFinder3(ABC):
                     "have no arrival date of their own. A bare string bound "
                     "selects by statement identity instead."
                 )
-            if isinstance(bound, str):
-                bound = cls._find_by_identity(bound, identities)
-                if bound is None:
-                    return []
-            elif isinstance(bound, bool) or not isinstance(bound, int):
+            if not isinstance(bound, str) and (
+                isinstance(bound, bool) or not isinstance(bound, int)
+            ):
                 raise ReferenceException3(
                     f"':{call.name}({bound!r})' is neither a statement identity "
                     "nor an index position."
                 )
+        positions = []
+        for bound in bounds:
+            if isinstance(bound, str):
+                bound = cls._find_by_identity(bound, identities)
+                if bound is None:
+                    return []
             positions.append(bound)
         start, end = positions
         if lower_call is not None and lower_call.name == "after" and start is not None:

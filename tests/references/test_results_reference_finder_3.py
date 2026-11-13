@@ -7433,7 +7433,15 @@ class TestInstanceRangeIdentities:
         assert _finder(reference, runs).query().uuids == expected
 
     @pytest.mark.parametrize(
-        "name_three", [".:from(:yesterday())", '.:from(:date("2026-01-01"))']
+        "name_three",
+        [
+            ".:from(:yesterday())",
+            '.:from(:date("2026-01-01"))',
+            # beside an identity that does not match, the date bound still
+            # raises, as in CSVPATHS (it returned [] quietly; reviewer on
+            # #596)
+            '.:from("nope"):to(:yesterday())',
+        ],
     )
     def test_a_date_bound_raises(self, runs, name_three):
         with pytest.raises(ReferenceException3) as error:
