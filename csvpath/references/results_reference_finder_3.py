@@ -798,27 +798,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             _,
             instance_pointer,
         ) = self._name_three_selector(reference.name_three)
-        if match_all and accessor is not None:
-            # :all() at name_three means every instance in whichever
-            # run(s) match, each with its own separate well-known file
-            # on disk. query()'s own literal-root equivalent of this
-            # check was relaxed 2026-10-17 (deferred to the
-            # ambiguous_content_read/Rule-1 pattern instead, see its own
-            # comment) once ":errors(:count(:above(10)))" needed it for
-            # a literal root_major -- left as an unconditional rejection
-            # HERE deliberately, since no worked example yet needs this
-            # combination across a '*'-root traversal specifically; a
-            # future one could extend this the same way, but doing so
-            # now would also require re-auditing _star_group_and_reduce's
-            # own "len(results) > 1 can only mean legitimate multi-group
-            # winners" reasoning below, which currently depends on this
-            # staying a hard block.
-            raise ReferenceException3(
-                "ResultsReferenceFinder3 requires a specific statement "
-                "identity, not :all(), to read full well-known-file "
-                "content -- resolving full content always touches "
-                "exactly one entity."
-            )
+        # ':all()' with a content accessor is not rejected here: query()
+        # gives every statement and resolve() raises when more than one
+        # would be read (5.3; David, 2026-08-22: "query() should always
+        # be allowed to return multiple matches, regardless of
+        # accessor"), as at a literal root since 2026-10-17. It raised
+        # here at query until 2026-11-13.
 
         if self._is_bare_function_only(name_one):
             calls = self._combined_name_one_calls(name_one)
@@ -2101,19 +2086,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         partition's own `_apply_pointer()` call already guarantees AT
         MOST one selected run per group, and `_results_for_run()`'s own
         internal guards (checked below) already guarantee AT MOST one
-        `ReferenceResult3` per run whenever `accessor is not None` --
-        `match_all` combined with an accessor is intercepted earlier by
-        this method's own sibling's unconditional instance-level
-        rejection (`_query_star_traversal`'s own `match_all and accessor
-        is not None` check, deliberately left in place for '*'-root
-        traversal specifically -- see its own comment; query()'s
-        LITERAL-root equivalent was relaxed 2026-10-17 for
-        ":errors(:count(:above(10)))", but that path never reaches
-        this method). A `range_bounds` match of more than one
-        statement with an accessor is returned whole and flagged, so
-        `len(results) > 1` here is either that or more than one
-        group's winner -- both deferred to resolve() rather than raised -- flagged via `ambiguous_content_read`
-        instead, same as every other Rule 1 call site in this file.
+        `ReferenceResult3` per run whenever `accessor is not None`
+        with a single statement identity. `:all()` or a range of more
+        than one statement with an accessor gives several per run
+        (both deferred since 2026-11-13). So `len(results) > 1` here
+        is either several statements or several groups' winners;
+        both are flagged via `ambiguous_content_read` and resolve()
+        raises, as at every other Rule 1 call site in this file.
         A name_three FIELD accessor (e.g. ".invoices:uuid()") was never
         rejected here to begin with -- confirmed live against the
         already-shipped literal-root precedent (":all():last().invoices
@@ -3122,16 +3101,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         for_manifest_set: bool = False,
     ) -> tuple[str | None, bool, object, object, tuple, object, object]:
         """returns (identity, match_all, accessor, field_call,
-        range_bounds, gate_call, pointer_call) for name_three -- identity is a literal statement-
-        identity string to look up (None if match_all/range_bounds, or
-        if no selector is present at all); match_all is True for :all()
+        range_bounds, gate_call, pointer_call) for name_three --
+        identity is a literal statement-identity string to look up
+        (None if match_all/range_bounds, or if no selector is present
+        at all); match_all is True for :all()
         (every instance in the run); range_bounds is (from_call, to_call)
         for ':from()'/':to()' (a positional slice of instances -- added
         2026-08-13, David: ":from(:index(2)):unmatched() should
         definitely not work" -- enforced at resolve(), which raises
         when a range with an accessor matches more than one statement;
-        a range narrowing to one statement resolves), None if absent; accessor is the built well-known-file
-        Function3 riding alongside the identity/:all()/range selector;
+        a range narrowing to one statement resolves), None if absent;
+        accessor is the built well-known-file Function3 riding
+        alongside the identity/:all()/range selector;
         field_call is a registered field-accessor Function3 (e.g.
         :uuid()) riding there instead -- kept separate from accessor
         rather than one shared variable, since field accessors are
