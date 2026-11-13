@@ -1049,17 +1049,16 @@ class TestTraversalRootNamedFileReads:
     @pytest.mark.parametrize(
         "reference",
         [
-            # ':named_file_home()' is computed, not a manifest.json field,
-            # and name_three only (POSITIONS); the general chain already
-            # rejected it. The bare one-field form raised TypeError under
-            # '*' and read the root's home at a literal root.
+            # ':named_file_home()' is computed from the root, which is not a
+            # name under a traversal root: it raises, as CSVPATHS does for
+            # ':named_paths_home()' (RMF section 4). It raised TypeError
+            # before #593, then read each live record's home.
             "$*.files.:manifest():named_file_home()",
             "$:regex(/^al/).files.:manifest():named_file_home()",
-            "$alpha.files.:manifest():named_file_home()",
-            "$*.files.:manifest():last():named_file_home()",
+            '$:choice("alpha").files.:manifest():named_file_home()',
         ],
     )
-    def test_a_computed_field_on_manifest_raises(self, reference):
+    def test_a_computed_field_on_manifest_raises_under_traversal(self, reference):
         with pytest.raises(ReferenceException3) as error:
             _finder(
                 reference,
@@ -1069,7 +1068,22 @@ class TestTraversalRootNamedFileReads:
                 ledger=STAR_LEDGER,
                 inputs_files_path="inputs/named_files",
             ).query()
-        assert "manifest.json" in str(error.value)
+        assert "literal named-file name" in str(error.value)
+
+    def test_a_computed_field_on_manifest_at_a_literal_root_reads_its_home(self):
+        # unchanged: the named-file's home for each of its entries, as
+        # CSVPATHS' ':manifest():named_paths_home()' does
+        finder = _finder(
+            "$alpha.files.:manifest():named_file_home()",
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=STAR_BY_NAME,
+            ledger=STAR_LEDGER,
+            inputs_files_path="inputs/named_files",
+        )
+        assert [r.data for r in finder.resolve().results] == [
+            "inputs/named_files/alpha"
+        ] * 3
 
 
 class TestTraversalFieldReadsLiveFirst:

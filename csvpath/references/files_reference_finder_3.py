@@ -1234,6 +1234,24 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # not organized by name the way per-name enumeration is
             # elsewhere in this method.
             manifest_field_call = self._bare_manifest_field_call(name_one)
+            if (
+                ReferenceFunctionFactory.get_registered_class(
+                    manifest_field_call.name
+                ).SOURCE
+                == "computed"
+            ):
+                # e.g. ':named_file_home()': computed from the root, which is
+                # not a name here. As CSVPATHS does for ':named_paths_home()'
+                # (RMF section 4: only with a literal root_major). It raised
+                # TypeError before #593, then read each live record's home;
+                # reading the ledger's own name_home is decision log W7
+                # (2026-11-12).
+                raise ReferenceException3(
+                    f"FilesReferenceFinder3 does not support "
+                    f":{manifest_field_call.name}() combined with '*'/:regex()/"
+                    ":choice() traversal -- root_major must be a literal "
+                    "named-file name."
+                )
             if reference.name_three is not None:
                 # settled, not a gap -- the '*' traversal twin of the
                 # literal-root restriction query() raises for the same
@@ -2366,17 +2384,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 f"':{call.name}()' reads definition.json, not manifest.json, "
                 "so it is not supported on ':manifest()' -- use "
                 f"':{call.name}()' on its own."
-            )
-        if function_cls.SOURCE == "computed":
-            # e.g. ':named_file_home()': not a manifest.json field, and
-            # name_three only (its POSITIONS), as the general chain already
-            # rejects it (':manifest():last():named_file_home()'). Under
-            # '*' it raised TypeError, and since #593 read each record's
-            # home; at a literal root it read the root's (2026-11-12).
-            raise ReferenceException3(
-                f"':{call.name}()' is not a manifest.json field, so it is not "
-                "supported on ':manifest()' -- read it from a version in "
-                f"name_three, e.g. '.:last():{call.name}()'."
             )
         return call
 
