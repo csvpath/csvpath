@@ -601,6 +601,14 @@ class TestVersionRange:
                 '$dater.csvpaths.:from("not-a-date")', VERSION_RANGE_MANIFEST
             ).query()
 
+    def test_a_name_bound_on_versions_raises(self):
+        # versions have no statement identity; a string here is a date, so
+        # a ':name()' bound must not be read as one (2026-11-13)
+        with pytest.raises(ReferenceException3, match="statement identit"):
+            _finder(
+                '$dater.csvpaths.:from(:name("2026-01-01"))', VERSION_RANGE_MANIFEST
+            ).query()
+
     def test_bare_time_window_function_is_a_range_matching_6_27e(self):
         # Gap 1 of compendium 6.27/TimeWindowFunction3, added 2026-10-17
         # -- a BARE time-component function riding in the chain, no
@@ -851,6 +859,21 @@ class TestNameThreeRange:
             '$ranger.csvpaths.:first().:from("two"):to("four")', RANGE_MANIFEST
         ).query()
         assert [r.identity for r in results.results] == ["two", "three", "four"]
+
+    def test_a_name_bound_is_a_statement_identity(self):
+        # NRE "Identities": "`:name()` with a string ... equaling the
+        # statement identity", the same as a bare string (2026-11-13)
+        results = _finder(
+            '$ranger.csvpaths.:first().:from(:name("two")):to(:name("four"))',
+            RANGE_MANIFEST,
+        ).query()
+        assert [r.identity for r in results.results] == ["two", "three", "four"]
+
+    def test_a_name_bound_that_does_not_match_gives_nothing(self):
+        results = _finder(
+            '$ranger.csvpaths.:first().:from(:name("nope"))', RANGE_MANIFEST
+        ).query()
+        assert results.results == []
 
     def test_identity_mode_resolve_gives_each_windowed_statements_own_text(self):
         results = _finder(

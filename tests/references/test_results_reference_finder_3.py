@@ -1352,6 +1352,14 @@ class TestRunLevelRange:
         with pytest.raises(ReferenceException3):
             _finder("$acme.results.customers:from(:uuid())", five_runs).query()
 
+    def test_a_name_bound_on_runs_raises(self, five_runs):
+        # runs have no statement identity; a string here is a date, so a
+        # ':name()' bound must not be read as one (2026-11-13)
+        with pytest.raises(ReferenceException3, match="statement identit"):
+            _finder(
+                '$acme.results.customers:from(:name("2025-01-01"))', five_runs
+            ).query()
+
     def test_from_combined_with_all_grouping_applies_within_the_group(
         self, tmp_path
     ):
@@ -1942,6 +1950,35 @@ class TestStatementLevelRange:
             )
         _write_archive_manifest(tmp_path, "acme", [str(run_dir)])
         return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "name_three, expected",
+        [
+            # ':name()' with a string is a statement identity in a range
+            # bound, the same as a bare string (NRE "Identities": "`:name()`
+            # with a string ... equaling the statement identity"); it
+            # raised "argument must be one of" until 2026-11-13
+            ('.:from(:name("one")):to(:name("three"))', ["o-uuid", "t-uuid", "th-uuid"]),
+            ('.:after(:name("two"))', ["th-uuid", "f-uuid"]),
+            ('.:before(:name("two"))', ["z-uuid", "o-uuid"]),
+            ('.:from(:name("three")):to(4)', ["th-uuid", "f-uuid"]),
+            ('.:from(:name("nope"))', []),
+        ],
+    )
+    def test_a_name_bound_is_a_statement_identity(
+        self, one_run_five_statements, name_three, expected
+    ):
+        reference = f"$acme.results.customers/2025:first(){name_three}"
+        assert _finder(reference, one_run_five_statements).query().uuids == expected
+
+    def test_a_name_bound_with_a_regex_raises(self, one_run_five_statements):
+        # the NRE allows a string, int or variable; a /regex/ is not an
+        # identity
+        with pytest.raises(ReferenceException3, match="regex"):
+            _finder(
+                "$acme.results.customers/2025:first().:from(:name(/o/))",
+                one_run_five_statements,
+            ).query()
 
     def test_from_gives_statements_in_true_declaration_order(
         self, one_run_five_statements
@@ -6583,6 +6620,11 @@ class TestStarManifestSetInstanceRecords:
     def test_an_identity_range_selects_instances(self, archive, name_three, expected):
         reference = f"$*.results.:manifest():last(){name_three}"
         assert self._uuids(reference, archive) == expected
+
+    def test_a_name_bound_selects_instances(self, archive):
+        # as a bare string bound (NRE "Identities"), 2026-11-13
+        reference = '$*.results.:manifest():last().:from(:name("s")):to(:name("t"))'
+        assert self._uuids(reference, archive) == ["k3-s", "k3-t"]
 
     def test_an_identity_selects_one_instance(self, archive):
         assert self._uuids("$*.results.:manifest():last().t", archive) == ["k3-t"]
