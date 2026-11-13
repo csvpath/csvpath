@@ -6419,6 +6419,21 @@ class TestStarManifestSetInstanceRecords:
         uuids = self._uuids("$*.results.:manifest():last().:to(0)", archive)
         assert uuids == ["k3-s"]
 
+    @pytest.mark.parametrize(
+        "name_three, expected",
+        [
+            # a string bound is a statement identity (3.19b; NRE
+            # "Identities"), in the ledger set as in a run dir (2026-11-12)
+            ('.:from("t")', ["k3-t"]),
+            ('.:to("s")', ["k3-s"]),
+            ('.:from("s"):to("t")', ["k3-s", "k3-t"]),
+            ('.:from("nope")', []),
+        ],
+    )
+    def test_an_identity_range_selects_instances(self, archive, name_three, expected):
+        reference = f"$*.results.:manifest():last(){name_three}"
+        assert self._uuids(reference, archive) == expected
+
     def test_an_identity_selects_one_instance(self, archive):
         assert self._uuids("$*.results.:manifest():last().t", archive) == ["k3-t"]
         assert self._uuids("$*.results.:manifest():last().nope", archive) == []
@@ -7376,3 +7391,51 @@ class TestMixedIndexAndDateRange:
         with pytest.raises(ReferenceException3) as error:
             _finder(reference, runs).query()
         assert "not settled" in str(error.value)
+
+
+class TestInstanceRangeIdentities:
+    # a name_three statement range in RESULTS works on identities, as in
+    # CSVPATHS (compendium 3.19b: name_three is a statement identity; NRE
+    # "Identities": "the directional/range functions can work on
+    # identities ... if the names given do not match, the reference
+    # returns no results, no error is thrown"). A string bound raised a
+    # bare TypeError until 2026-11-12. A date bound raises: statements have
+    # no arrival date of their own, as in CSVPATHS.
+    @pytest.fixture
+    def runs(self, tmp_path):
+        run_dir = tmp_path / "alpha" / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "r1"})
+        for index, name in enumerate(("header_checks", "rules", "summary")):
+            _write_json(
+                run_dir / name / "manifest.json",
+                {"uuid": name, "instance_index": index},
+            )
+        _write_archive_manifest(tmp_path, "alpha", [str(run_dir)])
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "name_three, expected",
+        [
+            ('.:from("rules")', ["rules", "summary"]),
+            ('.:from("header_checks"):to("rules")', ["header_checks", "rules"]),
+            ('.:after("header_checks")', ["rules", "summary"]),
+            ('.:before("summary")', ["header_checks", "rules"]),
+            ('.:from(0):to("rules")', ["header_checks", "rules"]),
+            # no match, no results, no error
+            ('.:from("nope")', []),
+            ('.:from("header_checks"):to("nope")', []),
+            # an index range, unchanged, in instance order
+            (".:from(1)", ["rules", "summary"]),
+        ],
+    )
+    def test_a_range_selects_statements_by_identity(self, runs, name_three, expected):
+        reference = f"$alpha.results.:first(){name_three}"
+        assert _finder(reference, runs).query().uuids == expected
+
+    @pytest.mark.parametrize(
+        "name_three", [".:from(:yesterday())", '.:from(:date("2026-01-01"))']
+    )
+    def test_a_date_bound_raises(self, runs, name_three):
+        with pytest.raises(ReferenceException3) as error:
+            _finder(f"$alpha.results.:first(){name_three}", runs).query()
+        assert "no arrival date" in str(error.value)
