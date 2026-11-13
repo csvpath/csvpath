@@ -1958,7 +1958,10 @@ class TestStatementLevelRange:
             # bound, the same as a bare string (NRE "Identities": "`:name()`
             # with a string ... equaling the statement identity"); it
             # raised "argument must be one of" until 2026-11-13
-            ('.:from(:name("one")):to(:name("three"))', ["o-uuid", "t-uuid", "th-uuid"]),
+            (
+                '.:from(:name("one")):to(:name("three"))',
+                ["o-uuid", "t-uuid", "th-uuid"],
+            ),
             ('.:after(:name("two"))', ["th-uuid", "f-uuid"]),
             ('.:before(:name("two"))', ["z-uuid", "o-uuid"]),
             ('.:from(:name("three")):to(4)', ["th-uuid", "f-uuid"]),
@@ -1970,6 +1973,28 @@ class TestStatementLevelRange:
     ):
         reference = f"$acme.results.customers/2025:first(){name_three}"
         assert _finder(reference, one_run_five_statements).query().uuids == expected
+
+    def test_a_name_bound_takes_a_variable(self, one_run_five_statements):
+        # the NRE's "variable" form: the nested arg is resolved first
+        # (_resolve_arg(), 2026-08-27)
+        finder = _finder(
+            "$acme.results.customers/2025:first().:from(:name(@x))",
+            one_run_five_statements,
+        )
+        finder.set_variable("x", value="three")
+        assert finder.query().uuids == ["th-uuid", "f-uuid"]
+
+    def test_a_name_bound_variable_resolving_to_an_int_raises(
+        self, one_run_five_statements
+    ):
+        # the int form is a question for David (D12); Name3 takes no int
+        finder = _finder(
+            "$acme.results.customers/2025:first().:from(:name(@x))",
+            one_run_five_statements,
+        )
+        finder.set_variable("x", value=3)
+        with pytest.raises(ReferenceException3, match="int"):
+            finder.query()
 
     def test_a_name_bound_with_a_regex_raises(self, one_run_five_statements):
         # the NRE allows a string, int or variable; a /regex/ is not an

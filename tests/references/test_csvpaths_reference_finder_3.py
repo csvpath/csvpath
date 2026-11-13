@@ -869,6 +869,18 @@ class TestNameThreeRange:
         ).query()
         assert [r.identity for r in results.results] == ["two", "three", "four"]
 
+    def test_a_name_bound_takes_a_variable(self):
+        finder = _finder(
+            '$ranger.csvpaths.:first().:from(:name(@x)):to(:name("four"))',
+            RANGE_MANIFEST,
+        )
+        finder.set_variable("x", value="two")
+        assert [r.identity for r in finder.query().results] == [
+            "two",
+            "three",
+            "four",
+        ]
+
     def test_a_name_bound_that_does_not_match_gives_nothing(self):
         results = _finder(
             '$ranger.csvpaths.:first().:from(:name("nope"))', RANGE_MANIFEST

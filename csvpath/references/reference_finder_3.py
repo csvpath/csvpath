@@ -387,9 +387,11 @@ class ReferenceFinder3(ABC):
         """a name_three statement-range bound: ':name("x")' is the
         identity "x", the same as a bare string (NRE "Identities":
         "`:name()` with a string, int, or variable equaling the statement
-        identity"; 2026-11-13). Only the string form is supported: Name3
-        does not take an int, a variable argument is an open gap, and a
-        /regex/ is not an identity, so it raises. Any other bound is
+        identity"; 2026-11-13). The string form, and a variable that
+        resolves to a string (_resolve_arg() resolves the nested arg
+        before this runs), are supported. Name3 does not take an int, so
+        `:name(0)` and a variable resolving to an int raise; a /regex/ is
+        not an identity, so it raises here. Any other bound is
         _range_bound()'s."""
         if function is None:
             raise ValueError("function cannot be None")
