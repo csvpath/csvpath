@@ -972,6 +972,65 @@ class TestTraversalRootResolve:
         assert self._resolve(reference) == [("u-one-2", "alpha")]
 
 
+class TestTraversalRootNamedFileReads:
+    # ':named_file_home()' and a definition.json field in name_three under
+    # '*', ':regex()' or ':choice()' read the named-file that holds each
+    # version (6.13b(iv): the literal reference for each live name). Until
+    # 2026-11-12 both passed root_major as the name: ':named_file_home()'
+    # raised, and a definition field read whichever named-file the
+    # describer gave for a non-name.
+    DEFINITIONS = {
+        "alpha": {"on_arrival": {"named_paths_group": "alpha-group"}},
+        "beta": {"on_arrival": {"named_paths_group": "beta-group"}},
+    }
+
+    def _values(self, reference: str) -> list:
+        finder = _finder(
+            reference,
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=STAR_BY_NAME,
+            ledger=STAR_LEDGER,
+            definitions=self.DEFINITIONS,
+        )
+        return [r.data for r in finder.resolve().results]
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            (
+                "$*.files.*.:last():named_file_home()",
+                ["inputs/named_files/alpha", "inputs/named_files/beta"],
+            ),
+            (
+                "$*.files.:flatten().:last():named_file_home()",
+                ["inputs/named_files/beta"],
+            ),
+            (
+                "$:regex(/^al/).files.*.:last():named_file_home()",
+                ["inputs/named_files/alpha"],
+            ),
+            (
+                '$:choice("beta").files.*.:last():named_file_home()',
+                ["inputs/named_files/beta"],
+            ),
+            (
+                "$*.files.*.:last():named_paths_group()",
+                ["alpha-group", "beta-group"],
+            ),
+            ('$:choice("beta").files.*.:last():named_paths_group()', ["beta-group"]),
+            # a literal root, unchanged
+            (
+                "$alpha.files.*.:last():named_file_home()",
+                ["inputs/named_files/alpha"],
+            ),
+            ("$alpha.files.*.:last():named_paths_group()", ["alpha-group"]),
+        ],
+    )
+    def test_the_holding_named_file_is_read(self, reference, expected):
+        assert self._values(reference) == expected
+
+
 class TestTraversalFieldReadsLiveFirst:
     # decision D4 (2026-11-12): a name_three field after a traversal root
     # reads as the literal reference does, the holding named-file's own
