@@ -288,9 +288,26 @@ class ReferenceFinder3(ABC):
         not "to the end" -- that one case still needs the explicit fix
         _slice_by_position() already had."""
         start = cls._range_bound(lower_call) if lower_call is not None else None
+        end = cls._range_bound(upper_call) if upper_call is not None else None
+        # an index range takes integer positions only; a date bound reaching
+        # here (e.g. a RESULTS name_three instance range, which has no date
+        # mode) raised a bare TypeError from the slice (2026-11-12)
+        for call, bound in ((lower_call, start), (upper_call, end)):
+            if bound is not None and (
+                isinstance(bound, bool) or not isinstance(bound, int)
+            ):
+                shown = (
+                    f":{bound.NAME}()"
+                    if isinstance(bound, TimeWindowFunction3)
+                    else repr(bound)
+                )
+                raise ReferenceException3(
+                    f"':{call.name}({shown})' is not an index position here "
+                    "-- this range takes integer positions only (e.g. "
+                    f"':{call.name}(2)')."
+                )
         if lower_call is not None and lower_call.name == "after" and start is not None:
             start = start + 1
-        end = cls._range_bound(upper_call) if upper_call is not None else None
         end_inclusive = upper_call is None or upper_call.name == "to"
         return cls._slice_by_position(items, start, end, end_inclusive=end_inclusive)
 

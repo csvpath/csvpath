@@ -7376,3 +7376,36 @@ class TestMixedIndexAndDateRange:
         with pytest.raises(ReferenceException3) as error:
             _finder(reference, runs).query()
         assert "not settled" in str(error.value)
+
+
+class TestInstanceRangeBounds:
+    # a RESULTS name_three instance range takes integer positions only
+    # (the NRE's instance ranges are index ranges). A date or string bound
+    # raised a bare TypeError from the slice until 2026-11-12; it now
+    # raises a clear ReferenceException3, from the shared _apply_range().
+    @pytest.fixture
+    def runs(self, tmp_path):
+        run_dir = tmp_path / "alpha" / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "r1"})
+        for name in ("a", "b", "c"):
+            _write_json(run_dir / name / "manifest.json", {"uuid": name})
+        _write_archive_manifest(tmp_path, "alpha", [str(run_dir)])
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "reference, shown",
+        [
+            ('$alpha.results.:first().:from("nope")', ":from('nope')"),
+            ('$alpha.results.:first().:from(0):to("nope")', ":to('nope')"),
+            ("$alpha.results.:first().:from(:yesterday())", ":from(:yesterday())"),
+            ('$*.results.:manifest():first().:from("nope")', ":from('nope')"),
+        ],
+    )
+    def test_a_non_index_bound_raises_clearly(self, runs, reference, shown):
+        with pytest.raises(ReferenceException3) as error:
+            _finder(reference, runs).query()
+        assert shown in str(error.value)
+        assert "integer positions" in str(error.value)
+
+    def test_an_index_bound_still_works(self, runs):
+        assert len(_finder("$alpha.results.:first().:from(1)", runs).query().uuids) == 2
