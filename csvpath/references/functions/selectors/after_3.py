@@ -11,10 +11,12 @@ class After3(PredicateFunction3):
     # the EXCLUSIVE sibling of :from() -- compendium 6.28/6.28b/6.28c,
     # built 2026-10-16. See Before3's own comment for the shared
     # mechanism/alias-registration reasoning; this is the LOWER-bound
-    # mirror of it. ":after(5)" starts at position 6, not 5;
-    # ":after(:date('2025-01-31'))" excludes runs that arrived ON
-    # 2025-01-31 itself, only strictly later ones. Aliased "above"/"gt"
-    # (6.28b).
+    # mirror of it. ":after(5)" starts at position 6, not 5. A date bound
+    # is its first moment (6.27b, 6.27g): ":after(:date('2025-01-31'))"
+    # keeps runs strictly after 2025-01-31 00:00:00, so later on the 31st
+    # too; "after the 31st" needs its last moment (normative examples;
+    # decision D8, 2026-11-12 -- it excluded the whole 31st until then).
+    # Aliased "above"/"gt" (6.28b).
     #
     # 6.28c: combining with :from() (another LOWER bound) is illegal.
     # May pair with :before()/:to() (an UPPER bound) to form a range.
@@ -34,8 +36,8 @@ class After3(PredicateFunction3):
     # ARG_TYPES widened 2026-10-17 from Date3 specifically to
     # TimeWindowFunction3 generically (compendium 6.27) -- ":after(
     # :year())"/etc are now equally legal as a RANGE bound, using that
-    # function's own end_datetime() as the exclusive lower cutoff (see
-    # TimeWindowFunction3's own docstring for the full four-way rule).
+    # function's own start_datetime() as the exclusive lower cutoff (see
+    # TimeWindowFunction3's own docstring for the rule; decision D8).
     # This is unrelated to this class's OWN separate, scalar-predicate
     # role (matches() below, used nested inside :count()) -- the two
     # roles share this class but not this widening's own reasoning;
@@ -50,10 +52,11 @@ class After3(PredicateFunction3):
         "ordered items -- index-mode: from, but NOT including, this "
         "0-based position (negative counts from the end) to the end, "
         "or to :before()'s/:to()'s position if present. date-mode: "
-        "from, but not including, this calendar date onward (or the "
-        "end of a coarser time-component function's own period, e.g. "
-        ":year()/:month()), compared against each run's own arrival "
-        "date. Aliases: ':above()'/':gt()'. Nested inside :count() "
+        "strictly after the first moment of this date or time-component "
+        "function (e.g. :date('2026-07-04') is 2026-07-04 00:00:00, so "
+        "later that day counts; use '2026-07-04_23-59-59' to mean after "
+        "the 4th), compared against each run's own arrival date. "
+        "Aliases: ':above()'/':gt()'. Nested inside :count() "
         "(e.g. ':count(:above(10))'), acts as a scalar predicate "
         "instead: matches any value strictly greater than its own "
         "bound."

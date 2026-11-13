@@ -33,10 +33,9 @@ class Before3(PredicateFunction3):
     # TimeWindowFunction3 generically (compendium 6.27) -- ":before(
     # :year())"/etc are now equally legal, using that function's own
     # start_datetime() as the exclusive upper cutoff (excludes the
-    # whole period it names, same as the already-shipped day-granular
-    # behavior -- see TimeWindowFunction3's own docstring for the full
-    # four-way directional rule). Date3 is itself a TimeWindowFunction3
-    # now, so this is strictly a widening.
+    # whole period it names -- see TimeWindowFunction3's own docstring
+    # for the rule, every bound its first moment; decision D8). Date3 is
+    # itself a TimeWindowFunction3 now, so this is strictly a widening.
     #
     # Extends PredicateFunction3 (not just Function3), added 2026-10-18
     # -- normative_reference_examples.txt's own worked examples

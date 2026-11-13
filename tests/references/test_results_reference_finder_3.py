@@ -1557,9 +1557,11 @@ class TestTimeWindowFunctionAnchors:
             "run-yesterday",
         }
 
-    def test_after_yesterday_excludes_yesterday_and_earlier(self, dated_runs):
-        # :after(:yesterday()) -> exclusive lower, excludes the whole
-        # of yesterday (and earlier) -- only strictly later survives.
+    def test_after_yesterday_excludes_yesterdays_first_moment(self, dated_runs):
+        # :after(:yesterday()) -> strictly after yesterday 00:00:00 (6.27b;
+        # decision D8). The yesterday run is at that moment, so only
+        # today's survives; a run later yesterday would too (see
+        # test_after_yesterday_keeps_the_rest_of_yesterday).
         results = _finder(
             "$acme.results.customers:after(:yesterday())", dated_runs
         ).query()
