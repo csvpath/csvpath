@@ -5095,6 +5095,93 @@ class TestStarTraversalPathNarrowingAndNameThree:
                 "$*.results.:all():last().invoices:errors()", str(tmp_path)
             ).resolve()
 
+    def test_star_all_statements_with_a_content_accessor_defers_to_resolve(
+        self, tmp_path
+    ):
+        # 2026-11-13: ':all()' with a content accessor under a '*' root
+        # raised at query; now query() gives every statement, flagged,
+        # and resolve() raises (5.3; David, 2026-08-22: "query() should
+        # always be allowed to return multiple matches, regardless of
+        # accessor"), as at a literal root.
+        run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {"a": "acme-a", "b": "acme-b"},
+        )
+        _write_archive_manifest(tmp_path, "acme", [run])
+        ref = "$*.results.:last().:all():unmatched()"
+        results = _finder(ref, str(tmp_path)).query()
+        assert sorted(results.uuids) == ["acme-a", "acme-b"]
+        assert results.ambiguous_content_read is True
+        with pytest.raises(ReferenceException3, match="more than one"):
+            _finder(ref, str(tmp_path)).resolve()
+
+    def test_star_all_statements_with_a_content_accessor_matches_literal_root(
+        self, tmp_path
+    ):
+        run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {"a": "acme-a", "b": "acme-b"},
+        )
+        _write_archive_manifest(tmp_path, "acme", [run])
+        star = _finder("$*.results.:last().:all():unmatched()", str(tmp_path))
+        literal = _finder(
+            "$acme.results.:last().:all():unmatched()", str(tmp_path)
+        )
+        star_results = star.query()
+        literal_results = literal.query()
+        assert sorted(star_results.uuids) == sorted(literal_results.uuids)
+        assert (
+            star_results.ambiguous_content_read
+            == literal_results.ambiguous_content_read
+        )
+
+    def test_star_all_one_statement_with_a_content_accessor_is_not_ambiguous(
+        self, tmp_path
+    ):
+        run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {"a": "acme-a"},
+        )
+        _write_archive_manifest(tmp_path, "acme", [run])
+        results = _finder(
+            "$*.results.:last().:all():unmatched()", str(tmp_path)
+        ).query()
+        assert results.uuids == ["acme-a"]
+        assert results.ambiguous_content_read is False
+
+    def test_star_all_across_groups_with_a_content_accessor_defers_to_resolve(
+        self, tmp_path
+    ):
+        # several groups, one statement each: the count is over groups,
+        # not per group, so it is still flagged.
+        acme_run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {"invoices": "acme-invoices"},
+        )
+        widgets_run = _make_run(
+            tmp_path / "widgets",
+            "2026-01-02_00-00-00",
+            "widgets-run",
+            {"invoices": "widgets-invoices"},
+        )
+        _write_archive_manifest_multi(
+            tmp_path, {"acme": [acme_run], "widgets": [widgets_run]}
+        )
+        ref = "$*.results.:all():last().:all():unmatched()"
+        results = _finder(ref, str(tmp_path)).query()
+        assert sorted(results.uuids) == ["acme-invoices", "widgets-invoices"]
+        assert results.ambiguous_content_read is True
+        with pytest.raises(ReferenceException3, match="more than one"):
+            _finder(ref, str(tmp_path)).resolve()
+
     def test_all_grouping_with_name_three_field_accessor_is_poolable(
         self, tmp_path
     ):
