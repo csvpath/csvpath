@@ -2852,13 +2852,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     upper_call=to_call,
                 )
             )
-            if len(matched) > 1 and accessor is not None:
-                raise ReferenceException3(
-                    "ResultsReferenceFinder3 requires ':from()'/':to()' to "
-                    "narrow to exactly one statement to read full well-"
-                    "known-file content -- resolving full content always "
-                    "touches exactly one entity, same as ':all()'."
-                )
+            # several statements with a content accessor: query() gives
+            # them all, and resolve() raises, one file's content at a time
+            # (5.3; the callers flag it), as ':all()' with an accessor and
+            # the ledger set already do. It raised here at query until
+            # 2026-11-12 (David, 2026-08-13: ":from(:index(2)):unmatched()
+            # should definitely not work" -- it still does not resolve).
         else:
             index = self._find_by_identity(identity, instances)
             matched = [instances[index]] if index is not None else []

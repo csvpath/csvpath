@@ -1975,6 +1975,20 @@ class TestStatementLevelRange:
         with pytest.raises(ReferenceException3):
             finder.resolve()
 
+    def test_a_range_with_a_content_accessor_queries_every_statement(
+        self, one_run_five_statements
+    ):
+        # 5.3: query() always succeeds and may name several files; only
+        # resolve() raises, one file's content at a time -- as ':all()' with
+        # an accessor and the ledger set already did. The run dir raised at
+        # query until 2026-11-12 (reviewer on #597).
+        reference = "$acme.results.customers/2025:first().:from(2):unmatched()"
+        results = _finder(reference, one_run_five_statements).query()
+        assert results.uuids == ["t-uuid", "th-uuid", "f-uuid"]
+        assert results.ambiguous_content_read
+        with pytest.raises(ReferenceException3):
+            _finder(reference, one_run_five_statements).resolve()
+
     def test_range_narrowed_to_exactly_one_with_accessor_is_fine(
         self, one_run_five_statements
     ):
