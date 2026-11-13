@@ -1,5 +1,6 @@
 import unittest
 import os
+from unittest import mock
 from csvpath import CsvPath
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}jev.csv"
@@ -11,6 +12,56 @@ PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}jev.csv"
 #
 
 
+def jev_key_available() -> bool:
+    """True only when config.ini's [jev] key resolves to a usable key.
+
+    These tests call the live Jev service, so they run only when a key is
+    really there. The key is usually an all-caps env var name (key = JEV_KEY).
+    When that var is not set, Config.get() returns the name itself, not None,
+    so "is None" alone would not skip.
+    """
+    config = CsvPath().config
+    raw = config.get(section="jev", name="key", swaps=False, string_parse=False)
+    if raw is None or not isinstance(raw, str) or raw.strip() == "":
+        return False
+    resolved = config.get(section="jev", name="key")
+    if not isinstance(resolved, str) or resolved.strip() == "":
+        return False
+    if raw.strip().isupper() and resolved == raw.strip():
+        return False
+    return True
+
+
+class TestJevKeyGate(unittest.TestCase):
+    """The gate itself. Never calls Jev: it only checks what the gate returns."""
+
+    def _env_reference(self) -> str:
+        config = CsvPath().config
+        raw = config.get(section="jev", name="key", swaps=False, string_parse=False)
+        if not isinstance(raw, str) or not raw.strip().isupper():
+            self.skipTest("[jev] key is not an env var reference in this config")
+        return raw.strip()
+
+    def test_gate_closed_when_env_var_unset(self):
+        name = self._env_reference()
+        env = {k: v for k, v in os.environ.items() if k != name}
+        with mock.patch.dict(os.environ, env, clear=True):
+            assert jev_key_available() is False
+
+    def test_gate_closed_when_env_var_blank(self):
+        name = self._env_reference()
+        with mock.patch.dict(os.environ, {name: "   "}):
+            assert jev_key_available() is False
+
+    def test_gate_open_when_env_var_set(self):
+        name = self._env_reference()
+        with mock.patch.dict(os.environ, {name: "not-a-real-key"}):
+            assert jev_key_available() is True
+
+
+@unittest.skipUnless(
+    jev_key_available(), "no [jev] key in config.ini, or its env var is not set"
+)
 class TestCsvPathFunctionsJev(unittest.TestCase):
     def test_function_jev_1(self):
         path = CsvPath()
