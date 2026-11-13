@@ -63,6 +63,9 @@ class ReferenceFinder3(ABC):
         #
         self._variables: dict = dict(variables) if variables else {}
         self._source: ReferenceSource | None = None
+        # the 5.20b ambiguity warnings this finder has already logged; one
+        # resolve() reads the same chain once per result (2026-11-13)
+        self._warned: set = set()
 
     @property
     def source(self) -> ReferenceSource:
@@ -1790,17 +1793,25 @@ class ReferenceFinder3(ABC):
         ':last():uuid():named_paths_name()'). Logs a warning (never
         raises) whenever 2+ candidates qualify, since that is the
         genuinely ambiguous case compendium 5.20b exists to resolve --
-        a single candidate is not ambiguous at all and is silent."""
+        a single candidate is not ambiguous at all and is silent.
+
+        Each distinct warning is logged once per finder (2026-11-13,
+        reviewer on #590): query() and each result's extraction read the
+        same chain, so one resolve() over N results logged it 1 + N
+        times. A second finder warns again."""
         calls = self._find_field_function_calls(functions, self.ref.parsed.datatype)
         if len(calls) > 1:
-            self.csvpaths.logger.warning(
-                "Reference resolves to the value of the last field-"
-                "accessor function in its chain (:%s()) -- :%s() earlier "
-                "in the same chain could also have provided a value; "
-                "see compendium 5.20b.",
-                calls[-1].name,
-                "(), :".join(f.name for f in calls[:-1]),
-            )
+            names = tuple(f.name for f in calls)
+            if names not in self._warned:
+                self._warned.add(names)
+                self.csvpaths.logger.warning(
+                    "Reference resolves to the value of the last field-"
+                    "accessor function in its chain (:%s()) -- :%s() earlier "
+                    "in the same chain could also have provided a value; "
+                    "see compendium 5.20b.",
+                    calls[-1].name,
+                    "(), :".join(f.name for f in calls[:-1]),
+                )
         return calls[-1] if calls else None
 
     @staticmethod

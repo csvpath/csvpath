@@ -7599,9 +7599,36 @@ class TestRunDirNameThreeTwoFields:
     def test_two_value_fields_warn(self, runs):
         finder = _finder("$widgets.results.:first().checks:uuid():valid()", runs)
         finder.resolve()
-        # query and resolve each read the selector, so it may warn twice
+        # query and resolve each read the selector; it warns once per
+        # finder (2026-11-13; it warned twice)
         warnings = finder.csvpaths.logger.warnings
-        assert warnings and all("5.20b" in w for w in warnings)
+        assert len(warnings) == 1
+        assert "5.20b" in warnings[0]
+
+    def test_two_value_fields_over_many_statements_warn_once(self, tmp_path):
+        # one resolve() over N statements read the chain 1 + N times and
+        # logged 1 + N warnings (reviewer on #590)
+        run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "acme-run",
+            {f"s{i}": f"u{i}" for i in range(4)},
+        )
+        _write_archive_manifest(tmp_path, "acme", [run])
+        finder = _finder("$acme.results.:last().:all():uuid():valid()", str(tmp_path))
+        assert len(finder.resolve().results) == 4
+        assert len(finder.csvpaths.logger.warnings) == 1
+
+    def test_each_finder_warns_on_its_own(self, tmp_path):
+        run = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "acme-run", {"s0": "u0"}
+        )
+        _write_archive_manifest(tmp_path, "acme", [run])
+        reference = "$acme.results.:last().s0:uuid():valid()"
+        for _ in range(2):
+            finder = _finder(reference, str(tmp_path))
+            finder.resolve()
+            assert len(finder.csvpaths.logger.warnings) == 1
 
 
 class TestMixedIndexAndDateRange:
