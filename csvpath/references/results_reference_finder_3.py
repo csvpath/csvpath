@@ -2109,12 +2109,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         traversal specifically -- see its own comment; query()'s
         LITERAL-root equivalent was relaxed 2026-10-17 for
         ":errors(:count(:above(10)))", but that path never reaches
-        this method), and a `range_bounds` match of more than one
-        statement is independently rejected inside `_results_for_run()`
-        itself. So `len(results) > 1` here can only
-        ever mean "more than one GROUP's own already-individually-
-        legitimate winner," the identical shape already proven safe to
-        defer rather than raise -- flagged via `ambiguous_content_read`
+        this method). A `range_bounds` match of more than one
+        statement with an accessor is returned whole and flagged, so
+        `len(results) > 1` here is either that or more than one
+        group's winner -- both deferred to resolve() rather than raised -- flagged via `ambiguous_content_read`
         instead, same as every other Rule 1 call site in this file.
         A name_three FIELD accessor (e.g. ".invoices:uuid()") was never
         rejected here to begin with -- confirmed live against the
@@ -2828,19 +2826,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             selected = self._apply_pointer(instance_pointer, instances)
             matched = [selected] if selected is not None else []
         elif range_bounds is not None:
-            # ':from()'/':to()' as a statement-level range -- added
-            # 2026-08-13, David: ":from(:index(2)):unmatched() should
-            # definitely not work" -- a range is "more than one entity"
-            # the same way ':all()' already is, so it gets the same
-            # restriction combined with a content accessor. Unlike
-            # ':all()'s own BLANKET rejection there, this is count-
-            # DEPENDENT (checked per run, since different runs can have
-            # different statement counts) -- mirrors query()'s own
-            # run-level "more than one candidate" check exactly, rather
-            # than introducing a second style of restriction. A range
-            # that happens to narrow to exactly one statement in THIS
-            # run is fine with an accessor, same as a bare pointer
-            # narrowing a run-list to one already is.
             from_call, to_call = range_bounds
             matched = (
                 instances
@@ -2853,11 +2838,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 )
             )
             # several statements with a content accessor: query() gives
-            # them all, and resolve() raises, one file's content at a time
-            # (5.3; the callers flag it), as ':all()' with an accessor and
-            # the ledger set already do. It raised here at query until
-            # 2026-11-12 (David, 2026-08-13: ":from(:index(2)):unmatched()
-            # should definitely not work" -- it still does not resolve).
+            # them all and resolve() raises (5.3; the callers flag it).
+            # David, 2026-08-22: "query() should always be allowed to
+            # return multiple matches, regardless of accessor". It raised
+            # here at query until 2026-11-13; the 2026-08-13 ruling
+            # (":from(:index(2)):unmatched() should definitely not work")
+            # still holds at resolve.
         else:
             index = self._find_by_identity(identity, instances)
             matched = [instances[index]] if index is not None else []
@@ -3142,15 +3128,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         (every instance in the run); range_bounds is (from_call, to_call)
         for ':from()'/':to()' (a positional slice of instances -- added
         2026-08-13, David: ":from(:index(2)):unmatched() should
-        definitely not work" -- confirmed a range is "more than one
-        entity" the same way :all() already is, see query()'s own
-        per-run count check for how this is enforced; unlike :all()'s
-        blanket rejection there, though, a range's rejection is count-
-        DEPENDENT, mirroring the run-level "more than one candidate"
-        check this whole file already uses elsewhere -- a range that
-        happens to narrow to exactly one instance is fine with an
-        accessor, same as a bare pointer narrowing to one run already
-        is), None if absent; accessor is the built well-known-file
+        definitely not work" -- enforced at resolve(), which raises
+        when a range with an accessor matches more than one statement;
+        a range narrowing to one statement resolves), None if absent; accessor is the built well-known-file
         Function3 riding alongside the identity/:all()/range selector;
         field_call is a registered field-accessor Function3 (e.g.
         :uuid()) riding there instead -- kept separate from accessor
