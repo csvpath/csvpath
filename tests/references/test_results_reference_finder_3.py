@@ -1326,6 +1326,8 @@ class TestRunLevelRange:
             ("$acme.results.customers:from(-4):to(-2)", ["run-2", "run-3", "run-4"]),
             ("$acme.results.customers:from(-4):to(-2):last()", ["run-4"]),
             ("$acme.results.customers:from(-4):to(-2):first()", ["run-2"]),
+            # the NRE line exactly as written; ':from(-6)' clamps to the start
+            ("$acme.results.customers/*:from(-6):to(-2):last()", ["run-4"]),
         ],
     )
     def test_a_pointer_selects_within_a_two_directional_range(
