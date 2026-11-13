@@ -1316,6 +1316,23 @@ class TestRunLevelRange:
         ).query()
         assert results.uuids == ["run-5"]
 
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # the NRE's "a pointer that is not a directional alongside a
+            # range of two directionals selects within the range":
+            # directionals set the range before an anchor does (David,
+            # spec review item 4), so ':last()' is the range's last
+            ("$acme.results.customers:from(-4):to(-2)", ["run-2", "run-3", "run-4"]),
+            ("$acme.results.customers:from(-4):to(-2):last()", ["run-4"]),
+            ("$acme.results.customers:from(-4):to(-2):first()", ["run-2"]),
+        ],
+    )
+    def test_a_pointer_selects_within_a_two_directional_range(
+        self, five_runs, reference, expected
+    ):
+        assert _finder(reference, five_runs).query().uuids == expected
+
     def test_from_rejects_a_malformed_date_string_argument(self, five_runs):
         # settled 2026-08-13: a bare str arg is now date-mode's leaf
         # shape (":from('2025-01-01')" == ":from(:date('2025-01-01'))"),
