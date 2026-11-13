@@ -59,7 +59,7 @@ class PercentDups(ValueProducer):
         super().check_valid()
 
     def _decide_match(self, skip=None) -> None:
-        self.match == self.default_match()
+        self.match = self.default_match()
 
     def _produce_value(self, skip=None) -> None:
         name = self.first_non_term_qualifier(self.name)
@@ -74,7 +74,6 @@ class PercentDups(ValueProducer):
             else self.matcher.csvpath.line_monitor.data_line_count
         )
         pd = i / j
-        print(f"i: {i} / j: {j} == {pd}")
         self.value = pd * 100
 
 
