@@ -4,6 +4,7 @@ from ..function_3 import Function3
 from ..filters.predicate_function_3 import PredicateFunction3
 from ..values.time_window_function_3 import TimeWindowFunction3
 from .index_3 import Index3
+from .name_3 import Name3
 
 
 class Before3(PredicateFunction3):
@@ -62,7 +63,11 @@ class Before3(PredicateFunction3):
     )
     ROLE = Function3.CONTEXT_SETTER
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    ARG_TYPES = (int, Index3, str, TimeWindowFunction3)
+    # Name3 added 2026-11-13: ':name("x")' is a statement identity in a
+    # name_three range, the same as a bare string (NRE "Identities").
+    # Only ReferenceFinder3._identity_bound() unwraps it; anywhere else a
+    # ':name()' bound raises (see ReferenceFinder3._range_bound()).
+    ARG_TYPES = (int, Index3, Name3, str, TimeWindowFunction3)
     ARG_REQUIRED = True
     #
     # see From3's own POSITIONS comment -- always paired, same positions.
@@ -88,6 +93,11 @@ class Before3(PredicateFunction3):
                 f":{bound.NAME}() -- as a predicate (e.g. nested inside "
                 ":error_count()), its bound must be a plain number, "
                 "not a time-component function."
+            )
+        if isinstance(bound, Name3):
+            raise ReferenceException3(
+                ":below()/:before() cannot compare against :name() -- as a "
+                "predicate its bound must be a plain number."
             )
         if not isinstance(bound, (int, str)):
             bound = bound.arg

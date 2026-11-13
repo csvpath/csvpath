@@ -9,6 +9,7 @@ from csvpath.util.nos import Nos
 from .functions.function_3 import Function3
 from .functions.filters.predicate_function_3 import PredicateFunction3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
+from .functions.selectors.name_3 import Name3
 from .functions.values.time_window_function_3 import TimeWindowFunction3
 from .reference_3 import (
     FunctionCall3,
@@ -211,10 +212,21 @@ class ReferenceFinder3(ABC):
         a TimeWindowFunction3 like its siblings now (previously
         special-cased to unwrap to its own plain date string here --
         that unwrap moved to TimeWindowFunction3.start_datetime()/
-        end_datetime() instead, consistent treatment for all ten)."""
+        end_datetime() instead, consistent treatment for all ten).
+
+        A ':name()' bound raises here: it is a statement identity, which
+        only a name_three statement range has (_identity_bound()). Runs
+        and versions take a string bound as a date, so unwrapping it here
+        would silently read ':name("2026-01-01")' as one (2026-11-13)."""
         arg = function.arg
         if isinstance(arg, (int, str)):
             return arg
+        if isinstance(arg, Name3):
+            raise ReferenceException3(
+                f"':{function.name}(:name())' takes a statement identity, "
+                "which only a name_three range over statements has; runs "
+                "and versions have no statement identity."
+            )
         if isinstance(arg, TimeWindowFunction3):
             return arg
         return arg.arg
@@ -336,7 +348,7 @@ class ReferenceFinder3(ABC):
         # illegal bound raises even beside an identity that does not match
         # (as CSVPATHS, which checks its bounds up front; reviewer on #596)
         bounds = [
-            None if call is None else cls._range_bound(call)
+            None if call is None else cls._identity_bound(call)
             for call in (lower_call, upper_call)
         ]
         for call, bound in zip((lower_call, upper_call), bounds):
@@ -369,6 +381,29 @@ class ReferenceFinder3(ABC):
             start = start + 1
         end_inclusive = upper_call is None or upper_call.name == "to"
         return cls._slice_by_position(items, start, end, end_inclusive=end_inclusive)
+
+    @classmethod
+    def _identity_bound(cls, function) -> "int | str | TimeWindowFunction3":
+        """a name_three statement-range bound: ':name("x")' is the
+        identity "x", the same as a bare string (NRE "Identities":
+        "`:name()` with a string, int, or variable equaling the statement
+        identity"; 2026-11-13). The string form, and a variable that
+        resolves to a string (_resolve_arg() resolves the nested arg
+        before this runs), are supported. Name3 does not take an int, so
+        `:name(0)` and a variable resolving to an int raise; a /regex/ is
+        not an identity, so it raises here. Any other bound is
+        _range_bound()'s."""
+        if function is None:
+            raise ValueError("function cannot be None")
+        arg = function.arg
+        if isinstance(arg, Name3):
+            if not isinstance(arg.arg, str):
+                raise ReferenceException3(
+                    f"':{function.name}(:name())' takes a statement identity "
+                    "string, not a regex."
+                )
+            return arg.arg
+        return cls._range_bound(function)
 
     @staticmethod
     def _slice_by_position(

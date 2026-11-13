@@ -5123,6 +5123,16 @@ class TestNameThreeRange:
         ).query()
         assert results.uuids == ["v2", "v3", "v4"]
 
+    def test_a_name_bound_on_versions_raises(self):
+        # named-file versions have no statement identity; a string here is
+        # a date, so a ':name()' bound must not be read as one (2026-11-13)
+        with pytest.raises(ReferenceException3, match="statement identit"):
+            _finder(
+                '$ranger.files.:name("orders.csv").:from(:name("2026-01-02"))',
+                RANGE_HOME,
+                RANGE_MANIFEST,
+            ).query()
+
     def test_date_mode_from_and_to_together_is_an_inclusive_range(self):
         # the bare-string shape (no ':date()' wrapper) is also valid,
         # same as RESULTS' own date-mode.

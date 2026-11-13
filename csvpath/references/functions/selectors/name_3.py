@@ -18,9 +18,11 @@ class Name3(Function3):
     # shared by every finder's own path-matching primitive, reusing
     # :idchain()'s own already-settled Regex3 semantics (search(), not
     # anchored -- see idchain_3.py's own docstring for why) rather than
-    # inventing a second convention. "@var" here is a separate, still-
-    # open gap (runtime variable lookup as some OTHER function's own
-    # direct argument) -- not addressed by this.
+    # inventing a second convention. "@var" here was called a separate,
+    # still-open gap; as a nested range-bound argument
+    # (':from(:name(@x))') it is resolved by ReferenceFinder3.
+    # _resolve_arg() (2026-08-27) before use, tested 2026-11-13. Not
+    # re-checked here for the name_one path-segment position.
     #
     NAME = "name"
     SUMMARY = (

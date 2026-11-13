@@ -3,6 +3,7 @@ import pytest
 from csvpath.references.functions.selectors.before_3 import Before3
 from csvpath.references.functions.selectors.date_3 import Date3
 from csvpath.references.functions.selectors.index_3 import Index3
+from csvpath.references.functions.selectors.name_3 import Name3
 from csvpath.references.functions.values.year_3 import Year3
 from csvpath.references.functions.filters.predicate_function_3 import (
     PredicateFunction3,
@@ -37,6 +38,12 @@ def test_is_also_a_predicate_function():
 
 def test_int_arg_is_valid():
     Before3(arg=-3).check_valid()  # should not raise
+
+
+def test_nested_name_arg_is_valid():
+    # a statement identity in a name_three range (NRE "Identities"),
+    # added 2026-11-13
+    Before3(arg=Name3(arg="header checks")).check_valid()  # should not raise
 
 
 def test_nested_index_arg_is_valid():
@@ -76,6 +83,12 @@ class TestMatches:
         f = Before3(arg=Index3(arg=10))
         assert f.matches(9) is True
         assert f.matches(10) is False
+
+    def test_name_bound_is_rejected_clearly(self):
+        # ':name()' is a statement identity, not a number to compare
+        # (2026-11-13)
+        with pytest.raises(ReferenceException3, match="name"):
+            Before3(arg=Name3(arg="x")).matches(1)
 
     def test_time_window_function_bound_is_rejected_clearly(self):
         # nonsensical as a predicate -- comparing a plain count against
