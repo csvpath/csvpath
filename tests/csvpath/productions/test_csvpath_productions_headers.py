@@ -160,3 +160,44 @@ class TestCsvPathProductionsHeaders(unittest.TestCase):
         path.add_to_config("errors", "csvpath", "raise, collect, print")
         with pytest.raises(UnexpectedCharacters):
             path.fast_forward()  # pragma: no cover
+
+
+NUMERIC_LIKE = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}numeric_like_headers.csv"
+
+
+def _header_value(header: str):
+    # numeric_like_headers.csv: a,-1,1.5,1_0,b / A,NEG,DECIMAL,UNDERSCORE,LAST
+    path = CsvPath()
+    path.parse(f"""${NUMERIC_LIKE}[1][ @v = {header} ]""")
+    path.fast_forward()
+    return path.variables.get("v")
+
+
+class TestCsvPathProductionsNumericLikeHeaderNames(unittest.TestCase):
+    """A header name that only looks numeric is a name. Only a decimal is a
+    0-based position (docs/headers.md). Before, "-1" was the last column,
+    "1.5" was column 1 and "1_0" was column 10."""
+
+    def test_negative_looking_name_is_a_name(self):
+        assert _header_value('#"-1"') == "NEG"
+
+    def test_decimal_looking_name_is_a_name(self):
+        assert _header_value('#"1.5"') == "DECIMAL"
+
+    def test_underscore_digits_name_is_a_name(self):
+        assert _header_value("#1_0") == "UNDERSCORE"
+
+    def test_decimal_is_still_a_position(self):
+        assert _header_value("#1") == "NEG"
+        assert _header_value('#"4"') == "LAST"
+
+    def test_padded_decimal_is_still_a_position(self):
+        assert _header_value('#" 2 "') == "DECIMAL"
+
+    def test_names_are_looked_up_exactly(self):
+        assert _header_value("#b") == "LAST"
+        assert _header_value('#" b "') is None
+        assert _header_value("#nope") is None
+
+    def test_position_past_the_end_is_none(self):
+        assert _header_value('#"9"') is None

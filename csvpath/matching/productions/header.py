@@ -34,7 +34,17 @@ class Header(Matchable):
             else:
                 ret = self.matcher.line[int(self.name)]
         else:
-            n = self.matcher.header_index(self.name)
+            #
+            # a quoted name keeps its spaces, e.g. #" 2 ". if it is a decimal
+            # once stripped it is a position, as matcher.header_index() ->
+            # to_int() made it. anything else is only a name, looked up
+            # exactly as written. to_int() also turned "-1", "1.5" and "1_0"
+            # into positions -1, 1 and 10, and re-parsed on every line.
+            #
+            if self.name.strip().isdecimal():
+                n = int(self.name.strip())
+            else:
+                n = self.matcher.csvpath.header_index(self.name)
             if n is None:
                 ret = None
             elif self.matcher.line and len(self.matcher.line) > n:
