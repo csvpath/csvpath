@@ -828,18 +828,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # time_3.py) is a real arrival-date concept, the same one
             # RESULTS already filters run-level ranges by) FILTERS by
             # each version's own "time" manifest field instead, via the
-            # shared _apply_manifest_date_range(). Mixing the two modes
-            # in one lower/upper pair is rejected -- not because
-            # it is meaningless (e.g.
-            # ":from(:date('2025-01-01')):to(:index(10))" is a
-            # reasonable ask: "10 versions starting from this date"),
-            # but because it is AMBIGUOUS and undecided which of at
-            # least two readings is meant -- is the index bound
-            # absolute position in the full version list, or relative
-            # to wherever the date bound starts matching? Nothing here
-            # picks one, so mixing is rejected until that anchor
-            # semantics question is deliberately settled, not attempted
-            # here for lack of a driving use case.
+            # shared _apply_manifest_date_range(). The two modes may mix
+            # (6.32) only as a non-negative index lower bound with a date
+            # upper bound, where both readings of the index agree; e.g.
+            # ":from(:date('2025-01-01')):to(:index(10))" ("10 versions
+            # starting from this date"?) still raises, since whether the
+            # index counts from the start of the list or from the date
+            # anchor is not settled (6.29, 6.30; decision log W4). See
+            # ReferenceFinder3._apply_mixed_range().
             from_bound = self._range_bound(lower_call) if lower_call is not None else None
             to_bound = self._range_bound(upper_call) if upper_call is not None else None
             # a TimeWindowFunction3 bound has nothing to validate this

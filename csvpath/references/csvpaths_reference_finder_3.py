@@ -1306,7 +1306,8 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         (int/:index(n)) POSITIONALLY slices via the shared
         _apply_range(); date-mode (str/:date(...)) FILTERS by each
         version's own "time" manifest field via the shared
-        _apply_manifest_date_range(). At most one pointer function is
+        _apply_manifest_date_range(), the two mixed where 6.32 allows
+        (_apply_mixed_range()). At most one pointer function is
         allowed among the combined chain (build_chain() enforces this):
         if present, it reduces the (possibly filtered/windowed) list to
         that one version -- riding alongside ':from()'/':to()', it

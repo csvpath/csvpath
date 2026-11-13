@@ -241,8 +241,8 @@ class ReferenceFinder3(ABC):
         functions (':after()'+':to()', ':from()'+':before()') -- 6.28's
         own explicit example, ':from(:index(5)):to(:yesterday())', pairs
         two different-mode functions without issue; mixing INDEX-mode
-        and DATE-mode bounds in one pair is a separate, pre-existing
-        check each finder already makes after calling this."""
+        and DATE-mode bounds in one pair is applied, or for the unsettled
+        shapes raised, by _apply_mixed_range()."""
         lowers = [f for f in built if f.name in ("from", "after")]
         uppers = [f for f in built if f.name in ("to", "before")]
         if len(lowers) > 1:
@@ -412,12 +412,15 @@ class ReferenceFinder3(ABC):
         is "the 3rd ... through the last result that happened before" the
         date). An index bound is a position in the whole ordered list, a
         date bound a filter on each entry's time, so the range is both:
-        the index bounds slice, then the date bounds filter. With one mode
-        only, it is that mode's own range. `date_filter` is the datatype's
-        date filter, called as date_filter(entries, lower, upper).
-        Mixing raised until 2026-11-12 (David, spec review item 3: "the
-        specs are consistent and not illogical, therefore the code is
-        wrong")."""
+        the index bound slices, then the date bound filters. Only a
+        non-negative index lower bound with a date upper bound is mixed
+        (the NRE's shape): there an index counted from the start and one
+        counted from the date anchor agree. The other mixes raise until
+        David settles the anchor (decision log W4). With one mode only, it
+        is that mode's own range. `date_filter` is the datatype's date
+        filter, called as date_filter(entries, lower, upper). Mixing
+        raised until 2026-11-12 (David, spec review item 3: "the specs are
+        consistent and not illogical, therefore the code is wrong")."""
         if entries is None:
             raise ValueError("entries cannot be None")
         if date_filter is None:
@@ -432,6 +435,24 @@ class ReferenceFinder3(ABC):
         index_upper = None if is_date(upper_call) else upper_call
         date_lower = lower_call if is_date(lower_call) else None
         date_upper = upper_call if is_date(upper_call) else None
+        mixed = (index_lower or index_upper) and (date_lower or date_upper)
+        if mixed and not (
+            index_lower is not None
+            and isinstance(cls._range_bound(index_lower), int)
+            and cls._range_bound(index_lower) >= 0
+        ):
+            # only a non-negative index lower bound with a date upper
+            # bound is supported: there an index counted from the start of
+            # the list and one counted from the date anchor (compendium
+            # 6.29, 6.30) give the same answer. Otherwise they differ, and
+            # which one is meant waits for David (decision log W4).
+            raise ReferenceException3(
+                "Mixing a date lower bound with an index upper bound, or a "
+                "negative index with a date bound, is not supported yet: "
+                "whether the index counts from the start of the list or "
+                "from the date anchor (compendium 6.29, 6.30) is not "
+                "settled."
+            )
         if index_lower is not None or index_upper is not None:
             entries = cls._apply_range(entries, index_lower, index_upper)
         if date_lower is not None or date_upper is not None:

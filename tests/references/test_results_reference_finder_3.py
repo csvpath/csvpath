@@ -7341,12 +7341,19 @@ class TestMixedIndexAndDateRange:
             "run-2026-01-10_07-00-00",
         ]
 
-    def test_a_date_lower_bound_with_an_index_upper_bound(self, runs):
-        # positions up to 3, at or after Jan 5: the index counts in the
-        # whole list, not from where the date bound starts matching
-        reference = '$alpha.results.*:from(:date("2026-01-05")):to(3)'
-        assert _finder(reference, runs).query().uuids == [
-            "run-2026-01-05_00-00-00",
-            "run-2026-01-08_00-00-00",
-            "run-2026-01-10_07-00-00",
-        ]
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            # where the two readings of the index differ (6.29, 6.30:
+            # "an index counts from the anchor"), the mix raises until
+            # David settles it (decision log W4): "3 runs from Jan 9"
+            # would be [] counted from the start, three runs counted
+            # from the date
+            '$alpha.results.*:from(:date("2026-01-09")):to(2)',
+            '$alpha.results.*:from(-3):to(:date("2026-01-10_08-00-00"))',
+        ],
+    )
+    def test_an_unsettled_mix_raises(self, runs, reference):
+        with pytest.raises(ReferenceException3) as error:
+            _finder(reference, runs).query()
+        assert "not settled" in str(error.value)

@@ -529,10 +529,6 @@ class TestVersionRange:
                 ["v1-uuid", "v2-uuid"],
             ),
             (
-                '$dater.csvpaths.:from(:date("2026-01-02")):to(3)',
-                ["v1-uuid", "v2-uuid", "v3-uuid"],
-            ),
-            (
                 '$dater.csvpaths.:after(1):before(:date("2026-01-05"))',
                 ["v2-uuid", "v3-uuid"],
             ),
@@ -540,6 +536,22 @@ class TestVersionRange:
     )
     def test_index_and_date_bounds_mix(self, reference, expected):
         assert _finder(reference, VERSION_RANGE_MANIFEST).query().uuids == expected
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            # a date lower bound with an index upper bound, or a negative
+            # index beside a date bound: whether the index counts from the
+            # start or from the date anchor (6.29, 6.30) changes the
+            # answer, and waits for David (decision log W4)
+            '$dater.csvpaths.:from(:date("2026-01-02")):to(3)',
+            '$dater.csvpaths.:from(-3):to(:date("2026-01-04"))',
+        ],
+    )
+    def test_an_unsettled_mix_raises(self, reference):
+        with pytest.raises(ReferenceException3) as error:
+            _finder(reference, VERSION_RANGE_MANIFEST).query()
+        assert "not settled" in str(error.value)
 
     def test_date_mode_accepts_the_optional_time_suffix(self):
         # issue #409 -- David's own exact repro:

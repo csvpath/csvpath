@@ -1156,9 +1156,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         below, the SAME run-level range query()'s own literal-root path
         already fully supports) are the built ':from()'/':to()' (or
         ':after()'/':before()') calls, validated here exactly the way
-        query()'s own literal-root path does (mixing-mode rejection,
-        date-format validation) -- the actual application (index-mode
-        positional slice vs. date-mode filter, per-partition in GROUP
+        query()'s own literal-root path does (date-format validation)
+        -- the actual application (_apply_mixed_range(): the index
+        bound's slice, then the date bound's filter, per-partition in GROUP
         mode) happens in _star_pool_and_reduce()/_star_group_and_reduce(),
         which both already receive them. field_calls
         (added 2026-10-18, alongside :error_count()'s own predicate-
@@ -1256,8 +1256,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # ':from()'/':to()' as a run-level range, now supported during
         # '*' traversal too (built 2026-10-21 -- see this method's own
         # docstring) -- validated here the same way query()'s own
-        # literal-root path validates it (mixing-mode rejection, date-
-        # format check); the actual application happens in
+        # literal-root path validates it (date-format check); the actual
+        # application happens in
         # _star_pool_and_reduce()/_star_group_and_reduce().
         lower_call, upper_call = self._range_calls_from_built(built)
         if lower_call is not None or upper_call is not None:
@@ -3068,10 +3068,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     def _apply_run_level_range(
         cls, run_homes: list, lower_call, upper_call
     ) -> list:
-        """picks index-mode (positional slice, via the shared
-        ReferenceFinder3._apply_range()) vs. date-mode (filter, via
-        this class's own _apply_date_range()) by each bound's own value
-        type -- added 2026-10-21, extracted so _star_pool_and_reduce()/
+        """a run-level range: the index bound's positional slice
+        (ReferenceFinder3._apply_range()) and the date bound's filter
+        (this class's own _apply_date_range()), mixed where 6.32 allows
+        (ReferenceFinder3._apply_mixed_range()) -- added 2026-10-21,
+        extracted so _star_pool_and_reduce()/
         _star_group_and_reduce() can apply a run-level ':from()'/':to()'
         range during '*' traversal the same way query()'s own literal-
         root path already does (that path's own equivalent dispatch is
