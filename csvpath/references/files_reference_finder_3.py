@@ -804,7 +804,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
         has_all = any(f.name == "all" for f in built)
         lower_call, upper_call = self._range_calls_from_built(built)
         has_range = lower_call is not None or upper_call is not None
-        from_is_date = to_is_date = False
         from_bound = to_bound = None
         if has_range:
             # ':from()'/':to()' (inclusive) or their exclusive siblings
@@ -843,19 +842,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # here for lack of a driving use case.
             from_bound = self._range_bound(lower_call) if lower_call is not None else None
             to_bound = self._range_bound(upper_call) if upper_call is not None else None
-            # TimeWindowFunction3 (":year()"/":date(...)"/etc, compendium
-            # 6.27, added 2026-10-17) is date-mode too, same as a plain
-            # string -- _range_bound() returns it as-is now, not
-            # unwrapped to a raw value (see its own docstring).
-            from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
-            to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
-            if (from_bound is not None and to_bound is not None) and (
-                from_is_date != to_is_date
-            ):
-                raise ReferenceException3(
-                    "FilesReferenceFinder3 does not support mixing index-"
-                    "mode and date-mode range bounds in the same range."
-                )
             # a TimeWindowFunction3 bound has nothing to validate this
             # way -- never a raw user-supplied string (Date3 already
             # validates its own format at construction); only a bare
@@ -945,12 +931,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     cands, bare_time_window
                 )
             elif has_range:
-                if from_is_date or to_is_date:
-                    cands = self._apply_manifest_date_range(
-                        cands, lower_call, upper_call
-                    )
-                else:
-                    cands = self._apply_range(cands, lower_call, upper_call)
+                # index and date bounds may mix (6.32)
+                cands = self._apply_mixed_range(
+                    entries=cands,
+                    lower_call=lower_call,
+                    upper_call=upper_call,
+                    date_filter=self._apply_manifest_date_range,
+                )
             return self._filter_by_gates(
                 reference=reference, gates=gates, candidates=cands
             )
@@ -1430,13 +1417,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
             to_bound = self._range_bound(upper_call) if upper_call is not None else None
             from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
             to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
-            if (from_bound is not None and to_bound is not None) and (
-                from_is_date != to_is_date
-            ):
-                raise ReferenceException3(
-                    "FilesReferenceFinder3 does not support mixing index-"
-                    "mode and date-mode range bounds in the same range."
-                )
             if isinstance(from_bound, str):
                 self._validate_date_format(from_bound)
             if isinstance(to_bound, str):
@@ -1464,7 +1444,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # version's own time, so with no pointer it keeps the pooled,
         # time-ordered list.
         #
-        index_range = has_range and not (from_is_date or to_is_date)
+        # an index bound groups like a pointer (4.1b), mixed with a date
+        # bound or not (6.32)
+        index_range = (from_bound is not None and not from_is_date) or (
+            to_bound is not None and not to_is_date
+        )
         by_named_file = named_file_of is not None
 
         def _narrow(cands: list) -> list:
@@ -1475,12 +1459,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     cands, bare_time_window
                 )
             elif has_range:
-                if from_is_date or to_is_date:
-                    cands = self._apply_manifest_date_range(
-                        cands, lower_call, upper_call
-                    )
-                else:
-                    cands = self._apply_range(cands, lower_call, upper_call)
+                # index and date bounds may mix (6.32)
+                cands = self._apply_mixed_range(
+                    entries=cands,
+                    lower_call=lower_call,
+                    upper_call=upper_call,
+                    date_filter=self._apply_manifest_date_range,
+                )
             return self._filter_by_gates(
                 reference=reference, gates=gates, candidates=cands
             )
@@ -2573,18 +2558,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
         bounds = [
             self._range_bound(c) for c in (lower_call, upper_call) if c is not None
         ]
-        is_date = [isinstance(b, (str, TimeWindowFunction3)) for b in bounds]
-        if len(set(is_date)) > 1:
-            raise ReferenceException3(
-                "FilesReferenceFinder3 does not support mixing index-"
-                "mode and date-mode range bounds in the same range."
-            )
         for bound in bounds:
             if isinstance(bound, str):
                 self._validate_date_format(bound)
-        if is_date[0]:
-            return self._apply_manifest_date_range(entries, lower_call, upper_call)
-        return self._apply_range(entries, lower_call, upper_call)
+        # index and date bounds may mix (6.32)
+        return self._apply_mixed_range(
+            entries=entries,
+            lower_call=lower_call,
+            upper_call=upper_call,
+            date_filter=self._apply_manifest_date_range,
+        )
 
     def _manifest_chain_field_value(
         self, *, reference: Reference3, function_cls: type, entry: dict | None

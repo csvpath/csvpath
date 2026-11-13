@@ -517,12 +517,29 @@ class TestVersionRange:
         ).query()
         assert results.uuids == ["v1-uuid", "v2-uuid", "v3-uuid"]
 
-    def test_mixing_index_mode_and_date_mode_bounds_is_rejected(self):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$dater.csvpaths.:from(1):to(:date("2026-01-01"))',
-                VERSION_RANGE_MANIFEST,
-            ).query()
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # index and date bounds may mix (6.32, NRE 781): the index
+            # bound is a position in the whole list, the date bound a
+            # filter, and the range is both. These raised until 2026-11-12.
+            ('$dater.csvpaths.:from(1):to(:date("2026-01-01"))', []),
+            (
+                '$dater.csvpaths.:from(1):to(:date("2026-01-03"))',
+                ["v1-uuid", "v2-uuid"],
+            ),
+            (
+                '$dater.csvpaths.:from(:date("2026-01-02")):to(3)',
+                ["v1-uuid", "v2-uuid", "v3-uuid"],
+            ),
+            (
+                '$dater.csvpaths.:after(1):before(:date("2026-01-05"))',
+                ["v2-uuid", "v3-uuid"],
+            ),
+        ],
+    )
+    def test_index_and_date_bounds_mix(self, reference, expected):
+        assert _finder(reference, VERSION_RANGE_MANIFEST).query().uuids == expected
 
     def test_date_mode_accepts_the_optional_time_suffix(self):
         # issue #409 -- David's own exact repro:

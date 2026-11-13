@@ -1433,46 +1433,25 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         elif from_call is not None or to_call is not None:
             from_bound = self._range_bound(from_call) if from_call is not None else None
             to_bound = self._range_bound(to_call) if to_call is not None else None
-            # TimeWindowFunction3 (":year()"/":date(...)"/etc, compendium
-            # 6.27, added 2026-10-17) is date-mode too, same as a plain
-            # string -- _range_bound() returns it as-is now, not
-            # unwrapped to a raw value (see its own docstring).
-            from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
-            to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
-            if (from_bound is not None and to_bound is not None) and (
-                from_is_date != to_is_date
-            ):
-                # rejected -- not because it is meaningless (e.g.
-                # ":from(:date('2025-01-01')):to(:index(10))" is a
-                # reasonable ask: "10 versions starting from this
-                # date"), but because it is AMBIGUOUS and undecided
-                # which of at least two readings is meant -- is the
-                # index bound absolute position in the full version
-                # list, or relative to wherever the date bound starts
-                # matching? Nothing here picks one, so mixing is
-                # rejected until that anchor semantics question is
-                # deliberately settled, not attempted here for lack of
-                # a driving use case (same reasoning as RESULTS'/FILES'
-                # own version-level ranges).
-                raise ReferenceException3(
-                    "CsvpathsReferenceFinder3 does not support mixing "
-                    "index-mode and date-mode range bounds in the same "
-                    "range."
-                )
-            if from_is_date or to_is_date:
-                # a TimeWindowFunction3 bound has nothing to validate
-                # this way -- never a raw user-supplied string (Date3
-                # already validates its own format at construction);
-                # only a bare string bound needs this check.
-                if isinstance(from_bound, str):
-                    self._validate_date_format(from_bound)
-                if isinstance(to_bound, str):
-                    self._validate_date_format(to_bound)
-                manifest = self._apply_manifest_date_range(
-                    manifest, from_call, to_call
-                )
-            else:
-                manifest = self._apply_range(manifest, from_call, to_call)
+            # index and date bounds may mix (6.32): an index bound is a
+            # position in the whole version list and a date bound a filter
+            # on each version's time -- the NRE's "identify the 3rd result
+            # in the range, collect from 3rd through the last result that
+            # happened before" the date settles the anchor question this
+            # used to reject on (2026-11-12, David, spec review item 3).
+            # A TimeWindowFunction3 bound has nothing to validate this way
+            # (Date3 validates its own format at construction); only a
+            # bare string bound needs this check.
+            if isinstance(from_bound, str):
+                self._validate_date_format(from_bound)
+            if isinstance(to_bound, str):
+                self._validate_date_format(to_bound)
+            manifest = self._apply_mixed_range(
+                entries=manifest,
+                lower_call=from_call,
+                upper_call=to_call,
+                date_filter=self._apply_manifest_date_range,
+            )
         # then the gates: a range comes before a filter, whatever the
         # written order (compendium 6.28), and the pointer picks from what
         # the gates leave (finding A, David 2026-10-29).
