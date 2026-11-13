@@ -1234,6 +1234,24 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # not organized by name the way per-name enumeration is
             # elsewhere in this method.
             manifest_field_call = self._bare_manifest_field_call(name_one)
+            if (
+                ReferenceFunctionFactory.get_registered_class(
+                    manifest_field_call.name
+                ).SOURCE
+                == "computed"
+            ):
+                # e.g. ':named_file_home()': computed from the root, which is
+                # not a name here. As CSVPATHS does for ':named_paths_home()'
+                # (RMF section 4: only with a literal root_major). It raised
+                # TypeError before #593, then read each live record's home;
+                # reading the ledger's own name_home is decision log W7
+                # (2026-11-12).
+                raise ReferenceException3(
+                    f"FilesReferenceFinder3 does not support "
+                    f":{manifest_field_call.name}() combined with '*'/:regex()/"
+                    ":choice() traversal -- root_major must be a literal "
+                    "named-file name."
+                )
             if reference.name_three is not None:
                 # settled, not a gap -- the '*' traversal twin of the
                 # literal-root restriction query() raises for the same
