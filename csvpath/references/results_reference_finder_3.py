@@ -705,6 +705,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     range_bounds,
                     accessor,
                     instance_pointer,
+                    gates=self._name_three_gates(self.ref.parsed.name_three),
                 )
             )
         return ReferenceResults3(
@@ -1520,6 +1521,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         range_bounds,
                         accessor,
                         instance_pointer,
+                        gates=self._name_three_gates(self.ref.parsed.name_three),
                     )
                 )
             return ReferenceResults3(
@@ -1531,7 +1533,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if selected is None:
             return ReferenceResults3(results=[])
         results = self._results_for_run(
-            selected, identity, match_all, range_bounds, accessor, instance_pointer
+            selected,
+            identity,
+            match_all,
+            range_bounds,
+            accessor,
+            instance_pointer,
+            gates=self._name_three_gates(self.ref.parsed.name_three),
         )
         return ReferenceResults3(
             results=results,
@@ -2204,6 +2212,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         range_bounds,
                         accessor,
                         instance_pointer,
+                        gates=self._name_three_gates(self.ref.parsed.name_three),
                     )
                 )
         return ReferenceResults3(
@@ -2484,6 +2493,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return self._instance_dir_field_value(
                     instance_dir=result.path, field_call=field_call
                 )
+            if self._name_three_gates(reference.name_three):
+                # only gates: nothing supplies a value, so it resolves as
+                # it would without them, an instance with no default
+                # payload (finding D; as FILES does), 2026-11-12
+                return None
         if kind != Reference3.FIRST_PARTY:
             # confirmed unreachable via any real reference (not-yet-
             # supported sweep #10), not a pending gap: by the time
@@ -2706,6 +2720,43 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         dropped via an existence check."""
         return self.source.run_homes(root_major=root_major, name_filter=name_filter)
 
+    def _name_three_gates(self, name_three) -> list:
+        """the argued field accessors in a run-dir name_three: gates that
+        filter the selected instances by each one's own value (compendium
+        6.40, 6.1; 6.13b's ':all():manifest():valid(:false())'), whatever
+        the written order. Every RESULTS field argument is a filter (see
+        _last_value_field_call()). None of them supplies the value."""
+        if name_three is None or not name_three.functions:
+            return []
+        built = self._build_chain(name_three.functions)
+        fields = self._find_field_function_calls(built, self.ref.parsed.datatype)
+        return [f for f in fields if f.arg is not None]
+
+    def _gate_instances(
+        self, *, run_dir: str, instances: list, gates: list
+    ) -> list:
+        """the instance identities of `run_dir` whose fields match every
+        gate (ANDed), read the way resolve() reads them
+        (_instance_dir_field_value())."""
+        if run_dir is None or run_dir == "":
+            raise ValueError("Run dir cannot be None or empty")
+        if instances is None:
+            raise ValueError("Instances cannot be None")
+        if gates is None:
+            raise ValueError("Gates cannot be None")
+        for gate in gates:
+            instances = [
+                inst
+                for inst in instances
+                if self._matches_field_predicate(
+                    self._instance_dir_field_value(
+                        instance_dir=Nos(run_dir).join(inst), field_call=gate
+                    ),
+                    gate.arg,
+                )
+            ]
+        return instances
+
     def _results_for_run(
         self,
         run_dir: str,
@@ -2714,6 +2765,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         range_bounds: tuple | None = None,
         accessor=None,
         instance_pointer=None,
+        *,
+        gates: list | None = None,
     ) -> list[ReferenceResult3]:
         if (
             identity is None
@@ -2731,6 +2784,17 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             return [ReferenceResult3(path=path, uuid=uuid)]
 
         instances = self._list_instance_identities(run_dir)
+        ranged = False
+        if gates:
+            # a range first, then the gates, then the pointer or the
+            # identity picks from what is left (6.28; as in
+            # _manifest_set_select_instances())
+            if range_bounds is not None:
+                instances = self._apply_range(instances, *range_bounds)
+                ranged = True
+            instances = self._gate_instances(
+                run_dir=run_dir, instances=instances, gates=gates
+            )
         if match_all:
             matched = instances
         elif instance_pointer is not None:
@@ -2758,7 +2822,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # run is fine with an accessor, same as a bare pointer
             # narrowing a run-list to one already is.
             from_call, to_call = range_bounds
-            matched = self._apply_range(instances, from_call, to_call)
+            matched = (
+                instances
+                if ranged
+                else self._apply_range(instances, from_call, to_call)
+            )
             if len(matched) > 1 and accessor is not None:
                 raise ReferenceException3(
                     "ResultsReferenceFinder3 requires ':from()'/':to()' to "
@@ -3120,7 +3188,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # _extract_data(). Instance call (not the class-qualified
             # staticmethod this used to be), since _last_field_function_
             # call() needs self.csvpaths.logger to warn on ambiguity.
-            field_call = self._last_field_function_call(built)
+            field_call = self._last_value_field_call(built)
+            # an argued field is a gate on the instances (6.40, 6.1; a
+            # filter doesn't return a value, David 2026-10-29), applied by
+            # _results_for_run(); see _name_three_gates(). It was taken as
+            # the value field until 2026-11-12, its argument ignored.
+            gates = [
+                f
+                for f in self._find_field_function_calls(
+                    built, self.ref.parsed.datatype
+                )
+                if f.arg is not None
+            ]
             # from_call/to_call here mean LOWER/UPPER bound, not
             # literally ":from()'/':to()' -- generalized 2026-10-16
             # (compendium 6.28) to also recognize their exclusive
@@ -3139,6 +3218,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 elif f.name in ResultsReferenceFinder3._ACCESSOR_NAMES:
                     accessor = f
                 elif f is field_call:
+                    continue
+                elif any(f is g for g in gates):
                     continue
                 elif f.name == "manifest":
                     # the instance's own manifest.json (compendium 6.14,

@@ -1,5 +1,6 @@
 from ...reference_3 import Reference3
 from ..function_3 import Function3
+from ..filters.predicate_function_3 import PredicateFunction3
 
 
 class Valid3(Function3):
@@ -23,7 +24,10 @@ class Valid3(Function3):
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.RESULTS,)
-    ARG_TYPES = ()
+    # a predicate argument makes it a filter (compendium 6.13b:
+    # '.:all():manifest():valid(:false())'), 2026-11-12. It refused any
+    # argument until then.
+    ARG_TYPES = (PredicateFunction3,)
     ARG_REQUIRED = False
     SOURCE = "manifest"
     KEY = {
