@@ -12,17 +12,18 @@ class To3(Function3):
     # INCLUSIVE of its own position/date (matches :index(n) pointing AT
     # a position, and SQL's BETWEEN, which David explicitly named as
     # the model): ":from(2):to(5)" is positions 2 through 5, both ends
-    # included, five items total; ":to(:date('2025-01-31'))" includes
-    # runs that arrived ON 2025-01-31 itself, not just before it.
+    # included, five items total. A date bound is its first moment
+    # (6.27b, 6.27g): ":to(:date('2025-01-31'))" includes runs up to
+    # and at 2025-01-31 00:00:00, so it "effectively misses one day"
+    # (normative examples; decision D8, 2026-11-12 -- it included the
+    # whole 31st until then).
     #
     # ARG_TYPES widened 2026-10-17 from Date3 specifically to
     # TimeWindowFunction3 generically (compendium 6.27) -- ":to(:year())"/
     # ":to(:month())"/etc are now equally legal, using that function's
-    # own end_datetime() as the inclusive upper cutoff (see
-    # TimeWindowFunction3's own docstring for the four-way directional
-    # rule). Date3 is itself a TimeWindowFunction3 now, so this is
-    # strictly a widening, not a change for the already-shipped
-    # ":to(:date(...))" shape.
+    # own start_datetime() as the inclusive upper cutoff (see
+    # TimeWindowFunction3's own docstring for the rule; decision D8).
+    # Date3 is itself a TimeWindowFunction3 now.
     #
     NAME = "to"
     SUMMARY = (
@@ -30,9 +31,10 @@ class To3(Function3):
         "index-mode: up to and including this 0-based position "
         "(negative counts from the end), from the start or from "
         ":from()'s position if present. date-mode: up to and including "
-        "this calendar date (or the end of a coarser time-component "
-        "function's own period, e.g. :year()/:month()), compared "
-        "against each run's own arrival date."
+        "the first moment of this date or time-component function (e.g. "
+        ":date('2026-01-31') is 2026-01-31 00:00:00, so the rest of that "
+        "day is not included; :month() is the month's first moment), "
+        "compared against each run's own arrival date."
     )
     ROLE = Function3.CONTEXT_SETTER
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)

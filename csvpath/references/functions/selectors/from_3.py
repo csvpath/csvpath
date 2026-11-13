@@ -46,10 +46,10 @@ class From3(Function3):
     # TimeWindowFunction3 generically (compendium 6.27) -- ":from(
     # :year())"/":from(:month())"/etc are now equally legal, using that
     # function's own start_datetime() as the inclusive lower cutoff
-    # (see TimeWindowFunction3's own docstring for the four-way
-    # directional rule). Date3 is itself a TimeWindowFunction3 now, so
-    # this is strictly a widening, not a change for the already-shipped
-    # ":from(:date(...))" shape.
+    # (see TimeWindowFunction3's own docstring for the rule, every bound
+    # its first moment; decision D8). Date3 is itself a
+    # TimeWindowFunction3 now, so this is strictly a widening, not a
+    # change for the already-shipped ":from(:date(...))" shape.
     #
     NAME = "from"
     SUMMARY = (

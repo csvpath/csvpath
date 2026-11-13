@@ -31,20 +31,20 @@ class TimeWindowFunction3(Function3):
     those three stay plain SOURCE == "clock" VALUE functions, extending
     Function3 directly, unchanged.
 
-    Resolved against four directional rules (David confirmed 2026-10-17,
-    reconciling 6.27b's literal "first moment" text against 6.27f's own
-    worked example and the already-shipped day-granular :before()/
-    :after() "excludes the whole day it names" behavior -- using only
-    the first moment does not reproduce either for the exclusive-upper/
-    lower cases):
+    As an anchor of a directional function it is its first moment
+    (compendium 6.27b; 6.27g: "the first moment of the day prior when
+    used as a direction anchor"):
         :from(X)   keeps candidates >= X.start_datetime
-        :to(X)     keeps candidates <= X.end_datetime
+        :to(X)     keeps candidates <= X.start_datetime
         :before(X) keeps candidates <  X.start_datetime
-        :after(X)  keeps candidates >  X.end_datetime
-    and, bare/standalone (no :from()/:to()/:before()/:after() riding
-    with it), as the implicit two-sided range this same rule set gives
-    for ":from(X):to(X)" -- see ReferenceFinder3._resolve_time_bound()
-    and the per-finder date-range filters that consume it."""
+        :after(X)  keeps candidates >  X.start_datetime
+    So ':to(:date("2026-01-31"))' "effectively misses one day", and
+    ':after()' of a day needs that day's last moment to mean after it
+    (normative examples; David, review item 7, 2026-10-31: "the specs
+    are in consistent agreement, so the code is wrong"). Until
+    2026-11-12 ':to()' and ':after()' used X.end_datetime, a four-way
+    rule confirmed 2026-10-17 (decision D8). Bare and standalone, with
+    no directional function, it is its whole window, start to end."""
 
     def start_datetime(self) -> datetime:
         raise NotImplementedError(

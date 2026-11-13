@@ -2117,6 +2117,17 @@ class TestManifestChainRanges:
             ("$*.files.:manifest():yesterday():last()", ["l4"]),
             ("$*.files.:manifest():from(1):to(2)", ["l2", "l3"]),
             ('$*.files.:manifest():from(:date("2026-01-03"))', ["l3", "l4", "l5"]),
+            # an anchor is its first moment (6.27b, 6.27g; decision D8):
+            # ':to()' a day "effectively misses one day" (l4 is at noon on
+            # the 3rd), and ':after()' a day keeps the rest of it
+            ('$*.files.:manifest():to(:date("2026-01-03"))', ["l1", "l2", "l3"]),
+            ("$*.files.:manifest():to(:yesterday())", ["l1", "l2", "l3"]),
+            ('$*.files.:manifest():after(:date("2026-01-03"))', ["l4", "l5"]),
+            (
+                '$*.files.:manifest():after(:date("2026-01-03_23-59-59"))',
+                ["l5"],
+            ),
+            ('$*.files.:manifest():before(:date("2026-01-03"))', ["l1", "l2"]),
             ("$:regex(/^b/).files.:manifest():yesterday()", ["l4"]),
             ("$:regex(/^a/).files.:manifest():from(-2)", ["l3", "l5"]),
         ],

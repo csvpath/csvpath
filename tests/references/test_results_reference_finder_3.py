@@ -1510,10 +1510,11 @@ class TestTimeWindowFunctionAnchors:
             "run-today",
         }
 
-    def test_to_month_keeps_up_through_this_months_own_end(self, dated_runs):
-        # :month() -> [2026-06-01, 2026-06-30] -- :to() uses its end,
-        # so everything through the end of June is kept (not just up
-        # to June 1st).
+    def test_to_month_keeps_up_to_this_months_first_moment(self, dated_runs):
+        # an anchor is its first moment (6.27b, 6.27g; decision D8,
+        # 2026-11-12): :month() -> 2026-06-01 00:00:00, so run-jun1 (at
+        # that moment) is kept and the later June runs are not. Until
+        # then ':to()' used the month's end and kept them all.
         results = _finder(
             "$acme.results.customers:to(:month())", dated_runs
         ).query()
@@ -1522,9 +1523,23 @@ class TestTimeWindowFunctionAnchors:
             "run-jan1",
             "run-may1",
             "run-jun1",
-            "run-yesterday",
-            "run-today",
         }
+
+    def test_after_yesterday_keeps_the_rest_of_yesterday(self, pinned_now, tmp_path):
+        # ':after()' an anchor is after its first moment (decision D8): a
+        # run at noon yesterday is after yesterday; one at 00:00 is not.
+        # Until 2026-11-12 ':after()' used the end, and dropped the noon run.
+        base = tmp_path / "acme" / "customers"
+        runs = [
+            _make_run(base, "2026-06-14_00-00-00", "run-midnight", {}),
+            _make_run(base, "2026-06-14_12-00-00", "run-noon", {}),
+            _make_run(base, "2026-06-15_00-00-00", "run-today", {}),
+        ]
+        _write_archive_manifest(tmp_path, "acme", runs)
+        results = _finder(
+            "$acme.results.customers:after(:yesterday())", str(tmp_path)
+        ).query()
+        assert set(results.uuids) == {"run-noon", "run-today"}
 
     def test_before_today_excludes_the_whole_of_today(self, dated_runs):
         # :before(:today()) -> exclusive upper, excludes the WHOLE
@@ -1542,9 +1557,11 @@ class TestTimeWindowFunctionAnchors:
             "run-yesterday",
         }
 
-    def test_after_yesterday_excludes_yesterday_and_earlier(self, dated_runs):
-        # :after(:yesterday()) -> exclusive lower, excludes the whole
-        # of yesterday (and earlier) -- only strictly later survives.
+    def test_after_yesterday_excludes_yesterdays_first_moment(self, dated_runs):
+        # :after(:yesterday()) -> strictly after yesterday 00:00:00 (6.27b;
+        # decision D8). The yesterday run is at that moment, so only
+        # today's survives; a run later yesterday would too (see
+        # test_after_yesterday_keeps_the_rest_of_yesterday).
         results = _finder(
             "$acme.results.customers:after(:yesterday())", dated_runs
         ).query()

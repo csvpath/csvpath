@@ -2926,7 +2926,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         2026-10-17: a bare time-component function riding in the chain
         (e.g. ":yesterday()"), with no explicit ':from()'/':to()' of
         its own. Always INCLUSIVE on both ends, unlike the general
-        four-way rule _apply_date_range() implements for the explicit,
+        first-moment rule _apply_date_range() implements for the explicit,
         directional case -- there is no separate :from()/:to()/
         :before()/:after() here to pick inclusive vs exclusive; the
         bare function always means its own whole period, both ends
@@ -2960,16 +2960,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         Rewritten 2026-10-17 (compendium 6.27, TimeWindowFunction3) from
         a fixed day-only string-prefix comparison to real datetime
         comparison -- see ReferenceFinder3._apply_manifest_date_range()'s
-        own docstring for the full reasoning (identical rewrite, same
-        four-way rule, just applied to run directories instead of
-        manifest entries); reproduces the exact prior behavior for
-        day-granular bounds."""
-        lower_start = lower_end = upper_start = upper_end = None
+        own docstring for the full reasoning (identical rewrite, the
+        same first-moment rule, just applied to run directories instead
+        of manifest entries; decision D8, 2026-11-12)."""
+        # every bound is its first moment (6.27b, 6.27g; decision D8)
+        lower_start = upper_start = None
         if lower_call is not None:
-            lower_start, lower_end = cls._bound_window(lower_call)
+            lower_start, _ = cls._bound_window(lower_call)
         lower_inclusive = lower_call is None or lower_call.name == "from"
         if upper_call is not None:
-            upper_start, upper_end = cls._bound_window(upper_call)
+            upper_start, _ = cls._bound_window(upper_call)
         upper_inclusive = upper_call is None or upper_call.name == "to"
         result = []
         for rh in run_homes:
@@ -2977,10 +2977,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             if lower_start is not None:
                 if lower_inclusive and d < lower_start:
                     continue
-                if not lower_inclusive and d <= lower_end:
+                if not lower_inclusive and d <= lower_start:
                     continue
-            if upper_end is not None:
-                if upper_inclusive and d > upper_end:
+            if upper_start is not None:
+                if upper_inclusive and d > upper_start:
                     continue
                 if not upper_inclusive and d >= upper_start:
                     continue
