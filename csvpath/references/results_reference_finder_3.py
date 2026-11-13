@@ -696,6 +696,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # only resolve()/resolve_from() do, and only when more than one
         # of the pooled results is actually asked for at once.
         results = []
+        instance_gates = self._name_three_gates(self.ref.parsed.name_three)
         for run_dir in selected_runs:
             results.extend(
                 self._results_for_run(
@@ -705,6 +706,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     range_bounds,
                     accessor,
                     instance_pointer,
+                    gates=instance_gates,
                 )
             )
         return ReferenceResults3(
@@ -1511,6 +1513,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         run_homes = sorted(run_homes, key=self._run_dir_sort_key)
         if pointer is None:
             results = []
+            instance_gates = self._name_three_gates(self.ref.parsed.name_three)
             for run_dir in run_homes:
                 results.extend(
                     self._results_for_run(
@@ -1520,6 +1523,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         range_bounds,
                         accessor,
                         instance_pointer,
+                        gates=instance_gates,
                     )
                 )
             return ReferenceResults3(
@@ -1530,8 +1534,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         selected = self._apply_pointer(pointer, run_homes)
         if selected is None:
             return ReferenceResults3(results=[])
+        instance_gates = self._name_three_gates(self.ref.parsed.name_three)
         results = self._results_for_run(
-            selected, identity, match_all, range_bounds, accessor, instance_pointer
+            selected,
+            identity,
+            match_all,
+            range_bounds,
+            accessor,
+            instance_pointer,
+            gates=instance_gates,
         )
         return ReferenceResults3(
             results=results,
@@ -2195,6 +2206,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 selected_runs = [selected] if selected is not None else []
             else:
                 selected_runs = candidates
+            instance_gates = self._name_three_gates(self.ref.parsed.name_three)
             for rh in selected_runs:
                 results.extend(
                     self._results_for_run(
@@ -2204,6 +2216,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         range_bounds,
                         accessor,
                         instance_pointer,
+                        gates=instance_gates,
                     )
                 )
         return ReferenceResults3(
@@ -2484,6 +2497,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return self._instance_dir_field_value(
                     instance_dir=result.path, field_call=field_call
                 )
+            if self._name_three_gates(reference.name_three):
+                # only gates: nothing supplies a value, so it resolves as
+                # the same reference without the gates does, an instance
+                # with no default payload (finding D; FILES finding G is
+                # the same rule), 2026-11-12
+                return None
         if kind != Reference3.FIRST_PARTY:
             # confirmed unreachable via any real reference (not-yet-
             # supported sweep #10), not a pending gap: by the time
@@ -2516,8 +2535,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             raise ValueError("Instance dir cannot be None or empty")
         if field_call is None:
             raise ValueError("Field call cannot be None")
+        return self._instance_entry_field_value(
+            entry=self.source.instance_manifest(instance_dir), field_call=field_call
+        )
+
+    def _instance_entry_field_value(self, *, entry: dict | None, field_call):
+        """the value an instance-level field accessor gives for one
+        instance's manifest.json entry, then its archive ledger entry
+        (LEDGER_KEY). _instance_dir_field_value() reads the entry first;
+        a gate reads it once for all its fields."""
+        if field_call is None:
+            raise ValueError("Field call cannot be None")
         function_cls = ReferenceFunctionFactory.get_registered_class(field_call.name)
-        entry = self.source.instance_manifest(instance_dir)
         key_path = function_cls.KEY.get(Reference3.RESULT)
         value = self._extract_field_value_with_ledger_fallback(
             entry=entry,
@@ -2706,6 +2735,53 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         dropped via an existence check."""
         return self.source.run_homes(root_major=root_major, name_filter=name_filter)
 
+    def _name_three_gates(self, name_three) -> list:
+        """the argued field accessors in a run-dir name_three: gates that
+        filter the selected instances by each one's own value (compendium
+        6.40, 6.1; 6.13b's ':all():manifest():valid(:false())'), whatever
+        the written order. Every RESULTS field argument is a filter (see
+        _last_value_field_call()). None of them supplies the value."""
+        if name_three is None or not name_three.functions:
+            return []
+        return self._gates_from_built(self._build_chain(name_three.functions))
+
+    def _gates_from_built(self, built: list) -> list:
+        """the argued field accessors in a built name_three chain, the
+        one list both _name_three_selector() (to skip them in its
+        dispatch) and _results_for_run() (to filter) use."""
+        if built is None:
+            raise ValueError("Built chain cannot be None")
+        fields = self._find_field_function_calls(built, self.ref.parsed.datatype)
+        return [f for f in fields if f.arg is not None]
+
+    def _gate_instances(
+        self, *, run_dir: str, instances: list, gates: list
+    ) -> list:
+        """the instance identities of `run_dir` whose fields match every
+        gate (ANDed), read the way resolve() reads them
+        (_instance_dir_field_value())."""
+        if run_dir is None or run_dir == "":
+            raise ValueError("Run dir cannot be None or empty")
+        if instances is None:
+            raise ValueError("Instances cannot be None")
+        if gates is None:
+            raise ValueError("Gates cannot be None")
+        if not gates:
+            return instances
+        kept = []
+        for inst in instances:
+            # each instance's manifest.json is read once for every gate
+            entry = self.source.instance_manifest(Nos(run_dir).join(inst))
+            if all(
+                self._matches_field_predicate(
+                    self._instance_entry_field_value(entry=entry, field_call=g),
+                    g.arg,
+                )
+                for g in gates
+            ):
+                kept.append(inst)
+        return kept
+
     def _results_for_run(
         self,
         run_dir: str,
@@ -2714,6 +2790,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         range_bounds: tuple | None = None,
         accessor=None,
         instance_pointer=None,
+        *,
+        gates: list | None = None,
     ) -> list[ReferenceResult3]:
         if (
             identity is None
@@ -2731,6 +2809,17 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             return [ReferenceResult3(path=path, uuid=uuid)]
 
         instances = self._list_instance_identities(run_dir)
+        ranged = False
+        if gates:
+            # a range first, then the gates, then the pointer or the
+            # identity picks from what is left (6.28; as in
+            # _manifest_set_select_instances())
+            if range_bounds is not None:
+                instances = self._apply_range(instances, *range_bounds)
+                ranged = True
+            instances = self._gate_instances(
+                run_dir=run_dir, instances=instances, gates=gates
+            )
         if match_all:
             matched = instances
         elif instance_pointer is not None:
@@ -2758,7 +2847,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # run is fine with an accessor, same as a bare pointer
             # narrowing a run-list to one already is.
             from_call, to_call = range_bounds
-            matched = self._apply_range(instances, from_call, to_call)
+            matched = (
+                instances
+                if ranged
+                else self._apply_range(instances, from_call, to_call)
+            )
             if len(matched) > 1 and accessor is not None:
                 raise ReferenceException3(
                     "ResultsReferenceFinder3 requires ':from()'/':to()' to "
@@ -3120,7 +3213,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # _extract_data(). Instance call (not the class-qualified
             # staticmethod this used to be), since _last_field_function_
             # call() needs self.csvpaths.logger to warn on ambiguity.
-            field_call = self._last_field_function_call(built)
+            field_call = self._last_value_field_call(built)
+            # an argued field is a gate on the instances (6.40, 6.1; a
+            # filter doesn't return a value, David 2026-10-29), applied by
+            # _results_for_run(); see _name_three_gates(). It was taken as
+            # the value field until 2026-11-12, its argument ignored.
+            gates = self._gates_from_built(built)
             # from_call/to_call here mean LOWER/UPPER bound, not
             # literally ":from()'/':to()' -- generalized 2026-10-16
             # (compendium 6.28) to also recognize their exclusive
@@ -3139,6 +3237,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 elif f.name in ResultsReferenceFinder3._ACCESSOR_NAMES:
                     accessor = f
                 elif f is field_call:
+                    continue
+                elif any(f is g for g in gates):
                     continue
                 elif f.name == "manifest":
                     # the instance's own manifest.json (compendium 6.14,

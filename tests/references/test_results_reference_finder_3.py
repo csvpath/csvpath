@@ -7074,3 +7074,175 @@ class TestRunDirNameThreeManifest:
             finder._instance_dir_field_value(instance_dir="", field_call=object())
         with pytest.raises(ValueError):
             finder._instance_dir_field_value(instance_dir="x", field_call=None)
+
+
+class TestRunDirNameThreeGates:
+    # an argued field in a run dir's name_three is a gate on its
+    # instances (compendium 6.40, 6.1; 6.13b's own example
+    # '.:all():manifest():valid(:false())'): a range first, then the
+    # gates, then a pointer or identity picks from what is left (6.28). A
+    # gate never supplies the value (5.20b; David 2026-10-29). Until
+    # 2026-11-12 the argued field was taken as the value field, its
+    # argument ignored, and ':valid()' refused any argument at all.
+    @pytest.fixture
+    def runs(self, tmp_path):
+        # the first run has a valid "checks" and an invalid "rules"
+        # instance; in the second, both are valid
+        homes = []
+        for stamp, all_valid, instances in (
+            ("2026-01-01_00-00-00", False, (("checks", True), ("rules", False))),
+            ("2026-01-02_00-00-00", True, (("checks", True), ("rules", True))),
+        ):
+            run_dir = tmp_path / "widgets" / stamp
+            _write_json(
+                run_dir / "manifest.json",
+                {"run_uuid": f"run-{stamp[:10]}", "all_valid": all_valid},
+            )
+            for name, valid in instances:
+                errors = 0 if valid else 3
+                _write_json(
+                    run_dir / name / "manifest.json",
+                    {
+                        "uuid": f"{name}-{stamp[:10]}",
+                        "valid": valid,
+                        "error_count": errors,
+                        "run_uuid": f"run-{stamp[:10]}",
+                    },
+                )
+                _write_json(
+                    run_dir / name / "errors.json",
+                    [{"message": f"e{i}"} for i in range(errors)],
+                )
+            homes.append(str(run_dir))
+        _write_archive_manifest(tmp_path, "widgets", homes)
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # the compendium 6.13b example
+            (".:all():manifest():valid(:false())", ["rules-2026-01-01"]),
+            (".:all():valid(:false())", ["rules-2026-01-01"]),
+            (".:all():valid(:true())", ["checks-2026-01-01"]),
+            (".*:valid(:false())", ["rules-2026-01-01"]),
+            # gates first, then the pointer: the last VALID instance is
+            # checks. Pointer first would pick rules, then filter it out.
+            (".:last():valid(:true())", ["checks-2026-01-01"]),
+            (".:valid(:true()):last()", ["checks-2026-01-01"]),
+            # the range first, then the gate: index 0 is checks, which is
+            # valid, so nothing invalid is left
+            (".:from(0):to(0):valid(:false())", []),
+            # an identity picks from what the gate left
+            (".rules:valid(:true())", []),
+            (".rules:valid(:false())", ["rules-2026-01-01"]),
+        ],
+    )
+    def test_a_gate_filters_the_first_runs_instances(self, runs, reference, expected):
+        uuids = _finder(f"$widgets.results.:first(){reference}", runs).query().uuids
+        assert uuids == expected
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # every argued RESULTS field is a gate here, not only ':valid()'
+            # (reviewer on #589). An argued ':uuid()' is a filter (6.44):
+            # alone it gives the same 0 or 1; beside a pointer the pointer
+            # picks from what it leaves. It was a value field whose
+            # argument was ignored.
+            ('.:uuid("rules-2026-01-01")', ["rules-2026-01-01"]),
+            ('.:last():uuid("checks-2026-01-01")', ["checks-2026-01-01"]),
+            # compendium 6.40's own example: the content accessor is read
+            # only for the instances the gate keeps
+            (".:all():errors():error_count(:above(2))", ["rules-2026-01-01"]),
+            (".:all():error_count(3)", ["rules-2026-01-01"]),
+            (".:all():error_count(2)", []),
+            # a string-argued field
+            (
+                '.:all():run_uuid("run-2026-01-01")',
+                ["checks-2026-01-01", "rules-2026-01-01"],
+            ),
+            ('.:all():run_uuid("run-2026-01-02")', []),
+        ],
+    )
+    def test_every_argued_field_is_a_gate(self, runs, reference, expected):
+        uuids = _finder(f"$widgets.results.:first(){reference}", runs).query().uuids
+        assert uuids == expected
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # an argued uuid alone resolves as the identity form does: no
+            # default payload (5.21). It gave both instances' uuids.
+            ('.:uuid("rules-2026-01-01")', [None]),
+            (
+                ".:all():errors():error_count(:above(2))",
+                [[{"message": "e0"}, {"message": "e1"}, {"message": "e2"}]],
+            ),
+            (".:all():error_count(:above(2)):error_count()", [3]),
+        ],
+    )
+    def test_other_gates_supply_no_value(self, runs, reference, expected):
+        results = _finder(f"$widgets.results.:first(){reference}", runs).resolve()
+        assert [r.data for r in results.results] == expected
+
+    def test_more_gates_do_not_read_more_manifests(self, runs):
+        # each instance's manifest is read once for all its gates, not
+        # once per gate (reviewer on #589: on a cloud backend every read
+        # costs). Listing the instances reads them too, before this.
+        def reads(reference: str) -> int:
+            finder = _finder(reference, runs)
+            seen = []
+            real = finder.source.instance_manifest
+            finder.source.instance_manifest = lambda d: seen.append(d) or real(d)
+            assert finder.query().uuids == ["rules-2026-01-01"]
+            return len(seen)
+
+        one = reads("$widgets.results.:first().:all():valid(:false())")
+        two = reads("$widgets.results.:first().:all():valid(:false()):error_count(3)")
+        assert two == one
+
+    def test_a_run_with_every_instance_valid_has_nothing_invalid(self, runs):
+        reference = "$widgets.results.:last().:all():manifest():valid(:false())"
+        assert _finder(reference, runs).query().uuids == []
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # the unargued field supplies the value, in either order
+            (".:all():valid(:false()):uuid()", ["rules-2026-01-01"]),
+            (".:all():uuid():valid(:false())", ["rules-2026-01-01"]),
+            (".:all():valid(:true()):valid()", [True]),
+            # beside ':manifest()', the instance's own manifest entry
+            (
+                ".:all():manifest():valid(:false())",
+                [
+                    {
+                        "uuid": "rules-2026-01-01",
+                        "valid": False,
+                        "error_count": 3,
+                        "run_uuid": "run-2026-01-01",
+                    }
+                ],
+            ),
+            # only gates: as without them, no default payload (finding D)
+            (".:all():valid(:false())", [None]),
+        ],
+    )
+    def test_a_gate_supplies_no_value(self, runs, reference, expected):
+        results = _finder(f"$widgets.results.:first(){reference}", runs).resolve()
+        assert [r.data for r in results.results] == expected
+
+    def test_a_star_root_gates_each_runs_instances(self, runs):
+        reference = "$*.results.:first().:all():valid(:false())"
+        assert _finder(reference, runs).query().uuids == ["rules-2026-01-01"]
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$widgets.results.:all():valid(:false())", ["run-2026-01-01"]),
+            ("$widgets.results.:all():valid(:true())", ["run-2026-01-02"]),
+        ],
+    )
+    def test_a_run_level_valid_gate_filters_runs(self, runs, reference, expected):
+        # ':valid()' at run scope is 'all_valid'
+        assert _finder(reference, runs).query().uuids == expected
