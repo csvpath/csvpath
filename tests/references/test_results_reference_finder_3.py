@@ -2159,6 +2159,26 @@ class TestStatementLevelPointer:
         reference = f"$acme.results.customers/2025:first(){name_three}"
         assert _finder(reference, one_run_five_statements).query().uuids == expected
 
+    def test_a_range_then_a_gate_then_the_pointer(self, tmp_path):
+        # 6.28: "a pointer then selects from what the range and filters
+        # leave". Only "c" is invalid. Range 1..3 is b, c, d; the gate
+        # leaves c; ':last()' picks c. Pointer before the gate would pick
+        # d and give []; the gate before the range would still give c, so
+        # the second case puts c outside the range.
+        run_dir = tmp_path / "acme" / "customers" / "2025" / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        for index, name in enumerate(("a", "b", "c", "d", "e")):
+            _write_json(
+                run_dir / name / "manifest.json",
+                {"uuid": name, "instance_index": index, "valid": name != "c"},
+            )
+        _write_archive_manifest(tmp_path, "acme", [str(run_dir)])
+        base = "$acme.results.customers/2025:first()"
+        reference = f"{base}.:from(1):to(3):valid(:false()):last()"
+        assert _finder(reference, str(tmp_path)).query().uuids == ["c"]
+        reference = f"{base}.:from(3):to(4):valid(:false()):first()"
+        assert _finder(reference, str(tmp_path)).query().uuids == []
+
     @pytest.mark.parametrize("name_three", [".one:last()", ".:all():last()"])
     def test_a_pointer_still_cannot_join_an_identity_or_all(
         self, one_run_five_statements, name_three

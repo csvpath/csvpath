@@ -3169,10 +3169,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         ResultsReferenceFinder3._apply_errors_gate() for what it does
         with it. pointer_call (added 2026-10-20, issue #418) is a
         :first()/:last()/:index(n) picking exactly ONE statement
-        instance within whichever run(s) name_one matched -- a fourth,
-        mutually-exclusive alternative to identity/match_all/
-        range_bounds (see the "more than one selection mode" check
-        below), composable with `accessor`/`field_call`/`gate_call`
+        instance within whichever run(s) name_one matched -- it picks
+        within a range when there is one (6.28; since 2026-11-12) and is
+        exclusive only of an identity or :all() (see the "more than one
+        selection mode" check below), composable with
+        `accessor`/`field_call`/`gate_call`
         exactly the way identity already is (e.g. ":last():data()").
         Resolving with none of identity/match_all/range_bounds/
         pointer_call present gives None -- "no default". An
