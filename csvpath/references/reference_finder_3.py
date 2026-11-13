@@ -289,11 +289,12 @@ class ReferenceFinder3(ABC):
         _slice_by_position() already had."""
         start = cls._range_bound(lower_call) if lower_call is not None else None
         end = cls._range_bound(upper_call) if upper_call is not None else None
-        # an index range takes integer positions. A string or date bound
-        # is resolved before this (_apply_identity_range(),
-        # _apply_mixed_range()); one that still reaches here raised a bare
-        # TypeError from the slice until 2026-11-12. (A bool is an int in
-        # Python, so it is excluded explicitly; the grammar gives none.)
+        # an index range takes integer positions. Its callers hand it only
+        # index bounds (_apply_mixed_range() filters date bounds itself, and
+        # name_three ranges use _apply_identity_range() instead); a bound
+        # that still reaches here raised a bare TypeError from the slice
+        # until 2026-11-12. (A bool is an int in Python, so it is excluded
+        # explicitly; the grammar gives none.)
         for call, bound in ((lower_call, start), (upper_call, end)):
             if bound is not None and (
                 isinstance(bound, bool) or not isinstance(bound, int)
@@ -338,16 +339,22 @@ class ReferenceFinder3(ABC):
                 continue
             bound = cls._range_bound(call)
             if isinstance(bound, TimeWindowFunction3):
+                shown = f'"{bound.arg}"' if isinstance(bound.arg, str) else ""
                 raise ReferenceException3(
                     f"':{call.name}()' does not support a date-mode bound "
-                    f"(:{bound.NAME}()) in name_three -- statements have no "
-                    "arrival date of their own. A bare string bound selects "
-                    "by statement identity instead."
+                    f"(:{bound.NAME}({shown})) in name_three -- statements "
+                    "have no arrival date of their own. A bare string bound "
+                    "selects by statement identity instead."
                 )
             if isinstance(bound, str):
                 bound = cls._find_by_identity(bound, identities)
                 if bound is None:
                     return []
+            elif isinstance(bound, bool) or not isinstance(bound, int):
+                raise ReferenceException3(
+                    f"':{call.name}({bound!r})' is neither a statement identity "
+                    "nor an index position."
+                )
             positions.append(bound)
         start, end = positions
         if lower_call is not None and lower_call.name == "after" and start is not None:

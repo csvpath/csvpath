@@ -430,32 +430,15 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # version contributes no results at all (not an error,
                 # not a partial match) -- skip straight to the next
                 # selected version.
-                from_bound = self._range_bound(from_call) if from_call is not None else None
-                to_bound = self._range_bound(to_call) if to_call is not None else None
-                if isinstance(from_bound, str):
-                    from_bound = self._find_by_identity(from_bound, identities)
-                    if from_bound is None:
-                        continue
-                if isinstance(to_bound, str):
-                    to_bound = self._find_by_identity(to_bound, identities)
-                    if to_bound is None:
-                        continue
-                # exclusive-bound adjustment (':after()'/':before()',
-                # compendium 6.28, added 2026-10-16) applies AFTER
-                # identity-mode resolution above -- "after this
-                # identity" means one position later than wherever that
-                # identity resolved to, same adjustment regardless of
-                # whether the bound started as a literal int or a
-                # resolved identity position.
-                if (
-                    from_call is not None
-                    and from_call.name == "after"
-                    and from_bound is not None
-                ):
-                    from_bound = from_bound + 1
-                end_inclusive = to_call is None or to_call.name == "to"
-                windowed = self._slice_by_position(
-                    identities, from_bound, to_bound, end_inclusive=end_inclusive
+                # the shared ReferenceFinder3._apply_identity_range() (RESULTS
+                # uses it too, since 2026-11-12): a non-matching identity
+                # gives this version no results, and ':after()' moves one
+                # past the resolved position.
+                windowed = self._apply_identity_range(
+                    items=identities,
+                    identities=identities,
+                    lower_call=from_call,
+                    upper_call=to_call,
                 )
                 for identity in windowed:
                     results.append(
