@@ -3214,11 +3214,23 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # staticmethod this used to be), since _last_field_function_
             # call() needs self.csvpaths.logger to warn on ambiguity.
             field_call = self._last_value_field_call(built)
-            # an argued field is a gate on the instances (6.40, 6.1; a
-            # filter doesn't return a value, David 2026-10-29), applied by
-            # _results_for_run(); see _name_three_gates(). It was taken as
-            # the value field until 2026-11-12, its argument ignored.
-            gates = self._gates_from_built(built)
+            # every field accessor passes the dispatch below: the last
+            # unargued one supplies the value, with a warning when there
+            # are two (5.20b), and each argued one is a gate on the
+            # instances (6.40, 6.1; a filter doesn't return a value, David
+            # 2026-10-29), applied by _results_for_run() through
+            # _name_three_gates(). Until 2026-11-12 an argued field was
+            # taken as the value field, and a second unargued one fell
+            # through to "does not support".
+            fields = self._find_field_function_calls(
+                built, self.ref.parsed.datatype
+            )
+            # each must be legal in name_three (its POSITIONS): a name_one-
+            # only field such as ':host()' or ':status()' read None here,
+            # silently, or filtered everything out as a gate (reviewer on
+            # #590; CSVPATHS checks the same since 2026-11-05)
+            for f in fields:
+                self._check_position(f, Reference3.NAME_THREE, Reference3.RESULTS)
             # from_call/to_call here mean LOWER/UPPER bound, not
             # literally ":from()'/':to()' -- generalized 2026-10-16
             # (compendium 6.28) to also recognize their exclusive
@@ -3236,9 +3248,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     continue
                 elif f.name in ResultsReferenceFinder3._ACCESSOR_NAMES:
                     accessor = f
-                elif f is field_call:
-                    continue
-                elif any(f is g for g in gates):
+                elif any(f is x for x in fields):
                     continue
                 elif f.name == "manifest":
                     # the instance's own manifest.json (compendium 6.14,
