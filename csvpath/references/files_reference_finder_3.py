@@ -124,6 +124,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
     # order (not sorted by the "time" field).
     #
     DEFINITION_OWNER = "named-file"
+    # uuid -> (name, entry) of the live manifests, per query()/resolve
+    # call; see _live_index()
+    _live_entries = None
 
     def _definition_names(self) -> list:
         return self.source.file_names()
@@ -156,18 +159,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # deleted versions included (compendium 6.19, agreed
                 # with David). status itself is read from the ledger,
                 # the only place it is written.
-                ledger = self._live_ledger_entries(names=self.source.file_names())
-                matched = self._filter_ledger_by_gate_chain(ledger, status_chain)
-                if reference.name_three is not None:
-                    return self._pointer_into_status_matches(reference, matched)
-                return ReferenceResults3(
-                    results=[
-                        ReferenceResult3(
-                            path=self._ledger_entry_result_path(e),
-                            uuid=e.get("uuid"),
-                        )
-                        for e in matched
-                    ]
+                return self._query_status_gate(
+                    reference=reference,
+                    status_chain=status_chain,
+                    names=self.source.file_names(),
                 )
             if self._is_bare_pointer_reference(reference, "manifest"):
                 # Rule 1a (manifest_field_functions_proposal.md): "*" at
@@ -210,6 +205,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     "function -- only :regex()/:choice() are supported."
                 )
             built = self._build(root_major)
+            status_chain = self._bare_status_gate_chain(reference.name_one)
+            if status_chain is not None:
+                # the bare status gate on the live versions of the matching
+                # named-files, as for '*' above (6.13b(iv): a filtered
+                # '*'). It raised "field functions attached directly to
+                # name_one" until 2026-11-12.
+                return self._query_status_gate(
+                    reference=reference,
+                    status_chain=status_chain,
+                    names=self._matching_names(
+                        self.source.file_names(), built.pattern
+                    ),
+                )
             pointer_call = self._pointer_before_manifest(reference, "manifest")
             if pointer_call is not None:
                 # Rule 1b on the ledger set filtered by name (6.13b), as
@@ -2106,10 +2114,41 @@ class FilesReferenceFinder3(ReferenceFinder3):
         manifest holds it, or None."""
         return self._live_named_file_entry(uuid)[1]
 
+    def resolve(self) -> ReferenceResults3:
+        # query() resets the live index; its resolve reuses it, so one
+        # resolve() reads each live manifest at most once (reviewer on
+        # #585). The base resolve() would reset it again.
+        return super().resolve_from(self.query())
+
     def resolve_from(self, selection: ReferenceResults3 | list) -> ReferenceResults3:
         # the live entries are read at most once per call (_live_index())
         self._live_entries = None
         return super().resolve_from(selection)
+
+    def _query_status_gate(
+        self, *, reference: Reference3, status_chain: list, names: list
+    ) -> ReferenceResults3:
+        """a bare ':status()' gate chain over the live versions of `names`
+        (the ledger entries of live versions, in ledger order; C1
+        bare-half revert, 2026-11-01), then a name_three pointer if there
+        is one. Shared by '*' and ':regex()'/':choice()'."""
+        if status_chain is None:
+            raise ValueError("status_chain cannot be None")
+        if names is None:
+            raise ValueError("names cannot be None")
+        ledger = self._live_ledger_entries(names=names)
+        matched = self._filter_ledger_by_gate_chain(ledger, status_chain)
+        if reference.name_three is not None:
+            return self._pointer_into_status_matches(reference, matched)
+        return ReferenceResults3(
+            results=[
+                ReferenceResult3(
+                    path=self._ledger_entry_result_path(e),
+                    uuid=e.get("uuid"),
+                )
+                for e in matched
+            ]
+        )
 
     def _query_ledger_pointer(
         self, *, pointer_call: FunctionCall3, name_filter: "str | None"
@@ -2142,7 +2181,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         entry, in a gate, a date bound or resolve, would otherwise walk
         every manifest once per record: on a cloud backend every read
         costs (reviewer on #585)."""
-        index = getattr(self, "_live_entries", None)
+        index = self._live_entries
         if index is None:
             index = {}
             for name in self.source.file_names():

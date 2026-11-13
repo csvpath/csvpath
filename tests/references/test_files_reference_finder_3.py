@@ -1181,6 +1181,23 @@ class TestTraversalFieldReadsLiveFirst:
         finder.query()
         assert sorted(reads) == ["alpha", "beta"]
 
+    def test_one_resolve_call_reads_each_manifest_once(self):
+        # resolve() is query() then resolve_from(); one live index serves
+        # both (reviewer on #585: it read each manifest twice)
+        finder = _finder(
+            '$*.files.:manifest():fingerprint("ccc"):fingerprint()',
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=self.BY_NAME,
+            ledger=self.LEDGER,
+            inputs_files_path="inputs/named_files",
+        )
+        reads = []
+        real = finder.source.file_manifest
+        finder.source.file_manifest = lambda name: reads.append(name) or real(name)
+        assert [r.data for r in finder.resolve().results] == ["ccc"]
+        assert sorted(reads) == ["alpha", "beta"]
+
     @pytest.mark.parametrize(
         "reference",
         [
@@ -4262,6 +4279,27 @@ class TestStatusGate:
 
     def test_no_match_gives_empty(self):
         assert self._status_finder('$*.files.:status("nope")').query().results == []
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # a ':regex()'/':choice()' root is a filtered '*' (6.13b(iv)):
+            # the bare gate on the live versions of the matching names.
+            # These raised "field functions attached directly to name_one"
+            # until 2026-11-12.
+            ('$:regex(/^ord/).files.:status("complete")', ["ok-1"]),
+            ('$:choice("orders").files.:status("complete")', ["ok-1"]),
+            ('$:regex(/^inv/).files.:status("complete")', []),
+            ('$:choice("invoices").files.:status("complete")', []),
+            # a failure is never a live version, as under '*'
+            ('$:regex(/^ord/).files.:status("failed")', []),
+            ('$:regex(/^ord/).files.:status("complete").:last()', ["ok-1"]),
+        ],
+    )
+    def test_a_filtered_root_bare_status_gates_its_live_versions(
+        self, reference, expected
+    ):
+        assert self._status_finder(reference).query().uuids == expected
 
     def test_name_three_pointer_star_root(self):
         # not-yet-supported sweep #2, 2026-10-20: a lone version-
