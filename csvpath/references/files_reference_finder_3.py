@@ -1384,6 +1384,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "fingerprint) or absent."
             )
         built = self._build_chain(name_three.functions)
+        # each must be legal in name_three, as at a literal root: under
+        # '*' a ':definition()' here read the version's manifest entry, or
+        # a definition field, where the literal form raises (6.13b(iv);
+        # reviewer on #593)
+        for f in built:
+            self._check_position(f, Reference3.NAME_THREE, Reference3.FILES)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         gates = [f for f in built if self._is_name_three_gate(f)]
         has_manifest = any(f.name == "manifest" for f in built)
@@ -2955,7 +2961,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     # never stored -- comes straight from the already-
                     # resolved reference, no manifest/definition read at
                     # all. see function_3.py's SOURCE comment.
-                    return self._compute_field(field_call.name, reference)
+                    return self._compute_field(
+                        name=field_call.name, reference=reference, result=result
+                    )
                 if field_call.name == "named_file_name" and not (
                     self._is_traversal_root(reference.root_major)
                 ):
@@ -2982,7 +2990,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 key_path = self._apply_key_arg(key_path, field_call.arg)
                 if function_cls.SOURCE == "definition":
                     config = self.csvpaths.file_manager.describer.get_config(
-                        reference.root_major
+                        self._holding_named_file_name(
+                            reference=reference, result=result
+                        )
                     )
                     entry = config.model_dump(exclude_none=True)
                     return self._extract_field_value(entry, key_path)
@@ -3045,16 +3055,49 @@ class FilesReferenceFinder3(ReferenceFinder3):
             "functions are wired up as metadata-file/field functions."
         )
 
-    def _compute_field(self, name: str, reference: "Reference3") -> object:
+    def _compute_field(
+        self, *, name: str, reference: "Reference3", result: ReferenceResult3
+    ) -> object:
         """values for SOURCE == "computed" field-accessor functions --
         never read from a manifest/definition, always derived from the
         already-resolved reference. See function_3.py's SOURCE comment
         and named_file_home_3.py."""
+        if name is None or name == "":
+            raise ValueError("name cannot be None or empty")
         if name == "named_file_home":
-            return self.csvpaths.file_manager.named_file_home(reference.root_major)
+            return self.csvpaths.file_manager.named_file_home(
+                self._holding_named_file_name(reference=reference, result=result)
+            )
         raise ReferenceException3(
             f"FilesReferenceFinder3 has no computed-field handling for :{name}()"
         )
+
+    def _holding_named_file_name(
+        self, *, reference: "Reference3", result: ReferenceResult3
+    ) -> str:
+        """the name of the named-file a result belongs to: the root for a
+        literal root_major; under '*', ':regex()' or ':choice()' the live
+        named-file whose own manifest holds the result's version
+        (6.13b(iv): the literal reference for each live name). It was
+        root_major itself, which is not a name there: ':named_file_home()'
+        and a definition field raised or read the wrong named-file
+        (2026-11-12). Raises when no live named-file holds the version."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        if isinstance(reference.root_major, str):
+            return reference.root_major
+        if result is None or not result.uuid:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 cannot tell which named-file a result "
+                "belongs to without its version uuid."
+            )
+        name, _ = self._live_named_file_entry(result.uuid)
+        if name is None:
+            raise ReferenceException3(
+                f"FilesReferenceFinder3 found no live named-file holding "
+                f"version {result.uuid!r}."
+            )
+        return name
 
     @staticmethod
     def _matches(entry: dict, home: str, pattern: list) -> bool:
