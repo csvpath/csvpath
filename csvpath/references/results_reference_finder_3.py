@@ -256,19 +256,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         from_call, to_call = self._range_calls_from_calls(calls)
         has_range = from_call is not None or to_call is not None
         from_bound = to_bound = None
-        from_is_date = to_is_date = False
         if has_range:
             from_bound = self._range_bound(from_call) if from_call is not None else None
             to_bound = self._range_bound(to_call) if to_call is not None else None
-            from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
-            to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
-            if (from_bound is not None and to_bound is not None) and (
-                from_is_date != to_is_date
-            ):
-                raise ReferenceException3(
-                    "ResultsReferenceFinder3 does not support mixing index-"
-                    "mode and date-mode range bounds in the same range."
-                )
             if isinstance(from_bound, str):
                 self._validate_date_format(from_bound)
             if isinstance(to_bound, str):
@@ -321,10 +311,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             if bare_time_window is not None:
                 cands = self._apply_bare_time_window(cands, bare_time_window)
             elif has_range:
-                if from_is_date or to_is_date:
-                    cands = self._apply_date_range(cands, from_call, to_call)
-                else:
-                    cands = self._apply_range(cands, from_call, to_call)
+                # index and date bounds may mix (6.32)
+                cands = self._apply_mixed_range(
+                    entries=cands,
+                    lower_call=from_call,
+                    upper_call=to_call,
+                    date_filter=self._apply_date_range,
+                )
             for name_one_field_call in name_one_field_calls:
                 if name_one_field_call.arg is None:
                     continue
@@ -1163,9 +1156,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         below, the SAME run-level range query()'s own literal-root path
         already fully supports) are the built ':from()'/':to()' (or
         ':after()'/':before()') calls, validated here exactly the way
-        query()'s own literal-root path does (mixing-mode rejection,
-        date-format validation) -- the actual application (index-mode
-        positional slice vs. date-mode filter, per-partition in GROUP
+        query()'s own literal-root path does (date-format validation)
+        -- the actual application (_apply_mixed_range(): the index
+        bound's slice, then the date bound's filter, per-partition in GROUP
         mode) happens in _star_pool_and_reduce()/_star_group_and_reduce(),
         which both already receive them. field_calls
         (added 2026-10-18, alongside :error_count()'s own predicate-
@@ -1263,22 +1256,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # ':from()'/':to()' as a run-level range, now supported during
         # '*' traversal too (built 2026-10-21 -- see this method's own
         # docstring) -- validated here the same way query()'s own
-        # literal-root path validates it (mixing-mode rejection, date-
-        # format check); the actual application happens in
+        # literal-root path validates it (date-format check); the actual
+        # application happens in
         # _star_pool_and_reduce()/_star_group_and_reduce().
         lower_call, upper_call = self._range_calls_from_built(built)
         if lower_call is not None or upper_call is not None:
             from_bound = self._range_bound(lower_call) if lower_call is not None else None
             to_bound = self._range_bound(upper_call) if upper_call is not None else None
-            from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
-            to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
-            if (from_bound is not None and to_bound is not None) and (
-                from_is_date != to_is_date
-            ):
-                raise ReferenceException3(
-                    "ResultsReferenceFinder3 does not support mixing index-"
-                    "mode and date-mode range bounds in the same range."
-                )
             if isinstance(from_bound, str):
                 self._validate_date_format(from_bound)
             if isinstance(to_bound, str):
@@ -3084,23 +3068,24 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     def _apply_run_level_range(
         cls, run_homes: list, lower_call, upper_call
     ) -> list:
-        """picks index-mode (positional slice, via the shared
-        ReferenceFinder3._apply_range()) vs. date-mode (filter, via
-        this class's own _apply_date_range()) by each bound's own value
-        type -- added 2026-10-21, extracted so _star_pool_and_reduce()/
+        """a run-level range: the index bound's positional slice
+        (ReferenceFinder3._apply_range()) and the date bound's filter
+        (this class's own _apply_date_range()), mixed where 6.32 allows
+        (ReferenceFinder3._apply_mixed_range()) -- added 2026-10-21,
+        extracted so _star_pool_and_reduce()/
         _star_group_and_reduce() can apply a run-level ':from()'/':to()'
         range during '*' traversal the same way query()'s own literal-
         root path already does (that path's own equivalent dispatch is
         inlined there rather than calling this, since it was written
         first and this was extracted once a second call site needed the
         identical logic)."""
-        from_bound = cls._range_bound(lower_call) if lower_call is not None else None
-        to_bound = cls._range_bound(upper_call) if upper_call is not None else None
-        from_is_date = isinstance(from_bound, (str, TimeWindowFunction3))
-        to_is_date = isinstance(to_bound, (str, TimeWindowFunction3))
-        if from_is_date or to_is_date:
-            return cls._apply_date_range(run_homes, lower_call, upper_call)
-        return cls._apply_range(run_homes, lower_call, upper_call)
+        # index and date bounds may mix (6.32)
+        return cls._apply_mixed_range(
+            entries=run_homes,
+            lower_call=lower_call,
+            upper_call=upper_call,
+            date_filter=cls._apply_date_range,
+        )
 
     @staticmethod
     def _run_dir_datetime(run_home: str) -> datetime:

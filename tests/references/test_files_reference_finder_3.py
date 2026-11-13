@@ -868,6 +868,15 @@ class TestStarTraversalFlatten:
         results = _star_finder("$*.files.*.:from(0):to(1):last()").query()
         assert results.uuids == ["u-one-1", "u-two-2"]
 
+    def test_a_mixed_range_groups_by_its_index_bound(self):
+        # 6.32: an index bound mixed with a date bound still groups by
+        # named-file, as an index range does (4.1b): alpha's from index 1
+        # (u-one-1, u-one-2) and beta's (u-two-2), then at or before
+        # 2026-01-04, which drops u-two-2. Pooled, it would also give
+        # u-two-1.
+        reference = '$*.files.*.:from(1):to(:date("2026-01-04"))'
+        assert _star_finder(reference).query().uuids == ["u-one-1", "u-one-2"]
+
 
 class TestStarTraversalLiteralNameThreeBody:
     # a literal fingerprint body in name_three during '*' traversal --
@@ -2117,6 +2126,8 @@ class TestManifestChainRanges:
             ("$ranger.files.:manifest():before(2)", ["v0", "v1"]),
             ("$ranger.files.:manifest():from(1):to(3):last()", ["v3"]),
             ('$ranger.files.:manifest():after(:date("2026-01-03"))', ["v3", "v4"]),
+            # index and date bounds mix (6.32)
+            ('$ranger.files.:manifest():from(1):to(:date("2026-01-03"))', ["v1", "v2"]),
             (
                 '$ranger.files.:manifest():from(:date("2026-01-02"))'
                 ":to(:yesterday())",
@@ -2200,10 +2211,6 @@ class TestManifestChainRanges:
         [
             ("$ranger.files.:manifest():yesterday():today()", "more than one"),
             ("$ranger.files.:manifest():yesterday():from(1)", "bare time"),
-            (
-                '$ranger.files.:manifest():from(1):to(:date("2026-01-03"))',
-                "mixing index",
-            ),
             ("$ranger.files.:manifest():from(1):after(2)", "two lower-bound"),
             ('$ranger.files.:manifest():from("not-a-date")', "date-mode"),
         ],
@@ -4998,13 +5005,20 @@ class TestNameThreeRange:
         ).query()
         assert results.uuids == ["v1", "v2", "v3"]
 
-    def test_mixing_index_mode_and_date_mode_bounds_is_rejected(self):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$ranger.files.:name("orders.csv").:from(1):to(:date("2026-01-01"))',
-                RANGE_HOME,
-                RANGE_MANIFEST,
-            ).query()
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # index and date bounds may mix (6.32, NRE 781); they raised
+            # until 2026-11-12
+            ('$ranger.files.:name("orders.csv").:from(1):to(:date("2026-01-01"))', []),
+            (
+                '$ranger.files.:name("orders.csv").:from(1):to(:date("2026-01-03"))',
+                ["v1", "v2"],
+            ),
+        ],
+    )
+    def test_index_and_date_bounds_mix(self, reference, expected):
+        assert _finder(reference, RANGE_HOME, RANGE_MANIFEST).query().uuids == expected
 
     def test_a_malformed_date_bound_is_rejected(self):
         with pytest.raises(ReferenceException3):

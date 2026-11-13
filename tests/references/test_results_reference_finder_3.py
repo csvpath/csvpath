@@ -1440,12 +1440,13 @@ class TestRunLevelDateRange:
                 '$acme.results.customers:from("not-a-date")', dated_runs
             ).query()
 
-    def test_mixing_index_and_date_modes_is_rejected(self, dated_runs):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$acme.results.customers:from(1):to(:date("2025-01-01"))',
-                dated_runs,
-            ).query()
+    def test_index_and_date_bounds_mix(self, dated_runs):
+        # 6.32, NRE 781: from the 2nd run (index 1) through the last run
+        # at or before 2025-01-15 00:00. Mixing raised until 2026-11-12.
+        results = _finder(
+            '$acme.results.customers:from(1):to(:date("2025-01-15"))', dated_runs
+        ).query()
+        assert set(results.uuids) == {"run-jan1", "run-jan15"}
 
 
 class TestTimeWindowFunctionAnchors:
@@ -1578,11 +1579,12 @@ class TestTimeWindowFunctionAnchors:
         ).query()
         assert set(results.uuids) == {"run-yesterday"}
 
-    def test_mixing_index_and_time_window_modes_is_rejected(self, dated_runs):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$acme.results.customers:from(1):to(:year())", dated_runs
-            ).query()
+    def test_index_and_time_window_bounds_mix(self, dated_runs):
+        # 6.32: positions 1 and up, at or before this year's first moment
+        results = _finder(
+            "$acme.results.customers:from(1):to(:year())", dated_runs
+        ).query()
+        assert set(results.uuids) == {"run-jan1"}
 
     def test_bare_yesterday_is_a_range_matching_6_27f_exactly(self, dated_runs):
         # Gap 1 of compendium 6.27/TimeWindowFunction3, added
@@ -7308,3 +7310,50 @@ class TestRunDirNameThreeTwoFields:
         # query and resolve each read the selector, so it may warn twice
         warnings = finder.csvpaths.logger.warnings
         assert warnings and all("5.20b" in w for w in warnings)
+
+
+class TestMixedIndexAndDateRange:
+    # compendium 6.32 and NRE 781, verbatim: "mixing index-mode and
+    # date-mode bounds in the same range is possible" --
+    # '$alpha.results.*:from(2):to(:date("2026-01-10_08-00-00"))', "identify
+    # the 3rd result in the range, collect from 3rd through the last result
+    # that happened before Jan 10 at 8am". Mixing raised until 2026-11-12.
+    @pytest.fixture
+    def runs(self, tmp_path):
+        base = tmp_path / "alpha"
+        stamps = [
+            "2026-01-01_00-00-00",
+            "2026-01-05_00-00-00",
+            "2026-01-08_00-00-00",
+            "2026-01-10_07-00-00",
+            "2026-01-10_09-00-00",
+            "2026-01-12_00-00-00",
+        ]
+        homes = [_make_run(base, stamp, f"run-{stamp}", {}) for stamp in stamps]
+        _write_archive_manifest(tmp_path, "alpha", homes)
+        return str(tmp_path)
+
+    def test_the_normative_example(self, runs):
+        reference = '$alpha.results.*:from(2):to(:date("2026-01-10_08-00-00"))'
+        results = _finder(reference, runs).query()
+        assert results.uuids == [
+            "run-2026-01-08_00-00-00",
+            "run-2026-01-10_07-00-00",
+        ]
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            # where the two readings of the index differ (6.29, 6.30:
+            # "an index counts from the anchor"), the mix raises until
+            # David settles it (decision log W4): "3 runs from Jan 9"
+            # would be [] counted from the start, three runs counted
+            # from the date
+            '$alpha.results.*:from(:date("2026-01-09")):to(2)',
+            '$alpha.results.*:from(-3):to(:date("2026-01-10_08-00-00"))',
+        ],
+    )
+    def test_an_unsettled_mix_raises(self, runs, reference):
+        with pytest.raises(ReferenceException3) as error:
+            _finder(reference, runs).query()
+        assert "not settled" in str(error.value)
