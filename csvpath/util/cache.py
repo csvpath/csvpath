@@ -40,7 +40,7 @@ class Cache:
             filename = f"{filename}{t}"
             return hashlib.sha256(filename.encode("utf-8")).hexdigest()
         except (FileNotFoundError, IsADirectoryError):
-            self.csvpathx.logger.debug("{filename} is not available or not a file")
+            self.csvpathx.logger.debug("%s is not available or not a file", filename)
         """
         if Nos(filename).is_local:
             try:

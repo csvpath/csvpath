@@ -85,7 +85,7 @@ class S3Utils:
             if _.find("403") > -1:
                 return False
             else:
-                raise ValueError("Unexpected ClientError message: {_}")
+                raise ValueError(f"Unexpected ClientError message: {_}")
         except DeprecationWarning:
             ...
         return True

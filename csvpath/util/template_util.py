@@ -62,7 +62,7 @@ class TemplateUtility:
         if template is None:
             template = cls.find_template(csvpaths, ref)
         if template is None:
-            raise ValueError("Cannot find template for reference: {ref}")
+            raise ValueError(f"Cannot find template for reference: {ref}")
         cls.valid(template)
         i = template.find(":run_dir")
         s = template[i + 8 :]

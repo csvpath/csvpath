@@ -70,7 +70,7 @@ class DataProvenance(BaseFacet):
             else:
                 if not isinstance(mdata, ResultMetadata):
                     listener.config.logger().warning(
-                        "Could not match UUID {uuid} in root manifest"
+                        "Could not match UUID %s in root manifest", uuid
                     )
 
         dp = DataProvenance(

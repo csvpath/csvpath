@@ -314,7 +314,9 @@ class Function(Matchable):
             else:
                 self.match = self.default_match()
                 self.matcher.csvpath.logger.debug(
-                    f"@{self}: appling default match, {self.match}, because !do_onmatch"
+                    "%s: applying default match, %s, because !do_onmatch",
+                    self,
+                    self.match,
                 )
                 self.matching().result(self.match).because("onmatch")
 

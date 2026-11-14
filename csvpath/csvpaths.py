@@ -1789,7 +1789,7 @@ Cache: {cache}
                 if csvpath.data_from_preceding is True:
                     # this exception raise may be redundant.
                     raise CsvPathsException(
-                        "Csvpath identified as {csvpath.identity} is set to use preceding data, but CsvPaths's by_line methods do not permit that"
+                        f"Csvpath identified as {csvpath.identity} is set to use preceding data, but CsvPaths's by_line methods do not permit that"
                     )
                 csvpath_objects.append([csvpath, []])
             except Exception as ex:  # pylint: disable=W0718

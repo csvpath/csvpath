@@ -67,7 +67,7 @@ class RunStateBuilder:
         elif isinstance(mdata, RunMetadata):
             runstate = RunState.START
         else:
-            raise ValueError("Unknown metadata type: {type(mdata)}")
+            raise ValueError(f"Unknown metadata type: {type(mdata)}")
         #
         #
         #

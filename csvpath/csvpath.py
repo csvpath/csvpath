@@ -1369,7 +1369,8 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                         break
             else:
                 self.logger.warning(
-                    "Csvpath identified as {self.identity} is disabled by run-mode:no-run"
+                    "Csvpath identified as %s is disabled by run-mode:no-run",
+                    self.identity,
                 )
             self.finalize()
             end = time.time()
@@ -1506,7 +1507,7 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
                 self.advance_count -= 1
                 matches = False
                 self.logger.debug(
-                    "Advancing one line with {self.advance_count} more skips to go"
+                    "Advancing one line with %s more skips to go", self.advance_count
                 )
             else:
                 self.logger.debug("Starting matching")
