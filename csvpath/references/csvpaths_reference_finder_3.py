@@ -1,3 +1,5 @@
+import re
+
 from csvpath.util.nos import Nos
 from csvpath.util.path_util import PathUtility as pathu
 
@@ -172,6 +174,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     "function -- only :regex()/:choice() are supported."
                 )
             built = self._build(root_major)
+            if self._is_bare_pointer_reference(reference, "manifest"):
+                # the ledger set filtered by name: one result, the ledger's
+                # path with uuid None (5.7; 6.13b), as RESULTS gives
+                # (David, 2026-11-14, W1 option B). It gave one result per
+                # record, each resolving to the whole unfiltered ledger.
+                home = self.csvpaths.config.inputs_csvpaths_path
+                return ReferenceResults3(
+                    results=[
+                        ReferenceResult3(path=Nos(home).join("manifest.json"), uuid=None)
+                    ]
+                )
             return self._query_star_traversal(reference, name_filter=built.pattern)
 
         name_one = reference.name_one
@@ -794,17 +807,22 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         if kind == Reference3.METADATA_FILE:
             #
             # a bare ':manifest()' under ':regex()'/':choice()' is the
-            # ledger set filtered by name, one result per record (query
-            # already gives each record's uuid), not the ledger file: a
-            # filtered set has no file of its own (David, 2026-11-14,
-            # decision W1, option D). It resolved the whole, unfiltered
-            # ledger once per result. Each record now resolves through the
-            # set-record branch below.
+            # ledger set filtered by name: the ledger's records, as stored,
+            # whose group name matches (David, 2026-11-14, W1 option B;
+            # decision D13), the same records '$*.csvpaths.:manifest()'
+            # resolves to, filtered. It resolved the whole, unfiltered
+            # ledger.
             #
-            filtered_bare_manifest = isinstance(
+            if isinstance(
                 reference.root_major, FunctionCall3
-            ) and self._is_bare_pointer_reference(reference, "manifest")
-            if not filtered_bare_manifest and (
+            ) and self._is_bare_pointer_reference(reference, "manifest"):
+                pattern = self._build(reference.root_major).pattern
+                return [
+                    e
+                    for e in self.source.paths_ledger()
+                    if re.search(pattern, e.get("named_paths_name") or "")
+                ]
+            if (
                 self._is_bare_pointer_reference(reference, "manifest")
                 or self._is_bare_pointer_reference(reference, "definition")
                 or self._is_bare_pointer_reference(reference, "readme")
