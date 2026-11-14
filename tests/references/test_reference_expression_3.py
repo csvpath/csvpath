@@ -962,3 +962,43 @@ class TestHavingAndFlattenPlusStarTraversalNowWork:
             "b2",
             "b3",
         ]
+
+
+class TestPathsSideResolvesEachResult:
+    # #639: a paths side is resolved one result at a time, so each item
+    # keeps its own data (the expressions spec's architecture notes) and a
+    # FILES side with several versions does not read several files in one
+    # resolve (compendium 5.3). Main's output and errors are unchanged.
+    def test_a_files_paths_side_keeps_each_versions_bytes(
+        self, orders_archive_with_files
+    ):
+        expr = ReferenceExpression3(
+            left="$finn.files.:all().:last()",
+            op=ReferenceExpression3.UNION,
+            right="$finn.files.:all().:last()",
+            csvpaths=orders_archive_with_files,
+        )
+        data = sorted(r.data for r in expr.resolve().results)
+        assert data == sorted([b"a,b\n1,2\n", b"c,d\n3,4\n"])
+
+    def test_a_worksheet_paths_side_on_a_csv_still_raises(
+        self, orders_archive_with_files
+    ):
+        expr = ReferenceExpression3(
+            left="$finn.files.*#sheet1.:last()",
+            op=ReferenceExpression3.UNION,
+            right="$finn.files.:all().:last()",
+            csvpaths=orders_archive_with_files,
+        )
+        with pytest.raises(ReferenceException3, match="worksheet"):
+            expr.resolve()
+
+    def test_a_statement_range_side_keeps_its_texts(self, orders_archive):
+        expr = ReferenceExpression3(
+            left="$groupa.csvpaths.:last().:from(0)",
+            op=ReferenceExpression3.UNION,
+            right="$groupa.csvpaths.:last().:from(0)",
+            csvpaths=orders_archive,
+        )
+        results = expr.resolve().results
+        assert results and all(isinstance(r.data, str) for r in results)

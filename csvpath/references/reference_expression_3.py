@@ -98,7 +98,8 @@ class ReferenceExpression3:
     # UNION paragraph in this class's own top comment block).
     # A side is VALUES if its own terminal function chain includes a
     # ROLE == VALUE function (a real scalar lands in .data), or PATHS
-    # if it does not (plain path+uuid, .data is always None). Computed
+    # if it does not (a path+uuid result; .data is whatever that path
+    # resolves to, e.g. a version's bytes or a statement's text). Computed
     # statically, from the parsed reference's own terminal_functions
     # (Reference3.terminal_functions), never from resolved data -- a
     # per-item legitimate None (e.g. an optional field absent for one
@@ -184,12 +185,26 @@ class ReferenceExpression3:
             reference=side, csvpaths=self._csvpaths
         )
         if self._kind(side) == self.PATHS:
-            # a paths side is "a plain path+uuid result -- `.data` is None"
-            # (references_v3_expressions.md, "paths vs. values sides"), so
-            # it is queried, not resolved. Resolving read every matched
-            # file's content only to compare uuids, and several version
-            # files cannot be read in one resolve (compendium 5.3).
-            return finder.query()
+            # a paths side is resolved one result at a time: each item
+            # keeps its own data, as the expressions spec's architecture
+            # notes say, and a FILES side with several versions does not
+            # read several files in one resolve (compendium 5.3; #639).
+            # Whether a paths side should carry content at all is a spec
+            # question for David (the spec says both).
+            selection = finder.query()
+            if selection.ambiguous_content_read:
+                # a side its own finder already flags as several whole-file
+                # reads raises, as it did when resolved whole
+                return finder.resolve_from(selection)
+            return ReferenceResults3(
+                results=[
+                    item
+                    for result in selection.results
+                    for item in finder.resolve_from(
+                        ReferenceResults3(results=[result])
+                    ).results
+                ]
+            )
         return finder.resolve()
 
     def _side_reference_parsed(self, side: "str | ReferenceExpression3"):
