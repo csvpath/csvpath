@@ -710,11 +710,39 @@ class TestGlobalArrivalsLedgerOrdinalIndexing:
     ):
         assert self._regex_data(reference) == expected
 
-    def test_a_bare_manifest_under_a_filtered_root_still_raises(self):
-        # what a bare ':manifest()' returns under ':regex()' waits for
-        # David (decision log W1); the pointer forms above do not
-        with pytest.raises(ReferenceException3):
-            self._regex_data("$:regex(/^al/).files.:manifest()")
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # David, 2026-11-14 (W1, option D): the ledger set filtered by
+            # name, one result per record in ledger order, each resolving
+            # to its record -- the live entry for a live one (D6, D7), the
+            # ledger record for the deleted alfa. It raised at query.
+            ("$:regex(/^al/).files.:manifest()", ["aaa", "bbb", "ccc", "L-alfa"]),
+            ('$:choice("alfa|beta").files.:manifest()', ["ddd", "eee", "L-alfa"]),
+            ('$:choice("alpha").files.:manifest()', ["aaa", "bbb", "ccc"]),
+            ("$:regex(/^zz/).files.:manifest()", []),
+        ],
+    )
+    def test_a_bare_manifest_under_a_filtered_root_is_its_records(
+        self, reference, expected
+    ):
+        assert self._regex_data(reference) == expected
+
+    def test_a_filtered_bare_manifest_queries_each_record_in_the_ledger(self):
+        # each result is the ledger's path with the record's uuid (5.7);
+        # several records are not a Rule 1 read (5.6, Rule 1a)
+        finder = _finder(
+            "$:regex(/^al/).files.:manifest()",
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=STAR_BY_NAME,
+            ledger=self._regex_ledger(),
+            inputs_files_path="inputs/named_files",
+        )
+        results = finder.query()
+        assert results.uuids == ["u-zero-1", "u-one-1", "u-one-2", "u-alfa-1"]
+        assert set(results.files) == {"inputs/named_files/manifest.json"}
+        assert not results.ambiguous_content_read
 
     def test_a_literal_root_reads_its_own_manifest_in_both_orders(self):
         # unchanged: '$alpha' reads alpha's own manifest.json

@@ -218,13 +218,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
                         self.source.file_names(), built.pattern
                     ),
                 )
+            bare_chain = self._bare_filtered_manifest_chain(reference)
+            if bare_chain is not None:
+                return self._query_manifest_chain(
+                    reference=reference, chain=bare_chain, name_filter=built.pattern
+                )
             pointer_call = self._pointer_before_manifest(reference, "manifest")
             if pointer_call is not None:
                 # Rule 1b on the ledger set filtered by name (6.13b), as
                 # for '*' above. It raised "Does not yet support
                 # :manifest() as a name_one path segment" until
-                # 2026-11-12. A bare ':manifest()' here is still not
-                # supported (decision log W1).
+                # 2026-11-12.
                 return self._query_ledger_pointer(
                     pointer_call=pointer_call, name_filter=built.pattern
                 )
@@ -2510,6 +2514,25 @@ class FilesReferenceFinder3(ReferenceFinder3):
             "values": [call for call, _ in fields if call.arg is None],
         }
 
+    def _bare_filtered_manifest_chain(self, reference: Reference3) -> "dict | None":
+        """a bare ':manifest()' under a ':regex()' or ':choice()' root, as
+        an empty ':manifest()' chain (_manifest_chain()), or None. The
+        root filters the ledger set by name (6.13b), and a filtered set
+        has no file of its own: Rule 1a's whole ledger file is '*' only.
+        So it is the matching records, one result each, each resolving to
+        its record, the live entry for a live one (D6, D7): David,
+        2026-11-14, decision W1, option D. It raised at query; CSVPATHS
+        resolved the whole unfiltered ledger once per result."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        if not isinstance(reference.root_major, FunctionCall3):
+            return None
+        if reference.name_three is not None:
+            return None
+        if not self._is_bare_pointer_reference(reference, "manifest"):
+            return None
+        return {"pointer": None, "ranges": [], "gates": [], "values": []}
+
     def _query_manifest_chain(
         self, *, reference: Reference3, chain: dict, name_filter: "str | None"
     ) -> ReferenceResults3:
@@ -2755,7 +2778,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
         manifest_chain = None
         definition_calls = None
         if reference.name_three is None:
-            manifest_chain = self._manifest_chain(name_one=reference.name_one)
+            manifest_chain = self._manifest_chain(
+                name_one=reference.name_one
+            ) or self._bare_filtered_manifest_chain(reference)
             definition_calls = self._definition_chain(name_one=reference.name_one)
         if definition_calls is not None:
             return self._definition_chain_data(
