@@ -174,15 +174,25 @@ def _header_value(header: str):
 
 
 class TestCsvPathProductionsNumericLikeHeaderNames(unittest.TestCase):
-    """A header name that only looks numeric is a name. Only a decimal is a
-    0-based position (docs/headers.md). Before, "-1" was the last column,
-    "1.5" was column 1 and "1_0" was column 10."""
-
-    def test_negative_looking_name_is_a_name(self):
-        assert _header_value('#"-1"') == "NEG"
+    """A header name with a decimal point or digit underscores is a name.
+    Before, "1.5" and "1.0" were column 1 and "1_0" was column 10. A decimal
+    is a 0-based position (docs/headers.md). A negative integer is still a
+    position from the end, as before, until we decide if it should be a
+    name (#607); these tests pin that, so a change to it is deliberate."""
 
     def test_decimal_looking_name_is_a_name(self):
         assert _header_value('#"1.5"') == "DECIMAL"
+
+    def test_whole_float_looking_name_is_a_name(self):
+        # numeric_like_headers.csv has no "1.0" header
+        assert _header_value('#"1.0"') is None
+
+    def test_negative_integer_is_still_a_position_from_the_end(self):
+        assert _header_value('#"-1"') == "LAST"
+        assert _header_value("#-1") == "LAST"
+        assert _header_value('#" -1 "') == "LAST"
+        assert _header_value('#"-2"') == "UNDERSCORE"
+        assert _header_value('#"-0"') == "A"
 
     def test_underscore_digits_name_is_a_name(self):
         assert _header_value("#1_0") == "UNDERSCORE"
