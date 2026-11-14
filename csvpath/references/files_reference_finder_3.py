@@ -356,13 +356,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
             path = self._root_manifest_path(root_major)
             # an argued field is a gate: it supplies no value, so resolve
-            # gives whole entries, and several at once is a Rule 1 read
-            # (2026-11-08), as ':name("x").:manifest():type("csv")' is
+            # gives whole entries. Several entries are records, not files,
+            # so they resolve: records resolve, files don't (David, 2026-11-14; compendium 5.3, 5.6). They raised (Rule 1) until then.
             return ReferenceResults3(
-                results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in manifest],
-                ambiguous_content_read=(
-                    manifest_field_call.arg is not None and len(manifest) > 1
-                ),
+                results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in manifest]
             )
 
         pointer_call = self._pointer_before_manifest(reference, "manifest")
@@ -1024,12 +1021,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # pools genuinely unreduced candidates per group, so the
             # naive count check still correctly flags that case --
             # `pointers` being falsy there makes this new term a no-op.
-            ambiguous_content_read=(
-                has_manifest
-                and not has_field_function
-                and len(selected_candidates) > 1
-                and not (partitioned and pointers)
-            ),
+            # several manifest entries are records, not files, so they
+            # resolve: records resolve, files don't (David, 2026-11-14; compendium 5.3, 5.6). They raised (Rule 1) until then.
         )
 
     def _query_star_traversal(
@@ -1543,9 +1536,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     ReferenceResult3(path=_result_path(c), uuid=c["uuid"])
                     for c in candidates
                 ],
-                ambiguous_content_read=(
-                    has_manifest and not has_value_field and len(candidates) > 1
-                ),
+                # several manifest entries are records: they resolve
+                # (records resolve, files don't (David, 2026-11-14; compendium 5.3, 5.6))
             )
         pointer = pointers[0]
 
@@ -1607,13 +1599,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # case above already returned), so no extra truthiness check
             # is needed the way the literal-root fix needed `and pointers`
             # alongside `partitioned`.
-            ambiguous_content_read=(
-                has_manifest
-                and not has_value_field
-                and len(selected_candidates) > 1
-                and not partitioned
-                and not by_named_file
-            ),
+            # several manifest entries are records: they resolve
+            # (records resolve, files don't (David, 2026-11-14; compendium 5.3, 5.6))
         )
 
     @staticmethod
@@ -2555,14 +2542,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 values[-1].name,
                 "(), :".join(f.name for f in values[:-1]),
             )
-        # several whole entries of one named-file cannot be resolved at
-        # once (Rule 1, 2026-11-08); a field can (Rule 3), and so can the
-        # ledger under '*', ':regex()' or ':choice()' (Rule 1a)
+        # several whole entries resolve, as the ledger's records do: they
+        # are records, not files (records resolve, files don't (David, 2026-11-14; compendium 5.3, 5.6)). Several entries of one
+        # named-file raised (Rule 1, 2026-11-08) until then.
         return ReferenceResults3(
-            results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in entries],
-            ambiguous_content_read=(
-                isinstance(root_major, str) and not values and len(entries) > 1
-            ),
+            results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in entries]
         )
 
     def _apply_manifest_chain_ranges(self, *, ranges: list, entries: list) -> list:
