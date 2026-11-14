@@ -184,28 +184,18 @@ class ReferenceExpression3:
         finder = ReferenceFinderFactory3.for_reference(
             reference=side, csvpaths=self._csvpaths
         )
-        if self._kind(side) == self.PATHS:
-            # a paths side is resolved one result at a time: each item
-            # keeps its own data, as the expressions spec's architecture
-            # notes say, and a FILES side with several versions does not
-            # read several files in one resolve (compendium 5.3; #639).
-            # Whether a paths side should carry content at all is a spec
-            # question for David (the spec says both).
-            selection = finder.query()
-            if selection.ambiguous_content_read:
-                # a side its own finder already flags as several whole-file
-                # reads raises, as it did when resolved whole
-                return finder.resolve_from(selection)
-            return ReferenceResults3(
-                results=[
-                    item
-                    for result in selection.results
-                    for item in finder.resolve_from(
-                        ReferenceResults3(results=[result])
-                    ).results
-                ]
-            )
-        return finder.resolve()
+        # every side is resolved one result at a time: each item keeps its
+        # own data, as the expressions spec's architecture notes say, and a
+        # FILES side with several versions -- a paths side, or a gate such
+        # as ':type("csv")', which _kind() counts as values -- does not read
+        # several files in one resolve (compendium 5.3; #639). A side its
+        # own finder flags as several whole-file reads raises, as it did
+        # when resolved whole. Whether a paths side should carry content
+        # at all is a spec question for David (the spec says both).
+        selection = finder.query()
+        if selection.ambiguous_content_read:
+            return finder.resolve_from(selection)
+        return finder.resolve_each(selection)
 
     def _side_reference_parsed(self, side: "str | ReferenceExpression3"):
         """the single, definitive parsed Reference3 that determines a

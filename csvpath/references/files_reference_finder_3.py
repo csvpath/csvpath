@@ -2119,6 +2119,23 @@ class FilesReferenceFinder3(ReferenceFinder3):
         self._version_reads = 0
         return super().resolve_from(selection)
 
+    def resolve_each(self, selection: ReferenceResults3) -> ReferenceResults3:
+        """as ReferenceFinder3.resolve_each(), keeping the live index the
+        selection's own query() built, so each result does not re-read
+        every named-file manifest (reviewer on #639; the #585 cost fix).
+        Only the per-resolve version-file count resets."""
+        if selection is None:
+            raise ValueError("selection cannot be None")
+        results = []
+        for result in selection.results:
+            self._version_reads = 0
+            results.extend(
+                ReferenceFinder3.resolve_from(
+                    self, ReferenceResults3(results=[result])
+                ).results
+            )
+        return ReferenceResults3(results=results)
+
     def _read_version_file(self, path: str, *, worksheet: "str | None" = None):
         """a version file's whole content: its bytes, or a worksheet's rows.
         Only one file's content can be read per resolve() (compendium 5.3:

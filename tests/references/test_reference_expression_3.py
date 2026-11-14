@@ -525,11 +525,13 @@ def orders_archive_with_files(tmp_path):
                     "file": str(orders_path),
                     "file_home": str(orders_path.parent),
                     "uuid": "file-uuid-1",
+                    "type": "csv",
                 },
                 {
                     "file": str(backup_path),
                     "file_home": str(backup_path.parent),
                     "uuid": "file-uuid-2",
+                    "type": "csv",
                 },
             ],
         )
@@ -976,6 +978,24 @@ class TestPathsSideResolvesEachResult:
             left="$finn.files.:all().:last()",
             op=ReferenceExpression3.UNION,
             right="$finn.files.:all().:last()",
+            csvpaths=orders_archive_with_files,
+        )
+        data = sorted(r.data for r in expr.resolve().results)
+        assert data == sorted([b"a,b\n1,2\n", b"c,d\n3,4\n"])
+
+    @pytest.mark.parametrize(
+        "side",
+        ['$finn.files.:all().:type("csv")', '$finn.files.:all().:all():type("csv")'],
+    )
+    def test_a_gate_shaped_files_side_keeps_each_versions_bytes(
+        self, orders_archive_with_files, side
+    ):
+        # reviewer #8 on #639: _kind() counts an argued gate as values, so
+        # this side resolved whole and raised on the second version file
+        expr = ReferenceExpression3(
+            left=side,
+            op=ReferenceExpression3.UNION,
+            right=side,
             csvpaths=orders_archive_with_files,
         )
         data = sorted(r.data for r in expr.resolve().results)
