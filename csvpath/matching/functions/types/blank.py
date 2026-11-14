@@ -83,7 +83,7 @@ class Blank(Type):
                     self._distinct_if(skip=skip, value=value)
                 else:
                     self.value = CheckedUnset()
-                    msg = "Header {i} not found"
+                    msg = f"Header {i} not found"
                     self.matcher.csvpath.error_manager.handle_error(
                         source=self, msg=msg
                     )
@@ -91,16 +91,22 @@ class Blank(Type):
                         raise MatchException(msg)
         if self.notnone:
             v = None
+            #
+            # with an argument, name that header. without one, i is our own
+            # header position. i is not set in the first case.
+            #
             if len(self.siblings()) > 0:
+                what = f"Header {self.siblings()[0].name}"
                 v = self._value_one(skip=skip)
             else:
                 sibs = self.parent.siblings()
                 i = sibs.index(self)
+                what = f"Header {i}"
                 if i > -1 and len(self.matcher.line) > i:
                     v = self.matcher.line[i]
             if v is None or str(v).strip() == "":
                 self.value = CheckedUnset()
-                msg = "Header {i} cannot be empty because notnone is set"
+                msg = f"{what} cannot be empty because notnone is set"
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.matcher.csvpath.do_i_raise():
                     raise MatchException(msg)

@@ -62,8 +62,8 @@ class NamedFileDescriber:
             with DataFileReader(path) as file:
                 try:
                     return json.load(file.source)
-                except Exception:
-                    msg = "Error getting named-file discriptor JSON for {name}: {ex}"
+                except Exception as ex:
+                    msg = f"Error getting named-file descriptor JSON for {name}: {ex}"
                     self.file_manager.csvpaths.logger.error(msg)
                     msg = traceback.format_exc()
                     self.file_manager.csvpaths.logger.debug(msg)

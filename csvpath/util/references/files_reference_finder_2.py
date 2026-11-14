@@ -531,7 +531,7 @@ class FilesReferenceFinder2:
             else:
                 t = index.get(_)
             if t is None:
-                raise ValueError("Cannot find a time for {_}")
+                raise ValueError(f"Cannot find a time for {_}")
             t = exut.to_datetime(t)
             if ffrom < t < tto:
                 keep.append(_)

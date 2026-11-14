@@ -15,7 +15,7 @@ class Scanner2Transformer(Transformer):
 
     def seek(self, lst) -> None:
         if not isinstance(lst, list):
-            raise ValueError("not a list: {lst}")
+            raise ValueError(f"not a list: {lst}")
         if len(lst) >= 1:
             if lst[len(lst) - 1] == "*":
                 lst.pop()
@@ -33,7 +33,7 @@ class Scanner2Transformer(Transformer):
 
     def process(self, line_nos) -> None:
         if not isinstance(line_nos, list):
-            raise ValueError("not a list: {line_nos}")
+            raise ValueError(f"not a list: {line_nos}")
         these = []
         op = None
         for num in line_nos:

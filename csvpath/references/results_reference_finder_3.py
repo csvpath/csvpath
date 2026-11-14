@@ -1144,9 +1144,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         already fully supports) are the built ':from()'/':to()' (or
         ':after()'/':before()') calls, validated here exactly the way
         query()'s own literal-root path does (date-format validation)
-        -- the actual application (_apply_mixed_range(): the index
-        bound's slice, then the date bound's filter, per-partition in GROUP
-        mode) happens in _star_pool_and_reduce()/_star_group_and_reduce(),
+        -- the actual application (_apply_mixed_range(): the date
+        bound's filter, then the index counted from it, decision W4;
+        per-partition in GROUP mode) happens in _star_pool_and_reduce()/_star_group_and_reduce(),
         which both already receive them. field_calls
         (added 2026-10-18, alongside :error_count()'s own predicate-
         argument GATE) is now a LIST, not a single call: REVISED

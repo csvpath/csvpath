@@ -261,7 +261,7 @@ class CollectDynamic(Runner):
             )
             refs.append(ref)
         else:
-            raise ValueError("Incorrect data and/or shape: {data}, {shape}")
+            raise ValueError(f"Incorrect data and/or shape: {data}, {shape}")
         #
         # probably won't matter but replace caching
         #

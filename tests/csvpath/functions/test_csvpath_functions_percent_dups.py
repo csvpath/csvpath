@@ -3,6 +3,7 @@ import os
 import io
 from contextlib import redirect_stdout
 from csvpath import CsvPath
+from csvpath.matching.functions.function_factory import FunctionFactory
 
 NUMBERS = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}numbers.csv"
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
@@ -84,3 +85,19 @@ class TestCsvPathFunctionsPercentDups(unittest.TestCase):
         )
         lines = path.collect()
         assert len(lines) == 0
+
+
+class TestCsvPathFunctionsPercentDupsDescription(unittest.TestCase):
+    def test_says_it_has_internal_variables_before_any_line(self):
+        #
+        # the CLI function lister builds each function this way and the
+        # describer reads has_internal_variables before any run. like the
+        # other dups functions, percent_dups() keeps its fingerprints in a
+        # variable, so it must say so up front. (_register_internal_var_name
+        # only sets the flag once a line runs.)
+        #
+        for name in ["percent_dups", "count_dups", "has_dups", "dup_lines"]:
+            f = FunctionFactory.get_function(
+                None, name=name, child=None, find_external_functions=False
+            )
+            assert f.has_internal_variables is True, name

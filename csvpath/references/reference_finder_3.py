@@ -260,8 +260,9 @@ class ReferenceFinder3(ABC):
         functions (':after()'+':to()', ':from()'+':before()') -- 6.28's
         own explicit example, ':from(:index(5)):to(:yesterday())', pairs
         two different-mode functions without issue; mixing INDEX-mode
-        and DATE-mode bounds in one pair is applied, or for the unsettled
-        shapes raised, by _apply_mixed_range()."""
+        and DATE-mode bounds in one pair is applied by
+        _apply_mixed_range(): the date filter, then the index counted from
+        it (decision W4, 2026-11-14)."""
         lowers = [f for f in built if f.name in ("from", "after")]
         uppers = [f for f in built if f.name in ("to", "before")]
         if len(lowers) > 1:
@@ -396,18 +397,25 @@ class ReferenceFinder3(ABC):
         "`:name()` with a string, int, or variable equaling the statement
         identity"; 2026-11-13). The string form, and a variable that
         resolves to a string (_resolve_arg() resolves the nested arg
-        before this runs), are supported. Name3 does not take an int, so
-        `:name(0)` and a variable resolving to an int raise; a /regex/ is
-        not an identity, so it raises here. Any other bound is
-        _range_bound()'s."""
+        before this runs), are supported. An int is the identity of that
+        string: ':name(0)' is the statement whose identity is "0", an
+        unnamed statement 0, since "the index is also used as the name, if
+        another name is not assigned" (NRE "Identities"; decision D12,
+        spec pass 2026-11-14). A named statement 0 is reached by '0' or
+        ':index(0)'. A /regex/ is not an identity, so it raises here. Any
+        other bound is _range_bound()'s."""
         if function is None:
             raise ValueError("function cannot be None")
         arg = function.arg
         if isinstance(arg, Name3):
+            if isinstance(arg.arg, int) and not isinstance(arg.arg, bool):
+                return str(arg.arg)
             if not isinstance(arg.arg, str):
+                # a regex, or a boolean from a variable (reviewer on #623)
+                what = "a regex" if isinstance(arg.arg, Regex3) else type(arg.arg).__name__
                 raise ReferenceException3(
-                    f"':{function.name}(:name())' takes a statement identity "
-                    "string, not a regex."
+                    f"':{function.name}(:name())' takes a statement identity, "
+                    f"a string or an int, not {what}."
                 )
             return arg.arg
         return cls._range_bound(function)
@@ -529,14 +537,21 @@ class ReferenceFinder3(ABC):
         """a range whose bounds may mix index-mode and date-mode
         (compendium 6.32; NRE: '$alpha.results.*:from(2):to(:date(...))'
         is "the 3rd ... through the last result that happened before" the
-        date). An index bound is a position in the ordered list, a date
-        bound a filter on each entry's time, so the range is both: the
-        index bound slices, then the date bound filters. Only a
-        non-negative index lower bound with a date upper bound is mixed
-        (the NRE's shape): there an index counted from the start and one
-        counted from the date anchor agree. The other mixes raise until
-        David settles the anchor (decision log W4). With one mode only, it
-        is that mode's own range. `date_filter` is the datatype's date
+        date). An index counts from the anchor (6.30; David, 2026-11-14,
+        decision W4): the date bound filters first, then the index bound
+        counts within what is left. ':from(:date("2026-01-09")):to(2)' is
+        the first three from the 9th; ':from(-3):to(:date(X))' the last
+        three through X. For the NRE's shape (a non-negative index lower
+        bound with a date upper bound) this is the same answer as
+        counting from the start when the list is in the date filter's own
+        time order, which is all #591 supported. It is not always: the
+        RESULTS ledger set is in first-instance arrival order (6.13b(ii)),
+        and the filter reads each run's time, so there the two can differ
+        and W4's answer is the filtered one (reviewer on #620). The other
+        mixes raised "not settled" until then. Index positions that must
+        ALSO fall after a date are two windows, not one range: a reference
+        expression, e.g. ':from(1):to(5)' INTERSECT ':after(:date(X))'.
+        With one mode only, it is that mode's own range. `date_filter` is the datatype's date
         filter, called as date_filter(entries, lower, upper). Mixing
         raised until 2026-11-12 (David, spec review item 3: "the specs are
         consistent and not illogical, therefore the code is wrong")."""
@@ -554,30 +569,11 @@ class ReferenceFinder3(ABC):
         index_upper = None if is_date(upper_call) else upper_call
         date_lower = lower_call if is_date(lower_call) else None
         date_upper = upper_call if is_date(upper_call) else None
-        mixed = (index_lower is not None or index_upper is not None) and (
-            date_lower is not None or date_upper is not None
-        )
-        if mixed and not (
-            index_lower is not None
-            and isinstance(cls._range_bound(index_lower), int)
-            and cls._range_bound(index_lower) >= 0
-        ):
-            # only a non-negative index lower bound with a date upper
-            # bound is supported: there an index counted from the start of
-            # the list and one counted from the date anchor (compendium
-            # 6.29, 6.30) give the same answer. Otherwise they differ, and
-            # which one is meant waits for David (decision log W4).
-            raise ReferenceException3(
-                "Mixing a date lower bound with an index upper bound, or a "
-                "negative index with a date bound, is not supported yet: "
-                "whether the index counts from the start of the list or "
-                "from the date anchor (compendium 6.29, 6.30) is not "
-                "settled."
-            )
-        if index_lower is not None or index_upper is not None:
-            entries = cls._apply_range(entries, index_lower, index_upper)
+        # the date anchor first, then the index counts from it (W4)
         if date_lower is not None or date_upper is not None:
             entries = date_filter(entries, date_lower, date_upper)
+        if index_lower is not None or index_upper is not None:
+            entries = cls._apply_range(entries, index_lower, index_upper)
         return entries
 
     @classmethod
@@ -779,6 +775,27 @@ class ReferenceFinder3(ABC):
         implied = path.pop()
         path.append(Star3())
         name_one.functions.insert(0, implied)
+
+    @staticmethod
+    def _reads_ledger_set(reference: Reference3) -> bool:
+        """true when a traversal reference reaches the logical ledger set:
+        a ':manifest()' in name_one (6.13b(iv): "Only :manifest() in
+        name_one, with '*' (or :regex()/:choice()) in root_major, reaches
+        the logical manifest set"), with no walk beside it. A walk
+        selector (':all()', ':groups()', ':flatten()') or a path segment
+        keeps it a traversal (ruling C Q1, 2026-10-30: they "stay
+        traversals"), as query() already treats it (reviewer on #618).
+        Otherwise a traversal root is the literal reference for each live
+        name."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        name_one = reference.name_one
+        calls = [*name_one.path, *name_one.functions]
+        if any(not isinstance(c, FunctionCall3) for c in name_one.path):
+            return False
+        if any(c.name in ("all", "groups", "flatten") for c in calls):
+            return False
+        return any(c.name == "manifest" for c in calls)
 
     @staticmethod
     def _is_bare_pointer_reference(reference: Reference3, name: str) -> bool:
@@ -1334,6 +1351,21 @@ class ReferenceFinder3(ABC):
                     # plain value here, no separate _resolve_value()
                     # call needed anymore.
                     built = self._build(segment)
+                    if isinstance(built.arg, bool):
+                        raise ReferenceException3(
+                            f":name({built.arg}) takes a string in a path "
+                            "segment, not a boolean."
+                        )
+                    if isinstance(built.arg, int):
+                        # an int is a statement identity, a name_three
+                        # range bound only (decision D12, 2026-11-14); a
+                        # path segment is a name, so say so rather than
+                        # match nothing
+                        raise ReferenceException3(
+                            f":name({built.arg}) takes a string in a path "
+                            "segment; an int :name() is a statement "
+                            "identity, for a name_three range bound."
+                        )
                     pattern.append(built.arg)
                     continue
                 if segment.name == "regex":

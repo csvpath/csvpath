@@ -160,7 +160,7 @@ class Scanner2:
         if data is None:
             raise ValueError("Data cannot be None")
         if not isinstance(data, str):
-            raise ValueError("Data must be a string, not {type(data)}")
+            raise ValueError(f"Data must be a string, not {type(data)}")
         data = data.strip()
         self.path = data
         if data[0] != "$":

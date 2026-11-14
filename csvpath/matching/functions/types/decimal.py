@@ -62,7 +62,7 @@ class Decimal(Type):
             v = self._value_one(skip=skip)
             if v is None:
                 if self.notnone is True:
-                    msg = "Value of {self.name} cannot be None"
+                    msg = f"Value of {self.name} cannot be None"
                     self.matcher.csvpath.error_manager.handle_error(
                         source=self, msg=msg
                     )

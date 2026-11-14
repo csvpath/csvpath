@@ -120,7 +120,7 @@ class RunHomeMaker:
                 index = finder.version_index
                 path = mani[index]["from"]
             else:
-                raise ValueError("Unhandled reference type in {filename}")
+                raise ValueError(f"Unhandled reference type in {filename}")
         else:
             #
             # plain named-file name
@@ -128,7 +128,7 @@ class RunHomeMaker:
             mani = self._csvpaths.file_manager.get_manifest(filename)
             path = mani[len(mani) - 1]["from"]
         if path is None:
-            raise ValueError("Cannot find path of data file for {filename}")
+            raise ValueError(f"Cannot find path of data file for {filename}")
         return path
 
     @property

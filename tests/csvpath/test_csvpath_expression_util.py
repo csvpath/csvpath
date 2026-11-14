@@ -184,6 +184,36 @@ class TestCsvPathExpressionUtil(unittest.TestCase):
         assert not isinstance(ExpressionUtility.to_float("five"), float)
         assert "five" == ExpressionUtility.to_float("five")
 
+    def test_csvpath_exp_util_to_int_two_characters(self):
+        #
+        # with no comma, find(",") is -1, which equals len - 3 for a
+        # 2-character value. the decimal-comma splice then ran anyway:
+        # "$5" became "$.$5" (0), ".5" became "...5" and "1." became "1.1."
+        #
+        assert ExpressionUtility.to_int("$5") == 5
+        assert ExpressionUtility.to_int("£7") == 7
+        assert ExpressionUtility.to_int("€9") == 9
+        assert ExpressionUtility.to_int(".5") == 0
+        assert ExpressionUtility.to_int("1.") == 1
+        assert ExpressionUtility.to_int("5,") == 5
+        #
+        # a real decimal comma still works
+        #
+        assert ExpressionUtility.to_int("$1,50") == 1
+        assert ExpressionUtility.to_int("10,00") == 10
+
+    def test_csvpath_exp_util_to_float_two_characters(self):
+        #
+        # "$5" was spliced into "$.$5" and read as 0.5
+        #
+        assert ExpressionUtility.to_float("$5") == 5.0
+        assert ExpressionUtility.to_float("£7") == 7.0
+        assert ExpressionUtility.to_float("€9") == 9.0
+        assert ExpressionUtility.to_float(".5") == 0.5
+        assert ExpressionUtility.to_float("1.") == 1.0
+        assert ExpressionUtility.to_float("$1,50") == 1.5
+        assert ExpressionUtility.to_float("10,00") == 10.0
+
     def test_csvpath_exp_util_all(self):
         assert ExpressionUtility.all(None) is False
         assert ExpressionUtility.all([]) is True

@@ -69,8 +69,8 @@ class DataProvenance(BaseFacet):
                     break
             else:
                 if not isinstance(mdata, ResultMetadata):
-                    listener.config.logger().warning(
-                        "Could not match UUID {uuid} in root manifest"
+                    listener.config.logger.warning(
+                        "Could not match UUID %s in root manifest", uuid
                     )
 
         dp = DataProvenance(

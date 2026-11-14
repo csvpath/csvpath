@@ -99,7 +99,7 @@ class Import(SideEffect):
             #
             e = ExpressionUtility.get_my_expression(self)
             if e is None:
-                raise MatchComponentException("Cannot find my expression: {self}")
+                raise MatchComponentException(f"Cannot find my expression: {self}")
             #
             #
             #

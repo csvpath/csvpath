@@ -179,7 +179,7 @@ class PathsManager:
             ref = ReferenceParser(name, csvpaths=self.csvpaths)
             if ref.datatype != ReferenceParser.CSVPATHS:
                 raise ValueError(
-                    "Must be a reference of type {ReferenceParser.CSVPATHS}"
+                    f"Must be a reference of type {ReferenceParser.CSVPATHS}"
                 )
             name = ref.root_major
 
@@ -212,7 +212,7 @@ class PathsManager:
             ref = ReferenceParser(name, csvpaths=self.csvpaths)
             if ref.datatype != ReferenceParser.CSVPATHS:
                 raise ValueError(
-                    "Must be a reference of type {ReferenceParser.CSVPATHS}"
+                    f"Must be a reference of type {ReferenceParser.CSVPATHS}"
                 )
             name = ref.root_major
 
@@ -756,7 +756,7 @@ class PathsManager:
                     path = self._group_file_path(npn)
                     lst = self._get_csvpaths_from_file(path)
                     if i >= len(lst):
-                        raise ValueError("Cannot find a csvpath in {npn} at {i}")
+                        raise ValueError(f"Cannot find a csvpath in {npn} at {i}")
                     csvpath = lst[i]
                     return [csvpath]
                 #

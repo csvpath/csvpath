@@ -40,7 +40,7 @@ class ReferenceManifestEntryFinder:
         ).query()
         if len(results.files) > 1:
             raise ReferenceException(
-                "Expecting only one result path, not {len(results.files)}"
+                f"Expecting only one result path, not {len(results.files)}"
             )
         if len(results.files) == 0:
             #

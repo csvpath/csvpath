@@ -18,7 +18,7 @@ class JsonReaderHelper:
         elif cls._is_json(path, filetype):
             return ("json_data_reader", "JsonDataReader")
         else:
-            raise ValueError("Must be a JSON type, not {path}/{filetype}")
+            raise ValueError(f"Must be a JSON type, not {path}/{filetype}")
 
     @classmethod
     def _is_json(cls, path, filetype) -> bool:

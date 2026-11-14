@@ -360,7 +360,7 @@ class Qualified:  # pylint: disable=R0904
         elif self.line_matches():  # pylint: disable=E1101
             ret = True
         self.matcher.csvpath.logger.debug(  # pylint: disable=E1101
-            f"Qualified.do_onmatch: {ret} for {self.name}"
+            "Qualified.do_onmatch: %s for %s", ret, self.name
         )
         return ret
 

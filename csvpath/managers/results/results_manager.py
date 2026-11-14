@@ -370,11 +370,14 @@ class ResultsManager:  # pylint: disable=C0115
                 return True
         return False
 
-    def get_number_of_errors(self, name: str) -> bool:
+    def get_number_of_errors(self, name: str) -> int:
         results = self._get_results_list(name)
         errors = 0
         for r in results:
-            errors += r.errors_count()
+            #
+            # errors_count is a property. calling it raised TypeError.
+            #
+            errors += r.errors_count
         return errors
 
     def get_number_of_results(self, name: str) -> int:

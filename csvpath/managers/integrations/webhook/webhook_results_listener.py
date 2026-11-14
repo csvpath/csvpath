@@ -123,7 +123,7 @@ class WebhookResultsListener(WebhookListener):
             raise ValueError("Type cannot be None")
         if not isinstance(mdata, ResultsMetadata):
             raise WebhookException(
-                "Cannot create a payload for a {type(mdata)}. Check your config."
+                f"Cannot create a payload for a {type(mdata)}. Check your config."
             )
         if self.csvpaths is None:
             raise ValueError("CsvPaths cannot be None")

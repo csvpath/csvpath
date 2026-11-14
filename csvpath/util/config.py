@@ -880,7 +880,7 @@ shell = /bin/bash
             or not len(self.csvpaths_errors_policy) > 0
         ):
             raise ConfigurationException(
-                "CsvPaths error policy is wrong in {self.configpath}"
+                f"CsvPaths error policy is wrong in {self.configpath}"
             )
         for _ in self.csvpaths_errors_policy:
             if _ not in [s.value for s in OnError]:
@@ -904,7 +904,7 @@ shell = /bin/bash
             self.csvpaths_log_level, str
         ):
             raise ConfigurationException(
-                "CsvPaths log level is wrong in {self.configpath}"
+                f"CsvPaths log level is wrong in {self.configpath}"
             )
         if self.csvpaths_log_level not in [s.value for s in LogLevels]:
             raise ConfigurationException(
@@ -928,7 +928,7 @@ shell = /bin/bash
                 f"Log files to keep is wrong in {self.configpath}: {type(self.log_files_to_keep)}"
             )
         if self.log_file_size is None or not isinstance(self.log_file_size, int):
-            raise ConfigurationException("Log files size is wrong in {self.configpath}")
+            raise ConfigurationException(f"Log files size is wrong in {self.configpath}")
         #
         # make sure a cache dir exists. the default should be chosen in the
         # default config, but regardless, we create the dir.

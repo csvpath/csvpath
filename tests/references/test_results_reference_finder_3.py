@@ -1984,16 +1984,42 @@ class TestStatementLevelRange:
         finder.set_variable("x", value="three")
         assert finder.query().uuids == ["th-uuid", "f-uuid"]
 
-    def test_a_name_bound_variable_resolving_to_an_int_raises(
+    def test_a_name_bound_variable_resolving_to_an_int_is_that_identity(
         self, one_run_five_statements
     ):
-        # the int form is a question for David (D12); Name3 takes no int
+        # decision D12 (2026-11-14): an int ':name()' is the identity "3".
+        # These statements are all named, so none has it: nothing, no error
+        # (NRE). It raised until then.
         finder = _finder(
             "$acme.results.customers/2025:first().:from(:name(@x))",
             one_run_five_statements,
         )
         finder.set_variable("x", value=3)
-        with pytest.raises(ReferenceException3, match="int"):
+        assert finder.query().results == []
+
+    def test_an_int_name_bound_matches_an_unnamed_statement(self, tmp_path):
+        # decision D12: ':name(1)' is the identity "1", an unnamed statement
+        # 1; statement 2 is named "header" (reviewer on #623: RESULTS had no
+        # positive case)
+        run_dir = tmp_path / "acme" / "customers" / "2025" / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        for idx, identity in enumerate(["0", "1", "header", "3", "4"]):
+            _write_json(
+                run_dir / identity / "manifest.json",
+                {"uuid": f"u-{identity}", "instance_index": idx},
+            )
+        _write_archive_manifest(tmp_path, "acme", [str(run_dir)])
+        reference = "$acme.results.customers/2025:first().:from(:name(1)):to(:name(3))"
+        assert _finder(reference, str(tmp_path)).query().uuids == [
+            "u-1",
+            "u-header",
+            "u-3",
+        ]
+        finder = _finder(
+            "$acme.results.customers/2025:first().:from(:name(@x))", str(tmp_path)
+        )
+        finder.set_variable("x", value=True)
+        with pytest.raises(ReferenceException3, match="bool"):
             finder.query()
 
     def test_a_name_bound_with_a_regex_raises(self, one_run_five_statements):
@@ -7822,21 +7848,64 @@ class TestMixedIndexAndDateRange:
         ]
 
     @pytest.mark.parametrize(
-        "reference",
+        "reference, expected",
         [
-            # where the two readings of the index differ (6.29, 6.30:
-            # "an index counts from the anchor"), the mix raises until
-            # David settles it (decision log W4): "3 runs from Jan 9"
-            # would be [] counted from the start, three runs counted
-            # from the date
-            '$alpha.results.*:from(:date("2026-01-09")):to(2)',
-            '$alpha.results.*:from(-3):to(:date("2026-01-10_08-00-00"))',
+            # David, 2026-11-14 (decision W4): an index counts from the date
+            # anchor (6.30), so "3 runs from Jan 9" and "the last 3 before
+            # 8am". Counted from the start these would be [] and one run.
+            # They raised "not settled".
+            (
+                '$alpha.results.*:from(:date("2026-01-09")):to(2)',
+                [
+                    "run-2026-01-10_07-00-00",
+                    "run-2026-01-10_09-00-00",
+                    "run-2026-01-12_00-00-00",
+                ],
+            ),
+            (
+                '$alpha.results.*:from(-3):to(:date("2026-01-10_08-00-00"))',
+                [
+                    "run-2026-01-05_00-00-00",
+                    "run-2026-01-08_00-00-00",
+                    "run-2026-01-10_07-00-00",
+                ],
+            ),
+            (
+                '$alpha.results.*:from(:date("2026-01-05")):to(1)',
+                ["run-2026-01-05_00-00-00", "run-2026-01-08_00-00-00"],
+            ),
         ],
     )
-    def test_an_unsettled_mix_raises(self, runs, reference):
-        with pytest.raises(ReferenceException3) as error:
-            _finder(reference, runs).query()
-        assert "not settled" in str(error.value)
+    def test_an_index_counts_from_the_date_anchor(self, runs, reference, expected):
+        assert _finder(reference, runs).query().uuids == expected
+
+    def test_the_index_counts_in_the_filtered_set_when_ledger_order_differs(
+        self, tmp_path
+    ):
+        # reviewer on #620: the ledger set is in arrival order (6.13b(ii))
+        # while the date filter reads each run's own time. With the ledger
+        # holding late, early, last, only "early" is on or before 10:00:01,
+        # so position 1 of the filtered set does not exist. Slicing first
+        # (the old order) gave ["early"].
+        base = tmp_path / "alpha"
+        late = _make_run(base, "2026-01-01_12-00-00", "late", {})
+        early = _make_run(base, "2026-01-01_08-00-00", "early", {})
+        last = _make_run(base, "2026-01-01_14-00-00", "last", {})
+        _write_archive_manifest(tmp_path, "alpha", [late, early, last])
+        archive = str(tmp_path)
+        upper = ':to(:date("2026-01-01_10-00-01"))'
+        assert _finder(f"$*.results.:manifest(){upper}", archive).query().uuids == ["early"]
+        assert _finder(f"$*.results.:manifest():from(1){upper}", archive).query().uuids == []
+        assert _finder(f"$*.results.:manifest():from(0){upper}", archive).query().uuids == ["early"]
+
+    def test_an_index_range_and_a_date_after_it_is_not_one_range(self, runs):
+        # David's probe, 2026-11-14: ':from(1):to(5):after(X)' has two
+        # lower bounds, which 6.28c makes illegal; "positions 1-5 that are
+        # also after X" is two windows, written with INTERSECT
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$alpha.results.*:from(1):to(5):after(:date("2026-01-01"))', runs
+            ).query()
 
 
 class TestInstanceRangeIdentities:

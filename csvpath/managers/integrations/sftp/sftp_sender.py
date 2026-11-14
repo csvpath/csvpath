@@ -127,7 +127,7 @@ class SftpSender(Listener, threading.Thread):
                 # if file not in files:
                 #    raise ValueError("File name {file} is not in {files}")
                 if to is None:
-                    raise ValueError("File name {file} has no destination")
+                    raise ValueError(f"File name {file} has no destination")
                 path = f"{self.metadata.run_home}{sep}{self.result.identity_or_index}{sep}{file}"
                 remote_path = f"{self._target_path}/{to}"
                 self.csvpaths.logger.info("Putting %s to %s", path, remote_path)
