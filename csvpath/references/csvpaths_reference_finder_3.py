@@ -304,8 +304,8 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         ]
         has_manifest = any(seg.name == "manifest" for seg in combined)
         # several versions' manifest entries are records, not files, so they
-        # resolve, with or without a field: records resolve, files don't (David, 2026-11-14; compendium 5.3, 5.6). Whole entries raised
-        # (Rule 1) until then.
+        # resolve, with or without a field (David, 2026-11-14; compendium
+        # 5.3, 5.6). Whole entries raised (Rule 1) until then.
         ambiguous_content_read = False
 
         return self._apply_name_three_to_versions(

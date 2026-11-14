@@ -7280,3 +7280,34 @@ class TestAnIntNameInAPathSegment:
                 ALPHA_MANIFEST,
                 inputs_files_path="inputs/named_files",
             ).query()
+
+
+class TestOneVersionFilePerResolve:
+    # compendium 5.3: "resolve() can only retrieve one file's content and
+    # errors if there are multiple file paths for the reference". Several
+    # version files resolved every file's bytes until 2026-11-14 for most
+    # shapes; only the :status() gate raised (reviewer on #632). query()
+    # lists them all; resolve_from() picks one.
+    @pytest.mark.parametrize(
+        "chain",
+        [".:all()", '.:type("csv")', ".:from(1)", ".:all():type(\"csv\")"],
+    )
+    def test_several_version_files_raise_on_resolve(self, tmp_path, chain):
+        finder = _g_finder(f"{ORDERS}{chain}", tmp_path)
+        uuids = finder.query().uuids
+        assert len(uuids) > 1
+        with pytest.raises(ReferenceException3, match="more than one version file"):
+            _g_finder(f"{ORDERS}{chain}", tmp_path).resolve()
+        # one of them resolves to its bytes
+        (one,) = _g_finder(f"{ORDERS}{chain}", tmp_path).resolve_from([uuids[0]]).results
+        assert isinstance(one.data, bytes)
+
+    def test_a_pointer_still_resolves_one(self, tmp_path):
+        results = _g_finder(f"{ORDERS}.:last()", tmp_path).resolve()
+        assert len(results) == 1 and isinstance(results.results[0].data, bytes)
+
+    def test_several_manifest_entries_still_resolve(self, tmp_path):
+        # records, not files (#632): unaffected
+        results = _g_finder(f"{ORDERS}.:manifest()", tmp_path).resolve()
+        assert len(results) > 1
+        assert all(isinstance(r.data, dict) for r in results.results)

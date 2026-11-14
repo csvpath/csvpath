@@ -180,9 +180,17 @@ class ReferenceExpression3:
     def _resolve_side(self, side: "str | ReferenceExpression3") -> ReferenceResults3:
         if isinstance(side, ReferenceExpression3):
             return side.resolve()
-        return ReferenceFinderFactory3.for_reference(
+        finder = ReferenceFinderFactory3.for_reference(
             reference=side, csvpaths=self._csvpaths
-        ).resolve()
+        )
+        if self._kind(side) == self.PATHS:
+            # a paths side is "a plain path+uuid result -- `.data` is None"
+            # (references_v3_expressions.md, "paths vs. values sides"), so
+            # it is queried, not resolved. Resolving read every matched
+            # file's content only to compare uuids, and several version
+            # files cannot be read in one resolve (compendium 5.3).
+            return finder.query()
+        return finder.resolve()
 
     def _side_reference_parsed(self, side: "str | ReferenceExpression3"):
         """the single, definitive parsed Reference3 that determines a

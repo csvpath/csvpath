@@ -127,6 +127,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
     # uuid -> (name, entry) of the live manifests, per query()/resolve
     # call; see _live_index()
     _live_entries = None
+    #
+    # whole version files read in the current resolve: compendium 5.3, only
+    # one file's content per resolve() (see _read_version_file())
+    #
+    _version_reads = 0
 
     def _definition_names(self) -> list:
         return self.source.file_names()
@@ -363,7 +368,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
             path = self._root_manifest_path(root_major)
             # an argued field is a gate: it supplies no value, so resolve
             # gives whole entries. Several entries are records, not files,
-            # so they resolve: records resolve, files don't (David, 2026-11-14; compendium 5.3, 5.6). They raised (Rule 1) until then.
+            # so they resolve: records resolve, files don't (David,
+            # 2026-11-14; compendium 5.3, 5.6). They raised (Rule 1) until
+            # then.
             return ReferenceResults3(
                 results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in manifest]
             )
@@ -1001,34 +1008,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 )
                 for c in selected_candidates
             ],
-            # `and not has_field_function` added 2026-09-28 -- confirmed
-            # LIVE this was a real bug: ":manifest():uuid()" (a field
-            # accessor chained alongside :manifest()) incorrectly set
-            # this flag whenever more than one candidate matched, even
-            # though Rule 3 exempts field accessors entirely and
-            # resolve_kind's own METADATA_FIELD-before-METADATA_FILE
-            # priority means :manifest() itself is never actually read
-            # as a whole resource in that shape -- only a BARE
-            # :manifest() (no field riding with it) is genuine Rule 1
-            # territory.
-            #
-            # `and not (partitioned and pointers)` added 2026-10-16 --
-            # partition-aware fix (bucket list's "'*'-traversal content-
-            # accessor guards" entry). When `partitioned and pointers`,
-            # `selected_candidates` came from the by-file_home reduction
-            # above -- each entry is already the SOLE pointer-selected
-            # candidate for its own distinct file_home, not several raw
-            # candidates sharing one read. Pooling several already-
-            # reduced, independently-identified entities' own single
-            # manifest entries is not the same ambiguity Rule 1 guards
-            # against (that is exactly what the removed rejection just
-            # above used to conflate). `partitioned` with no pointer
-            # (bare ':all():manifest()'/':groups():manifest()') still
-            # pools genuinely unreduced candidates per group, so the
-            # naive count check still correctly flags that case --
-            # `pointers` being falsy there makes this new term a no-op.
             # several manifest entries are records, not files, so they
-            # resolve: records resolve, files don't (David, 2026-11-14; compendium 5.3, 5.6). They raised (Rule 1) until then.
+            # resolve, one per result (David, 2026-11-14; compendium 5.3,
+            # 5.6). They raised (Rule 1) until then; the flag's history is
+            # in git.
         )
 
     def _query_star_traversal(
@@ -1543,7 +1526,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     for c in candidates
                 ],
                 # several manifest entries are records: they resolve
-                # (records resolve, files don't (David, 2026-11-14; compendium 5.3, 5.6))
+                # (records resolve, files don't (David, 2026-11-14; compendium
+                # 5.3, 5.6))
             )
         pointer = pointers[0]
 
@@ -2126,12 +2110,39 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # query() resets the live index; its resolve reuses it, so one
         # resolve() reads each live manifest at most once (reviewer on
         # #585). The base resolve() would reset it again.
+        self._version_reads = 0
         return super().resolve_from(self.query())
 
     def resolve_from(self, selection: ReferenceResults3 | list) -> ReferenceResults3:
         # the live entries are read at most once per call (_live_index())
         self._live_entries = None
+        self._version_reads = 0
         return super().resolve_from(selection)
+
+    def _read_version_file(self, path: str, *, worksheet: "str | None" = None):
+        """a version file's whole content: its bytes, or a worksheet's rows.
+        Only one file's content can be read per resolve() (compendium 5.3:
+        "resolve() can only retrieve one file's content and errors if
+        there are multiple file paths"), so a second read in the same
+        resolve raises before reading anything more. Most version shapes
+        never flagged several -- ':all()', ':type("csv")', ':from(1)' --
+        and resolved every file (reviewer on #632); only the status gate
+        did. query() still lists them all, and resolve_from() picks one."""
+        if not path:
+            raise ValueError("path cannot be None or empty")
+        if self._version_reads >= 1:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 cannot resolve more than one version "
+                "file at once -- only one file's content can be read per "
+                "resolve() (compendium 5.3). Use a pointer (:first()/:last()/"
+                ":index(n)), or resolve_from() with one of query()'s results."
+            )
+        self._version_reads += 1
+        if worksheet is not None:
+            with DataFileReader(path=f"{path}#{worksheet}", mode="rb") as reader:
+                return list(reader.next())
+        with DataFileReader(path=path, mode="rb") as reader:
+            return reader.source.read()
 
     def _query_status_gate(
         self, *, reference: Reference3, status_chain: list, names: list
@@ -2565,7 +2576,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "(), :".join(f.name for f in values[:-1]),
             )
         # several whole entries resolve, as the ledger's records do: they
-        # are records, not files (records resolve, files don't (David, 2026-11-14; compendium 5.3, 5.6)). Several entries of one
+        # are records, not files (records resolve, files don't (David,
+        # 2026-11-14; compendium 5.3, 5.6)). Several entries of one
         # named-file raised (Rule 1, 2026-11-08) until then.
         return ReferenceResults3(
             results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in entries]
@@ -2752,8 +2764,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # selects live versions (C1, 2026-11-01), so it resolves to the
             # version's bytes, as a version pointer does (David,
             # 2026-11-14). It raised "resolve_kind='metadata_field'".
-            with DataFileReader(path=result.path, mode="rb") as reader:
-                return reader.source.read()
+            return self._read_version_file(result.path)
         manifest_chain = None
         definition_calls = None
         if reference.name_three is None:
@@ -2868,12 +2879,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
                         f"'#worksheet' marker to {result.path!r} -- it is "
                         "not an XLSX file."
                     )
-                with DataFileReader(
-                    path=f"{result.path}#{worksheet}", mode="rb"
-                ) as reader:
-                    return list(reader.next())
-            with DataFileReader(path=result.path, mode="rb") as reader:
-                return reader.source.read()
+                return self._read_version_file(result.path, worksheet=worksheet)
+            return self._read_version_file(result.path)
         if kind == Reference3.METADATA_FILE:
             if (
                 self._is_bare_pointer_reference(reference, "manifest")
