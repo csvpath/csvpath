@@ -3060,18 +3060,60 @@ class TestFieldAccessorFunctions:
 class TestMatchesFieldPredicate:
     # the generic, shared test _star_pool_and_reduce()/
     # _star_group_and_reduce()/query() all use for a field-accessor's
-    # own predicate/exact-match argument -- added 2026-10-18.
-    def test_predicate_arg_delegates_to_its_own_matches(self):
+    # own predicate/exact-match argument -- added 2026-10-18. An
+    # instance method since 2026-11-14, so it can log a skip (W3).
+    def test_predicate_arg_delegates_to_its_own_matches(self, tmp_path):
         from csvpath.references.functions.selectors.after_3 import After3
 
-        assert ResultsReferenceFinder3._matches_field_predicate(5, After3(arg=3))
-        assert not ResultsReferenceFinder3._matches_field_predicate(
-            2, After3(arg=3)
-        )
+        finder = _finder("$acme.results.:last()", str(tmp_path))
+        assert finder._matches_field_predicate(5, After3(arg=3))
+        assert not finder._matches_field_predicate(2, After3(arg=3))
 
-    def test_bare_value_is_an_exact_match_test(self):
-        assert ResultsReferenceFinder3._matches_field_predicate(0, 0)
-        assert not ResultsReferenceFinder3._matches_field_predicate(1, 0)
+    def test_bare_value_is_an_exact_match_test(self, tmp_path):
+        finder = _finder("$acme.results.:last()", str(tmp_path))
+        assert finder._matches_field_predicate(0, 0)
+        assert not finder._matches_field_predicate(1, 0)
+
+    def test_a_comparison_never_matches_a_missing_value(self, tmp_path):
+        # W3, option A (David, 2026-11-14): absence implies nothing, as
+        # for :lifecycle()/:status() (6.13b(vi)/(vii)). It raised a bare
+        # TypeError (None > 0).
+        from csvpath.references.functions.selectors.after_3 import After3
+        from csvpath.references.functions.selectors.before_3 import Before3
+
+        finder = _finder("$acme.results.:last()", str(tmp_path))
+        assert not finder._matches_field_predicate(None, After3(arg=0))
+        assert not finder._matches_field_predicate(None, Before3(arg=1))
+        assert len(finder.csvpaths.logger.warnings) == 2
+        assert ":after()" in finder.csvpaths.logger.warnings[0]
+        assert ":before()" in finder.csvpaths.logger.warnings[1]
+
+    def test_a_missing_value_warns_once_per_predicate(self, tmp_path):
+        from csvpath.references.functions.selectors.after_3 import After3
+
+        finder = _finder("$acme.results.:last()", str(tmp_path))
+        bound = After3(arg=0)
+        for _ in range(3):
+            assert not finder._matches_field_predicate(None, bound)
+        assert len(finder.csvpaths.logger.warnings) == 1
+
+    def test_a_present_value_does_not_warn(self, tmp_path):
+        from csvpath.references.functions.selectors.after_3 import After3
+
+        finder = _finder("$acme.results.:last()", str(tmp_path))
+        assert not finder._matches_field_predicate(0, After3(arg=0))
+        assert finder.csvpaths.logger.warnings == []
+
+
+class TestComparisonPredicateMissingValue:
+    # the predicates themselves, every role passes through matches()
+    def test_after_and_before_never_match_none(self):
+        from csvpath.references.functions.selectors.after_3 import After3
+        from csvpath.references.functions.selectors.before_3 import Before3
+
+        assert After3(arg=0).matches(None) is False
+        assert Before3(arg=1).matches(None) is False
+        assert Before3(arg=-1).matches(None) is False
 
 
 class TestErrorCountPredicateGate:
@@ -3116,6 +3158,41 @@ class TestErrorCountPredicateGate:
             "$*.results.:flatten():error_count(:below(1))", three_runs
         ).query()
         assert set(results.uuids) == {"no-errors"}
+
+    @pytest.fixture
+    def runs_with_one_in_progress(self, three_runs):
+        # a fourth run still in progress: no error_count yet
+        run_dir = Path(three_runs) / "acme" / "2026-01-04_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "in-progress"})
+        runs = [
+            os.path.join(three_runs, "acme", name)
+            for name in (
+                "2026-01-01_00-00-00",
+                "2026-01-02_00-00-00",
+                "2026-01-03_00-00-00",
+                "2026-01-04_00-00-00",
+            )
+        ]
+        _write_archive_manifest(Path(three_runs), "acme", runs)
+        return three_runs
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$*.results.:flatten():error_count(:above(1))", {"many-errors", "few-errors"}),
+            ("$*.results.:flatten():error_count(:below(1))", {"no-errors"}),
+            ("$*.results.:flatten():error_count(:gt(1))", {"many-errors", "few-errors"}),
+            ("$*.results.:flatten():error_count(:lt(1))", {"no-errors"}),
+        ],
+    )
+    def test_a_run_with_no_error_count_matches_neither_direction(
+        self, runs_with_one_in_progress, reference, expected
+    ):
+        # W3, option A (David, 2026-11-14). It raised TypeError.
+        finder = _finder(reference, runs_with_one_in_progress)
+        assert set(finder.query().uuids) == expected
+        assert len(finder.csvpaths.logger.warnings) == 1
+        assert "does_not_have_value" in finder.csvpaths.logger.warnings[0]
 
     def test_star_root_exact_int_gate(self, three_runs):
         # "two ways of selecting runs without errors" -- declared

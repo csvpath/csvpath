@@ -9,6 +9,8 @@ from csvpath.util.nos import Nos
 from .functions.function_3 import Function3
 from .functions.filters.predicate_function_3 import PredicateFunction3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
+from .functions.selectors.after_3 import After3
+from .functions.selectors.before_3 import Before3
 from .functions.selectors.name_3 import Name3
 from .functions.values.time_window_function_3 import TimeWindowFunction3
 from .reference_3 import (
@@ -1511,8 +1513,7 @@ class ReferenceFinder3(ABC):
                 "takes none."
             )
 
-    @staticmethod
-    def _matches_field_predicate(value, arg) -> bool:
+    def _matches_field_predicate(self, value, arg) -> bool:
         """generic test for a field-accessor's own predicate/exact-
         match argument -- added 2026-10-18 for ResultsReferenceFinder3's
         own ':error_count()' GATE (e.g. ":error_count(:above(3))"/
@@ -1523,7 +1524,23 @@ class ReferenceFinder3(ABC):
         ":below()", both built as dual-role range-bound/predicate
         classes) delegates to its own matches(); a bare leaf value (int/
         str) is an exact-match test instead -- no dedicated predicate
-        class needed for ":error_count(0)"/":type(\"csv\")"."""
+        class needed for ":error_count(0)"/":type(\"csv\")".
+
+        A comparison (':above()'/':below()' and their aliases) never
+        matches a missing value, and the first such skip logs a
+        warning, once per finder (W3, option A, 2026-11-14)."""
+        if isinstance(arg, (After3, Before3)) and value is None:
+            key = ("missing value", repr(arg))
+            if key not in self._warned:
+                self._warned.add(key)
+                self.csvpaths.logger.warning(
+                    "A record has no value for the field compared by "
+                    ":%s(); it does not match. Absence implies nothing "
+                    "(compendium 6.13b(vi)); :does_not_have_value() "
+                    "finds such records.",
+                    arg.NAME,
+                )
+            return False
         if isinstance(arg, PredicateFunction3):
             return arg.matches(value)
         return value == arg

@@ -1985,8 +1985,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             and Reference3.NAME_ONE in function_cls.POSITIONS.get(Reference3.FILES, ())
         )
 
-    @staticmethod
-    def _filter_ledger_by_gate_chain(ledger: list, chain: list) -> list:
+    def _filter_ledger_by_gate_chain(self, ledger: list, chain: list) -> list:
         """every global-ledger entry matching ALL of `chain`'s own
         GATE arguments (AND-combined) -- e.g. ':status("failed"):
         named_file_name("orders")' keeps only entries where
@@ -2003,7 +2002,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 key = field_call.KEY.get(
                     Reference3.FILES
                 ) or field_call.LEDGER_KEY.get(Reference3.FILES)
-                if not ReferenceFinder3._matches_field_predicate(
+                if not self._matches_field_predicate(
                     entry.get(key), field_call.arg
                 ):
                     matched = False
