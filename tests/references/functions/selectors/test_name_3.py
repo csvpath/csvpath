@@ -22,9 +22,15 @@ def test_missing_arg_raises():
         Name3().check_valid()
 
 
-def test_non_str_arg_raises():
+def test_an_int_arg_is_valid():
+    # decision D12 (2026-11-14): ':name(0)' is the statement identity "0"
+    # as a name_three range bound; a path segment raises on it instead
+    Name3(arg=5).check_valid()
+
+
+def test_a_float_arg_raises():
     with pytest.raises(ReferenceException3):
-        Name3(arg=5).check_valid()
+        Name3(arg=5.5).check_valid()
 
 
 def test_regex_arg_is_valid():

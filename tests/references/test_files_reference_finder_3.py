@@ -7217,3 +7217,17 @@ class TestTwoLowerBoundsAreNotARange:
                 ALPHA_MANIFEST,
                 inputs_files_path="inputs/named_files",
             ).query()
+
+
+class TestAnIntNameInAPathSegment:
+    # decision D12 (2026-11-14): an int ':name()' is a statement identity,
+    # for a name_three range bound only. In a path segment it would match
+    # no file name, so it raises.
+    def test_raises(self):
+        with pytest.raises(ReferenceException3, match="statement identity"):
+            _finder(
+                "$alpha.files.:name(5)",
+                ALPHA_HOME,
+                ALPHA_MANIFEST,
+                inputs_files_path="inputs/named_files",
+            ).query()

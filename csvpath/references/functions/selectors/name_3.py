@@ -32,7 +32,11 @@ class Name3(Function3):
     )
     ROLE = Function3.CONTEXT_SETTER
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    ARG_TYPES = (str, Regex3)
+    # int added 2026-11-14 (decision D12): ':name(0)' is the statement
+    # identity "0" as a name_three range bound (NRE "Identities": "`:name()`
+    # with a string, int, or variable"). A path segment raises on an int
+    # (ReferenceFinder3._compile_path_pattern()).
+    ARG_TYPES = (str, int, Regex3)
     ARG_REQUIRED = True
     #
     # CSVPATHS deliberately maps to an EMPTY tuple, not an absent key --
