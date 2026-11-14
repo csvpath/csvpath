@@ -4,7 +4,9 @@ comparison is written explicitly: gt(int(#a), 9).
 
 Before the fix, AboveBelow asked ExpressionUtility.all([a, b], [float, int]),
 which goes through to_int() and to_float(). Those strip $, € and £, so
-"$10" compared as 10. == and between() already compared it as a string.
+"$10" took the number path, where a plain float("$10") raised ValueError.
+Expression.matches swallows ValueError: a bare gt() matched every line and
+@r = gt() was None. == and between() already compared it as a string.
 """
 
 import os
@@ -60,6 +62,22 @@ class TestCsvPathFunctionsCompareCurrency:
     @pytest.mark.parametrize("name", list(EXPECTED))
     def test_currency_compares_as_a_string(self, name):
         assert _run(f"{name}(#a, #b)") == _expected(name)
+
+    def test_bare_match_component_agrees_with_the_value(self):
+        #
+        # before #576 was fixed, "$10" passed the lenient number check and
+        # then failed a plain float(). Expression.matches swallowed the
+        # ValueError, so a bare gt() matched every line while @r = gt() was
+        # None. now the bare form matches exactly the lines where the value
+        # is True.
+        #
+        path = CsvPath()
+        path.parse(f"""${CURRENCY}[1*][ gt(#a, #b) ]""")
+        lines = path.collect()
+        assert [line[0] for line in lines] == [
+            a for (a, b, kind), r in zip(ROWS, _expected("gt")) if r
+        ]
+        assert len(path.errors) == 0
 
     def test_the_rows_tell_string_from_number(self):
         #
