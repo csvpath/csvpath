@@ -2,8 +2,11 @@ import unittest
 import pytest
 import shutil
 import os
+import sys
+import logging
 import threading
 import time
+import traceback
 from csvpath import CsvPaths
 from csvpath.managers.files.file_describer import NamedFileDescriber
 from csvpath.managers.files.files_activation_listener import FileActivationListener
@@ -24,7 +27,23 @@ def _wait_for_activations(*, timeout: float = 60) -> None:
     for t in threading.enumerate():
         if isinstance(t, FileActivationListener):
             t.join(max(0, deadline - time.monotonic()))
-            assert not t.is_alive(), f"activation still running after {timeout}s"
+            if t.is_alive():
+                raise AssertionError(_stuck_thread_report(t, timeout))
+
+
+def _stuck_thread_report(t: threading.Thread, timeout: float) -> str:
+    """Where the stuck thread is and who holds logging's module lock. A
+    leaked logging._lock once blocked these threads forever."""
+    frame = sys._current_frames().get(t.ident)
+    threads = ", ".join(f"{x.name}={x.ident}" for x in threading.enumerate())
+    return "\n".join(
+        [
+            f"activation {t.name} ({t.ident}) still running after {timeout}s",
+            f"threads: {threads}",
+            "".join(traceback.format_stack(frame)) if frame else "no frame",
+            f"logging._lock = {logging._lock!r}",
+        ]
+    )
 
 
 class TestCsvPathsManagersFileDescriber(unittest.TestCase):
