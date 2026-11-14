@@ -2511,10 +2511,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
     def _is_bare_filtered_manifest(self, reference: Reference3) -> bool:
         """a bare ':manifest()' under a ':regex()' or ':choice()' root: the
         ledger set filtered by name (6.13b). One result, the ledger's path
-        with uuid None (5.7), resolving to the matching ledger records --
-        the same records, as stored, that '$*.files.:manifest()' resolves
-        to, filtered (David, 2026-11-14, W1 option B; decision D13). RESULTS
-        already did this. It raised "Does not yet support :manifest() as a
+        with uuid None (5.7), resolving to the matching ledger records as
+        stored, a list of dicts: what '$*.files.:manifest()' holds, filtered
+        by name ('$*' itself resolves to the file's raw bytes). David,
+        2026-11-14, W1 option B; decision D13. RESULTS already did this. It raised "Does not yet support :manifest() as a
         name_one path segment"."""
         if reference is None:
             raise ValueError("reference cannot be None")

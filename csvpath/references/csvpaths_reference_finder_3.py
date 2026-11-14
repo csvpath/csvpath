@@ -808,10 +808,10 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             #
             # a bare ':manifest()' under ':regex()'/':choice()' is the
             # ledger set filtered by name: the ledger's records, as stored,
-            # whose group name matches (David, 2026-11-14, W1 option B;
-            # decision D13), the same records '$*.csvpaths.:manifest()'
-            # resolves to, filtered. It resolved the whole, unfiltered
-            # ledger.
+            # whose group name matches, a list of dicts (David, 2026-11-14,
+            # W1 option B; decision D13): what '$*.csvpaths.:manifest()'
+            # holds, filtered ('$*' itself resolves to the file's raw
+            # bytes). It resolved the whole, unfiltered ledger.
             #
             if isinstance(
                 reference.root_major, FunctionCall3

@@ -1,3 +1,4 @@
+import json
 import os
 
 import pytest
@@ -743,21 +744,31 @@ class TestGlobalArrivalsLedgerOrdinalIndexing:
         (data,) = [r.data for r in finder().resolve().results]
         assert [e["fingerprint"] for e in data] == expected
 
-    def test_a_filtered_bare_manifest_is_the_star_form_filtered(self):
-        # decision D13: the same records '$*.files.:manifest()' resolves
-        # to, as stored, filtered by name
-        def data(reference):
-            finder = _finder(
+    def test_a_filtered_bare_manifest_is_the_ledger_records_as_stored(
+        self, tmp_path
+    ):
+        # decision D13: the ledger's records as stored, filtered by name --
+        # json.loads of what '$*.files.:manifest()' resolves to (that form
+        # gives the file's raw bytes; reviewer on #616)
+        ledger = self._regex_ledger()
+        (tmp_path / "manifest.json").write_text(json.dumps(ledger))
+
+        def finder(reference):
+            return _finder(
                 reference,
                 STAR_ALPHA_HOME,
                 STAR_ALPHA_MANIFEST,
                 by_name=STAR_BY_NAME,
-                ledger=self._regex_ledger(),
-                inputs_files_path="inputs/named_files",
+                ledger=ledger,
+                inputs_files_path=str(tmp_path),
             )
-            return [r.data for r in finder.resolve().results]
 
-        assert data("$:regex(/.*/).files.:manifest()") == [self._regex_ledger()]
+        (star,) = [r.data for r in finder("$*.files.:manifest()").resolve().results]
+        (filtered,) = [
+            r.data for r in finder("$:regex(/.*/).files.:manifest()").resolve().results
+        ]
+        assert isinstance(star, bytes)
+        assert filtered == json.loads(star)
 
     def test_a_literal_root_reads_its_own_manifest_in_both_orders(self):
         # unchanged: '$alpha' reads alpha's own manifest.json
