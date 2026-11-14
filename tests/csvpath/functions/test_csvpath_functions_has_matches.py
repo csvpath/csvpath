@@ -71,3 +71,21 @@ class TestCsvPathFunctionsHasMatches(unittest.TestCase):
         lines = path.collect()
         assert len(lines) == 0
         assert path.is_valid is True
+
+    def test_has_matches_in_or_mode(self):
+        #
+        # with OR, a line matches when any component matches. only line 1
+        # (Kermit) matches, so has_matches() is False on line 1 and True
+        # from line 2 on.
+        #
+        path = CsvPath()
+        path.OR = True
+        path.parse(
+            f"""${PATH}[1*][
+                #lastname == "Kermit"
+                push.nocontrib("hm", has_matches())
+            ]"""
+        )
+        lines = path.collect()
+        assert len(lines) == 1
+        assert path.variables["hm"] == [False] + [True] * 7
