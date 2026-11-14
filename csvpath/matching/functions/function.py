@@ -175,7 +175,9 @@ class Function(Matchable):
             else:
                 self._apply_default_value()
                 self.matcher.csvpath.logger.debug(
-                    "@{self}: appling default value, {self.value}, because !do_onmatch"
+                    "%s: applying default value, %s, because !do_onmatch",
+                    self,
+                    self.value,
                 )
         # we strip because csvs generally don't consider whitespace before and
         # after the delimiter to be part of the data. unless they do. possibly
