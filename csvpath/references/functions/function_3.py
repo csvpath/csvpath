@@ -262,6 +262,25 @@ class Function3:
     def name(self) -> str:
         return self.NAME
 
+    #
+    # the name as written in the reference, which may be an alias
+    # (':above()' builds After3, compendium 6.28b). Set by
+    # ReferenceFunctionFactory.build(); NAME for an instance built
+    # directly. Added 2026-11-14 so a message can say what the user
+    # wrote (reviewer on #611).
+    #
+    _written_name: "str | None" = None
+
+    @property
+    def written_name(self) -> str:
+        return self._written_name or self.NAME
+
+    @written_name.setter
+    def written_name(self, value: str) -> None:
+        if not value:
+            raise ValueError("written_name cannot be None or empty")
+        self._written_name = value
+
     @property
     def arg(self) -> Any:
         return self._arg

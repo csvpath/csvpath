@@ -628,7 +628,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
             candidates = [
                 c
                 for c in candidates
-                if self._matches_field_predicate(c.get(key), field_call.arg)
+                if self._matches_field_predicate(
+                    c.get(key), field_call.arg, field=field_call.name, record=c
+                )
             ]
 
         name_three = reference.name_three
@@ -1339,7 +1341,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
             candidates = [
                 c
                 for c in candidates
-                if self._matches_field_predicate(c.get(key), field_call.arg)
+                if self._matches_field_predicate(
+                    c.get(key), field_call.arg, field=field_call.name, record=c
+                )
             ]
 
         name_three = reference.name_three
@@ -1985,8 +1989,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             and Reference3.NAME_ONE in function_cls.POSITIONS.get(Reference3.FILES, ())
         )
 
-    @staticmethod
-    def _filter_ledger_by_gate_chain(ledger: list, chain: list) -> list:
+    def _filter_ledger_by_gate_chain(self, ledger: list, chain: list) -> list:
         """every global-ledger entry matching ALL of `chain`'s own
         GATE arguments (AND-combined) -- e.g. ':status("failed"):
         named_file_name("orders")' keeps only entries where
@@ -2003,8 +2006,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 key = field_call.KEY.get(
                     Reference3.FILES
                 ) or field_call.LEDGER_KEY.get(Reference3.FILES)
-                if not ReferenceFinder3._matches_field_predicate(
-                    entry.get(key), field_call.arg
+                if not self._matches_field_predicate(
+                    entry.get(key), field_call.arg, field=field_call.name, record=entry
                 ):
                     matched = False
                     break
@@ -2653,6 +2656,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     reference=reference, function_cls=function_cls, entry=e
                 ),
                 built.arg,
+                field=built.name,
+                record=e,
             )
         ]
 
@@ -2699,6 +2704,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
                         reference=reference, function_cls=function_cls, entry=c
                     ),
                     gate.arg,
+                    field=gate.name,
+                    record=c,
                 )
             ]
         return candidates

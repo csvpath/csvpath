@@ -6935,3 +6935,19 @@ class TestStarRootGroupsByNamedFile:
 
         assert _uuids('$*.files.*.:from(:date("2026-01-01"))') == ["a1", "b1", "a2"]
         assert _uuids('$*.files.*.:from(:date("2026-01-01")):last()') == ["a2", "b1"]
+
+
+class TestComparisonOnAMissingValue:
+    # W3, option A (David, 2026-11-14): a missing value is neither above
+    # nor below a bound; the record does not match, and the skip is
+    # logged, naming the field and the record. It raised TypeError.
+    def test_a_manifest_chain_gate_skips_an_entry_with_no_template(self):
+        # u-b2's template is None; u-a1's and u-b1's are "" (present,
+        # and not above "")
+        finder = _gate_finder('$*.files.:manifest():template(:above(""))')
+        finder.csvpaths.logger = _FakeLogger()
+        assert finder.query().uuids == ["u-a2"]
+        warnings = finder.csvpaths.logger.warnings
+        assert len(warnings) == 1
+        assert "u-b2" in warnings[0] and ":template()" in warnings[0]
+        assert ":above()" in warnings[0]

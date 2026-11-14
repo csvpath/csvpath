@@ -3837,3 +3837,36 @@ class TestArguedUuidFilters:
 
     def test_the_bare_lookup_is_unchanged(self):
         assert _gate_finder('$acme.csvpaths.:uuid("a2")').query().uuids == ["a2"]
+
+
+class TestComparisonOnAMissingValue:
+    # W3, option A (David, 2026-11-14): a missing value is neither above
+    # nor below a bound; the record does not match, and the skip is
+    # logged, naming the field and the record. Both shapes raised
+    # TypeError.
+    def test_a_version_gate_skips_a_version_with_no_template(self):
+        # a copy of the gate fixture where a1 has no template at all; a4's
+        # is "" (present, and not above "")
+        by_name = {name: [dict(e) for e in es] for name, es in GATE_BY_NAME.items()}
+        for entry in by_name["acme"]:
+            if entry["uuid"] == "a1":
+                del entry["template"]
+        finder = _finder(
+            '$acme.csvpaths.:all():template(:above(""))',
+            by_name=by_name,
+            ledger=[dict(e) for e in GATE_LEDGER],
+            inputs_csvpaths_path="named_paths",
+        )
+        assert finder.query().uuids == ["a2", "a3"]
+        warnings = finder.csvpaths.logger.warnings
+        assert len(warnings) == 1
+        assert "a1" in warnings[0] and ":template()" in warnings[0]
+        assert ":above()" in warnings[0]
+
+    def test_a_definition_field_comparison_skips_a_group_without_it(self):
+        # acme's definition.json has no on_arrival
+        finder = _gate_finder('$acme.csvpaths.:on_arrival(:above("a"))')
+        assert finder.query().results == []
+        warnings = finder.csvpaths.logger.warnings
+        assert len(warnings) == 1
+        assert "acme" in warnings[0] and ":on_arrival()" in warnings[0]
