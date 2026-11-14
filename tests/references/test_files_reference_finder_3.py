@@ -7202,3 +7202,18 @@ class TestStatusChainGatesReadLive:
         failure = {"named_file_name": "orders", "status": "failed", "file_path": None}
         finder = self._finder('$orders.files.:status("failed")', failure, live)
         assert finder.query().results == []
+
+
+class TestTwoLowerBoundsAreNotARange:
+    # David's W4 probe (2026-11-14): '*:from(1):to(5):after(X)' has two
+    # lower bounds, which 6.28c makes illegal. "Positions 1-5 that are also
+    # after X" is two windows, written as a reference expression with
+    # INTERSECT, not one range.
+    def test_from_and_after_together_raise(self):
+        with pytest.raises(ReferenceException3, match="two lower-bound"):
+            _finder(
+                '$alpha.files.*.:from(1):to(5):after(:date("2026-01-01"))',
+                ALPHA_HOME,
+                ALPHA_MANIFEST,
+                inputs_files_path="inputs/named_files",
+            ).query()

@@ -826,12 +826,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # RESULTS already filters run-level ranges by) FILTERS by
             # each version's own "time" manifest field instead, via the
             # shared _apply_manifest_date_range(). The two modes may mix
-            # (6.32) only as a non-negative index lower bound with a date
-            # upper bound, where both readings of the index agree; e.g.
-            # ":from(:date('2025-01-01')):to(:index(10))" ("10 versions
-            # starting from this date"?) still raises, since whether the
-            # index counts from the start of the list or from the date
-            # anchor is not settled (6.29, 6.30; decision log W4). See
+            # (6.32); the index counts from the date anchor (6.30; David,
+            # 2026-11-14, decision W4), so
+            # ":from(:date('2025-01-01')):to(:index(10))" is the first
+            # eleven versions from that date. See
             # ReferenceFinder3._apply_mixed_range().
             from_bound = self._range_bound(lower_call) if lower_call is not None else None
             to_bound = self._range_bound(upper_call) if upper_call is not None else None

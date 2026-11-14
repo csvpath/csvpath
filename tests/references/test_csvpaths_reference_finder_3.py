@@ -557,20 +557,24 @@ class TestVersionRange:
         assert _finder(reference, VERSION_RANGE_MANIFEST).query().uuids == expected
 
     @pytest.mark.parametrize(
-        "reference",
+        "reference, expected",
         [
-            # a date lower bound with an index upper bound, or a negative
-            # index beside a date bound: whether the index counts from the
-            # start or from the date anchor (6.29, 6.30) changes the
-            # answer, and waits for David (decision log W4)
-            '$dater.csvpaths.:from(:date("2026-01-02")):to(3)',
-            '$dater.csvpaths.:from(-3):to(:date("2026-01-04"))',
+            # David, 2026-11-14 (decision W4): an index counts from the date
+            # anchor (6.30). The date bound filters first, then the index
+            # counts within what is left. Counted from the start, these
+            # would give v1-v3 and v2-v3. They raised "not settled".
+            (
+                '$dater.csvpaths.:from(:date("2026-01-02")):to(3)',
+                ["v1-uuid", "v2-uuid", "v3-uuid", "v4-uuid"],
+            ),
+            (
+                '$dater.csvpaths.:from(-3):to(:date("2026-01-04"))',
+                ["v1-uuid", "v2-uuid", "v3-uuid"],
+            ),
         ],
     )
-    def test_an_unsettled_mix_raises(self, reference):
-        with pytest.raises(ReferenceException3) as error:
-            _finder(reference, VERSION_RANGE_MANIFEST).query()
-        assert "not settled" in str(error.value)
+    def test_an_index_counts_from_the_date_anchor(self, reference, expected):
+        assert _finder(reference, VERSION_RANGE_MANIFEST).query().uuids == expected
 
     def test_date_mode_accepts_the_optional_time_suffix(self):
         # issue #409 -- David's own exact repro:
