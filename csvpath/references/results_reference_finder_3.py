@@ -2044,7 +2044,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             instance_dir = Nos(record["run_home"]).join(entry["identity"])
             data = self._read_accessor(instance_dir, accessor)
             if selector["gate_call"] is not None:
-                return self._apply_errors_gate(data, selector["gate_call"])
+                return self._apply_errors_gate(
+                    data,
+                    selector["gate_call"],
+                    path=Nos(instance_dir).join(self._JSON_ACCESSOR_FILES["errors"]),
+                )
             return data
         if selector["value_field"] is not None:
             return self._instance_record_field_value(
@@ -2469,7 +2473,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     # narrow errors.json's own entries; it decides
                     # whether the WHOLE, already-read, UNFILTERED content
                     # is returned at all.
-                    return self._apply_errors_gate(data, gate_call)
+                    return self._apply_errors_gate(
+                        data,
+                        gate_call,
+                        path=Nos(pathu.dir_name(result.path)).join(self._JSON_ACCESSOR_FILES["errors"]),
+                    )
                 return data
             if field_call is not None:
                 # a registered field-accessor (e.g. :uuid()) riding
@@ -2622,17 +2630,17 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 elif data is not None and isinstance(accessor.arg, Idchain3):
                     data = [
                         e
-                        for e in data
+                        for i, e in enumerate(data)
                         if self._errors_entry_matches(
-                            entry=e, key="source", predicate=accessor.arg, path=path
+                            entry=e, index=i, key="source", predicate=accessor.arg, path=path
                         )
                     ]
                 elif data is not None and isinstance(accessor.arg, Message3):
                     data = [
                         e
-                        for e in data
+                        for i, e in enumerate(data)
                         if self._errors_entry_matches(
-                            entry=e, key="message", predicate=accessor.arg, path=path
+                            entry=e, index=i, key="message", predicate=accessor.arg, path=path
                         )
                     ]
             return data
@@ -2667,7 +2675,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         path = Nos(instance_dir).join(accessor.arg)
         return self._read_well_known_file(path)
 
-    def _errors_entry_matches(self, *, entry: dict, key: str, predicate, path: str) -> bool:
+    def _errors_entry_matches(
+        self, *, entry: dict, index: int, key: str, predicate, path: str
+    ) -> bool:
         """true if an errors.json entry's `key` value satisfies
         `predicate` (':idchain()' reads "source", ':message()' reads
         "message"). A missing value never satisfies a comparison, and
@@ -2677,12 +2687,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             value=value,
             predicate=predicate,
             field=predicate.name,
-            record=f"An errors.json entry in {path}",
+            record=f"Entry {index} of {path}",
         ):
             return False
         return predicate.matches(value)
 
-    def _apply_errors_gate(self, data, gate_call):
+    def _apply_errors_gate(self, data, gate_call, *, path: str):
         """GATE half of the position-decides-meaning rule (David,
         2026-08-21; settled compendium 4.13/4.14) -- `gate_call`
         (:idchain(...), chained AFTER :errors() in the same func_chain,
@@ -2708,9 +2718,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             return None
         if any(
             self._errors_entry_matches(
-                entry=e, key="source", predicate=gate_call, path="errors.json"
+                entry=e, index=i, key="source", predicate=gate_call, path=path
             )
-            for e in data
+            for i, e in enumerate(data)
         ):
             return data
         return None

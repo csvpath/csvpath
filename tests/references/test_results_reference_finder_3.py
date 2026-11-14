@@ -3091,7 +3091,7 @@ class TestMatchesFieldPredicate:
         assert "run-1" in warning and ":error_count()" in warning
         assert ":after()" in warning
 
-    def test_a_missing_value_warns_once_per_predicate(self, tmp_path):
+    def test_a_missing_value_warns_once_per_field_and_record(self, tmp_path):
         from csvpath.references.functions.selectors.after_3 import After3
 
         finder = _finder("$acme.results.:last()", str(tmp_path))
@@ -3957,7 +3957,7 @@ class TestWellKnownFileAccessors:
         assert finder.resolve().results[0].data == kept
         warnings = finder.csvpaths.logger.warnings
         assert len(warnings) == 1
-        assert "errors.json" in warnings[0]
+        assert f"Entry 1 of {os.path.join(instance_dir, 'errors.json')}" in warnings[0]
         written = accessor.split("(:")[2].split("(")[0]
         assert f":{written}()" in warnings[0]
 
@@ -3975,6 +3975,32 @@ class TestWellKnownFileAccessors:
         warnings = finder.csvpaths.logger.warnings
         assert len(warnings) == 1
         assert ":idchain()" in warnings[0] and ":above()" in warnings[0]
+        assert os.path.join(instance_dir, "errors.json") in warnings[0]
+
+    def test_errors_comparison_gate_names_each_instance(self, tmp_path):
+        # reviewer on #611: the gate's label was "errors.json" for every
+        # instance, so the per-record dedupe hid the second skip
+        run = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "acme-run", {"s0": "u0", "s1": "u1"}
+        )
+        for identity in ("s0", "s1"):
+            _write_json(
+                Path(run) / identity / "errors.json", [{"message": "no source"}]
+            )
+        _write_archive_manifest(tmp_path, "acme", [run])
+        finder = _finder(
+            '$acme.results.:last().:all():errors():idchain(:above("a"))',
+            str(tmp_path),
+        )
+        selection = finder.query()
+        assert [finder.resolve_from([r.uuid]).results[0].data for r in selection.results] == [
+            None,
+            None,
+        ]
+        warnings = finder.csvpaths.logger.warnings
+        assert len(warnings) == 2
+        assert any(os.path.join(run, "s0", "errors.json") in w for w in warnings)
+        assert any(os.path.join(run, "s1", "errors.json") in w for w in warnings)
 
     def test_errors_with_idchain_no_match_returns_empty_list(
         self, acme_archive, instance_dir
