@@ -1993,22 +1993,51 @@ class FilesReferenceFinder3(ReferenceFinder3):
         member's own value directly off the raw ledger dict via
         `KEY`/`LEDGER_KEY` (whichever is populated for FILES), the
         same dual lookup `_bare_status_gate_chain()` itself already
-        validated is present on every member."""
+        validated is present on every member.
+
+        The entries are live versions' (_live_ledger_entries()), so a
+        detail -- a field the named-file manifest holds, or the name --
+        is read live first (_status_chain_gate_value()). A ledger-only
+        field (status, lifecycle) is read from the ledger."""
         results = []
         for entry in ledger:
             matched = True
             for field_call in chain:
-                key = field_call.KEY.get(
-                    Reference3.FILES
-                ) or field_call.LEDGER_KEY.get(Reference3.FILES)
                 if not self._matches_field_predicate(
-                    entry.get(key), field_call.arg, field=field_call.name, record=entry
+                    self._status_chain_gate_value(entry=entry, field_call=field_call),
+                    field_call.arg,
+                    field=field_call.name,
+                    record=entry,
                 ):
                     matched = False
                     break
             if matched:
                 results.append(entry)
         return results
+
+    def _status_chain_gate_value(self, *, entry: dict, field_call):
+        """the value one member of a bare status chain compares, for a
+        live version's ledger entry. Membership follows the named-file
+        manifest, so its details must too, or a gate and the membership
+        test disagree about the same record (reviewer on #613): the name
+        is the named-file whose manifest holds the uuid (D4), and a field
+        that manifest holds reads its value (6.13b(v), "the named-entity
+        manifest wins for details"; D7), the ledger's only where the live
+        entry has none. A ledger-only field (status, lifecycle) reads the
+        ledger, which wins for lifecycle."""
+        if entry is None:
+            raise ValueError("entry cannot be None")
+        if field_call is None:
+            raise ValueError("field_call cannot be None")
+        name, live = self._live_named_file_entry(entry.get("uuid"))
+        if field_call.NAME == "named_file_name" and name is not None:
+            return name
+        key = field_call.KEY.get(Reference3.FILES)
+        if key is not None and live is not None:
+            value = live.get(key)
+            if value is not None:
+                return value
+        return entry.get(key or field_call.LEDGER_KEY.get(Reference3.FILES))
 
     def _pointer_into_status_matches(
         self, reference: Reference3, matched: list
@@ -2100,6 +2129,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
         live = set()
         for name in names:
             live.update(e.get("uuid") for e in self.source.file_manifest(name))
+        #
+        # a manifest entry with no uuid identifies no ledger entry. It put
+        # None in the set, so a ledger entry with no uuid (an old failure)
+        # counted as live (reviewer on #613).
+        #
+        live.discard(None)
         return [e for e in self.source.files_ledger() if e.get("uuid") in live]
 
     def _live_manifest_entry_by_uuid(self, uuid: str) -> "dict | None":
