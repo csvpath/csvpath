@@ -1,3 +1,5 @@
+import re
+
 from csvpath.util.nos import Nos
 from csvpath.util.path_util import PathUtility as pathu
 
@@ -172,6 +174,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     "function -- only :regex()/:choice() are supported."
                 )
             built = self._build(root_major)
+            if self._is_bare_pointer_reference(reference, "manifest"):
+                # the ledger set filtered by name: one result, the ledger's
+                # path with uuid None (5.7; 6.13b), as RESULTS gives
+                # (David, 2026-11-14, W1 option B). It gave one result per
+                # record, each resolving to the whole unfiltered ledger.
+                home = self.csvpaths.config.inputs_csvpaths_path
+                return ReferenceResults3(
+                    results=[
+                        ReferenceResult3(path=Nos(home).join("manifest.json"), uuid=None)
+                    ]
+                )
             return self._query_star_traversal(reference, name_filter=built.pattern)
 
         name_one = reference.name_one
@@ -787,6 +800,23 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 else Reference3.FIRST_PARTY
             )
         if kind == Reference3.METADATA_FILE:
+            #
+            # a bare ':manifest()' under ':regex()'/':choice()' is the
+            # ledger set filtered by name: the ledger's records, as stored,
+            # whose group name matches, a list of dicts (David, 2026-11-14,
+            # W1 option B; decision D13): what '$*.csvpaths.:manifest()'
+            # holds, filtered ('$*' itself resolves to the file's raw
+            # bytes). It resolved the whole, unfiltered ledger.
+            #
+            if isinstance(
+                reference.root_major, FunctionCall3
+            ) and self._is_bare_pointer_reference(reference, "manifest"):
+                pattern = self._build(reference.root_major).pattern
+                return [
+                    e
+                    for e in self.source.paths_ledger()
+                    if re.search(pattern, e.get("named_paths_name") or "")
+                ]
             if (
                 self._is_bare_pointer_reference(reference, "manifest")
                 or self._is_bare_pointer_reference(reference, "definition")

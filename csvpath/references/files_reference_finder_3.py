@@ -218,13 +218,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
                         self.source.file_names(), built.pattern
                     ),
                 )
+            if self._is_bare_filtered_manifest(reference):
+                # the ledger set filtered by name: one result, the ledger's
+                # path with uuid None (5.7; 6.13b), as RESULTS gives
+                # (David, 2026-11-14, W1 option B)
+                return ReferenceResults3(
+                    results=[ReferenceResult3(path=self._files_ledger_path(), uuid=None)]
+                )
             pointer_call = self._pointer_before_manifest(reference, "manifest")
             if pointer_call is not None:
                 # Rule 1b on the ledger set filtered by name (6.13b), as
                 # for '*' above. It raised "Does not yet support
                 # :manifest() as a name_one path segment" until
-                # 2026-11-12. A bare ':manifest()' here is still not
-                # supported (decision log W1).
+                # 2026-11-12.
                 return self._query_ledger_pointer(
                     pointer_call=pointer_call, name_filter=built.pattern
                 )
@@ -2489,6 +2495,22 @@ class FilesReferenceFinder3(ReferenceFinder3):
             "values": [call for call, _ in fields if call.arg is None],
         }
 
+    def _is_bare_filtered_manifest(self, reference: Reference3) -> bool:
+        """a bare ':manifest()' under a ':regex()' or ':choice()' root: the
+        ledger set filtered by name (6.13b). One result, the ledger's path
+        with uuid None (5.7), resolving to the matching ledger records as
+        stored, a list of dicts: what '$*.files.:manifest()' holds, filtered
+        by name ('$*' itself resolves to the file's raw bytes). David,
+        2026-11-14, W1 option B; decision D13. RESULTS already did this. It raised "Does not yet support :manifest() as a
+        name_one path segment"."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        return (
+            isinstance(reference.root_major, FunctionCall3)
+            and reference.name_three is None
+            and self._is_bare_pointer_reference(reference, "manifest")
+        )
+
     def _query_manifest_chain(
         self, *, reference: Reference3, chain: dict, name_filter: "str | None"
     ) -> ReferenceResults3:
@@ -2735,6 +2757,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
         manifest_chain = None
         definition_calls = None
         if reference.name_three is None:
+            if self._is_bare_filtered_manifest(reference):
+                pattern = self._build(reference.root_major).pattern
+                return [
+                    e
+                    for e in self.source.files_ledger()
+                    if re.search(pattern, e.get("named_file_name") or "")
+                ]
             manifest_chain = self._manifest_chain(name_one=reference.name_one)
             definition_calls = self._definition_chain(name_one=reference.name_one)
         if definition_calls is not None:
