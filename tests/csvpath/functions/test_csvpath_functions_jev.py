@@ -2,6 +2,7 @@ import unittest
 import os
 from unittest import mock
 from csvpath import CsvPath
+from csvpath.matching.functions.jev.jev import Jev
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}jev.csv"
 
@@ -16,20 +17,9 @@ def jev_key_available() -> bool:
     """True only when config.ini's [jev] key resolves to a usable key.
 
     These tests call the live Jev service, so they run only when a key is
-    really there. The key is usually an all-caps env var name (key = JEV_KEY).
-    When that var is not set, Config.get() returns the name itself, not None,
-    so "is None" alone would not skip.
+    really there. Jev.check_valid() uses the same rule, Jev.key_problem().
     """
-    config = CsvPath().config
-    raw = config.get(section="jev", name="key", swaps=False, string_parse=False)
-    if raw is None or not isinstance(raw, str) or raw.strip() == "":
-        return False
-    resolved = config.get(section="jev", name="key")
-    if not isinstance(resolved, str) or resolved.strip() == "":
-        return False
-    if raw.strip().isupper() and resolved == raw.strip():
-        return False
-    return True
+    return Jev.key_problem(config=CsvPath().config) is None
 
 
 class TestJevKeyGate(unittest.TestCase):
@@ -57,6 +47,61 @@ class TestJevKeyGate(unittest.TestCase):
         name = self._env_reference()
         with mock.patch.dict(os.environ, {name: "not-a-real-key"}):
             assert jev_key_available() is True
+
+
+class TestJevKeyCheck(unittest.TestCase):
+    """Jev.check_valid() fails fast on an unusable key. Never calls Jev: the
+    client is patched to fail the test if anything builds it."""
+
+    def _env_reference(self) -> str:
+        config = CsvPath().config
+        raw = config.get(section="jev", name="key", swaps=False, string_parse=False)
+        if not isinstance(raw, str) or not raw.strip().isupper():
+            self.skipTest("[jev] key is not an env var reference in this config")
+        return raw.strip()
+
+    def test_key_problem_names_the_unset_env_var(self):
+        name = self._env_reference()
+        env = {k: v for k, v in os.environ.items() if k != name}
+        with mock.patch.dict(os.environ, env, clear=True):
+            problem = Jev.key_problem(config=CsvPath().config)
+        assert problem == f"Jev key in config.ini names env var {name}, which is not set"
+
+    def test_key_problem_none_when_env_var_set(self):
+        name = self._env_reference()
+        with mock.patch.dict(os.environ, {name: "not-a-real-key"}):
+            assert Jev.key_problem(config=CsvPath().config) is None
+
+    def test_key_problem_requires_config(self):
+        with self.assertRaises(ValueError):
+            Jev.key_problem(config=None)
+
+    def test_jev_with_unset_key_stops_before_calling_jev(self):
+        #
+        # before, check_valid() only checked for None, so the env var's
+        # name was sent to Jev as the key
+        #
+        name = self._env_reference()
+        env = {k: v for k, v in os.environ.items() if k != name}
+        client = mock.MagicMock(side_effect=AssertionError("Jev must not be called"))
+        with mock.patch.dict(os.environ, env, clear=True), mock.patch(
+            "csvpath.matching.functions.jev.jev.TypeSafeClient", client
+        ):
+            path = CsvPath()
+            path.parse(
+                f"""
+                ~ validation-mode:raise ~
+                ${PATH}[*][
+                    @answers = jev(
+                        concat(line_values_stack(), ""),
+                        noul("This includes a bank account number")
+                    )
+                ]"""
+            )
+            with self.assertRaises(Exception) as ctx:
+                path.fast_forward()
+        assert f"names env var {name}, which is not set" in str(ctx.exception)
+        assert client.call_count == 0
 
 
 @unittest.skipUnless(
