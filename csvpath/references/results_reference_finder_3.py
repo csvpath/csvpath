@@ -2006,7 +2006,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     record=record, entry=entry, selector=selector
                 )
                 results.append(ReferenceResult3(path=path, uuid=entry["uuid"]))
-        reads_a_file = selector["accessor"] is not None or (
+        # a chained ':idchain()' reads values inside errors.json, not the
+        # file, so several resolve (5.3; reviewer on #636)
+        reads_a_file = (
+            selector["accessor"] is not None and selector["gate_call"] is None
+        ) or (
             selector["manifest_call"] is not None and selector["value_field"] is None
         )
         return ReferenceResults3(
@@ -2613,9 +2617,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         documented exception to the nested=FILTER rule) is not a
         per-entry filter at all -- see Count3.matches(), applied here
         directly against `data` (not per-entry) and gating the whole,
-        unfiltered list to None if unsatisfied, same all-or-nothing
-        treatment _apply_errors_gate() already gives the chained-
-        :idchain() GATE case."""
+        unfiltered list to None if unsatisfied."""
         if accessor.name in self._JSON_ACCESSOR_FILES:
             path = Nos(instance_dir).join(self._JSON_ACCESSOR_FILES[accessor.name])
             data = self._read_well_known_json(path)
@@ -3171,14 +3173,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         content accessors are not; conflating them would risk the same
         "field accessor accidentally restricted like a content
         accessor" bug already hit twice during the #228 merge. gate_call
-        is the GATE half of "position decides meaning" (David,
-        2026-08-21; settled compendium 4.13/4.14, added 2026-10-17) -- an
-        :idchain(...) CHAINED after :errors() in the same func_chain (a
-        separate sibling, not nested as :errors()'s own argument -- that
-        is the pre-existing FILTER half, untouched) -- requires
-        `accessor` to also be present (raises otherwise, below); see
-        ResultsReferenceFinder3._apply_errors_gate() for what it does
-        with it. pointer_call (added 2026-10-20, issue #418) is a
+        is an :idchain(...) CHAINED beside :errors() in the same
+        func_chain (not nested as :errors()'s own argument -- that is the
+        filter on the errors): it reads the idchain values inside
+        errors.json (compendium 5.19; David, 2026-11-14; a whole-file gate
+        from 2026-10-17 until then). It requires `accessor` to be
+        ':errors()' (raises otherwise, below); see
+        ResultsReferenceFinder3._errors_idchain_values(). pointer_call (added 2026-10-20, issue #418) is a
         :first()/:last()/:index(n) picking exactly ONE statement
         instance within whichever run(s) name_one matched -- it picks
         within a range when there is one (6.28; since 2026-11-12) and is
@@ -3306,7 +3307,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 f":{accessor.name}() -- each names a different file of "
                 "the instance."
             )
-        if gate_call is not None and accessor is None:
+        if gate_call is not None and (accessor is None or accessor.name != "errors"):
+            # an idchain lives only in errors.json (compendium 5.19); beside
+            # ':vars()', ':data()' etc. it silently read nothing (reviewer
+            # on #636)
             raise ReferenceException3(
                 "ResultsReferenceFinder3's ':idchain()' reads errors.json, "
                 "so it needs ':errors()' beside it (':errors():idchain()') "

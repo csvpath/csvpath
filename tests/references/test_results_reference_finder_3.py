@@ -4456,6 +4456,19 @@ class TestErrorsIdchainValues:
                 acme_archive,
             ).query()
 
+    @pytest.mark.parametrize("accessor", ["vars", "meta", "data", "printouts", "unmatched"])
+    @pytest.mark.parametrize("instance", ["company_names", ":all()"])
+    def test_an_idchain_beside_another_accessor_raises(
+        self, acme_archive, instance_dir, accessor, instance
+    ):
+        # an idchain lives only in errors.json (5.19); beside another file it
+        # silently read nothing (reviewer on #636)
+        with pytest.raises(ReferenceException3, match="needs ':errors\\(\\)'"):
+            _finder(
+                f"$acme.results.customers/2025:first().{instance}:{accessor}():idchain()",
+                acme_archive,
+            ).query()
+
     def test_a_nested_idchain_needs_an_argument(self, acme_archive, instance_dir):
         with pytest.raises(ReferenceException3, match="needs an argument"):
             _finder(
@@ -7009,6 +7022,13 @@ class TestStarManifestSetInstanceRecords:
         # idchains (compendium 5.19, 2026-11-14; a gate gave None until then)
         ref = '$*.results.:manifest():last().t:errors():idchain("add[0]")'
         assert self._data(ref, archive) == [[]]
+
+    def test_several_instances_idchain_values_resolve(self, archive):
+        # values, not files, so several instances resolve together (5.3);
+        # the ledger set used to keep its own several-files raise
+        # (reviewer on #636). k3's s has no errors; t has two, no source.
+        ref = "$*.results.:manifest():last().:all():errors():idchain()"
+        assert sorted(self._data(ref, archive), key=len) == [[], [None, None]]
 
     def test_a_content_accessor_wins_over_a_field(self, archive):
         # the same order as the run-dir branch: the file is read
