@@ -68,9 +68,33 @@ class Jev(SideEffect):
         )
         self.args.validate(self.siblings())
         super().check_valid()
-        key = self.matcher.csvpath.config.get(section="jev", name="key")
-        if key is None:
-            raise ChildrenException("Jev key is not available in config.ini")
+        problem = Jev.key_problem(config=self.matcher.csvpath.config)
+        if problem is not None:
+            #
+            # report it where it is found. Expression.check_valid() stops the
+            # run on a ChildrenException but only re-raises in raise mode, so
+            # without this a no-raise run would end silently.
+            #
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=problem)
+            raise ChildrenException(problem)
+
+    @classmethod
+    def key_problem(cls, *, config) -> str | None:
+        """None if config.ini's [jev] key resolves to a usable key, else why
+        not. The key is usually an all-caps env var name (key = JEV_KEY).
+        When that var is not set, Config.get() returns the name itself, not
+        None, and we would send the name to Jev as the key."""
+        if config is None:
+            raise ValueError("Config cannot be None")
+        raw = config.get(section="jev", name="key", swaps=False, string_parse=False)
+        if not isinstance(raw, str) or raw.strip() == "":
+            return "Jev key is not available in config.ini"
+        key = config.get(section="jev", name="key")
+        if not isinstance(key, str) or key.strip() == "":
+            return f"Jev key {raw.strip()} in config.ini resolves to nothing"
+        if raw.strip().isupper() and key == raw.strip():
+            return f"Jev key in config.ini names env var {raw.strip()}, which is not set"
+        return None
 
     @property
     def has_internal_variables(self) -> bool:
