@@ -268,9 +268,19 @@ class TestVersionRange:
         ).query()
         assert results.uuids == [f"v{i}-uuid" for i in range(5)]
 
-    def test_having_filters_before_the_range_windows(self):
+    def test_the_range_windows_before_having_filters(self):
+        # NRE: "Collects the last three versions of acme if they have a
+        # my_validations statement". :having() is a filter, and a range
+        # comes before a filter (compendium 6.28, 6.39; David, 2026-11-14).
+        # Only v0 has my_validations, and it is not one of the last three.
+        # Having first gave [v0] until then.
         results = _finder(
             '$acme.csvpaths.:having("my_validations"):from(-3)', VERSION_RANGE_MANIFEST
+        ).query()
+        assert results.uuids == []
+        results = _finder(
+            '$acme.csvpaths.:having("my_validations"):from(0):to(2)',
+            VERSION_RANGE_MANIFEST,
         ).query()
         assert results.uuids == ["v0-uuid"]
 
