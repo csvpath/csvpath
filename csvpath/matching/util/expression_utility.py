@@ -194,11 +194,15 @@ class ExpressionUtility:
             return v
         except ValueError:
             pass
-        if v.find(",") == len(v) - 3:
-            a = v[0 : v.find(",")]
-            a += "."
-            a += v[v.find(",") + 1 :]
-            v = a
+        #
+        # a comma two places from the end is a decimal comma, e.g. 1,50.
+        # find() is -1 with no comma, which equals len - 3 for a 2-character
+        # value, so check that there is a comma: "$5" was spliced into
+        # "$.$5" and read as 0.5.
+        #
+        c = v.find(",")
+        if c > -1 and c == len(v) - 3:
+            v = f"{v[0:c]}.{v[c + 1 :]}"
         v = v.replace(",", "")
         v = v.replace(";", "")
         v = v.replace("$", "")
@@ -229,11 +233,12 @@ class ExpressionUtility:
             v = float(v)
             return v
         except ValueError:
-            if v.find(",") == len(v) - 3:
-                a = v[0 : v.find(",")]
-                a += "."
-                a += v[v.find(",") + 1 :]
-                v = a
+            #
+            # see to_int(): only a real comma two places from the end
+            #
+            c = v.find(",")
+            if c > -1 and c == len(v) - 3:
+                v = f"{v[0:c]}.{v[c + 1 :]}"
             v = v.replace(",", "")
             v = v.replace(";", "")
             v = v.replace("$", "")
