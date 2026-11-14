@@ -2061,37 +2061,27 @@ class FilesReferenceFinder3(ReferenceFinder3):
         return ReferenceResults3(
             results=[
                 ReferenceResult3(
-                    path=self._ledger_entry_result_path(selected),
+                    path=self._live_version_path(selected.get("uuid")),
                     uuid=selected.get("uuid"),
                 )
             ]
         )
 
-    def _ledger_entry_result_path(self, entry: dict) -> str:
-        """the real path to use for a `ReferenceResult3` built from a
-        raw global-ledger entry -- added 2026-10-18, caught live before
-        shipping: `ReferenceResult3` itself forbids a None/empty path,
-        but a "failed" entry's own "file_path" is always
-        None (the registration never got that far -- confirmed against
-        `file_manager.py`'s own `_registration_failed()`, which never
-        sets `file_path`/`file_home`/`file_name` at all). Falls back to
-        "origin_path" (the attempted source file -- the one real path
-        a failure entry usually carries) when "file_path" is empty.
-        Widened 2026-10-21: "origin_path" itself can ALSO be empty --
-        confirmed live this is exactly the shape the one real, tested
-        trigger for this status produces (add_named_file(path="") --
-        see test_file_registration_failed), not a hypothetical. Falls
-        back a second time, to the global arrivals ledger's own
-        manifest.json -- the one real path that always exists and
-        genuinely contains this entry -- so a reference can still
-        select and report it instead of raising on the one input
-        actually confirmed to cause it. Converted from @staticmethod
-        to read self.csvpaths.config for this fallback; every existing
-        call site already invokes this as self._ledger_entry_result_
-        path(...), so no call site changes."""
-        path = entry.get("file_path") or entry.get("origin_path")
+    def _live_version_path(self, uuid: str) -> str:
+        """the version file of the live version `uuid`, from its named-
+        file's own manifest entry. The bare status gate selects live
+        versions only (_live_ledger_entries()), and where the ledger and
+        the named-file manifest disagree on a detail, the manifest wins
+        (6.13b(v); D6, D7). It read the ledger's file_path, with fallbacks
+        meant for failed registrations (reviewer on #613). A live version
+        with no file is an inconsistent manifest: raise."""
+        name, entry = self._live_named_file_entry(uuid)
+        path = None if entry is None else entry.get("file")
         if not path:
-            return self._files_ledger_path()
+            raise ReferenceException3(
+                f"Version {uuid!r} has no file in its named-file's manifest "
+                f"({name!r}); the manifest is inconsistent."
+            )
         return path
 
     def _files_ledger_path(self) -> str:
@@ -2152,7 +2142,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         return ReferenceResults3(
             results=[
                 ReferenceResult3(
-                    path=self._ledger_entry_result_path(e),
+                    path=self._live_version_path(e.get("uuid")),
                     uuid=e.get("uuid"),
                 )
                 for e in matched

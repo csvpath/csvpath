@@ -7050,3 +7050,24 @@ class TestStatusGateResolve:
         versions = {"o1": ("orders", "orders-renamed", b"a\n")}
         for reference in ('$orders.files.:status("complete")', '$*.files.:status("complete")'):
             assert self._finder(reference, tmp_path, versions).query().uuids == ["o1"]
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            '$orders.files.:status("complete")',
+            '$*.files.:status("complete")',
+            '$orders.files.:status("complete").:last()',
+        ],
+    )
+    def test_the_bytes_come_from_the_named_file_manifest(self, tmp_path, reference):
+        # reviewer on #613: where the ledger's file_path and the named-
+        # file manifest's file disagree, the manifest wins for a detail
+        # (6.13b(v); D6, D7). Both forms read the ledger's path.
+        finder = self._finder(reference, tmp_path, {"o1": ("orders", "orders", b"live\n")})
+        stale = tmp_path / "orders" / "old.csv" / "o1.csv"
+        stale.parent.mkdir(parents=True)
+        stale.write_bytes(b"stale\n")
+        finder.csvpaths.file_manager._ledger[0]["file_path"] = str(stale)
+        results = finder.resolve()
+        assert results.files == [str(tmp_path / "orders" / "orders.csv" / "o1.csv")]
+        assert results.results[0].data == b"live\n"
