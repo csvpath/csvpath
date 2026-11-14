@@ -343,7 +343,9 @@ class TestStatusRegistrationFailed:
     status could never be reported back through
     :status("failed"). Fixed 2026-10-21: falls back to the
     global arrivals ledger's own manifest.json when neither file_path nor
-    a non-empty origin_path is available."""
+    a non-empty origin_path is available. That helper was removed in #613:
+    a failure is never a live version, so it is reached only through
+    ':manifest()', whose result path is the ledger's manifest.json."""
 
     def test_status_registration_failed_is_selectable(self, csvpaths):
         # changed 2026-11-01 (C1 bare-half revert, agreed with David): a

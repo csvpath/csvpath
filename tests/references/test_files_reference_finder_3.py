@@ -7071,3 +7071,65 @@ class TestStatusGateResolve:
         results = finder.resolve()
         assert results.files == [str(tmp_path / "orders" / "orders.csv" / "o1.csv")]
         assert results.results[0].data == b"live\n"
+
+
+class TestStatusChainGatesReadLive:
+    # reviewer on #613: membership in a bare status chain follows the
+    # named-file manifest, but a chained detail gate read the raw ledger
+    # entry, so the two could disagree about one record. A detail reads
+    # the live version first (6.13b(v); D4, D7); status and lifecycle stay
+    # on the ledger.
+    @staticmethod
+    def _finder(reference: str, ledger_entry: dict, manifest_entry: dict):
+        return _finder(
+            reference,
+            "inputs/named_files/orders",
+            [],
+            ledger=[ledger_entry],
+            by_name={"orders": ("inputs/named_files/orders", [manifest_entry])},
+            inputs_files_path="inputs/named_files",
+        )
+
+    LIVE = {
+        "file": "inputs/named_files/orders/orders.csv/o1.xlsx",
+        "file_home": "inputs/named_files/orders/orders.csv",
+        "uuid": "o1",
+        "type": "xlsx",
+    }
+    LEDGER = {
+        "named_file_name": "orders-renamed",
+        "status": "complete",
+        "uuid": "o1",
+        "type": "csv",
+        "file_path": "inputs/named_files/orders/old.csv/o1.csv",
+    }
+
+    @pytest.mark.parametrize(
+        "chain, expected",
+        [
+            (':status("complete")', ["o1"]),
+            # the name is the named-file whose manifest holds o1 (D4)
+            (':status("complete"):named_file_name("orders")', ["o1"]),
+            (':status("complete"):named_file_name("orders-renamed")', []),
+            # a detail the manifest holds reads the live entry (D7)
+            (':status("complete"):type("xlsx")', ["o1"]),
+            (':status("complete"):type("csv")', []),
+        ],
+    )
+    def test_a_chained_detail_gate_reads_the_live_version(self, chain, expected):
+        for root in ("$orders", "$*"):
+            finder = self._finder(f"{root}.files.{chain}", self.LEDGER, self.LIVE)
+            assert finder.query().uuids == expected, root
+
+    def test_a_detail_the_live_entry_lacks_reads_the_ledger(self):
+        live = {k: v for k, v in self.LIVE.items() if k != "type"}
+        finder = self._finder('$orders.files.:status("complete"):type("csv")', self.LEDGER, live)
+        assert finder.query().uuids == ["o1"]
+
+    def test_a_manifest_entry_with_no_uuid_does_not_make_a_failure_live(self):
+        # it raised "ValueError: uuid cannot be None or empty"; before #613
+        # the failure came back as a live version
+        live = {k: v for k, v in self.LIVE.items() if k != "uuid"}
+        failure = {"named_file_name": "orders", "status": "failed", "file_path": None}
+        finder = self._finder('$orders.files.:status("failed")', failure, live)
+        assert finder.query().results == []
