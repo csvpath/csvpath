@@ -2,9 +2,11 @@ import gc
 import logging
 import threading
 import unittest
+import unittest.mock
 from logging import Logger
 from csvpath import CsvPath
 from csvpath.util.log_utility import LogUtility as lout
+import csvpath.util.log_utility as lout_mod
 
 PREFIX = "test_util_log_utility_release"
 
@@ -156,3 +158,63 @@ class TestUtilLogUtilityRelease(unittest.TestCase):
         lout._purge_released()
         assert name not in _pending_names()
         assert name not in Logger.manager.loggerDict
+
+
+class TestUtilLogUtilitySetLevel(unittest.TestCase):
+    def test_set_level_error_raises_and_frees_the_lock(self):
+        #
+        # config_logger() used to swallow any setLevel() error. now it raises,
+        # and if the error left logging._lock held (py3.12 _clear_cache has no
+        # try/finally) it gives the lock back first
+        #
+        def leaks_then_fails(self, level):
+            logging._lock.acquire()
+            raise RuntimeError("dictionary changed size during iteration")
+
+        config = CsvPath().config
+        try:
+            with unittest.mock.patch.object(Logger, "setLevel", leaks_then_fails):
+                with self.assertRaises(lout_mod.LogException) as ctx:
+                    lout.config_logger(config=config, name=f"{PREFIX}.setlevel")
+            assert "Cannot set level" in str(ctx.exception)
+            assert isinstance(ctx.exception.__cause__, RuntimeError)
+            assert not logging._lock._is_owned()
+        finally:
+            while logging._lock._is_owned():
+                logging._lock.release()
+
+    @unittest.skipUnless(
+        hasattr(logging._lock, "_recursion_count"),
+        "needs RLock._recursion_count (py3.12+) to count the caller's hold",
+    )
+    def test_set_level_error_when_lock_already_held_releases_only_its_own(self):
+        #
+        # if the caller already holds the lock, give back only what this call
+        # took. once the caller releases its own hold, another thread must be
+        # able to take the lock.
+        #
+        def leaks_then_fails(self, level):
+            logging._lock.acquire()
+            raise RuntimeError("dictionary changed size during iteration")
+
+        config = CsvPath().config
+        try:
+            logging._lock.acquire()
+            with unittest.mock.patch.object(Logger, "setLevel", leaks_then_fails):
+                with self.assertRaises(lout_mod.LogException):
+                    lout.config_logger(config=config, name=f"{PREFIX}.setlevel_held")
+            assert lout._lock_count() == 1
+            logging._lock.release()
+            t = threading.Thread(target=logging.getLogger, args=("x.z",), daemon=True)
+            t.start()
+            t.join(5)
+            assert not t.is_alive()
+        finally:
+            while logging._lock._is_owned():
+                logging._lock.release()
+
+    def test_set_level_still_works(self):
+        config = CsvPath().config
+        lg = lout.config_logger(config=config, name=f"{PREFIX}.setlevel_ok", level="warn")
+        assert lg.level == logging.WARNING
+        assert not logging._lock._is_owned()
