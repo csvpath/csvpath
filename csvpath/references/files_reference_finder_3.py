@@ -264,19 +264,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # know those high risk files by name" -- confirmed just as
             # real a need as the '*' form below, built together. Only
             # the ledger entries of this named-file's live versions are
-            # candidates (2026-11-01, as for '*' above).
-            ledger = self._live_ledger_entries(names=[root_major])
-            by_name = [e for e in ledger if e.get("named_file_name") == root_major]
-            matched = self._filter_ledger_by_gate_chain(by_name, status_chain)
-            if reference.name_three is not None:
-                return self._pointer_into_status_matches(reference, matched)
-            return ReferenceResults3(
-                results=[
-                    ReferenceResult3(
-                        path=self._ledger_entry_result_path(e), uuid=e.get("uuid")
-                    )
-                    for e in matched
-                ]
+            # candidates (2026-11-01, as for '*' above). Membership follows
+            # the named-file's own manifest, not the ledger's
+            # named_file_name: 6.13b(v), "the named-entity manifest wins
+            # for details", as D4 takes the name from the manifest that
+            # holds the uuid (spec pass, 2026-11-14). It filtered on the
+            # ledger's name too until then (reviewer on #588).
+            return self._query_status_gate(
+                reference=reference, status_chain=status_chain, names=[root_major]
             )
 
         if self._is_bare_pointer_reference(
@@ -2066,37 +2061,27 @@ class FilesReferenceFinder3(ReferenceFinder3):
         return ReferenceResults3(
             results=[
                 ReferenceResult3(
-                    path=self._ledger_entry_result_path(selected),
+                    path=self._live_version_path(selected.get("uuid")),
                     uuid=selected.get("uuid"),
                 )
             ]
         )
 
-    def _ledger_entry_result_path(self, entry: dict) -> str:
-        """the real path to use for a `ReferenceResult3` built from a
-        raw global-ledger entry -- added 2026-10-18, caught live before
-        shipping: `ReferenceResult3` itself forbids a None/empty path,
-        but a "failed" entry's own "file_path" is always
-        None (the registration never got that far -- confirmed against
-        `file_manager.py`'s own `_registration_failed()`, which never
-        sets `file_path`/`file_home`/`file_name` at all). Falls back to
-        "origin_path" (the attempted source file -- the one real path
-        a failure entry usually carries) when "file_path" is empty.
-        Widened 2026-10-21: "origin_path" itself can ALSO be empty --
-        confirmed live this is exactly the shape the one real, tested
-        trigger for this status produces (add_named_file(path="") --
-        see test_file_registration_failed), not a hypothetical. Falls
-        back a second time, to the global arrivals ledger's own
-        manifest.json -- the one real path that always exists and
-        genuinely contains this entry -- so a reference can still
-        select and report it instead of raising on the one input
-        actually confirmed to cause it. Converted from @staticmethod
-        to read self.csvpaths.config for this fallback; every existing
-        call site already invokes this as self._ledger_entry_result_
-        path(...), so no call site changes."""
-        path = entry.get("file_path") or entry.get("origin_path")
+    def _live_version_path(self, uuid: str) -> str:
+        """the version file of the live version `uuid`, from its named-
+        file's own manifest entry. The bare status gate selects live
+        versions only (_live_ledger_entries()), and where the ledger and
+        the named-file manifest disagree on a detail, the manifest wins
+        (6.13b(v); D6, D7). It read the ledger's file_path, with fallbacks
+        meant for failed registrations (reviewer on #613). A live version
+        with no file is an inconsistent manifest: raise."""
+        name, entry = self._live_named_file_entry(uuid)
+        path = None if entry is None else entry.get("file")
         if not path:
-            return self._files_ledger_path()
+            raise ReferenceException3(
+                f"Version {uuid!r} has no file in its named-file's manifest "
+                f"({name!r}); the manifest is inconsistent."
+            )
         return path
 
     def _files_ledger_path(self) -> str:
@@ -2148,14 +2133,21 @@ class FilesReferenceFinder3(ReferenceFinder3):
         matched = self._filter_ledger_by_gate_chain(ledger, status_chain)
         if reference.name_three is not None:
             return self._pointer_into_status_matches(reference, matched)
+        #
+        # the gate selects versions (C1, 2026-11-01), and resolve reads a
+        # version's bytes (David, 2026-11-14: only ':manifest()' reaches
+        # the ledger set, 6.13b(iv)). Only one file's content can be read
+        # at a time (compendium 5.3), so several is a Rule 1 read.
+        #
         return ReferenceResults3(
             results=[
                 ReferenceResult3(
-                    path=self._ledger_entry_result_path(e),
+                    path=self._live_version_path(e.get("uuid")),
                     uuid=e.get("uuid"),
                 )
                 for e in matched
-            ]
+            ],
+            ambiguous_content_read=len(matched) > 1,
         )
 
     def _query_ledger_pointer(
@@ -2715,6 +2707,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
         log_call = self._bare_log_call(reference)
         if log_call is not None:
             return self._read_log_file(result.path, log_call.arg)
+        if (
+            reference.name_three is None
+            and self._bare_status_gate_chain(reference.name_one) is not None
+        ):
+            # a bare ':status()'/':lifecycle()' gate with no ':manifest()'
+            # selects live versions (C1, 2026-11-01), so it resolves to the
+            # version's bytes, as a version pointer does (David,
+            # 2026-11-14). It raised "resolve_kind='metadata_field'".
+            with DataFileReader(path=result.path, mode="rb") as reader:
+                return reader.source.read()
         manifest_chain = None
         definition_calls = None
         if reference.name_three is None:
