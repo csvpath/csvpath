@@ -6935,3 +6935,139 @@ class TestStarRootGroupsByNamedFile:
 
         assert _uuids('$*.files.*.:from(:date("2026-01-01"))') == ["a1", "b1", "a2"]
         assert _uuids('$*.files.*.:from(:date("2026-01-01")):last()') == ["a2", "b1"]
+
+
+class TestComparisonOnAMissingValue:
+    # W3, option A (David, 2026-11-14): a missing value is neither above
+    # nor below a bound; the record does not match, and the skip is
+    # logged, naming the field and the record. It raised TypeError.
+    def test_a_manifest_chain_gate_skips_an_entry_with_no_template(self):
+        # u-b2's template is None; u-a1's and u-b1's are "" (present,
+        # and not above "")
+        finder = _gate_finder('$*.files.:manifest():template(:above(""))')
+        finder.csvpaths.logger = _FakeLogger()
+        assert finder.query().uuids == ["u-a2"]
+        warnings = finder.csvpaths.logger.warnings
+        assert len(warnings) == 1
+        assert "u-b2" in warnings[0] and ":template()" in warnings[0]
+        assert ":above()" in warnings[0]
+
+
+class TestStatusGateResolve:
+    # David, 2026-11-14 (decision 5, option A): a bare ':status()' or
+    # ':lifecycle()' gate with no ':manifest()' selects live versions (C1,
+    # 2026-11-01), so resolve reads the version's bytes. Only ':manifest()'
+    # reaches the ledger set (6.13b(iv)). One file at a time (5.3): several
+    # raise, and query still lists them. Every shape here raised
+    # "resolve_kind='metadata_field'".
+    @staticmethod
+    def _finder(reference: str, tmp_path, versions: dict) -> FilesReferenceFinder3:
+        # versions: {uuid: (named-file name, ledger named_file_name, bytes)}
+        ledger = []
+        by_name = {}
+        for uuid, (name, ledger_name, data) in versions.items():
+            path = tmp_path / name / f"{name}.csv" / f"{uuid}.csv"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+            home, manifest = by_name.setdefault(name, (str(tmp_path / name), []))
+            manifest.append(
+                {"file": str(path), "file_home": str(path.parent), "uuid": uuid}
+            )
+            ledger.append(
+                {
+                    "named_file_name": ledger_name,
+                    "status": "complete",
+                    "lifecycle": "active",
+                    "uuid": uuid,
+                    "file_path": str(path),
+                }
+            )
+        return _finder(
+            reference,
+            str(tmp_path / "orders"),
+            [],
+            ledger=ledger,
+            by_name=by_name,
+            inputs_files_path=str(tmp_path),
+        )
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            '$orders.files.:status("complete")',
+            '$*.files.:status("complete")',
+            '$:regex(/^ord/).files.:status("complete")',
+            '$:choice("orders").files.:status("complete")',
+            '$orders.files.:lifecycle("active")',
+            '$orders.files.:status("complete"):named_file_name("orders")',
+        ],
+    )
+    def test_one_version_resolves_to_its_bytes(self, tmp_path, reference):
+        finder = self._finder(reference, tmp_path, {"o1": ("orders", "orders", b"a,b\n")})
+        results = finder.resolve()
+        assert results.uuids == ["o1"]
+        assert results.results[0].data == b"a,b\n"
+
+    @pytest.mark.parametrize(
+        "reference",
+        ['$orders.files.:status("complete")', '$*.files.:status("complete")'],
+    )
+    def test_several_versions_raise_on_resolve_but_query_lists_them(
+        self, tmp_path, reference
+    ):
+        versions = {
+            "o1": ("orders", "orders", b"one\n"),
+            "o2": ("orders", "orders", b"two\n"),
+        }
+        assert self._finder(reference, tmp_path, versions).query().uuids == ["o1", "o2"]
+        # the Rule 1 raise, not the old "resolve_kind='metadata_field'"
+        with pytest.raises(ReferenceException3, match="more than one match"):
+            self._finder(reference, tmp_path, versions).resolve()
+
+    def test_a_pointer_picks_one_version_to_resolve(self, tmp_path):
+        versions = {
+            "o1": ("orders", "orders", b"one\n"),
+            "o2": ("orders", "orders", b"two\n"),
+        }
+        finder = self._finder('$orders.files.:status("complete").:last()', tmp_path, versions)
+        assert [r.data for r in finder.resolve().results] == [b"two\n"]
+
+    def test_resolve_from_one_of_several(self, tmp_path):
+        versions = {
+            "o1": ("orders", "orders", b"one\n"),
+            "o2": ("orders", "orders", b"two\n"),
+        }
+        finder = self._finder('$orders.files.:status("complete")', tmp_path, versions)
+        assert [r.data for r in finder.resolve_from(["o1"]).results] == [b"one\n"]
+
+    def test_a_literal_root_takes_membership_from_the_named_file_manifest(
+        self, tmp_path
+    ):
+        # the spec pass (2026-11-14): the named-entity manifest wins for
+        # details (6.13b(v)); the literal branch also required the
+        # ledger's own named_file_name to be the root until then, where
+        # '*' and ':regex()' did not (reviewer on #588)
+        versions = {"o1": ("orders", "orders-renamed", b"a\n")}
+        for reference in ('$orders.files.:status("complete")', '$*.files.:status("complete")'):
+            assert self._finder(reference, tmp_path, versions).query().uuids == ["o1"]
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            '$orders.files.:status("complete")',
+            '$*.files.:status("complete")',
+            '$orders.files.:status("complete").:last()',
+        ],
+    )
+    def test_the_bytes_come_from_the_named_file_manifest(self, tmp_path, reference):
+        # reviewer on #613: where the ledger's file_path and the named-
+        # file manifest's file disagree, the manifest wins for a detail
+        # (6.13b(v); D6, D7). Both forms read the ledger's path.
+        finder = self._finder(reference, tmp_path, {"o1": ("orders", "orders", b"live\n")})
+        stale = tmp_path / "orders" / "old.csv" / "o1.csv"
+        stale.parent.mkdir(parents=True)
+        stale.write_bytes(b"stale\n")
+        finder.csvpaths.file_manager._ledger[0]["file_path"] = str(stale)
+        results = finder.resolve()
+        assert results.files == [str(tmp_path / "orders" / "orders.csv" / "o1.csv")]
+        assert results.results[0].data == b"live\n"

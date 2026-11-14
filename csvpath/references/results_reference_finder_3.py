@@ -327,6 +327,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     if self._matches_field_predicate(
                         self._run_field_value(rh, name_one_field_call),
                         name_one_field_call.arg,
+                        field=name_one_field_call.name,
+                        record=rh,
                     )
                 ]
             return cands
@@ -1367,7 +1369,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             entry = self.source.instance_manifest(inst_dir)
             value = self._extract_field_value(entry, key_path)
             value = function_cls.transform_value(value)
-            if self._matches_field_predicate(value, field_call.arg):
+            if self._matches_field_predicate(
+                value, field_call.arg, field=field_call.name, record=inst_dir
+            ):
                 return True
         return False
 
@@ -1476,7 +1480,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     rh
                     for rh in run_homes
                     if self._matches_field_predicate(
-                        self._run_field_value(rh, field_call), field_call.arg
+                        self._run_field_value(rh, field_call),
+                        field_call.arg,
+                        field=field_call.name,
+                        record=rh,
                     )
                 ]
         run_homes = sorted(run_homes, key=self._run_dir_sort_key)
@@ -1735,6 +1742,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     if self._matches_field_predicate(
                         self._run_record_field_value(record=r, field_call=field_call),
                         field_call.arg,
+                        field=field_call.name,
+                        record=r,
                     )
                 ]
         if pointer is not None:
@@ -1806,7 +1815,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             value = self._instance_record_field_value(
                 record=record, entry=entry, field_call=field_call
             )
-            if self._matches_field_predicate(value, field_call.arg):
+            if self._matches_field_predicate(
+                value, field_call.arg, field=field_call.name, record=entry
+            ):
                 return True
         return False
 
@@ -1909,6 +1920,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         record=record, entry=e, field_call=field_call
                     ),
                     field_call.arg,
+                    field=field_call.name,
+                    record=e,
                 )
             ]
         if selector["pointer"] is not None:
@@ -2031,7 +2044,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             instance_dir = Nos(record["run_home"]).join(entry["identity"])
             data = self._read_accessor(instance_dir, accessor)
             if selector["gate_call"] is not None:
-                return self._apply_errors_gate(data, selector["gate_call"])
+                return self._apply_errors_gate(
+                    data,
+                    selector["gate_call"],
+                    path=Nos(instance_dir).join(self._JSON_ACCESSOR_FILES["errors"]),
+                )
             return data
         if selector["value_field"] is not None:
             return self._instance_record_field_value(
@@ -2165,7 +2182,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         rh
                         for rh in candidates
                         if self._matches_field_predicate(
-                            self._run_field_value(rh, field_call), field_call.arg
+                            self._run_field_value(rh, field_call),
+                            field_call.arg,
+                            field=field_call.name,
+                            record=rh,
                         )
                     ]
             if pointer is not None:
@@ -2453,7 +2473,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     # narrow errors.json's own entries; it decides
                     # whether the WHOLE, already-read, UNFILTERED content
                     # is returned at all.
-                    return self._apply_errors_gate(data, gate_call)
+                    return self._apply_errors_gate(
+                        data,
+                        gate_call,
+                        path=Nos(pathu.dir_name(result.path)).join(self._JSON_ACCESSOR_FILES["errors"]),
+                    )
                 return data
             if field_call is not None:
                 # a registered field-accessor (e.g. :uuid()) riding
@@ -2575,8 +2599,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             return entry
         return None
 
-    @classmethod
-    def _read_accessor(cls, instance_dir: str, accessor):
+    def _read_accessor(self, instance_dir: str, accessor):
         """resolves a well-known instance-level file accessor (errors/
         vars/meta -> parsed JSON; data/unmatched -> raw bytes, both
         genuinely optional, None if never written; file("...") -> raw
@@ -2597,17 +2620,29 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         unfiltered list to None if unsatisfied, same all-or-nothing
         treatment _apply_errors_gate() already gives the chained-
         :idchain() GATE case."""
-        if accessor.name in cls._JSON_ACCESSOR_FILES:
-            path = Nos(instance_dir).join(cls._JSON_ACCESSOR_FILES[accessor.name])
-            data = cls._read_well_known_json(path)
+        if accessor.name in self._JSON_ACCESSOR_FILES:
+            path = Nos(instance_dir).join(self._JSON_ACCESSOR_FILES[accessor.name])
+            data = self._read_well_known_json(path)
             if accessor.name == "errors":
                 if isinstance(accessor.arg, Count3):
                     if not accessor.arg.matches(data):
                         data = None
                 elif data is not None and isinstance(accessor.arg, Idchain3):
-                    data = [e for e in data if accessor.arg.matches(e.get("source"))]
+                    data = [
+                        e
+                        for i, e in enumerate(data)
+                        if self._errors_entry_matches(
+                            entry=e, index=i, key="source", predicate=accessor.arg, path=path
+                        )
+                    ]
                 elif data is not None and isinstance(accessor.arg, Message3):
-                    data = [e for e in data if accessor.arg.matches(e.get("message"))]
+                    data = [
+                        e
+                        for i, e in enumerate(data)
+                        if self._errors_entry_matches(
+                            entry=e, index=i, key="message", predicate=accessor.arg, path=path
+                        )
+                    ]
             return data
         if accessor.name == "printouts" and accessor.arg:
             # a named stream under print-mode:separate (added
@@ -2616,7 +2651,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # doc example this matches ("...printouts('greetings')" and
             # "...file('greetings.txt')" are declared equivalent there).
             path = Nos(instance_dir).join(f"{accessor.arg}.txt")
-            return cls._read_well_known_file(path)
+            return self._read_well_known_file(path)
         if accessor.name == "original":
             # added 2026-10-15 -- unlike every other well-known file
             # here, original.<ext>'s own extension varies by source
@@ -2632,16 +2667,32 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return None
             for name in nos.listdir(files_only=True):
                 if name.startswith(f"{orut.NAME}.") or name == orut.NAME:
-                    return cls._read_well_known_file(Nos(instance_dir).join(name))
+                    return self._read_well_known_file(Nos(instance_dir).join(name))
             return None
-        if accessor.name in cls._BYTES_ACCESSOR_FILES:
-            path = Nos(instance_dir).join(cls._BYTES_ACCESSOR_FILES[accessor.name])
-            return cls._read_well_known_file(path)
+        if accessor.name in self._BYTES_ACCESSOR_FILES:
+            path = Nos(instance_dir).join(self._BYTES_ACCESSOR_FILES[accessor.name])
+            return self._read_well_known_file(path)
         path = Nos(instance_dir).join(accessor.arg)
-        return cls._read_well_known_file(path)
+        return self._read_well_known_file(path)
 
-    @staticmethod
-    def _apply_errors_gate(data, gate_call):
+    def _errors_entry_matches(
+        self, *, entry: dict, index: int, key: str, predicate, path: str
+    ) -> bool:
+        """true if an errors.json entry's `key` value satisfies
+        `predicate` (':idchain()' reads "source", ':message()' reads
+        "message"). A missing value never satisfies a comparison, and
+        the skip is logged (decision W3)."""
+        value = entry.get(key)
+        if self._skips_missing_value(
+            value=value,
+            predicate=predicate,
+            field=predicate.name,
+            record=f"Entry {index} of {path}",
+        ):
+            return False
+        return predicate.matches(value)
+
+    def _apply_errors_gate(self, data, gate_call, *, path: str):
         """GATE half of the position-decides-meaning rule (David,
         2026-08-21; settled compendium 4.13/4.14) -- `gate_call`
         (:idchain(...), chained AFTER :errors() in the same func_chain,
@@ -2665,7 +2716,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         other well-known-file miss gets."""
         if data is None:
             return None
-        if any(gate_call.matches(e.get("source")) for e in data):
+        if any(
+            self._errors_entry_matches(
+                entry=e, index=i, key="source", predicate=gate_call, path=path
+            )
+            for i, e in enumerate(data)
+        ):
             return data
         return None
 
@@ -2743,6 +2799,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 self._matches_field_predicate(
                     self._instance_entry_field_value(entry=entry, field_call=g),
                     g.arg,
+                    field=g.name,
+                    record=Nos(run_dir).join(inst),
                 )
                 for g in gates
             ):

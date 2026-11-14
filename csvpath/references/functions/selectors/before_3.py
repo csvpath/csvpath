@@ -101,4 +101,14 @@ class Before3(PredicateFunction3):
             )
         if not isinstance(bound, (int, str)):
             bound = bound.arg
+        #
+        # a missing value (None, e.g. a run still in progress has no
+        # error_count yet) is not above or below anything: absence
+        # implies nothing, as for :lifecycle()/:status() (compendium
+        # 6.13b(vi)/(vii)). David, 2026-11-14 (W3, option A). It was
+        # a bare TypeError. The finders log each skip, through
+        # ReferenceFinder3._skips_missing_value().
+        #
+        if value is None:
+            return False
         return value < bound

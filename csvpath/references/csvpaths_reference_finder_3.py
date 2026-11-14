@@ -1240,7 +1240,10 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 v
                 for v in versions
                 if self._matches_field_predicate(
-                    self._version_field_value(entry=v, field_call=gate), gate.arg
+                    self._version_field_value(entry=v, field_call=gate),
+                    gate.arg,
+                    field=gate.name,
+                    record=v,
                 )
             ]
         return versions

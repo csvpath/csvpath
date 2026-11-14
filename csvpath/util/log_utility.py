@@ -20,6 +20,11 @@ class LogUtility:
     # them indexed by instance ID.
     #
     LOGGERS = {}
+    #
+    # (name, logger) of released loggers waiting to leave Manager.loggerDict.
+    # see release_logger() and _purge_released().
+    #
+    PENDING_RELEASE = []
 
     @classmethod
     def log_brief_trace(cls, *, logger=None, printer=None, depth=30) -> str:
@@ -191,14 +196,15 @@ class LogUtility:
                 )
             else:
                 #
-                # this use of the lock is stepping over a line. but we saw occasional instances
-                # of collection change while iterating. this should fix that. also added
-                # try to our setLevel call below, which was one trigger of the iterations.
-                # TODO: this part is sketchy. it probably won't break, but we should think
-                # on it more.
+                # not here. release_logger() runs from __del__, so from the GC,
+                # which can fire inside logging's own loops over loggerDict. on
+                # py3.12 Manager._clear_cache() (from setLevel) then raises
+                # "dictionary changed size during iteration" while holding
+                # logging._lock, and never releases it. every other thread that
+                # logs then blocks forever. instead, we queue the name and
+                # remove it at a safe point. see _purge_released().
                 #
-                with logging._lock:
-                    del Logger.manager.loggerDict[name]
+                cls.PENDING_RELEASE.append((name, loggerx))
             names.remove(name)
             #
             # the other concerning thing: there was a statement online that log handlers are
@@ -230,9 +236,33 @@ class LogUtility:
         return lg
 
     @classmethod
+    def _purge_released(cls) -> None:
+        """removes released loggers from loggerDict. if the GC releases more
+        loggers while we purge, they only append to the list, which is safe."""
+        #
+        # if this thread already holds logging's lock, we may be inside one of
+        # logging's own loops over loggerDict. e.g. the GC ran a finalizer that
+        # logs through a Config while Manager._clear_cache() iterates. a purge
+        # then would be the very bug we are avoiding. purge next time.
+        #
+        if logging._lock._is_owned():
+            return
+        with logging._lock:
+            while cls.PENDING_RELEASE:
+                name, released = cls.PENDING_RELEASE.pop()
+                #
+                # only if the entry is still the logger we released. a new
+                # component with a reused id on the same thread gets the same
+                # name, and may hold a logger under it by now.
+                #
+                if Logger.manager.loggerDict.get(name) is released:
+                    del Logger.manager.loggerDict[name]
+
+    @classmethod
     def config_logger(cls, *, config, name: str, level: str = None) -> Logger:
         if config is None:
             raise ValueError("Config cannot be None")
+        cls._purge_released()
         if name is None:
             name = "config"
         if level is None:
