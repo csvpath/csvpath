@@ -1997,6 +1997,31 @@ class TestStatementLevelRange:
         finder.set_variable("x", value=3)
         assert finder.query().results == []
 
+    def test_an_int_name_bound_matches_an_unnamed_statement(self, tmp_path):
+        # decision D12: ':name(1)' is the identity "1", an unnamed statement
+        # 1; statement 2 is named "header" (reviewer on #623: RESULTS had no
+        # positive case)
+        run_dir = tmp_path / "acme" / "customers" / "2025" / "2026-01-01_00-00-00"
+        _write_json(run_dir / "manifest.json", {"run_uuid": "run1-uuid"})
+        for idx, identity in enumerate(["0", "1", "header", "3", "4"]):
+            _write_json(
+                run_dir / identity / "manifest.json",
+                {"uuid": f"u-{identity}", "instance_index": idx},
+            )
+        _write_archive_manifest(tmp_path, "acme", [str(run_dir)])
+        reference = "$acme.results.customers/2025:first().:from(:name(1)):to(:name(3))"
+        assert _finder(reference, str(tmp_path)).query().uuids == [
+            "u-1",
+            "u-header",
+            "u-3",
+        ]
+        finder = _finder(
+            "$acme.results.customers/2025:first().:from(:name(@x))", str(tmp_path)
+        )
+        finder.set_variable("x", value=True)
+        with pytest.raises(ReferenceException3, match="bool"):
+            finder.query()
+
     def test_a_name_bound_with_a_regex_raises(self, one_run_five_statements):
         # the NRE allows a string, int or variable; a /regex/ is not an
         # identity

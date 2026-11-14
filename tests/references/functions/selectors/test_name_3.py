@@ -28,6 +28,12 @@ def test_an_int_arg_is_valid():
     Name3(arg=5).check_valid()
 
 
+def test_a_bool_arg_raises():
+    # bool is an int subclass; ARG_TYPES alone lets it through
+    with pytest.raises(ReferenceException3, match="boolean"):
+        Name3(arg=True).check_valid()
+
+
 def test_a_float_arg_raises():
     with pytest.raises(ReferenceException3):
         Name3(arg=5.5).check_valid()
