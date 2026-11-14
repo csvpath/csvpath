@@ -379,12 +379,11 @@ genuinely uncertain is marked below rather than guessed.
 - `test_results_reference_finder_3.py::test_errors_with_idchain_filters_to_matching_source`,
   `test_errors_with_idchain_no_match_returns_empty_list`,
   `test_errors_with_idchain_regex_filters_by_search_not_full_match` (the
-  three *filter* examples). **UPDATED: the two *gate* examples
-  (`:errors():idchain(...)` chained after) are now built** — the
-  predicate-argument GATE mechanism (`field_call`/`_matches_field_
-  predicate`) built 2026-10-17/18 generalizes to exactly this shape;
-  confirmed via `TestErrorsIdchainGate`/`TestErrorsCountGate` in
-  `test_results_reference_finder_3.py`.
+  three *filter* examples). The chained examples
+  (`:errors():idchain()`, `:errors():idchain("add[0]")`) read the
+  idchain values (5.19 as revised 2026-11-14; a whole-file gate until
+  then): `TestErrorsIdchainValues` in `test_results_reference_finder_3.py`.
+  Keeping an instance by its errors is `:having()` (6.39), not built yet.
 
 #### 5.20
 - Same as 5.19 — explanatory note for the same worked example.

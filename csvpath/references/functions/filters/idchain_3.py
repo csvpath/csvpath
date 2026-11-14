@@ -69,7 +69,10 @@ class Idchain3(Function3):
     RESOLVES_AS = Reference3.METADATA_FIELD
     DATATYPES = (Reference3.RESULTS,)
     ARG_TYPES = (str, Regex3, PredicateFunction3)
-    ARG_REQUIRED = True
+    # optional since 2026-11-14: chained beside ':errors()' with no
+    # argument it reads each error's idchain (compendium 5.19). Nested in
+    # ':errors()' it narrows the errors, which needs one (Errors3).
+    ARG_REQUIRED = False
 
     def __init__(self, *, arg=None) -> None:
         super().__init__(arg=arg)
