@@ -3474,10 +3474,11 @@ class TestRangeBeforeGate:
         ).query()
         assert results.uuids == ["w2-i0", "w2-i2"]
 
-    def test_having_still_comes_before_the_range(self, tmp_path):
-        # :having() is not moved: 6.39 calls it a context setter, and
-        # whether 6.28 covers it is an open question. Instance "x" is in
-        # r2 and r3 only, so the first run having it is r2.
+    def test_the_range_comes_before_having(self, tmp_path):
+        # :having() is a filter, and a range comes before a filter
+        # (compendium 6.28, 6.39; David, 2026-11-14). Instance "x" is in r2
+        # and r3 only, so the first run (r0) does not have it. Having first
+        # gave r2 until then.
         run_homes = [
             _make_run(
                 tmp_path / "acme",
@@ -3488,11 +3489,15 @@ class TestRangeBeforeGate:
             for i in range(4)
         ]
         _write_archive_manifest(tmp_path, "acme", run_homes)
-        for reference in (
-            "$acme.results.:having(\"x\"):from(0):to(0)",
-            "$*.results.:flatten():having(\"x\"):from(0):to(0)",
-        ):
-            assert _finder(reference, str(tmp_path)).query().uuids == ["r2"]
+        for root in ("$acme.results.", "$*.results.:flatten()"):
+            for chain, expected in (
+                (':having("x"):from(0):to(0)', []),
+                (':having("x"):from(1):to(2)', ["r2"]),
+                (':having("x"):from(-1)', ["r3"]),
+                (':from(0):to(2):having("x")', ["r2"]),
+            ):
+                reference = root + chain
+                assert _finder(reference, str(tmp_path)).query().uuids == expected, reference
 
 
 class TestUuidGate:

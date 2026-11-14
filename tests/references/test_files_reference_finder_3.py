@@ -1,3 +1,4 @@
+import json
 import os
 
 import pytest
@@ -710,11 +711,64 @@ class TestGlobalArrivalsLedgerOrdinalIndexing:
     ):
         assert self._regex_data(reference) == expected
 
-    def test_a_bare_manifest_under_a_filtered_root_still_raises(self):
-        # what a bare ':manifest()' returns under ':regex()' waits for
-        # David (decision log W1); the pointer forms above do not
-        with pytest.raises(ReferenceException3):
-            self._regex_data("$:regex(/^al/).files.:manifest()")
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # David, 2026-11-14 (W1, option B): the ledger set filtered by
+            # name is one result, the ledger's path with uuid None (5.7),
+            # resolving to the matching ledger records as stored -- the
+            # deleted alfa's included (6.13b(i)) -- as RESULTS gives. It
+            # raised at query.
+            ("$:regex(/^al/).files.:manifest()", ["L-aaa", "L-bbb", "L-ccc", "L-alfa"]),
+            ('$:choice("alfa|beta").files.:manifest()', ["L-ddd", "L-eee", "L-alfa"]),
+            ('$:choice("alpha").files.:manifest()', ["L-aaa", "L-bbb", "L-ccc"]),
+            ("$:regex(/^zz/).files.:manifest()", []),
+        ],
+    )
+    def test_a_bare_manifest_under_a_filtered_root_is_the_filtered_set(
+        self, reference, expected
+    ):
+        def finder():
+            return _finder(
+                reference,
+                STAR_ALPHA_HOME,
+                STAR_ALPHA_MANIFEST,
+                by_name=STAR_BY_NAME,
+                ledger=self._regex_ledger(),
+                inputs_files_path="inputs/named_files",
+            )
+
+        results = finder().query()
+        assert results.uuids == [None]
+        assert results.files == ["inputs/named_files/manifest.json"]
+        (data,) = [r.data for r in finder().resolve().results]
+        assert [e["fingerprint"] for e in data] == expected
+
+    def test_a_filtered_bare_manifest_is_the_ledger_records_as_stored(
+        self, tmp_path
+    ):
+        # decision D13: the ledger's records as stored, filtered by name --
+        # json.loads of what '$*.files.:manifest()' resolves to (that form
+        # gives the file's raw bytes; reviewer on #616)
+        ledger = self._regex_ledger()
+        (tmp_path / "manifest.json").write_text(json.dumps(ledger))
+
+        def finder(reference):
+            return _finder(
+                reference,
+                STAR_ALPHA_HOME,
+                STAR_ALPHA_MANIFEST,
+                by_name=STAR_BY_NAME,
+                ledger=ledger,
+                inputs_files_path=str(tmp_path),
+            )
+
+        (star,) = [r.data for r in finder("$*.files.:manifest()").resolve().results]
+        (filtered,) = [
+            r.data for r in finder("$:regex(/.*/).files.:manifest()").resolve().results
+        ]
+        assert isinstance(star, bytes)
+        assert filtered == json.loads(star)
 
     def test_a_literal_root_reads_its_own_manifest_in_both_orders(self):
         # unchanged: '$alpha' reads alpha's own manifest.json
