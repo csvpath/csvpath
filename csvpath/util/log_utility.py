@@ -259,6 +259,21 @@ class LogUtility:
                     del Logger.manager.loggerDict[name]
 
     @classmethod
+    def _lock_count(cls) -> int:
+        """how many times this thread holds logging._lock. RLock's
+        _recursion_count() is private, so fall back to held or not."""
+        counter = getattr(logging._lock, "_recursion_count", None)
+        if counter is not None:
+            return counter()
+        return 1 if logging._lock._is_owned() else 0
+
+    @classmethod
+    def _release_lock_to(cls, count: int) -> None:
+        """releases logging._lock until this thread holds it count times"""
+        while cls._lock_count() > count:
+            logging._lock.release()
+
+    @classmethod
     def config_logger(cls, *, config, name: str, level: str = None) -> Logger:
         if config is None:
             raise ValueError("Config cannot be None")
@@ -317,15 +332,13 @@ class LogUtility:
         # this used to swallow every error, which hid #612's leaked lock. fail
         # fast instead. on py3.12 an error inside Manager._clear_cache() leaves
         # logging._lock held, which would block every other thread that logs,
-        # so if this call took the lock and kept it, give it back first.
+        # so give back whatever this call took and kept, then raise.
         #
-        held_before = logging._lock._is_owned()
+        count_before = cls._lock_count()
         try:
             logger.setLevel(level)
         except Exception as e:
-            if not held_before:
-                while logging._lock._is_owned():
-                    logging._lock.release()
+            cls._release_lock_to(count_before)
             raise LogException(f"Cannot set level {level} on logger {name}") from e
         #
         # there will be 0, 1, or 2 handlers. we clear them and start fresh.

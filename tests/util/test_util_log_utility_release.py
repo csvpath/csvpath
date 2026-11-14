@@ -183,6 +183,36 @@ class TestUtilLogUtilitySetLevel(unittest.TestCase):
             while logging._lock._is_owned():
                 logging._lock.release()
 
+    @unittest.skipUnless(
+        hasattr(logging._lock, "_recursion_count"),
+        "needs RLock._recursion_count (py3.12+) to count the caller's hold",
+    )
+    def test_set_level_error_when_lock_already_held_releases_only_its_own(self):
+        #
+        # if the caller already holds the lock, give back only what this call
+        # took. once the caller releases its own hold, another thread must be
+        # able to take the lock.
+        #
+        def leaks_then_fails(self, level):
+            logging._lock.acquire()
+            raise RuntimeError("dictionary changed size during iteration")
+
+        config = CsvPath().config
+        try:
+            logging._lock.acquire()
+            with unittest.mock.patch.object(Logger, "setLevel", leaks_then_fails):
+                with self.assertRaises(lout_mod.LogException):
+                    lout.config_logger(config=config, name=f"{PREFIX}.setlevel_held")
+            assert lout._lock_count() == 1
+            logging._lock.release()
+            t = threading.Thread(target=logging.getLogger, args=("x.z",), daemon=True)
+            t.start()
+            t.join(5)
+            assert not t.is_alive()
+        finally:
+            while logging._lock._is_owned():
+                logging._lock.release()
+
     def test_set_level_still_works(self):
         config = CsvPath().config
         lg = lout.config_logger(config=config, name=f"{PREFIX}.setlevel_ok", level="warn")
