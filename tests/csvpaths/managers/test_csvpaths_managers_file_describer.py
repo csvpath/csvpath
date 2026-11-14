@@ -2,13 +2,29 @@ import unittest
 import pytest
 import shutil
 import os
+import threading
+import time
 from csvpath import CsvPaths
 from csvpath.managers.files.file_describer import NamedFileDescriber
+from csvpath.managers.files.files_activation_listener import FileActivationListener
 from csvpath.util.nos import Nos
 from tests.csvpaths.builder import Builder
 
 FILE = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test.csv"
 FILE2 = f"tests{os.sep}csvpaths{os.sep}test_resources{os.sep}test2.csv"
+
+
+def _wait_for_activations(*, timeout: float = 60) -> None:
+    """Join the FileActivationListener threads that registering a file
+    starts. Each one runs any on-arrival activation on its own thread, so
+    the test must not read results until it is done. A fixed sleep was
+    too short under load. Polling results is no good either: a read while
+    the run writes its manifest can corrupt it (#609)."""
+    deadline = time.monotonic() + timeout
+    for t in threading.enumerate():
+        if isinstance(t, FileActivationListener):
+            t.join(max(0, deadline - time.monotonic()))
+            assert not t.is_alive(), f"activation still running after {timeout}s"
 
 
 class TestCsvPathsManagersFileDescriber(unittest.TestCase):
@@ -132,12 +148,11 @@ class TestCsvPathsManagersFileDescriber(unittest.TestCase):
                 j[describer.ON_ARRIVAL] = a
             a[describer.NAMED_PATHS_GROUP] = np
             #
-            # seems that we get past the storing of the json before the add file listeners complete
-            # when that happens we do a run in a way that is unhelpful.
+            # the add file listeners must complete before we store the json.
+            # otherwise the first registration's listener can see the
+            # activation and do a run in a way that is unhelpful.
             #
-            import time
-
-            time.sleep(0.5)
+            _wait_for_activations()
             #
             #
             #
@@ -153,12 +168,10 @@ class TestCsvPathsManagersFileDescriber(unittest.TestCase):
             #
             paths.file_manager.add_named_file(name=nf, path=FILE2)
             #
-            # check for results. we're happening in a thread, so we may want to give
-            # a brief pause
+            # the activation runs in a thread. wait for it before reading
+            # results.
             #
-            import time
-
-            time.sleep(1.5)
+            _wait_for_activations()
             results = paths.results_manager.get_named_results(np)
             assert results
             assert len(results) == 1
