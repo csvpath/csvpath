@@ -264,19 +264,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # know those high risk files by name" -- confirmed just as
             # real a need as the '*' form below, built together. Only
             # the ledger entries of this named-file's live versions are
-            # candidates (2026-11-01, as for '*' above).
-            ledger = self._live_ledger_entries(names=[root_major])
-            by_name = [e for e in ledger if e.get("named_file_name") == root_major]
-            matched = self._filter_ledger_by_gate_chain(by_name, status_chain)
-            if reference.name_three is not None:
-                return self._pointer_into_status_matches(reference, matched)
-            return ReferenceResults3(
-                results=[
-                    ReferenceResult3(
-                        path=self._ledger_entry_result_path(e), uuid=e.get("uuid")
-                    )
-                    for e in matched
-                ]
+            # candidates (2026-11-01, as for '*' above). Membership follows
+            # the named-file's own manifest, not the ledger's
+            # named_file_name: 6.13b(v), "the named-entity manifest wins
+            # for details", as D4 takes the name from the manifest that
+            # holds the uuid (spec pass, 2026-11-14). It filtered on the
+            # ledger's name too until then (reviewer on #588).
+            return self._query_status_gate(
+                reference=reference, status_chain=status_chain, names=[root_major]
             )
 
         if self._is_bare_pointer_reference(
@@ -2148,6 +2143,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
         matched = self._filter_ledger_by_gate_chain(ledger, status_chain)
         if reference.name_three is not None:
             return self._pointer_into_status_matches(reference, matched)
+        #
+        # the gate selects versions (C1, 2026-11-01), and resolve reads a
+        # version's bytes (David, 2026-11-14: only ':manifest()' reaches
+        # the ledger set, 6.13b(iv)). Only one file's content can be read
+        # at a time (compendium 5.3), so several is a Rule 1 read.
+        #
         return ReferenceResults3(
             results=[
                 ReferenceResult3(
@@ -2155,7 +2156,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     uuid=e.get("uuid"),
                 )
                 for e in matched
-            ]
+            ],
+            ambiguous_content_read=len(matched) > 1,
         )
 
     def _query_ledger_pointer(
@@ -2715,6 +2717,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
         log_call = self._bare_log_call(reference)
         if log_call is not None:
             return self._read_log_file(result.path, log_call.arg)
+        if (
+            reference.name_three is None
+            and self._bare_status_gate_chain(reference.name_one) is not None
+        ):
+            # a bare ':status()'/':lifecycle()' gate with no ':manifest()'
+            # selects live versions (C1, 2026-11-01), so it resolves to the
+            # version's bytes, as a version pointer does (David,
+            # 2026-11-14). It raised "resolve_kind='metadata_field'".
+            with DataFileReader(path=result.path, mode="rb") as reader:
+                return reader.source.read()
         manifest_chain = None
         definition_calls = None
         if reference.name_three is None:
