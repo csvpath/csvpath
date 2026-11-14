@@ -628,7 +628,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
             candidates = [
                 c
                 for c in candidates
-                if self._matches_field_predicate(c.get(key), field_call.arg)
+                if self._matches_field_predicate(
+                    c.get(key), field_call.arg, field=field_call.name, record=c
+                )
             ]
 
         name_three = reference.name_three
@@ -1339,7 +1341,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
             candidates = [
                 c
                 for c in candidates
-                if self._matches_field_predicate(c.get(key), field_call.arg)
+                if self._matches_field_predicate(
+                    c.get(key), field_call.arg, field=field_call.name, record=c
+                )
             ]
 
         name_three = reference.name_three
@@ -2003,7 +2007,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     Reference3.FILES
                 ) or field_call.LEDGER_KEY.get(Reference3.FILES)
                 if not self._matches_field_predicate(
-                    entry.get(key), field_call.arg
+                    entry.get(key), field_call.arg, field=field_call.name, record=entry
                 ):
                     matched = False
                     break
@@ -2652,6 +2656,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     reference=reference, function_cls=function_cls, entry=e
                 ),
                 built.arg,
+                field=built.name,
+                record=e,
             )
         ]
 
@@ -2698,6 +2704,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
                         reference=reference, function_cls=function_cls, entry=c
                     ),
                     gate.arg,
+                    field=gate.name,
+                    record=c,
                 )
             ]
         return candidates

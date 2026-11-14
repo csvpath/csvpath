@@ -354,6 +354,7 @@ class ReferenceFunctionFactory:
         if function_cls is None:
             raise ReferenceException3(f"Unknown reference function: {call.name}")
         instance = function_cls(arg=arg)
+        instance.written_name = call.name
         instance.check_valid()
         return instance
 

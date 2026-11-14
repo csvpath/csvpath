@@ -7,6 +7,8 @@ from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
 from .functions.function_3 import Function3
+from .functions.filters.idchain_3 import Idchain3
+from .functions.filters.message_3 import Message3
 from .functions.filters.predicate_function_3 import PredicateFunction3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .functions.selectors.after_3 import After3
@@ -1021,6 +1023,10 @@ class ReferenceFinder3(ABC):
         config = self._definition_config(name)
         entry = config.model_dump(exclude_none=True)
         value = self._extract_field_value(entry, key_path)
+        if self._skips_missing_value(
+            value=value, predicate=field_call.arg, field=field_call.name, record=name
+        ):
+            return False
         return field_call.arg.matches(value)
 
     def _query_definition_chain(
@@ -1513,7 +1519,7 @@ class ReferenceFinder3(ABC):
                 "takes none."
             )
 
-    def _matches_field_predicate(self, value, arg) -> bool:
+    def _matches_field_predicate(self, value, arg, *, field: str, record) -> bool:
         """generic test for a field-accessor's own predicate/exact-
         match argument -- added 2026-10-18 for ResultsReferenceFinder3's
         own ':error_count()' GATE (e.g. ":error_count(:above(3))"/
@@ -1526,24 +1532,67 @@ class ReferenceFinder3(ABC):
         str) is an exact-match test instead -- no dedicated predicate
         class needed for ":error_count(0)"/":type(\"csv\")".
 
-        A comparison (':above()'/':below()' and their aliases) never
-        matches a missing value, and the first such skip logs a
-        warning, once per finder (W3, option A, 2026-11-14)."""
-        if isinstance(arg, (After3, Before3)) and value is None:
-            key = ("missing value", repr(arg))
-            if key not in self._warned:
-                self._warned.add(key)
-                self.csvpaths.logger.warning(
-                    "A record has no value for the field compared by "
-                    ":%s(); it does not match. Absence implies nothing "
-                    "(compendium 6.13b(vi)); :does_not_have_value() "
-                    "finds such records.",
-                    arg.NAME,
-                )
+        `field` is the field function's name and `record` the record
+        whose value this is, for the missing-value warning (see
+        _skips_missing_value())."""
+        if self._skips_missing_value(
+            value=value, predicate=arg, field=field, record=record
+        ):
             return False
         if isinstance(arg, PredicateFunction3):
             return arg.matches(value)
         return value == arg
+
+    def _skips_missing_value(self, *, value, predicate, field: str, record) -> bool:
+        """true if `predicate` is a comparison (':above()'/':below()'
+        and their aliases, directly or inside ':idchain()'/':message()')
+        and `value` is missing. A missing value is neither above nor
+        below a bound, so the record does not match (David, 2026-11-14,
+        decision W3, option A). Each skip logs a warning naming the
+        field and the record, once per field and record per finder:
+        query() and resolve() read the same records."""
+        if not field:
+            raise ValueError("field cannot be None or empty")
+        comparison = predicate
+        if isinstance(comparison, (Idchain3, Message3)):
+            comparison = comparison.arg
+        if value is not None or not isinstance(comparison, (After3, Before3)):
+            return False
+        label = self._record_label(record)
+        key = ("missing value", field, label)
+        if key not in self._warned:
+            self._warned.add(key)
+            self.csvpaths.logger.warning(
+                "%s has no value for :%s(), so :%s() does not match it: "
+                "a missing value is neither above nor below a bound "
+                "(decision W3, 2026-11-14). :does_not_have_value() finds "
+                "such records.",
+                label,
+                field,
+                comparison.written_name,
+            )
+        return True
+
+    @staticmethod
+    def _record_label(record) -> str:
+        """a short name for a record in a message: a path or name as
+        given, or a manifest entry's first identifying field."""
+        if record is None:
+            raise ValueError("record cannot be None")
+        if isinstance(record, dict):
+            for key in (
+                "uuid",
+                "run_uuid",
+                "instance_uuid",
+                "identity",
+                "named_file_name",
+                "named_paths_name",
+                "run_home",
+            ):
+                if record.get(key):
+                    return f"The record with {key} {record[key]}"
+            return "A record"
+        return str(record)
 
     def _resolve_value(self, value):
         """returns `value` unchanged if it is a plain literal (str, int,

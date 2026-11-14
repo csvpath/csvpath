@@ -111,7 +111,8 @@ class After3(PredicateFunction3):
         # error_count yet) is not above or below anything: absence
         # implies nothing, as for :lifecycle()/:status() (compendium
         # 6.13b(vi)/(vii)). David, 2026-11-14 (W3, option A). It was
-        # a bare TypeError. The finder logs the skip.
+        # a bare TypeError. The finders log each skip, through
+        # ReferenceFinder3._skips_missing_value().
         #
         if value is None:
             return False

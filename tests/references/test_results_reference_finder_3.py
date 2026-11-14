@@ -3066,13 +3066,13 @@ class TestMatchesFieldPredicate:
         from csvpath.references.functions.selectors.after_3 import After3
 
         finder = _finder("$acme.results.:last()", str(tmp_path))
-        assert finder._matches_field_predicate(5, After3(arg=3))
-        assert not finder._matches_field_predicate(2, After3(arg=3))
+        assert finder._matches_field_predicate(5, After3(arg=3), field="error_count", record="run-1")
+        assert not finder._matches_field_predicate(2, After3(arg=3), field="error_count", record="run-1")
 
     def test_bare_value_is_an_exact_match_test(self, tmp_path):
         finder = _finder("$acme.results.:last()", str(tmp_path))
-        assert finder._matches_field_predicate(0, 0)
-        assert not finder._matches_field_predicate(1, 0)
+        assert finder._matches_field_predicate(0, 0, field="error_count", record="run-1")
+        assert not finder._matches_field_predicate(1, 0, field="error_count", record="run-1")
 
     def test_a_comparison_never_matches_a_missing_value(self, tmp_path):
         # W3, option A (David, 2026-11-14): absence implies nothing, as
@@ -3082,11 +3082,14 @@ class TestMatchesFieldPredicate:
         from csvpath.references.functions.selectors.before_3 import Before3
 
         finder = _finder("$acme.results.:last()", str(tmp_path))
-        assert not finder._matches_field_predicate(None, After3(arg=0))
-        assert not finder._matches_field_predicate(None, Before3(arg=1))
-        assert len(finder.csvpaths.logger.warnings) == 2
-        assert ":after()" in finder.csvpaths.logger.warnings[0]
-        assert ":before()" in finder.csvpaths.logger.warnings[1]
+        assert not finder._matches_field_predicate(None, After3(arg=0), field="error_count", record="run-1")
+        assert not finder._matches_field_predicate(None, Before3(arg=1), field="error_count", record="run-1")
+        # one warning per field and record: the second comparison on the
+        # same record and field is the same skip
+        assert len(finder.csvpaths.logger.warnings) == 1
+        warning = finder.csvpaths.logger.warnings[0]
+        assert "run-1" in warning and ":error_count()" in warning
+        assert ":after()" in warning
 
     def test_a_missing_value_warns_once_per_predicate(self, tmp_path):
         from csvpath.references.functions.selectors.after_3 import After3
@@ -3094,14 +3097,14 @@ class TestMatchesFieldPredicate:
         finder = _finder("$acme.results.:last()", str(tmp_path))
         bound = After3(arg=0)
         for _ in range(3):
-            assert not finder._matches_field_predicate(None, bound)
+            assert not finder._matches_field_predicate(None, bound, field="error_count", record="run-1")
         assert len(finder.csvpaths.logger.warnings) == 1
 
     def test_a_present_value_does_not_warn(self, tmp_path):
         from csvpath.references.functions.selectors.after_3 import After3
 
         finder = _finder("$acme.results.:last()", str(tmp_path))
-        assert not finder._matches_field_predicate(0, After3(arg=0))
+        assert not finder._matches_field_predicate(0, After3(arg=0), field="error_count", record="run-1")
         assert finder.csvpaths.logger.warnings == []
 
 
@@ -3191,8 +3194,14 @@ class TestErrorCountPredicateGate:
         # W3, option A (David, 2026-11-14). It raised TypeError.
         finder = _finder(reference, runs_with_one_in_progress)
         assert set(finder.query().uuids) == expected
-        assert len(finder.csvpaths.logger.warnings) == 1
-        assert "does_not_have_value" in finder.csvpaths.logger.warnings[0]
+        # one warning, naming the field, the run and the predicate as written
+        warnings = finder.csvpaths.logger.warnings
+        assert len(warnings) == 1
+        assert ":error_count()" in warnings[0]
+        assert "2026-01-04_00-00-00" in warnings[0]
+        written = reference.split("(:")[1].split("(")[0]
+        assert f":{written}()" in warnings[0]
+        assert "does_not_have_value" in warnings[0]
 
     def test_star_root_exact_int_gate(self, three_runs):
         # "two ways of selecting runs without errors" -- declared
@@ -3917,6 +3926,55 @@ class TestWellKnownFileAccessors:
             acme_archive,
         ).resolve()
         assert results.results[0].data == [errors[0]]
+
+    @pytest.mark.parametrize(
+        "accessor, errors, kept",
+        [
+            # W3 (David, 2026-11-14): a missing value is neither above nor
+            # below a bound. These raised TypeError, then (first draft of
+            # #611) dropped the entry with no warning.
+            (
+                ':errors(:idchain(:above("a")))',
+                [{"source": "b"}, {"message": "no source"}],
+                [{"source": "b"}],
+            ),
+            (
+                ':errors(:message(:gt("a")))',
+                [{"message": "b"}, {"message": None}],
+                [{"message": "b"}],
+            ),
+        ],
+    )
+    def test_errors_comparison_filter_skips_a_missing_value_and_warns(
+        self, acme_archive, instance_dir, accessor, errors, kept
+    ):
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump(errors, f)
+        finder = _finder(
+            f"$acme.results.customers/2025:first().company_names{accessor}",
+            acme_archive,
+        )
+        assert finder.resolve().results[0].data == kept
+        warnings = finder.csvpaths.logger.warnings
+        assert len(warnings) == 1
+        assert "errors.json" in warnings[0]
+        written = accessor.split("(:")[2].split("(")[0]
+        assert f":{written}()" in warnings[0]
+
+    def test_errors_comparison_gate_skips_a_missing_source_and_warns(
+        self, acme_archive, instance_dir
+    ):
+        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
+            json.dump([{"message": "no source"}], f)
+        finder = _finder(
+            "$acme.results.customers/2025:first().company_names"
+            ':errors():idchain(:above("a"))',
+            acme_archive,
+        )
+        assert finder.resolve().results[0].data is None
+        warnings = finder.csvpaths.logger.warnings
+        assert len(warnings) == 1
+        assert ":idchain()" in warnings[0] and ":above()" in warnings[0]
 
     def test_errors_with_idchain_no_match_returns_empty_list(
         self, acme_archive, instance_dir
