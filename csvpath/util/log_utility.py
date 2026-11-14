@@ -314,13 +314,19 @@ class LogUtility:
         log_file_handler.setFormatter(formatter)
         logger = logging.getLogger(name)
         #
-        # try shouldn't be needed, but we do some things with the logger cache that
-        # can be a problem if we didn't do them right.
+        # this used to swallow every error, which hid #612's leaked lock. fail
+        # fast instead. on py3.12 an error inside Manager._clear_cache() leaves
+        # logging._lock held, which would block every other thread that logs,
+        # so if this call took the lock and kept it, give it back first.
         #
+        held_before = logging._lock._is_owned()
         try:
             logger.setLevel(level)
-        except Exception:
-            ...
+        except Exception as e:
+            if not held_before:
+                while logging._lock._is_owned():
+                    logging._lock.release()
+            raise LogException(f"Cannot set level {level} on logger {name}") from e
         #
         # there will be 0, 1, or 2 handlers. we clear them and start fresh.
         #
