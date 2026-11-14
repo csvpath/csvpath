@@ -7822,21 +7822,45 @@ class TestMixedIndexAndDateRange:
         ]
 
     @pytest.mark.parametrize(
-        "reference",
+        "reference, expected",
         [
-            # where the two readings of the index differ (6.29, 6.30:
-            # "an index counts from the anchor"), the mix raises until
-            # David settles it (decision log W4): "3 runs from Jan 9"
-            # would be [] counted from the start, three runs counted
-            # from the date
-            '$alpha.results.*:from(:date("2026-01-09")):to(2)',
-            '$alpha.results.*:from(-3):to(:date("2026-01-10_08-00-00"))',
+            # David, 2026-11-14 (decision W4): an index counts from the date
+            # anchor (6.30), so "3 runs from Jan 9" and "the last 3 before
+            # 8am". Counted from the start these would be [] and one run.
+            # They raised "not settled".
+            (
+                '$alpha.results.*:from(:date("2026-01-09")):to(2)',
+                [
+                    "run-2026-01-10_07-00-00",
+                    "run-2026-01-10_09-00-00",
+                    "run-2026-01-12_00-00-00",
+                ],
+            ),
+            (
+                '$alpha.results.*:from(-3):to(:date("2026-01-10_08-00-00"))',
+                [
+                    "run-2026-01-05_00-00-00",
+                    "run-2026-01-08_00-00-00",
+                    "run-2026-01-10_07-00-00",
+                ],
+            ),
+            (
+                '$alpha.results.*:from(:date("2026-01-05")):to(1)',
+                ["run-2026-01-05_00-00-00", "run-2026-01-08_00-00-00"],
+            ),
         ],
     )
-    def test_an_unsettled_mix_raises(self, runs, reference):
-        with pytest.raises(ReferenceException3) as error:
-            _finder(reference, runs).query()
-        assert "not settled" in str(error.value)
+    def test_an_index_counts_from_the_date_anchor(self, runs, reference, expected):
+        assert _finder(reference, runs).query().uuids == expected
+
+    def test_an_index_range_and_a_date_after_it_is_not_one_range(self, runs):
+        # David's probe, 2026-11-14: ':from(1):to(5):after(X)' has two
+        # lower bounds, which 6.28c makes illegal; "positions 1-5 that are
+        # also after X" is two windows, written with INTERSECT
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$alpha.results.*:from(1):to(5):after(:date("2026-01-01"))', runs
+            ).query()
 
 
 class TestInstanceRangeIdentities:

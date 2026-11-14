@@ -529,14 +529,17 @@ class ReferenceFinder3(ABC):
         """a range whose bounds may mix index-mode and date-mode
         (compendium 6.32; NRE: '$alpha.results.*:from(2):to(:date(...))'
         is "the 3rd ... through the last result that happened before" the
-        date). An index bound is a position in the ordered list, a date
-        bound a filter on each entry's time, so the range is both: the
-        index bound slices, then the date bound filters. Only a
-        non-negative index lower bound with a date upper bound is mixed
-        (the NRE's shape): there an index counted from the start and one
-        counted from the date anchor agree. The other mixes raise until
-        David settles the anchor (decision log W4). With one mode only, it
-        is that mode's own range. `date_filter` is the datatype's date
+        date). An index counts from the anchor (6.30; David, 2026-11-14,
+        decision W4): the date bound filters first, then the index bound
+        counts within what is left. ':from(:date("2026-01-09")):to(2)' is
+        the first three from the 9th; ':from(-3):to(:date(X))' the last
+        three through X. For the NRE's shape (a non-negative index lower
+        bound with a date upper bound) this is the same answer as
+        counting from the start, which is all #591 supported; the other
+        mixes raised "not settled" until then. Index positions that must
+        ALSO fall after a date are two windows, not one range: a reference
+        expression, e.g. ':from(1):to(5)' INTERSECT ':after(:date(X))'.
+        With one mode only, it is that mode's own range. `date_filter` is the datatype's date
         filter, called as date_filter(entries, lower, upper). Mixing
         raised until 2026-11-12 (David, spec review item 3: "the specs are
         consistent and not illogical, therefore the code is wrong")."""
@@ -554,30 +557,11 @@ class ReferenceFinder3(ABC):
         index_upper = None if is_date(upper_call) else upper_call
         date_lower = lower_call if is_date(lower_call) else None
         date_upper = upper_call if is_date(upper_call) else None
-        mixed = (index_lower is not None or index_upper is not None) and (
-            date_lower is not None or date_upper is not None
-        )
-        if mixed and not (
-            index_lower is not None
-            and isinstance(cls._range_bound(index_lower), int)
-            and cls._range_bound(index_lower) >= 0
-        ):
-            # only a non-negative index lower bound with a date upper
-            # bound is supported: there an index counted from the start of
-            # the list and one counted from the date anchor (compendium
-            # 6.29, 6.30) give the same answer. Otherwise they differ, and
-            # which one is meant waits for David (decision log W4).
-            raise ReferenceException3(
-                "Mixing a date lower bound with an index upper bound, or a "
-                "negative index with a date bound, is not supported yet: "
-                "whether the index counts from the start of the list or "
-                "from the date anchor (compendium 6.29, 6.30) is not "
-                "settled."
-            )
-        if index_lower is not None or index_upper is not None:
-            entries = cls._apply_range(entries, index_lower, index_upper)
+        # the date anchor first, then the index counts from it (W4)
         if date_lower is not None or date_upper is not None:
             entries = date_filter(entries, date_lower, date_upper)
+        if index_lower is not None or index_upper is not None:
+            entries = cls._apply_range(entries, index_lower, index_upper)
         return entries
 
     @classmethod

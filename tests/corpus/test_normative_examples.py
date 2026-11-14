@@ -437,3 +437,24 @@ class TestStarTypeGate:
         assert r.files[0].startswith(
             "tests/corpus/data/inputs/named_files/energy_readings/Book1.xlsx/"
         )
+
+
+class TestIndexWindowIntersectDateWindow:
+    """David, 2026-11-14 (decision W4): "positions 1-5 that are also after a
+    date" is two windows, not one range (':from()' and ':after()' together
+    are illegal, 6.28c), so it is written as a reference expression -- "it's
+    why we have them". Verified on the corpus orders data, food.csv's five
+    versions (Jul 29, Aug 12, Aug 27, Sep 11, Oct 9)."""
+
+    def test_intersect_of_an_index_range_and_a_date_window(self, csvpaths):
+        from csvpath.references.reference_expression_3 import ReferenceExpression3
+
+        name = '$orders.files.orders/:name("food.csv")'
+        results = ReferenceExpression3(
+            left=f"{name}.:from(1):to(3):uuid()",
+            op="intersect",
+            right=f'{name}.:after(:date("2026-08-20")):uuid()',
+            csvpaths=csvpaths,
+        ).resolve()
+        # positions 1-3 are Aug 12, Aug 27, Sep 11; after Aug 20 leaves two
+        assert [r.data[:8] for r in results.results] == ["2e8d9724", "39e5df07"]
