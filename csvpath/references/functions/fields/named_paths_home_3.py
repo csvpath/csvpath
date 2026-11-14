@@ -17,10 +17,11 @@ class NamedPathsHome3(Function3):
     # NamedFileHome3. Added 2026-09-22, closing the deferred-work bucket
     # list gap of the same name.
     #
-    # Only legal with a literal root_major -- '*'/:regex() traversal is
-    # not supported (CsvpathsReferenceFinder3._compute_field() raises
-    # clearly rather than guessing what "the home directory" would mean
-    # across several groups at once).
+    # Under '*', ':regex()' or ':choice()' each record has one home: a
+    # live version's group's, or the ledger's own named_paths_home for a
+    # ledger-only record (David, 2026-11-14, decision W7, option B; see
+    # CsvpathsReferenceFinder3._record_home()). It was literal-root only
+    # until then.
     #
     NAME = "named_paths_home"
     SUMMARY = "The named-paths group's own root directory, shared by every version loaded under this name."

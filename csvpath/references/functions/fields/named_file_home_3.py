@@ -12,7 +12,10 @@ class NamedFileHome3(Function3):
     # already computes to even find that manifest in the first place
     # (file_manager.named_file_home(name)) -- so it is computed directly
     # rather than read. Settled 2026-08-09, see
-    # manifest_field_functions_proposal.md.
+    # manifest_field_functions_proposal.md. Under a traversal root a
+    # deleted named-file's ledger record gives the ledger's own name_home
+    # (David, 2026-11-14, decision W7, option B; see
+    # FilesReferenceFinder3._record_home()).
     #
     NAME = "named_file_home"
     SUMMARY = "The named-file's own root directory, shared by every version registered under this name."

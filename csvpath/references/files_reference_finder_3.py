@@ -1231,24 +1231,13 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # not organized by name the way per-name enumeration is
             # elsewhere in this method.
             manifest_field_call = self._bare_manifest_field_call(name_one)
-            if (
-                ReferenceFunctionFactory.get_registered_class(
-                    manifest_field_call.name
-                ).SOURCE
-                == "computed"
-            ):
-                # e.g. ':named_file_home()': computed from the root, which is
-                # not a name here. As CSVPATHS does for ':named_paths_home()'
-                # (RMF section 4: only with a literal root_major). It raised
-                # TypeError before #593, then read each live record's home;
-                # reading the ledger's own name_home is decision log W7
-                # (2026-11-12).
-                raise ReferenceException3(
-                    f"FilesReferenceFinder3 does not support "
-                    f":{manifest_field_call.name}() combined with '*'/:regex()/"
-                    ":choice() traversal -- root_major must be a literal "
-                    "named-file name."
-                )
+            #
+            # a computed field, ':named_file_home()', is each record's home:
+            # the live owner's, or the ledger's own name_home for a deleted
+            # named-file (David, 2026-11-14, decision W7, option B;
+            # _record_home()). It raised here, as RMF section 4 said
+            # ("only with a literal root_major"), a spec-doc bug.
+            #
             if reference.name_three is not None:
                 # settled, not a gap -- the '*' traversal twin of the
                 # literal-root restriction query() raises for the same
@@ -2494,10 +2483,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 + "."
             )
         for call, function_cls in fields:
+            #
+            # ':named_file_home()' is computed, not read from manifest.json,
+            # but every record has one (W7, option B, 2026-11-14), so it
+            # rides in a chain too: ':manifest():last():named_file_home()'.
+            #
             if (
                 function_cls.SOURCE != "manifest"
-                or Reference3.FILES not in function_cls.DATATYPES
-            ):
+                and function_cls.NAME != "named_file_home"
+            ) or Reference3.FILES not in function_cls.DATATYPES:
                 raise ReferenceException3(
                     f"':{call.name}()' does not read a named-file's "
                     "manifest.json, so it is not supported in a "
@@ -2627,6 +2621,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
         entry for a literal root. Shared by resolve() and by the gate in
         query(), so a gate always matches on the value resolve() would
         show."""
+        if function_cls.NAME == "named_file_home":
+            return self._record_home(
+                reference=reference, uuid=None if entry is None else entry.get("uuid")
+            )
         if function_cls.NAME == "named_file_name" and isinstance(
             reference.root_major, str
         ):
@@ -3127,12 +3125,41 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if name is None or name == "":
             raise ValueError("name cannot be None or empty")
         if name == "named_file_home":
-            return self.csvpaths.file_manager.named_file_home(
-                self._holding_named_file_name(reference=reference, result=result)
+            return self._record_home(
+                reference=reference, uuid=None if result is None else result.uuid
             )
         raise ReferenceException3(
             f"FilesReferenceFinder3 has no computed-field handling for :{name}()"
         )
+
+    def _record_home(self, *, reference: "Reference3", uuid: "str | None") -> "str | None":
+        """the named-file home of the record `uuid` (David, 2026-11-14,
+        decision W7, option B). A literal root is its own home. Under '*',
+        ':regex()' or ':choice()' a live record's home is its live owner's
+        (D4; 6.13b(v), the named-entity manifest wins for details), and a
+        deleted named-file's record gives the ledger's own name_home (RMF
+        table 2), like every other field of a deleted record: a historical
+        value, which may no longer exist on disk. None if that record
+        predates the field (absence implies nothing)."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        if isinstance(reference.root_major, str):
+            return self.csvpaths.file_manager.named_file_home(reference.root_major)
+        if not uuid:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 cannot tell whose home a record has "
+                "without its uuid."
+            )
+        name, _ = self._live_named_file_entry(uuid)
+        if name is not None:
+            return self.csvpaths.file_manager.named_file_home(name)
+        record = self._find_manifest_entry_by_uuid(self.source.files_ledger(), uuid)
+        if record is None:
+            raise ReferenceException3(
+                f"FilesReferenceFinder3 found no live version or ledger record "
+                f"{uuid!r}."
+            )
+        return record.get("name_home")
 
     def _holding_named_file_name(
         self, *, reference: "Reference3", result: ReferenceResult3
