@@ -792,7 +792,19 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 else Reference3.FIRST_PARTY
             )
         if kind == Reference3.METADATA_FILE:
-            if (
+            #
+            # a bare ':manifest()' under ':regex()'/':choice()' is the
+            # ledger set filtered by name, one result per record (query
+            # already gives each record's uuid), not the ledger file: a
+            # filtered set has no file of its own (David, 2026-11-14,
+            # decision W1, option D). It resolved the whole, unfiltered
+            # ledger once per result. Each record now resolves through the
+            # set-record branch below.
+            #
+            filtered_bare_manifest = isinstance(
+                reference.root_major, FunctionCall3
+            ) and self._is_bare_pointer_reference(reference, "manifest")
+            if not filtered_bare_manifest and (
                 self._is_bare_pointer_reference(reference, "manifest")
                 or self._is_bare_pointer_reference(reference, "definition")
                 or self._is_bare_pointer_reference(reference, "readme")

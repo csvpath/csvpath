@@ -3504,6 +3504,27 @@ class TestStarLedgerReadKeepsDeletedEntries:
         assert [e["uuid"] for e in self._data(root + tail)] == [expected]
 
     @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # David, 2026-11-14 (W1, option D): the ledger set filtered by
+            # name, one result per record in ledger order, each resolving
+            # to its own record. Each resolved to the whole, unfiltered
+            # ledger file until then.
+            ('$:regex("^(keep|gone)$").csvpaths.:manifest()', ["keep-v1", "gone-v1", "keep-reload"]),
+            ('$:choice("keep|gone").csvpaths.:manifest()', ["keep-v1", "gone-v1", "keep-reload"]),
+            ('$:choice("also").csvpaths.:manifest()', ["also-v1"]),
+            ('$:regex("^zz$").csvpaths.:manifest()', []),
+        ],
+    )
+    def test_a_bare_manifest_under_a_filtered_root_is_its_records(
+        self, reference, expected
+    ):
+        results = self._c1_finder(reference).query()
+        assert results.uuids == expected
+        assert not results.ambiguous_content_read
+        assert [e["uuid"] for e in self._data(reference)] == expected
+
+    @pytest.mark.parametrize(
         "root", ['$:regex("^(keep|gone)$")', '$:choice("keep|gone")']
     )
     def test_a_deleted_record_resolves_under_a_filtered_root(self, root):
