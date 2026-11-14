@@ -237,8 +237,8 @@ The following references return the path+uuid on `query()`.
 #### `resolve()` to the matching idchains, one per matching error
 `$acme.results.:last().:errors():idchain("add[0]")`
 
-#### `query()` finds the file only if an error has a matching idchain; `resolve()` to the content of file
-`$acme.results.:last().:having(:errors(:idchain("add[0]"))):errors()`
+#### `query()` finds the errors.json of each instance of the last run that has a matching idchain; `resolve()` reads one file at a time
+`$acme.results.:last().:all():having(:errors(:idchain("add[0]"))):errors()`
 
 #### Error: an idchain lives only in errors.json, which this reference does not name
 `$acme.results.:last().:idchain("add[0]")`

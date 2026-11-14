@@ -737,7 +737,8 @@ The rule is:
   multiple file paths for the reference
 
 A manifest entry or a ledger record is not a file. Several of them resolve,
-one per result, whatever the root (5.6). Only a file's whole content, e.g. a
+whatever the root: one per result, or several under one ledger result
+(5.6, 5.7). Only a file's whole content, e.g. a
 version's bytes, an instance's manifest.json or an errors.json, is limited to
 one per `resolve()`.
 
@@ -839,12 +840,12 @@ that finds the last `results` run and using the `:idchain()` field accessor:
 `$acme.results.:last().:errors(:idchain("add[0]"))` — returns the path+uuid, and resolves to all errors with matching idchains
 `$acme.results.:last().:errors():idchain()` — returns the path+uuid, and resolves to the idchain of each error
 `$acme.results.:last().:errors():idchain("add[0]")` — returns the path+uuid, and resolves to the matching idchains, one per matching error
-`$acme.results.:last().:having(:errors(:idchain("add[0]"))):errors()` — returns the path+uuid only if the file has a matching error, and resolves to content of file
+`$acme.results.:last().:all():having(:errors(:idchain("add[0]"))):errors()` — returns the path+uuid of each instance's errors.json that has a matching error, and resolves to one file's content at a time
 
 A function nested in `:errors()` narrows the errors it returns. A field
 chained beside `:errors()` reads its own source. `:idchain()` lives only in
 each error of `errors.json`, so it reads those values. A field held in the
-instance manifest, e.g. `:error_count()`, filters the instance instead
+instance manifest, e.g. `:error_count(:above(2))`, filters the instance instead
 (6.40). To keep or drop the instance by what its `errors.json` contains, use
 `:having()`.
 
@@ -1104,10 +1105,6 @@ Records
       their instances, not the file's own flat list of
       instances.
     For example, $*.results.:manifest() returns the entire set.
-- In every datatype, a bare :manifest() under a :regex() or :choice()
-  root is the set filtered by name: still one result (the ledger's
-  path, uuid None), resolving to the matching records. E.g.
-  $:regex(/^al/).files.:manifest().
     - A :manifest() in name_one with a pointer, filter or range, and
       no field after it, resolves to the selected run record(s),
       e.g. $*.results.:manifest():last() is the last run record.
@@ -1132,12 +1129,18 @@ Records
       For example, .:last():manifest():errors() raises an exception
       because it points at both the instance's own manifest.json
       and its errors.json file.
-    - If more than one instance is selected and no field supplies
-      a value, query() returns all instances and resolve() raises
+    - If more than one instance is selected with a name_three
+      :manifest() (each instance's own manifest.json, a file) and no
+      field supplies a value, query() returns all instances and
+      resolve() raises
       because only one file's content can be resolved at a time
       (compendium 5.6).
     - If the instance's own manifest no longer exists (e.g. a
       deleted run), a name_three :manifest() resolves to None.
+- In every datatype, a bare :manifest() under a :regex() or :choice()
+  root is the set filtered by name: still one result (the ledger's
+  path, uuid None), resolving to the matching records. E.g.
+  $:regex(/^al/).files.:manifest().
 
 #### 6.13b(i)
 Membership
@@ -1641,9 +1644,9 @@ is the instances of the last run whose `errors.json` has an `add[0]` error.
 Like every filter, it applies after a range and before a pointer (6.28).
 
 #### 6.40
-An argument that matches allows a field accessor function to indicate a
-limitation on its `name_one` or `name_three` results by requiring the value of
-its field to match the argument it receives. Take, for e.g.,
+An argument to a field accessor filters too (6.37): it limits the
+`name_one` or `name_three` results to those whose field value matches the
+argument it receives. Take, for e.g.,
 `:errors():error_count(:above(2))`. By itself, `:error_count()` provides
 access to a csvpath statement's run instance's manifest field tracking the
 number of errors. But `:errors():error_count(:above(2))` is selecting the
@@ -1727,7 +1730,8 @@ expressions (multiple references with set operations; discussed elsewhere).
 
 ### At most one pointer per chain, per nesting level
 #### 6.48
-A chain may contain any number of filters but at most one pointer.
+A chain may contain any number of filters, one range (6.28), and at most one
+pointer. A range's bounds are not the chain's pointer.
 Critically, **a function used as another function's argument does not count
 toward, or act as, the pointer of the chain it is nested in** — it works
 inside that function's own scope. So `:errors(:idchain("..."))` is legal:
