@@ -2459,13 +2459,11 @@ class TestManifestChainRanges:
 
 
 class TestManifestChainRuleOne:
-    # Rule 1 (manifest_field_functions_proposal.md): several whole manifest
-    # entries of one named-file cannot be resolved at once; a pointer must
-    # pick one. Rule 3: a field can be read for several. Rule 1a: the
-    # ledger under '*' is one file. Before 2026-11-08 the name_one
-    # ':manifest()' chain resolved several whole entries, where
-    # ':name("x").:manifest()' and CSVPATHS raise. Same fixture as
-    # TestManifestChainRanges, "now" pinned to 2026-01-04.
+    # David, 2026-11-14 (#14): records resolve, files don't (compendium 5.3,
+    # 5.6). Several whole manifest entries of one named-file are records, so
+    # they resolve, one per result, as the ledger's do. They raised (Rule 1,
+    # 2026-11-08) until then. Same fixture as TestManifestChainRanges, "now"
+    # pinned to 2026-01-04.
     @pytest.fixture(autouse=True)
     def pinned_now(self):
         from datetime import date
@@ -2489,14 +2487,11 @@ class TestManifestChainRuleOne:
             ('$ranger.files.:manifest():type("csv"):from(0)', ["v0", "v1", "v2", "v4"]),
         ],
     )
-    def test_several_whole_entries_raise(self, reference, expected):
-        finder = self._finder(reference)
-        results = finder.query()
+    def test_several_whole_entries_resolve(self, reference, expected):
+        results = self._finder(reference).resolve()
         assert results.uuids == expected
-        assert results.ambiguous_content_read
-        with pytest.raises(ReferenceException3) as error:
-            finder.resolve()
-        assert "more than one match" in str(error.value)
+        assert not results.ambiguous_content_read
+        assert [r.data["uuid"] for r in results.results] == expected
 
     @pytest.mark.parametrize(
         "reference, expected",
@@ -2530,13 +2525,14 @@ class TestManifestChainRuleOne:
         assert [r.data for r in finder.resolve().results] == expected
 
     def test_the_name_three_form_agrees(self, tmp_path):
-        # the same shapes on ':name("orders.csv").' already raised
+        # the same shapes on ':name("orders.csv").' resolve each entry too
         for reference in (
             f"{ORDERS}.:manifest():from(1):to(2)",
             f'{ORDERS}.:manifest():type("csv")',
         ):
-            with pytest.raises(ReferenceException3):
-                _g_finder(reference, tmp_path).resolve()
+            results = _g_finder(reference, tmp_path).resolve()
+            assert len(results) > 1
+            assert [r.data["uuid"] for r in results.results] == results.uuids
 
 
 class TestTimeWindowExamples:
@@ -2716,10 +2712,11 @@ class TestNameThreeGates:
         assert results[0].path == os.path.join(str(tmp_path), "orders", "manifest.json")
 
     def test_a_gate_beside_manifest_is_still_a_whole_entry_read(self, tmp_path):
-        # several whole entries at once: flagged, as without the gate
+        # several whole entries at once: records, so not flagged (#14,
+        # 2026-11-14; they were until then)
         results = _g_finder(f'{ORDERS}.:manifest():type("csv")', tmp_path).query()
         assert results.uuids == ["g0", "g2", "g3"]
-        assert results.ambiguous_content_read
+        assert not results.ambiguous_content_read
         reference = f'{ORDERS}.:manifest():type("csv"):uuid()'
         results = _g_finder(reference, tmp_path).query()
         assert not results.ambiguous_content_read
@@ -5600,19 +5597,17 @@ class TestManifestCombinedWithNameThree:
     # entry, unreduced). Neither shape routes through
     # _is_bare_pointer_reference -- that is only for the sole-content
     # "$acme.files.:manifest()" case.
-    def test_manifest_alone_with_more_than_one_matching_version_raises(self):
-        # "one.csv" has two versions in ALPHA_MANIFEST -- resolving full
-        # manifest content always touches exactly one entity (settled
-        # 2026-08-07), so no pointer to pick between them is illegal.
-        # query() itself succeeds (moved 2026-08-26, see the ":path()"
-        # retirement/Rule 1 bucket-list entry) -- only resolve() raises,
-        # once something actually tries to read the content.
+    def test_manifest_alone_with_more_than_one_matching_version_resolves_each(self):
+        # "one.csv" has two versions in ALPHA_MANIFEST. Each version's
+        # manifest entry is a record, not a file, so both resolve (David,
+        # 2026-11-14, #14: records resolve, files don't). This raised
+        # (Rule 1, 2026-08-07) until then.
         finder = _finder(
             '$alpha.files.:name("one.csv").:manifest()', ALPHA_HOME, ALPHA_MANIFEST
         )
-        assert len(finder.query()) > 1
-        with pytest.raises(ReferenceException3):
-            finder.resolve()
+        results = finder.resolve()
+        assert results.uuids == ["u-one-1", "u-one-2"]
+        assert [r.data for r in results.results] == ALPHA_MANIFEST[1:3]
 
     def test_manifest_alone_with_exactly_one_matching_version_still_works(self):
         # "zero.csv" has only one version -- no pointer needed, since

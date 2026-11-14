@@ -515,12 +515,13 @@ genuinely uncertain is marked below rather than guessed.
   literal root and ledger, range before gate and pointer, bad ranges) and
   `TestManifestChainParts::test_a_range_is_its_own_part`
 - A field beside a several-version `:manifest()`, one value per version,
-  while whole entries still raise:
+  and the whole entries too (records resolve, files don't; 5.3, 2026-11-14):
   `test_csvpaths_reference_finder_3.py::TestManifestFieldOverSeveralVersions`
-  (2026-11-08)
-- Several whole entries from a FILES name_one `:manifest()` chain raise on
-  resolve (Rule 1); a pointer, a field or the ledger still resolve:
-  `test_files_reference_finder_3.py::TestManifestChainRuleOne` (2026-11-08)
+  (2026-11-08; whole entries raised until 2026-11-14)
+- Several whole entries from a FILES name_one `:manifest()` chain resolve,
+  one per result, as a pointer, a field or the ledger does (5.3):
+  `test_files_reference_finder_3.py::TestManifestChainRuleOne` (2026-11-08;
+  they raised, Rule 1, until 2026-11-14)
 - A CSVPATHS definition read is one result per group, never per version
   (`:definition()` with fields, or a bare definition field, under a literal
   root, `'*'`, `:regex()` and `:choice()`); a version selector beside a

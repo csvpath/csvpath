@@ -1083,19 +1083,14 @@ class TestManifestFunction:
         assert results.uuids == ["v1-uuid"]
         assert results.results[0].data == ACME_MANIFEST[1]
 
-    def test_manifest_with_all_and_no_pointer_raises(self):
-        # :all() (CONTEXT_SETTER) plus :manifest() (VALUE) -- neither is
-        # a pointer, and ACME_MANIFEST has two versions. Resolving full
-        # manifest content always touches exactly one entity (settled
-        # 2026-08-07), so this is illegal -- a pointer is required to
-        # pick one version. query() itself succeeds (moved 2026-08-26,
-        # see the ":path()" retirement/Rule 1 bucket-list entry) -- only
-        # resolve() raises, once something actually tries to read the
-        # content.
+    def test_manifest_with_all_and_no_pointer_resolves_each_entry(self):
+        # David, 2026-11-14 (#14): records resolve, files don't (compendium
+        # 5.3, 5.6). Each version's manifest entry is a record, so all of
+        # them resolve, one per result. This raised (Rule 1) until then.
         finder = _finder("$acme.csvpaths.:all():manifest()")
-        assert len(finder.query()) > 1
-        with pytest.raises(ReferenceException3):
-            finder.resolve()
+        results = finder.resolve()
+        assert len(results) == 2
+        assert [r.data["uuid"] for r in results.results] == results.uuids
 
     def test_manifest_with_no_pointer_and_exactly_one_version_still_works(self):
         single_version = [ACME_MANIFEST[0]]
@@ -1162,14 +1157,14 @@ class TestManifestFieldOverSeveralVersions:
             "$dater.csvpaths.:all():manifest()",
         ],
     )
-    def test_whole_entries_for_several_versions_still_raise(self, reference):
+    def test_whole_entries_for_several_versions_resolve(self, reference):
+        # David, 2026-11-14 (#14): records resolve, files don't. They
+        # raised (Rule 1) until then.
         finder = _finder(reference, VERSION_RANGE_MANIFEST)
-        results = finder.query()
+        results = finder.resolve()
         assert len(results) > 1
-        assert results.ambiguous_content_read
-        with pytest.raises(ReferenceException3) as error:
-            finder.resolve()
-        assert "more than one match" in str(error.value)
+        assert not results.ambiguous_content_read
+        assert [r.data["uuid"] for r in results.results] == results.uuids
 
     def test_a_pointer_after_the_range_still_gives_the_whole_entry(self):
         finder = _finder(

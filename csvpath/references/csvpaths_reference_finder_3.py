@@ -303,15 +303,10 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             if isinstance(seg, FunctionCall3)
         ]
         has_manifest = any(seg.name == "manifest" for seg in combined)
-        # a field reads one value per version, not the whole entry, so it
-        # is not flagged (Rule 3, 2026-11-08): ':manifest():from(1):to(2)
-        # :uuid()' gives each version's uuid, as FILES does. With no field
-        # the whole entries are still flagged.
-        ambiguous_content_read = (
-            has_manifest
-            and len(selected_versions) > 1
-            and self._last_value_field_call(combined) is None
-        )
+        # several versions' manifest entries are records, not files, so they
+        # resolve, with or without a field: records resolve, files don't (David, 2026-11-14; compendium 5.3, 5.6). Whole entries raised
+        # (Rule 1) until then.
+        ambiguous_content_read = False
 
         return self._apply_name_three_to_versions(
             selected_versions,
