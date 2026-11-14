@@ -1730,8 +1730,8 @@ expressions (multiple references with set operations; discussed elsewhere).
 
 ### At most one pointer per chain, per nesting level
 #### 6.48
-A chain may contain any number of filters, one range (6.28), and at most one
-pointer. A range's bounds are not the chain's pointer.
+A chain may contain any number of filters, at most one range (6.28), and at
+most one pointer. A range's bounds are not the chain's pointer.
 Critically, **a function used as another function's argument does not count
 toward, or act as, the pointer of the chain it is nested in** — it works
 inside that function's own scope. So `:errors(:idchain("..."))` is legal:
