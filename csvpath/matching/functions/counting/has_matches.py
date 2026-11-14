@@ -24,4 +24,10 @@ class HasMatches(ValueProducer):
         self.value = self.matches(skip=skip)
 
     def _decide_match(self, skip=None) -> None:
-        self.match = self.matcher.csvpath.current_match_count + 1 > 0
+        #
+        # True only when an earlier line matched. _current_match_count is the
+        # match count as it stood when this line started. current_match_count
+        # is the live count, which an onmatch component can raise partway
+        # through this line, so it would count this line as "previous".
+        #
+        self.match = self.matcher.csvpath._current_match_count > 0
