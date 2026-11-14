@@ -852,8 +852,9 @@ instance manifest, e.g. `:error_count(:above(2))`, filters the instance instead
 #### 5.20
 `:idchain()` and similar functions must be smart enough to look into a JSON
 structure in the right place to find the value they operate on. In the case
-of idchains, the function must know to look at the `idchain` key of each
-error dictionary in the list contained by `errors.json`.
+of idchains, the function must know to look at the `source` key of each
+error dictionary in the list contained by `errors.json`: an error records
+its idchain there.
 
 #### 5.20b
 In the case there are two possible interpretation of a reference's resolve
@@ -1528,7 +1529,11 @@ create a range; however, combining `:before()` and `:to()` or
 #### 6.28d Example
 Find versions registered as `acme` from the beginning of 2026 through
 yesterday:
-`$acme.files.:flatten().:from(:date("2026-01-01")):to(:yesterday())`
+`$acme.files.:flatten().:from(:date("2026-01-01")):before(:today())`
+
+A bound is its first moment (6.27b, 6.27g), so `:before(:today())` keeps all
+of yesterday. `:to(:yesterday())` would stop at yesterday 00:00 and miss the
+rest of that day, as the NRE notes for `:to(:date("2026-01-31"))`.
 
 (Corrected 2026-10-16 -- this example originally used `:after(...)`,
 which 6.28b's own alias table defines as strictly exclusive
