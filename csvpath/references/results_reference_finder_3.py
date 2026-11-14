@@ -1407,13 +1407,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         _star_group_and_reduce(), factored out once name_three needed
         threading through every star-traversal shape identically.
         `having_call` (added 2026-08-27) filters `run_homes` down to
-        runs containing an instance with the given identity, BEFORE the
-        pointer reduces -- applied here, centrally, rather than in each
-        of _query_star_traversal's own four candidate-gathering
-        branches, since every one of them already funnels into this
-        shared tail (or _star_group_and_reduce's, which applies the same
-        filter itself before delegating here for its own no-pointer
-        case). `field_calls` (added 2026-10-18, REVISED the same day
+        runs containing an instance with the given identity, after the
+        range and before the pointer (since 2026-11-14, compendium 6.39)
+        -- applied here, centrally, rather than in each of
+        _query_star_traversal's own four candidate-gathering branches,
+        since every one of them already funnels into this shared tail
+        (or _star_group_and_reduce's, which applies it per group, or
+        passes it here for its own no-pointer, no-range case). `field_calls` (added 2026-10-18, REVISED the same day
         from a single `field_call` to a list -- see
         _star_run_selector_chain()'s own comment) similarly filters
         `run_homes` down to those whose own field value (e.g.
@@ -2076,11 +2076,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         """GROUP mode's shared tail (":all()", bare or literal/'*'-
         prefixed) -- added 2026-08-19. `partitioned`: list of
         (run_home, composite_key) pairs. `having_call` (added
-        2026-08-27) filters `partitioned` down to runs containing an
-        instance with the given identity, BEFORE partitioning/reducing
-        -- same position/reasoning as _star_pool_and_reduce's own copy
-        of this filter (not shared as one call, since the two methods
-        filter different-shaped inputs -- a flat list here vs. pairs).
+        2026-08-27) keeps the runs containing an instance with the given
+        identity, within each group after that group's range and before
+        its pointer (since 2026-11-14, compendium 6.39; it filtered
+        `partitioned` before partitioning until then). With no pointer
+        and no range it is passed through to _star_pool_and_reduce().
         `field_calls`/`bare_time_window` (added 2026-10-18, `field_
         calls` REVISED the same day from a single `field_call` to a
         list) similarly filter `partitioned` down to runs whose own

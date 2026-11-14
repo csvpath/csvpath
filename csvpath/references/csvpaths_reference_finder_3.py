@@ -523,9 +523,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         ':having("identity")' is ALSO now supported (added 2026-08-18,
         alongside RESULTS' own ':flatten()' fix) -- filters each group's
         own manifest down to versions whose "named_paths_identities"
-        actually contains that identity, BEFORE either mode's own
-        pointer/grouping reduction, same position it occupies in
-        _resolve_versions()'s single-group precedent. This closes a
+        actually contains that identity: after the range and before the
+        pointer, in _narrow_versions(), per group in GROUP mode (since
+        2026-11-14; it ran before the range until then). This closes a
         real, previously-latent bug, not just a missing feature:
         ':having()' was never checked for at all here before this fix --
         neither rejected as unsupported NOR applied -- so it was
@@ -1308,16 +1308,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         (added 2026-08-14, see ReferenceFinder3._check_position()) --
         e.g. ":name()" is registered for csvpaths but has nowhere legal
         to go there, so it now raises here instead of silently no-
-        opping the way it used to. ':having("identity")' (added
-        2026-08-13) filters
-        `manifest` down to versions whose own "named_paths_identities"
-        list contains that identity, BEFORE any pointer reduces further
-        -- e.g. ":having('my_validations'):last()" is "the last version
-        that actually has a my_validations statement." ':from()'/':to()'
+        opping the way it used to. ':from()'/':to()'
         (added 2026-08-13, David: a named-paths group's own load time is
         a real arrival-date concept -- "give me the versions loaded
-        between date-one and date-two") window the (possibly
-        ':having()'-filtered) manifest to a RANGE next, same position
+        between date-one and date-two") window the manifest to a RANGE
+        first; then the gates and ':having("identity")' (added 2026-08-13)
+        filter it to versions whose "named_paths_identities" list
+        contains that identity; then a pointer picks, all in
+        _narrow_versions() -- e.g. ":having('my_validations'):last()" is
+        "the last version that actually has a my_validations statement".
+        ':having()' ran before the range until 2026-11-14 (compendium
+        6.39, 6.28: a range comes before a filter). The range is at the same position
         RESULTS'/FILES' own version-level range occupies -- index-mode
         (int/:index(n)) POSITIONALLY slices via the shared
         _apply_range(); date-mode (str/:date(...)) FILTERS by each
