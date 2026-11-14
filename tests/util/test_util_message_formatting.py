@@ -100,16 +100,23 @@ class TestUtilMessageFormatting(unittest.TestCase):
             f"$tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv[1][ string(#firstname, 1, 5) ]"
         ) == ["Max length (1) cannot be less than min length (5)"]
 
-    def test_blank_notnone_with_a_header_argument_does_not_name_a_position(self):
+    def test_blank_notnone_with_a_header_argument_names_the_header(self):
         #
-        # with an argument there is no header position, so this message
-        # cannot say "Header {i}". a plain f prefix would have raised
-        # NameError, because i is only set when there is no argument.
+        # with an argument there is no header position i. a plain f prefix
+        # would have raised NameError, because i is only set when there is
+        # no argument. the message names the argument's header instead.
         #
         errors = _collected_errors(
-            f"$tests{os.sep}csvpath{os.sep}test_resources{os.sep}blank_notnone.csv[1*][ blank.notnone(#b) ]"
+            f"$tests{os.sep}csvpath{os.sep}test_resources{os.sep}blank_notnone.csv[1*][ line(string(#a), blank.notnone(#b)) ]"
         )
-        assert "Value cannot be empty because notnone is set" in errors
+        assert "Header b cannot be empty because notnone is set" in errors
+        assert not any("{" in e for e in errors)
+
+    def test_blank_notnone_without_an_argument_names_the_position(self):
+        errors = _collected_errors(
+            f"$tests{os.sep}csvpath{os.sep}test_resources{os.sep}blank_notnone.csv[1*][ line(string(#a), blank.notnone()) ]"
+        )
+        assert "Header 1 cannot be empty because notnone is set" in errors
         assert not any("{" in e for e in errors)
 
 

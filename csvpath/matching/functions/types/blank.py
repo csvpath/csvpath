@@ -92,10 +92,11 @@ class Blank(Type):
         if self.notnone:
             v = None
             #
-            # i is only known when we look at our own header position
+            # with an argument, name that header. without one, i is our own
+            # header position. i is not set in the first case.
             #
-            what = "Value"
             if len(self.siblings()) > 0:
+                what = f"Header {self.siblings()[0].name}"
                 v = self._value_one(skip=skip)
             else:
                 sibs = self.parent.siblings()
