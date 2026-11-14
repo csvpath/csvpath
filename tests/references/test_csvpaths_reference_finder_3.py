@@ -2680,30 +2680,43 @@ class TestNamedPathsHomeFunction:
     @pytest.mark.parametrize(
         "reference, expected",
         [
-            # keep-v1 and also-v1 are live; gone-v1 (a deleted group) and
-            # keep-reload (an unchanged reload) are ledger-only and give the
-            # ledger's own named_paths_home
+            # a ':manifest()' read gives each record's STORED
+            # named_paths_home: the group manifest's for a live version
+            # (6.13b(v); the key ':group_home()' reads), else the ledger's
+            # -- also-v1's group entry has none, and gone-v1 (a deleted
+            # group) and keep-reload (an unchanged reload) are ledger-only.
+            # The stored values differ from the computed named_paths/<name>
+            # to show which is read (reviewer on #618).
             (
                 "$*.csvpaths.:manifest():named_paths_home()",
-                ["named_paths/keep", "named_paths/also", "L/gone", "L/keep"],
+                ["S/keep", "L/also", "L/gone", "L/keep"],
             ),
             (
                 '$:regex("^(keep|gone)$").csvpaths.:manifest():named_paths_home()',
-                ["named_paths/keep", "L/gone", "L/keep"],
+                ["S/keep", "L/gone", "L/keep"],
             ),
             ("$*.csvpaths.:manifest():last():named_paths_home()", ["L/keep"]),
+            # without ':manifest()', the literal reference for each live
+            # group (6.13b(iv)): computed
             ("$*.csvpaths.:named_paths_home()", ["named_paths/keep", "named_paths/also"]),
         ],
     )
     def test_a_traversal_root_reads_each_records_home(self, reference, expected):
-        homes = {"gone-v1": "L/gone", "keep-reload": "L/keep"}
+        homes = {
+            "keep-v1": "L/keep",
+            "also-v1": "L/also",
+            "gone-v1": "L/gone",
+            "keep-reload": "L/keep",
+        }
         ledger = [dict(e) for e in _C1_LEDGER]
         for e in ledger:
-            if e["uuid"] in homes:
-                e["named_paths_home"] = homes[e["uuid"]]
+            e["named_paths_home"] = homes[e["uuid"]]
         finder = _finder(
             reference,
-            by_name={"keep": [dict(_C1_KEEP)], "also": [dict(_C1_ALSO)]},
+            by_name={
+                "keep": [dict(_C1_KEEP, named_paths_home="S/keep")],
+                "also": [dict(_C1_ALSO)],
+            },
             ledger=ledger,
             inputs_csvpaths_path="named_paths",
         )

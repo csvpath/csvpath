@@ -3134,13 +3134,21 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
     def _record_home(self, *, reference: "Reference3", uuid: "str | None") -> "str | None":
         """the named-file home of the record `uuid` (David, 2026-11-14,
-        decision W7, option B). A literal root is its own home. Under '*',
-        ':regex()' or ':choice()' a live record's home is its live owner's
-        (D4; 6.13b(v), the named-entity manifest wins for details), and a
-        deleted named-file's record gives the ledger's own name_home (RMF
-        table 2), like every other field of a deleted record: a historical
-        value, which may no longer exist on disk. None if that record
-        predates the field (absence implies nothing)."""
+        decision W7, option B).
+
+        - A literal root is its own home, as before.
+        - A ':manifest()' read under '*', ':regex()' or ':choice()' reaches
+          the ledger set, and reads each record's stored ledger name_home,
+          "like every other ledger field" (the ruling). The named-file
+          manifest holds no home (RMF table 1), so the ledger is the only
+          stored source (6.13b(v)). A historical value for a deleted
+          named-file, which may no longer exist on disk; None if the
+          record predates the field.
+        - Without ':manifest()' a traversal root is the literal reference
+          for each live name (6.13b(iv)): the live owner's home, computed.
+
+        The first draft of #618 computed the home for live ':manifest()'
+        records too, which the ruling does not say (reviewer on #618)."""
         if reference is None:
             raise ValueError("reference cannot be None")
         if isinstance(reference.root_major, str):
@@ -3150,16 +3158,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "FilesReferenceFinder3 cannot tell whose home a record has "
                 "without its uuid."
             )
+        if self._reads_ledger_set(reference):
+            record = self._find_manifest_entry_by_uuid(self.source.files_ledger(), uuid)
+            if record is None:
+                raise ReferenceException3(
+                    f"FilesReferenceFinder3 found no ledger record {uuid!r}."
+                )
+            return record.get("name_home")
         name, _ = self._live_named_file_entry(uuid)
-        if name is not None:
-            return self.csvpaths.file_manager.named_file_home(name)
-        record = self._find_manifest_entry_by_uuid(self.source.files_ledger(), uuid)
-        if record is None:
+        if name is None:
             raise ReferenceException3(
-                f"FilesReferenceFinder3 found no live version or ledger record "
-                f"{uuid!r}."
+                f"FilesReferenceFinder3 found no live named-file holding "
+                f"version {uuid!r}."
             )
-        return record.get("name_home")
+        return self.csvpaths.file_manager.named_file_home(name)
 
     def _holding_named_file_name(
         self, *, reference: "Reference3", result: ReferenceResult3

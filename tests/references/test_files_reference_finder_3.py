@@ -1046,12 +1046,14 @@ class TestTraversalRootNamedFileReads:
         with pytest.raises(ReferenceException3):
             self._values(reference)
 
-    # David, 2026-11-14 (decision W7, option B): under a traversal root
-    # each ledger record has a home: its live owner's, or the ledger's own
-    # name_home for a deleted named-file. These raised "root_major must be a
-    # literal named-file name" (RMF section 4, a spec-doc bug).
+    # David, 2026-11-14 (decision W7, option B): a ':manifest()' read under
+    # a traversal root gives each ledger record's stored name_home, "like
+    # every other ledger field", a deleted named-file's included. These
+    # raised "root_major must be a literal named-file name" (RMF section 4,
+    # a spec-doc bug). The stored homes here differ from the computed ones
+    # (inputs/named_files/<name>) to show which is read.
     HOME_LEDGER = [
-        dict(e, named_file_name=name)
+        dict(e, named_file_name=name, name_home=f"L/{name}")
         for e, name in zip(STAR_LEDGER, ["alpha", "alpha", "alpha", "beta", "beta"])
     ] + [
         {
@@ -1060,8 +1062,8 @@ class TestTraversalRootNamedFileReads:
             "name_home": "inputs/named_files/gone",
         }
     ]
-    ALPHA = "inputs/named_files/alpha"
-    BETA = "inputs/named_files/beta"
+    ALPHA = "L/alpha"
+    BETA = "L/beta"
     GONE = "inputs/named_files/gone"
 
     def _home_values(self, reference: str) -> list:
@@ -1095,19 +1097,20 @@ class TestTraversalRootNamedFileReads:
     ):
         assert self._home_values(reference) == expected
 
-    def test_a_live_records_home_is_its_owners_not_the_ledgers(self):
-        # 6.13b(v): the named-entity manifest wins for details (D4)
-        ledger = [dict(e) for e in self.HOME_LEDGER]
-        ledger[0]["name_home"] = "inputs/named_files/stale"
-        finder = _finder(
-            "$*.files.:manifest():first():named_file_home()",
-            STAR_ALPHA_HOME,
-            STAR_ALPHA_MANIFEST,
-            by_name=STAR_BY_NAME,
-            ledger=ledger,
-            inputs_files_path="inputs/named_files",
-        )
-        assert [r.data for r in finder.resolve().results] == [self.ALPHA]
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # without ':manifest()' a traversal root is the literal
+            # reference for each live name (6.13b(iv)): the home is computed
+            # from the live owner, as at a literal root
+            ("$*.files.*.:last():named_file_home()", ["inputs/named_files/alpha", "inputs/named_files/beta"]),
+            ("$:regex(/^al/).files.*.:last():named_file_home()", ["inputs/named_files/alpha"]),
+        ],
+    )
+    def test_without_manifest_the_home_is_each_live_owners(self, reference, expected):
+        # reviewer on #618: the ':manifest()' forms read the stored field,
+        # these do not
+        assert sorted(self._home_values(reference)) == expected
 
     def test_a_record_that_predates_the_home_field_reads_none(self):
         # absence implies nothing: an old deleted record with no name_home
