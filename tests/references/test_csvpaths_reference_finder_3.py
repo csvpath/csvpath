@@ -2699,6 +2699,14 @@ class TestNamedPathsHomeFunction:
             # without ':manifest()', the literal reference for each live
             # group (6.13b(iv)): computed
             ("$*.csvpaths.:named_paths_home()", ["named_paths/keep", "named_paths/also"]),
+            # ':all()' beside ':manifest()' stays a walk (ruling C Q1), so it
+            # is the literal reference for each live group: computed, as
+            # '$keep.csvpaths.:all():manifest():named_paths_home()' gives
+            # (reviewer on #618; it read the stored homes)
+            (
+                "$*.csvpaths.:all():manifest():named_paths_home()",
+                ["named_paths/also", "named_paths/keep"],
+            ),
         ],
     )
     def test_a_traversal_root_reads_each_records_home(self, reference, expected):
