@@ -47,10 +47,11 @@ def _csvpath_freed_only_by_gc() -> str:
 class TestUtilLogUtilityRelease(unittest.TestCase):
     def _gc_inside_clear_cache(self) -> None:
         """Calls setLevel() with the GC firing inside Manager._clear_cache()'s
-        loop. Fails if that raises or leaves logging._lock held, and in any
-        case gives the lock back and restores the GC."""
-        was_enabled = gc.isenabled()
-        gc.disable()
+        loop. The caller keeps the GC disabled from building its cycle until
+        this returns, so nothing collects the cycle anywhere else. Fails if
+        setLevel() raises or leaves logging._lock held, and in any case gives
+        the lock back."""
+        assert not gc.isenabled()
         trigger = logging.getLogger(f"{PREFIX}.trigger")
         try:
             trigger._cache = _GcOnClear()
@@ -71,8 +72,6 @@ class TestUtilLogUtilityRelease(unittest.TestCase):
             while logging._lock._is_owned():
                 logging._lock.release()
             trigger._cache = {}
-            if was_enabled:
-                gc.enable()
 
     def test_release_during_set_level_does_not_leak_logging_lock(self):
         #
@@ -88,10 +87,10 @@ class TestUtilLogUtilityRelease(unittest.TestCase):
         try:
             name = _csvpath_freed_only_by_gc()
             assert name in Logger.manager.loggerDict
+            self._gc_inside_clear_cache()
         finally:
             if was_enabled:
                 gc.enable()
-        self._gc_inside_clear_cache()
 
     def test_logging_from_a_finalizer_does_not_purge_inside_clear_cache(self):
         #
@@ -109,10 +108,10 @@ class TestUtilLogUtilityRelease(unittest.TestCase):
         gc.disable()
         try:
             _LogsInDel(config)
+            self._gc_inside_clear_cache()
         finally:
             if was_enabled:
                 gc.enable()
-        self._gc_inside_clear_cache()
         #
         # still queued, and the next ordinary purge removes it
         #
