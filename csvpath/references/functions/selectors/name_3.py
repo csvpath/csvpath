@@ -70,6 +70,10 @@ class Name3(Function3):
         right after constructing), not later, deep inside path-matching,
         the first time a candidate happens to be compared against it."""
         super().check_valid()
+        if isinstance(self._arg, bool):
+            # bool is an int subclass, so ARG_TYPES lets it through
+            # (reviewer on #623)
+            raise ReferenceException3(":name() takes a string or an int, not a boolean.")
         if isinstance(self._arg, Regex3):
             try:
                 re.compile(self._arg.pattern)

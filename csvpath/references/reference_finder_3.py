@@ -411,9 +411,11 @@ class ReferenceFinder3(ABC):
             if isinstance(arg.arg, int) and not isinstance(arg.arg, bool):
                 return str(arg.arg)
             if not isinstance(arg.arg, str):
+                # a regex, or a boolean from a variable (reviewer on #623)
+                what = "a regex" if isinstance(arg.arg, Regex3) else type(arg.arg).__name__
                 raise ReferenceException3(
-                    f"':{function.name}(:name())' takes a statement identity "
-                    "string, not a regex."
+                    f"':{function.name}(:name())' takes a statement identity, "
+                    f"a string or an int, not {what}."
                 )
             return arg.arg
         return cls._range_bound(function)
@@ -1349,6 +1351,11 @@ class ReferenceFinder3(ABC):
                     # plain value here, no separate _resolve_value()
                     # call needed anymore.
                     built = self._build(segment)
+                    if isinstance(built.arg, bool):
+                        raise ReferenceException3(
+                            f":name({built.arg}) takes a string in a path "
+                            "segment, not a boolean."
+                        )
                     if isinstance(built.arg, int):
                         # an int is a statement identity, a name_three
                         # range bound only (decision D12, 2026-11-14); a
