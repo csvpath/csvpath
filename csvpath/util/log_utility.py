@@ -20,6 +20,11 @@ class LogUtility:
     # them indexed by instance ID.
     #
     LOGGERS = {}
+    #
+    # names of released loggers waiting to leave Manager.loggerDict. see
+    # release_logger() and _purge_released().
+    #
+    PENDING_RELEASE = []
 
     @classmethod
     def log_brief_trace(cls, *, logger=None, printer=None, depth=30) -> str:
@@ -191,14 +196,15 @@ class LogUtility:
                 )
             else:
                 #
-                # this use of the lock is stepping over a line. but we saw occasional instances
-                # of collection change while iterating. this should fix that. also added
-                # try to our setLevel call below, which was one trigger of the iterations.
-                # TODO: this part is sketchy. it probably won't break, but we should think
-                # on it more.
+                # not here. release_logger() runs from __del__, so from the GC,
+                # which can fire inside logging's own loops over loggerDict. on
+                # py3.12 Manager._clear_cache() (from setLevel) then raises
+                # "dictionary changed size during iteration" while holding
+                # logging._lock, and never releases it. every other thread that
+                # logs then blocks forever. instead, we queue the name and
+                # remove it at a safe point. see _purge_released().
                 #
-                with logging._lock:
-                    del Logger.manager.loggerDict[name]
+                cls.PENDING_RELEASE.append(name)
             names.remove(name)
             #
             # the other concerning thing: there was a statement online that log handlers are
@@ -230,9 +236,20 @@ class LogUtility:
         return lg
 
     @classmethod
+    def _purge_released(cls) -> None:
+        """removes released loggers from loggerDict. call it only from ordinary
+        code, never from __del__. if the GC releases more loggers while we
+        purge, they only append to the list, which is safe."""
+        with logging._lock:
+            while cls.PENDING_RELEASE:
+                name = cls.PENDING_RELEASE.pop()
+                Logger.manager.loggerDict.pop(name, None)
+
+    @classmethod
     def config_logger(cls, *, config, name: str, level: str = None) -> Logger:
         if config is None:
             raise ValueError("Config cannot be None")
+        cls._purge_released()
         if name is None:
             name = "config"
         if level is None:
