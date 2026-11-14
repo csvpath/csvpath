@@ -15,6 +15,7 @@ Above and below handle number, date, and string comparisons. At this time they d
 
 Keep in mind two important considerations:
 - A number compared with a stringified number is a viable comparison, no different than a number and a number. The conversion is the same as in the underlying Python.
+- A currency value like `$10` is a string, so `gt("$10", 9)` is a string comparison. To compare it as a number, convert it first: `gt(int(#price), 9)` or `gt(float(#price), 9.5)`.
 - These functions answer a question: _is this thing before or after this other thing?_ The answer to: _is None after 1048?_ is _no, it is not_. The result of comparing `None` or `nan` to a regular `int`, `float`, `date`, or `string` is `False`. The functions believe the question is valid and the answer is `False` because there is no ordinal relationship between the two things being compared.
 
 There are no differences between each function's three aliases. The reason to have them is just to suit the use case. For instance, in comparing two numbers `lt()` and `gt()` may feel more right; whereas, in finding a point in time between two dates `before()` and `after()` may feel like a better fit.
