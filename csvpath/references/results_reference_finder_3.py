@@ -331,6 +331,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                         record=rh,
                     )
                 ]
+            if having_call is not None:
+                cands = [rh for rh in cands if self._run_satisfies_having(rh, having_call)]
             return cands
 
         # group_key_for: set when ':all()'/':groups()' partitions
@@ -580,24 +582,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             (f for f in self._build_chain(calls) if f.name == "having"),
             None,
         )
-        if having_call is not None:
-            # filters the run pool down to runs that contain an instance
-            # (a csvpath statement result) with this identity -- added
-            # 2026-08-27, mirroring CsvpathsReferenceFinder3's own
-            # ':having()' (manifest-array membership there; a real
-            # filesystem listing here, since RESULTS has no equivalent
-            # "named_paths_identities" field to read off a run). Applied
-            # BEFORE ':from()'/':to()'/the pointer reduce below, same
-            # position ':having()' occupies in CSVPATHS' own
-            # _resolve_versions(). group_key_for (if set) needs no
-            # separate trim -- its own consumer below only ever looks up
-            # keys for `rh in candidates`, so extra now-unused entries
-            # for filtered-out runs are simply never read.
-            candidates = [
-                rh
-                for rh in candidates
-                if self._run_satisfies_having(rh, having_call)
-            ]
+        # ':having()' keeps the runs that contain an instance with this
+        # identity (added 2026-08-27, mirroring CSVPATHS). _narrow() applies
+        # it after the range and the gates, before the pointer: the
+        # range first, then ':having()' (spec pass, 2026-11-14: NRE
+        # '$acme.csvpaths.:having("my_validations"):from(-3)' "Collects the
+        # last three versions of acme if they have a my_validations
+        # statement"; compendium 6.28). It ran before the range until then.
 
         # range/bare-time-window detection+validation already happened
         # earlier (right after `pointer`/`is_grouped`, so group_key_for
@@ -1461,17 +1452,21 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         ':from()'/':to()' range, applied to the pooled `run_homes` list
         the same position `bare_time_window` already occupies (a POOL-
         mode narrowing step, before the pointer reduces further)."""
+        if bare_time_window is not None:
+            run_homes = self._apply_bare_time_window(run_homes, bare_time_window)
+        if lower_call is not None or upper_call is not None:
+            run_homes = sorted(run_homes, key=self._run_dir_sort_key)
+            run_homes = self._apply_run_level_range(run_homes, lower_call, upper_call)
+        # the range first, then ':having()' (spec pass, 2026-11-14: NRE
+        # '$acme.csvpaths.:having("my_validations"):from(-3)' "Collects the
+        # last three versions of acme if they have a my_validations
+        # statement"; compendium 6.28). It ran before the range until then.
         if having_call is not None:
             run_homes = [
                 rh
                 for rh in run_homes
                 if self._run_satisfies_having(rh, having_call)
             ]
-        if bare_time_window is not None:
-            run_homes = self._apply_bare_time_window(run_homes, bare_time_window)
-        if lower_call is not None or upper_call is not None:
-            run_homes = sorted(run_homes, key=self._run_dir_sort_key)
-            run_homes = self._apply_run_level_range(run_homes, lower_call, upper_call)
         # the gates come after the range, whatever the written order
         # (compendium 6.28); the pointer picks from what is left.
         for field_call in field_calls or []:
@@ -1715,12 +1710,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         runs' instance records instead, see
         _manifest_set_instance_results()."""
         records = self._manifest_set_runs(name_filter=name_filter)
-        if having_call is not None:
-            records = [
-                r
-                for r in records
-                if self._run_record_satisfies_having(record=r, having_call=having_call)
-            ]
         has_range = lower_call is not None or upper_call is not None
         if bare_time_window is not None or has_range:
             by_home = {r["run_home"]: r for r in records}
@@ -1732,6 +1721,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     run_homes, lower_call, upper_call
                 )
             records = [by_home[rh] for rh in run_homes]
+        # the range first, then ':having()' (spec pass, 2026-11-14: NRE
+        # '$acme.csvpaths.:having("my_validations"):from(-3)' "Collects the
+        # last three versions of acme if they have a my_validations
+        # statement"; compendium 6.28). It ran before the range until then.
+        if having_call is not None:
+            records = [
+                r
+                for r in records
+                if self._run_record_satisfies_having(record=r, having_call=having_call)
+            ]
         # the gates come after the range, whatever the written order
         # (compendium 6.28); the pointer picks from what is left.
         for field_call in field_calls or []:
@@ -2137,12 +2136,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         independently per partition, and a range is just a multi-
         valued pointer, the same category of reduction a plain pointer
         already gets this treatment for."""
-        if having_call is not None:
-            partitioned = [
-                (rh, key)
-                for rh, key in partitioned
-                if self._run_satisfies_having(rh, having_call)
-            ]
         if bare_time_window is not None:
             start = bare_time_window.start_datetime()
             end = bare_time_window.end_datetime()
@@ -2160,6 +2153,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 match_all,
                 range_bounds,
                 accessor,
+                having_call=having_call,
                 field_calls=field_calls,
                 instance_pointer=instance_pointer,
             )
@@ -2173,6 +2167,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 candidates = self._apply_run_level_range(
                     candidates, lower_call, upper_call
                 )
+            # the range first, then ':having()' (spec pass, 2026-11-14: NRE
+            # '$acme.csvpaths.:having("my_validations"):from(-3)' "Collects the
+            # last three versions of acme if they have a my_validations
+            # statement"; compendium 6.28). It ran before the range until then.
+            if having_call is not None:
+                candidates = [
+                    rh for rh in candidates if self._run_satisfies_having(rh, having_call)
+                ]
             # the gates come after the range, within each group, whatever
             # the written order (compendium 6.28); the pointer picks from
             # what is left.

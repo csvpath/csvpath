@@ -676,29 +676,14 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     "CsvpathsReferenceFinder3's '*' traversal to apply it to."
                 )
 
-        def _having_filtered(manifest: list) -> list:
-            if having_call is None:
-                return manifest
-            if isinstance(having_call.arg, Function3):
-                raise ReferenceException3(
-                    "CsvpathsReferenceFinder3's ':having()' only accepts a "
-                    "plain identity string -- csvpaths has no per-statement "
-                    "field to match a nested function against."
-                )
-            return [
-                entry
-                for entry in manifest
-                if self._version_satisfies_having(entry, having_call)
-            ]
-
         if is_grouped:
             selected_versions = []
             for name in self._matching_names(
                 self.source.paths_names(), name_filter
             ):
-                # ':having()', then a range or window, the gates and the
-                # pointer, within this group
-                manifest = _having_filtered(self.source.paths_manifest(name))
+                # a range or window, the gates, ':having()' and the
+                # pointer, within this group (_narrow_versions())
+                manifest = self.source.paths_manifest(name)
                 selected_versions.extend(
                     self._narrow_versions(built=built, manifest=manifest)
                 )
@@ -729,19 +714,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # field with no pointer read the ledger too until
                 # 2026-11-01; it now reads each live group in turn, like
                 # every bare '*' read (compendium 6.19, agreed with David).
-                pooled = _having_filtered(
-                    self._ledger_versions(name_filter=name_filter)
-                )
+                pooled = self._ledger_versions(name_filter=name_filter)
             else:
                 pooled = []
                 for name in self._matching_names(
                     self.source.paths_names(), name_filter
                 ):
-                    pooled.extend(
-                        _having_filtered(
-                            self.source.paths_manifest(name)
-                        )
-                    )
+                    pooled.extend(self.source.paths_manifest(name))
                 pooled.sort(key=lambda e: e["time"])
             selected_versions = self._narrow_versions(built=built, manifest=pooled)
 
@@ -1161,6 +1140,25 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         manifest = self.source.paths_manifest(root_major)
         return root_major, self._find_manifest_entry_by_uuid(manifest, uuid)
 
+    def _apply_having(self, *, built: list, versions: list) -> list:
+        """the versions that have the statement ':having()' names, or all
+        of them without one. Applied after the range, with the gates,
+        before the pointer (_narrow_versions())."""
+        if built is None:
+            raise ValueError("built cannot be None")
+        if versions is None:
+            raise ValueError("versions cannot be None")
+        having_call = next((f for f in built if f.name == "having"), None)
+        if having_call is None:
+            return versions
+        if isinstance(having_call.arg, Function3):
+            raise ReferenceException3(
+                "CsvpathsReferenceFinder3's ':having()' only accepts a "
+                "plain identity string -- csvpaths has no per-statement "
+                "field to match a nested function against."
+            )
+        return [v for v in versions if self._version_satisfies_having(v, having_call)]
+
     @staticmethod
     def _version_satisfies_having(entry: dict, having_call) -> bool:
         """dispatches ':having()'s own two CSVPATHS-legal argument
@@ -1384,19 +1382,6 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     "CsvpathsReferenceFinder3 -- there is no filtering "
                     "mechanism here to apply it to."
                 )
-        having_call = next((f for f in built if f.name == "having"), None)
-        if having_call is not None:
-            if isinstance(having_call.arg, Function3):
-                raise ReferenceException3(
-                    "CsvpathsReferenceFinder3's ':having()' only accepts a "
-                    "plain identity string -- csvpaths has no per-statement "
-                    "field to match a nested function against."
-                )
-            manifest = [
-                entry
-                for entry in manifest
-                if self._version_satisfies_having(entry, having_call)
-            ]
         return self._narrow_versions(built=built, manifest=manifest)
 
 
@@ -1475,6 +1460,11 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         # written order (compendium 6.28), and the pointer picks from what
         # the gates leave (finding A, David 2026-10-29).
         manifest = self._apply_gates(versions=manifest, gates=gates)
+        # the range first, then ':having()' (spec pass, 2026-11-14: NRE
+        # '$acme.csvpaths.:having("my_validations"):from(-3)' "Collects the
+        # last three versions of acme if they have a my_validations
+        # statement"; compendium 6.28). It ran before the range until then.
+        manifest = self._apply_having(built=built, versions=manifest)
         pointers = [f for f in built if f.ROLE == Function3.POINTER]
         if not pointers:
             return manifest
