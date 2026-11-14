@@ -77,7 +77,7 @@ class String(Type):
             # TODO: we could also check this in check_valid(). it is most often
             # going to be two Term ints, not a dynamic value.
             #
-            msg = "Max length ({maxlen}) cannot be less than min length ({minlen})"
+            msg = f"Max length ({maxlen}) cannot be less than min length ({minlen})"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
             if self.matcher.csvpath.do_i_raise():
                 raise ChildrenException(msg)

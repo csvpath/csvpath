@@ -3,6 +3,7 @@ import os
 import re
 import unittest
 import pytest
+from csvpath import CsvPath
 from csvpath.modes.run_mode import RunMode
 from csvpath.scanning.scanner2 import Scanner2
 from csvpath.scanning.scanner2_transformer import Scanner2Transformer
@@ -15,9 +16,20 @@ from csvpath.util.json.json_reader_helper import JsonReaderHelper
 #
 _PLACEHOLDER = re.compile(r"\{[A-Za-z_][A-Za-z0-9_\.\[\]\(\)'\"]*\}")
 #
-# deliberate templates, filled in later by .replace() or .format()
+# deliberate templates, filled in later
 #
-_ALLOWED_CALLS = {"f.replace", "cls._load"}
+_TEMPLATE_METHODS = {"replace", "format", "format_map", "substitute"}
+_ALLOWED_CALLS = {"cls._load"}
+#
+# by convention a message is built as msg = "..." and then logged or raised
+#
+_MESSAGE_NAMES = {"msg", "message"}
+
+
+def _is_template_call(func: ast.expr) -> bool:
+    if ast.unparse(func) in _ALLOWED_CALLS:
+        return True
+    return isinstance(func, ast.Attribute) and func.attr in _TEMPLATE_METHODS
 
 
 def _unformatted_messages(root: str) -> list[str]:
@@ -30,11 +42,20 @@ def _unformatted_messages(root: str) -> list[str]:
             with open(path, encoding="utf-8") as f:
                 tree = ast.parse(f.read(), path)
             for node in ast.walk(tree):
-                if not isinstance(node, ast.Call):
+                if isinstance(node, ast.Assign):
+                    targets = {t.id for t in node.targets if isinstance(t, ast.Name)}
+                    v = node.value
+                    if (
+                        targets & _MESSAGE_NAMES
+                        and isinstance(v, ast.Constant)
+                        and isinstance(v.value, str)
+                        and _PLACEHOLDER.search(v.value)
+                    ):
+                        found.append(f"{path}:{v.lineno}: msg = {v.value!r}")
+                    continue
+                if not isinstance(node, ast.Call) or _is_template_call(node.func):
                     continue
                 func = ast.unparse(node.func)
-                if func in _ALLOWED_CALLS or func.endswith(".format"):
-                    continue
                 for arg in list(node.args) + [k.value for k in node.keywords]:
                     if (
                         isinstance(arg, ast.Constant)
@@ -73,3 +94,27 @@ class TestUtilMessageFormatting(unittest.TestCase):
     def test_json_helper_shows_path_and_type(self):
         with pytest.raises(ValueError, match="not a.csv/csv$"):
             JsonReaderHelper._json_type("a.csv", "csv")
+
+    def test_string_length_message_shows_the_lengths(self):
+        assert _collected_errors(
+            f"$tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv[1][ string(#firstname, 1, 5) ]"
+        ) == ["Max length (1) cannot be less than min length (5)"]
+
+    def test_blank_notnone_with_a_header_argument_does_not_name_a_position(self):
+        #
+        # with an argument there is no header position, so this message
+        # cannot say "Header {i}". a plain f prefix would have raised
+        # NameError, because i is only set when there is no argument.
+        #
+        errors = _collected_errors(
+            f"$tests{os.sep}csvpath{os.sep}test_resources{os.sep}blank_notnone.csv[1*][ blank.notnone(#b) ]"
+        )
+        assert "Value cannot be empty because notnone is set" in errors
+        assert not any("{" in e for e in errors)
+
+
+def _collected_errors(cvl: str) -> list[str]:
+    path = CsvPath()
+    path.parse(f"~ validation-mode: collect, no-raise, no-stop ~ {cvl}")
+    path.collect()
+    return [e.message for e in path.errors]
