@@ -108,7 +108,7 @@ class Reference(Matchable):
             elif ref["data_type"] == Reference.CSVPATHS:
                 self.value = f"{ref['paths_name']}#{ref['name']}"
             else:
-                msg = "Incorrect reference data type: {ref['data_type']}"
+                msg = f"Incorrect reference data type: {ref['data_type']}"
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.matcher.csvpath.do_i_raise():
                     raise MatchException(msg)
