@@ -40,7 +40,7 @@ class Fingerprint(ValueProducer):
 
 
 class PercentDups(ValueProducer):
-    """returns a count of duplicates."""
+    """returns the percent of duplicate lines or sets of header values."""
 
     def check_valid(self) -> None:
         self.name_qualifier = True
@@ -57,6 +57,13 @@ class PercentDups(ValueProducer):
         )
         self.args.validate(self.siblings())
         super().check_valid()
+
+    @property
+    def has_internal_variables(self) -> bool:
+        return True
+
+    @has_internal_variables.setter
+    def has_internal_variables(self, b: bool) -> None: ...
 
     def _decide_match(self, skip=None) -> None:
         self.match = self.default_match()
