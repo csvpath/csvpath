@@ -21,8 +21,8 @@ class LogUtility:
     #
     LOGGERS = {}
     #
-    # names of released loggers waiting to leave Manager.loggerDict. see
-    # release_logger() and _purge_released().
+    # (name, logger) of released loggers waiting to leave Manager.loggerDict.
+    # see release_logger() and _purge_released().
     #
     PENDING_RELEASE = []
 
@@ -204,7 +204,7 @@ class LogUtility:
                 # logs then blocks forever. instead, we queue the name and
                 # remove it at a safe point. see _purge_released().
                 #
-                cls.PENDING_RELEASE.append(name)
+                cls.PENDING_RELEASE.append((name, loggerx))
             names.remove(name)
             #
             # the other concerning thing: there was a statement online that log handlers are
@@ -237,13 +237,26 @@ class LogUtility:
 
     @classmethod
     def _purge_released(cls) -> None:
-        """removes released loggers from loggerDict. call it only from ordinary
-        code, never from __del__. if the GC releases more loggers while we
-        purge, they only append to the list, which is safe."""
+        """removes released loggers from loggerDict. if the GC releases more
+        loggers while we purge, they only append to the list, which is safe."""
+        #
+        # if this thread already holds logging's lock, we may be inside one of
+        # logging's own loops over loggerDict. e.g. the GC ran a finalizer that
+        # logs through a Config while Manager._clear_cache() iterates. a purge
+        # then would be the very bug we are avoiding. purge next time.
+        #
+        if logging._lock._is_owned():
+            return
         with logging._lock:
             while cls.PENDING_RELEASE:
-                name = cls.PENDING_RELEASE.pop()
-                Logger.manager.loggerDict.pop(name, None)
+                name, released = cls.PENDING_RELEASE.pop()
+                #
+                # only if the entry is still the logger we released. a new
+                # component with a reused id on the same thread gets the same
+                # name, and may hold a logger under it by now.
+                #
+                if Logger.manager.loggerDict.get(name) is released:
+                    del Logger.manager.loggerDict[name]
 
     @classmethod
     def config_logger(cls, *, config, name: str, level: str = None) -> Logger:
