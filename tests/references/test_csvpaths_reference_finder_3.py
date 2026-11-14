@@ -885,6 +885,41 @@ class TestNameThreeRange:
             "four",
         ]
 
+    # decision D12 (spec pass, 2026-11-14): an int ':name()' is the
+    # statement identity of that string. NRE "Identities": "the index is
+    # also used as the name, if another name is not assigned". Statement 2
+    # here is named "header", so its identity is not "2".
+    UNNAMED_MANIFEST = [
+        dict(
+            RANGE_MANIFEST[0],
+            named_paths_identities=["0", "1", "header", "3", "4"],
+        )
+    ]
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$ranger.csvpaths.:first().:from(:name(1)):to(:name(3))", ["1", "header", "3"]),
+            ("$ranger.csvpaths.:first().:from(:name(3))", ["3", "4"]),
+            # no statement has the identity "2": nothing, no error (NRE)
+            ("$ranger.csvpaths.:first().:from(:name(2))", []),
+            # the index is always there, named or not
+            ("$ranger.csvpaths.:first().:from(2)", ["header", "3", "4"]),
+        ],
+    )
+    def test_an_int_name_bound_is_the_identity_of_that_string(
+        self, reference, expected
+    ):
+        results = _finder(reference, self.UNNAMED_MANIFEST).query()
+        assert [r.identity for r in results.results] == expected
+
+    def test_an_int_name_bound_takes_a_variable(self):
+        finder = _finder(
+            "$ranger.csvpaths.:first().:from(:name(@x))", self.UNNAMED_MANIFEST
+        )
+        finder.set_variable("x", value=3)
+        assert [r.identity for r in finder.query().results] == ["3", "4"]
+
     def test_a_name_bound_that_does_not_match_gives_nothing(self):
         results = _finder(
             '$ranger.csvpaths.:first().:from(:name("nope"))', RANGE_MANIFEST

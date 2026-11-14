@@ -1984,17 +1984,18 @@ class TestStatementLevelRange:
         finder.set_variable("x", value="three")
         assert finder.query().uuids == ["th-uuid", "f-uuid"]
 
-    def test_a_name_bound_variable_resolving_to_an_int_raises(
+    def test_a_name_bound_variable_resolving_to_an_int_is_that_identity(
         self, one_run_five_statements
     ):
-        # the int form is a question for David (D12); Name3 takes no int
+        # decision D12 (2026-11-14): an int ':name()' is the identity "3".
+        # These statements are all named, so none has it: nothing, no error
+        # (NRE). It raised until then.
         finder = _finder(
             "$acme.results.customers/2025:first().:from(:name(@x))",
             one_run_five_statements,
         )
         finder.set_variable("x", value=3)
-        with pytest.raises(ReferenceException3, match="int"):
-            finder.query()
+        assert finder.query().results == []
 
     def test_a_name_bound_with_a_regex_raises(self, one_run_five_statements):
         # the NRE allows a string, int or variable; a /regex/ is not an

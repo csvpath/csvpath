@@ -397,14 +397,19 @@ class ReferenceFinder3(ABC):
         "`:name()` with a string, int, or variable equaling the statement
         identity"; 2026-11-13). The string form, and a variable that
         resolves to a string (_resolve_arg() resolves the nested arg
-        before this runs), are supported. Name3 does not take an int, so
-        `:name(0)` and a variable resolving to an int raise; a /regex/ is
-        not an identity, so it raises here. Any other bound is
-        _range_bound()'s."""
+        before this runs), are supported. An int is the identity of that
+        string: ':name(0)' is the statement whose identity is "0", an
+        unnamed statement 0, since "the index is also used as the name, if
+        another name is not assigned" (NRE "Identities"; decision D12,
+        spec pass 2026-11-14). A named statement 0 is reached by '0' or
+        ':index(0)'. A /regex/ is not an identity, so it raises here. Any
+        other bound is _range_bound()'s."""
         if function is None:
             raise ValueError("function cannot be None")
         arg = function.arg
         if isinstance(arg, Name3):
+            if isinstance(arg.arg, int) and not isinstance(arg.arg, bool):
+                return str(arg.arg)
             if not isinstance(arg.arg, str):
                 raise ReferenceException3(
                     f"':{function.name}(:name())' takes a statement identity "
@@ -1344,6 +1349,16 @@ class ReferenceFinder3(ABC):
                     # plain value here, no separate _resolve_value()
                     # call needed anymore.
                     built = self._build(segment)
+                    if isinstance(built.arg, int):
+                        # an int is a statement identity, a name_three
+                        # range bound only (decision D12, 2026-11-14); a
+                        # path segment is a name, so say so rather than
+                        # match nothing
+                        raise ReferenceException3(
+                            f":name({built.arg}) takes a string in a path "
+                            "segment; an int :name() is a statement "
+                            "identity, for a name_three range bound."
+                        )
                     pattern.append(built.arg)
                     continue
                 if segment.name == "regex":
