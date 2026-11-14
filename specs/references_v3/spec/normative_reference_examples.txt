@@ -231,11 +231,33 @@ The following references return the path+uuid on `query()`.
 #### `resolves()` to all errors with matching idchains
 `$acme.results.:last().:errors(:idchain("add[0]"))`
 
-#### `resolve()` to contents, iff idchain exists in file
-`$acme.results.:last().:errors():idchain(:has_value())`
+#### `resolve()` to the idchain of each error
+`$acme.results.:last().:errors():idchain()`
 
-#### `resolve()` to contents, iff idchain matching exists in file
+#### `resolve()` to the matching idchains, one per matching error
 `$acme.results.:last().:errors():idchain("add[0]")`
+
+#### `query()` finds the file only if an error has a matching idchain; `resolve()` to the content of file
+`$acme.results.:last().:having(:errors(:idchain("add[0]"))):errors()`
+
+#### Error: an idchain lives only in errors.json, which this reference does not name
+`$acme.results.:last().:idchain("add[0]")`
+
+---
+
+## Filtering by content with `:having()`
+
+#### Runs that have an instance whose errors include idchain add[0]
+`$acme.results.:having(:errors(:idchain("add[0]")))`
+
+#### The instances of the last run whose errors include idchain add[0]
+`$acme.results.:last().:all():having(:errors(:idchain("add[0]")))`
+
+#### The errors.json of those instances (resolve reads one file at a time)
+`$acme.results.:last().:all():having(:errors(:idchain("add[0]"))):errors()`
+
+#### Only the add[0] errors of those instances
+`$acme.results.:last().:all():having(:errors(:idchain("add[0]"))):errors(:idchain("add[0]"))`
 
 ---
 

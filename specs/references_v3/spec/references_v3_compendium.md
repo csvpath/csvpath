@@ -304,7 +304,8 @@ More specifically:
 occupy, precluding the possibility of a wildcard at that location
 - A `:manifest()` standing alone in `name_one` with entity name `*`
 always points to the datatype's ledger manifest, not those of individual
-named-entities or the events that happen within them.
+named-entities or the events that happen within them; with a `:regex()` or
+`:choice()` root, to that ledger filtered by name.
 - A `:manifest()` standing alone in `name_one` with a specific entity name
 implies a `*` in the case of the `results` datatype, there being one
 manifest file per run; however, in the case of `files`, and `csvpaths` the
@@ -735,6 +736,11 @@ The rule is:
 - `resolve()` can only retrieve one file's content and errors if there are
   multiple file paths for the reference
 
+A manifest entry or a ledger record is not a file. Several of them resolve,
+one per result, whatever the root (5.6). Only a file's whole content, e.g. a
+version's bytes, an instance's manifest.json or an errors.json, is limited to
+one per `resolve()`.
+
 #### 5.4
 Tangental to the rule of 4.2, a wildcard `root_major` in any datatype where
 name_one is `:manifest()` points to the ledger manifest for that datatype.
@@ -831,8 +837,16 @@ that finds the last `results` run and using the `:idchain()` field accessor:
 `$acme.results.:last().:errors()` — returns the path+uuid, and resolves to content of file
 `$acme.results.:last().:errors(:idchain(:has_value()))` — returns the path+uuid, and resolves to all errors that have idchains
 `$acme.results.:last().:errors(:idchain("add[0]"))` — returns the path+uuid, and resolves to all errors with matching idchains
-`$acme.results.:last().:errors():idchain(:has_value())` — returns path+uuid, and resolves to contents, iff idchain exists in file
-`$acme.results.:last().:errors():idchain("add[0]")` — returns path+uuid, and resolves to contents, iff idchain matching exists in file
+`$acme.results.:last().:errors():idchain()` — returns the path+uuid, and resolves to the idchain of each error
+`$acme.results.:last().:errors():idchain("add[0]")` — returns the path+uuid, and resolves to the matching idchains, one per matching error
+`$acme.results.:last().:having(:errors(:idchain("add[0]"))):errors()` — returns the path+uuid only if the file has a matching error, and resolves to content of file
+
+A function nested in `:errors()` narrows the errors it returns. A field
+chained beside `:errors()` reads its own source. `:idchain()` lives only in
+each error of `errors.json`, so it reads those values. A field held in the
+instance manifest, e.g. `:error_count()`, filters the instance instead
+(6.40). To keep or drop the instance by what its `errors.json` contains, use
+`:having()`.
 
 #### 5.20
 `:idchain()` and similar functions must be smart enough to look into a JSON
@@ -1090,6 +1104,10 @@ Records
       their instances, not the file's own flat list of
       instances.
     For example, $*.results.:manifest() returns the entire set.
+- In every datatype, a bare :manifest() under a :regex() or :choice()
+  root is the set filtered by name: still one result (the ledger's
+  path, uuid None), resolving to the matching records. E.g.
+  $:regex(/^al/).files.:manifest().
     - A :manifest() in name_one with a pointer, filter or range, and
       no field after it, resolves to the selected run record(s),
       e.g. $*.results.:manifest():last() is the last run record.
@@ -1580,7 +1598,7 @@ predicate matching with variable or category values.
   missing facts gets fields that are present but empty too; the results
   show which is which.
 - :regex(/.../) — value matches regex
-- :having("...") — structure has a named/IDed child. Primary case: named-paths groups versions having a csvpath statement ID.
+- :having(...) — the item has a matching child: a statement with that identity, an instance whose field matches, or content that matches, e.g. `:having(:errors(:idchain("add[0]")))`.
 - The directional functions listed above can be used as operators:
   - `:after(...)` - greater-than
   - `:from(...)` - greater-than-or-equal-to
@@ -1589,10 +1607,14 @@ predicate matching with variable or category values.
 
 ### Function arguments
 #### 6.37
-Functions may have zero or one argument. Arguments do one of three things:
-- Point
-- Narrow
-- Match
+Functions may have zero or one argument.
+
+Arguments do one of three things:
+- Point: pick items by position. :index(5), :from(2):to(4), :last().
+- Filter: keep the items that meet a condition. :having("orders"),
+  :error_count(:above(2)), :status("complete").
+- Select inside individual items in a set: pick values inside each item's
+  content, without changing which items are selected. :errors(:idchain("add[0]")).
 
 #### 6.38
 An argument that enables a function to point provides additional variable
@@ -1601,10 +1623,22 @@ it is given the information indicating which index it refers to, in this case
 the 0-based `5`, meaning the 6th item.
 
 #### 6.39
-An argument that narrows enables a context-setting function to know what its
-context creating constraint is. E.g. `:having("orders")` is a context setter that
-needs the ID of a csvpath statement to enforce its limitation on the results of
-`name_one`.
+An argument that filters tells a filtering function what condition to apply.
+`:having()` keeps the items that have a matching child. Its argument names the
+child:
+- A csvpath statement identity: `$acme.csvpaths.:having("orders")` keeps the
+  versions of `acme` that have an `orders` statement;
+  `$acme.results.:having("orders")` keeps the runs that have an `orders`
+  instance.
+- An instance field: `$*.results.:flatten():having(:uuid("a381..."))` keeps
+  the runs that have an instance with that uuid.
+- Content: `$acme.results.:having(:errors(:idchain("add[0]")))` keeps the runs
+  that have an instance whose `errors.json` has an `add[0]` error.
+
+In `name_one`, `:having()` filters the versions or runs. In `name_three`, it
+filters the instances: `$acme.results.:last().:all():having(:errors(:idchain("add[0]")))`
+is the instances of the last run whose `errors.json` has an `add[0]` error.
+Like every filter, it applies after a range and before a pointer (6.28).
 
 #### 6.40
 An argument that matches allows a field accessor function to indicate a
@@ -1674,11 +1708,10 @@ What a pointer or value resolves to depends on where it sits and how it is used:
 - In name_one, a pointer resolves to a physical file, a named-paths group
   version, or a run.
 #### 6.46
-- In name_three, a pointer resolves to a well-known metadata *file* (e.g.
-  `:errors()`) — unless that pointer's own argument is itself another
-  pointer, in which case it resolves to a specific *value* inside that file
-  instead (e.g. `:errors(:idchain("add[0]"))`). Same trait, one nesting level
-  deeper, not a separate category.
+- In name_three, a content accessor resolves to a well-known metadata *file*
+  (e.g. `:errors()`) — unless its argument selects inside it (6.37), in which
+  case it resolves to the matching *values* inside that file instead (e.g.
+  `:errors(:idchain("add[0]"))`).
 
 #### 6.47
 **Note on pointers within file functions:**
@@ -1694,12 +1727,11 @@ expressions (multiple references with set operations; discussed elsewhere).
 
 ### At most one pointer per chain, per nesting level
 #### 6.48
-A chain may contain any number of context setters but at most one pointer.
-Critically, **a pointer used as another function's argument does not count
-toward, or act as, the pointer of the chain it is nested in** — it resolves
-that inner function's own internal scope. So `:errors(:idchain("..."))` is
-legal (one pointer — `idchain` — at the argument level, one pointer —
-`errors` — at the chain's own top level). Conversely, `:last():index(3)`
+A chain may contain any number of filters but at most one pointer.
+Critically, **a function used as another function's argument does not count
+toward, or act as, the pointer of the chain it is nested in** — it works
+inside that function's own scope. So `:errors(:idchain("..."))` is legal:
+`:idchain()` selects inside `:errors()` (6.37). Conversely, `:last():index(3)`
 sitting side by side in the same chain is illegal (two pointers, same
 level).
 
