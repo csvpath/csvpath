@@ -7853,6 +7853,25 @@ class TestMixedIndexAndDateRange:
     def test_an_index_counts_from_the_date_anchor(self, runs, reference, expected):
         assert _finder(reference, runs).query().uuids == expected
 
+    def test_the_index_counts_in_the_filtered_set_when_ledger_order_differs(
+        self, tmp_path
+    ):
+        # reviewer on #620: the ledger set is in arrival order (6.13b(ii))
+        # while the date filter reads each run's own time. With the ledger
+        # holding late, early, last, only "early" is on or before 10:00:01,
+        # so position 1 of the filtered set does not exist. Slicing first
+        # (the old order) gave ["early"].
+        base = tmp_path / "alpha"
+        late = _make_run(base, "2026-01-01_12-00-00", "late", {})
+        early = _make_run(base, "2026-01-01_08-00-00", "early", {})
+        last = _make_run(base, "2026-01-01_14-00-00", "last", {})
+        _write_archive_manifest(tmp_path, "alpha", [late, early, last])
+        archive = str(tmp_path)
+        upper = ':to(:date("2026-01-01_10-00-01"))'
+        assert _finder(f"$*.results.:manifest(){upper}", archive).query().uuids == ["early"]
+        assert _finder(f"$*.results.:manifest():from(1){upper}", archive).query().uuids == []
+        assert _finder(f"$*.results.:manifest():from(0){upper}", archive).query().uuids == ["early"]
+
     def test_an_index_range_and_a_date_after_it_is_not_one_range(self, runs):
         # David's probe, 2026-11-14: ':from(1):to(5):after(X)' has two
         # lower bounds, which 6.28c makes illegal; "positions 1-5 that are

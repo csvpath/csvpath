@@ -260,8 +260,9 @@ class ReferenceFinder3(ABC):
         functions (':after()'+':to()', ':from()'+':before()') -- 6.28's
         own explicit example, ':from(:index(5)):to(:yesterday())', pairs
         two different-mode functions without issue; mixing INDEX-mode
-        and DATE-mode bounds in one pair is applied, or for the unsettled
-        shapes raised, by _apply_mixed_range()."""
+        and DATE-mode bounds in one pair is applied by
+        _apply_mixed_range(): the date filter, then the index counted from
+        it (decision W4, 2026-11-14)."""
         lowers = [f for f in built if f.name in ("from", "after")]
         uppers = [f for f in built if f.name in ("to", "before")]
         if len(lowers) > 1:
@@ -535,7 +536,11 @@ class ReferenceFinder3(ABC):
         the first three from the 9th; ':from(-3):to(:date(X))' the last
         three through X. For the NRE's shape (a non-negative index lower
         bound with a date upper bound) this is the same answer as
-        counting from the start, which is all #591 supported; the other
+        counting from the start when the list is in the date filter's own
+        time order, which is all #591 supported. It is not always: the
+        RESULTS ledger set is in first-instance arrival order (6.13b(ii)),
+        and the filter reads each run's time, so there the two can differ
+        and W4's answer is the filtered one (reviewer on #620). The other
         mixes raised "not settled" until then. Index positions that must
         ALSO fall after a date are two windows, not one range: a reference
         expression, e.g. ':from(1):to(5)' INTERSECT ':after(:date(X))'.
