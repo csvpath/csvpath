@@ -270,7 +270,8 @@ class ArgSet:
             if not arg or not arg.actuals or len(arg.actuals) == 0:
                 if self._parent and self._parent.csvpath:
                     self._parent.csvpath.logger.debug(
-                        "No expectations to validate actual values against in argset {self.argset_number}"
+                        "No expectations to validate actual values against in argset %s",
+                        self.argset_number,
                     )
                 found = True
                 break

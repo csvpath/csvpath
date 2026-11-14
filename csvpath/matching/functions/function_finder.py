@@ -122,4 +122,4 @@ class FunctionFinder:  # pylint: disable=R0903
                 # fallback because it is an unlikely scenario that would have its own logic.
                 #
         else:
-            raise ConfigurationException("Unclear external function imports: {s}")
+            raise ConfigurationException(f"Unclear external function imports: {s}")

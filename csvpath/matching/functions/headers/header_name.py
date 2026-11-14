@@ -75,7 +75,7 @@ class HeaderName(ValueProducer):
         else:
             # correct exception. for e.g. we don't allow floats, but
             # floats can be cast to int, so we could have an incorrect val.
-            raise DataException("Unexpected value returned: {v}")
+            raise DataException(f"Unexpected value returned: {v}")
         self.match = ret
 
     def _produce_value(self, skip=None) -> None:

@@ -29,7 +29,7 @@ class RunMode:
                 rm = RunMode.RUN
             rm = rm.strip()
             if rm not in [RunMode.RUN, RunMode.NO_RUN]:
-                raise InputException("Unknown run mode: {rm}")
+                raise InputException(f"Unknown run mode: {rm}")
             if rm == RunMode.RUN:
                 self._run_mode = True
             else:

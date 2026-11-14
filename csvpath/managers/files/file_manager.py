@@ -120,7 +120,7 @@ class FileManager:
             if ref.datatype == ref.FILES:
                 return self._named_file_ref_to_uuid(ref)
             if ref.datatype != ref.RESULTS:
-                raise ValueError("Reference must be results, not {ref.datatype}")
+                raise ValueError(f"Reference must be results, not {ref.datatype}")
             #
             # see examples/references/test_ref.py. there we handle references like:
             #    $sourcemode.results.202:last.source1
@@ -159,7 +159,7 @@ class FileManager:
             elif ref.datatype == ref.RESULTS:
                 return mani["uuid"]
             else:
-                raise ValueError("Invalid reference type in {name}")
+                raise ValueError(f"Invalid reference type in {name}")
         else:
             mani = self.get_manifest(name)
             if file is None:
@@ -261,7 +261,7 @@ class FileManager:
                 rf = FilesReferenceFinder(self.csvpaths, reference=name)
                 mani = rf.manifest
             else:
-                raise ValueError("Unhandled type of reference: {name}")
+                raise ValueError(f"Unhandled type of reference: {name}")
         else:
             #
             # find a file manifest

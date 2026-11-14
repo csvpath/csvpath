@@ -289,7 +289,7 @@ class LogUtility:
             # this is a bit paranoid
             #
             if not os.path.exists(parentdir):
-                raise RuntimeError("Cannot create logging directory: {parentdir}")
+                raise RuntimeError(f"Cannot create logging directory: {parentdir}")
         log_file_handler = None
         handler_type = config.get(section="logging", name="handler", default="file")
         log_file_handler = None
