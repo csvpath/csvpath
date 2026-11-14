@@ -70,6 +70,12 @@ class Jev(SideEffect):
         super().check_valid()
         problem = Jev.key_problem(config=self.matcher.csvpath.config)
         if problem is not None:
+            #
+            # report it where it is found. Expression.check_valid() stops the
+            # run on a ChildrenException but only re-raises in raise mode, so
+            # without this a no-raise run would end silently.
+            #
+            self.matcher.csvpath.error_manager.handle_error(source=self, msg=problem)
             raise ChildrenException(problem)
 
     @classmethod

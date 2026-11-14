@@ -103,6 +103,33 @@ class TestJevKeyCheck(unittest.TestCase):
         assert f"names env var {name}, which is not set" in str(ctx.exception)
         assert client.call_count == 0
 
+    def test_jev_with_unset_key_reports_the_problem_without_raise(self):
+        #
+        # under no-raise the run stops at validation. the error must be
+        # collected, or the run looks valid and empty with no reason given.
+        #
+        name = self._env_reference()
+        env = {k: v for k, v in os.environ.items() if k != name}
+        client = mock.MagicMock(side_effect=AssertionError("Jev must not be called"))
+        with mock.patch.dict(os.environ, env, clear=True), mock.patch(
+            "csvpath.matching.functions.jev.jev.TypeSafeClient", client
+        ):
+            path = CsvPath()
+            path.parse(
+                f"""
+                ~ validation-mode:collect, no-raise, no-stop ~
+                ${PATH}[*][
+                    @answers = jev(
+                        concat(line_values_stack(), ""),
+                        noul("This includes a bank account number")
+                    )
+                ]"""
+            )
+            path.fast_forward()
+        messages = [e.message for e in path.errors]
+        assert f"Jev key in config.ini names env var {name}, which is not set" in messages
+        assert client.call_count == 0
+
 
 @unittest.skipUnless(
     jev_key_available(), "no [jev] key in config.ini, or its env var is not set"
