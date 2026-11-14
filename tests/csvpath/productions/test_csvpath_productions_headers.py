@@ -163,12 +163,13 @@ class TestCsvPathProductionsHeaders(unittest.TestCase):
 
 
 NUMERIC_LIKE = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}numeric_like_headers.csv"
+DASH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}dash_headers.csv"
 
 
-def _header_value(header: str):
+def _header_value(header: str, *, file: str = None):
     # numeric_like_headers.csv: a,-1,1.5,1_0,b / A,NEG,DECIMAL,UNDERSCORE,LAST
     path = CsvPath()
-    path.parse(f"""${NUMERIC_LIKE}[1][ @v = {header} ]""")
+    path.parse(f"""${file or NUMERIC_LIKE}[1][ @v = {header} ]""")
     path.fast_forward()
     return path.variables.get("v")
 
@@ -196,6 +197,10 @@ class TestCsvPathProductionsNumericLikeHeaderNames(unittest.TestCase):
 
     def test_underscore_digits_name_is_a_name(self):
         assert _header_value("#1_0") == "UNDERSCORE"
+
+    def test_only_one_leading_minus_makes_a_position(self):
+        # dash_headers.csv: --1,x / DASHDASH,X
+        assert _header_value("#--1", file=DASH) == "DASHDASH"
 
     def test_decimal_is_still_a_position(self):
         assert _header_value("#1") == "NEG"
