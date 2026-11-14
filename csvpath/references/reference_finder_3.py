@@ -781,6 +781,27 @@ class ReferenceFinder3(ABC):
         name_one.functions.insert(0, implied)
 
     @staticmethod
+    def _reads_ledger_set(reference: Reference3) -> bool:
+        """true when a traversal reference reaches the logical ledger set:
+        a ':manifest()' in name_one (6.13b(iv): "Only :manifest() in
+        name_one, with '*' (or :regex()/:choice()) in root_major, reaches
+        the logical manifest set"), with no walk beside it. A walk
+        selector (':all()', ':groups()', ':flatten()') or a path segment
+        keeps it a traversal (ruling C Q1, 2026-10-30: they "stay
+        traversals"), as query() already treats it (reviewer on #618).
+        Otherwise a traversal root is the literal reference for each live
+        name."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        name_one = reference.name_one
+        calls = [*name_one.path, *name_one.functions]
+        if any(not isinstance(c, FunctionCall3) for c in name_one.path):
+            return False
+        if any(c.name in ("all", "groups", "flatten") for c in calls):
+            return False
+        return any(c.name == "manifest" for c in calls)
+
+    @staticmethod
     def _is_bare_pointer_reference(reference: Reference3, name: str) -> bool:
         """true when name_one's entire content is a single, argument-
         less ":name()" call -- no other path segments, no trailing

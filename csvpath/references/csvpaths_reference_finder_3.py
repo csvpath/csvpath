@@ -896,7 +896,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     # all. See function_3.py's SOURCE comment and
                     # FilesReferenceFinder3._compute_field()'s own
                     # precedent (:named_file_home()).
-                    return self._compute_field(field_call.name, reference)
+                    return self._compute_field(
+                        name=field_call.name, reference=reference, result=result
+                    )
                 key_path = function_cls.KEY.get(reference.datatype)
                 key_path = self._apply_key_arg(key_path, field_call.arg)
                 if function_cls.SOURCE == "definition":
@@ -1011,31 +1013,72 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             isinstance(c, FunctionCall3) and c.name == fname for c in calls
         )
 
-    def _compute_field(self, name: str, reference: Reference3) -> object:
+    def _compute_field(
+        self, *, name: str, reference: Reference3, result: ReferenceResult3
+    ) -> object:
         """values for SOURCE == "computed" field-accessor functions --
         never read from a manifest/definition, always derived from the
         already-resolved reference. See function_3.py's SOURCE comment
         and named_paths_home_3.py."""
+        if name is None or name == "":
+            raise ValueError("name cannot be None or empty")
         if name == "named_paths_home":
-            if self._is_traversal_root(reference.root_major):
-                # settled, not a gap (not-yet-supported sweep #9) --
-                # unlike _group_manifest_entry() (which can search every
-                # group for a matching uuid), "the home directory" has
-                # no single answer across several groups at once -- not
-                # a missing feature, a structural impossibility (see
-                # the function's own docstring).
-                raise ReferenceException3(
-                    "CsvpathsReferenceFinder3 does not support "
-                    ":named_paths_home() combined with '*'/:regex() "
-                    "traversal -- root_major must be a literal named-"
-                    "paths group name."
-                )
-            return self.csvpaths.paths_manager.named_paths_home(
-                reference.root_major, assure=False
+            return self._record_home(
+                reference=reference, uuid=None if result is None else result.uuid
             )
         raise ReferenceException3(
             f"CsvpathsReferenceFinder3 has no computed-field handling for :{name}()"
         )
+
+    def _record_home(self, *, reference: Reference3, uuid: "str | None") -> "str | None":
+        """the named-paths home of the record `uuid` (David, 2026-11-14,
+        decision W7, option B).
+
+        - A literal root is its own home, as before.
+        - A ':manifest()' read under '*', ':regex()' or ':choice()' reaches
+          the ledger set, and reads each record's stored named_paths_home:
+          the group manifest's for a live version, which wins for details
+          (6.13b(v); the same key ':group_home()' reads, RMF table 3), else
+          the ledger's (table 4) -- a deleted group, an unchanged reload,
+          or a live entry without the field. A historical value, which may
+          no longer exist on disk; None if neither has it.
+        - Without ':manifest()' a traversal root is the literal reference
+          for each live group (6.13b(iv)): its home, computed.
+
+        It raised under a traversal root ("no single answer across several
+        groups"), as RMF section 4 said; each record has exactly one. The
+        first draft of #618 computed the home for live ':manifest()'
+        records too (reviewer on #618)."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        if not self._is_traversal_root(reference.root_major):
+            return self.csvpaths.paths_manager.named_paths_home(
+                reference.root_major, assure=False
+            )
+        if not uuid:
+            raise ReferenceException3(
+                "CsvpathsReferenceFinder3 cannot tell whose home a record has "
+                "without its uuid."
+            )
+        name, entry = self._group_manifest_entry(reference.root_major, uuid)
+        if self._reads_ledger_set(reference):
+            if entry is not None and entry.get("named_paths_home"):
+                return entry["named_paths_home"]
+            record = self._find_manifest_entry_by_uuid(self.source.paths_ledger(), uuid)
+            if record is None:
+                if entry is not None:
+                    return None
+                raise ReferenceException3(
+                    f"CsvpathsReferenceFinder3 found no live version or ledger "
+                    f"record {uuid!r}."
+                )
+            return record.get("named_paths_home")
+        if name is None:
+            raise ReferenceException3(
+                f"CsvpathsReferenceFinder3 found no live group holding "
+                f"version {uuid!r}."
+            )
+        return self.csvpaths.paths_manager.named_paths_home(name, assure=False)
 
     def _ledger_versions(self, *, name_filter: "str | None") -> list:
         """every root ledger entry, in ledger order, deleted ones

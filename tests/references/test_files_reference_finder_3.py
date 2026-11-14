@@ -1046,29 +1046,96 @@ class TestTraversalRootNamedFileReads:
         with pytest.raises(ReferenceException3):
             self._values(reference)
 
+    # David, 2026-11-14 (decision W7, option B): a ':manifest()' read under
+    # a traversal root gives each ledger record's stored name_home, "like
+    # every other ledger field", a deleted named-file's included. These
+    # raised "root_major must be a literal named-file name" (RMF section 4,
+    # a spec-doc bug). The stored homes here differ from the computed ones
+    # (inputs/named_files/<name>) to show which is read.
+    HOME_LEDGER = [
+        dict(e, named_file_name=name, name_home=f"L/{name}")
+        for e, name in zip(STAR_LEDGER, ["alpha", "alpha", "alpha", "beta", "beta"])
+    ] + [
+        {
+            "uuid": "u-gone-1",
+            "named_file_name": "gone",
+            "name_home": "inputs/named_files/gone",
+        }
+    ]
+    ALPHA = "L/alpha"
+    BETA = "L/beta"
+    GONE = "inputs/named_files/gone"
+
+    def _home_values(self, reference: str) -> list:
+        finder = _finder(
+            reference,
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=STAR_BY_NAME,
+            ledger=self.HOME_LEDGER,
+            inputs_files_path="inputs/named_files",
+        )
+        return [r.data for r in finder.resolve().results]
+
     @pytest.mark.parametrize(
-        "reference",
+        "reference, expected",
         [
-            # ':named_file_home()' is computed from the root, which is not a
-            # name under a traversal root: it raises, as CSVPATHS does for
-            # ':named_paths_home()' (RMF section 4). It raised TypeError
-            # before #593, then read each live record's home.
-            "$*.files.:manifest():named_file_home()",
-            "$:regex(/^al/).files.:manifest():named_file_home()",
-            '$:choice("alpha").files.:manifest():named_file_home()',
+            (
+                "$*.files.:manifest():named_file_home()",
+                [ALPHA, ALPHA, ALPHA, BETA, BETA, GONE],
+            ),
+            ("$:regex(/^al/).files.:manifest():named_file_home()", [ALPHA] * 3),
+            ('$:choice("alpha|gone").files.:manifest():named_file_home()', [ALPHA] * 3 + [GONE]),
+            # the chain form, a deleted record and a live one
+            ("$*.files.:manifest():last():named_file_home()", [GONE]),
+            ("$*.files.:manifest():first():named_file_home()", [ALPHA]),
+            ('$:choice("beta").files.:manifest():last():named_file_home()', [BETA]),
         ],
     )
-    def test_a_computed_field_on_manifest_raises_under_traversal(self, reference):
-        with pytest.raises(ReferenceException3) as error:
-            _finder(
-                reference,
-                STAR_ALPHA_HOME,
-                STAR_ALPHA_MANIFEST,
-                by_name=STAR_BY_NAME,
-                ledger=STAR_LEDGER,
-                inputs_files_path="inputs/named_files",
-            ).query()
-        assert "literal named-file name" in str(error.value)
+    def test_a_computed_home_on_manifest_reads_each_records_home(
+        self, reference, expected
+    ):
+        assert self._home_values(reference) == expected
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # without ':manifest()' a traversal root is the literal
+            # reference for each live name (6.13b(iv)): the home is computed
+            # from the live owner, as at a literal root
+            ("$*.files.*.:last():named_file_home()", ["inputs/named_files/alpha", "inputs/named_files/beta"]),
+            ("$:regex(/^al/).files.*.:last():named_file_home()", ["inputs/named_files/alpha"]),
+        ],
+    )
+    def test_without_manifest_the_home_is_each_live_owners(self, reference, expected):
+        # reviewer on #618: the ':manifest()' forms read the stored field,
+        # these do not
+        assert sorted(self._home_values(reference)) == expected
+
+    def test_a_record_that_predates_the_home_field_reads_none(self):
+        # absence implies nothing: an old deleted record with no name_home
+        ledger = STAR_LEDGER + [{"uuid": "u-old-1", "named_file_name": "old"}]
+        finder = _finder(
+            "$*.files.:manifest():last():named_file_home()",
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=STAR_BY_NAME,
+            ledger=ledger,
+            inputs_files_path="inputs/named_files",
+        )
+        assert [r.data for r in finder.resolve().results] == [None]
+
+    def test_the_literal_chain_reads_its_home(self):
+        # it raised "does not read a named-file's manifest.json"; the
+        # CSVPATHS literal chain already worked (reviewer on #594)
+        finder = _finder(
+            "$alpha.files.:manifest():last():named_file_home()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            inputs_files_path="inputs/named_files",
+            ledger=LEDGER,
+        )
+        assert [r.data for r in finder.resolve().results] == [ALPHA_HOME]
 
     def test_a_computed_field_on_manifest_at_a_literal_root_reads_its_home(self):
         # unchanged: the named-file's home for each of its entries, as
@@ -1948,7 +2015,9 @@ class TestManifestChainParts:
         assert "at most one pointer" in str(error.value)
 
     @pytest.mark.parametrize(
-        "field", ["on_arrival()", "run_method()", "named_file_home()"]
+        # ':named_file_home()' is allowed in a chain since W7 (2026-11-14):
+        # every record has a home (test_the_literal_chain_reads_its_home)
+        "field", ["on_arrival()", "run_method()"]
     )
     def test_a_field_not_read_from_the_manifest_raises(self, field):
         with pytest.raises(ReferenceException3) as error:

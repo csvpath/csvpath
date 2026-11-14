@@ -255,7 +255,9 @@ def test_the_named_paths_home_field_creates_nothing(paths):
     finder = ReferenceFinderFactory3.for_reference(
         reference="$newgroup.csvpaths.:last():named_paths_home()", csvpaths=paths
     )
-    home = finder._compute_field("named_paths_home", finder.ref.parsed)
+    home = finder._compute_field(
+        name="named_paths_home", reference=finder.ref.parsed, result=None
+    )
     assert home == paths.paths_manager.named_paths_home("newgroup", assure=False)
     assert not os.path.exists(home)
 

@@ -2661,7 +2661,10 @@ class TestNamedPathsHomeFunction:
         ).resolve()
         assert results.results[0].data == GROUP_HOME
 
-    def test_star_traversal_is_not_yet_supported(self):
+    def test_star_traversal_reads_each_versions_group_home(self):
+        # David, 2026-11-14 (decision W7, option B): a live version's home
+        # is its group's. It raised "root_major must be a literal named-
+        # paths group name" (RMF section 4, a spec-doc bug).
         by_name = {
             "alpha": [
                 {
@@ -2671,11 +2674,61 @@ class TestNamedPathsHomeFunction:
                 }
             ],
         }
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$*.csvpaths.:last():named_paths_home()", by_name=by_name
-            ).resolve()
+        results = _finder("$*.csvpaths.:last():named_paths_home()", by_name=by_name).resolve()
+        assert [r.data for r in results.results] == ["named_paths/alpha"]
 
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # a ':manifest()' read gives each record's STORED
+            # named_paths_home: the group manifest's for a live version
+            # (6.13b(v); the key ':group_home()' reads), else the ledger's
+            # -- also-v1's group entry has none, and gone-v1 (a deleted
+            # group) and keep-reload (an unchanged reload) are ledger-only.
+            # The stored values differ from the computed named_paths/<name>
+            # to show which is read (reviewer on #618).
+            (
+                "$*.csvpaths.:manifest():named_paths_home()",
+                ["S/keep", "L/also", "L/gone", "L/keep"],
+            ),
+            (
+                '$:regex("^(keep|gone)$").csvpaths.:manifest():named_paths_home()',
+                ["S/keep", "L/gone", "L/keep"],
+            ),
+            ("$*.csvpaths.:manifest():last():named_paths_home()", ["L/keep"]),
+            # without ':manifest()', the literal reference for each live
+            # group (6.13b(iv)): computed
+            ("$*.csvpaths.:named_paths_home()", ["named_paths/keep", "named_paths/also"]),
+            # ':all()' beside ':manifest()' stays a walk (ruling C Q1), so it
+            # is the literal reference for each live group: computed, as
+            # '$keep.csvpaths.:all():manifest():named_paths_home()' gives
+            # (reviewer on #618; it read the stored homes)
+            (
+                "$*.csvpaths.:all():manifest():named_paths_home()",
+                ["named_paths/also", "named_paths/keep"],
+            ),
+        ],
+    )
+    def test_a_traversal_root_reads_each_records_home(self, reference, expected):
+        homes = {
+            "keep-v1": "L/keep",
+            "also-v1": "L/also",
+            "gone-v1": "L/gone",
+            "keep-reload": "L/keep",
+        }
+        ledger = [dict(e) for e in _C1_LEDGER]
+        for e in ledger:
+            e["named_paths_home"] = homes[e["uuid"]]
+        finder = _finder(
+            reference,
+            by_name={
+                "keep": [dict(_C1_KEEP, named_paths_home="S/keep")],
+                "also": [dict(_C1_ALSO)],
+            },
+            ledger=ledger,
+            inputs_csvpaths_path="named_paths",
+        )
+        assert [r.data for r in finder.resolve().results] == expected
 
 def _one(results) -> object:
     """the data of the only result: a definition read is one result per
