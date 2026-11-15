@@ -8213,7 +8213,11 @@ class TestANamedRunDir:
         r1 = _make_run(base / "beta", "2026-01-01_00-00-00", "b1", {"s": "b1-s"})
         r2 = _make_run(base / "beta", "2026-01-02_00-00-00", "b2", {"s": "b2-s"})
         r3 = _make_run(base, "2026-01-03_00-00-00", "top", {"s": "top-s"})
-        _write_archive_manifest(tmp_path, "acme", [r1, r2, r3])
+        # a collision run: two runs in one second get "_N" (run_home_maker)
+        r4 = _make_run(base / "beta", "2026-01-01_00-00-00_0", "b1x", {"s": "b1x-s"})
+        # a template dir whose name looks like a run dir
+        r5 = _make_run(base / "2025-12-31_00-00-00", "2026-01-05_00-00-00", "t1", {"s": "t1-s"})
+        _write_archive_manifest(tmp_path, "acme", [r1, r2, r3, r4, r5])
         return str(tmp_path)
 
     @pytest.mark.parametrize(
@@ -8227,6 +8231,13 @@ class TestANamedRunDir:
             ("$acme.results.beta/2026-01-01_00-00-01", []),
             # a run dir is matched at its own depth only
             ("$acme.results.2026-01-01_00-00-00", []),
+            # the framework's "_N" collision suffix (reviewer on #644)
+            ("$acme.results.beta/2026-01-01_00-00-00_0", ["b1x"]),
+            # a template dir named like a run dir still matches as a
+            # template path, with a pointer (it went silent in the first
+            # draft; reviewer on #644)
+            ("$acme.results.2025-12-31_00-00-00/:last()", ["t1"]),
+            ("$acme.results.2025-12-31_00-00-00/2026-01-05_00-00-00", ["t1"]),
         ],
     )
     def test_naming_the_run_dir_finds_it(self, archive, reference, expected):

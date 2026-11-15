@@ -3599,23 +3599,35 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         prefix_segments = cls._prefix_segments(run_home, home)
         if prefix_segments is None:
             return False
+        if cls._segments_match(prefix_segments, pattern):
+            return True
         if pattern and cls._is_run_dir_name(pattern[-1]):
-            # the pattern names the run dir itself, e.g.
-            # 'beta/2026-01-01_00-00-00': compare the whole path, the run's
-            # own name included. It never matched, the name being cut off
-            # first (David, 2026-11-14; decision D18)
-            prefix_segments = prefix_segments + [pathu.parts(run_home)[-1]]
-        if len(prefix_segments) != len(pattern):
+            # the pattern may name the run dir itself, e.g.
+            # 'beta/2026-01-01_00-00-00': the whole path, the run's own name
+            # included. It never matched, the name being cut off first
+            # (David, 2026-11-14). Depth tells the two readings apart, so a
+            # template dir whose name looks like a run dir still matches as
+            # a template path above (decision D18; reviewer on #644).
+            return cls._segments_match(
+                prefix_segments + [pathu.parts(run_home)[-1]], pattern
+            )
+        return False
+
+    @classmethod
+    def _segments_match(cls, segments: list, pattern: list) -> bool:
+        """true if `segments` match `pattern` position by position, with
+        exactly as many segments as the pattern has."""
+        if len(segments) != len(pattern):
             return False
-        for actual, expected in zip(prefix_segments, pattern):
-            if not cls._segment_matches(expected, actual):
-                return False
-        return True
+        return all(
+            cls._segment_matches(expected, actual)
+            for actual, expected in zip(segments, pattern)
+        )
 
     # the run-dir name form the framework writes (run_home_maker.py,
-    # "%Y-%m-%d_%H-%M-%S"): how a run dir is told from a template segment
-    # (decision D18, 2026-11-14)
-    _RUN_DIR_NAME = re.compile(r"^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}$")
+    # "%Y-%m-%d_%H-%M-%S", with "_N" when two runs start in the same second)
+    # (decision D18, 2026-11-14; the suffix: reviewer on #644)
+    _RUN_DIR_NAME = re.compile(r"^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(_\d+)?$")
 
     @classmethod
     def _is_run_dir_name(cls, segment) -> bool:
