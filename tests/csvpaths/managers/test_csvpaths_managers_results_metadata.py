@@ -52,3 +52,20 @@ class TestCsvPathsManagersResultsMetadata(unittest.TestCase):
         }
         m.from_manifest(manifest)
         assert m.named_paths_fingerprint == "abc123"
+
+    def test_from_manifest_reads_named_file_size(self) -> None:
+        # register_complete() rebuilds the metadata from the run manifest and
+        # writes it back; an empty key ("") dropped the size on every run
+        # (RC triage A20, David 2026-11-15)
+        m = ResultsMetadata(None)
+        m.from_manifest(
+            {
+                "run_home": "some/run/home",
+                "uuid": str(uuid4()),
+                "run_uuid": str(uuid4()),
+                "named_paths_uuid": str(uuid4()),
+                "named_file_uuid": str(uuid4()),
+                "named_file_size": 224,
+            }
+        )
+        assert m.named_file_size == 224
