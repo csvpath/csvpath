@@ -21,8 +21,9 @@ class Name3(Function3):
     # inventing a second convention. "@var" here was called a separate,
     # still-open gap; as a nested range-bound argument
     # (':from(:name(@x))') it is resolved by ReferenceFinder3.
-    # _resolve_arg() (2026-08-27) before use, tested 2026-11-13. Not
-    # re-checked here for the name_one path-segment position.
+    # _resolve_arg() (2026-08-27) before use, tested 2026-11-13. As a
+    # name_one path segment the resolved value is checked too (an int, a
+    # bool or an unset variable raises; checked 2026-11-15, RC triage A7).
     #
     NAME = "name"
     SUMMARY = (
