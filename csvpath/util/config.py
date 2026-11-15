@@ -908,7 +908,7 @@ shell = /bin/bash
             )
         if self.csvpaths_log_level not in [s.value for s in LogLevels]:
             raise ConfigurationException(
-                f"CsvPaths log level {_} is wrong in {self.configpath}"
+                f"CsvPaths log level {self.csvpaths_log_level} is wrong in {self.configpath}"
             )
         #
         # log files config

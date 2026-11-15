@@ -121,4 +121,94 @@ Each is a short file and one more job: cents.
 
 Until the open items are probed, the phone, German ID and Codice Fiscale
 differences go on the worklist's "Ask road-testers about" list as possible
-false positives.
+false positives. (Probed on 2026-11-14: see the next section.)
+
+## The second probe, 2026-11-14
+
+Job `csvpath-probe-1` (`3347c6fce7a5889680d5e436c77d676d`): include
+`PHONE_NUMBER`, `GERMANY_NATIONAL_IDENTIFICATION_NUMBER`,
+`ITALY_NATIONAL_IDENTIFICATION_NUMBER`; the three files from
+`tests/macie/live/make_probe_files.py` under `probe/` (ETags equal the
+local MD5s). One variant per row; Macie reported 2 findings, 6 cells.
+
+### Phones
+
+| Cell | Ours | Macie |
+|---|---|---|
+| `call +1 212 555 0148` | 1 | 0 |
+| `call +12125550148` | 1 | **1** |
+| `call +1-212-555-0148` | 1 | 0 |
+| `call +1 (212) 555-0148` | 1 | **1** |
+| `call +1.212.555.0148` | 1 | 0 |
+| `call +44 20 7946 0958` | 0 | 0 |
+| `call +49 30 12345678` | 0 | 0 |
+| `+1 212 555 0148` under header `phone` | 1 | 1 |
+| `phone +1 212 555 0148` | 1 | 1 |
+| `phone 212 555 0149` | 1 | 1 |
+
+With a keyword, Macie takes spaces. **Without one, a country code is not
+enough**: only the unbroken `+12125550148` and the `(212)` form were
+reported; spaces, dashes and dots between the groups were not. Our rule
+(a country code needs no keyword) over-reports.
+
+### German ID
+
+Macie reported **none** of seven variants: the first check's value under
+the `personalausweis` header and with `personalausweis:` in the cell,
+three more 2010-format values (valid ICAO check digit), one after
+`ausweisnummer`, and a pre-2010 all-digit number. The keyword is not the
+problem (it is on Macie's list and was in the cell), so Macie checks
+something about the value that we do not, or detects a form we have not
+tried. We report all seven.
+
+### Codice Fiscale
+
+| Cell | Ours | Macie |
+|---|---|---|
+| `RSSMRA85T10A562S` under `codice_fiscale` | 1 | 0 |
+| the same under `codice fiscale` | 1 | 0 |
+| `codice fiscale: RSSMRA85T10A562S` | 1 | 0 |
+| three more values under `codice_fiscale` | 1 each | 0 |
+| `tax code BNCLRA70A41H501B` | 1 | **1** |
+
+The value check is not the problem: `BNCLRA70A41H501B` was reported after
+`tax code` and not under `codice_fiscale`. **`codice fiscale` is not a
+keyword to Macie**, in the header or in the cell, with a space or an
+underscore. Our catalog, copied from Macie's documentation, lists the
+keyword as `codice fiscal`, and we match keywords as substrings (fidelity item 3), so for us
+`codice fiscale` contains it. For Macie it does not.
+
+That is the first evidence on item 3: **Macie may match managed
+identifiers' keywords as whole words, not substrings.** If so, every
+keyword that fires inside a longer word for us (Brazil's `rg` in `org`,
+`cep` in `receptor`, `card`, `pan`, ...) over-reports, not just this one.
+It may instead be that the documented `codice fiscal` is a typo and the
+real keyword is something else; one more probe can tell the two apart.
+
+### What to decide
+
+1. **Phones:** a country code without a keyword counts only for the
+   unbroken E.164 form and the `+1 (212) 555-0148` form. Narrowing our
+   rule to that matches all ten rows.
+2. **Keywords: substrings or words?** A short probe: a few identifiers
+   whose keywords we can put inside longer words (`ssn` in `ssnumber`,
+   `itin` in `itinerary`, `dob` in `dobson`), and the same keywords
+   standing alone as controls. If Macie matches words, change the keyword
+   rule for managed identifiers (custom identifiers stay as tested in the
+   first check, where the keyword stood alone).
+3. **German ID:** nothing we tried is reported. Until a reported form is
+   found, our stand-in can only over-report against Macie. Options: mark
+   it partial in the catalog and say so in `limitations.md`, or probe
+   further (the MRZ form with `D` and `<` fillers, the number with the
+   card's own `IDD` prefix).
+
+### Decided (David, 2026-11-15)
+
+- **German ID:** marked partial in the catalog ("Not confirmed against
+  Macie"), so every conversion that uses it says so; listed in
+  `docs/macie/limitations.md` under "Known to differ from Macie". Probing
+  the machine-readable forms is deferred.
+- **Keywords:** a third probe (`tests/macie/live/README.md` section 6),
+  before any change to the keyword rule.
+- **Phones:** waiting on the third probe, which adds the UK and German
+  numbers in the two forms Macie reported without a keyword.

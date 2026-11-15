@@ -150,6 +150,12 @@ def test_macie_group_a_more_catalog(catalog) -> None:
     for e in [de, fr, mag]:
         assert e["keyword_mode"] == "required"
         assert e["severity"] == "1:HIGH"
+    #
+    # the live probe (2026-11-14): Macie reported none of the forms we
+    # report, so every conversion that uses it says so
+    #
+    assert "Not confirmed against Macie" in de["partial"]
+    assert fr.get("partial") is None
 
 
 @pytest.mark.parametrize(
