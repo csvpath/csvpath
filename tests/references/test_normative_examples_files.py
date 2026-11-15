@@ -29,6 +29,7 @@ import pytest
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.files_reference_finder_3 import FilesReferenceFinder3
+from csvpath.util.date_util import DateUtility as daut
 
 
 class _FakeFileDescriber:
@@ -890,3 +891,20 @@ class TestPredicateSupportExamples:
         # '*' is exactly one level; the templated registration is deeper.
         reference = "$*.files.*.:template(:has_value())"
         assert _predicate_finder(reference, tmp_path).query().results == []
+
+
+class TestNameOfAClockValue:
+    # NRE ":year()": "$acme.files.orders/:name(:year())/:last()" (raised on
+    # the argument type until 2026-11-15; 6.27d)
+    def test_it_is_the_years_path_segment(self):
+        year = str(daut.now().year)
+        home = "inputs/named_files/acme"
+        manifest = [
+            {"file": f"{home}/orders/{year}/x/a.csv", "file_home": f"{home}/orders/{year}/x", "uuid": "u1"},
+            {"file": f"{home}/orders/{year}/z/b.csv", "file_home": f"{home}/orders/{year}/z", "uuid": "u2"},
+            {"file": f"{home}/orders/1999/x/c.csv", "file_home": f"{home}/orders/1999/x", "uuid": "u3"},
+        ]
+        nre = _finder("$acme.files.orders/:name(:year())/:last()", home, manifest).query()
+        literal = _finder(f"$acme.files.orders/{year}/:last()", home, manifest).query()
+        assert nre.files == literal.files
+        assert nre.files and all(f"/orders/{year}/" in p for p in nre.files)
