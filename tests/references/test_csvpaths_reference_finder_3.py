@@ -4007,7 +4007,6 @@ class TestATrailingStarIsEveryVersion:
         assert len(_finder("$acme.csvpaths.*").query().uuids) == len(ACME_MANIFEST)
 
 
-
 class TestALedgerEntryWithNoUuid:
     # David, 2026-10-31: "a ledger entry with no `uuid` raises (there should
     # be none)", as FILES (decision D20) and RESULTS check theirs. CSVPATHS
@@ -4035,6 +4034,10 @@ class TestALedgerEntryWithNoUuid:
             '$*.csvpaths.:manifest():lifecycle("active")',
             "$:regex(/^ac/).csvpaths.:manifest():last()",
             '$:choice("acme").csvpaths.:manifest():last()',
+            '$acme.csvpaths.:lifecycle("active")',
+            # forms that never needed a4's uuid read the ledger too
+            "$*.csvpaths.:manifest():first()",
+            '$*.csvpaths.:manifest():lifecycle("deleted")',
         ],
     )
     def test_a_ledger_read_raises_naming_the_entry(self, reference):
@@ -4042,6 +4045,13 @@ class TestALedgerEntryWithNoUuid:
         with pytest.raises(ValueError, match="paths ledger entry has no uuid"):
             finder.query()
         assert len(finder.csvpaths.logger.errors) == 1
+
+    def test_a_bare_filtered_set_raises_at_resolve(self):
+        # its query names the ledger only (uuid None); resolve reads it
+        finder = self._finder('$:choice("acme").csvpaths.:manifest()')
+        assert finder.query().uuids == [None]
+        with pytest.raises(ValueError, match="paths ledger entry has no uuid"):
+            self._finder('$:choice("acme").csvpaths.:manifest()').resolve()
 
     def test_a_form_that_reads_only_the_named_paths_manifest_is_unchanged(self):
         assert self._finder("$acme.csvpaths.:last()").query().uuids == ["a4"]
