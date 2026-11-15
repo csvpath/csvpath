@@ -8080,3 +8080,53 @@ class TestHavingByContent:
     def test_unclear_or_wrong_arguments_raise(self, archive, reference, message):
         with pytest.raises(ReferenceException3, match=message):
             _finder(reference, archive).query()
+
+
+class TestInstanceDeclarationOrder:
+    # David, 2026-11-14: in name_three, positions (pointers, :index(), ranges)
+    # are the statement's position in group.csvpaths -- declaration order --
+    # whichever source is read. A parallel run's instances can ARRIVE in a
+    # different order; the ledger set counted arrival order until then while
+    # the run-dir branch counted declaration (instance_index).
+    @pytest.fixture
+    def archive(self, tmp_path):
+        run = tmp_path / "acme" / "2026-01-01_00-00-00"
+        _write_json(run / "manifest.json", {"run_uuid": "r1"})
+        for identity, index in (("s0", 0), ("s1", 1)):
+            _write_json(
+                run / identity / "manifest.json",
+                {"uuid": f"r1-{identity}", "instance_index": index},
+            )
+        # s1 arrived first
+        ledger = [
+            {"named_paths_name": "acme", "run_home": str(run), "run_uuid": "r1",
+             "uuid": f"r1-{identity}", "identity": identity}
+            for identity in ("s1", "s0")
+        ]
+        _write_json(tmp_path / "manifest.json", ledger)
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "name_three, expected",
+        [
+            (".:first()", ["r1-s0"]),
+            (".:last()", ["r1-s1"]),
+            (".:index(0)", ["r1-s0"]),
+            (".:from(0):to(0)", ["r1-s0"]),
+            (".:all()", ["r1-s0", "r1-s1"]),
+        ],
+    )
+    def test_both_sources_count_declaration_order(self, archive, name_three, expected):
+        ledger = _finder(f"$*.results.:manifest():last(){name_three}", archive).query().uuids
+        run_dir = _finder(f"$acme.results.:last(){name_three}", archive).query().uuids
+        assert ledger == expected
+        assert run_dir == expected
+
+    def test_an_unknown_index_keeps_arrival_order(self, archive):
+        # decision D17: a deleted run's instances, with ledger entries that
+        # carry no instance_index, keep the only order there is
+        import shutil
+
+        shutil.rmtree(Path(archive) / "acme" / "2026-01-01_00-00-00")
+        ref = "$*.results.:manifest():last().:first()"
+        assert _finder(ref, archive).query().uuids == ["r1-s1"]

@@ -1957,7 +1957,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             raise TypeError("Record must be a dict")
         if selector is None or not isinstance(selector, dict):
             raise TypeError("Selector must be a dict")
-        entries = record["instances"]
+        entries = self._in_declaration_order(record)
         if selector["range_bounds"] is not None:
             lower_call, upper_call = selector["range_bounds"]
             # identity, index or (raising) date bounds, as in CSVPATHS
@@ -1998,6 +1998,33 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if selector["identity"] is not None:
             return [e for e in entries if e.get("identity") == selector["identity"]]
         return entries
+
+    def _in_declaration_order(self, record: dict) -> list[dict]:
+        """a run record's instance records in DECLARATION order, each
+        statement's position in group.csvpaths (David, 2026-11-14: name_three
+        positions -- pointers, :index(), ranges -- count declaration order
+        whichever source is read; the run-dir branch already sorts by
+        instance_index, _list_instance_identities()). The ledger holds them
+        in arrival order, which differs in a parallel run. The index is the
+        ledger entry's instance_index, else the live instance manifest's
+        (6.13b(v)). If any instance's index cannot be known (e.g. a deleted
+        run whose ledger entries predate the field), arrival order is kept
+        for the whole run, the only order there is (decision D17)."""
+        if record is None or not isinstance(record, dict):
+            raise TypeError("Record must be a dict")
+        entries = record["instances"]
+        indexes = []
+        for entry in entries:
+            idx = entry.get("instance_index")
+            if idx is None and entry.get("identity") and record.get("run_home"):
+                manifest = self.source.instance_manifest(
+                    Nos(record["run_home"]).join(entry["identity"])
+                )
+                idx = manifest.get("instance_index") if manifest else None
+            if idx is None:
+                return list(entries)
+            indexes.append(int(idx))
+        return [e for _, e in sorted(zip(indexes, entries), key=lambda p: p[0])]
 
     def _manifest_set_instance_path(
         self, *, record: dict, entry: dict, selector: dict
