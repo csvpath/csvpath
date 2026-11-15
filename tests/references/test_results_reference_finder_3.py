@@ -4002,7 +4002,8 @@ class TestWellKnownFileAccessors:
             ':errors():idchain(:above("a"))',
             acme_archive,
         )
-        assert finder.resolve().results[0].data is None
+        # no idchain matches; the skip is still warned (W3)
+        assert finder.resolve().results[0].data == []
         warnings = finder.csvpaths.logger.warnings
         assert len(warnings) == 1
         assert ":idchain()" in warnings[0] and ":above()" in warnings[0]
@@ -4025,8 +4026,8 @@ class TestWellKnownFileAccessors:
         )
         selection = finder.query()
         assert [finder.resolve_from([r.uuid]).results[0].data for r in selection.results] == [
-            None,
-            None,
+            [],
+            [],
         ]
         warnings = finder.csvpaths.logger.warnings
         assert len(warnings) == 2
@@ -4370,19 +4371,17 @@ class TestWellKnownFileAccessors:
         assert results.results[0].data == {"which": "company_names"}
 
 
-class TestErrorsIdchainGate:
-    # the GATE half of "position decides meaning" (David, 2026-08-21;
-    # settled compendium 4.13/4.14, built 2026-10-17) -- an :idchain(...)
-    # CHAINED after :errors() in the same func_chain (NOT nested as its
-    # own argument -- that is the pre-existing FILTER shape, untouched)
-    # does not narrow errors.json's own entries; it decides whether the
-    # WHOLE, unfiltered content is returned at all. The five settled
-    # acceptance-criteria references from the compendium itself:
+class TestErrorsIdchainValues:
+    # David, 2026-11-14 (compendium 5.19): a field chained beside a content
+    # accessor reads its own source, and an idchain lives only in each
+    # error of errors.json. So:
     #   :errors()                        -- full content
-    #   :errors(:idchain(:has_value()))   -- filter: entries that HAVE an idchain
-    #   :errors(:idchain("add[0]"))      -- filter: entries matching that idchain
-    #   :errors():idchain(:has_value())   -- gate: full content, iff some idchain exists
-    #   :errors():idchain("add[0]")      -- gate: full content, iff a matching idchain exists
+    #   :errors(:idchain(:has_value()))   -- the errors that HAVE an idchain
+    #   :errors(:idchain("add[0]"))      -- the errors matching that idchain
+    #   :errors():idchain()              -- each error's idchain
+    #   :errors():idchain("add[0]")      -- the matching idchains, one per error
+    # The chained forms were a whole-file GATE (2026-08-21) until then;
+    # keeping an instance by its errors is ':having()' (6.39).
     @pytest.fixture
     def instance_dir(self, acme_archive):
         path = (
@@ -4392,65 +4391,53 @@ class TestErrorsIdchainGate:
         os.makedirs(path, exist_ok=True)
         return path
 
-    def test_gate_not_none_passes_when_any_entry_has_a_source(
-        self, acme_archive, instance_dir
-    ):
-        errors = [
-            {"source": "add[0]string[2]", "message": "bad add"},
-            {"message": "no source recorded for this one"},
-        ]
-        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
-            json.dump(errors, f)
-        results = _finder(
-            "$acme.results.customers/2025:first().company_names"
-            ":errors():idchain(:has_value())",
-            acme_archive,
-        ).resolve()
-        # the WHOLE, UNFILTERED list -- not narrowed to just the
-        # matching entry, unlike the filter shape.
-        assert results.results[0].data == errors
+    ERRORS = [
+        {"source": "add[0]string[2]", "message": "bad add"},
+        {"source": "name[1]", "message": "bad name"},
+        {"source": "add[0]string[2]", "message": "bad add again"},
+        {"message": "no source recorded for this one"},
+    ]
 
-    def test_gate_not_none_fails_when_no_entry_has_a_source(
-        self, acme_archive, instance_dir
-    ):
-        errors = [{"message": "no source recorded for this one"}]
+    def _data(self, acme_archive, instance_dir, chain):
         with open(os.path.join(instance_dir, "errors.json"), "w") as f:
-            json.dump(errors, f)
+            json.dump(self.ERRORS, f)
         results = _finder(
-            "$acme.results.customers/2025:first().company_names"
-            ":errors():idchain(:has_value())",
+            f"$acme.results.customers/2025:first().company_names{chain}",
             acme_archive,
         ).resolve()
-        assert results.results[0].data is None
+        return results.results[0].data
 
-    def test_gate_exact_string_passes_when_a_matching_entry_exists(
-        self, acme_archive, instance_dir
+    @pytest.mark.parametrize(
+        "chain, expected",
+        [
+            (":errors():idchain()", ["add[0]string[2]", "name[1]", "add[0]string[2]", None]),
+            (':errors():idchain("add[0]string[2]")', ["add[0]string[2]"] * 2),
+            (':errors():idchain("nope")', []),
+            (":errors():idchain(:has_value())", ["add[0]string[2]", "name[1]", "add[0]string[2]"]),
+            (":errors():idchain(/^add/)", ["add[0]string[2]"] * 2),
+            # the nested filter narrows first, then the values are read
+            (':errors(:idchain("name[1]")):idchain()', ["name[1]"]),
+        ],
+    )
+    def test_a_chained_idchain_reads_the_values(
+        self, acme_archive, instance_dir, chain, expected
     ):
-        errors = [
-            {"source": "add[0]string[2]", "message": "bad add"},
-            {"source": "name[1]", "message": "bad name"},
-        ]
-        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
-            json.dump(errors, f)
-        results = _finder(
-            '$acme.results.customers/2025:first().company_names'
-            ':errors():idchain("add[0]string[2]")',
-            acme_archive,
-        ).resolve()
-        assert results.results[0].data == errors
+        assert self._data(acme_archive, instance_dir, chain) == expected
 
-    def test_gate_exact_string_fails_when_no_entry_matches(
-        self, acme_archive, instance_dir
-    ):
-        errors = [{"source": "name[1]", "message": "bad name"}]
-        with open(os.path.join(instance_dir, "errors.json"), "w") as f:
-            json.dump(errors, f)
-        results = _finder(
-            '$acme.results.customers/2025:first().company_names'
-            ':errors():idchain("add[0]string[2]")',
-            acme_archive,
-        ).resolve()
-        assert results.results[0].data is None
+    def test_the_nested_filter_still_gives_the_errors(self, acme_archive, instance_dir):
+        data = self._data(acme_archive, instance_dir, ':errors(:idchain("name[1]"))')
+        assert data == [self.ERRORS[1]]
+
+    def test_several_instances_resolve_their_values_together(self, tmp_path):
+        # values, not files: several instances resolve at once (5.3)
+        run = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "acme-run", {"s0": "u0", "s1": "u1"}
+        )
+        _write_json(Path(run) / "s0" / "errors.json", [{"source": "a"}])
+        _write_json(Path(run) / "s1" / "errors.json", [{"source": "b"}, {"source": "a"}])
+        _write_archive_manifest(tmp_path, "acme", [run])
+        results = _finder("$acme.results.:last().:all():errors():idchain()", str(tmp_path)).resolve()
+        assert sorted(r.data for r in results.results) == [["a"], ["b", "a"]]
 
     def test_gate_with_no_errors_file_resolves_to_none(
         self, acme_archive, instance_dir
@@ -4471,6 +4458,26 @@ class TestErrorsIdchainGate:
             _finder(
                 "$acme.results.customers/2025:first().company_names"
                 ":idchain(:has_value())",
+                acme_archive,
+            ).query()
+
+    @pytest.mark.parametrize("accessor", ["vars", "meta", "data", "printouts", "unmatched"])
+    @pytest.mark.parametrize("instance", ["company_names", ":all()"])
+    def test_an_idchain_beside_another_accessor_raises(
+        self, acme_archive, instance_dir, accessor, instance
+    ):
+        # an idchain lives only in errors.json (5.19); beside another file it
+        # silently read nothing (reviewer on #636)
+        with pytest.raises(ReferenceException3, match="needs ':errors\\(\\)'"):
+            _finder(
+                f"$acme.results.customers/2025:first().{instance}:{accessor}():idchain()",
+                acme_archive,
+            ).query()
+
+    def test_a_nested_idchain_needs_an_argument(self, acme_archive, instance_dir):
+        with pytest.raises(ReferenceException3, match="needs an argument"):
+            _finder(
+                "$acme.results.customers/2025:first().company_names:errors(:idchain())",
                 acme_archive,
             ).query()
 
@@ -7015,10 +7022,18 @@ class TestStarManifestSetInstanceRecords:
         data = self._data("$*.results.:manifest():last().t:errors()", archive)
         assert data == [[{"message": "k3-t"}, {"message": "k3-t"}]]
 
-    def test_a_gate_after_errors_applies(self, archive):
-        # no error has an "add[0]" source, so the gate gives None
+    def test_an_idchain_beside_errors_reads_its_values(self, archive):
+        # no error has an "add[0]" source, so there are no matching
+        # idchains (compendium 5.19, 2026-11-14; a gate gave None until then)
         ref = '$*.results.:manifest():last().t:errors():idchain("add[0]")'
-        assert self._data(ref, archive) == [None]
+        assert self._data(ref, archive) == [[]]
+
+    def test_several_instances_idchain_values_resolve(self, archive):
+        # values, not files, so several instances resolve together (5.3);
+        # the ledger set used to keep its own several-files raise
+        # (reviewer on #636). k3's s has no errors; t has two, no source.
+        ref = "$*.results.:manifest():last().:all():errors():idchain()"
+        assert sorted(self._data(ref, archive), key=len) == [[], [None, None]]
 
     def test_a_content_accessor_wins_over_a_field(self, archive):
         # the same order as the run-dir branch: the file is read
@@ -7285,9 +7300,10 @@ class TestQueryPathsNameTheFile:
         ]
         assert data == [[{"message": "k3-t"}, {"message": "k3-t"}]]
 
-    def test_a_gate_after_errors_still_applies(self, archive):
+    def test_an_idchain_beside_errors_reads_its_values(self, archive):
+        # compendium 5.19, 2026-11-14 (a gate gave None until then)
         ref = '$keep.results.:last().t:errors():idchain("add[0]")'
-        assert [r.data for r in _finder(ref, archive).resolve().results] == [None]
+        assert [r.data for r in _finder(ref, archive).resolve().results] == [[]]
 
     def test_a_missing_file_still_resolves_to_none(self, archive):
         data = [
