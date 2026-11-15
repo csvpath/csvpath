@@ -8644,3 +8644,20 @@ class TestAnInstanceManifestIsReadOncePerCall:
         run = Path(archive) / "acme" / "2026-01-01_00-00-00"
         _write_json(run / "s0" / "manifest.json", {"uuid": "u0-changed"})
         assert finder.query().uuids == ["u0-changed"]
+
+    def test_a_resolve_from_reads_afresh(self, archive):
+        # reviewer on #658: the reset in resolve_from() was unpinned
+        finder = _finder("$acme.results.:last().s0:manifest()", archive)
+        selection = finder.query()
+        run = Path(archive) / "acme" / "2026-01-01_00-00-00"
+        _write_json(run / "s0" / "manifest.json", {"uuid": "u0-changed"})
+        (result,) = finder.resolve_from(selection).results
+        assert result.data == {"uuid": "u0-changed"}
+
+    def test_a_missing_manifest_is_read_once_too(self, archive):
+        finder = _finder("$acme.results.:last().*", archive)
+        run = Path(archive) / "acme" / "2026-01-01_00-00-00"
+        (run / "s3" / "manifest.json").unlink()
+        counts = self._counting(finder)
+        finder.query()
+        assert counts["reads"] == 4

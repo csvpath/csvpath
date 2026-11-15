@@ -3901,7 +3901,12 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         read in one call is reused by another."""
         if not instance_dir:
             raise ValueError("instance_dir cannot be None or empty")
-        reads = self.__dict__.setdefault("_manifest_reads", {})
+        reads = getattr(self, "_manifest_reads", None)
+        if reads is None:
+            reads = {}
+            self._manifest_reads = reads
+        # a missing manifest is remembered as None too. callers get the same
+        # dict for one instance within a call; none of them changes it
         if instance_dir not in reads:
             reads[instance_dir] = self.source.instance_manifest(instance_dir)
         return reads[instance_dir]
