@@ -1750,6 +1750,15 @@ class ReferenceFinder3(ABC):
         ReferenceException3, since the reference itself was perfectly
         well-formed; only a variable's own runtime value did not
         satisfy it (see that exception class's own docstring)."""
+        if built.name == "name" and isinstance(built.arg, Function3):
+            # ':name(:year())' is the clock value's string, the same
+            # str(compute()) a "{:year()}" interpolation gives (6.27d; NRE
+            # ':name(:year())'). Name3.check_valid() admits only clock values.
+            # Its own argument is resolved first, as _build() does for an
+            # interpolated part (none takes one today; reviewer on #651).
+            self._resolve_arg(built.arg)
+            built.arg = str(built.arg.compute())
+            return
         if isinstance(built.arg, Function3):
             self._resolve_arg(built.arg)
             return
