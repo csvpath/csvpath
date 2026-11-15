@@ -8304,12 +8304,14 @@ class TestAResultsNameOneMustNameARun:
             "$acme.results.beta.s",
             "$*.results.beta",
             "$:regex(/^a/).results.beta",
-            # a pattern over template names cannot name a run either
-            # (compendium 3.9c; reviewer on #647: these were searched as a
-            # prefix, silently)
+            # a trailing pattern that matches a template dir names no run
+            # either (reviewer on #647: these were searched as a prefix,
+            # silently)
             '$acme.results.:choice("beta")',
             "$acme.results.:regex(/^bet/)",
+            '$acme.results.:name(/^bet/)',
             "$acme.results.customers/:regex(/^20/)",
+            '$*.results.:choice("beta")',
         ],
     )
     def test_a_template_path_alone_raises(self, archive, reference):
@@ -8330,6 +8332,59 @@ class TestAResultsNameOneMustNameARun:
             _finder("$acme.results.customers/2025", archive).query()
         assert "'$acme.results.customers/2025/*'" in str(error.value)
         assert "'$acme.results.customers/2025:last()'" in str(error.value)
+
+    def test_the_message_puts_the_fix_before_a_name_three(self, archive):
+        # reviewer on #647: '$acme.results.beta.s/*' does not parse
+        with pytest.raises(ReferenceException3) as error:
+            _finder("$acme.results.beta.s", archive).query()
+        assert "'$acme.results.beta/*.s'" in str(error.value)
+        assert "'$acme.results.beta:last().s'" in str(error.value)
+        # and the suggestion is a working reference
+        assert _finder("$acme.results.beta/*.s", archive).query().uuids == ["b1-s"]
+
+    def test_a_name_two_keeps_its_own_error(self, archive):
+        with pytest.raises(ReferenceException3, match="files-only"):
+            _finder("$acme.results.beta#g", archive).query()
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ('$acme.results.beta/:choice("2026-01-01_00-00-00")', ["b1"]),
+            ('$acme.results.beta/:regex("2026-01-01_")', ["b1"]),
+            ('$acme.results.beta/:name(/^2026-01-01_/)', ["b1"]),
+            ('$acme.results.customers/2025/:regex("01-02_")', ["c1"]),
+            ('$*.results.beta/:choice("2026-01-01_00-00-00")', ["b1"]),
+            # a pattern that matches nothing is no result
+            ('$acme.results.beta/:regex("2030")', []),
+        ],
+    )
+    def test_a_trailing_pattern_matches_the_run_names(self, archive, reference, expected):
+        # compendium 3.9c: ':regex()'/':choice()' are analogs of ':name()';
+        # a trailing one is the run-dir slot (NRE '$alpha.results.:regex(
+        # "2026-01-01_").header_checks:errors()'; reviewer on #647)
+        assert sorted(_finder(reference, archive).query().uuids) == expected
+
+    def test_a_pattern_before_a_pointer_is_a_template_level(self, archive):
+        # the pointer stands in for the run, as in 'customers/2025:last()'
+        assert _finder('$acme.results.:choice("beta"):last()', archive).query().uuids == ["b1"]
+        assert _finder("$acme.results.customers/:regex(/^20/):first()", archive).query().uuids == ["c1"]
+
+    def test_the_normative_regex_example(self, tmp_path):
+        # NRE: '$alpha.results.:regex("2026-01-01_").header_checks:errors()'
+        # and '...:from("2026-01-01"):before("2026-01-02")...' are "two
+        # equivalent ways" to get the 1/1/2026 no-template runs
+        base = tmp_path / "alpha"
+        r1 = _make_run(base, "2026-01-01_01-01-01", "r1", {"header_checks": "r1-h"})
+        r2 = _make_run(base, "2026-01-02_01-01-01", "r2", {"header_checks": "r2-h"})
+        _write_archive_manifest(tmp_path, "alpha", [r1, r2])
+        archive = str(tmp_path)
+        by_regex = _finder('$alpha.results.:regex("2026-01-01_").header_checks', archive)
+        by_range = _finder(
+            '$alpha.results.:from("2026-01-01"):before("2026-01-02").header_checks',
+            archive,
+        )
+        assert by_regex.query().uuids == ["r1-h"]
+        assert by_regex.query().uuids == by_range.query().uuids
 
     @pytest.mark.parametrize(
         "reference, expected",
