@@ -8617,7 +8617,8 @@ class TestAScalarFieldFilters:
                 {
                     "uuid": f"u{i}",
                     "instance_identity": f"s{i}",
-                    "instance_index": i,
+                    # stored as a string, as Result.run_index writes it
+                    "instance_index": str(i),
                     "completed": completed,
                 },
             )
@@ -8632,6 +8633,8 @@ class TestAScalarFieldFilters:
             (":instance_index(2)", ["u2"]),
             (":completed(:true())", ["u0", "u2"]),
             (":completed(:false())", ["u1"]),
+            (":instance_index(:above(0))", ["u1", "u2"]),
+            (":identity(:has_value())", ["u0", "u1", "u2"]),
         ],
     )
     def test_the_field_filters_the_instances(self, archive, chain, expected):
@@ -8641,3 +8644,13 @@ class TestAScalarFieldFilters:
     def test_a_wrong_type_still_raises(self, archive):
         with pytest.raises(ReferenceException3):
             _finder('$acme.results.:last().*:instance_index("2")', archive).query()
+
+    def test_the_bare_index_reads_as_an_int(self, archive):
+        # decision D23: it resolved to the stored string ("0") until then
+        (result,) = _finder("$acme.results.:last().s1:instance_index()", archive).resolve().results
+        assert result.data == 1
+
+    def test_nre_212_a_run_field_with_no_value(self, archive):
+        # NRE: '$acme.results.*:host(:does_not_have_value())' -- this run
+        # manifest has no hostname
+        assert _finder("$acme.results.*:host(:does_not_have_value())", archive).query().uuids == ["r1"]

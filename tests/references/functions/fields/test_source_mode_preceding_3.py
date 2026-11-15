@@ -21,12 +21,7 @@ def test_no_arg_is_valid():
     SourceModePreceding3().check_valid()  # should not raise
 
 
-def test_a_string_arg_is_a_filter():
-    # compendium 6.40: an argument to a field accessor filters (refused one
-    # until 2026-11-15; RC triage A6/H)
-    SourceModePreceding3(arg="x").check_valid()  # should not raise
-
-
-def test_a_non_string_arg_raises():
+def test_a_string_arg_raises():
+    # a flag: it takes a predicate (:true()/:false()), as :valid() does
     with pytest.raises(ReferenceException3):
-        SourceModePreceding3(arg=5).check_valid()
+        SourceModePreceding3(arg="x").check_valid()
