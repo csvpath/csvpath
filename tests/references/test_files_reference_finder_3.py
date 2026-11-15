@@ -7462,3 +7462,48 @@ class TestAScalarFieldFilters:
         # (reviewer on #659)
         with pytest.raises(ReferenceException3, match="not a named-file field"):
             _finder(f"{root}.files.:manifest(){chain}", self.HOME, self.MANIFEST).query()
+
+
+class TestATraversalNameReadsTheManifestOwner:
+    # decision D25 (2026-11-15; reviewer on #615): under '*' a live record's
+    # ':named_file_name()' is the named-file whose manifest holds it (D4),
+    # as the status-chain gate reads it. It read the ledger record's own
+    # name, so the two could disagree about one record.
+    LIVE = {"file": "inputs/named_files/orders/orders.csv/o1.csv", "file_home": "inputs/named_files/orders/orders.csv", "uuid": "o1"}
+    LEDGER = {"named_file_name": "orders-renamed", "status": "complete", "uuid": "o1", "file_path": "inputs/named_files/orders/orders.csv/o1.csv"}
+    GONE = {"named_file_name": "gone", "status": "complete", "uuid": "g1", "file_path": "x"}
+
+    def _finder(self, reference):
+        return _finder(
+            reference,
+            "inputs/named_files/orders",
+            [],
+            ledger=[dict(self.LEDGER), dict(self.GONE)],
+            by_name={"orders": ("inputs/named_files/orders", [dict(self.LIVE)])},
+            inputs_files_path="inputs/named_files",
+        )
+
+    def test_the_name_is_the_manifest_owner(self):
+        assert self._finder('$*.files.:manifest():named_file_name("orders")').query().uuids == ["o1"]
+        assert self._finder('$*.files.:manifest():named_file_name("orders-renamed")').query().uuids == []
+
+    def test_a_record_no_live_manifest_holds_keeps_the_ledger_name(self):
+        assert self._finder('$*.files.:manifest():named_file_name("gone")').query().uuids == ["g1"]
+
+    @pytest.mark.parametrize("root", ['$:choice("orders")', "$:regex(/^orders$/)"])
+    def test_a_root_selects_by_the_same_name(self, root):
+        # the name a record reports is the name that selected it (reviewer
+        # on #662): the root filter reads the owner's name too
+        assert self._finder(f"{root}.files.:manifest():last()").query().uuids == ["o1"]
+        assert self._finder(f'{root}.files.:manifest():named_file_name("orders")').query().uuids == ["o1"]
+        assert self._finder('$:choice("orders-renamed").files.:manifest():last()').query().uuids == []
+
+    def test_a_bare_filtered_set_resolves_by_the_same_name(self):
+        # the bare ':regex()'/':choice()' ':manifest()' resolve filters by the
+        # owner's name too (reviewer on #662, round 2)
+        records = self._finder('$:choice("orders").files.:manifest()').resolve().results[0].data
+        assert [r["uuid"] for r in records] == ["o1"]
+        assert self._finder('$:choice("orders-renamed").files.:manifest()').resolve().results[0].data == []
+
+    def test_the_status_chain_agrees(self):
+        assert self._finder('$*.files.:status("complete"):named_file_name("orders")').query().uuids == ["o1"]
