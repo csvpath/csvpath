@@ -121,8 +121,8 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     #
 
     def query(self) -> ReferenceResults3:
-        # the uuid -> owning group map is built once per call (triage A22)
-        self._owners = None
+        # the uuid -> (owning group, entry) index is built once per call (A22)
+        self._live_entries = None
         reference = self.ref.parsed
         log_results = self._query_log_call(reference)
         if log_results is not None:
@@ -1103,17 +1103,14 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         (its own uuid, linked by version_uuid), stays its ledger entry.
         `name_filter` is a :regex()/:choice() pattern, as
         _matching_names() applies it."""
-        names = self._matching_names(self.source.paths_names(), name_filter)
-        live = {}
-        for name in names:
-            for entry in self.source.paths_manifest(name):
-                live[entry.get("uuid")] = entry
+        index = self._live_index()
         versions = []
         for entry in self._paths_ledger():
             name = self._record_name(entry) or ""
             if not self._matching_names([name], name_filter):
                 continue
-            versions.append(live.get(entry.get("uuid"), entry))
+            live = index.get(entry.get("uuid"))
+            versions.append(live[1] if live is not None else entry)
         return versions
 
     def _version_result_path(
@@ -1164,24 +1161,33 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             raise ValueError("uuid cannot be None")
         return self._find_manifest_entry_by_uuid(self._paths_ledger(), uuid)
 
-    def resolve_from(self, selection):
-        # the owner map is never carried over from an earlier call (A22)
-        self._owners = None
+    _live_entries = None
+
+    def resolve_from(self, selection: "ReferenceResults3 | list") -> ReferenceResults3:
+        """ReferenceFinder3.resolve_from(), with the live index reset so
+        nothing read in an earlier call is reused (triage A22)."""
+        self._live_entries = None
         return super().resolve_from(selection)
 
-    def _owner_of(self, uuid: str) -> "str | None":
-        """the named-paths group whose own manifest holds `uuid`, or None.
-        Every group's manifest is read once per query()/resolve_from()."""
-        if not uuid:
-            raise ValueError("uuid cannot be None or empty")
-        owners = getattr(self, "_owners", None)
-        if owners is None:
-            owners = {}
+    def _live_index(self) -> dict:
+        """uuid -> (group name, manifest entry) for every named-paths group's
+        own manifest, read once per query()/resolve_from(), as FILES'
+        _live_index() (reviewer on #663: a separate owner map read every
+        group twice)."""
+        index = self._live_entries
+        if index is None:
+            index = {}
             for name in self.source.paths_names():
                 for e in self.source.paths_manifest(name):
-                    owners.setdefault(e.get("uuid"), name)
-            self._owners = owners
-        return owners.get(uuid)
+                    index.setdefault(e.get("uuid"), (name, e))
+            self._live_entries = index
+        return index
+
+    def _owner_of(self, uuid: str) -> "str | None":
+        """the named-paths group whose own manifest holds `uuid`, or None."""
+        if not uuid:
+            raise ValueError("uuid cannot be None or empty")
+        return self._live_index().get(uuid, (None, None))[0]
 
     def _record_name(self, entry: dict) -> "str | None":
         """a ledger record's group name: for a live version, the group whose
@@ -1191,6 +1197,11 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         that selected it (decision D25, as FILES; triage A22)."""
         if entry is None:
             raise ValueError("entry cannot be None")
+        root_major = self.ref.parsed.root_major
+        if isinstance(root_major, str):
+            # a literal root names the group itself, as FILES returns the
+            # root (reviewer on #663); no index is built for it
+            return root_major
         if entry.get("uuid"):
             owner = self._owner_of(entry.get("uuid"))
             if owner is not None:

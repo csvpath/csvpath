@@ -4102,3 +4102,31 @@ class TestATraversalNameReadsTheOwningGroup:
         uuids = self._finder('$*.csvpaths.:manifest():named_paths_name("acme")').query().uuids
         assert "a1" in uuids
         assert self._finder('$*.csvpaths.:manifest():named_paths_name("acme-renamed")').query().uuids == []
+
+    @staticmethod
+    def _counting(finder):
+        counts = {"manifests": 0}
+        source = finder.source
+        real = source.paths_manifest
+
+        def counted(name):
+            counts["manifests"] += 1
+            return real(name)
+
+        source.paths_manifest = counted
+        return counts
+
+    def test_a_literal_root_is_the_group_itself(self):
+        # as FILES returns the literal root (reviewer on #663); no index
+        finder = self._finder('$acme.csvpaths.:manifest():named_paths_name("acme")')
+        counts = self._counting(finder)
+        assert finder.query().uuids == ["a1", "a2", "a3", "a4"]
+        assert counts["manifests"] == 1
+        (first,) = self._finder("$acme.csvpaths.:first():named_paths_name()").resolve().results
+        assert first.data == "acme"
+
+    def test_a_ledger_set_query_reads_each_group_once(self):
+        finder = self._finder('$*.csvpaths.:manifest():named_paths_name("acme")')
+        counts = self._counting(finder)
+        finder.query()
+        assert counts["manifests"] == len(GATE_BY_NAME)
