@@ -1367,7 +1367,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             function_cls=function_cls,
             datatype=Reference3.RESULTS,
             ledger_entry_getter=lambda: self._find_archive_ledger_entry(
-                ledger=self.source.results_ledger(),
+                ledger=self._results_ledger(),
                 run_uuid=entry.get("run_uuid") if entry else None,
             ),
         )
@@ -1756,8 +1756,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         :regex()/:choice() root's pattern, matched against each run's
         named_paths_name the same way _discover_run_homes() matches it."""
         runs = {}
-        for entry in self.source.results_ledger():
-            for key in ("uuid", "run_uuid", "run_home"):
+        for entry in self._results_ledger():
+            # uuid is checked by _results_ledger() as the ledger is read
+            for key in ("run_uuid", "run_home"):
                 if entry.get(key) is None:
                     msg = f"A results ledger entry has no {key}: {entry}"
                     self.csvpaths.logger.error(msg)
@@ -1774,6 +1775,22 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 runs[entry["run_uuid"]] = record
             record["instances"].append(entry)
         return list(runs.values())
+
+    def _results_ledger(self) -> list:
+        """the archive ledger, every entry checked for a uuid as it is read.
+        There should be none without one (David, 2026-10-31: "a ledger entry
+        with no `uuid` raises (there should be none)"), as FILES
+        (_files_ledger(), decision D20) and CSVPATHS (_paths_ledger()) check
+        theirs. Only _manifest_set_runs() checked until then; the literal-root
+        gates and ledger-fallback fields read past an entry with none
+        (reviewer on #652; triage A18, decision D21)."""
+        ledger = self.source.results_ledger()
+        for entry in ledger or []:
+            if not entry.get("uuid"):
+                msg = f"A results ledger entry has no uuid: {entry}"
+                self.csvpaths.logger.error(msg)
+                raise ValueError(msg)
+        return ledger
 
     def _manifest_set_query(
         self,
@@ -2545,7 +2562,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     function_cls=function_cls,
                     datatype=Reference3.RESULTS,
                     ledger_entry_getter=lambda: self._find_archive_ledger_entry(
-                        ledger=self.source.results_ledger(),
+                        ledger=self._results_ledger(),
                         run_uuid=entry.get("run_uuid") if entry else None,
                     ),
                 )
@@ -2595,7 +2612,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 function_cls=function_cls,
                 datatype=Reference3.RESULTS,
                 ledger_entry_getter=lambda: self._find_archive_ledger_entry(
-                    ledger=self.source.results_ledger(),
+                    ledger=self._results_ledger(),
                     run_uuid=entry.get("run_uuid") if entry else None,
                 ),
             )
@@ -2724,7 +2741,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             function_cls=function_cls,
             datatype=Reference3.RESULT,
             ledger_entry_getter=lambda: self._find_archive_ledger_entry(
-                ledger=self.source.results_ledger(),
+                ledger=self._results_ledger(),
                 run_uuid=entry.get("run_uuid") if entry else None,
                 identity=entry.get("instance_identity") if entry else None,
             ),
