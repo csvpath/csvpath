@@ -271,19 +271,20 @@ def test_macie_es_in_identifiers(
     )
 
 
-def test_macie_es_short_keywords_match_inside_words(catalog) -> None:
+def test_macie_es_short_keywords_match_whole_words(catalog) -> None:
     #
-    # keywords match as substrings (transpile-design.md, interpretations
-    # 3 and 10), so "nie" is found in "niece" and "tin" in "destination".
-    # That over-reports keyword presence; the number must still pass its
+    # keywords match as whole words (fidelity item 3, settled by the third
+    # live probe), so "nie" is not found in "niece", nor "tin" in
+    # "destination". As a word it is found; the number must still pass its
     # control letter
     #
     nie = _mdi(catalog, "SPAIN_NIE_NUMBER")
-    assert nie.occurrences(cell="X1234567L", header="niece", allow_lists=NO_ALLOW) == 1
+    assert nie.occurrences(cell="X1234567L", header="niece", allow_lists=NO_ALLOW) == 0
     assert (
         nie.occurrences(
             cell="destination X1234567L", header="notes", allow_lists=NO_ALLOW
         )
-        == 1
+        == 0
     )
-    assert nie.occurrences(cell="X1234567A", header="niece", allow_lists=NO_ALLOW) == 0
+    assert nie.occurrences(cell="X1234567L", header="nie", allow_lists=NO_ALLOW) == 1
+    assert nie.occurrences(cell="X1234567A", header="nie", allow_lists=NO_ALLOW) == 0

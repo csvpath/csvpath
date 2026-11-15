@@ -393,12 +393,14 @@ def test_macie_near_before_and_after() -> None:
 
 def test_macie_near_distance_is_the_gap() -> None:
     #
-    # 30 characters between the keyword and the number still count
+    # 30 characters between the keyword and the number still count. The
+    # gap is not letters: a keyword touched by a letter is not a word
     #
-    assert _near("visa" + "x" * 30 + VISA, VISA, "visa")
-    assert not _near("visa" + "x" * 31 + VISA, VISA, "visa")
-    assert _near(VISA + "x" * 30 + "visa", VISA, "visa")
-    assert not _near(VISA + "x" * 31 + "visa", VISA, "visa")
+    assert _near("visa" + "-" * 30 + VISA, VISA, "visa")
+    assert not _near("visa" + "-" * 31 + VISA, VISA, "visa")
+    assert _near(VISA + "-" * 30 + "visa", VISA, "visa")
+    assert not _near(VISA + "-" * 31 + "visa", VISA, "visa")
+    assert not _near("visax " + VISA, VISA, "visa")
 
 
 def test_macie_near_variants_and_case() -> None:

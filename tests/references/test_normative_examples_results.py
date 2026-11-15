@@ -107,6 +107,7 @@ from pathlib import Path
 
 import pytest
 
+from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.results_reference_finder_3 import ResultsReferenceFinder3
 
@@ -878,3 +879,33 @@ def _yesterday_day(archive: str) -> str:
         p.name for p in (Path(archive) / "orders").iterdir() if p.name != "tpl"
     ]
     return name[:10]
+
+
+class TestNameOfAClockValue:
+    # NRE "$acme.results.customers/:name(:year())/:first().:from(2):unmatched()"
+    # -- "calling resolve() on finder will error" (several unmatched files);
+    # query() names the statements of the first run under customers/<year>.
+    # It raised on the argument type until 2026-11-15 (6.27d).
+    def test_it_selects_the_years_runs(self, tmp_path):
+        from csvpath.util.date_util import DateUtility as daut
+
+        year = str(daut.now().year)
+        base = tmp_path / "acme"
+        statements = {f"s{i}": f"u{i}" for i in range(4)}
+        first = _make_run(base / "customers" / year, "2026-01-01_00-00-00", "c1", statements)
+        second = _make_run(base / "customers" / year, "2026-01-02_00-00-00", "c2", statements)
+        other = _make_run(base / "customers" / "1999", "2025-01-01_00-00-00", "c0", statements)
+        for name, run in (("c1", first), ("c2", second), ("c0", other)):
+            # real runs write each statement's declaration position; each
+            # run's uuids differ, so the test shows which run was picked
+            for i in range(4):
+                _write_json(
+                    Path(run) / f"s{i}" / "manifest.json",
+                    {"uuid": f"{name}-u{i}", "instance_index": i},
+                )
+        _write_archive_manifest(tmp_path, "acme", [first, second, other])
+        reference = "$acme.results.customers/:name(:year())/:first().:from(2):unmatched()"
+        results = _finder(reference, str(tmp_path)).query()
+        assert sorted(results.uuids) == ["c1-u2", "c1-u3"]
+        with pytest.raises(ReferenceException3, match="more than one"):
+            _finder(reference, str(tmp_path)).resolve()

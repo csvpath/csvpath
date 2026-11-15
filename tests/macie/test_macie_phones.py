@@ -121,11 +121,22 @@ def test_macie_phone_not_detected(catalog, name: str, cell: str) -> None:
 
 
 def test_macie_phone_country_code_is_keyword_exempt(catalog) -> None:
+    #
+    # unbroken, or with a group in parentheses; not with spaces, dashes or
+    # dots between the groups (the live probes, 2026-11-14 and -15)
+    #
     d = _detector(catalog, "gb_phone")
-    cell = "call +44 20 7946 0958 or 020 7946 0958"
+    cell = (
+        "call +442079460958 or +44 (20) 7946 0958 or 00442079460958 or "
+        "+44 20 7946 0958 or +44-20-7946-0958 or 020 7946 0958"
+    )
     spans = d.matches(cell=cell)
     assert [d.keyword_exempt(cell=cell, start=s, end=e) for s, e in spans] == [
         True,
+        True,
+        True,
+        False,
+        False,
         False,
     ]
 
@@ -135,14 +146,18 @@ def test_macie_phone_country_code_is_keyword_exempt(catalog) -> None:
     [
         #
         # Macie: with a keyword, no country code needed; without one, the
-        # number must have its country code
+        # number must have its country code, unbroken or with a group in
+        # parentheses
         #
         ("020 7946 0958", "phone", 1),
         ("tel 020 7946 0958", "x", 1),
+        ("+44 20 7946 0958", "phone", 1),
         ("020 7946 0958", "notes", 0),
-        ("+44 20 7946 0958", "notes", 1),
-        ("0044 20 7946 0958", "notes", 1),
-        ("+44 20 7946 0958 / 020 7946 0958", "notes", 1),
+        ("+442079460958", "notes", 1),
+        ("+44 (20) 7946 0958", "notes", 1),
+        ("+44 20 7946 0958", "notes", 0),
+        ("0044 20 7946 0958", "notes", 0),
+        ("+442079460958 / 020 7946 0958", "notes", 1),
     ],
 )
 def test_macie_phone_keyword_rule(catalog, cell: str, header: str, n: int) -> None:
@@ -165,14 +180,14 @@ def test_macie_phone_brazil_keywords(catalog) -> None:
         == 1
     )
     #
-    # Brazil's extra keywords are not the UK's, but keywords match as
-    # substrings: "telefone" holds the shared "tel", "celular" holds no
-    # shared keyword ("cell" has two l's)
+    # Brazil's extra keywords are not the UK's, and keywords match as
+    # whole words: "telefone" holds the shared "tel" only as a substring,
+    # so it is not a UK keyword; nor is "celular"
     #
     uk = _mdi(catalog, "UK_PHONE_NUMBER")
     assert (
         uk.occurrences(cell="telefone 020 7946 0958", header="x", allow_lists=NO_ALLOW)
-        == 1
+        == 0
     )
     assert (
         uk.occurrences(cell="celular 020 7946 0958", header="x", allow_lists=NO_ALLOW)

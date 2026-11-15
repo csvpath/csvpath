@@ -93,11 +93,16 @@ def test_macie_keyword_must_come_before_the_match() -> None:
     #
     # ("demp" matches "dEMP", which overlaps the match "EMP-1")
     #
-    assert not _precedes("xdEMP-1", "EMP-1", "demp", distance=50)
+    assert not _precedes("x dEMP-1", "EMP-1", "demp", distance=50)
     #
-    # ending exactly where the match starts is fine
+    # ending where the match starts is fine when a separator is between
     #
-    assert _precedes("xdempEMP-1", "EMP-1", "demp", distance=50)
+    assert _precedes("x demp:EMP-1", "EMP-1", "demp", distance=50)
+    #
+    # touching letters on either side is not a word
+    #
+    assert not _precedes("xdemp EMP-1", "EMP-1", "demp", distance=50)
+    assert not _precedes("x dempEMP-1", "EMP-1", "demp", distance=50)
 
 
 def test_macie_keyword_too_far_back() -> None:
@@ -145,3 +150,46 @@ def test_macie_keyword_precedes_bad_input() -> None:
         keut.precedes(cell="x", match_start=0, match_end=2, patterns=p, distance=5)
     with pytest.raises(ValueError):
         keut.precedes(cell="xy", match_start=2, match_end=1, patterns=p, distance=5)
+
+
+@pytest.mark.parametrize(
+    "header, expected",
+    [
+        #
+        # the third live probe (2026-11-15): Macie matched these as words
+        #
+        ("ssn", True),
+        ("customer_ssn", True),
+        ("SSN (US)", True),
+        ("ssn-2", True),
+        ("ssnumber", False),
+        ("myssn", False),
+    ],
+)
+def test_macie_keyword_in_header_is_a_word(header: str, expected: bool) -> None:
+    assert keut.in_header(header=header, variants=["ssn"]) is expected
+
+
+def test_macie_keyword_in_cell_is_a_word() -> None:
+    assert _precedes("ssn 123-45-6789", "123-45-6789", "ssn")
+    assert _precedes("SSN:123-45-6789", "123-45-6789", "ssn")
+    assert not _precedes("myssn 123-45-6789", "123-45-6789", "ssn")
+    assert not _precedes("ssnumber 123-45-6789", "123-45-6789", "ssn")
+
+
+def test_macie_keyword_edge_without_a_letter_needs_no_boundary() -> None:
+    #
+    # "dl#" ends in "#": a digit right after it does not make it part of a
+    # longer word
+    #
+    assert keut.is_word(text="dl#123", start=0, end=3)
+    assert not keut.is_word(text="xdl#123", start=1, end=4)
+    assert keut.is_word(text="a dl# b", start=2, end=5)
+
+
+def test_macie_keyword_is_word_bad_input() -> None:
+    with pytest.raises(TypeError):
+        keut.is_word(text=None, start=0, end=1)
+    for start, end in [(0, 0), (-1, 1), (0, 4), (2, 1)]:
+        with pytest.raises(ValueError):
+            keut.is_word(text="abc", start=start, end=end)
