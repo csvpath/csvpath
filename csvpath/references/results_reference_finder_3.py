@@ -170,6 +170,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         log_results = self._query_log_call(reference)
         if log_results is not None:
             return log_results
+        self._check_names_a_run(reference)
         root_major = reference.root_major
         if isinstance(root_major, Star3):
             if self._is_bare_pointer_reference(reference, "manifest"):
@@ -3633,6 +3634,43 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     # "%Y-%m-%d_%H-%M-%S", with "_N" when two runs start in the same second)
     # (decision D18, 2026-11-14; the suffix: reviewer on #644)
     _RUN_DIR_NAME = re.compile(r"^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(_\d+)?$")
+
+    @classmethod
+    def _check_names_a_run(self, reference) -> None:
+        """a RESULTS name_one must name a run: a run-dir name, a function
+        that stands in for one (a pointer, a range, :all(), :manifest(), a
+        field or gate...), or a `*` (David, 2026-11-14, reconfirming
+        2026-10-31; NRE "Run directories must be represented in name_one").
+        A template path alone -- '$acme.results.beta', '$acme.results.
+        customers/2025' -- names no run: there is no run dir called `beta`,
+        so it raises. It used to search the runs under it as a prefix. A
+        segment shaped like a run dir name may be one (decision D18), so it
+        does not raise."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        name_one = reference.name_one
+        if name_one.functions:
+            return
+        path = name_one.path
+        if not path:
+            return
+        last = path[-1]
+        if isinstance(last, Star3):
+            return
+        if isinstance(last, FunctionCall3):
+            if last.name != "name" or not isinstance(last.arg, str):
+                # ':regex()', a clock value, ':manifest()' ...: a function
+                return
+            last = last.arg
+        if self._is_run_dir_name(last):
+            return
+        raise ReferenceException3(
+            f"'{reference}' names no run: a results name_one needs a run dir "
+            "name, a function that stands in for one (e.g. :last(), :all(), "
+            f":from(...)), or a '*' -- '{last}' is not a run dir name. To "
+            f"search the runs under it, write e.g. '.../{last}/*' or "
+            f"'.../{last}:last()'."
+        )
 
     @classmethod
     def _is_run_dir_name(cls, segment) -> bool:

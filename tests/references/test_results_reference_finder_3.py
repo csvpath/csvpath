@@ -314,7 +314,7 @@ class TestHavingFiltersRunsByInstanceIdentity:
 
 class TestNoPointerReturnsEveryRun:
     def test_no_pointer_returns_every_run_unreduced(self, acme_archive):
-        results = _finder("$acme.results.customers/2025", acme_archive).query()
+        results = _finder("$acme.results.customers/2025/*", acme_archive).query()
         assert results.uuids == ["run1-uuid", "run2-uuid"]
 
 
@@ -351,7 +351,7 @@ class TestNameRegexPathSegment:
         assert results.files == []
 
     def test_no_pointer_no_matching_prefix_returns_empty(self, acme_archive):
-        results = _finder("$acme.results.orders/2025", acme_archive).query()
+        results = _finder("$acme.results.orders/2025/*", acme_archive).query()
         assert results.files == []
 
 
@@ -898,7 +898,7 @@ class TestAllGroupingAtAMiddlePosition:
         x1 = _make_run(base / "x" / "one", "2026-01-01_00-00-00", "x-1", {})
         x2 = _make_run(base / "x" / "one", "2026-01-02_00-00-00", "x-2", {})
         _write_archive_manifest(tmp_path, "alpha", [x1, x2])
-        results = _finder("$alpha.results.test/:all()/one", str(tmp_path)).query()
+        results = _finder("$alpha.results.test/:all()/one/*", str(tmp_path)).query()
         assert set(results.uuids) == {"x-1", "x-2"}
 
     def test_all_with_an_argument_is_rejected(self, tmp_path):
@@ -1020,7 +1020,7 @@ class TestRegexPathSegment:
         )
         _write_archive_manifest(tmp_path, "alpha", [matching, non_matching])
         results = _finder(
-            '$alpha.results.orders/:regex("202[6789]")/EMEA', str(tmp_path)
+            '$alpha.results.orders/:regex("202[6789]")/EMEA/*', str(tmp_path)
         ).query()
         assert results.uuids == ["match-1"]
 
@@ -2368,7 +2368,7 @@ class TestHomeIsRetired:
         beta1 = _make_run(base / "beta", "2026-01-01_00-00-00", "beta-1", {})
         beta2 = _make_run(base / "beta", "2026-01-02_00-00-00", "beta-2", {})
         _write_archive_manifest(tmp_path, "acme", [beta1, beta2])
-        plain_prefix = _finder("$acme.results.beta", str(tmp_path)).query()
+        plain_prefix = _finder("$acme.results.beta/*", str(tmp_path)).query()
         assert set(plain_prefix.uuids) == {"beta-1", "beta-2"}
 
 
@@ -2456,7 +2456,7 @@ class TestAllFunctionOnNameThree:
 
     def test_all_with_no_run_pointer_covers_every_matched_run(self, acme_archive):
         results = _finder(
-            "$acme.results.customers/2025.:all()", acme_archive
+            "$acme.results.customers/2025/*.:all()", acme_archive
         ).query()
         assert set(results.uuids) == {"inst1-uuid", "inst2-uuid", "inst3-uuid"}
 
@@ -5845,7 +5845,7 @@ class TestStarTraversalPointerIsOptional:
             {"acme": [acme_run], "widgets": [widgets_run, other_run]},
         )
         results = _finder(
-            "$*.results.customers/2025", str(tmp_path)
+            "$*.results.customers/2025/*", str(tmp_path)
         ).query()
         assert sorted(results.uuids) == ["acme-run", "widgets-run"]
 
@@ -8277,4 +8277,51 @@ class TestATrailingStar:
         ],
     )
     def test_a_trailing_star_is_every_run_at_that_level(self, archive, reference, expected):
+        assert sorted(_finder(reference, archive).query().uuids) == expected
+
+
+
+class TestAResultsNameOneMustNameARun:
+    # David, 2026-11-14 (reconfirming 2026-10-31; NRE "Run directories must
+    # be represented in name_one"): a results name_one names a run -- a
+    # run-dir name, a function that stands in for one, or a '*'. A template
+    # path alone names none, so it raises; it searched the runs under it as
+    # a prefix until then. The '/*' form is the explicit search.
+    @pytest.fixture
+    def archive(self, tmp_path):
+        base = tmp_path / "acme"
+        r1 = _make_run(base / "beta", "2026-01-01_00-00-00", "b1", {"s": "b1-s"})
+        r2 = _make_run(base / "customers" / "2025", "2026-01-02_00-00-00", "c1", {"s": "c1-s"})
+        _write_archive_manifest(tmp_path, "acme", [r1, r2])
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$acme.results.beta",
+            "$acme.results.customers/2025",
+            '$acme.results.:name("beta")',
+            "$acme.results.beta.s",
+            "$*.results.beta",
+            "$:regex(/^a/).results.beta",
+        ],
+    )
+    def test_a_template_path_alone_raises(self, archive, reference):
+        with pytest.raises(ReferenceException3, match="names no run"):
+            _finder(reference, archive).query()
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$acme.results.beta/*", ["b1"]),
+            ("$acme.results.beta:last()", ["b1"]),
+            ("$acme.results.customers/2025:first()", ["c1"]),
+            ("$acme.results.beta/2026-01-01_00-00-00", ["b1"]),
+            ("$acme.results.:last()", []),
+            # :all() is the zero-level runs; this archive has none
+            ("$acme.results.:all()", []),
+            ("$acme.results.*/*", ["b1"]),
+        ],
+    )
+    def test_a_run_name_a_stand_in_or_a_star_is_fine(self, archive, reference, expected):
         assert sorted(_finder(reference, archive).query().uuids) == expected

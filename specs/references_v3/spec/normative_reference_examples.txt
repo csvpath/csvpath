@@ -619,8 +619,9 @@ $alpha.results.:flatten():first().:all():has_errors()
 
 ### Run directories must be represented in `name_one`
 
-#### Error: there can be no run dir called `beta`. No exception, but never
-returns results.
+#### Error: there can be no run dir called `beta`. A `results` name_one must
+name a run -- a run dir name, a function that stands in for one, or a `*` --
+so this raises.
 $acme.results.beta
 
 #### Corrected
