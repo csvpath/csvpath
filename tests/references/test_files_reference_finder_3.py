@@ -7315,3 +7315,57 @@ class TestOneVersionFilePerResolve:
         results = _g_finder(f"{ORDERS}.:manifest()", tmp_path).resolve()
         assert len(results) > 1
         assert all(isinstance(r.data, dict) for r in results.results)
+
+
+class TestALedgerEntryWithNoUuid:
+    # reviewer on #615: every entry the framework writes has a uuid; one
+    # without (a hand-edited ledger, an old release) raised a bare KeyError
+    # 'uuid' deep in a read. Fail fast, naming the file. Forms that never
+    # need that entry's uuid are unchanged.
+    HOME = "inputs/named_files/keep"
+    MANIFEST = [
+        {
+            "file": "inputs/named_files/keep/a.csv/1.csv",
+            "file_home": "inputs/named_files/keep/a.csv",
+            "uuid": "u1",
+            "time": "2026-01-01 00:00:00+00:00",
+            "named_file_name": "keep",
+            "type": "csv",
+        }
+    ]
+    LEDGER = [
+        dict(MANIFEST[0]),
+        {
+            "file": "inputs/named_files/keep/a.csv/2.csv",
+            "file_home": "inputs/named_files/keep/a.csv",
+            "time": "2026-01-02 00:00:00+00:00",
+            "named_file_name": "keep",
+            "type": "csv",
+        },
+    ]
+
+    def _finder(self, reference):
+        return _finder(
+            reference,
+            self.HOME,
+            self.MANIFEST,
+            ledger=self.LEDGER,
+            by_name={"keep": (self.HOME, self.MANIFEST)},
+            inputs_files_path="inputs/named_files",
+        )
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            '$*.files.:manifest():named_file_name("keep")',
+            '$*.files.:manifest():type("csv")',
+            "$*.files.:manifest():last()",
+        ],
+    )
+    def test_it_raises_naming_the_file(self, reference):
+        with pytest.raises(ReferenceException3, match="no uuid .file 'inputs/named_files/keep/a.csv/2.csv'"):
+            self._finder(reference).query()
+
+    def test_forms_that_do_not_need_it_are_unchanged(self):
+        assert self._finder("$*.files.:manifest()").query().uuids == [None]
+        assert self._finder("$*.files.:manifest():first():named_file_name()").query().uuids == ["u1"]

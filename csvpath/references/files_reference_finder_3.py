@@ -1254,7 +1254,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             #
             path = self._files_ledger_path()
             return ReferenceResults3(
-                results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in entries]
+                results=[ReferenceResult3(path=path, uuid=self._entry_uuid(e)) for e in entries]
             )
         else:
             # issue #438: mirrors query()'s own identical normalization
@@ -2213,7 +2213,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             return ReferenceResults3(results=[])
         return ReferenceResults3(
             results=[
-                ReferenceResult3(path=self._files_ledger_path(), uuid=selected["uuid"])
+                ReferenceResult3(path=self._files_ledger_path(), uuid=self._entry_uuid(selected))
             ]
         )
 
@@ -2597,7 +2597,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # 2026-11-14; compendium 5.3, 5.6)). Several entries of one
         # named-file raised (Rule 1, 2026-11-08) until then.
         return ReferenceResults3(
-            results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in entries]
+            results=[ReferenceResult3(path=path, uuid=self._entry_uuid(e)) for e in entries]
         )
 
     def _apply_manifest_chain_ranges(self, *, ranges: list, entries: list) -> list:
@@ -2675,7 +2675,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # so '$*' and '$alpha' could disagree. A gate reads through
             # here too, so it matches on the value resolve() shows.
             #
-            live = self._live_manifest_entry_by_uuid(entry["uuid"])
+            live = self._live_manifest_entry_by_uuid(self._entry_uuid(entry))
             value = self._extract_field_value(live, key_path)
             if value is not None:
                 return value
@@ -2685,9 +2685,27 @@ class FilesReferenceFinder3(ReferenceFinder3):
             function_cls=function_cls,
             datatype=Reference3.FILES,
             ledger_entry_getter=lambda: self._find_manifest_entry_by_uuid(
-                self.source.files_ledger(), None if entry is None else entry["uuid"]
+                self.source.files_ledger(), None if entry is None else self._entry_uuid(entry)
             ),
         )
+
+    @staticmethod
+    def _entry_uuid(entry: dict) -> str:
+        """a manifest or ledger entry's uuid. The framework writes one on
+        every entry, so an entry without one -- a hand-edited ledger, or
+        one from an old release -- raises here, naming the file, instead of
+        a bare KeyError deep in a read (reviewer on #615; fail fast)."""
+        if entry is None:
+            raise ValueError("entry cannot be None")
+        uuid = entry.get("uuid")
+        if not uuid:
+            raise ReferenceException3(
+                f"A files manifest or ledger entry has no uuid (file "
+                f"{entry.get('file')!r}); every entry the framework writes has "
+                "one, so the ledger may have been edited by hand or written "
+                "by an old release."
+            )
+        return uuid
 
     def _filter_by_manifest_chain_gate(
         self, *, reference: Reference3, call: FunctionCall3, entries: list
