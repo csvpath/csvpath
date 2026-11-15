@@ -7983,3 +7983,83 @@ class TestInstanceRangeIdentities:
         with pytest.raises(ReferenceException3) as error:
             _finder(f"$alpha.results.:first(){name_three}", runs).query()
         assert "no arrival date" in str(error.value)
+
+
+class TestHavingByContent:
+    # compendium 6.39 and the NRE "Filtering by content with :having()"
+    # (David, 2026-11-14): ':having(:errors(...))' keeps the runs (name_one)
+    # or instances (name_three) whose errors.json has a matching error. r1's
+    # orders instance has an add[0] error; r2's has only name[1].
+    @pytest.fixture
+    def archive(self, tmp_path):
+        base = tmp_path / "acme"
+        r1 = _make_run(base, "2026-01-01_00-00-00", "r1", {"orders": "r1-o", "other": "r1-x"})
+        r2 = _make_run(base, "2026-01-02_00-00-00", "r2", {"orders": "r2-o"})
+        _write_json(Path(r1) / "orders" / "errors.json", [{"source": "add[0]"}, {"source": "name[1]"}])
+        _write_json(Path(r1) / "other" / "errors.json", [])
+        _write_json(Path(r2) / "orders" / "errors.json", [{"source": "name[1]"}])
+        _write_archive_manifest(tmp_path, "acme", [r1, r2])
+        return str(tmp_path)
+
+    HAVING = ':having(:errors(:idchain("add[0]")))'
+
+    def test_name_one_keeps_the_runs_with_a_matching_error(self, archive):
+        assert _finder(f"$acme.results.{self.HAVING}", archive).query().uuids == ["r1"]
+
+    def test_name_three_keeps_the_instances_with_a_matching_error(self, archive):
+        uuids = _finder(f"$acme.results.:first().:all(){self.HAVING}", archive).query().uuids
+        assert uuids == ["r1-o"]
+        assert _finder(f"$acme.results.:last().:all(){self.HAVING}", archive).query().uuids == []
+
+    def test_their_errors_json_and_only_the_matching_errors(self, archive):
+        ref = f"$acme.results.:first().:all(){self.HAVING}"
+        (whole,) = [r.data for r in _finder(f"{ref}:errors()", archive).resolve().results]
+        assert whole == [{"source": "add[0]"}, {"source": "name[1]"}]
+        (only,) = [
+            r.data
+            for r in _finder(f'{ref}:errors(:idchain("add[0]"))', archive).resolve().results
+        ]
+        assert only == [{"source": "add[0]"}]
+
+    def test_a_count_is_content_too(self, archive):
+        # r1's orders has two errors, its other none, r2's orders one
+        ref = "$acme.results.:all().:all():having(:errors(:count(:above(1))))"
+        assert _finder(ref, archive).query().uuids == ["r1-o"]
+
+    def test_the_ledger_set_filters_runs_and_instances_alike(self, archive):
+        # a ledger with one record per instance, as a real one has
+        root = Path(archive)
+        ledger = [
+            {
+                "named_paths_name": "acme",
+                "run_home": str(root / "acme" / run),
+                "run_uuid": run_uuid,
+                "uuid": f"{run_uuid}-{identity}",
+                "identity": identity,
+            }
+            for run, run_uuid, identity in (
+                ("2026-01-01_00-00-00", "r1", "orders"),
+                ("2026-01-01_00-00-00", "r1", "other"),
+                ("2026-01-02_00-00-00", "r2", "orders"),
+            )
+        ]
+        _write_json(root / "manifest.json", ledger)
+        runs = _finder(f"$*.results.:manifest(){self.HAVING}", archive).query().uuids
+        assert runs == ["r1"]
+        ref = f"$*.results.:manifest():first().:all(){self.HAVING}"
+        assert _finder(ref, archive).query().uuids == ["r1-orders"]
+
+    @pytest.mark.parametrize(
+        "reference, message",
+        [
+            # what the errors must have is not said
+            ("$acme.results.:having(:errors())", "does not say"),
+            ("$acme.results.:first().:all():having(:errors())", "does not say"),
+            # an instance takes content; a field there is a gate already
+            ('$acme.results.:first().:all():having("orders")', "takes content"),
+            ('$acme.results.:first().:all():having(:uuid("r1-o"))', "takes content"),
+        ],
+    )
+    def test_unclear_or_wrong_arguments_raise(self, archive, reference, message):
+        with pytest.raises(ReferenceException3, match=message):
+            _finder(reference, archive).query()

@@ -9,6 +9,8 @@ from .functions.function_3 import Function3
 from .functions.filters.count_3 import Count3
 from .functions.filters.idchain_3 import Idchain3
 from .functions.filters.message_3 import Message3
+from .functions.selectors.having_3 import Having3
+from .functions.well_known_files.errors_3 import Errors3
 from .functions.values.time_window_function_3 import TimeWindowFunction3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_3 import FunctionCall3, Reference3, Star3
@@ -1329,6 +1331,34 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         )
         return function_cls.transform_value(value)
 
+    def _instance_content_matches(self, *, instance_dir: str, content) -> bool:
+        """true if an instance's content satisfies a ':having()' content
+        argument (compendium 6.39, David 2026-11-14), e.g.
+        ':having(:errors(:idchain("add[0]")))': the instance's errors.json
+        has at least one matching error, or, for ':errors(:count(...))',
+        its count of errors satisfies the count. Only ':errors()' is a
+        content argument (6.39's example; errors.json is the instance's
+        list of errors). A bare ':errors()' says nothing about what the
+        errors must have -- that the file exists, or that it is not empty?
+        -- so it raises."""
+        if instance_dir is None or instance_dir == "":
+            raise ValueError("instance_dir cannot be None or empty")
+        if not isinstance(content, Errors3):
+            raise ReferenceException3(
+                f":having() cannot take :{content.name}() as content -- only "
+                ":errors(...) is (compendium 6.39)."
+            )
+        if content.arg is None:
+            raise ReferenceException3(
+                ":having(:errors()) does not say what the errors must have; "
+                'name it, e.g. :having(:errors(:idchain("add[0]"))) or '
+                ":having(:errors(:count(:above(0))))."
+            )
+        data = self._read_accessor(instance_dir, content)
+        if isinstance(content.arg, Count3):
+            return data is not None
+        return bool(data)
+
     def _any_instance_matches_field(self, run_dir: str, field_call) -> bool:
         """true if ANY of `run_dir`'s own instance subdirectories has a
         field (per `field_call`'s own KEY, instance/RESULT scope) that
@@ -1381,6 +1411,15 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         doc's own need); a plain string (the original, unchanged
         shape) matches by ONE instance identity NAME, exactly as
         before."""
+        if isinstance(having_call.arg, Errors3):
+            # content (compendium 6.39): a run with an instance whose
+            # errors.json has a matching error (2026-11-14)
+            return any(
+                self._instance_content_matches(
+                    instance_dir=Nos(run_dir).join(identity), content=having_call.arg
+                )
+                for identity in self._list_instance_identities(run_dir)
+            )
         if isinstance(having_call.arg, Function3):
             return self._any_instance_matches_field(run_dir, having_call.arg)
         identities = self._list_instance_identities(run_dir)
@@ -1797,6 +1836,17 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if having_call is None:
             raise ValueError("Having call cannot be None")
         arg = having_call.arg
+        if isinstance(arg, Errors3):
+            # content (6.39): an instance whose errors.json matches; a
+            # deleted run's instances have no file, so they do not match
+            return any(
+                self._instance_content_matches(
+                    instance_dir=Nos(record["run_home"]).join(e.get("identity")),
+                    content=arg,
+                )
+                for e in record["instances"]
+                if e.get("identity")
+            )
         if isinstance(arg, Function3):
             return self._any_instance_record_matches_field(
                 record=record, field_call=arg
@@ -1882,6 +1932,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             "pointer": pointer,
             "range_bounds": range_bounds,
             "filters": [f for f in fields if f.arg is not None],
+            "havings": self._name_three_havings(built),
             "value_field": self._last_value_field_call(built),
             "manifest_call": manifest_call,
             "accessor": accessor,
@@ -1921,6 +1972,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     field_call.arg,
                     field=field_call.name,
                     record=e,
+                )
+            ]
+        for having in selector["havings"]:
+            entries = [
+                e
+                for e in entries
+                if e.get("identity")
+                and self._instance_content_matches(
+                    instance_dir=Nos(record["run_home"]).join(e["identity"]),
+                    content=having.arg,
                 )
             ]
         if selector["pointer"] is not None:
@@ -2757,7 +2818,26 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         _last_value_field_call()). None of them supplies the value."""
         if name_three is None or not name_three.functions:
             return []
-        return self._gates_from_built(self._build_chain(name_three.functions))
+        built = self._build_chain(name_three.functions)
+        return self._gates_from_built(built) + self._name_three_havings(built)
+
+    def _name_three_havings(self, built: list) -> list:
+        """the ':having()' calls in a built name_three chain: filters that
+        keep the instances whose content matches (compendium 6.39, David
+        2026-11-14). Only a content argument means something for an
+        instance; an identity or a field there raises (a field is already
+        a gate, e.g. ':uuid("x")')."""
+        if built is None:
+            raise ValueError("Built chain cannot be None")
+        havings = [f for f in built if isinstance(f, Having3)]
+        for having in havings:
+            if not isinstance(having.arg, Errors3):
+                raise ReferenceException3(
+                    "In name_three, :having() takes content, e.g. "
+                    ':having(:errors(:idchain("add[0]"))); an instance\'s '
+                    "field is filtered by the field itself, e.g. :uuid(\"x\")."
+                )
+        return havings
 
     def _gates_from_built(self, built: list) -> list:
         """the argued field accessors in a built name_three chain, the
@@ -2783,17 +2863,23 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if not gates:
             return instances
         kept = []
+        field_gates = [g for g in gates if not isinstance(g, Having3)]
+        havings = [g for g in gates if isinstance(g, Having3)]
         for inst in instances:
+            instance_dir = Nos(run_dir).join(inst)
             # each instance's manifest.json is read once for every gate
-            entry = self.source.instance_manifest(Nos(run_dir).join(inst))
+            entry = self.source.instance_manifest(instance_dir) if field_gates else None
             if all(
                 self._matches_field_predicate(
                     self._instance_entry_field_value(entry=entry, field_call=g),
                     g.arg,
                     field=g.name,
-                    record=Nos(run_dir).join(inst),
+                    record=instance_dir,
                 )
-                for g in gates
+                for g in field_gates
+            ) and all(
+                self._instance_content_matches(instance_dir=instance_dir, content=h.arg)
+                for h in havings
             ):
                 kept.append(inst)
         return kept
@@ -3261,6 +3347,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 if f.name == "all":
                     match_all = True
                 elif f is from_call or f is to_call:
+                    continue
+                elif isinstance(f, Having3):
+                    # an instance filter by content (6.39); applied with
+                    # the gates (_name_three_gates())
                     continue
                 elif f.name in ResultsReferenceFinder3._ACCESSOR_NAMES:
                     accessor = f

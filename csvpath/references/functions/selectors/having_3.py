@@ -95,7 +95,12 @@ class Having3(Function3):
     DATATYPES = (Reference3.CSVPATHS, Reference3.RESULTS)
     ARG_TYPES = (str, Function3, list)
     ARG_REQUIRED = True
+    #
+    # RESULTS name_three added 2026-11-14 (compendium 6.39): it keeps the
+    # instances whose content matches, e.g. ':all():having(:errors(
+    # :idchain("add[0]")))'. Only a content argument means something there.
+    #
     POSITIONS = {
         Reference3.CSVPATHS: (Reference3.NAME_ONE,),
-        Reference3.RESULTS: (Reference3.NAME_ONE,),
+        Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
     }

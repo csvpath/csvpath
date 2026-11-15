@@ -14,7 +14,8 @@ def test_metadata():
     assert f.DATATYPES == (Reference3.CSVPATHS, Reference3.RESULTS)
     assert f.POSITIONS == {
         Reference3.CSVPATHS: (Reference3.NAME_ONE,),
-        Reference3.RESULTS: (Reference3.NAME_ONE,),
+        # name_three added 2026-11-14 (compendium 6.39): instances by content
+        Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
     }
 
 
