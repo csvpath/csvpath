@@ -22,5 +22,8 @@ def test_no_arg_is_valid():
 
 
 def test_arg_is_rejected():
+    # a definition field: its finder's gate does not filter on it yet, so it
+    # refuses an argument rather than ignoring one (reviewer on #659; RC
+    # triage B5)
     with pytest.raises(ReferenceException3):
         ScriptOnCompleteValid3(arg="x").check_valid()

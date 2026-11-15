@@ -191,6 +191,7 @@ class SqlReferenceSource(FilesystemReferenceSource):
             entries=self.results_ledger(),
             root_major=root_major,
             name_filter=name_filter,
+            logger=getattr(self.csvpaths, "logger", None),
         )
 
     def run_manifest(self, run_dir: str) -> dict | None:
