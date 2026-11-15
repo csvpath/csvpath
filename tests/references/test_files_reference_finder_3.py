@@ -7478,5 +7478,13 @@ class TestATraversalNameReadsTheManifestOwner:
     def test_a_record_no_live_manifest_holds_keeps_the_ledger_name(self):
         assert self._finder('$*.files.:manifest():named_file_name("gone")').query().uuids == ["g1"]
 
+    @pytest.mark.parametrize("root", ['$:choice("orders")', "$:regex(/^orders$/)"])
+    def test_a_root_selects_by_the_same_name(self, root):
+        # the name a record reports is the name that selected it (reviewer
+        # on #662): the root filter reads the owner's name too
+        assert self._finder(f"{root}.files.:manifest():last()").query().uuids == ["o1"]
+        assert self._finder(f'{root}.files.:manifest():named_file_name("orders")').query().uuids == ["o1"]
+        assert self._finder('$:choice("orders-renamed").files.:manifest():last()').query().uuids == []
+
     def test_the_status_chain_agrees(self):
         assert self._finder('$*.files.:status("complete"):named_file_name("orders")').query().uuids == ["o1"]

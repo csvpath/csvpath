@@ -1243,7 +1243,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 e
                 for e in ledger
                 if name_filter is None
-                or re.search(name_filter, e.get("named_file_name") or "")
+                or re.search(name_filter, self._record_name(e) or "")
             ]
             entries = self._filter_by_manifest_chain_gate(
                 reference=reference, call=manifest_field_call, entries=entries
@@ -2206,7 +2206,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             e
             for e in self._files_ledger()
             if name_filter is None
-            or re.search(name_filter, e.get("named_file_name") or "")
+            or re.search(name_filter, self._record_name(e) or "")
         ]
         selected = self._apply_pointer(pointer_call, ledger)
         if selected is None:
@@ -2248,6 +2248,21 @@ class FilesReferenceFinder3(ReferenceFinder3):
             time = None if live is None else live.get("time")
             timed.append(e if time is None else {**e, "time": time})
         return timed
+
+    def _record_name(self, entry: dict) -> "str | None":
+        """a ledger record's named-file name: for a live record, the
+        named-file whose manifest holds its uuid (D4); the ledger's own name
+        only for a record no live manifest holds. Used both to select records
+        by a ':regex()'/':choice()' root and to read ':named_file_name()', so
+        the name a record reports is the name that selected it (decision
+        D25; reviewer on #662)."""
+        if entry is None:
+            raise ValueError("entry cannot be None")
+        if entry.get("uuid"):
+            name, _ = self._live_named_file_entry(entry.get("uuid"))
+            if name is not None:
+                return name
+        return entry.get("named_file_name")
 
     def _live_named_file_entry(self, uuid: str) -> tuple:
         """(name, entry) for the live named-file whose own manifest holds
@@ -2565,7 +2580,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 e
                 for e in self._files_ledger()
                 if name_filter is None
-                or re.search(name_filter, e.get("named_file_name") or "")
+                or re.search(name_filter, self._record_name(e) or "")
             ]
             path = self._files_ledger_path()
         # a live record's time is its live entry's, when a range will read
@@ -2674,9 +2689,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # (D4), as the status-chain gate reads it (#615); the ledger's
             # own name only for a record no live manifest holds (decision
             # D25; reviewer on #615: the two could disagree)
-            name, _ = self._live_named_file_entry(entry.get("uuid"))
-            if name is not None:
-                return name
+            return self._record_name(entry)
         key_path = function_cls.KEY.get(Reference3.FILES)
         if self._is_traversal_root(reference.root_major) and entry is not None:
             #
