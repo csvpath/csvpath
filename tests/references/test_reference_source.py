@@ -11,6 +11,7 @@ run, all under a module-scoped tmp dir.
 import pytest
 
 from csvpath import CsvPaths
+from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_finder_factory_3 import ReferenceFinderFactory3
 from csvpath.references.sources.filesystem_reference_source import (
     FilesystemReferenceSource,
@@ -99,6 +100,14 @@ def test_read_json_missing_file_is_none_and_not_created(tmp_path):
     path = str(tmp_path / "manifest.json")
     assert FilesystemReferenceSource.read_json(path) is None
     assert not Nos(path).exists()
+
+
+def test_read_json_invalid_json_raises_naming_the_file(tmp_path):
+    # reviewer on #649: a bare JSONDecodeError with no path until 2026-11-15
+    path = tmp_path / "errors.json"
+    path.write_text("[{not json")
+    with pytest.raises(ReferenceException3, match="errors.json is not valid JSON"):
+        FilesystemReferenceSource.read_json(str(path))
 
 
 # ===================

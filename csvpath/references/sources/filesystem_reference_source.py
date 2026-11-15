@@ -4,6 +4,7 @@ import re
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
+from ..reference_exceptions_3 import ReferenceException3
 from .reference_source import ReferenceSource
 
 
@@ -18,13 +19,18 @@ class FilesystemReferenceSource(ReferenceSource):
     @staticmethod
     def read_json(path: str):
         """a parsed JSON file, or None if it does not exist. never writes,
-        unlike helpers that create a missing file."""
+        unlike helpers that create a missing file. A file that is not valid
+        JSON raises, naming it; it raised a bare JSONDecodeError with no path
+        (reviewer on #649; fail fast)."""
         if path is None or path == "":
             raise ValueError("Path cannot be None or empty")
         if not Nos(path).exists():
             return None
         with DataFileReader(path) as reader:
-            return json.load(reader.source)
+            try:
+                return json.load(reader.source)
+            except json.JSONDecodeError as e:
+                raise ReferenceException3(f"{path} is not valid JSON: {e}") from e
 
     #
     # FILES
@@ -76,24 +82,36 @@ class FilesystemReferenceSource(ReferenceSource):
         # existence check. see ResultsReferenceFinder3's module docstring.
         #
         archive = self.csvpaths.config.get(section="results", name="archive")
-        manifest_path = Nos(archive).join(self.MANIFEST)
-        if not Nos(manifest_path).exists():
+        # read_json() names the file if it is not valid JSON (reviewer on
+        # #653: this read raised a bare JSONDecodeError)
+        entries = self.read_json(Nos(archive).join(self.MANIFEST))
+        if entries is None:
             return []
-        with DataFileReader(manifest_path) as reader:
-            entries = json.load(reader.source)
         return self._run_homes_from(
-            entries=entries, root_major=root_major, name_filter=name_filter
+            entries=entries,
+            root_major=root_major,
+            name_filter=name_filter,
+            logger=getattr(self.csvpaths, "logger", None),
         )
 
     @staticmethod
     def _run_homes_from(
-        *, entries: list, root_major: str | None, name_filter: str | None
+        *, entries: list, root_major: str | None, name_filter: str | None, logger=None
     ) -> list[tuple[str, str]]:
         """the distinct, still-existing (run_home, named_paths_name) pairs
         in archive ledger entries, in ledger order. shared with the SQL
-        source, which passes the same entries from its mirror."""
+        source, which passes the same entries from its mirror. An entry with
+        no uuid raises, logged when a logger is given: there should be none
+        (David, 2026-10-31), as every FILES, CSVPATHS and RESULTS ledger read
+        checks (decisions D20, D21)."""
         if entries is None or not isinstance(entries, list):
             raise TypeError("Entries must be a list")
+        for entry in entries:
+            if not entry.get("uuid"):
+                msg = f"A results ledger entry has no uuid: {entry}"
+                if logger is not None:
+                    logger.error(msg)
+                raise ValueError(msg)
         homes = []
         seen = set()
         for entry in entries:

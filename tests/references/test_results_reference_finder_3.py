@@ -54,14 +54,15 @@ class _FakeLogger:
 
     def __init__(self):
         self.warnings = []
+        self.errors = []
 
     def warning(self, msg, *args):
         self.warnings.append(msg % args if args else msg)
 
-    def info(self, *args, **kwargs):
-        pass
+    def error(self, msg, *args):
+        self.errors.append(msg % args if args else msg)
 
-    def error(self, *args, **kwargs):
+    def info(self, *args, **kwargs):
         pass
 
     def debug(self, *args, **kwargs):
@@ -2404,8 +2405,8 @@ class TestDiscoveryFromArchiveManifest:
         _write_json(
             tmp_path / "manifest.json",
             [
-                {"named_paths_name": "acme", "run_home": acme_run},
-                {"named_paths_name": "other", "run_home": other_run},
+                {"named_paths_name": "acme", "run_home": acme_run, "uuid": "a-i"},
+                {"named_paths_name": "other", "run_home": other_run, "uuid": "o-i"},
             ],
         )
         results = _finder("$acme.results.:flatten()", str(tmp_path)).query()
@@ -3821,6 +3822,7 @@ class TestArchiveLedgerFallback:
                 {
                     "run_uuid": "run1-uuid",
                     "identity": "company_names",
+                    "uuid": "instance-uuid",
                     "named_paths_name": "widgets",
                     "run_home": str(run_dir),
                     "archive_name": "archive-2026",
@@ -3842,6 +3844,7 @@ class TestArchiveLedgerFallback:
                 {
                     "run_uuid": "run1-uuid",
                     "identity": "company_names",
+                    "uuid": "instance-uuid",
                     "named_paths_name": "widgets",
                     "run_home": str(run_dir),
                     "archive_path": "/archives/archive-2026",
@@ -3882,6 +3885,7 @@ class TestArchiveLedgerFallback:
                     # itself finds nothing.
                     "run_uuid": "some-other-run-uuid",
                     "identity": "company_names",
+                    "uuid": "instance-uuid",
                     "named_paths_name": "widgets",
                     "run_home": str(run_dir),
                 }
@@ -5134,7 +5138,7 @@ class TestStarTraversal:
         archive_manifest = Path(two_group_archive) / "manifest.json"
         entries = json.loads(archive_manifest.read_text())
         entries.append(
-            {"named_paths_name": "acme", "run_home": str(yesterday_dir)}
+            {"named_paths_name": "acme", "run_home": str(yesterday_dir), "uuid": "y-i"}
         )
         _write_json(archive_manifest, entries)
         results = _finder("$*.results.:all():yesterday()", two_group_archive).query()
@@ -8094,6 +8098,40 @@ class TestHavingByContent:
         ref = f"$*.results.:manifest():first().:all(){self.HAVING}"
         assert _finder(ref, archive).query().uuids == ["r1-orders"]
 
+    def test_an_identity_reads_only_its_own_instance(self, archive):
+        # 6.39: in name_three ':having()' filters the instances the reference
+        # selects. With an identity that is one instance, so a sibling's
+        # errors.json is never read -- here a malformed one that would raise
+        # if it were (reviewer on #649: it was read, and its keys counted)
+        root = Path(archive)
+        _write_json(root / "acme" / "2026-01-01_00-00-00" / "other" / "errors.json", {"bad": 1})
+        ref = f"$acme.results.:first().orders{self.HAVING}"
+        assert _finder(ref, archive).query().uuids == ["r1-o"]
+        # ':all()' selects the sibling too, so it is read, and raises
+        with pytest.raises(ReferenceException3, match="not a list of error entries"):
+            _finder(f"$acme.results.:first().:all(){self.HAVING}", archive).query()
+
+    def test_an_identity_reads_only_its_own_instance_in_the_ledger_set(self, archive):
+        root = Path(archive)
+        _write_json(root / "acme" / "2026-01-01_00-00-00" / "other" / "errors.json", {"bad": 1})
+        ledger = [
+            {
+                "named_paths_name": "acme",
+                "run_home": str(root / "acme" / run),
+                "run_uuid": run_uuid,
+                "uuid": f"{run_uuid}-{identity}",
+                "identity": identity,
+            }
+            for run, run_uuid, identity in (
+                ("2026-01-01_00-00-00", "r1", "orders"),
+                ("2026-01-01_00-00-00", "r1", "other"),
+                ("2026-01-02_00-00-00", "r2", "orders"),
+            )
+        ]
+        _write_json(root / "manifest.json", ledger)
+        ref = f"$*.results.:manifest():first().orders{self.HAVING}"
+        assert _finder(ref, archive).query().uuids == ["r1-orders"]
+
     def test_a_count_reads_a_missing_errors_file_as_zero(self, archive, tmp_path):
         # decision D14: a live instance with no errors.json has no errors
         # (Count3: "a missing file counts as zero entries"); r1's other has
@@ -8600,6 +8638,87 @@ class TestAClockValueInsideName:
             "$acme.results.customers/:name(:year())/*",
         ):
             assert _finder(reference, str(tmp_path)).query().uuids == ["c1"], reference
+
+
+class TestAnInvalidJsonFile:
+    # reviewer on #649: a well-known JSON file that does not parse raised a
+    # bare JSONDecodeError with no path; it raises naming the file
+    def test_a_bare_errors_read_names_the_file(self, tmp_path):
+        run = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s": "r1-s"})
+        (Path(run) / "s" / "errors.json").write_text("[{not json")
+        _write_archive_manifest(tmp_path, "acme", [run])
+        with pytest.raises(ReferenceException3, match="errors.json is not valid JSON"):
+            _finder("$acme.results.:last().s:errors()", str(tmp_path)).resolve()
+
+    def test_an_invalid_archive_ledger_names_the_file(self, tmp_path):
+        # reviewer on #653: run_homes() parsed the archive ledger itself
+        (tmp_path / "manifest.json").write_text("[{not json")
+        with pytest.raises(ReferenceException3, match="manifest.json is not valid JSON"):
+            _finder("$acme.results.:last()", str(tmp_path)).query()
+
+
+class TestALedgerEntryWithNoUuid:
+    # David, 2026-10-31 (v3_part_2_lifecycle_gate.md): "a ledger entry with no
+    # `uuid` raises (there should be none)". Only _manifest_set_runs() checked
+    # until 2026-11-15; run discovery, the literal-root gates and the
+    # ledger-fallback fields read past one, so another group's bad entry was
+    # ignored or, under '*', included silently (reviewer on #652; triage A18,
+    # decision D21). Every read of the archive ledger now raises, as FILES
+    # (D20) and CSVPATHS check theirs.
+    @pytest.fixture
+    def archive(self, tmp_path):
+        r1 = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s": "r1-s"})
+        b1 = _make_run(tmp_path / "beta", "2026-01-02_00-00-00", "b1", {"s": "b1-s"})
+        _write_json(
+            tmp_path / "manifest.json",
+            [
+                {
+                    "named_paths_name": "acme",
+                    "run_home": r1,
+                    "run_uuid": "r1",
+                    "uuid": "r1-s",
+                    "identity": "s",
+                    "lifecycle": "active",
+                },
+                {
+                    "named_paths_name": "beta",
+                    "run_home": b1,
+                    "run_uuid": "b1",
+                    "identity": "s",
+                    "lifecycle": "active",
+                },
+            ],
+        )
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$acme.results.:last()",
+            "$acme.results.:last():lifecycle()",
+            '$acme.results.:lifecycle("active"):last()',
+            '$*.results.:lifecycle("active")',
+            '$:choice("acme").results.:lifecycle("active")',
+            "$*.results.:manifest():first()",
+        ],
+    )
+    @pytest.mark.parametrize("call", ["query", "resolve"])
+    def test_a_ledger_read_raises_naming_the_entry(self, archive, reference, call):
+        finder = _finder(reference, archive)
+        with pytest.raises(ValueError, match="results ledger entry has no uuid"):
+            getattr(finder, call)()
+
+    def test_the_finder_logs_the_error(self, archive):
+        finder = _finder('$acme.results.:lifecycle("active"):last()', archive)
+        with pytest.raises(ValueError):
+            finder.query()
+        assert any("has no uuid" in e for e in finder.csvpaths.logger.errors)
+
+    def test_a_bare_ledger_set_raises_at_resolve(self, archive):
+        # its query names the ledger only (uuid None); resolve reads it
+        assert _finder("$*.results.:manifest()", archive).query().uuids == [None]
+        with pytest.raises(ValueError, match="results ledger entry has no uuid"):
+            _finder("$*.results.:manifest()", archive).resolve()
 
 
 class TestAnInstanceManifestIsReadOncePerCall:

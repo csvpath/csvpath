@@ -344,7 +344,12 @@ def test_macie_fr_mx_it_catalog(catalog) -> None:
         ("MEXICO_CURP_NUMBER", CURP, "curp", 1),
         ("MEXICO_CURP_NUMBER", f"clave única {CURP}", "x", 1),
         ("MEXICO_CURP_NUMBER", CURP, "notes", 0),
-        ("ITALY_NATIONAL_IDENTIFICATION_NUMBER", CF, "codice_fiscale", 1),
+        #
+        # the keyword is "codice fiscal"; "codice fiscale" is a longer word
+        # (the second and third live probes)
+        #
+        ("ITALY_NATIONAL_IDENTIFICATION_NUMBER", CF, "codice_fiscale", 0),
+        ("ITALY_NATIONAL_IDENTIFICATION_NUMBER", CF, "codice fiscal", 1),
         ("ITALY_NATIONAL_IDENTIFICATION_NUMBER", f"tax code {CF}", "x", 1),
         ("ITALY_NATIONAL_IDENTIFICATION_NUMBER", CF, "notes", 0),
         ("ITALY_NATIONAL_IDENTIFICATION_NUMBER", "partita i.v.a. 00743110157", "x", 1),

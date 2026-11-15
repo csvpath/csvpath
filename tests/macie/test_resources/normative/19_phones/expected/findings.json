@@ -9,8 +9,8 @@
       "detections": [
         {
           "type": "UK_PHONE_NUMBER",
-          "count": 2,
-          "severity": "MEDIUM",
+          "count": 1,
+          "severity": "LOW",
           "occurrences": {
             "cells": [
               {
@@ -18,28 +18,16 @@
                 "column": 2,
                 "columnName": "phone",
                 "row": 2
-              },
-              {
-                "cellReference": null,
-                "column": 3,
-                "columnName": "notes",
-                "row": 11
               }
             ]
           }
         },
         {
           "type": "FRANCE_PHONE_NUMBER",
-          "count": 2,
-          "severity": "MEDIUM",
+          "count": 1,
+          "severity": "LOW",
           "occurrences": {
             "cells": [
-              {
-                "cellReference": null,
-                "column": 3,
-                "columnName": "notes",
-                "row": 6
-              },
               {
                 "cellReference": null,
                 "column": 3,
@@ -51,7 +39,7 @@
         },
         {
           "type": "GERMANY_PHONE_NUMBER",
-          "count": 3,
+          "count": 2,
           "severity": "MEDIUM",
           "occurrences": {
             "cells": [
@@ -60,12 +48,6 @@
                 "column": 2,
                 "columnName": "phone",
                 "row": 2
-              },
-              {
-                "cellReference": null,
-                "column": 3,
-                "columnName": "notes",
-                "row": 7
               },
               {
                 "cellReference": null,
@@ -78,7 +60,7 @@
         },
         {
           "type": "ITALY_PHONE_NUMBER",
-          "count": 3,
+          "count": 2,
           "severity": "MEDIUM",
           "occurrences": {
             "cells": [
@@ -87,12 +69,6 @@
                 "column": 2,
                 "columnName": "phone",
                 "row": 2
-              },
-              {
-                "cellReference": null,
-                "column": 3,
-                "columnName": "notes",
-                "row": 9
               },
               {
                 "cellReference": null,
@@ -155,7 +131,7 @@
           }
         }
       ],
-      "totalCount": 14
+      "totalCount": 10
     }
   ],
   "csvpath": {

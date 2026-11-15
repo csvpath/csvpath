@@ -147,7 +147,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # instead of dumping the whole thing.
                 home = self.csvpaths.config.inputs_csvpaths_path
                 path = Nos(home).join("manifest.json")
-                ledger = self.source.paths_ledger()
+                ledger = self._paths_ledger()
                 selected = self._apply_pointer(pointer_call, ledger)
                 if selected is None:
                     return ReferenceResults3(results=[])
@@ -794,7 +794,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 pattern = self._build(reference.root_major).pattern
                 return [
                     e
-                    for e in self.source.paths_ledger()
+                    for e in self._paths_ledger()
                     if re.search(pattern, e.get("named_paths_name") or "")
                 ]
             if (
@@ -843,7 +843,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                         )
                         if entry is not None:
                             return entry
-                        ledger = self.source.paths_ledger()
+                        ledger = self._paths_ledger()
                         return self._find_manifest_entry_by_uuid(
                             ledger, result.uuid
                         )
@@ -936,7 +936,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     function_cls=function_cls,
                     datatype=reference.datatype,
                     ledger_entry_getter=lambda: self._find_manifest_entry_by_uuid(
-                        self.source.paths_ledger(), result.uuid
+                        self._paths_ledger(), result.uuid
                     ),
                 )
         if kind != Reference3.FIRST_PARTY:
@@ -1069,7 +1069,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         if self._reads_ledger_set(reference):
             if entry is not None and entry.get("named_paths_home"):
                 return entry["named_paths_home"]
-            record = self._find_manifest_entry_by_uuid(self.source.paths_ledger(), uuid)
+            record = self._find_manifest_entry_by_uuid(self._paths_ledger(), uuid)
             if record is None:
                 if entry is not None:
                     return None
@@ -1103,7 +1103,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             for entry in self.source.paths_manifest(name):
                 live[entry.get("uuid")] = entry
         versions = []
-        for entry in self.source.paths_ledger():
+        for entry in self._paths_ledger():
             name = entry.get("named_paths_name") or ""
             if not self._matching_names([name], name_filter):
                 continue
@@ -1131,6 +1131,22 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             return self._paths_ledger_path()
         raise ValueError(f"manifest_source cannot be {manifest_source!r}")
 
+    def _paths_ledger(self) -> "list | None":
+        """the paths ledger, every entry checked for a uuid as it is read.
+        There should be none without one (David, 2026-10-31: "a ledger entry
+        with no `uuid` raises (there should be none)"), as FILES
+        (_files_ledger(), decision D20) and RESULTS (_manifest_set_runs())
+        check theirs. A hand-edited or old ledger raised a bare KeyError
+        'uuid' in some forms, and a gate such as ':lifecycle("active")'
+        silently dropped the entry (reviewer on #652; triage A17)."""
+        ledger = self.source.paths_ledger()
+        for entry in ledger or []:
+            if not entry.get("uuid"):
+                msg = f"A paths ledger entry has no uuid: {entry}"
+                self.csvpaths.logger.error(msg)
+                raise ValueError(msg)
+        return ledger
+
     def _paths_ledger_path(self) -> str:
         """the root named-paths ledger's own manifest.json."""
         return Nos(self.csvpaths.config.inputs_csvpaths_path).join("manifest.json")
@@ -1140,7 +1156,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         none."""
         if uuid is None:
             raise ValueError("uuid cannot be None")
-        return self._find_manifest_entry_by_uuid(self.source.paths_ledger(), uuid)
+        return self._find_manifest_entry_by_uuid(self._paths_ledger(), uuid)
 
     def _group_manifest_entry(self, root_major, uuid: str) -> tuple:
         """returns (group_name, manifest_entry) for the version matching

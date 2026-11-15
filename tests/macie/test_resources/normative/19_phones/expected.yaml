@@ -5,6 +5,12 @@
 # rule: a number near a keyword needs no country code, and a number with
 # no keyword near must have one.
 #
+# Not every number with a country code is keyword exempt: the live probes
+# (2026-11-14 and -15) found Macie reports one with no keyword only when
+# it is unbroken or has a group in parentheses. So the international
+# numbers written with spaces in this file's notes column (rows 6, 7, 9
+# and 11) are no longer reported; the one near a keyword (row 10) is.
+#
 # A national number (no country code) can fit more than one country's
 # plan, and the seven share their keywords, so near a keyword it is
 # reported for each country it fits. International numbers never are.
@@ -34,7 +40,7 @@ conversion:
 runs:
   - csvpath: group-b-phones.csvpath
     data: contacts.csv
-    finding_lines: [1, 2, 3, 4, 5, 6, 8, 9, 10]
+    finding_lines: [1, 2, 3, 4, 9]
     printouts:
       macie: printouts.macie.txt
     errors:
@@ -45,11 +51,9 @@ runs:
       - { line: 2, message: "macie SPAIN_PHONE_NUMBER: occurrence 1, line 2 (row 3), column 2 phone" }
       - { line: 3, message: "macie PHONE_NUMBER: occurrence 1, line 3 (row 4), column 2 phone" }
       - { line: 4, message: "macie BRAZIL_PHONE_NUMBER: occurrence 2, line 4 (row 5), column 2 phone" }
-      - { line: 5, message: "macie FRANCE_PHONE_NUMBER: occurrence 1, line 5 (row 6), column 3 notes" }
-      - { line: 6, message: "macie GERMANY_PHONE_NUMBER: occurrence 2, line 6 (row 7), column 3 notes" }
-      - { line: 8, message: "macie ITALY_PHONE_NUMBER: occurrence 2, line 8 (row 9), column 3 notes" }
-      - { line: 9, message: "macie FRANCE_PHONE_NUMBER: occurrence 2, line 9 (row 10), column 3 notes" }
-      - { line: 10, message: "macie UK_PHONE_NUMBER: occurrence 2, line 10 (row 11), column 3 notes" }
+      - { line: 9, message: "macie FRANCE_PHONE_NUMBER: occurrence 1, line 9 (row 10), column 3 notes" }
+      - { line: 9, message: "macie GERMANY_PHONE_NUMBER: occurrence 2, line 9 (row 10), column 3 notes" }
+      - { line: 9, message: "macie ITALY_PHONE_NUMBER: occurrence 2, line 9 (row 10), column 3 notes" }
     findings: findings.json
     #
     # Header "phone" is a keyword of all seven; "id" and "notes" hold none.
