@@ -15,6 +15,20 @@ class ExpressionUtility:
         in some cases we want an empty string to just be an empty string. see
         length(). to do that, we put args.EMPTY_STRING into the actuals list. """
 
+    CURRENCY_SYMBOLS = ("$", "€", "£")
+    """ the symbols to_int() and to_float() strip. a value holding one is a
+        string to comparisons like gt(); int() and float() still convert it.
+        see #576. """
+
+    @classmethod
+    def has_currency_symbol(cls, v: Any) -> bool:
+        if not isinstance(v, str):
+            return False
+        for symbol in cls.CURRENCY_SYMBOLS:
+            if symbol in v:
+                return True
+        return False
+
     @classmethod
     def _numeric_string(self, i) -> str:
         s = f"{i}"

@@ -30,7 +30,11 @@ class TestDescribeOneFunction:
         assert "none" in doc.lower()
 
     def test_required_arg_function_shows_type_and_required(self):
-        doc = Function3Describer.describe(Idchain3)
+        # :name() takes a required str/int/regex; :idchain()'s argument is
+        # optional since 2026-11-14
+        from csvpath.references.functions.selectors.name_3 import Name3
+
+        doc = Function3Describer.describe(Name3)
         assert "required" in doc
         assert "Regex3" in doc
 

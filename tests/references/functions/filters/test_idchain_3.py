@@ -22,9 +22,18 @@ def test_required_arg_present_and_correct_type_passes():
     Idchain3(arg="add[0]string[2]").check_valid()  # should not raise
 
 
-def test_missing_arg_is_rejected():
-    with pytest.raises(ReferenceException3):
-        Idchain3().check_valid()
+def test_no_arg_is_valid_alone():
+    # 2026-11-14 (compendium 5.19): chained beside ':errors()' with no
+    # argument it reads each error's idchain
+    Idchain3().check_valid()
+
+
+def test_no_arg_is_rejected_nested_in_errors():
+    # nested, :idchain() narrows the errors, so it needs an argument
+    from csvpath.references.functions.well_known_files.errors_3 import Errors3
+
+    with pytest.raises(ReferenceException3, match="needs an argument"):
+        Errors3(arg=Idchain3()).check_valid()
 
 
 def test_wrong_arg_type_is_rejected():

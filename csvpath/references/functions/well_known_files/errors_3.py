@@ -1,4 +1,5 @@
 from ...reference_3 import Reference3
+from ...reference_exceptions_3 import ReferenceException3
 from ..function_3 import Function3
 from ..filters.count_3 import Count3
 from ..filters.idchain_3 import Idchain3
@@ -74,3 +75,16 @@ class Errors3(Function3):
     ARG_TYPES = (Idchain3, Message3, Count3)
     ARG_REQUIRED = False
     POSITIONS = {Reference3.RESULTS: (Reference3.NAME_THREE,)}
+
+    def check_valid(self) -> None:
+        """the shared checks, plus: a nested ':idchain()' narrows the
+        errors, so it needs an argument. ':idchain()' with no argument
+        only means something chained beside ':errors()', where it reads
+        each error's idchain (compendium 5.19, 2026-11-14)."""
+        super().check_valid()
+        if isinstance(self._arg, Idchain3) and self._arg.arg is None:
+            raise ReferenceException3(
+                ":errors(:idchain()) needs an argument: nested, :idchain() "
+                "narrows the errors. Chained beside, ':errors():idchain()' "
+                "reads each error's idchain."
+            )

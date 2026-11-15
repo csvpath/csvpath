@@ -66,7 +66,14 @@ class AboveBelow(MatchDecider):
         if a is None and b is not None or b is None and a is not None:
             self.match = False
         else:
-            if ExpressionUtility.all([a, b], [float, int]):
+            #
+            # a currency string like "$10" compares as a string. to compare
+            # it as a number, convert it first: gt(int(#a), 9). see #576.
+            #
+            has_symbol = ExpressionUtility.has_currency_symbol
+            if has_symbol(a) or has_symbol(b):
+                self.match = self._try_strings(a, b)
+            elif ExpressionUtility.all([a, b], [float, int]):
                 self.match = self._try_numbers(a, b)
             elif ExpressionUtility.all([a, b], [datetime]):
                 self.match = self._try_dates(a, b)
