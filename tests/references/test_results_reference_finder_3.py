@@ -8546,3 +8546,21 @@ class TestAMalformedErrorsJson:
             '$acme.results.:last().s:errors(:idchain("a"))', str(tmp_path)
         ).resolve().results
         assert result.data is None
+
+
+class TestAClockValueInsideName:
+    # NRE "$acme.results.customers/:name(:year())/:first()...": ':name()' of
+    # a clock value is its string, as "{:year()}" interpolation is (6.27d).
+    # It raised ":name() argument must be one of ..." until 2026-11-15.
+    def test_it_names_the_template_segment(self, tmp_path):
+        year = str(daut.now().year)
+        base = tmp_path / "acme"
+        r1 = _make_run(base / "customers" / year, "2026-01-01_00-00-00", "c1", {"s": "c1-s"})
+        r2 = _make_run(base / "customers" / "1999", "2026-01-02_00-00-00", "c0", {"s": "c0-s"})
+        _write_archive_manifest(tmp_path, "acme", [r1, r2])
+        for reference in (
+            "$acme.results.customers/:name(:year())/:first()",
+            '$acme.results.customers/:name("{:year()}")/:first()',
+            "$acme.results.customers/:name(:year())/*",
+        ):
+            assert _finder(reference, str(tmp_path)).query().uuids == ["c1"], reference
