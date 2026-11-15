@@ -8214,7 +8214,8 @@ class TestATrailingStar:
         r2 = _make_run(base / "beta", "2026-01-02_00-00-00", "b2", {"s": "b2-s"})
         r3 = _make_run(base, "2026-01-03_00-00-00", "top", {"s": "top-s"})
         r4 = _make_run(base / "beta" / "deeper", "2026-01-04_00-00-00", "d1", {"s": "d1-s"})
-        _write_archive_manifest(tmp_path, "acme", [r1, r2, r3, r4])
+        r5 = _make_run(base / "gamma" / "deeper", "2026-01-05_00-00-00", "g1", {"s": "g1-s"})
+        _write_archive_manifest(tmp_path, "acme", [r1, r2, r3, r4, r5])
         return str(tmp_path)
 
     @pytest.mark.parametrize(
@@ -8223,6 +8224,11 @@ class TestATrailingStar:
             ("$acme.results.beta/*", ["b1", "b2"]),
             ("$acme.results.*", ["top"]),
             ("$acme.results.beta/*/*", ["d1"]),
+            # after a middle :all(), the trailing * is the run-dir slot too
+            # (reviewer on #646: it counted a template level, one too deep)
+            ("$acme.results.:all()/*", ["b1", "b2"]),
+            ("$acme.results.:all()/deeper/*", ["d1", "g1"]),
+            ("$acme.results.:all()/*:last()", ["b2"]),
         ],
     )
     def test_a_trailing_star_is_every_run_at_that_level(self, archive, reference, expected):

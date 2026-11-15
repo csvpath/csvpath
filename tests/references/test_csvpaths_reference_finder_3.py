@@ -3991,9 +3991,12 @@ class TestHavingByContentIsResultsOnly:
             _finder('$acme.csvpaths.:having(:errors(:idchain("add[0]")))').query()
 
 
-class TestATrailingStarHasNoPathHere:
-    # compendium 4.1a: a csvpaths name_one holds no path, so a `*` there
-    # raises, as any path segment does
-    def test_raises(self):
-        with pytest.raises(ReferenceException3):
-            _finder("$acme.csvpaths.*").query()
+class TestATrailingStarIsEveryVersion:
+    # compendium 4.1a and 4.2b, the NRE's "Two ways to get all versions:
+    # $acme.csvpaths.:all() / $acme.csvpaths.*" (reviewer on #646: the first
+    # draft wrote a raise into the spec)
+    def test_star_is_all(self):
+        assert _finder("$acme.csvpaths.*").query().uuids == _finder(
+            "$acme.csvpaths.:all()"
+        ).query().uuids
+        assert len(_finder("$acme.csvpaths.*").query().uuids) == len(ACME_MANIFEST)

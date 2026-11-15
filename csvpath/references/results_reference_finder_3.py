@@ -537,9 +537,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # SOURCE == "clock"), enforcing compendium 4.2b's "name_one
             # can have only one :all() or :groups()" for free, no
             # separate check needed here.
-            suffix_pattern = self._compile_path_pattern(
-                name_one.path[all_index + 1 :]
-            )
+            suffix = name_one.path[all_index + 1 :]
+            if suffix and isinstance(suffix[-1], Star3):
+                # a trailing '*' is the run-dir slot, as the plain path
+                # drops it below (compendium 4.1a): ':all()/*' is the runs
+                # under each first-level template, not a level deeper
+                # (reviewer on #646)
+                suffix = suffix[:-1]
+            suffix_pattern = self._compile_path_pattern(suffix)
             pattern = [*prefix_pattern, Star3(), *suffix_pattern]
             candidates = [
                 rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
