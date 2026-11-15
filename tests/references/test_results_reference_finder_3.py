@@ -8049,6 +8049,23 @@ class TestHavingByContent:
         ref = f"$*.results.:manifest():first().:all(){self.HAVING}"
         assert _finder(ref, archive).query().uuids == ["r1-orders"]
 
+    def test_a_count_reads_a_missing_errors_file_as_zero(self, archive, tmp_path):
+        # decision D14: a live instance with no errors.json has no errors
+        # (Count3: "a missing file counts as zero entries"); r1's other has
+        # an empty file, so both match below(1). A gone run does not.
+        (Path(archive) / "acme" / "2026-01-01_00-00-00" / "other" / "errors.json").unlink()
+        ref = "$acme.results.:first().:all():having(:errors(:count(:below(1))))"
+        assert _finder(ref, archive).query().uuids == ["r1-x"]
+
+    def test_the_name_one_form_resolves(self, archive):
+        # a filter's argument supplies no value; it raised "does not support
+        # resolve_kind='metadata_field'" (reviewer on #641), as 6.39's
+        # :having(:uuid(...)) example did
+        results = _finder(f"$acme.results.{self.HAVING}", archive).resolve()
+        assert results.uuids == ["r1"]
+        results = _finder('$acme.results.:having(:uuid("r1-o"))', archive).resolve()
+        assert results.uuids == ["r1"]
+
     @pytest.mark.parametrize(
         "reference, message",
         [

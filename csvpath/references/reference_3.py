@@ -570,6 +570,12 @@ class Reference3:
             while call is not None:
                 if _kind_of(call) == Reference3.METADATA_FIELD:
                     return Reference3.METADATA_FIELD
+                # a filter's argument picks the items; it supplies no value,
+                # so ':having(:uuid("x"))' or ':having(:errors(:idchain(...)))'
+                # is not a field read (it raised resolve_kind=
+                # 'metadata_field' on resolve; reviewer on #641)
+                if call.name == "having":
+                    break
                 call = call.arg if isinstance(call.arg, FunctionCall3) else None
         for f in terminal_functions:
             if _kind_of(f) == Reference3.METADATA_FILE:

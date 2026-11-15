@@ -1354,10 +1354,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 'name it, e.g. :having(:errors(:idchain("add[0]"))) or '
                 ":having(:errors(:count(:above(0))))."
             )
-        data = self._read_accessor(instance_dir, content)
         if isinstance(content.arg, Count3):
-            return data is not None
-        return bool(data)
+            # a live instance with no errors.json has no errors: zero, as
+            # Count3.matches() says ("a missing file counts as zero
+            # entries"); an instance that is gone (a deleted run) does not
+            # match at all (decision D14, reviewer on #641)
+            if not Nos(instance_dir).dir_exists():
+                return False
+            path = Nos(instance_dir).join(self._JSON_ACCESSOR_FILES["errors"])
+            return content.arg.matches(self._read_well_known_json(path))
+        return bool(self._read_accessor(instance_dir, content))
 
     def _any_instance_matches_field(self, run_dir: str, field_call) -> bool:
         """true if ANY of `run_dir`'s own instance subdirectories has a
