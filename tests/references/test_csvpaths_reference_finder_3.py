@@ -3980,3 +3980,12 @@ class TestComparisonOnAMissingValue:
         warnings = finder.csvpaths.logger.warnings
         assert len(warnings) == 1
         assert "acme" in warnings[0] and ":on_arrival()" in warnings[0]
+
+
+class TestHavingByContentIsResultsOnly:
+    # compendium 6.39's content form reads an instance's errors.json, which
+    # only RESULTS has (a CSVPATHS content case is deferred, David
+    # 2026-11-14); here it raises
+    def test_raises(self):
+        with pytest.raises(ReferenceException3):
+            _finder('$acme.csvpaths.:having(:errors(:idchain("add[0]")))').query()
