@@ -106,13 +106,22 @@ class Decimal(Type):
         if dmin is not None:
             dmin = self._to(name=self.name, n=dmin)
 
-        ret = Decimal._is_match(
-            name=self.name,
-            value=h,
-            dmax=dmax,
-            dmin=dmin,
-            strict=self.has_qualifier("strict"),
-        )
+        strict = self.has_qualifier("strict")
+        #
+        # a currency symbol is not a strict numeric character: integer("$10")
+        # matches, integer.strict("$10") does not. the check is here, not in
+        # _is_match(), so datatype()'s inference is unchanged.
+        #
+        if strict and exut.has_currency_symbol(h):
+            ret = (False, f"'{h}' has 'strict' but contains a currency symbol")
+        else:
+            ret = Decimal._is_match(
+                name=self.name,
+                value=h,
+                dmax=dmax,
+                dmin=dmin,
+                strict=strict,
+            )
         if ret[0] is False:
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=ret[1])
             if self.matcher.csvpath.do_i_raise():
