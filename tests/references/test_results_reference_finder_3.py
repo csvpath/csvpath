@@ -8671,3 +8671,15 @@ class TestAScalarFieldFilters:
         # NRE: '$acme.results.*:host(:does_not_have_value())' -- this run
         # manifest has no hostname
         assert _finder("$acme.results.*:host(:does_not_have_value())", archive).query().uuids == ["r1"]
+
+    @pytest.mark.parametrize(
+        "root", ["$*", "$:regex(/^ac/)", '$:choice("acme")', "$acme"]
+    )
+    @pytest.mark.parametrize(
+        "chain", [":identity()", ':identity("s1")', ":instance_index(1)", ":run_dir(:has_value())"]
+    )
+    def test_a_name_three_field_is_not_legal_on_name_one(self, archive, root, chain):
+        # every root raises as the literal one does; the ledger set gave []
+        # or None (reviewer on #659)
+        with pytest.raises(ReferenceException3, match="not legal at name_one"):
+            _finder(f"{root}.results.:manifest(){chain}", archive).query()

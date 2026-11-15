@@ -1696,6 +1696,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             lower_call,
             upper_call,
         ) = chain
+        # the name_one position check the literal root applies: a
+        # name_three-only field (':identity()', ':instance_index()', ...)
+        # is not legal here either. It gave [] with an argument and None
+        # without one, where '$acme.results.:manifest():identity()' raised
+        # (reviewer on #659)
+        for f in field_calls:
+            self._check_position(f, Reference3.NAME_ONE, Reference3.RESULTS)
         if reference.name_three is not None and any(
             f.arg is None for f in field_calls
         ):
