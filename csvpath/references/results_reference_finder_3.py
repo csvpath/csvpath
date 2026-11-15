@@ -3635,7 +3635,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     # (decision D18, 2026-11-14; the suffix: reviewer on #644)
     _RUN_DIR_NAME = re.compile(r"^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(_\d+)?$")
 
-    @classmethod
     def _check_names_a_run(self, reference) -> None:
         """a RESULTS name_one must name a run: a run-dir name, a function
         that stands in for one (a pointer, a range, :all(), :manifest(), a
@@ -3658,18 +3657,32 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if isinstance(last, Star3):
             return
         if isinstance(last, FunctionCall3):
-            if last.name != "name" or not isinstance(last.arg, str):
-                # ':regex()', a clock value, ':manifest()' ...: a function
+            if last.name in ("regex", "choice"):
+                # a pattern over template names (compendium 3.9c: analogs
+                # of ':name()'); it is only ever matched at a template level
+                # and cannot name a run (reviewer on #647)
+                raise self._names_no_run(reference, f":{last.name}()")
+            if last.name != "name":
+                # a clock value, ':all()', ':flatten()', ':manifest()' ...:
+                # a function that may stand in
                 return
-            last = last.arg
+            # ':name("x")' or ':name(@var)': the name it gives
+            last = self._build(last).arg
+            if not isinstance(last, str):
+                return
         if self._is_run_dir_name(last):
             return
-        raise ReferenceException3(
-            f"'{reference}' names no run: a results name_one needs a run dir "
-            "name, a function that stands in for one (e.g. :last(), :all(), "
-            f":from(...)), or a '*' -- '{last}' is not a run dir name. To "
-            f"search the runs under it, write e.g. '.../{last}/*' or "
-            f"'.../{last}:last()'."
+        raise self._names_no_run(reference, f"'{last}'")
+
+    def _names_no_run(self, reference, what: str) -> ReferenceException3:
+        """the error for a results name_one that names no run, with the
+        corrected reference written out in full"""
+        text = self.ref.reference
+        return ReferenceException3(
+            f"'{text}' names no run: a results name_one needs a run dir name, "
+            "a function that stands in for one (e.g. :last(), :all(), "
+            f":from(...)), or a '*' -- {what} is not a run dir name. To search "
+            f"the runs under it, write e.g. '{text}/*' or '{text}:last()'."
         )
 
     @classmethod

@@ -8304,11 +8304,32 @@ class TestAResultsNameOneMustNameARun:
             "$acme.results.beta.s",
             "$*.results.beta",
             "$:regex(/^a/).results.beta",
+            # a pattern over template names cannot name a run either
+            # (compendium 3.9c; reviewer on #647: these were searched as a
+            # prefix, silently)
+            '$acme.results.:choice("beta")',
+            "$acme.results.:regex(/^bet/)",
+            "$acme.results.customers/:regex(/^20/)",
         ],
     )
     def test_a_template_path_alone_raises(self, archive, reference):
         with pytest.raises(ReferenceException3, match="names no run"):
             _finder(reference, archive).query()
+
+    def test_a_variable_name_is_checked_once_resolved(self, archive):
+        finder = _finder("$acme.results.:name(@w)", archive)
+        finder.set_variable("w", value="beta")
+        with pytest.raises(ReferenceException3, match="names no run"):
+            finder.query()
+        finder = _finder("$acme.results.beta/:name(@w)", archive)
+        finder.set_variable("w", value="2026-01-01_00-00-00")
+        assert finder.query().uuids == ["b1"]
+
+    def test_the_message_writes_the_corrected_reference_in_full(self, archive):
+        with pytest.raises(ReferenceException3) as error:
+            _finder("$acme.results.customers/2025", archive).query()
+        assert "'$acme.results.customers/2025/*'" in str(error.value)
+        assert "'$acme.results.customers/2025:last()'" in str(error.value)
 
     @pytest.mark.parametrize(
         "reference, expected",
