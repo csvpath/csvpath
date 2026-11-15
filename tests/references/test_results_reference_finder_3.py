@@ -4439,6 +4439,44 @@ class TestErrorsIdchainValues:
         results = _finder("$acme.results.:last().:all():errors():idchain()", str(tmp_path)).resolve()
         assert sorted(r.data for r in results.results) == [["a"], ["b", "a"]]
 
+    @pytest.mark.parametrize(
+        "chain, expected",
+        [
+            (':errors(:idchain("a"))', [[{"source": "a"}], [{"source": "a"}]]),
+            (':errors(:message("m"))', [[], [{"source": "b", "message": "m"}]]),
+        ],
+    )
+    def test_several_instances_resolve_a_nested_filter_together(
+        self, tmp_path, chain, expected
+    ):
+        # compendium 847: ':errors(:idchain("add[0]"))' "resolves to all
+        # errors with matching idchains" -- records, so several instances
+        # resolve at once, as the chained form does (it raised as a whole
+        # file until 2026-11-15, found measuring costs on the corpus)
+        run = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "acme-run", {"s0": "u0", "s1": "u1"}
+        )
+        _write_json(Path(run) / "s0" / "errors.json", [{"source": "a"}])
+        _write_json(
+            Path(run) / "s1" / "errors.json",
+            [{"source": "b", "message": "m"}, {"source": "a"}],
+        )
+        _write_archive_manifest(tmp_path, "acme", [run])
+        results = _finder(f"$acme.results.:last().:all(){chain}", str(tmp_path)).resolve()
+        assert sorted((r.data for r in results.results), key=str) == sorted(expected, key=str)
+
+    def test_several_instances_still_raise_for_a_nested_count(self, tmp_path):
+        # ':errors(:count(...))' gates the whole file: still one file at a time
+        run = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "acme-run", {"s0": "u0", "s1": "u1"}
+        )
+        _write_json(Path(run) / "s0" / "errors.json", [{"source": "a"}])
+        _write_json(Path(run) / "s1" / "errors.json", [{"source": "b"}, {"source": "a"}])
+        _write_archive_manifest(tmp_path, "acme", [run])
+        finder = _finder("$acme.results.:last().:all():errors(:count(:above(0)))", str(tmp_path))
+        with pytest.raises(ReferenceException3, match="more than one"):
+            finder.resolve()
+
     def test_gate_with_no_errors_file_resolves_to_none(
         self, acme_archive, instance_dir
     ):
@@ -7035,6 +7073,13 @@ class TestStarManifestSetInstanceRecords:
         ref = "$*.results.:manifest():last().:all():errors():idchain()"
         assert sorted(self._data(ref, archive), key=len) == [[], [None, None]]
 
+    def test_several_instances_resolve_a_nested_filter_together(self, archive):
+        # compendium 847: the matching errors are records (2026-11-15)
+        ref = '$*.results.:manifest():last().:all():errors(:message("k3-t"))'
+        data = self._data(ref, archive)
+        assert [{"message": "k3-t"}, {"message": "k3-t"}] in data
+        assert len(data) == 2
+
     def test_a_content_accessor_wins_over_a_field(self, archive):
         # the same order as the run-dir branch: the file is read
         ref = "$*.results.:manifest():last().t:errors():error_count()"
@@ -8450,6 +8495,57 @@ class TestAResultsNameOneMustNameARun:
     )
     def test_a_run_name_a_stand_in_or_a_star_is_fine(self, archive, reference, expected):
         assert sorted(_finder(reference, archive).query().uuids) == expected
+
+
+class TestAMalformedErrorsJson:
+    # reviewer on #641 (fail fast): errors.json is a list of error dicts.
+    # Anything else raised AttributeError for ':idchain()' and was counted by
+    # its keys for ':count()'. A filter, a count or an idchain now raises,
+    # naming the file; a bare ':errors()' still gives the file as it is.
+    @pytest.fixture
+    def archive(self, tmp_path):
+        run = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s": "r1-s"})
+        _write_json(Path(run) / "s" / "errors.json", {"source": "a", "message": "m"})
+        _write_archive_manifest(tmp_path, "acme", [run])
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "chain",
+        [
+            ':errors(:idchain("a"))',
+            ':errors(:message("m"))',
+            ":errors(:count(:above(0)))",
+            ":errors():idchain()",
+            ':errors(:idchain("a")):idchain()',
+        ],
+    )
+    def test_a_dict_raises_when_its_errors_are_read(self, archive, chain):
+        with pytest.raises(ReferenceException3, match="not a list of error entries"):
+            _finder(f"$acme.results.:last().s{chain}", archive).resolve()
+
+    def test_a_dict_raises_for_a_having_count(self, archive):
+        ref = "$acme.results.:last().:all():having(:errors(:count(:above(0))))"
+        with pytest.raises(ReferenceException3, match="errors.json is not a list"):
+            _finder(ref, archive).query()
+
+    def test_a_list_of_strings_raises_too(self, tmp_path):
+        run = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s": "r1-s"})
+        _write_json(Path(run) / "s" / "errors.json", ["a", "b"])
+        _write_archive_manifest(tmp_path, "acme", [run])
+        with pytest.raises(ReferenceException3, match="non-dict entries"):
+            _finder('$acme.results.:last().s:errors(:idchain("a"))', str(tmp_path)).resolve()
+
+    def test_a_bare_errors_gives_the_file_as_it_is(self, archive):
+        (result,) = _finder("$acme.results.:last().s:errors()", archive).resolve().results
+        assert result.data == {"source": "a", "message": "m"}
+
+    def test_a_missing_file_is_still_none(self, tmp_path):
+        run = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s": "r1-s"})
+        _write_archive_manifest(tmp_path, "acme", [run])
+        (result,) = _finder(
+            '$acme.results.:last().s:errors(:idchain("a"))', str(tmp_path)
+        ).resolve().results
+        assert result.data is None
 
 
 class TestAClockValueInsideName:
