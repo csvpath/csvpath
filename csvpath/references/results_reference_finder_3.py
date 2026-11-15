@@ -2015,7 +2015,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         arrival order and no instance_index (RunRegistrar never writes it),
         so the index is read from each live instance's manifest, as the
         run-dir branch reads it (_list_instance_identities()): an unknown
-        index counts as 0 there, and here too, so the two branches agree.
+        index counts as 0 there, and here too. The two branches agree
+        unless an unknown index ties another at 0 -- then each keeps its
+        own starting order (arrival here, directory listing there) -- so an
+        unknown index on a live run is warned (reviewer on #643).
         A deleted run has no instance manifests and so no declaration order
         at all: it keeps arrival order, the only order there is, with a
         warning naming the run (decision D17)."""
@@ -2041,7 +2044,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return 0
             manifest = self.source.instance_manifest(Nos(run_home).join(identity))
             idx = manifest.get("instance_index") if manifest else None
-            return int(idx) if idx is not None else 0
+            if idx is None:
+                key = ("unknown instance index", run_home, identity)
+                if key not in self._warned:
+                    self._warned.add(key)
+                    self.csvpaths.logger.warning(
+                        "Instance %s of run %s has no instance_index; it counts "
+                        "as position 0, so its declaration order is uncertain.",
+                        identity,
+                        run_home,
+                    )
+                return 0
+            return int(idx)
 
         return sorted(entries, key=_index)
 

@@ -8156,6 +8156,19 @@ class TestInstanceDeclarationOrder:
         run_dir = _finder("$acme.results.:last().:first()", archive).query().uuids
         assert ledger == run_dir == ["r1-s0"]
 
+    def test_an_unknown_index_that_ties_is_warned(self, archive):
+        # both indexes unknown: a tie at 0, where each branch keeps its own
+        # starting order (arrival vs directory listing), so the uncertainty
+        # is warned, once per instance (reviewer on #643)
+        run = Path(archive) / "acme" / "2026-01-01_00-00-00"
+        for identity in ("s0", "s1"):
+            _write_json(run / identity / "manifest.json", {"uuid": f"r1-{identity}"})
+        finder = _finder("$*.results.:manifest():last().:first()", archive)
+        finder.query()
+        warnings = finder.csvpaths.logger.warnings
+        assert len(warnings) == 2
+        assert all("no instance_index" in w for w in warnings)
+
     def test_one_identity_reads_no_instance_manifests(self, archive):
         # the order cannot change one identity with no position
         finder = _finder("$*.results.:manifest():last().s0", archive)
