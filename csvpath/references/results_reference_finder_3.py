@@ -13,7 +13,7 @@ from .functions.selectors.having_3 import Having3
 from .functions.well_known_files.errors_3 import Errors3
 from .functions.values.time_window_function_3 import TimeWindowFunction3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
-from .reference_3 import FunctionCall3, Reference3, Star3
+from .reference_3 import FunctionCall3, Reference3, Regex3, Star3
 from .reference_exceptions_3 import ReferenceException3
 from .reference_finder_3 import ReferenceFinder3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
@@ -170,6 +170,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         log_results = self._query_log_call(reference)
         if log_results is not None:
             return log_results
+        self._check_names_a_run(reference)
         root_major = reference.root_major
         if isinstance(root_major, Star3):
             if self._is_bare_pointer_reference(reference, "manifest"):
@@ -538,6 +539,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # can have only one :all() or :groups()" for free, no
             # separate check needed here.
             suffix = name_one.path[all_index + 1 :]
+            # a trailing pattern in the suffix is the run-dir slot, as on a
+            # plain path (reviewer on #647: ':all()/:regex(/^2025/)' passed
+            # quietly as a template, ':all()/:regex(/01-01/)' found no run)
+            run_slot = self._pattern_is_run_slot(name_one=name_one, path=suffix)
             if suffix and isinstance(suffix[-1], Star3):
                 # a trailing '*' is the run-dir slot, as the plain path
                 # drops it below (compendium 4.1a): ':all()/*' is the runs
@@ -546,8 +551,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 suffix = suffix[:-1]
             suffix_pattern = self._compile_path_pattern(suffix)
             pattern = [*prefix_pattern, Star3(), *suffix_pattern]
+            self._check_pattern_names_runs(
+                reference=reference,
+                pattern=pattern,
+                pairs=[(rh, home) for rh in run_homes],
+                run_slot=run_slot,
+            )
             candidates = [
-                rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
+                rh
+                for rh in run_homes
+                if self._plain_path_matches(
+                    run_home=rh, home=home, pattern=pattern, run_slot=run_slot
+                )
             ]
             if reduces:
                 # _group_key()'s own "every segment after prefix_len, as
@@ -580,8 +595,19 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             if path and isinstance(path[-1], Star3):
                 path = path[:-1]
             pattern = self._compile_path_pattern(path)
+            run_slot = self._pattern_is_run_slot(name_one=name_one, path=name_one.path)
+            self._check_pattern_names_runs(
+                reference=reference,
+                pattern=pattern,
+                pairs=[(rh, home) for rh in run_homes],
+                run_slot=run_slot,
+            )
             candidates = [
-                rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
+                rh
+                for rh in run_homes
+                if self._plain_path_matches(
+                    run_home=rh, home=home, pattern=pattern, run_slot=run_slot
+                )
             ]
         candidates = sorted(candidates, key=self._run_dir_sort_key)
 
@@ -1105,11 +1131,22 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # applies within each named-results group, e.g.
         # "$*.results.beta/*:last()" is each group's last run under a
         # one-level 'beta' template.
+        in_play = [
+            (rh, group, self.csvpaths.results_manager.get_named_results_home(group))
+            for rh, group in self._discover_run_homes(None, name_filter)
+        ]
+        run_slot = self._pattern_is_run_slot(name_one=name_one, path=name_one.path)
+        self._check_pattern_names_runs(
+            reference=reference,
+            pattern=pattern,
+            pairs=[(rh, home) for rh, _, home in in_play],
+            run_slot=run_slot,
+        )
         partitioned = [
             (rh, (group,))
-            for rh, group in self._discover_run_homes(None, name_filter)
-            if self._matches_prefix(
-                rh, self.csvpaths.results_manager.get_named_results_home(group), pattern
+            for rh, group, home in in_play
+            if self._plain_path_matches(
+                run_home=rh, home=home, pattern=pattern, run_slot=run_slot
             )
         ]
         return self._star_group_and_reduce(
@@ -3633,6 +3670,131 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     # "%Y-%m-%d_%H-%M-%S", with "_N" when two runs start in the same second)
     # (decision D18, 2026-11-14; the suffix: reviewer on #644)
     _RUN_DIR_NAME = re.compile(r"^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(_\d+)?$")
+
+    def _check_names_a_run(self, reference) -> None:
+        """a RESULTS name_one must name a run: a run-dir name, a function
+        that stands in for one (a pointer, a range, :all(), :manifest(), a
+        field or gate...), or a `*` (David, 2026-11-14, reconfirming
+        2026-10-31; NRE "Run directories must be represented in name_one").
+        A template path alone -- '$acme.results.beta', '$acme.results.
+        customers/2025' -- names no run: there is no run dir called `beta`,
+        so it raises. It used to search the runs under it as a prefix. A
+        segment shaped like a run dir name may be one (decision D18), so it
+        does not raise."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        name_one = reference.name_one
+        if name_one.functions:
+            return
+        if name_one.name_two is not None:
+            # '#name_two' is files-only; that error is raised later
+            return
+        path = name_one.path
+        if not path:
+            return
+        last = path[-1]
+        if isinstance(last, Star3):
+            return
+        if isinstance(last, FunctionCall3):
+            if last.name in ("regex", "choice"):
+                # a trailing pattern is matched against the runs' own names
+                # (NRE '$alpha.results.:regex("2026-01-01_")...'); whether it
+                # picked templates instead is only known once matched, see
+                # _check_pattern_names_runs() (decision D19, revised)
+                return
+            if last.name != "name":
+                # a clock value, ':all()', ':flatten()', ':manifest()' ...:
+                # a function that may stand in
+                return
+            # ':name("x")' or ':name(@var)': the name it gives. A
+            # ':name(/re/)' is a pattern, checked once matched.
+            last = self._build(last).arg
+            if not isinstance(last, str):
+                return
+        if self._is_run_dir_name(last):
+            return
+        raise self._names_no_run(reference, f"'{last}' is not a run dir name")
+
+    def _names_no_run(self, reference, what: str) -> ReferenceException3:
+        """the error for a results name_one that names no run, with the
+        corrected reference written out in full: '/*' or ':last()' at the
+        end of name_one, any name_three after it (reviewer on #647)"""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        if not what:
+            raise ValueError("what cannot be None or empty")
+        text = self.ref.reference
+        start = f"${reference.root_major}.{reference.datatype}.{reference.name_one}"
+        end = "" if reference.name_three is None else f".{reference.name_three}"
+        return ReferenceException3(
+            f"'{text}' names no run: a results name_one needs a run dir name, "
+            "a function that stands in for one (e.g. :last(), :all(), "
+            f":from(...)), or a '*' -- {what}. To search the runs under it, "
+            f"write e.g. '{start}/*{end}' or '{start}:last(){end}'."
+        )
+
+    def _plain_path_matches(
+        self, *, run_home: str, home: str, pattern: list, run_slot: bool
+    ) -> bool:
+        """a plain name_one path's match. With nothing after it in name_one
+        (`run_slot`), a trailing pattern (':regex()', ':choice()',
+        ':name(/re/)') is the run-dir slot: it matches the run's own name
+        (NRE '$alpha.results.:regex("2026-01-01_").header_checks:errors()',
+        "runs on 1/1/2026"; compendium 3.9c's analogs of ':name()'). With a
+        pointer or range after it, that function stands in for the run and
+        the pattern is a template level, as in 'customers/2025:last()'.
+        A template dir whose name looks like a run dir matches the pattern
+        too, as a literal one does (decision D18; reviewer on #647).
+        Anything else is _matches_prefix()."""
+        if run_slot and pattern and isinstance(pattern[-1], Regex3):
+            segments = self._prefix_segments(run_home, home)
+            if segments is None:
+                return False
+            if self._segments_match(segments + [pathu.parts(run_home)[-1]], pattern):
+                return True
+            return self._segments_match(segments, pattern) and self._is_run_dir_name(
+                segments[-1]
+            )
+        return self._matches_prefix(run_home, home, pattern)
+
+    @staticmethod
+    def _pattern_is_run_slot(*, name_one, path: list) -> bool:
+        """true when the last segment of `path` (name_one's path, or the
+        part after a middle ':all()') is the run-dir slot: nothing follows it
+        in name_one, and it is not a written '*' -- in ':choice("beta")/*'
+        the '*' is the run slot and the pattern a template level (reviewer
+        on #647)."""
+        if name_one is None or path is None:
+            raise ValueError("name_one and path cannot be None")
+        if name_one.functions or not path:
+            return False
+        return not isinstance(path[-1], Star3)
+
+    def _check_pattern_names_runs(
+        self, *, reference, pattern: list, pairs: list, run_slot: bool
+    ) -> None:
+        """raises when a trailing pattern matches a template dir rather than
+        a run: '$acme.results.:choice("beta")' picks the 'beta' template,
+        which names no run, like '$acme.results.beta' (David, 2026-11-14).
+        `pairs` is (run_home, results home) for every run in play. A
+        pattern that matches nothing is no result (decision D19)."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        if pattern is None or pairs is None:
+            raise ValueError("pattern and pairs cannot be None")
+        if not run_slot or not pattern or not isinstance(pattern[-1], Regex3):
+            return
+        for run_home, home in pairs:
+            segments = self._prefix_segments(run_home, home)
+            if segments is None or not self._segments_match(segments, pattern):
+                continue
+            if not self._is_run_dir_name(segments[-1]):
+                # a run-dir-shaped template dir may be meant (D18)
+                raise self._names_no_run(
+                    reference,
+                    f"its trailing pattern matches the template dir "
+                    f"'{segments[-1]}', not a run dir name",
+                )
 
     @classmethod
     def _is_run_dir_name(cls, segment) -> bool:
