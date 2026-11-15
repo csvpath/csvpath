@@ -2664,6 +2664,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # at FILES scope the name is the literal root itself. under
             # '*', ':regex()' or ':choice()' it is read from each entry.
             return reference.root_major
+        if (
+            function_cls.NAME == "named_file_name"
+            and self._is_traversal_root(reference.root_major)
+            and entry is not None
+            and entry.get("uuid")
+        ):
+            # a live record's name is the named-file whose manifest holds it
+            # (D4), as the status-chain gate reads it (#615); the ledger's
+            # own name only for a record no live manifest holds (decision
+            # D25; reviewer on #615: the two could disagree)
+            name, _ = self._live_named_file_entry(entry.get("uuid"))
+            if name is not None:
+                return name
         key_path = function_cls.KEY.get(Reference3.FILES)
         if self._is_traversal_root(reference.root_major) and entry is not None:
             #
