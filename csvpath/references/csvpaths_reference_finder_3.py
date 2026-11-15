@@ -121,6 +121,8 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
     #
 
     def query(self) -> ReferenceResults3:
+        # the uuid -> owning group map is built once per call (triage A22)
+        self._owners = None
         reference = self.ref.parsed
         log_results = self._query_log_call(reference)
         if log_results is not None:
@@ -795,7 +797,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 return [
                     e
                     for e in self._paths_ledger()
-                    if re.search(pattern, e.get("named_paths_name") or "")
+                    if re.search(pattern, self._record_name(e) or "")
                 ]
             if (
                 self._is_bare_pointer_reference(reference, "manifest")
@@ -916,9 +918,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                         f"':{field_call.name}()' reads definition.json, "
                         "which has no version to read it from."
                     )
-                _, entry = self._group_manifest_entry(
+                name, entry = self._group_manifest_entry(
                     reference.root_major, result.uuid
                 )
+                if function_cls.NAME == "named_paths_name" and name is not None:
+                    # the owning group's name, as selection reads it
+                    # (decision D25 for CSVPATHS; triage A22)
+                    return name
                 if entry is None and self._is_traversal_root(reference.root_major):
                     # a deleted version (or an unchanged reload) from a
                     # '*' ledger read has no per-name entry: read its
@@ -1104,7 +1110,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 live[entry.get("uuid")] = entry
         versions = []
         for entry in self._paths_ledger():
-            name = entry.get("named_paths_name") or ""
+            name = self._record_name(entry) or ""
             if not self._matching_names([name], name_filter):
                 continue
             versions.append(live.get(entry.get("uuid"), entry))
@@ -1157,6 +1163,39 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         if uuid is None:
             raise ValueError("uuid cannot be None")
         return self._find_manifest_entry_by_uuid(self._paths_ledger(), uuid)
+
+    def resolve_from(self, selection):
+        # the owner map is never carried over from an earlier call (A22)
+        self._owners = None
+        return super().resolve_from(selection)
+
+    def _owner_of(self, uuid: str) -> "str | None":
+        """the named-paths group whose own manifest holds `uuid`, or None.
+        Every group's manifest is read once per query()/resolve_from()."""
+        if not uuid:
+            raise ValueError("uuid cannot be None or empty")
+        owners = getattr(self, "_owners", None)
+        if owners is None:
+            owners = {}
+            for name in self.source.paths_names():
+                for e in self.source.paths_manifest(name):
+                    owners.setdefault(e.get("uuid"), name)
+            self._owners = owners
+        return owners.get(uuid)
+
+    def _record_name(self, entry: dict) -> "str | None":
+        """a ledger record's group name: for a live version, the group whose
+        manifest holds its uuid; the ledger's own name otherwise. Used to
+        select by a ':regex()'/':choice()' root and to read
+        ':named_paths_name()', so the name a version reports is the name
+        that selected it (decision D25, as FILES; triage A22)."""
+        if entry is None:
+            raise ValueError("entry cannot be None")
+        if entry.get("uuid"):
+            owner = self._owner_of(entry.get("uuid"))
+            if owner is not None:
+                return owner
+        return entry.get("named_paths_name")
 
     def _group_manifest_entry(self, root_major, uuid: str) -> tuple:
         """returns (group_name, manifest_entry) for the version matching
@@ -1300,6 +1339,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         function_cls = ReferenceFunctionFactory.get_registered_class(field_call.name)
         key_path = function_cls.KEY.get(Reference3.CSVPATHS)
         uuid = entry.get("uuid")
+        if function_cls.NAME == "named_paths_name":
+            # the name that selected the version (decision D25; A22)
+            return self._record_name(entry)
         value = self._extract_field_value_with_ledger_fallback(
             entry=entry,
             key_path=key_path,
