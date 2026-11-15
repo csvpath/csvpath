@@ -54,14 +54,15 @@ class _FakeLogger:
 
     def __init__(self):
         self.warnings = []
+        self.errors = []
 
     def warning(self, msg, *args):
         self.warnings.append(msg % args if args else msg)
 
-    def info(self, *args, **kwargs):
-        pass
+    def error(self, msg, *args):
+        self.errors.append(msg % args if args else msg)
 
-    def error(self, *args, **kwargs):
+    def info(self, *args, **kwargs):
         pass
 
     def debug(self, *args, **kwargs):
@@ -8620,8 +8621,21 @@ class TestALedgerEntryWithNoUuid:
         _write_json(
             tmp_path / "manifest.json",
             [
-                {"named_paths_name": "acme", "run_home": r1, "run_uuid": "r1", "uuid": "r1-s", "identity": "s", "lifecycle": "active"},
-                {"named_paths_name": "beta", "run_home": b1, "run_uuid": "b1", "identity": "s", "lifecycle": "active"},
+                {
+                    "named_paths_name": "acme",
+                    "run_home": r1,
+                    "run_uuid": "r1",
+                    "uuid": "r1-s",
+                    "identity": "s",
+                    "lifecycle": "active",
+                },
+                {
+                    "named_paths_name": "beta",
+                    "run_home": b1,
+                    "run_uuid": "b1",
+                    "identity": "s",
+                    "lifecycle": "active",
+                },
             ],
         )
         return str(tmp_path)
@@ -8637,7 +8651,20 @@ class TestALedgerEntryWithNoUuid:
             "$*.results.:manifest():first()",
         ],
     )
-    def test_a_ledger_read_raises_naming_the_entry(self, archive, reference):
+    @pytest.mark.parametrize("call", ["query", "resolve"])
+    def test_a_ledger_read_raises_naming_the_entry(self, archive, reference, call):
         finder = _finder(reference, archive)
         with pytest.raises(ValueError, match="results ledger entry has no uuid"):
-            finder.resolve()
+            getattr(finder, call)()
+
+    def test_the_finder_logs_the_error(self, archive):
+        finder = _finder('$acme.results.:lifecycle("active"):last()', archive)
+        with pytest.raises(ValueError):
+            finder.query()
+        assert any("has no uuid" in e for e in finder.csvpaths.logger.errors)
+
+    def test_a_bare_ledger_set_raises_at_resolve(self, archive):
+        # its query names the ledger only (uuid None); resolve reads it
+        assert _finder("$*.results.:manifest()", archive).query().uuids == [None]
+        with pytest.raises(ValueError, match="results ledger entry has no uuid"):
+            _finder("$*.results.:manifest()", archive).resolve()

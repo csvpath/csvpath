@@ -1757,7 +1757,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         named_paths_name the same way _discover_run_homes() matches it."""
         runs = {}
         for entry in self._results_ledger():
-            for key in ("uuid", "run_uuid", "run_home"):
+            # uuid is checked by _results_ledger() as the ledger is read
+            for key in ("run_uuid", "run_home"):
                 if entry.get(key) is None:
                     msg = f"A results ledger entry has no {key}: {entry}"
                     self.csvpaths.logger.error(msg)
