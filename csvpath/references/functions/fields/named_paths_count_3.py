@@ -1,5 +1,6 @@
 from ...reference_3 import Reference3
 from ..function_3 import Function3
+from ..filters.predicate_function_3 import PredicateFunction3
 
 
 class NamedPathsCount3(Function3):
@@ -15,7 +16,9 @@ class NamedPathsCount3(Function3):
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.CSVPATHS,)
-    ARG_TYPES = ()
+    # an argument filters (compendium 6.40: "An argument to a field accessor
+    # filters too"); it refused one until 2026-11-15 (RC triage A6/H)
+    ARG_TYPES = (int, PredicateFunction3)
     ARG_REQUIRED = False
     SOURCE = "manifest"
     KEY = {

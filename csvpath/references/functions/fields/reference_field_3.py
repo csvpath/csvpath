@@ -20,7 +20,9 @@ class ReferenceField3(Function3):
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES,)
-    ARG_TYPES = ()
+    # an argument filters (compendium 6.40: "An argument to a field accessor
+    # filters too"); it refused one until 2026-11-15 (RC triage A6/H)
+    ARG_TYPES = (str,)
     ARG_REQUIRED = False
     SOURCE = "manifest"
     KEY = {

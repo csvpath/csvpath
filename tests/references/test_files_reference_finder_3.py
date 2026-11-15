@@ -1977,11 +1977,10 @@ class TestManifestChainGate:
         assert all(not isinstance(v, dict) for v in values)
 
     @pytest.mark.parametrize("root", ["$*", "$alpha"])
-    @pytest.mark.parametrize(
-        "gate", ['file_name("one.csv")', "time(:has_value())", 'host("h")']
-    )
+    @pytest.mark.parametrize("gate", ["time(:has_value())"])
     def test_a_field_that_takes_no_argument_raises(self, root, gate):
-        # these do not filter yet. they raise instead of being ignored.
+        # time fields do not filter yet (RC triage B5). they raise instead of
+        # being ignored. file_name and host filter since 2026-11-15 (6.40).
         with pytest.raises(ReferenceException3) as error:
             _gate_finder(f"{root}.files.:manifest():{gate}").query()
         assert "does not take an argument" in str(error.value)
@@ -7406,3 +7405,37 @@ class TestALedgerEntryWithNoUuid:
         # the selected entry had one, as a bare KeyError
         with pytest.raises(ValueError, match="files ledger entry has no uuid"):
             self._finder("$*.files.:manifest():last():named_file_name()").resolve()
+
+
+class TestAScalarFieldFilters:
+    # compendium 6.40: an argument to a field accessor filters (RC triage
+    # A6/H; ':file_name()' and others refused one until 2026-11-15)
+    HOME = "inputs/named_files/alpha"
+    MANIFEST = [
+        {
+            "file": "inputs/named_files/alpha/one.csv/a.csv",
+            "file_home": "inputs/named_files/alpha/one.csv",
+            "file_name": "one.csv",
+            "uuid": "u1",
+            "time": "2026-01-01 00:00:00+00:00",
+        },
+        {
+            "file": "inputs/named_files/alpha/two.csv/b.csv",
+            "file_home": "inputs/named_files/alpha/two.csv",
+            "file_name": "two.csv",
+            "uuid": "u2",
+            "time": "2026-01-02 00:00:00+00:00",
+        },
+    ]
+
+    @pytest.mark.parametrize(
+        "chain, expected",
+        [
+            (':file_name("one.csv")', ["u1"]),
+            (':file_name("nope.csv")', []),
+            (':file_home("inputs/named_files/alpha/two.csv")', ["u2"]),
+        ],
+    )
+    def test_the_field_filters_the_versions(self, chain, expected):
+        finder = _finder(f"$alpha.files.:manifest(){chain}", self.HOME, self.MANIFEST)
+        assert finder.query().uuids == expected

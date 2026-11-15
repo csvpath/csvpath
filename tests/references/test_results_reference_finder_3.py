@@ -8600,3 +8600,44 @@ class TestAClockValueInsideName:
             "$acme.results.customers/:name(:year())/*",
         ):
             assert _finder(reference, str(tmp_path)).query().uuids == ["c1"], reference
+
+
+class TestAScalarFieldFilters:
+    # compendium 6.40: an argument to a field accessor filters the instances
+    # to those whose field matches (RC triage A6/H; they refused one until
+    # 2026-11-15). A missing value never matches (decision W3).
+    @pytest.fixture
+    def archive(self, tmp_path):
+        run = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s0": "u0", "s1": "u1", "s2": "u2"}
+        )
+        for i, completed in enumerate((True, False, True)):
+            _write_json(
+                Path(run) / f"s{i}" / "manifest.json",
+                {
+                    "uuid": f"u{i}",
+                    "instance_identity": f"s{i}",
+                    "instance_index": i,
+                    "completed": completed,
+                },
+            )
+        _write_archive_manifest(tmp_path, "acme", [run])
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "chain, expected",
+        [
+            (':identity("s1")', ["u1"]),
+            (':identity("nope")', []),
+            (":instance_index(2)", ["u2"]),
+            (":completed(:true())", ["u0", "u2"]),
+            (":completed(:false())", ["u1"]),
+        ],
+    )
+    def test_the_field_filters_the_instances(self, archive, chain, expected):
+        uuids = _finder(f"$acme.results.:last().*{chain}", archive).query().uuids
+        assert sorted(uuids) == expected
+
+    def test_a_wrong_type_still_raises(self, archive):
+        with pytest.raises(ReferenceException3):
+            _finder('$acme.results.:last().*:instance_index("2")', archive).query()

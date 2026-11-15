@@ -13,7 +13,9 @@ class RunDir3(Function3):
     SUMMARY = "The run directory name (timestamp, disambiguated if needed) of the resolved instance's own run."
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.RESULTS,)
-    ARG_TYPES = ()
+    # an argument filters (compendium 6.40: "An argument to a field accessor
+    # filters too"); it refused one until 2026-11-15 (RC triage A6/H)
+    ARG_TYPES = (str,)
     ARG_REQUIRED = False
     SOURCE = "manifest"
     KEY = {

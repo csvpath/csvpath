@@ -21,6 +21,12 @@ def test_no_arg_is_valid():
     ScriptOnCompleteValid3().check_valid()  # should not raise
 
 
-def test_arg_is_rejected():
+def test_a_string_arg_is_a_filter():
+    # compendium 6.40: an argument to a field accessor filters (refused one
+    # until 2026-11-15; RC triage A6/H)
+    ScriptOnCompleteValid3(arg="x").check_valid()  # should not raise
+
+
+def test_a_non_string_arg_raises():
     with pytest.raises(ReferenceException3):
-        ScriptOnCompleteValid3(arg="x").check_valid()
+        ScriptOnCompleteValid3(arg=5).check_valid()
