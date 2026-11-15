@@ -333,6 +333,27 @@ class TestClockFunctionInPathSegments:
         )
         assert finder.query().files == [f"{home}/aaaa.csv"]
 
+    def test_a_clock_value_inside_name_is_its_string(self):
+        # NRE "$acme.files.orders/:name(:year())/:last()": the same segment
+        # "{:year()}" interpolation gives (6.27d; it raised until 2026-11-15)
+        year = str(daut.now().year)
+        home = f"inputs/named_files/acme/{year}/test-data"
+        manifest = [{"file": f"{home}/aaaa.csv", "file_home": home, "uuid": "u-1"}]
+        for reference in (
+            "$acme.files.:name(:year())/test-data.:first()",
+            '$acme.files.:name("{:year()}")/test-data.:first()',
+        ):
+            finder = _finder(reference, TEMPLATED_HOME, manifest)
+            assert finder.query().files == [f"{home}/aaaa.csv"], reference
+
+    def test_a_non_clock_function_inside_name_raises(self):
+        with pytest.raises(ReferenceException3, match="clock value"):
+            _finder(
+                "$acme.files.:name(:uuid())/test-data.:first()",
+                TEMPLATED_HOME,
+                TEMPLATED_MANIFEST,
+            ).query()
+
     def test_non_clock_function_still_rejected_as_a_path_segment(self):
         # regression guard: the widening is specifically for SOURCE ==
         # "clock" functions, not "any function at all" -- a field

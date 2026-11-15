@@ -2,6 +2,8 @@ import pytest
 
 from csvpath.references.functions.function_3 import Function3
 from csvpath.references.functions.selectors.name_3 import Name3
+from csvpath.references.functions.values.year_3 import Year3
+from csvpath.references.functions.fields.uuid_3 import Uuid3
 from csvpath.references.reference_3 import Reference3, Regex3
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 
@@ -48,3 +50,13 @@ def test_regex_arg_is_valid():
 def test_invalid_regex_arg_raises():
     with pytest.raises(ReferenceException3):
         Name3(arg=Regex3(pattern="(unclosed")).check_valid()
+
+
+def test_a_clock_value_arg_is_valid():
+    # NRE "$acme.files.orders/:name(:year())/:last()" (added 2026-11-15)
+    Name3(arg=Year3()).check_valid()  # should not raise
+
+
+def test_a_non_clock_function_arg_raises():
+    with pytest.raises(ReferenceException3, match="clock value"):
+        Name3(arg=Uuid3()).check_valid()

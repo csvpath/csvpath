@@ -36,7 +36,11 @@ class Name3(Function3):
     # identity "0" as a name_three range bound (NRE "Identities": "`:name()`
     # with a string, int, or variable"). A path segment raises on an int
     # (ReferenceFinder3._compile_path_pattern()).
-    ARG_TYPES = (str, int, Regex3)
+    # Function3 added 2026-11-15: a clock value, ':name(:year())' (NRE
+    # "$acme.files.orders/:name(:year())/:last()"; 6.27d: a time function
+    # passed to a string is stringified). ReferenceFinder3._resolve_arg()
+    # turns it into its string, as "{:year()}" interpolation does.
+    ARG_TYPES = (str, int, Regex3, Function3)
     ARG_REQUIRED = True
     #
     # CSVPATHS deliberately maps to an EMPTY tuple, not an absent key --
@@ -70,6 +74,11 @@ class Name3(Function3):
         right after constructing), not later, deep inside path-matching,
         the first time a candidate happens to be compared against it."""
         super().check_valid()
+        if isinstance(self._arg, Function3) and self._arg.SOURCE != "clock":
+            raise ReferenceException3(
+                f":name() takes a clock value function (e.g. :year()), not "
+                f":{self._arg.name}()."
+            )
         if isinstance(self._arg, bool):
             # bool is an int subclass, so ARG_TYPES lets it through
             # (reviewer on #623)
