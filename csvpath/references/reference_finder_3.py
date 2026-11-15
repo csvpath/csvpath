@@ -176,6 +176,18 @@ class ReferenceFinder3(ABC):
             result.data = self._extract_data(result)
         return results
 
+    def resolve_each(self, selection: ReferenceResults3) -> ReferenceResults3:
+        """`selection`'s results resolved one at a time, as separate
+        resolves, so a reader of several files (a reference expression's
+        side) never reads more than one file per resolve (compendium 5.3).
+        The selection is used as given; it is not queried again."""
+        if selection is None:
+            raise ValueError("selection cannot be None")
+        results = []
+        for result in selection.results:
+            results.extend(self.resolve_from(ReferenceResults3(results=[result])).results)
+        return ReferenceResults3(results=results)
+
     @abstractmethod
     def _extract_data(self, result: ReferenceResult3):
         """returns whatever this reference's resolve_kind calls for --

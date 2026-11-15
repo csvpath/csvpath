@@ -865,10 +865,14 @@ class TestPredicateSupportExamples:
         )
         finder = _predicate_finder(reference, tmp_path)
         assert sorted(finder.query().uuids) == ["i-plain", "o-plain"]
-        assert sorted(r.data for r in finder.resolve().results) == [
-            b"i-plain\n",
-            b"o-plain\n",
-        ]
+        # one version file per resolve (compendium 5.3): resolve_from()
+        # picks each; resolving both at once raises
+        assert sorted(
+            finder.resolve_from([uuid]).results[0].data
+            for uuid in ("i-plain", "o-plain")
+        ) == [b"i-plain\n", b"o-plain\n"]
+        with pytest.raises(ReferenceException3, match="more than one version file"):
+            _predicate_finder(reference, tmp_path).resolve()
 
     def test_has_value_registrations_that_used_a_template(self, tmp_path):
         finder = _predicate_finder(

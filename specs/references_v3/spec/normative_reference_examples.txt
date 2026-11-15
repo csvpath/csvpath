@@ -345,8 +345,8 @@ $*.results.:flatten():named_file_fingerprint("4fd50acf4b5da0c2bcb8cb6c66a753a27c
 would make sense using a variable that happened to have the value `acme`, as shown in the fourth
 example. Also note that as written the third would return any deleted records that otherwise
 matched because deletes remain visible in the ledger manifest.
-- $acme.files.:flatten():fingerprint()
-- $*.files.:flatten():fingerprint():named_file_name("acme")
+- $acme.files.:flatten().:fingerprint()
+- $*.files.:flatten().:fingerprint():named_file_name("acme")
 - $*.files.:manifest():fingerprint():named_file_name("acme")
 - $*.files.:manifest():fingerprint():named_file_name(@acompany)
 
@@ -872,9 +872,11 @@ $alpha.results.*:from(2):to(:date("2026-01-10_08-00-00"))
 Note that the instruction is to find a range of results, identify the 3rd result in the range,
 collect from 3rd through the last result that happened before Jan 10 at 8am.
 
-#### Two ways to find the remaining items from a pointer
-$acme.results.customers/*:from(-3):last()
+#### The last three runs, and the last of them
 $acme.results.customers/*:from(-3)
+$acme.results.customers/*:from(-3):last()
+The range sets the items; the pointer then picks from them (6.28), so the
+first gives three runs and the second one.
 
 
 #### A pointer that is not a directional alongside a range of two directionals selects within the range
