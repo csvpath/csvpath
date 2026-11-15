@@ -8,9 +8,15 @@ class PhoneDetector:
     """finds one country's phone numbers in a cell, our stand-in for
     Macie's phone number identifiers. Macie: a number near a keyword need
     not include a country code; a number with no keyword near must include
-    one. So a number written with its country code (+44 or 0044) is
+    one. So a number written with its country code (+44 or 0044) may be
     keyword exempt, through the same keyword_exempt hook as the bank
     detector's IBANs, and every other number needs a keyword.
+
+    Not every such number is exempt. In the live probes (2026-11-14 and
+    -15) Macie reported +12125550148 and +1 (212) 555-0148 with no keyword,
+    and not +1 212 555 0148, +1-212-555-0148 or +1.212.555.0148. So a
+    number is exempt only when it is unbroken or has a group in
+    parentheses. Seen for the US; applied to every country, as one rule.
 
     The catalog detector's data is the country's numbering plan, ours, from
     the national regulators (checked against Google's phonenumbers library
@@ -86,8 +92,12 @@ class PhoneDetector:
         return found
 
     def keyword_exempt(self, *, cell: str, start: int, end: int) -> bool:
-        """a number written with the country code needs no keyword"""
-        return self._international(text=cell[start:end])
+        """a number written with the country code, unbroken or with a group
+        in parentheses, needs no keyword"""
+        text = cell[start:end]
+        if not self._international(text=text):
+            return False
+        return text[1:].isdigit() or "(" in text
 
     @classmethod
     def _international(cls, *, text: str) -> bool:

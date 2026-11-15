@@ -307,7 +307,7 @@ conversion.report.skipped   # what was not translated
 | `MxRfcDetector` | Mexico RFC for people and organizations: letters, a real date, 3 characters |
 | `CoNitDetector` | Colombia NIT: body and mod 11 digit; 9 digits from 8 or 9 is an organization's |
 | `DateDetector` | birth dates (full, real dates) and card expiration (month and year, and Macie's keyword form) |
-| `PhoneDetector` | one country's phone numbers from its numbering plan; a country code makes a number keyword exempt |
+| `PhoneDetector` | one country's phone numbers from its numbering plan; a country code makes an unbroken or parenthesized number keyword exempt |
 | `FormatDetector` | group B: shapes in the catalog's format notation, compiled to one regex |
 | `DeIdDetector` | Germany identity card: 9 characters and an ICAO 7-3-1 check digit |
 | `MagStripeDetector` | card magnetic stripe tracks 1 and 2, Luhn card number |
@@ -601,8 +601,9 @@ French one are fidelity B.
   2-2-3-3-3, the first 0 to 3, the last three the first ten mod 511
   (`chut.fr_spi`). `GroupedDigitsDetector` data. HIGH.
 - Keyword overlaps: France's and Spain's lists both have `tin`, `tax
-  id` and `tax number`, and Mexico's short `iva` matches inside words
-  such as `private` (item 3).
+  id` and `tax number`. Mexico's short `iva` no longer matches inside
+  words such as `private`: keywords match as whole words (item 3,
+  settled 2026-11-15).
 
 **Credentials**: Macie's nine credential identifiers, category
 CREDENTIALS, all HIGH from one occurrence. Only `AWS_CREDENTIALS` and
@@ -739,7 +740,11 @@ occurrence, MEDIUM from 2, HIGH from 100.
   marks a number written with its country code (`+44`, `0044`) keyword
   exempt, through the same `keyword_exempt` hook the bank detector uses
   for IBANs, and the entries are `required`. No new keyword mode was
-  needed after all.
+  needed after all. Since the live probes (2026-11-14 and -15), only when
+  the number is unbroken (`+442079460958`) or has a group in parentheses
+  (`+44 (20) 7946 0958`): Macie did not report `+1 212 555 0148`,
+  `+1-212-555-0148` or `+1.212.555.0148` without a keyword. Seen for the
+  US, applied to every country.
 - **Numbering plans are catalog data** (David, 2026-11-05, option A):
   `country_code`, `trunk`, `trunk_required` and `nsn_formats` in the
   format notation. The trunk is required in the UK, France and Germany,
@@ -832,8 +837,9 @@ its exclusions), so every format is ours:
 - `BRAZIL_CEP_CODE`: 8 digits, as 01310-100, 01310100 or 01.310-100.
   Severity is Macie's mailing address row, LOW, MEDIUM from 2, HIGH from
   100.
-The short keywords `rg` and `cep` match as substrings (item 3): `org`,
-a `cargo` header and `receptor` count. Keywords are matched as Macie
+The short keywords `rg` and `cep` match as whole words (item 3, settled
+2026-11-15): `org`, a `cargo` header and `receptor` do not count, `rg:`
+and an `rg_number` header do. Keywords are matched as Macie
 lists them, so `cedula de ciudadania` without its accents is not
 Colombia's keyword (item 22).
 
@@ -886,8 +892,9 @@ with their checks).
   digit, optional secondary data after `/`, and the mod 43 check character
   over the whole (`chut.hibcc_mod43`, checked against two HIBCC
   specification examples). ISBT 128 is not detected yet. Macie's keywords
-  include `med` and `blood`, which match widely as substrings (item 3);
-  the check characters keep the false positives down.
+  include `med` and `blood`, which match only as whole words (item 3,
+  settled 2026-11-15); the check characters keep the false positives
+  down.
 
 **Checks against an oracle.** `tests/macie/test_macie_checksum_oracle.py`
 compares every `ChecksumUtility` check that python-stdnum also implements
@@ -936,10 +943,15 @@ every detector the catalog names exists, and every detector is used.
    allow spaces and hyphens for the Argentina SUBE card ("can be
    separated by spaces or hyphens") but say only "digit sequence" for
    credit cards, which suggests Macie may not.
-3. Keywords match as substrings, as for custom identifiers, so the short
-   ones (`mc`, `pan`, `card`) match inside longer words, e.g. a header
-   `discard_reason`. That over-reports keyword presence. A value must
-   still pass Luhn and the prefix table.
+3. ~~Keywords match as substrings, as for custom identifiers, so the
+   short ones (`mc`, `pan`, `card`) match inside longer words, e.g. a
+   header `discard_reason`.~~ **Settled (third live probe, 2026-11-15):
+   Macie matches keywords as whole words.** `ssn` counts in `ssn`,
+   `customer_ssn` and `ssn 716-...`, not in `ssnumber` or `myssn`; nor
+   `itin` in `itinerary` or `dob` in `dobson`; `codice fiscal` is a
+   keyword and `codice fiscale` is not. `_`, `-`, spaces and punctuation
+   separate words. Applied to custom identifiers too, as one rule
+   (`KeywordUtility.is_word`).
 4. Macie "in certain cases" expands or abbreviates keywords. It does not
    say how, so we don't.
 5. SSN and NPI formats are the issuers' rules, not Macie's (which are not
@@ -958,8 +970,8 @@ every detector the catalog names exists, and every detector is used.
 10. Spain DNI: does Macie need the control letter, or does it report 8
     digits alone (its exclusions `99999999` and `99.999.999` have no
     letter)? Does it check the letter? NIE and Aadhaar formats are the
-    issuers'. The short Spanish keywords match as substrings (item 3):
-    `nie` in `niece`, `tin` in `setting`.
+    issuers'. The short Spanish keywords match only as whole words (item
+    3, settled 2026-11-15): not `nie` in `niece` or `tin` in `setting`.
 11. NIR, CURP and Codice Fiscale formats are the issuers'. Does Macie
     detect Italy's 11 digit organization codes (we do)? Does it accept NIRs with
     dots, or CURPs with sex X? python-stdnum also rejects Aadhaar

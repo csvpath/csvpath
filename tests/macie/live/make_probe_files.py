@@ -37,16 +37,20 @@ def phones(rng) -> mlf.LiveFile:
     # "+1 212 555 0148" in a notes column was not reported
     #
     f = mlf.LiveFile(name="probe_phones.csv", headers=["id", "phone", "notes"])
-    for value, note in [
-        ("+1 212 555 0148", "control: the first check's value"),
-        ("+12125550148", "country code, no separators"),
-        ("+1-212-555-0148", "country code, dashes"),
-        ("+1 (212) 555-0148", "country code, area code in parentheses"),
-        ("+1.212.555.0148", "country code, dots"),
+    #
+    # the counts are what Macie reported (2026-11-14), which our rule now
+    # follows: unbroken, or with a group in parentheses
+    #
+    for value, n, note in [
+        ("+1 212 555 0148", 0, "control: the first check's value"),
+        ("+12125550148", 1, "country code, no separators"),
+        ("+1-212-555-0148", 0, "country code, dashes"),
+        ("+1 (212) 555-0148", 1, "country code, area code in parentheses"),
+        ("+1.212.555.0148", 0, "country code, dots"),
     ]:
         f.add(
             cells={"id": "r", "notes": f"call {value}"},
-            expect=[("notes", "PHONE_NUMBER", 1, f"no keyword; {note}")],
+            expect=[("notes", "PHONE_NUMBER", n, f"no keyword; {note}")],
         )
     #
     # our stand-in does not report these without a keyword
@@ -120,17 +124,22 @@ def codici_fiscali(rng) -> mlf.LiveFile:
         headers=["id", "codice_fiscale", "codice fiscale", "notes"],
     )
     expect = "ITALY_NATIONAL_IDENTIFICATION_NUMBER"
+    #
+    # "codice fiscale" is a longer word than the keyword "codice fiscal",
+    # so none of these is reported (Macie, 2026-11-14; ours since the
+    # whole-word rule). "tax code" is a keyword
+    #
     f.add(
         cells={"id": "r", "codice_fiscale": FIRST_CF},
-        expect=[("codice_fiscale", expect, 1, "control: the first check's value")],
+        expect=[("codice_fiscale", expect, 0, "control: the first check's value")],
     )
     f.add(
         cells={"id": "r", "codice fiscale": FIRST_CF},
-        expect=[("codice fiscale", expect, 1, "header with a space")],
+        expect=[("codice fiscale", expect, 0, "header with a space")],
     )
     f.add(
         cells={"id": "r", "notes": f"codice fiscale: {FIRST_CF}"},
-        expect=[("notes", expect, 1, "keyword in the cell")],
+        expect=[("notes", expect, 0, "keyword in the cell")],
     )
     for body, note in [
         ("BNCLRA70A41H501", "a woman born in Rome"),
@@ -139,7 +148,7 @@ def codici_fiscali(rng) -> mlf.LiveFile:
     ]:
         f.add(
             cells={"id": "r", "codice_fiscale": _cf(body)},
-            expect=[("codice_fiscale", expect, 1, note)],
+            expect=[("codice_fiscale", expect, 0, note)],
         )
     f.add(
         cells={"id": "r", "notes": f"tax code {_cf('BNCLRA70A41H501')}"},
@@ -177,27 +186,29 @@ def keywords(rng) -> mlf.LiveFile:
             "notes",
         ],
     )
-    ssn, itin, cf = (
-        "USA_SOCIAL_SECURITY_NUMBER",
-        ("USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER"),
-        "ITALY_NATIONAL_IDENTIFICATION_NUMBER",
-    )
-    for column, value, identifier, note in [
-        ("ssn", mlf.ssn(rng), ssn, "control: the keyword is the header"),
-        ("ssnumber", mlf.ssn(rng), ssn, "keyword at the start of a longer word"),
-        ("customer_ssn", mlf.ssn(rng), ssn, "keyword after an underscore"),
-        ("notes", f"ssn {mlf.ssn(rng)}", ssn, "control: keyword in the cell"),
-        ("notes", f"myssn {mlf.ssn(rng)}", ssn, "keyword at the end of a word"),
-        ("itin", mlf.itin(rng), itin, "control: the keyword is the header"),
-        ("itinerary", mlf.itin(rng), itin, "keyword inside itinerary"),
-        ("dob", "1985-11-05", "DATE_OF_BIRTH", "control: the keyword is the header"),
-        ("dobson", "1985-11-06", "DATE_OF_BIRTH", "keyword inside dobson"),
-        ("codice fiscal", FIRST_CF, cf, "the documented keyword, exactly"),
-        ("tax code", FIRST_CF, cf, "control: a keyword Macie took in a cell"),
+    ssn = "USA_SOCIAL_SECURITY_NUMBER"
+    itin = "USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER"
+    cf = "ITALY_NATIONAL_IDENTIFICATION_NUMBER"
+    #
+    # the counts are what Macie reported (2026-11-15), which our rule now
+    # follows: a keyword inside a longer word does not count
+    #
+    for column, value, identifier, n, note in [
+        ("ssn", mlf.ssn(rng), ssn, 1, "control: the keyword is the header"),
+        ("ssnumber", mlf.ssn(rng), ssn, 0, "keyword at the start of a longer word"),
+        ("customer_ssn", mlf.ssn(rng), ssn, 1, "keyword after an underscore"),
+        ("notes", f"ssn {mlf.ssn(rng)}", ssn, 1, "control: keyword in the cell"),
+        ("notes", f"myssn {mlf.ssn(rng)}", ssn, 0, "keyword at the end of a word"),
+        ("itin", mlf.itin(rng), itin, 1, "control: the keyword is the header"),
+        ("itinerary", mlf.itin(rng), itin, 0, "keyword inside itinerary"),
+        ("dob", "1985-11-05", "DATE_OF_BIRTH", 1, "control: the keyword is the header"),
+        ("dobson", "1985-11-06", "DATE_OF_BIRTH", 0, "keyword inside dobson"),
+        ("codice fiscal", FIRST_CF, cf, 1, "the documented keyword, exactly"),
+        ("tax code", FIRST_CF, cf, 1, "control: a keyword Macie took in a cell"),
     ]:
         f.add(
             cells={"id": "r", column: value},
-            expect=[(column, identifier, 1, note)],
+            expect=[(column, identifier, n, note)],
         )
     return f
 

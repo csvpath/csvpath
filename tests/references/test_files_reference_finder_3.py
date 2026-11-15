@@ -2014,9 +2014,13 @@ class TestManifestChainGate:
 class _FakeLogger:
     def __init__(self):
         self.warnings = []
+        self.errors = []
 
     def warning(self, message, *args):
         self.warnings.append(message % args)
+
+    def error(self, message, *args):
+        self.errors.append(message % args if args else message)
 
 
 def _chain_values(reference: str) -> list:
@@ -7273,7 +7277,10 @@ class TestStatusChainGatesReadLive:
         # it raised "ValueError: uuid cannot be None or empty"; before #613
         # the failure came back as a live version
         live = {k: v for k, v in self.LIVE.items() if k != "uuid"}
-        failure = {"named_file_name": "orders", "status": "failed", "file_path": None}
+        # the failure has its own uuid, as a real one does (FileManager
+        # gives every failed registration one); a ledger entry with none
+        # raises (TestALedgerEntryWithNoUuid)
+        failure = {"uuid": "f1", "named_file_name": "orders", "status": "failed", "file_path": None}
         finder = self._finder('$orders.files.:status("failed")', failure, live)
         assert finder.query().results == []
 
@@ -7336,3 +7343,66 @@ class TestOneVersionFilePerResolve:
         results = _g_finder(f"{ORDERS}.:manifest()", tmp_path).resolve()
         assert len(results) > 1
         assert all(isinstance(r.data, dict) for r in results.results)
+
+
+class TestALedgerEntryWithNoUuid:
+    # every entry the framework writes has a uuid; there should be none
+    # without one (David, 2026-10-31, ruled for the results ledger, which
+    # raises the same way). A hand-edited or old files ledger raised a bare
+    # KeyError 'uuid' in some forms and nothing in others (reviewer on #615
+    # and #652). Every read of the ledger now raises, naming the entry.
+    HOME = "inputs/named_files/keep"
+    MANIFEST = [
+        {
+            "file": "inputs/named_files/keep/a.csv/1.csv",
+            "file_home": "inputs/named_files/keep/a.csv",
+            "uuid": "u1",
+            "time": "2026-01-01 00:00:00+00:00",
+            "named_file_name": "keep",
+            "type": "csv",
+        }
+    ]
+    LEDGER = [
+        {
+            "file": "inputs/named_files/keep/a.csv/0.csv",
+            "file_home": "inputs/named_files/keep/a.csv",
+            "time": "2025-12-31 00:00:00+00:00",
+            "named_file_name": "keep",
+            "type": "csv",
+        },
+        dict(MANIFEST[0]),
+    ]
+
+    def _finder(self, reference):
+        finder = _finder(
+            reference,
+            self.HOME,
+            self.MANIFEST,
+            ledger=self.LEDGER,
+            by_name={"keep": (self.HOME, self.MANIFEST)},
+            inputs_files_path="inputs/named_files",
+        )
+        finder.csvpaths.logger = _FakeLogger()
+        return finder
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            '$*.files.:manifest():named_file_name("keep")',
+            '$*.files.:manifest():type("csv")',
+            "$*.files.:manifest():last()",
+            "$*.files.:manifest():first():named_file_name()",
+        ],
+    )
+    def test_a_ledger_read_raises_naming_the_entry(self, reference):
+        finder = self._finder(reference)
+        with pytest.raises(ValueError, match="files ledger entry has no uuid.*0.csv"):
+            finder.query()
+        assert len(finder.csvpaths.logger.errors) == 1
+
+    def test_resolve_through_the_ledger_raises_too(self):
+        # reviewer on #652: the uuid lookup over the whole ledger
+        # (_find_manifest_entry_by_uuid) hit the entry with no uuid even when
+        # the selected entry had one, as a bare KeyError
+        with pytest.raises(ValueError, match="files ledger entry has no uuid"):
+            self._finder("$*.files.:manifest():last():named_file_name()").resolve()

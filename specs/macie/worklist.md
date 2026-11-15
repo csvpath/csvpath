@@ -125,9 +125,10 @@ last. Add an item the moment something is deferred.
    live check: 34 of 43 identifier-file comparisons match exactly, and
    the one difference on our side (a cell listed once per occurrence) is
    fixed. Second probe done (2026-11-14, same report). German ID marked
-   partial (2026-11-15). Next: the third probe (README section 6), on
-   keywords as substrings or words (fidelity item 3) and phones without
-   a keyword for the UK and Germany; then decide the phone rule.
+   partial (2026-11-15). Third probe done (2026-11-15): keywords match
+   as whole words, and phones with a country code and no keyword count
+   only unbroken or parenthesized; both rules now follow Macie. Next:
+   the Jev review experiment (design note first).
 
 ## Ask road-testers about
 
@@ -135,10 +136,14 @@ Known false positive and false negative risks, to ask people road-testing
 the stand-ins for specific feedback on (David, 2026-11-06). Each is also a
 fidelity item in transpile-design.md.
 
-- **Short keywords match inside words** (fidelity item 3). Brazil's `rg`
-  matches `org`, `large`, a `cargo` header; `cep` matches `receptor`,
-  `exception`; also `mc`, `pan`, `card` and France's `social`. A number
-  of the right shape next to such a word is reported.
+- **Keywords are whole words** (fidelity item 3, settled 2026-11-15).
+  The old risk, short keywords inside longer words, is gone. The new
+  one: a keyword written directly against a value (`SSN123-45-6789`) is
+  not a word, and we have not seen what Macie does there.
+- **Phones with a country code and no keyword** count only unbroken or
+  with a group in parentheses (seen for the US, applied to every
+  country). Ask testers with UK, French, German, Italian, Spanish or
+  Brazilian numbers whether Macie finds ones we do not.
 - **Keywords need their accents** (item 22). `cedula de ciudadania`
   without accents is not Colombia's keyword, so a cedula labeled that way
   is missed. Brazil's CEP list has both forms only because Macie lists
@@ -161,17 +166,13 @@ fidelity item in transpile-design.md.
   checked (item 26), so any 12 digits of the right layout near a keyword
   count. Ask testers with Spanish payroll data for false positives.
 - **UDI: GS1 and HIBCC only.** ISBT 128 (blood and tissue products) is
-  missed, as are GS1 UDIs written without their parentheses. The
-  keywords `med` and `blood` match inside many words.
-- **Seen against real Macie, pending a probe** (live check, 2026-11-11).
-  We report each of these and Macie did not: a phone number with a
-  country code and no keyword (`+1 212 555 0148`), a German ID card number
-  in the 2010 format under a `personalausweis` header, and the textbook
-  Codice Fiscale `RSSMRA85T10A562S` under a `codice_fiscale` header.
-  Possible false positives until the probe settles why. Probed
-  (2026-11-14): Macie needs the unbroken or `(212)` form for a phone
-  without a keyword; `codice fiscale` is not a keyword to Macie (perhaps
-  keywords match as words); no German ID form we tried is reported.
+  missed, as are GS1 UDIs written without their parentheses.
+- **German ID: no form reported by Macie** (live probes, 2026-11-14).
+  We report 2010-format and older numbers with valid check digits; Macie
+  reported none of seven. Marked partial in the catalog. Ask testers
+  with German data whether Macie reports any, and in what form. (The
+  phone and Codice Fiscale differences seen with it were fixed on
+  2026-11-15.)
 
 ## Decide at release planning
 

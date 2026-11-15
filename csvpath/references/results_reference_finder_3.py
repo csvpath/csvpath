@@ -2009,7 +2009,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if positional or selector["identity"] is None:
             entries = self._in_declaration_order(record)
         else:
-            entries = record["instances"]
+            # an identity picks its instance first, so its filters read only
+            # that instance, as in the run-dir branch (6.39; reviewer on #649)
+            entries = [
+                e for e in record["instances"] if e.get("identity") == selector["identity"]
+            ]
         if selector["range_bounds"] is not None:
             lower_call, upper_call = selector["range_bounds"]
             # identity, index or (raising) date bounds, as in CSVPATHS
@@ -3048,6 +3052,20 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             return [ReferenceResult3(path=path, uuid=uuid)]
 
         instances = self._list_instance_identities(run_dir)
+        if (
+            gates
+            and identity is not None
+            and not match_all
+            and range_bounds is None
+            and instance_pointer is None
+        ):
+            # an identity picks one instance; its filters read only that
+            # instance's files, not every sibling's (6.39: ':having()' in
+            # name_three "filters the instances" the reference selects;
+            # reviewer on #649). The same result, without reading -- or
+            # failing on -- instances the reference never names.
+            index = self._find_by_identity(identity, instances)
+            instances = [instances[index]] if index is not None else []
         ranged = False
         if gates or (range_bounds is not None and instance_pointer is not None):
             # a range first, then the gates, then the pointer or the
@@ -3746,9 +3764,30 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # picked templates instead is only known once matched, see
                 # _check_pattern_names_runs() (decision D19, revised)
                 return
+            function_cls = ReferenceFunctionFactory.get_registered_class(last.name)
+            if (
+                function_cls is not None
+                and function_cls.SOURCE == "clock"
+                and not self._is_bare_function_only(name_one)
+            ):
+                # a clock value after a path segment is a path segment,
+                # 'customers/:year()' being 'customers/2026' (compendium
+                # 6.43, 3.9c), so it is checked as that segment; it searched
+                # as a prefix (reviewer on #647). Alone in name_one it is a
+                # time window over the runs ('$acme.results.:yesterday()',
+                # 6.27e "use as a range"), a stand-in, so it passes (reviewer
+                # on #650). No clock function computes a run-dir-shaped value
+                # today; the check is kept so a literal and a clock spelling
+                # stay one rule.
+                value = str(self._build(last).compute())
+                if self._is_run_dir_name(value):
+                    return
+                raise self._names_no_run(
+                    reference, f"':{last.name}()' gives '{value}', which is not a run dir name"
+                )
             if last.name != "name":
-                # a clock value, ':all()', ':flatten()', ':manifest()' ...:
-                # a function that may stand in
+                # ':all()', ':flatten()', ':manifest()' ...: a function that
+                # may stand in
                 return
             # ':name("x")' or ':name(@var)': the name it gives. A
             # ':name(/re/)' is a pattern, checked once matched.

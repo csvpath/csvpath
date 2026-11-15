@@ -44,7 +44,9 @@ in order:
    of the keyword to the end of the match. Keywords are not case
    sensitive. A keyword with spaces also matches with the spaces removed
    or replaced by `_` or `-`, so `employee id` matches the header
-   `employee_id`.
+   `employee_id`. Keywords are whole words, as Macie matches them: `ssn`
+   counts in a `customer_ssn` header or `SSN: ...`, not in `ssnumber`.
+   `_`, `-`, spaces and punctuation separate words.
 2. **Ignore words.** The match is dropped if it contains an ignore word
    (case sensitive).
 3. **Allow lists.** The match is dropped if its text equals a text
@@ -66,7 +68,7 @@ catalog entry and a detector:
   mod 97 for IBANs, the Spanish DNI letter, and so on);
 - the **keyword mode** says whether a keyword is needed: `required` (in
   the column name, or in the same cell within 30 characters before or
-  after the occurrence), `absent` (only when no keyword is there, as for
+  after the occurrence, as a whole word), `absent` (only when no keyword is there, as for
   `CREDIT_CARD_NUMBER_(NO_KEYWORD)`), or `none`;
 - the **keywords** and **severity** are Macie's published ones.
 

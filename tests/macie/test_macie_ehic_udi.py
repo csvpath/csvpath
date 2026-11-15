@@ -208,13 +208,20 @@ def test_macie_ehic_udi_identifiers(
 
 def test_macie_udi_short_keyword(catalog) -> None:
     #
-    # med matches as a substring (fidelity item 3): medium, named, a
-    # medication column
+    # keywords match as whole words (fidelity item 3, settled by the third
+    # live probe): med is not found in a medication column, but is in
+    # med_device
     #
     mdi = _mdi(catalog, "MEDICAL_DEVICE_UDI")
     assert (
         mdi.occurrences(
             cell="(01)00614141999996", header="medication", allow_lists=NO_ALLOW
+        )
+        == 0
+    )
+    assert (
+        mdi.occurrences(
+            cell="(01)00614141999996", header="med_device", allow_lists=NO_ALLOW
         )
         == 1
     )
