@@ -187,21 +187,24 @@ def test_macie_group_b_rest_identifiers(
 
 
 @pytest.mark.parametrize(
-    "name, cell, header",
+    "name, cell, header, n",
     [
         #
-        # the short keywords rg and cep match as substrings, as all
-        # keywords do (transpile-design.md, fidelity item 3)
+        # the short keywords rg and cep match as whole words, as all
+        # keywords do (fidelity item 3, settled by the third live probe)
         #
-        ("BRAZIL_RG_NUMBER", "org 12.345.678-9", "x"),
-        ("BRAZIL_RG_NUMBER", "12.345.678-9", "cargo"),
-        ("BRAZIL_CEP_CODE", "receptor 01310-100", "x"),
+        ("BRAZIL_RG_NUMBER", "org 12.345.678-9", "x", 0),
+        ("BRAZIL_RG_NUMBER", "12.345.678-9", "cargo", 0),
+        ("BRAZIL_CEP_CODE", "receptor 01310-100", "x", 0),
+        ("BRAZIL_RG_NUMBER", "rg 12.345.678-9", "x", 1),
+        ("BRAZIL_RG_NUMBER", "12.345.678-9", "rg_number", 1),
+        ("BRAZIL_CEP_CODE", "cep: 01310-100", "x", 1),
     ],
 )
 def test_macie_group_b_rest_short_keywords(
-    catalog, name: str, cell: str, header: str
+    catalog, name: str, cell: str, header: str, n: int
 ) -> None:
     assert (
         _mdi(catalog, name).occurrences(cell=cell, header=header, allow_lists=NO_ALLOW)
-        == 1
+        == n
     )
