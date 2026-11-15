@@ -2721,6 +2721,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 f"':{call.name}()' cannot filter a manifest -- only a "
                 "manifest.json field can be used as a gate on ':manifest()'."
             )
+        if Reference3.FILES not in function_cls.DATATYPES or (
+            function_cls.KEY.get(Reference3.FILES) is None
+            and function_cls.LEDGER_KEY.get(Reference3.FILES) is None
+        ):
+            # a field of another datatype ('$orders.files.:manifest():
+            # identity("x")') matched nothing, silently, once it took an
+            # argument; only refusing the argument stopped it (reviewer on
+            # #659). The same rule _is_name_three_gate() applies.
+            raise ReferenceException3(
+                f"':{call.name}()' is not a named-file field, so it cannot "
+                "filter a named-file manifest."
+            )
         built = self._build(call)
         return [
             e

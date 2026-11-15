@@ -8678,8 +8678,9 @@ class TestAScalarFieldFilters:
     @pytest.mark.parametrize(
         "chain", [":identity()", ':identity("s1")', ":instance_index(1)", ":run_dir(:has_value())"]
     )
-    def test_a_name_three_field_is_not_legal_on_name_one(self, archive, root, chain):
-        # every root raises as the literal one does; the ledger set gave []
-        # or None (reviewer on #659)
+    @pytest.mark.parametrize("prefix", [":manifest()", ":last()", ":all()", ""])
+    def test_a_name_three_field_is_not_legal_on_name_one(self, archive, root, chain, prefix):
+        # every root raises as the literal one does, with or without the
+        # ledger set; '$*' gave [] or None (reviewer on #659, rounds 2-3)
         with pytest.raises(ReferenceException3, match="not legal at name_one"):
-            _finder(f"{root}.results.:manifest(){chain}", archive).query()
+            _finder(f"{root}.results.{prefix}{chain}", archive).query()

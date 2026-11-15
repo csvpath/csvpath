@@ -7439,3 +7439,14 @@ class TestAScalarFieldFilters:
     def test_the_field_filters_the_versions(self, chain, expected):
         finder = _finder(f"$alpha.files.:manifest(){chain}", self.HOME, self.MANIFEST)
         assert finder.query().uuids == expected
+
+    @pytest.mark.parametrize(
+        "chain",
+        [':identity("x")', ":run_dir(:has_value())", ":completed(:true())", ':group_file("x")', ":instance_index(1)"],
+    )
+    @pytest.mark.parametrize("root", ["$alpha", "$*"])
+    def test_another_datatypes_field_raises(self, root, chain):
+        # once these took an argument they matched nothing, silently
+        # (reviewer on #659)
+        with pytest.raises(ReferenceException3, match="not a named-file field"):
+            _finder(f"{root}.files.:manifest(){chain}", self.HOME, self.MANIFEST).query()

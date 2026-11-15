@@ -806,6 +806,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "ResultsReferenceFinder3 does not support the '#worksheet' "
                 "marker (name_two) -- it is files-only."
             )
+        # the name_one position check the literal root applies, for every
+        # traversal path (the run-dir walk and the ledger set): a
+        # name_three-only field (':identity()', ':instance_index()', ...) is
+        # not legal here either. '$*' gave [] or None where '$acme' raised
+        # (reviewer on #659, rounds 2 and 3)
+        for f in self._build_chain(self._combined_name_one_calls(name_one)):
+            self._check_position(f, Reference3.NAME_ONE, Reference3.RESULTS)
         set_chain = self._manifest_set_chain(reference)
         if set_chain is not None:
             # the logical manifest set (compendium 6.13b), checked before
@@ -1696,13 +1703,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             lower_call,
             upper_call,
         ) = chain
-        # the name_one position check the literal root applies: a
-        # name_three-only field (':identity()', ':instance_index()', ...)
-        # is not legal here either. It gave [] with an argument and None
-        # without one, where '$acme.results.:manifest():identity()' raised
-        # (reviewer on #659)
-        for f in field_calls:
-            self._check_position(f, Reference3.NAME_ONE, Reference3.RESULTS)
         if reference.name_three is not None and any(
             f.arg is None for f in field_calls
         ):
