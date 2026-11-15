@@ -1949,7 +1949,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         self, *, record: dict, selector: dict
     ) -> list[dict]:
         """the instance records of one run record that a name_three
-        selects, in arrival order (6.13b(ii)): a range first, then the
+        selects, in declaration order (David, 2026-11-14; see
+        _in_declaration_order()): a range first, then the
         argued fields filter, whatever the written order (6.28), then an
         identity or pointer picks from what is left, the same way
         filters come before the pointer in name_one."""
@@ -1957,7 +1958,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             raise TypeError("Record must be a dict")
         if selector is None or not isinstance(selector, dict):
             raise TypeError("Selector must be a dict")
-        entries = record["instances"]
+        # the order only matters for a position or a list of several:
+        # one identity with no position reads no instance manifests
+        # (reviewer on #643: each read is a paid call on a cloud backend)
+        positional = selector["pointer"] is not None or selector["range_bounds"] is not None
+        if positional or selector["identity"] is None:
+            entries = self._in_declaration_order(record)
+        else:
+            entries = record["instances"]
         if selector["range_bounds"] is not None:
             lower_call, upper_call = selector["range_bounds"]
             # identity, index or (raising) date bounds, as in CSVPATHS
@@ -1998,6 +2006,58 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if selector["identity"] is not None:
             return [e for e in entries if e.get("identity") == selector["identity"]]
         return entries
+
+    def _in_declaration_order(self, record: dict) -> list[dict]:
+        """a run record's instance records in DECLARATION order, each
+        statement's position in group.csvpaths (David, 2026-11-14: name_three
+        positions -- pointers, :index(), ranges -- count declaration order
+        whichever source is read). The ledger holds instance records in
+        arrival order and no instance_index (RunRegistrar never writes it),
+        so the index is read from each live instance's manifest, as the
+        run-dir branch reads it (_list_instance_identities()): an unknown
+        index counts as 0 there, and here too. The two branches agree
+        unless an unknown index ties another at 0 -- then each keeps its
+        own starting order (arrival here, directory listing there) -- so an
+        unknown index on a live run is warned (reviewer on #643).
+        A deleted run has no instance manifests and so no declaration order
+        at all: it keeps arrival order, the only order there is, with a
+        warning naming the run (decision D17)."""
+        if record is None or not isinstance(record, dict):
+            raise TypeError("Record must be a dict")
+        entries = record["instances"]
+        run_home = record.get("run_home")
+        if not run_home or not Nos(run_home).dir_exists():
+            key = ("arrival order", run_home)
+            if len(entries) > 1 and key not in self._warned:
+                self._warned.add(key)
+                self.csvpaths.logger.warning(
+                    "Run %s is gone, so its instances have no declaration order "
+                    "to read; its name_three positions count arrival order "
+                    "(decision D17).",
+                    run_home,
+                )
+            return list(entries)
+
+        def _index(entry: dict) -> int:
+            identity = entry.get("identity")
+            if not identity:
+                return 0
+            manifest = self.source.instance_manifest(Nos(run_home).join(identity))
+            idx = manifest.get("instance_index") if manifest else None
+            if idx is None:
+                key = ("unknown instance index", run_home, identity)
+                if key not in self._warned:
+                    self._warned.add(key)
+                    self.csvpaths.logger.warning(
+                        "Instance %s of run %s has no instance_index; it counts "
+                        "as position 0, so its declaration order is uncertain.",
+                        identity,
+                        run_home,
+                    )
+                return 0
+            return int(idx)
+
+        return sorted(entries, key=_index)
 
     def _manifest_set_instance_path(
         self, *, record: dict, entry: dict, selector: dict

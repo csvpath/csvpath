@@ -8080,3 +8080,124 @@ class TestHavingByContent:
     def test_unclear_or_wrong_arguments_raise(self, archive, reference, message):
         with pytest.raises(ReferenceException3, match=message):
             _finder(reference, archive).query()
+
+
+class TestInstanceDeclarationOrder:
+    # David, 2026-11-14: in name_three, positions (pointers, :index(), ranges)
+    # are the statement's position in group.csvpaths -- declaration order --
+    # whichever source is read. A parallel run's instances can ARRIVE in a
+    # different order; the ledger set counted arrival order until then while
+    # the run-dir branch counted declaration (instance_index).
+    @pytest.fixture
+    def archive(self, tmp_path):
+        run = tmp_path / "acme" / "2026-01-01_00-00-00"
+        _write_json(run / "manifest.json", {"run_uuid": "r1"})
+        for identity, index in (("s0", 0), ("s1", 1)):
+            _write_json(
+                run / identity / "manifest.json",
+                {"uuid": f"r1-{identity}", "instance_index": index},
+            )
+        # s1 arrived first
+        ledger = [
+            {"named_paths_name": "acme", "run_home": str(run), "run_uuid": "r1",
+             "uuid": f"r1-{identity}", "identity": identity}
+            for identity in ("s1", "s0")
+        ]
+        _write_json(tmp_path / "manifest.json", ledger)
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "name_three, expected",
+        [
+            (".:first()", ["r1-s0"]),
+            (".:last()", ["r1-s1"]),
+            (".:index(0)", ["r1-s0"]),
+            (".:from(0):to(0)", ["r1-s0"]),
+            (".:all()", ["r1-s0", "r1-s1"]),
+        ],
+    )
+    def test_both_sources_count_declaration_order(self, archive, name_three, expected):
+        ledger = _finder(f"$*.results.:manifest():last(){name_three}", archive).query().uuids
+        run_dir = _finder(f"$acme.results.:last(){name_three}", archive).query().uuids
+        assert ledger == expected
+        assert run_dir == expected
+
+    @pytest.mark.parametrize(
+        "name_three, expected",
+        [
+            # an identity bound (D9) finds its position in declaration order
+            ('.:from("s1")', ["r1-s1"]),
+            ('.:to("s0")', ["r1-s0"]),
+        ],
+    )
+    def test_identity_bounds_count_declaration_order(self, archive, name_three, expected):
+        ledger = _finder(f"$*.results.:manifest():last(){name_three}", archive).query().uuids
+        run_dir = _finder(f"$acme.results.:last(){name_three}", archive).query().uuids
+        assert ledger == run_dir == expected
+
+    def test_a_gone_run_keeps_arrival_order_with_a_warning(self, archive):
+        # decision D17: a deleted run has no instance manifests, so no
+        # declaration order; arrival is the only order, and it is said
+        import shutil
+
+        shutil.rmtree(Path(archive) / "acme" / "2026-01-01_00-00-00")
+        finder = _finder("$*.results.:manifest():last().:first()", archive)
+        assert finder.query().uuids == ["r1-s1"]
+        warnings = finder.csvpaths.logger.warnings
+        assert len(warnings) == 1 and "decision D17" in warnings[0]
+
+    def test_an_unknown_index_counts_as_zero_in_both_branches(self, archive):
+        # a live instance with no instance_index: 0, as the run-dir branch
+        # has always read it, so the two sources agree (reviewer on #643)
+        run = Path(archive) / "acme" / "2026-01-01_00-00-00"
+        _write_json(run / "s0" / "manifest.json", {"uuid": "r1-s0"})
+        _write_json(run / "s1" / "manifest.json", {"uuid": "r1-s1", "instance_index": 1})
+        ledger = _finder("$*.results.:manifest():last().:first()", archive).query().uuids
+        run_dir = _finder("$acme.results.:last().:first()", archive).query().uuids
+        assert ledger == run_dir == ["r1-s0"]
+
+    def test_an_unknown_index_that_ties_is_warned(self, archive):
+        # both indexes unknown: a tie at 0, where each branch keeps its own
+        # starting order (arrival vs directory listing), so the uncertainty
+        # is warned, once per instance (reviewer on #643)
+        run = Path(archive) / "acme" / "2026-01-01_00-00-00"
+        for identity in ("s0", "s1"):
+            _write_json(run / identity / "manifest.json", {"uuid": f"r1-{identity}"})
+        finder = _finder("$*.results.:manifest():last().:first()", archive)
+        finder.query()
+        warnings = finder.csvpaths.logger.warnings
+        assert len(warnings) == 2
+        assert all("no instance_index" in w for w in warnings)
+
+    def test_one_identity_reads_no_instance_manifests(self, archive):
+        # the order cannot change one identity with no position
+        finder = _finder("$*.results.:manifest():last().s0", archive)
+        reads = []
+        original = finder.source.instance_manifest
+        finder.source.instance_manifest = lambda d: (reads.append(d), original(d))[1]
+        assert finder.query().uuids == ["r1-s0"]
+        assert reads == []
+
+    def test_a_gone_run_beside_a_live_one(self, archive):
+        # r1 gone (arrival, warned), r2 live (declaration): each run reads
+        # the only order it has
+        import shutil
+
+        root = Path(archive)
+        run2 = root / "acme" / "2026-01-02_00-00-00"
+        _write_json(run2 / "manifest.json", {"run_uuid": "r2"})
+        for identity, index in (("s0", 0), ("s1", 1)):
+            _write_json(
+                run2 / identity / "manifest.json",
+                {"uuid": f"r2-{identity}", "instance_index": index},
+            )
+        ledger = json.loads((root / "manifest.json").read_text()) + [
+            {"named_paths_name": "acme", "run_home": str(run2), "run_uuid": "r2",
+             "uuid": f"r2-{identity}", "identity": identity}
+            for identity in ("s1", "s0")
+        ]
+        _write_json(root / "manifest.json", ledger)
+        shutil.rmtree(root / "acme" / "2026-01-01_00-00-00")
+        finder = _finder("$*.results.:manifest():from(0).:first()", archive)
+        assert finder.query().uuids == ["r1-s1", "r2-s0"]
+        assert len(finder.csvpaths.logger.warnings) == 1
