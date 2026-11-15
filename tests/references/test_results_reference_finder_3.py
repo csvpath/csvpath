@@ -8600,3 +8600,20 @@ class TestAClockValueInsideName:
             "$acme.results.customers/:name(:year())/*",
         ):
             assert _finder(reference, str(tmp_path)).query().uuids == ["c1"], reference
+
+
+class TestAnInvalidJsonFile:
+    # reviewer on #649: a well-known JSON file that does not parse raised a
+    # bare JSONDecodeError with no path; it raises naming the file
+    def test_a_bare_errors_read_names_the_file(self, tmp_path):
+        run = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s": "r1-s"})
+        (Path(run) / "s" / "errors.json").write_text("[{not json")
+        _write_archive_manifest(tmp_path, "acme", [run])
+        with pytest.raises(ReferenceException3, match="errors.json is not valid JSON"):
+            _finder("$acme.results.:last().s:errors()", str(tmp_path)).resolve()
+
+    def test_an_invalid_archive_ledger_names_the_file(self, tmp_path):
+        # reviewer on #653: run_homes() parsed the archive ledger itself
+        (tmp_path / "manifest.json").write_text("[{not json")
+        with pytest.raises(ReferenceException3, match="manifest.json is not valid JSON"):
+            _finder("$acme.results.:last()", str(tmp_path)).query()
