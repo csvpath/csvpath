@@ -3602,12 +3602,43 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         file_home) run_home already includes that final, version-
         identifying segment itself."""
         prefix_segments = cls._prefix_segments(run_home, home)
-        if prefix_segments is None or len(prefix_segments) != len(pattern):
+        if prefix_segments is None:
             return False
-        for actual, expected in zip(prefix_segments, pattern):
-            if not cls._segment_matches(expected, actual):
-                return False
-        return True
+        if cls._segments_match(prefix_segments, pattern):
+            return True
+        if pattern and cls._is_run_dir_name(pattern[-1]):
+            # the pattern may name the run dir itself, e.g.
+            # 'beta/2026-01-01_00-00-00': the whole path, the run's own name
+            # included. It never matched, the name being cut off first
+            # (David, 2026-11-14). Depth tells the two readings apart, so a
+            # template dir whose name looks like a run dir still matches as
+            # a template path above (decision D18; reviewer on #644).
+            return cls._segments_match(
+                prefix_segments + [pathu.parts(run_home)[-1]], pattern
+            )
+        return False
+
+    @classmethod
+    def _segments_match(cls, segments: list, pattern: list) -> bool:
+        """true if `segments` match `pattern` position by position, with
+        exactly as many segments as the pattern has."""
+        if len(segments) != len(pattern):
+            return False
+        return all(
+            cls._segment_matches(expected, actual)
+            for actual, expected in zip(segments, pattern)
+        )
+
+    # the run-dir name form the framework writes (run_home_maker.py,
+    # "%Y-%m-%d_%H-%M-%S", with "_N" when two runs start in the same second)
+    # (decision D18, 2026-11-14; the suffix: reviewer on #644)
+    _RUN_DIR_NAME = re.compile(r"^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}(_\d+)?$")
+
+    @classmethod
+    def _is_run_dir_name(cls, segment) -> bool:
+        """true for a literal path segment in the framework's run-dir name
+        form, e.g. '2026-01-01_00-00-00'."""
+        return isinstance(segment, str) and cls._RUN_DIR_NAME.match(segment) is not None
 
     @classmethod
     def _matches_prefix_at_least(cls, run_home: str, home: str, pattern: list) -> bool:

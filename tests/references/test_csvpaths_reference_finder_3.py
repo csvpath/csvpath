@@ -3240,10 +3240,14 @@ class TestScopeLimits:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_star_in_name_one_not_supported(self):
-        finder = _finder("$acme.csvpaths.*.x")
-        with pytest.raises(ReferenceException3):
-            finder.query()
+    def test_star_in_name_one_is_every_version(self):
+        # compendium 4.1a/4.2b (2026-11-14): '*' is ':all()' here, so this
+        # is statement x in every version; it raised until then
+        star = _finder("$acme.csvpaths.*.x").query()
+        all_ = _finder("$acme.csvpaths.:all().x").query()
+        assert [(r.uuid, r.identity) for r in star.results] == [
+            (r.uuid, r.identity) for r in all_.results
+        ]
 
     def test_two_pointers_in_name_one_raises(self):
         finder = _finder("$acme.csvpaths.:first():last()")
