@@ -4,6 +4,7 @@ import re
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
+from ..reference_exceptions_3 import ReferenceException3
 from .reference_source import ReferenceSource
 
 
@@ -18,13 +19,18 @@ class FilesystemReferenceSource(ReferenceSource):
     @staticmethod
     def read_json(path: str):
         """a parsed JSON file, or None if it does not exist. never writes,
-        unlike helpers that create a missing file."""
+        unlike helpers that create a missing file. A file that is not valid
+        JSON raises, naming it; it raised a bare JSONDecodeError with no path
+        (reviewer on #649; fail fast)."""
         if path is None or path == "":
             raise ValueError("Path cannot be None or empty")
         if not Nos(path).exists():
             return None
         with DataFileReader(path) as reader:
-            return json.load(reader.source)
+            try:
+                return json.load(reader.source)
+            except json.JSONDecodeError as e:
+                raise ReferenceException3(f"{path} is not valid JSON: {e}") from e
 
     #
     # FILES
