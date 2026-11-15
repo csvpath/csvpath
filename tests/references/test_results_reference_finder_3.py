@@ -8450,3 +8450,54 @@ class TestAResultsNameOneMustNameARun:
     )
     def test_a_run_name_a_stand_in_or_a_star_is_fine(self, archive, reference, expected):
         assert sorted(_finder(reference, archive).query().uuids) == expected
+
+
+class TestAMalformedErrorsJson:
+    # reviewer on #641 (fail fast): errors.json is a list of error dicts.
+    # Anything else raised AttributeError for ':idchain()' and was counted by
+    # its keys for ':count()'. A filter, a count or an idchain now raises,
+    # naming the file; a bare ':errors()' still gives the file as it is.
+    @pytest.fixture
+    def archive(self, tmp_path):
+        run = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s": "r1-s"})
+        _write_json(Path(run) / "s" / "errors.json", {"source": "a", "message": "m"})
+        _write_archive_manifest(tmp_path, "acme", [run])
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "chain",
+        [
+            ':errors(:idchain("a"))',
+            ':errors(:message("m"))',
+            ":errors(:count(:above(0)))",
+            ":errors():idchain()",
+            ':errors(:idchain("a")):idchain()',
+        ],
+    )
+    def test_a_dict_raises_when_its_errors_are_read(self, archive, chain):
+        with pytest.raises(ReferenceException3, match="not a list of error entries"):
+            _finder(f"$acme.results.:last().s{chain}", archive).resolve()
+
+    def test_a_dict_raises_for_a_having_count(self, archive):
+        ref = "$acme.results.:last().:all():having(:errors(:count(:above(0))))"
+        with pytest.raises(ReferenceException3, match="errors.json is not a list"):
+            _finder(ref, archive).query()
+
+    def test_a_list_of_strings_raises_too(self, tmp_path):
+        run = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s": "r1-s"})
+        _write_json(Path(run) / "s" / "errors.json", ["a", "b"])
+        _write_archive_manifest(tmp_path, "acme", [run])
+        with pytest.raises(ReferenceException3, match="non-dict entries"):
+            _finder('$acme.results.:last().s:errors(:idchain("a"))', str(tmp_path)).resolve()
+
+    def test_a_bare_errors_gives_the_file_as_it_is(self, archive):
+        (result,) = _finder("$acme.results.:last().s:errors()", archive).resolve().results
+        assert result.data == {"source": "a", "message": "m"}
+
+    def test_a_missing_file_is_still_none(self, tmp_path):
+        run = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s": "r1-s"})
+        _write_archive_manifest(tmp_path, "acme", [run])
+        (result,) = _finder(
+            '$acme.results.:last().s:errors(:idchain("a"))', str(tmp_path)
+        ).resolve().results
+        assert result.data is None
