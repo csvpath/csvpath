@@ -7280,8 +7280,9 @@ class TestStatusChainGatesReadLive:
         # #615; RC triage A8). (':file_path()' differs the same way, but a
         # live version always has its `file`.)
         ledger = dict(self.LEDGER, origin_path="/landing/orders.csv")
-        finder = self._finder('$orders.files.:status("complete"):origin("/landing/orders.csv")', ledger, self.LIVE)
-        assert finder.query().uuids == ["o1"]
+        for root in ("$orders", "$*", "$:regex(/^ord/)", '$:choice("orders|x")'):
+            reference = f'{root}.files.:status("complete"):origin("/landing/orders.csv")'
+            assert self._finder(reference, ledger, self.LIVE).query().uuids == ["o1"], root
 
     def test_a_manifest_entry_with_no_uuid_does_not_make_a_failure_live(self):
         # it raised "ValueError: uuid cannot be None or empty"; before #613
