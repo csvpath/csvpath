@@ -8719,3 +8719,64 @@ class TestALedgerEntryWithNoUuid:
         assert _finder("$*.results.:manifest()", archive).query().uuids == [None]
         with pytest.raises(ValueError, match="results ledger entry has no uuid"):
             _finder("$*.results.:manifest()", archive).resolve()
+
+
+class TestAnInstanceManifestIsReadOncePerCall:
+    # triage A13 (measured on the corpus, 2026-11-15): ordering a run's
+    # instances read every instance manifest, and building the results read
+    # them again -- 8 reads for 4 instances. Cost estimates should not have
+    # to model that 2x. Each query() and resolve_from() reads one once.
+    @pytest.fixture
+    def archive(self, tmp_path):
+        run = _make_run(
+            tmp_path / "acme",
+            "2026-01-01_00-00-00",
+            "r1",
+            {f"s{i}": f"u{i}" for i in range(4)},
+        )
+        _write_archive_manifest(tmp_path, "acme", [run])
+        return str(tmp_path)
+
+    @staticmethod
+    def _counting(finder):
+        counts = {"reads": 0}
+        source = finder.source
+        real = source.instance_manifest
+
+        def counted(instance_dir):
+            counts["reads"] += 1
+            return real(instance_dir)
+
+        source.instance_manifest = counted
+        return counts
+
+    def test_a_query_reads_each_instance_once(self, archive):
+        finder = _finder("$acme.results.:last().*", archive)
+        counts = self._counting(finder)
+        assert len(finder.query().uuids) == 4
+        assert counts["reads"] == 4
+
+    def test_a_later_call_reads_afresh(self, archive):
+        # nothing read in one call is reused by the next
+        finder = _finder("$acme.results.:last().s0", archive)
+        assert finder.query().uuids == ["u0"]
+        run = Path(archive) / "acme" / "2026-01-01_00-00-00"
+        _write_json(run / "s0" / "manifest.json", {"uuid": "u0-changed"})
+        assert finder.query().uuids == ["u0-changed"]
+
+    def test_a_resolve_from_reads_afresh(self, archive):
+        # reviewer on #658: the reset in resolve_from() was unpinned
+        finder = _finder("$acme.results.:last().s0:manifest()", archive)
+        selection = finder.query()
+        run = Path(archive) / "acme" / "2026-01-01_00-00-00"
+        _write_json(run / "s0" / "manifest.json", {"uuid": "u0-changed"})
+        (result,) = finder.resolve_from(selection).results
+        assert result.data == {"uuid": "u0-changed"}
+
+    def test_a_missing_manifest_is_read_once_too(self, archive):
+        finder = _finder("$acme.results.:last().*", archive)
+        run = Path(archive) / "acme" / "2026-01-01_00-00-00"
+        (run / "s3" / "manifest.json").unlink()
+        counts = self._counting(finder)
+        finder.query()
+        assert counts["reads"] == 4

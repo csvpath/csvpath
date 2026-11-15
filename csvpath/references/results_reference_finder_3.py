@@ -166,6 +166,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         return (seg, -1)
 
     def query(self) -> ReferenceResults3:
+        # instance manifests are read once per query() (triage A13)
+        self._manifest_reads = {}
         reference = self.ref.parsed
         log_results = self._query_log_call(reference)
         if log_results is not None:
@@ -1437,7 +1439,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
         for identity in self._list_instance_identities(run_dir):
             inst_dir = Nos(run_dir).join(identity)
-            entry = self.source.instance_manifest(inst_dir)
+            entry = self._instance_manifest(inst_dir)
             value = self._extract_field_value(entry, key_path)
             value = function_cls.transform_value(value)
             if self._matches_field_predicate(
@@ -1963,7 +1965,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         instance = None
         if entry.get("identity") is not None:
             instance_dir = Nos(record["run_home"]).join(entry["identity"])
-            instance = self.source.instance_manifest(instance_dir)
+            instance = self._instance_manifest(instance_dir)
         value = self._extract_field_value(instance, key_path)
         if value is None:
             ledger_key_path = function_cls.LEDGER_KEY.get(Reference3.RESULT) or key_path
@@ -2107,7 +2109,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             identity = entry.get("identity")
             if not identity:
                 return 0
-            manifest = self.source.instance_manifest(Nos(run_home).join(identity))
+            manifest = self._instance_manifest(Nos(run_home).join(identity))
             idx = manifest.get("instance_index") if manifest else None
             if idx is None:
                 key = ("unknown instance index", run_home, identity)
@@ -2253,7 +2255,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
         if selector["manifest_call"] is not None:
             instance_dir = Nos(record["run_home"]).join(entry["identity"])
-            return self.source.instance_manifest(instance_dir)
+            return self._instance_manifest(instance_dir)
         return entry
 
     def _star_group_and_reduce(
@@ -2638,7 +2640,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return self._instance_dir_field_value(
                     instance_dir=instance_dir, field_call=value_field
                 )
-            return self.source.instance_manifest(instance_dir)
+            return self._instance_manifest(instance_dir)
 
         kind = reference.resolve_kind
         if kind in (Reference3.METADATA_FILE, Reference3.METADATA_FIELD):
@@ -2723,7 +2725,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if field_call is None:
             raise ValueError("Field call cannot be None")
         return self._instance_entry_field_value(
-            entry=self.source.instance_manifest(instance_dir), field_call=field_call
+            entry=self._instance_manifest(instance_dir), field_call=field_call
         )
 
     def _instance_entry_field_value(self, *, entry: dict | None, field_call):
@@ -3026,7 +3028,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         for inst in instances:
             instance_dir = Nos(run_dir).join(inst)
             # each instance's manifest.json is read once for every gate
-            entry = self.source.instance_manifest(instance_dir) if field_gates else None
+            entry = self._instance_manifest(instance_dir) if field_gates else None
             if all(
                 self._matches_field_predicate(
                     self._instance_entry_field_value(entry=entry, field_call=g),
@@ -3137,7 +3139,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         found = []
         for inst in matched:
             inst_dir = Nos(run_dir).join(inst)
-            entry = self.source.instance_manifest(inst_dir)
+            entry = self._instance_manifest(inst_dir)
             uuid = entry.get("uuid") if entry else None
             path = inst_dir
             if accessor is not None:
@@ -3919,6 +3921,31 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return False
         return True
 
+    def resolve_from(self, selection: ReferenceResults3 | list) -> ReferenceResults3:
+        # instance manifests are read once per resolve, never carried over
+        # from an earlier call (triage A13)
+        self._manifest_reads = {}
+        return super().resolve_from(selection)
+
+    def _instance_manifest(self, instance_dir: str) -> dict | None:
+        """an instance's manifest.json, read once per query() or
+        resolve_from(). Ordering an instance list read every manifest, and
+        building its results read them again: `$x.results.:last().*` read 8
+        manifests for 4 instances (measured on the corpus, 2026-11-15;
+        triage A13). The memo is reset by each of those calls, so nothing
+        read in one call is reused by another."""
+        if not instance_dir:
+            raise ValueError("instance_dir cannot be None or empty")
+        reads = getattr(self, "_manifest_reads", None)
+        if reads is None:
+            reads = {}
+            self._manifest_reads = reads
+        # a missing manifest is remembered as None too. callers get the same
+        # dict for one instance within a call; none of them changes it
+        if instance_dir not in reads:
+            reads[instance_dir] = self.source.instance_manifest(instance_dir)
+        return reads[instance_dir]
+
     def _list_instance_identities(self, run_dir: str) -> list[str]:
         """every csvpath statement's own result subdirectory within a
         run, named by that statement's identity, sorted into real
@@ -3943,7 +3970,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         names = self.source.instance_dirs(run_dir)
 
         def _index(name: str) -> int:
-            entry = self.source.instance_manifest(Nos(run_dir).join(name))
+            entry = self._instance_manifest(Nos(run_dir).join(name))
             idx = entry.get("instance_index") if entry else None
             return int(idx) if idx is not None else 0
 
