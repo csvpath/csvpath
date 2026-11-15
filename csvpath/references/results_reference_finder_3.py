@@ -1404,7 +1404,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             if not Nos(instance_dir).dir_exists():
                 return False
             path = Nos(instance_dir).join(self._JSON_ACCESSOR_FILES["errors"])
-            return content.arg.matches(self._read_well_known_json(path))
+            return content.arg.matches(
+                self._errors_entries(data=self._read_well_known_json(path), path=path)
+            )
         return bool(self._read_accessor(instance_dir, content))
 
     def _any_instance_matches_field(self, run_dir: str, field_call) -> bool:
@@ -2794,6 +2796,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if accessor.name in self._JSON_ACCESSOR_FILES:
             path = Nos(instance_dir).join(self._JSON_ACCESSOR_FILES[accessor.name])
             data = self._read_well_known_json(path)
+            if accessor.name == "errors" and accessor.arg is not None:
+                # a nested filter interprets the entries, so they must be
+                # entries; a bare ':errors()' gives the file as it is
+                data = self._errors_entries(data=data, path=path)
             if accessor.name == "errors":
                 if isinstance(accessor.arg, Count3):
                     if not accessor.arg.matches(data):
@@ -2863,6 +2869,26 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             return False
         return predicate.matches(value)
 
+    @staticmethod
+    def _errors_entries(*, data, path: str) -> "list | None":
+        """errors.json's entries, checked before a filter, a count or an
+        idchain reads them: a list of error dicts, as the framework writes
+        it, or None when the file was never written. Anything else raises,
+        naming the file -- a dict raised AttributeError for ':idchain()'
+        and was silently counted by its keys for ':count()' (reviewer on
+        #641; fail fast)."""
+        if not path:
+            raise ValueError("path cannot be None or empty")
+        if data is None:
+            return None
+        if not isinstance(data, list) or not all(isinstance(e, dict) for e in data):
+            shape = type(data).__name__ if not isinstance(data, list) else "a list with non-dict entries"
+            raise ReferenceException3(
+                f"{path} is not a list of error entries (it is {shape}), so "
+                "its errors cannot be filtered, counted or read."
+            )
+        return data
+
     def _errors_idchain_values(self, data, idchain_call, *, path: str):
         """the idchain values inside errors.json for an ':idchain()'
         chained beside ':errors()' (David, 2026-11-14: a field chained
@@ -2875,6 +2901,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         a GATE -- the whole file if any error matched, else None
         (2026-08-21) -- until then; keeping or dropping an instance by its
         errors is ':having()' now (6.39)."""
+        data = self._errors_entries(data=data, path=path)
         if data is None:
             return None
         if idchain_call.arg is None:
