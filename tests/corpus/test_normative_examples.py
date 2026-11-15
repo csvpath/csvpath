@@ -458,3 +458,14 @@ class TestIndexWindowIntersectDateWindow:
         ).resolve()
         # positions 1-3 are Aug 12, Aug 27, Sep 11; after Aug 20 leaves two
         assert [r.data[:8] for r in results.results] == ["2e8d9724", "39e5df07"]
+
+
+class TestANamedRunDirOnTheCorpus:
+    """David, 2026-11-14: naming a real run dir (the framework's
+    %Y-%m-%d_%H-%M-%S name) finds it; it returned [] until then."""
+
+    def test_the_named_run_is_the_first_run(self, csvpaths):
+        first = _query(csvpaths, ResultsReferenceFinder3, "$scan_invoices.results.:first()")
+        name = first.results[0].path.rstrip("/").split("/")[-1]
+        named = _query(csvpaths, ResultsReferenceFinder3, f"$scan_invoices.results.{name}")
+        assert named.files == first.files
