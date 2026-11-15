@@ -2844,7 +2844,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 return [
                     e
                     for e in self._files_ledger()
-                    if re.search(pattern, e.get("named_file_name") or "")
+                    if re.search(pattern, self._record_name(e) or "")
                 ]
             manifest_chain = self._manifest_chain(name_one=reference.name_one)
             definition_calls = self._definition_chain(name_one=reference.name_one)

@@ -7486,5 +7486,12 @@ class TestATraversalNameReadsTheManifestOwner:
         assert self._finder(f'{root}.files.:manifest():named_file_name("orders")').query().uuids == ["o1"]
         assert self._finder('$:choice("orders-renamed").files.:manifest():last()').query().uuids == []
 
+    def test_a_bare_filtered_set_resolves_by_the_same_name(self):
+        # the bare ':regex()'/':choice()' ':manifest()' resolve filters by the
+        # owner's name too (reviewer on #662, round 2)
+        records = self._finder('$:choice("orders").files.:manifest()').resolve().results[0].data
+        assert [r["uuid"] for r in records] == ["o1"]
+        assert self._finder('$:choice("orders-renamed").files.:manifest()').resolve().results[0].data == []
+
     def test_the_status_chain_agrees(self):
         assert self._finder('$*.files.:status("complete"):named_file_name("orders")').query().uuids == ["o1"]
