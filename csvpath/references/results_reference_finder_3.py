@@ -539,6 +539,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # can have only one :all() or :groups()" for free, no
             # separate check needed here.
             suffix = name_one.path[all_index + 1 :]
+            # a trailing pattern in the suffix is the run-dir slot, as on a
+            # plain path (reviewer on #647: ':all()/:regex(/^2025/)' passed
+            # quietly as a template, ':all()/:regex(/01-01/)' found no run)
+            run_slot = self._pattern_is_run_slot(name_one=name_one, path=suffix)
             if suffix and isinstance(suffix[-1], Star3):
                 # a trailing '*' is the run-dir slot, as the plain path
                 # drops it below (compendium 4.1a): ':all()/*' is the runs
@@ -547,8 +551,18 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 suffix = suffix[:-1]
             suffix_pattern = self._compile_path_pattern(suffix)
             pattern = [*prefix_pattern, Star3(), *suffix_pattern]
+            self._check_pattern_names_runs(
+                reference=reference,
+                pattern=pattern,
+                pairs=[(rh, home) for rh in run_homes],
+                run_slot=run_slot,
+            )
             candidates = [
-                rh for rh in run_homes if self._matches_prefix(rh, home, pattern)
+                rh
+                for rh in run_homes
+                if self._plain_path_matches(
+                    run_home=rh, home=home, pattern=pattern, run_slot=run_slot
+                )
             ]
             if reduces:
                 # _group_key()'s own "every segment after prefix_len, as
@@ -581,7 +595,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             if path and isinstance(path[-1], Star3):
                 path = path[:-1]
             pattern = self._compile_path_pattern(path)
-            run_slot = not name_one.functions
+            run_slot = self._pattern_is_run_slot(name_one=name_one, path=name_one.path)
             self._check_pattern_names_runs(
                 reference=reference,
                 pattern=pattern,
@@ -1121,7 +1135,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             (rh, group, self.csvpaths.results_manager.get_named_results_home(group))
             for rh, group in self._discover_run_homes(None, name_filter)
         ]
-        run_slot = not name_one.functions
+        run_slot = self._pattern_is_run_slot(name_one=name_one, path=name_one.path)
         self._check_pattern_names_runs(
             reference=reference,
             pattern=pattern,
@@ -3729,15 +3743,32 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         "runs on 1/1/2026"; compendium 3.9c's analogs of ':name()'). With a
         pointer or range after it, that function stands in for the run and
         the pattern is a template level, as in 'customers/2025:last()'.
+        A template dir whose name looks like a run dir matches the pattern
+        too, as a literal one does (decision D18; reviewer on #647).
         Anything else is _matches_prefix()."""
         if run_slot and pattern and isinstance(pattern[-1], Regex3):
             segments = self._prefix_segments(run_home, home)
             if segments is None:
                 return False
-            return self._segments_match(
-                segments + [pathu.parts(run_home)[-1]], pattern
+            if self._segments_match(segments + [pathu.parts(run_home)[-1]], pattern):
+                return True
+            return self._segments_match(segments, pattern) and self._is_run_dir_name(
+                segments[-1]
             )
         return self._matches_prefix(run_home, home, pattern)
+
+    @staticmethod
+    def _pattern_is_run_slot(*, name_one, path: list) -> bool:
+        """true when the last segment of `path` (name_one's path, or the
+        part after a middle ':all()') is the run-dir slot: nothing follows it
+        in name_one, and it is not a written '*' -- in ':choice("beta")/*'
+        the '*' is the run slot and the pattern a template level (reviewer
+        on #647)."""
+        if name_one is None or path is None:
+            raise ValueError("name_one and path cannot be None")
+        if name_one.functions or not path:
+            return False
+        return not isinstance(path[-1], Star3)
 
     def _check_pattern_names_runs(
         self, *, reference, pattern: list, pairs: list, run_slot: bool
@@ -3755,7 +3786,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             return
         for run_home, home in pairs:
             segments = self._prefix_segments(run_home, home)
-            if segments is not None and self._segments_match(segments, pattern):
+            if segments is None or not self._segments_match(segments, pattern):
+                continue
+            if not self._is_run_dir_name(segments[-1]):
+                # a run-dir-shaped template dir may be meant (D18)
                 raise self._names_no_run(
                     reference,
                     f"its trailing pattern matches the template dir "

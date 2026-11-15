@@ -8369,6 +8369,55 @@ class TestAResultsNameOneMustNameARun:
         assert _finder('$acme.results.:choice("beta"):last()', archive).query().uuids == ["b1"]
         assert _finder("$acme.results.customers/:regex(/^20/):first()", archive).query().uuids == ["c1"]
 
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # the written '*' is the run slot (reviewer on #647: these raised,
+            # and the message suggested this very form)
+            ('$acme.results.:choice("beta")/*', ["b1"]),
+            ("$acme.results.:regex(/^bet/)/*", ["b1"]),
+            ("$acme.results.:name(/^bet/)/*", ["b1"]),
+            ('$*.results.:choice("beta")/*', ["b1"]),
+            ("$:regex(/^ac/).results.:regex(/^bet/)/*", ["b1"]),
+            ("$acme.results.customers/:regex(/^20/)/*", ["c1"]),
+        ],
+    )
+    def test_a_pattern_before_a_star_is_a_template_level(self, archive, reference, expected):
+        assert sorted(_finder(reference, archive).query().uuids) == expected
+
+    def test_a_pattern_after_a_middle_all_is_the_run_slot(self, archive):
+        # as on a plain path, and as ':all()/:name("<run>")' (reviewer on #647)
+        with pytest.raises(ReferenceException3, match="names no run"):
+            _finder("$acme.results.:all()/:regex(/^2025/)", archive).query()
+        for reference in (
+            "$acme.results.:all()/:regex(/01-01/)",
+            '$acme.results.:all()/:choice("2026-01-01_00-00-00")',
+            '$acme.results.:all()/:name("2026-01-01_00-00-00")',
+            "$acme.results.*/:regex(/01-01/)",
+        ):
+            assert _finder(reference, archive).query().uuids == ["b1"], reference
+        assert _finder("$acme.results.:all()/:regex(/^20/)/*", archive).query().uuids == ["c1"]
+
+    def test_a_run_dir_shaped_template_dir_matches_a_pattern_too(self, tmp_path):
+        # decision D18: such a template dir matches either reading; a
+        # pattern gives what the literal and ':name()' give (reviewer on #647)
+        base = tmp_path / "acme"
+        t1 = _make_run(base / "2026-02-02_00-00-00", "2026-02-03_00-00-00", "t1", {})
+        top1 = _make_run(base, "2026-01-05_00-00-00", "top1", {})
+        _write_archive_manifest(tmp_path, "acme", [t1, top1])
+        archive = str(tmp_path)
+        for reference in (
+            "$acme.results.2026-02-02_00-00-00",
+            '$acme.results.:name("2026-02-02_00-00-00")',
+            '$acme.results.:choice("2026-02-02_00-00-00")',
+            "$acme.results.:regex(/^2026-02-02/)",
+        ):
+            assert _finder(reference, archive).query().uuids == ["t1"], reference
+        assert sorted(_finder("$acme.results.:regex(/^2026-0[12]/)", archive).query().uuids) == [
+            "t1",
+            "top1",
+        ]
+
     def test_the_normative_regex_example(self, tmp_path):
         # NRE: '$alpha.results.:regex("2026-01-01_").header_checks:errors()'
         # and '...:from("2026-01-01"):before("2026-01-02")...' are "two
