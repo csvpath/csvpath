@@ -63,22 +63,10 @@
         },
         {
           "type": "ITALY_NATIONAL_IDENTIFICATION_NUMBER",
-          "count": 4,
+          "count": 2,
           "severity": "HIGH",
           "occurrences": {
             "cells": [
-              {
-                "cellReference": null,
-                "column": 4,
-                "columnName": "codice_fiscale",
-                "row": 8
-              },
-              {
-                "cellReference": null,
-                "column": 4,
-                "columnName": "codice_fiscale",
-                "row": 9
-              },
               {
                 "cellReference": null,
                 "column": 5,
@@ -95,7 +83,7 @@
           }
         }
       ],
-      "totalCount": 10
+      "totalCount": 8
     }
   ],
   "csvpath": {

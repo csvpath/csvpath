@@ -51,14 +51,13 @@ does not.
   seven forms we tried, with valid check digits and the keyword in the
   header or the cell. Marked partial in the catalog, so every conversion
   that uses it says so in its report.
-- **`PHONE_NUMBER` without a keyword**: we report a number with a country
-  code in any common layout. Without a keyword, Macie reported only
-  `+12125550148` and `+1 (212) 555-0148`, not spaces, dashes or dots
-  between the groups.
-- **`ITALY_NATIONAL_IDENTIFICATION_NUMBER`**: `codice fiscale` is not a
-  keyword to Macie, in a header or a cell; for us it contains the
-  documented keyword `codice fiscal`. See "Short keywords match inside
-  words" below.
+
+Two earlier differences were fixed by following Macie (2026-11-15):
+keywords now match as whole words, so `codice fiscale` is not the
+Italian keyword `codice fiscal`; and a phone number with a country code
+needs no keyword only when it is unbroken (`+12125550148`) or has a
+group in parentheses (`+1 (212) 555-0148`). The phone rule was seen for
+US numbers and is applied to every country's.
 
 ## Also not translated
 
@@ -74,13 +73,13 @@ These are known false positive and false negative risks. If your data
 shows any of them, we want to hear about it, with the identifier, a
 description of the value (not the value), and the column name.
 
-- **Short keywords match inside words.** Keywords match as substrings,
-  which is our reading of Macie's documentation. A live probe suggests
-  Macie may match whole words instead; a further probe is under way. Brazil's `rg` matches `org`, `large` or a `cargo`
-  column; `cep` matches `receptor` and `exception`; also `mc`, `pan`,
-  `card`, `med`, `blood` and France's `social`. A value of the right
-  shape next to such a word is reported. The [project
-  rulesbase](customizing.md) can drop a keyword.
+- **Keywords are whole words.** As Macie does (checked against Macie,
+  2026-11-15), a keyword counts only as a word of its own: `ssn` in an
+  `ssn` or `customer_ssn` column or in `SSN: ...`, not in `ssnumber` or
+  `myssn`. `_`, `-`, spaces and punctuation separate words. A keyword
+  written directly against a value, as in `SSN123-45-6789`, is not a
+  word, which may miss some values; we have not seen what Macie does
+  there.
 - **Keywords need their accents.** `cedula de ciudadania` without its
   accents is not Colombia's keyword, so a cedula labeled that way is
   missed.
