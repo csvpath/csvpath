@@ -3702,9 +3702,20 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # picked templates instead is only known once matched, see
                 # _check_pattern_names_runs() (decision D19, revised)
                 return
+            function_cls = ReferenceFunctionFactory.get_registered_class(last.name)
+            if function_cls is not None and function_cls.SOURCE == "clock":
+                # a clock value is a path segment, 'customers/:year()' being
+                # 'customers/2026' (compendium 6.43, 3.9c), so it is checked
+                # as that segment; it searched as a prefix (reviewer on #647)
+                value = str(self._build(last).compute())
+                if self._is_run_dir_name(value):
+                    return
+                raise self._names_no_run(
+                    reference, f"':{last.name}()' gives '{value}', which is not a run dir name"
+                )
             if last.name != "name":
-                # a clock value, ':all()', ':flatten()', ':manifest()' ...:
-                # a function that may stand in
+                # ':all()', ':flatten()', ':manifest()' ...: a function that
+                # may stand in
                 return
             # ':name("x")' or ':name(@var)': the name it gives. A
             # ':name(/re/)' is a pattern, checked once matched.

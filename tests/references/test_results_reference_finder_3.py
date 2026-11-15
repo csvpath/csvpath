@@ -8318,6 +8318,28 @@ class TestAResultsNameOneMustNameARun:
         with pytest.raises(ReferenceException3, match="names no run"):
             _finder(reference, archive).query()
 
+    def test_a_clock_value_is_checked_as_its_segment(self, tmp_path):
+        # compendium 6.43: ':year()' as a path segment is the year, so
+        # 'customers/:year()' is 'customers/2026' and names no run either
+        # (it searched the runs under it as a prefix; reviewer on #647)
+        year = str(daut.now().year)
+        base = tmp_path / "acme"
+        r1 = _make_run(base / "customers" / year, "2026-01-01_00-00-00", "c1", {"s": "c1-s"})
+        _write_archive_manifest(tmp_path, "acme", [r1])
+        archive = str(tmp_path)
+        for reference in (
+            f"$acme.results.customers/{year}",
+            "$acme.results.customers/:year()",
+            "$acme.results.customers/:year().s",
+        ):
+            with pytest.raises(ReferenceException3, match="names no run"):
+                _finder(reference, archive).query()
+        with pytest.raises(ReferenceException3, match="':year\\(\\)' gives"):
+            _finder("$acme.results.customers/:year()", archive).query()
+        assert _finder("$acme.results.customers/:year()/*", archive).query().uuids == ["c1"]
+        assert _finder("$acme.results.customers/:year():last()", archive).query().uuids == ["c1"]
+        assert _finder("$acme.results.customers/:year()/*.s", archive).query().uuids == ["c1-s"]
+
     def test_a_variable_name_is_checked_once_resolved(self, archive):
         finder = _finder("$acme.results.:name(@w)", archive)
         finder.set_variable("w", value="beta")
