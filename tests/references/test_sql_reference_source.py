@@ -686,3 +686,26 @@ def test_run_homes_from_checks_its_entries():
         FilesystemReferenceSource._run_homes_from(
             entries=None, root_major=None, name_filter=None
         )
+
+
+def test_run_homes_from_raises_for_an_entry_with_no_uuid():
+    # David, 2026-10-31: a ledger entry with no uuid raises (there should be
+    # none). Run discovery reads the archive ledger for every literal RESULTS
+    # root, under either source (decision D21)
+    class _Logger:
+        def __init__(self):
+            self.errors = []
+
+        def error(self, msg):
+            self.errors.append(msg)
+
+    logger = _Logger()
+    entries = [
+        {"named_paths_name": "acme", "run_home": "/x/acme/r1", "uuid": "i1"},
+        {"named_paths_name": "beta", "run_home": "/x/beta/r1"},
+    ]
+    with pytest.raises(ValueError, match="results ledger entry has no uuid"):
+        FilesystemReferenceSource._run_homes_from(
+            entries=entries, root_major="acme", name_filter=None, logger=logger
+        )
+    assert len(logger.errors) == 1

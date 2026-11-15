@@ -120,6 +120,7 @@ class _FakeLogger:
 
     def __init__(self):
         self.warnings = []
+        self.errors = []
 
     def warning(self, msg, *args):
         self.warnings.append(msg % args if args else msg)
@@ -127,8 +128,8 @@ class _FakeLogger:
     def info(self, *args, **kwargs):
         pass
 
-    def error(self, *args, **kwargs):
-        pass
+    def error(self, msg, *args, **kwargs):
+        self.errors.append(msg % args if args else msg)
 
     def debug(self, *args, **kwargs):
         pass
@@ -4004,6 +4005,56 @@ class TestATrailingStarIsEveryVersion:
             "$acme.csvpaths.:all()"
         ).query().uuids
         assert len(_finder("$acme.csvpaths.*").query().uuids) == len(ACME_MANIFEST)
+
+
+class TestALedgerEntryWithNoUuid:
+    # David, 2026-10-31: "a ledger entry with no `uuid` raises (there should
+    # be none)", as FILES (decision D20) and RESULTS check theirs. CSVPATHS
+    # raised a bare KeyError 'uuid' in some forms and silently dropped the
+    # entry under a ':lifecycle("active")' gate (reviewer on #652; triage
+    # A17). Here acme's latest version, a4, has none in the ledger.
+    def _finder(self, reference):
+        ledger = [dict(e) for e in GATE_LEDGER]
+        for e in ledger:
+            if e["uuid"] == "a4":
+                del e["uuid"]
+        return _finder(
+            reference,
+            by_name={name: [dict(e) for e in es] for name, es in GATE_BY_NAME.items()},
+            ledger=ledger,
+            inputs_csvpaths_path="named_paths",
+        )
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$*.csvpaths.:manifest():last()",
+            '$*.csvpaths.:manifest():named_paths_name("acme")',
+            "$*.csvpaths.:manifest():from(1)",
+            '$*.csvpaths.:manifest():lifecycle("active")',
+            "$:regex(/^ac/).csvpaths.:manifest():last()",
+            '$:choice("acme").csvpaths.:manifest():last()',
+            '$acme.csvpaths.:lifecycle("active")',
+            # forms that never needed a4's uuid read the ledger too
+            "$*.csvpaths.:manifest():first()",
+            '$*.csvpaths.:manifest():lifecycle("deleted")',
+        ],
+    )
+    def test_a_ledger_read_raises_naming_the_entry(self, reference):
+        finder = self._finder(reference)
+        with pytest.raises(ValueError, match="paths ledger entry has no uuid"):
+            finder.query()
+        assert len(finder.csvpaths.logger.errors) == 1
+
+    def test_a_bare_filtered_set_raises_at_resolve(self):
+        # its query names the ledger only (uuid None); resolve reads it
+        finder = self._finder('$:choice("acme").csvpaths.:manifest()')
+        assert finder.query().uuids == [None]
+        with pytest.raises(ValueError, match="paths ledger entry has no uuid"):
+            self._finder('$:choice("acme").csvpaths.:manifest()').resolve()
+
+    def test_a_form_that_reads_only_the_named_paths_manifest_is_unchanged(self):
+        assert self._finder("$acme.csvpaths.:last()").query().uuids == ["a4"]
 
 
 class TestAScalarFieldFilters:

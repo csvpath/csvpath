@@ -442,7 +442,12 @@ def _make_run(
 def _write_archive_manifest_multi(archive, groups: dict) -> None:
     entries = []
     for group, run_homes in groups.items():
-        entries.extend({"named_paths_name": group, "run_home": rh} for rh in run_homes)
+        # every real ledger entry has a uuid (David, 2026-10-31: one
+        # without raises)
+        entries.extend(
+            {"named_paths_name": group, "run_home": rh, "uuid": f"{rh}-instance"}
+            for rh in run_homes
+        )
     _write_json(archive / "manifest.json", entries)
 
 

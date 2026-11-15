@@ -166,6 +166,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         return (seg, -1)
 
     def query(self) -> ReferenceResults3:
+        # instance manifests are read once per query() (triage A13)
+        self._manifest_reads = {}
         reference = self.ref.parsed
         log_results = self._query_log_call(reference)
         if log_results is not None:
@@ -1374,7 +1376,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             function_cls=function_cls,
             datatype=Reference3.RESULTS,
             ledger_entry_getter=lambda: self._find_archive_ledger_entry(
-                ledger=self.source.results_ledger(),
+                ledger=self._results_ledger(),
                 run_uuid=entry.get("run_uuid") if entry else None,
             ),
         )
@@ -1444,7 +1446,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
         for identity in self._list_instance_identities(run_dir):
             inst_dir = Nos(run_dir).join(identity)
-            entry = self.source.instance_manifest(inst_dir)
+            entry = self._instance_manifest(inst_dir)
             value = self._extract_field_value(entry, key_path)
             value = function_cls.transform_value(value)
             if self._matches_field_predicate(
@@ -1763,8 +1765,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         :regex()/:choice() root's pattern, matched against each run's
         named_paths_name the same way _discover_run_homes() matches it."""
         runs = {}
-        for entry in self.source.results_ledger():
-            for key in ("uuid", "run_uuid", "run_home"):
+        for entry in self._results_ledger():
+            # uuid is checked by _results_ledger() as the ledger is read
+            for key in ("run_uuid", "run_home"):
                 if entry.get(key) is None:
                     msg = f"A results ledger entry has no {key}: {entry}"
                     self.csvpaths.logger.error(msg)
@@ -1781,6 +1784,22 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 runs[entry["run_uuid"]] = record
             record["instances"].append(entry)
         return list(runs.values())
+
+    def _results_ledger(self) -> list:
+        """the archive ledger, every entry checked for a uuid as it is read.
+        There should be none without one (David, 2026-10-31: "a ledger entry
+        with no `uuid` raises (there should be none)"), as FILES
+        (_files_ledger(), decision D20) and CSVPATHS (_paths_ledger()) check
+        theirs. Only _manifest_set_runs() checked until then; the literal-root
+        gates and ledger-fallback fields read past an entry with none
+        (reviewer on #652; triage A18, decision D21)."""
+        ledger = self.source.results_ledger()
+        for entry in ledger or []:
+            if not entry.get("uuid"):
+                msg = f"A results ledger entry has no uuid: {entry}"
+                self.csvpaths.logger.error(msg)
+                raise ValueError(msg)
+        return ledger
 
     def _manifest_set_query(
         self,
@@ -1953,7 +1972,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         instance = None
         if entry.get("identity") is not None:
             instance_dir = Nos(record["run_home"]).join(entry["identity"])
-            instance = self.source.instance_manifest(instance_dir)
+            instance = self._instance_manifest(instance_dir)
         value = self._extract_field_value(instance, key_path)
         if value is None:
             ledger_key_path = function_cls.LEDGER_KEY.get(Reference3.RESULT) or key_path
@@ -2097,7 +2116,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             identity = entry.get("identity")
             if not identity:
                 return 0
-            manifest = self.source.instance_manifest(Nos(run_home).join(identity))
+            manifest = self._instance_manifest(Nos(run_home).join(identity))
             idx = manifest.get("instance_index") if manifest else None
             if idx is None:
                 key = ("unknown instance index", run_home, identity)
@@ -2243,7 +2262,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             )
         if selector["manifest_call"] is not None:
             instance_dir = Nos(record["run_home"]).join(entry["identity"])
-            return self.source.instance_manifest(instance_dir)
+            return self._instance_manifest(instance_dir)
         return entry
 
     def _star_group_and_reduce(
@@ -2552,7 +2571,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     function_cls=function_cls,
                     datatype=Reference3.RESULTS,
                     ledger_entry_getter=lambda: self._find_archive_ledger_entry(
-                        ledger=self.source.results_ledger(),
+                        ledger=self._results_ledger(),
                         run_uuid=entry.get("run_uuid") if entry else None,
                     ),
                 )
@@ -2602,7 +2621,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 function_cls=function_cls,
                 datatype=Reference3.RESULTS,
                 ledger_entry_getter=lambda: self._find_archive_ledger_entry(
-                    ledger=self.source.results_ledger(),
+                    ledger=self._results_ledger(),
                     run_uuid=entry.get("run_uuid") if entry else None,
                 ),
             )
@@ -2628,7 +2647,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return self._instance_dir_field_value(
                     instance_dir=instance_dir, field_call=value_field
                 )
-            return self.source.instance_manifest(instance_dir)
+            return self._instance_manifest(instance_dir)
 
         kind = reference.resolve_kind
         if kind in (Reference3.METADATA_FILE, Reference3.METADATA_FIELD):
@@ -2713,7 +2732,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if field_call is None:
             raise ValueError("Field call cannot be None")
         return self._instance_entry_field_value(
-            entry=self.source.instance_manifest(instance_dir), field_call=field_call
+            entry=self._instance_manifest(instance_dir), field_call=field_call
         )
 
     def _instance_entry_field_value(self, *, entry: dict | None, field_call):
@@ -2731,7 +2750,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             function_cls=function_cls,
             datatype=Reference3.RESULT,
             ledger_entry_getter=lambda: self._find_archive_ledger_entry(
-                ledger=self.source.results_ledger(),
+                ledger=self._results_ledger(),
                 run_uuid=entry.get("run_uuid") if entry else None,
                 identity=entry.get("instance_identity") if entry else None,
             ),
@@ -3016,7 +3035,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         for inst in instances:
             instance_dir = Nos(run_dir).join(inst)
             # each instance's manifest.json is read once for every gate
-            entry = self.source.instance_manifest(instance_dir) if field_gates else None
+            entry = self._instance_manifest(instance_dir) if field_gates else None
             if all(
                 self._matches_field_predicate(
                     self._instance_entry_field_value(entry=entry, field_call=g),
@@ -3127,7 +3146,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         found = []
         for inst in matched:
             inst_dir = Nos(run_dir).join(inst)
-            entry = self.source.instance_manifest(inst_dir)
+            entry = self._instance_manifest(inst_dir)
             uuid = entry.get("uuid") if entry else None
             path = inst_dir
             if accessor is not None:
@@ -3909,6 +3928,31 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return False
         return True
 
+    def resolve_from(self, selection: ReferenceResults3 | list) -> ReferenceResults3:
+        # instance manifests are read once per resolve, never carried over
+        # from an earlier call (triage A13)
+        self._manifest_reads = {}
+        return super().resolve_from(selection)
+
+    def _instance_manifest(self, instance_dir: str) -> dict | None:
+        """an instance's manifest.json, read once per query() or
+        resolve_from(). Ordering an instance list read every manifest, and
+        building its results read them again: `$x.results.:last().*` read 8
+        manifests for 4 instances (measured on the corpus, 2026-11-15;
+        triage A13). The memo is reset by each of those calls, so nothing
+        read in one call is reused by another."""
+        if not instance_dir:
+            raise ValueError("instance_dir cannot be None or empty")
+        reads = getattr(self, "_manifest_reads", None)
+        if reads is None:
+            reads = {}
+            self._manifest_reads = reads
+        # a missing manifest is remembered as None too. callers get the same
+        # dict for one instance within a call; none of them changes it
+        if instance_dir not in reads:
+            reads[instance_dir] = self.source.instance_manifest(instance_dir)
+        return reads[instance_dir]
+
     def _list_instance_identities(self, run_dir: str) -> list[str]:
         """every csvpath statement's own result subdirectory within a
         run, named by that statement's identity, sorted into real
@@ -3933,7 +3977,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         names = self.source.instance_dirs(run_dir)
 
         def _index(name: str) -> int:
-            entry = self.source.instance_manifest(Nos(run_dir).join(name))
+            entry = self._instance_manifest(Nos(run_dir).join(name))
             idx = entry.get("instance_index") if entry else None
             return int(idx) if idx is not None else 0
 
