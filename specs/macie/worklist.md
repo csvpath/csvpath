@@ -124,8 +124,9 @@ last. Add an item the moment something is deferred.
    the interpretations in transpile-design.md. First scan done with the
    live check: 34 of 43 identifier-file comparisons match exactly, and
    the one difference on our side (a cell listed once per occurrence) is
-   fixed. Next: a second probe for the three open items in the report
-   (phones with a country code, the German ID, the Codice Fiscale).
+   fixed. Second probe done (2026-11-14, same report): three decisions
+   for David, on phones without a keyword, keywords as substrings or
+   words (fidelity item 3), and the German ID.
 
 ## Ask road-testers about
 
@@ -166,7 +167,10 @@ fidelity item in transpile-design.md.
   country code and no keyword (`+1 212 555 0148`), a German ID card number
   in the 2010 format under a `personalausweis` header, and the textbook
   Codice Fiscale `RSSMRA85T10A562S` under a `codice_fiscale` header.
-  Possible false positives until the probe settles why.
+  Possible false positives until the probe settles why. Probed
+  (2026-11-14): Macie needs the unbroken or `(212)` form for a phone
+  without a keyword; `codice fiscale` is not a keyword to Macie (perhaps
+  keywords match as words); no German ID form we tried is reported.
 
 ## Decide at release planning
 
