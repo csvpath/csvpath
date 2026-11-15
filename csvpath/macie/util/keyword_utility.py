@@ -7,8 +7,15 @@ class KeywordUtility:
     Keywords are case-insensitive. A keyword with spaces also matches with
     the spaces removed or replaced by "_" or "-", so "employee id" matches
     a header named employee_id. Macie documents that rule for managed data
-    identifiers; we apply it to custom identifiers too (to confirm in the
-    fidelity scan against real Macie).
+    identifiers; the live check (2026-11-11) confirmed it for custom
+    identifiers too.
+
+    Keywords match as whole words, not substrings: a keyword that starts
+    or ends with a letter or digit does not count where a letter or digit
+    touches it. "ssn" is a keyword in customer_ssn and "ssn: ..." but not
+    in ssnumber or myssn. "_", "-", spaces and punctuation separate words.
+    Confirmed for managed identifiers by the third live probe
+    (2026-11-15); applied to custom identifiers too, as one rule.
 
     In-cell searches run on the original cell text with re.IGNORECASE, not
     on a lowercased copy: lowercasing can change a string's length (e.g.
@@ -51,7 +58,30 @@ class KeywordUtility:
         if not isinstance(variants, list):
             raise TypeError(f"variants must be a list, not {type(variants)}")
         h = header.lower()
-        return any(v in h for v in variants)
+        for v in variants:
+            start = h.find(v)
+            while start != -1:
+                if cls.is_word(text=h, start=start, end=start + len(v)):
+                    return True
+                start = h.find(v, start + 1)
+        return False
+
+    @classmethod
+    def is_word(cls, *, text: str, start: int, end: int) -> bool:
+        """True if text[start:end] is not touched by a letter or digit at
+        an edge where it has one itself. "dl#" ends in "#", so "dl#123"
+        still holds the keyword."""
+        if not isinstance(text, str):
+            raise TypeError(f"text must be a str, not {type(text)}")
+        if not 0 <= start < end <= len(text):
+            raise ValueError(
+                f"Bad span {start}..{end} for a text of length {len(text)}"
+            )
+        if text[start].isalnum() and start > 0 and text[start - 1].isalnum():
+            return False
+        if text[end - 1].isalnum() and end < len(text) and text[end].isalnum():
+            return False
+        return True
 
     @classmethod
     def precedes(
@@ -84,7 +114,9 @@ class KeywordUtility:
             #
             pos = max(0, match_end - distance - 2 * len(p.pattern))
             for m in p.finditer(cell, pos, match_start):
-                if match_end - m.end(1) <= distance:
+                if match_end - m.end(1) <= distance and cls.is_word(
+                    text=cell, start=m.start(1), end=m.end(1)
+                ):
                     return True
         return False
 
@@ -119,13 +151,17 @@ class KeywordUtility:
             #
             pos = max(0, match_start - distance - 2 * len(p.pattern))
             for m in p.finditer(cell, pos, match_start):
-                if match_start - m.end(1) <= distance:
+                if match_start - m.end(1) <= distance and cls.is_word(
+                    text=cell, start=m.start(1), end=m.end(1)
+                ):
                     return True
             #
             # after: the keyword starts at or after match_end
             #
             endpos = min(len(cell), match_end + distance + 2 * len(p.pattern))
             for m in p.finditer(cell, match_end, endpos):
-                if m.start(1) - match_end <= distance:
+                if m.start(1) - match_end <= distance and cls.is_word(
+                    text=cell, start=m.start(1), end=m.end(1)
+                ):
                     return True
         return False

@@ -8098,6 +8098,40 @@ class TestHavingByContent:
         ref = f"$*.results.:manifest():first().:all(){self.HAVING}"
         assert _finder(ref, archive).query().uuids == ["r1-orders"]
 
+    def test_an_identity_reads_only_its_own_instance(self, archive):
+        # 6.39: in name_three ':having()' filters the instances the reference
+        # selects. With an identity that is one instance, so a sibling's
+        # errors.json is never read -- here a malformed one that would raise
+        # if it were (reviewer on #649: it was read, and its keys counted)
+        root = Path(archive)
+        _write_json(root / "acme" / "2026-01-01_00-00-00" / "other" / "errors.json", {"bad": 1})
+        ref = f"$acme.results.:first().orders{self.HAVING}"
+        assert _finder(ref, archive).query().uuids == ["r1-o"]
+        # ':all()' selects the sibling too, so it is read, and raises
+        with pytest.raises(ReferenceException3, match="not a list of error entries"):
+            _finder(f"$acme.results.:first().:all(){self.HAVING}", archive).query()
+
+    def test_an_identity_reads_only_its_own_instance_in_the_ledger_set(self, archive):
+        root = Path(archive)
+        _write_json(root / "acme" / "2026-01-01_00-00-00" / "other" / "errors.json", {"bad": 1})
+        ledger = [
+            {
+                "named_paths_name": "acme",
+                "run_home": str(root / "acme" / run),
+                "run_uuid": run_uuid,
+                "uuid": f"{run_uuid}-{identity}",
+                "identity": identity,
+            }
+            for run, run_uuid, identity in (
+                ("2026-01-01_00-00-00", "r1", "orders"),
+                ("2026-01-01_00-00-00", "r1", "other"),
+                ("2026-01-02_00-00-00", "r2", "orders"),
+            )
+        ]
+        _write_json(root / "manifest.json", ledger)
+        ref = f"$*.results.:manifest():first().orders{self.HAVING}"
+        assert _finder(ref, archive).query().uuids == ["r1-orders"]
+
     def test_a_count_reads_a_missing_errors_file_as_zero(self, archive, tmp_path):
         # decision D14: a live instance with no errors.json has no errors
         # (Count3: "a missing file counts as zero entries"); r1's other has
@@ -8604,6 +8638,23 @@ class TestAClockValueInsideName:
             "$acme.results.customers/:name(:year())/*",
         ):
             assert _finder(reference, str(tmp_path)).query().uuids == ["c1"], reference
+
+
+class TestAnInvalidJsonFile:
+    # reviewer on #649: a well-known JSON file that does not parse raised a
+    # bare JSONDecodeError with no path; it raises naming the file
+    def test_a_bare_errors_read_names_the_file(self, tmp_path):
+        run = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s": "r1-s"})
+        (Path(run) / "s" / "errors.json").write_text("[{not json")
+        _write_archive_manifest(tmp_path, "acme", [run])
+        with pytest.raises(ReferenceException3, match="errors.json is not valid JSON"):
+            _finder("$acme.results.:last().s:errors()", str(tmp_path)).resolve()
+
+    def test_an_invalid_archive_ledger_names_the_file(self, tmp_path):
+        # reviewer on #653: run_homes() parsed the archive ledger itself
+        (tmp_path / "manifest.json").write_text("[{not json")
+        with pytest.raises(ReferenceException3, match="manifest.json is not valid JSON"):
+            _finder("$acme.results.:last()", str(tmp_path)).query()
 
 
 class TestALedgerEntryWithNoUuid:

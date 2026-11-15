@@ -408,7 +408,14 @@ def people_us(rng) -> LiveFile:
     )
     f.add(
         cells={"id": "r", "notes": "call +1 212 555 0148"},
-        expect=[("notes", "PHONE_NUMBER", 1, "country code, no keyword needed")],
+        expect=[
+            (
+                "notes",
+                "PHONE_NUMBER",
+                0,
+                "country code with spaces, no keyword (Macie: 0)",
+            )
+        ],
     )
     f.add(
         cells={"id": "r", "notes": "212 555 0149"},
@@ -474,8 +481,8 @@ def people_eu(rng) -> LiveFile:
             (
                 "codice_fiscale",
                 "ITALY_NATIONAL_IDENTIFICATION_NUMBER",
-                1,
-                "check letter",
+                0,
+                "codice fiscale is a longer word than the keyword (Macie: 0)",
             ),
         ],
     )

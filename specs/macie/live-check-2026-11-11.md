@@ -212,3 +212,53 @@ real keyword is something else; one more probe can tell the two apart.
   before any change to the keyword rule.
 - **Phones:** waiting on the third probe, which adds the UK and German
   numbers in the two forms Macie reported without a keyword.
+
+## The third probe, 2026-11-15
+
+Job `csvpath-probe-2` (`deafd731404e74a81bd409f9a5b3329e`): include
+`USA_SOCIAL_SECURITY_NUMBER`, `USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER`,
+`DATE_OF_BIRTH`, `ITALY_NATIONAL_IDENTIFICATION_NUMBER`, `PHONE_NUMBER`;
+the files from `make_probe_files.py <out> 2` under `probe2/` (ETags equal
+the local MD5s).
+
+### Keywords: words, not substrings
+
+| Where the keyword is | Ours | Macie |
+|---|---|---|
+| header `ssn` | 1 | 1 |
+| header `ssnumber` | 1 | **0** |
+| header `customer_ssn` | 1 | 1 |
+| cell `ssn 716-90-7411` | 1 | 1 |
+| cell `myssn 644-25-1556` | 1 | **0** |
+| header `itin` | 1 | 1 |
+| header `itinerary` | 1 | **0** |
+| header `dob` | 1 | 1 |
+| header `dobson` | 1 | **0** |
+| header `codice fiscal` | 1 | 1 |
+| header `tax code` | 1 | 1 |
+
+**Settled (fidelity item 3): Macie matches managed identifiers' keywords
+as whole words.** A keyword inside a longer word, at its start, end or
+middle, does not count; `_` separates words (`customer_ssn`). The
+documented `codice fiscal` is a real keyword, and that is why
+`codice fiscale` (a longer word) was not one in the second probe.
+
+### Phones for other countries
+
+None of `+442079460958`, `+44 (20) 7946 0958`, `+493012345678`,
+`+49 (30) 12345678` (no keyword) was reported, by Macie or by us; the
+`+12125550148` control was reported by both. Without a keyword, only the
+two `+1` forms have been seen reported.
+
+### Changed (David, 2026-11-15)
+
+- **Keywords match as whole words**, for managed and custom identifiers
+  (`KeywordUtility.is_word`): a keyword edge that is a letter or digit
+  must not touch another letter or digit.
+- **Phones:** a number with a country code needs no keyword only when it
+  is unbroken or has a group in parentheses (`PhoneDetector.keyword_exempt`).
+- With both, our stand-ins agree with Macie on every row of the live
+  files and both probes except the seven German IDs (partial). Normative
+  pairs 11 (two Codice Fiscale codes under `codice_fiscale`) and 19 (four
+  international numbers written with spaces and no keyword) changed
+  accordingly.
