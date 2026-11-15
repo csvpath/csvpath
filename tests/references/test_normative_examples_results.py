@@ -895,13 +895,17 @@ class TestNameOfAClockValue:
         first = _make_run(base / "customers" / year, "2026-01-01_00-00-00", "c1", statements)
         second = _make_run(base / "customers" / year, "2026-01-02_00-00-00", "c2", statements)
         other = _make_run(base / "customers" / "1999", "2025-01-01_00-00-00", "c0", statements)
-        for run in (first, second):
-            # real runs write each statement's declaration position
+        for name, run in (("c1", first), ("c2", second), ("c0", other)):
+            # real runs write each statement's declaration position; each
+            # run's uuids differ, so the test shows which run was picked
             for i in range(4):
-                _write_json(Path(run) / f"s{i}" / "manifest.json", {"uuid": f"u{i}", "instance_index": i})
+                _write_json(
+                    Path(run) / f"s{i}" / "manifest.json",
+                    {"uuid": f"{name}-u{i}", "instance_index": i},
+                )
         _write_archive_manifest(tmp_path, "acme", [first, second, other])
         reference = "$acme.results.customers/:name(:year())/:first().:from(2):unmatched()"
         results = _finder(reference, str(tmp_path)).query()
-        assert sorted(results.uuids) == ["u2", "u3"]
-        with pytest.raises(ReferenceException3):
+        assert sorted(results.uuids) == ["c1-u2", "c1-u3"]
+        with pytest.raises(ReferenceException3, match="more than one"):
             _finder(reference, str(tmp_path)).resolve()
