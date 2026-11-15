@@ -8340,6 +8340,20 @@ class TestAResultsNameOneMustNameARun:
         assert _finder("$acme.results.customers/:year():last()", archive).query().uuids == ["c1"]
         assert _finder("$acme.results.customers/:year()/*.s", archive).query().uuids == ["c1-s"]
 
+    def test_a_clock_window_alone_in_name_one_still_selects_runs(self, tmp_path):
+        # 6.27e: a bare time function is a range over the runs, a stand-in
+        # for a run; only a clock value after a path segment is a segment
+        # (reviewer on #650: these raised)
+        base = tmp_path / "acme"
+        stamp = daut.now().strftime("%Y-%m-%d_%H-%M-%S")
+        r1 = _make_run(base, stamp, "today", {"s": "today-s"})
+        r2 = _make_run(base, "1999-01-01_00-00-00", "old", {"s": "old-s"})
+        _write_archive_manifest(tmp_path, "acme", [r1, r2])
+        archive = str(tmp_path)
+        assert _finder("$acme.results.:today()", archive).query().uuids == ["today"]
+        assert _finder("$acme.results.:year().s", archive).query().uuids == ["today-s"]
+        assert _finder("$*.results.:year()", archive).query().uuids == ["today"]
+
     def test_a_variable_name_is_checked_once_resolved(self, archive):
         finder = _finder("$acme.results.:name(@w)", archive)
         finder.set_variable("w", value="beta")

@@ -3703,10 +3703,20 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 # _check_pattern_names_runs() (decision D19, revised)
                 return
             function_cls = ReferenceFunctionFactory.get_registered_class(last.name)
-            if function_cls is not None and function_cls.SOURCE == "clock":
-                # a clock value is a path segment, 'customers/:year()' being
-                # 'customers/2026' (compendium 6.43, 3.9c), so it is checked
-                # as that segment; it searched as a prefix (reviewer on #647)
+            if (
+                function_cls is not None
+                and function_cls.SOURCE == "clock"
+                and not self._is_bare_function_only(name_one)
+            ):
+                # a clock value after a path segment is a path segment,
+                # 'customers/:year()' being 'customers/2026' (compendium
+                # 6.43, 3.9c), so it is checked as that segment; it searched
+                # as a prefix (reviewer on #647). Alone in name_one it is a
+                # time window over the runs ('$acme.results.:yesterday()',
+                # 6.27e "use as a range"), a stand-in, so it passes (reviewer
+                # on #650). No clock function computes a run-dir-shaped value
+                # today; the check is kept so a literal and a clock spelling
+                # stay one rule.
                 value = str(self._build(last).compute())
                 if self._is_run_dir_name(value):
                     return
