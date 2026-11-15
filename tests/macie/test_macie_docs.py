@@ -27,7 +27,7 @@ and regenerates it.
 - **Fidelity**: A, Macie documents the rule; B, the format is ours from
   the issuer's published rules (see [translation](translation.md)).
 - **Partial**: what the stand-in does not detect that Macie says Macie
-  does.
+  does, or where a live check found it reporting what Macie does not.
 
 Not supported: `NAME` and `ADDRESS`, and driver's licenses for Finland,
 Greece, Hungary, Ireland, Latvia, Lithuania, Luxembourg, Malta, the

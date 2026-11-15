@@ -150,30 +150,112 @@ def codici_fiscali(rng) -> mlf.LiveFile:
 
 FILES = [phones, german_ids, codici_fiscali]
 
+#
+# the third probe (2026-11-15): do managed identifiers' keywords match as
+# substrings, as we match them, or as words? The second probe found
+# `codice fiscale` is not a keyword to Macie although it contains the
+# documented `codice fiscal`. Also: the two phone forms Macie reported
+# without a keyword, for other countries
+#
+SEED_2 = 20261115
 
-def write_all(*, out: str) -> dict:
+
+def keywords(rng) -> mlf.LiveFile:
+    f = mlf.LiveFile(
+        name="probe2_keywords.csv",
+        headers=[
+            "id",
+            "ssn",
+            "ssnumber",
+            "customer_ssn",
+            "itin",
+            "itinerary",
+            "dob",
+            "dobson",
+            "codice fiscal",
+            "tax code",
+            "notes",
+        ],
+    )
+    ssn, itin, cf = (
+        "USA_SOCIAL_SECURITY_NUMBER",
+        ("USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER"),
+        "ITALY_NATIONAL_IDENTIFICATION_NUMBER",
+    )
+    for column, value, identifier, note in [
+        ("ssn", mlf.ssn(rng), ssn, "control: the keyword is the header"),
+        ("ssnumber", mlf.ssn(rng), ssn, "keyword at the start of a longer word"),
+        ("customer_ssn", mlf.ssn(rng), ssn, "keyword after an underscore"),
+        ("notes", f"ssn {mlf.ssn(rng)}", ssn, "control: keyword in the cell"),
+        ("notes", f"myssn {mlf.ssn(rng)}", ssn, "keyword at the end of a word"),
+        ("itin", mlf.itin(rng), itin, "control: the keyword is the header"),
+        ("itinerary", mlf.itin(rng), itin, "keyword inside itinerary"),
+        ("dob", "1985-11-05", "DATE_OF_BIRTH", "control: the keyword is the header"),
+        ("dobson", "1985-11-06", "DATE_OF_BIRTH", "keyword inside dobson"),
+        ("codice fiscal", FIRST_CF, cf, "the documented keyword, exactly"),
+        ("tax code", FIRST_CF, cf, "control: a keyword Macie took in a cell"),
+    ]:
+        f.add(
+            cells={"id": "r", column: value},
+            expect=[(column, identifier, 1, note)],
+        )
+    return f
+
+
+def phones_2(rng) -> mlf.LiveFile:
+    f = mlf.LiveFile(name="probe2_phones.csv", headers=["id", "notes"])
+    for value, n, note in [
+        ("+12125550148", 1, "control: reported by Macie in the second probe"),
+        ("+442079460958", 0, "UK, unbroken"),
+        ("+44 (20) 7946 0958", 0, "UK, area code in parentheses"),
+        ("+493012345678", 0, "Germany, unbroken"),
+        ("+49 (30) 12345678", 0, "Germany, area code in parentheses"),
+    ]:
+        f.add(
+            cells={"id": "r", "notes": f"call {value}"},
+            expect=[("notes", "PHONE_NUMBER", n, f"no keyword; {note}")],
+        )
+    return f
+
+
+FILES_2 = [keywords, phones_2]
+#
+# probe number -> seed, files, directory, expectations file
+#
+PROBES = {
+    1: (SEED, FILES, "probe", "expected_probe.json"),
+    2: (SEED_2, FILES_2, "probe2", "expected_probe2.json"),
+}
+
+
+def write_all(*, out: str, probe: int = 1) -> dict:
     if not isinstance(out, str) or out.strip() == "":
         raise ValueError("out must be a directory path")
-    rng = random.Random(SEED)
-    data = os.path.join(out, "probe")
+    if probe not in PROBES:
+        raise ValueError(f"probe must be one of {sorted(PROBES)}, not {probe!r}")
+    seed, files, directory, expectations = PROBES[probe]
+    rng = random.Random(seed)
+    data = os.path.join(out, directory)
     os.makedirs(data, exist_ok=True)
     expected = []
-    for make in FILES:
+    for make in files:
         f = make(rng)
         f.write(directory=data)
         expected.extend(f.expected)
-    doc = {"seed": SEED, "expected": expected}
-    with open(os.path.join(out, "expected_probe.json"), "w", encoding="utf-8") as fh:
+    doc = {"seed": seed, "expected": expected}
+    with open(os.path.join(out, expectations), "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2)
         fh.write("\n")
     return doc
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        sys.stderr.write("usage: make_probe_files.py <out dir>\n")
+    if len(sys.argv) not in (2, 3):
+        sys.stderr.write("usage: make_probe_files.py <out dir> [probe number]\n")
         sys.exit(2)
-    result = write_all(out=sys.argv[1])
+    n = int(sys.argv[2]) if len(sys.argv) == 3 else 1
+    result = write_all(out=sys.argv[1], probe=n)
     sys.stdout.write(
-        f"wrote {len(FILES)} probe files and {len(result['expected'])} expectations to {sys.argv[1]}\n"
+        f"wrote probe {n}: {len(PROBES[n][1])} files and "
+        f"{len(result['expected'])} expectations to {sys.argv[1]}\n"
     )

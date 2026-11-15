@@ -124,9 +124,10 @@ last. Add an item the moment something is deferred.
    the interpretations in transpile-design.md. First scan done with the
    live check: 34 of 43 identifier-file comparisons match exactly, and
    the one difference on our side (a cell listed once per occurrence) is
-   fixed. Second probe done (2026-11-14, same report): three decisions
-   for David, on phones without a keyword, keywords as substrings or
-   words (fidelity item 3), and the German ID.
+   fixed. Second probe done (2026-11-14, same report). German ID marked
+   partial (2026-11-15). Next: the third probe (README section 6), on
+   keywords as substrings or words (fidelity item 3) and phones without
+   a keyword for the UK and Germany; then decide the phone rule.
 
 ## Ask road-testers about
 

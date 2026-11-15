@@ -201,3 +201,14 @@ real keyword is something else; one more probe can tell the two apart.
    it partial in the catalog and say so in `limitations.md`, or probe
    further (the MRZ form with `D` and `<` fillers, the number with the
    card's own `IDD` prefix).
+
+### Decided (David, 2026-11-15)
+
+- **German ID:** marked partial in the catalog ("Not confirmed against
+  Macie"), so every conversion that uses it says so; listed in
+  `docs/macie/limitations.md` under "Known to differ from Macie". Probing
+  the machine-readable forms is deferred.
+- **Keywords:** a third probe (`tests/macie/live/README.md` section 6),
+  before any change to the keyword rule.
+- **Phones:** waiting on the third probe, which adds the UK and German
+  numbers in the two forms Macie reported without a keyword.

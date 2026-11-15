@@ -13,7 +13,7 @@ and regenerates it.
 - **Fidelity**: A, Macie documents the rule; B, the format is ours from
   the issuer's published rules (see [translation](translation.md)).
 - **Partial**: what the stand-in does not detect that Macie says Macie
-  does.
+  does, or where a live check found it reporting what Macie does not.
 
 Not supported: `NAME` and `ADDRESS`, and driver's licenses for Finland,
 Greece, Hungary, Ireland, Latvia, Lithuania, Luxembourg, Malta, the
@@ -127,7 +127,7 @@ Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia and Sweden
 | `FRANCE_PHONE_NUMBER` | required, `phone` | `fr_phone` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `FRANCE_TAX_IDENTIFICATION_NUMBER` | required, `fr_tax` | `fr_spi` | 1:HIGH | A |  |
 | `GERMANY_DRIVERS_LICENSE` | required, `germany_drivers_license` | `germany_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
-| `GERMANY_NATIONAL_IDENTIFICATION_NUMBER` | required, `de_id` | `de_id` | 1:HIGH | B |  |
+| `GERMANY_NATIONAL_IDENTIFICATION_NUMBER` | required, `de_id` | `de_id` | 1:HIGH | B | Not confirmed against Macie: in a live probe (2026-11-14) Macie reported none of the seven forms this stand-in reports, so it may report numbers Macie does not |
 | `GERMANY_PASSPORT_NUMBER` | required, `germany_passport` | `germany_passport` | 1:MEDIUM 2:HIGH | B |  |
 | `GERMANY_PHONE_NUMBER` | required, `phone` | `de_phone` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `GERMANY_TAX_IDENTIFICATION_NUMBER` | required, `de_tax` | `de_idnr` | 1:HIGH | A |  |

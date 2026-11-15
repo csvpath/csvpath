@@ -41,6 +41,25 @@ catalog, and every conversion that uses one says so in its report.
 | `MEDICAL_DEVICE_UDI` | ICCBBA ISBT 128 UDIs; only GS1 and HIBCC |
 | `CANADA_HEALTH_NUMBER` | Provinces other than British Columbia, Ontario and Quebec |
 
+## Known to differ from Macie
+
+Found by running the same files through Macie and through the stand-ins
+(`specs/macie/live-check-2026-11-11.md`). Each may report values Macie
+does not.
+
+- **`GERMANY_NATIONAL_IDENTIFICATION_NUMBER`**: Macie reported none of
+  seven forms we tried, with valid check digits and the keyword in the
+  header or the cell. Marked partial in the catalog, so every conversion
+  that uses it says so in its report.
+- **`PHONE_NUMBER` without a keyword**: we report a number with a country
+  code in any common layout. Without a keyword, Macie reported only
+  `+12125550148` and `+1 (212) 555-0148`, not spaces, dashes or dots
+  between the groups.
+- **`ITALY_NATIONAL_IDENTIFICATION_NUMBER`**: `codice fiscale` is not a
+  keyword to Macie, in a header or a cell; for us it contains the
+  documented keyword `codice fiscal`. See "Short keywords match inside
+  words" below.
+
 ## Also not translated
 
 - **Findings filters** act on findings after detection. They are kept in
@@ -56,7 +75,8 @@ shows any of them, we want to hear about it, with the identifier, a
 description of the value (not the value), and the column name.
 
 - **Short keywords match inside words.** Keywords match as substrings,
-  which is our reading of Macie's documentation. Brazil's `rg` matches `org`, `large` or a `cargo`
+  which is our reading of Macie's documentation. A live probe suggests
+  Macie may match whole words instead; a further probe is under way. Brazil's `rg` matches `org`, `large` or a `cargo`
   column; `cep` matches `receptor` and `exception`; also `mc`, `pan`,
   `card`, `med`, `blood` and France's `social`. A value of the right
   shape next to such a word is reported. The [project

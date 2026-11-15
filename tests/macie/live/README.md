@@ -156,3 +156,33 @@ writes `~/macie-live/probe/` (`probe_phones.csv`, `probe_de_id.csv`,
 
 **Hand over** the job id once it shows **Complete**. The reader profile
 needs nothing new.
+
+## 6. The third probe (2026-11-15)
+
+The second probe found that `codice fiscale` is not a keyword to Macie,
+although it contains the documented keyword `codice fiscal`. We match
+managed identifiers' keywords as substrings; this probe asks whether
+Macie matches them as words. Each keyword appears alone (the control)
+and inside a longer word, as a column header and in a cell. It also asks
+whether the two phone forms Macie reported without a keyword hold for
+the UK and Germany.
+
+```
+poetry run python tests/macie/live/make_probe_files.py ~/macie-live 2
+```
+
+writes `~/macie-live/probe2/` (`probe2_keywords.csv`, `probe2_phones.csv`)
+and `~/macie-live/expected_probe2.json` (do not upload).
+
+**Set up (David):**
+
+- upload `probe2/*.csv` under `probe2/` in the same bucket;
+- create one one-time job, **`csvpath-probe-2`**:
+  - object criterion: key prefix `probe2/`;
+  - managed data identifiers **Custom**, *include* these 5:
+    `USA_SOCIAL_SECURITY_NUMBER`,
+    `USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER`, `DATE_OF_BIRTH`,
+    `ITALY_NATIONAL_IDENTIFICATION_NUMBER`, `PHONE_NUMBER`;
+  - no custom identifiers, no allow lists.
+
+**Hand over** the job id once it shows **Complete**.

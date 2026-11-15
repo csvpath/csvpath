@@ -137,42 +137,53 @@ def test_macie_live_clean_file_has_nothing(written) -> None:
 
 
 #
-# the second probe (tests/macie/live/make_probe_files.py): the three
-# differences the first live check left open
+# the probes (tests/macie/live/make_probe_files.py): probe 1, the three
+# differences the first live check left open; probe 2, keywords as
+# substrings or words, and phones for other countries
 #
 import make_probe_files as mpf  # noqa: E402
 
-
-@pytest.fixture(scope="module")
-def probed(tmp_path_factory):
-    out = tmp_path_factory.mktemp("probe")
-    doc = mpf.write_all(out=str(out))
-    return str(out), doc
+PROBE_FILES = {
+    1: (["probe_de_id.csv", "probe_it_cf.csv", "probe_phones.csv"], 24),
+    2: (["probe2_keywords.csv", "probe2_phones.csv"], 16),
+}
 
 
-def test_macie_probe_files_written(probed) -> None:
-    out, doc = probed
-    names = sorted(os.listdir(os.path.join(out, "probe")))
-    assert names == ["probe_de_id.csv", "probe_it_cf.csv", "probe_phones.csv"]
-    assert len(doc["expected"]) == 24
+@pytest.mark.parametrize("probe", sorted(PROBE_FILES))
+def test_macie_probe_files_written(probe, tmp_path) -> None:
+    doc = mpf.write_all(out=str(tmp_path), probe=probe)
+    directory = mpf.PROBES[probe][2]
+    names, count = PROBE_FILES[probe]
+    assert sorted(os.listdir(os.path.join(tmp_path, directory))) == names
+    assert len(doc["expected"]) == count
 
 
-def test_macie_probe_files_are_deterministic(probed, tmp_path) -> None:
-    out, _ = probed
-    mpf.write_all(out=str(tmp_path))
-    for n in os.listdir(os.path.join(out, "probe")):
-        with open(os.path.join(out, "probe", n), "rb") as a:
-            with open(os.path.join(tmp_path, "probe", n), "rb") as b:
+def test_macie_probe_number_is_checked(tmp_path) -> None:
+    with pytest.raises(ValueError):
+        mpf.write_all(out=str(tmp_path), probe=3)
+
+
+@pytest.mark.parametrize("probe", sorted(PROBE_FILES))
+def test_macie_probe_files_are_deterministic(probe, tmp_path) -> None:
+    directory = mpf.PROBES[probe][2]
+    a_dir, b_dir = tmp_path / "a", tmp_path / "b"
+    mpf.write_all(out=str(a_dir), probe=probe)
+    mpf.write_all(out=str(b_dir), probe=probe)
+    for n in os.listdir(os.path.join(a_dir, directory)):
+        with open(os.path.join(a_dir, directory, n), "rb") as a:
+            with open(os.path.join(b_dir, directory, n), "rb") as b:
                 assert a.read() == b.read(), n
 
 
-def test_macie_probe_expectations_hold_for_the_stand_ins(probed) -> None:
-    out, doc = probed
+@pytest.mark.parametrize("probe", sorted(PROBE_FILES))
+def test_macie_probe_expectations_hold_for_the_stand_ins(probe, tmp_path) -> None:
+    doc = mpf.write_all(out=str(tmp_path), probe=probe)
+    directory = mpf.PROBES[probe][2]
     catalog = ManagedCatalog.load()
     wrong = []
     for e in doc["expected"]:
         with open(
-            os.path.join(out, "probe", e["file"]), encoding="utf-8", newline=""
+            os.path.join(tmp_path, directory, e["file"]), encoding="utf-8", newline=""
         ) as f:
             rows = list(csv.reader(f))
         headers, row = rows[0], rows[e["row"] - 1]
