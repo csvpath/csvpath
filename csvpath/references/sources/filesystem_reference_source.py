@@ -82,11 +82,11 @@ class FilesystemReferenceSource(ReferenceSource):
         # existence check. see ResultsReferenceFinder3's module docstring.
         #
         archive = self.csvpaths.config.get(section="results", name="archive")
-        manifest_path = Nos(archive).join(self.MANIFEST)
-        if not Nos(manifest_path).exists():
+        # read_json() names the file if it is not valid JSON (reviewer on
+        # #653: this read raised a bare JSONDecodeError)
+        entries = self.read_json(Nos(archive).join(self.MANIFEST))
+        if entries is None:
             return []
-        with DataFileReader(manifest_path) as reader:
-            entries = json.load(reader.source)
         return self._run_homes_from(
             entries=entries, root_major=root_major, name_filter=name_filter
         )

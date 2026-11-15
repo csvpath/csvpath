@@ -8557,3 +8557,9 @@ class TestAnInvalidJsonFile:
         _write_archive_manifest(tmp_path, "acme", [run])
         with pytest.raises(ReferenceException3, match="errors.json is not valid JSON"):
             _finder("$acme.results.:last().s:errors()", str(tmp_path)).resolve()
+
+    def test_an_invalid_archive_ledger_names_the_file(self, tmp_path):
+        # reviewer on #653: run_homes() parsed the archive ledger itself
+        (tmp_path / "manifest.json").write_text("[{not json")
+        with pytest.raises(ReferenceException3, match="manifest.json is not valid JSON"):
+            _finder("$acme.results.:last()", str(tmp_path)).query()
