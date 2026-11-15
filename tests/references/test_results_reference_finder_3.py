@@ -8246,3 +8246,35 @@ class TestANamedRunDir:
     def test_a_named_run_dir_resolves(self, archive):
         results = _finder("$acme.results.beta/2026-01-01_00-00-00.s:manifest()", archive).resolve()
         assert [r.data["uuid"] for r in results.results] == ["b1-s"]
+
+
+class TestATrailingStar:
+    # compendium 4.1a (David, 2026-11-14): a trailing `*` in name_one is
+    # every run directly under that results path. It raised in the parser
+    # ("a bare '*' cannot be the last element") until then.
+    @pytest.fixture
+    def archive(self, tmp_path):
+        base = tmp_path / "acme"
+        r1 = _make_run(base / "beta", "2026-01-01_00-00-00", "b1", {"s": "b1-s"})
+        r2 = _make_run(base / "beta", "2026-01-02_00-00-00", "b2", {"s": "b2-s"})
+        r3 = _make_run(base, "2026-01-03_00-00-00", "top", {"s": "top-s"})
+        r4 = _make_run(base / "beta" / "deeper", "2026-01-04_00-00-00", "d1", {"s": "d1-s"})
+        r5 = _make_run(base / "gamma" / "deeper", "2026-01-05_00-00-00", "g1", {"s": "g1-s"})
+        _write_archive_manifest(tmp_path, "acme", [r1, r2, r3, r4, r5])
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$acme.results.beta/*", ["b1", "b2"]),
+            ("$acme.results.*", ["top"]),
+            ("$acme.results.beta/*/*", ["d1"]),
+            # after a middle :all(), the trailing * is the run-dir slot too
+            # (reviewer on #646: it counted a template level, one too deep)
+            ("$acme.results.:all()/*", ["b1", "b2"]),
+            ("$acme.results.:all()/deeper/*", ["d1", "g1"]),
+            ("$acme.results.:all()/*:last()", ["b2"]),
+        ],
+    )
+    def test_a_trailing_star_is_every_run_at_that_level(self, archive, reference, expected):
+        assert sorted(_finder(reference, archive).query().uuids) == expected

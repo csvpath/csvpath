@@ -421,34 +421,11 @@ class Reference3:
         what happens to any exception raised from inside a Transformer
         rule method).
 
-        one rule so far: a bare "*" cannot be the terminal element of a
-        reference. "*" is a fragment -- "any of the data that ___" --
-        and needs something after it to complete the sentence:
-        :all() does NOT have this problem ("get me all of them!" is
-        already a complete instruction, not a dangling clause -- * and
-        :all() are not equivalent, see reference_grammar_3.py). A
-        literal path segment doesn't have this problem either, since
-        naming an exact thing isn't matching against an open set to
-        begin with. So the only violation is: no name_three, no
-        trailing function chain of its own on name_one, AND name_one's
-        own last path segment is a bare "*" -- e.g. "$alpha.files.*" is
-        illegal, but "$alpha.files.*/orders" (more path completes it),
-        "$alpha.files.*:first()" (name_one's own chain completes it),
-        "$alpha.files.*.:first()" (name_three completes it), and
-        "$alpha.files.:all()" (already complete on its own) are all
-        fine."""
-        if (
-            self._name_three is None
-            and not self._name_one.functions
-            and isinstance(self._name_one.path[-1], Star3)
-        ):
-            msg = (
-                "A bare '*' cannot be the last element of a reference -- "
-                "it needs a function (on name_one or name_three) or more "
-                "path to complete it, e.g. '*:first()' or '*.name_three', "
-                "not '*' alone."
-            )
-            raise ReferenceException3(msg)
+        A trailing bare "*" is legal (compendium 4.1a; David, 2026-11-14):
+        every item at that level, e.g. "$alpha.files.*" or
+        "$acme.results.beta/*". It was rejected here as an incomplete
+        fragment until then, a rule from an early design note that the
+        spec never stated."""
 
         # root_major's own structural validation -- added 2026-08-27,
         # alongside :regex() -- root_major is a FunctionCall3 only for

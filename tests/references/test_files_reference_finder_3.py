@@ -379,9 +379,13 @@ class TestNameThreeAbsent:
     # test_star_alone_is_rejected_before_the_finder_even_runs below --
     # Reference3.check_valid() rejects it at construction, before the
     # finder ever gets a chance to query().
-    def test_star_alone_is_rejected_before_the_finder_even_runs(self):
-        with pytest.raises(ReferenceException3):
-            _finder("$alpha.files.*", ALPHA_HOME, ALPHA_MANIFEST)
+    def test_star_alone_is_every_file_directly_under_the_named_file(self):
+        # compendium 4.1a (David, 2026-11-14); it raised until then
+        results = _finder("$alpha.files.*", ALPHA_HOME, ALPHA_MANIFEST).query()
+        assert sorted(results.files) == [
+            "inputs/named_files/alpha/one.csv",
+            "inputs/named_files/alpha/zero.csv",
+        ]
 
     def test_name_one_alone_narrowed_by_name_function(self):
         finder = _finder('$alpha.files.:name("one.csv")', ALPHA_HOME, ALPHA_MANIFEST)

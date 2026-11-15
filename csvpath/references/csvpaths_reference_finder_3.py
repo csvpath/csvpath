@@ -125,6 +125,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         log_results = self._query_log_call(reference)
         if log_results is not None:
             return log_results
+        self._star_means_all(reference.name_one)
         root_major = reference.root_major
         if isinstance(root_major, Star3):
             if self._is_bare_pointer_reference(reference, "manifest"):
@@ -1327,6 +1328,20 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         gates = self._gate_calls(built=built)
         values = [c for c, b in zip(calls, built) if not any(b is g for g in gates)]
         return self._last_field_function_call(values)
+
+    @staticmethod
+    def _star_means_all(name_one) -> None:
+        """a lone '*' in a csvpaths name_one is every version: the NRE's
+        "Two ways to get all versions: $acme.csvpaths.:all() /
+        $acme.csvpaths.*", and compendium 4.2b ("in csvpaths, when used in
+        name_one, :all() devolves to *'s functionality"). It is rewritten
+        to ':all()' in place, as FILES normalizes an implied '*'
+        (_apply_implied_star()). A trailing '*' became legal on 2026-11-14
+        (compendium 4.1a); csvpaths raised for it until then."""
+        if name_one is None:
+            raise ValueError("name_one cannot be None")
+        if len(name_one.path) == 1 and isinstance(name_one.path[0], Star3):
+            name_one.path[0] = FunctionCall3(name="all")
 
     def _resolve_versions(self, name_one, manifest: list) -> list:
         """name_one's sole job for csvpaths is selecting which

@@ -367,26 +367,21 @@ class TestReference3:
         with pytest.raises(ReferenceException3):
             r.check_valid()
 
-    def test_check_valid_rejects_bare_trailing_star(self):
-        # "*" alone: "any of the data that ___" with nothing to
-        # complete it -- no name_three, no trailing function on
-        # name_one, and the star is name_one's last path segment.
+    def test_check_valid_accepts_a_bare_trailing_star(self):
+        # compendium 4.1a (David, 2026-11-14): every item at that level
         r = Reference3(
             root_major="acme", datatype=Reference3.FILES, name_one=self._name_one(Star3())
         )
-        with pytest.raises(ReferenceException3):
-            r.check_valid()
+        r.check_valid()
 
-    def test_check_valid_rejects_star_trailing_after_a_literal_segment(self):
-        # the star being last is what matters, not whether it is alone
-        # -- "orders/*" still dangles the same way "*" does.
+    def test_check_valid_accepts_a_star_trailing_after_a_literal_segment(self):
+        # "orders/*": every item directly under orders (4.1a)
         r = Reference3(
             root_major="acme",
             datatype=Reference3.FILES,
             name_one=self._name_one("orders", Star3()),
         )
-        with pytest.raises(ReferenceException3):
-            r.check_valid()
+        r.check_valid()
 
     def test_check_valid_allows_star_followed_by_a_literal_segment(self):
         # "*/orders" completes the sentence with the literal segment

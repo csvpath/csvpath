@@ -3240,10 +3240,14 @@ class TestScopeLimits:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_star_in_name_one_not_supported(self):
-        finder = _finder("$acme.csvpaths.*.x")
-        with pytest.raises(ReferenceException3):
-            finder.query()
+    def test_star_in_name_one_is_every_version(self):
+        # compendium 4.1a/4.2b (2026-11-14): '*' is ':all()' here, so this
+        # is statement x in every version; it raised until then
+        star = _finder("$acme.csvpaths.*.x").query()
+        all_ = _finder("$acme.csvpaths.:all().x").query()
+        assert [(r.uuid, r.identity) for r in star.results] == [
+            (r.uuid, r.identity) for r in all_.results
+        ]
 
     def test_two_pointers_in_name_one_raises(self):
         finder = _finder("$acme.csvpaths.:first():last()")
@@ -3989,3 +3993,14 @@ class TestHavingByContentIsResultsOnly:
     def test_raises(self):
         with pytest.raises(ReferenceException3):
             _finder('$acme.csvpaths.:having(:errors(:idchain("add[0]")))').query()
+
+
+class TestATrailingStarIsEveryVersion:
+    # compendium 4.1a and 4.2b, the NRE's "Two ways to get all versions:
+    # $acme.csvpaths.:all() / $acme.csvpaths.*" (reviewer on #646: the first
+    # draft wrote a raise into the spec)
+    def test_star_is_all(self):
+        assert _finder("$acme.csvpaths.*").query().uuids == _finder(
+            "$acme.csvpaths.:all()"
+        ).query().uuids
+        assert len(_finder("$acme.csvpaths.*").query().uuids) == len(ACME_MANIFEST)
