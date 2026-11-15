@@ -8201,3 +8201,29 @@ class TestInstanceDeclarationOrder:
         finder = _finder("$*.results.:manifest():from(0).:first()", archive)
         assert finder.query().uuids == ["r1-s1", "r2-s0"]
         assert len(finder.csvpaths.logger.warnings) == 1
+
+
+class TestATrailingStar:
+    # compendium 4.1a (David, 2026-11-14): a trailing `*` in name_one is
+    # every run directly under that results path. It raised in the parser
+    # ("a bare '*' cannot be the last element") until then.
+    @pytest.fixture
+    def archive(self, tmp_path):
+        base = tmp_path / "acme"
+        r1 = _make_run(base / "beta", "2026-01-01_00-00-00", "b1", {"s": "b1-s"})
+        r2 = _make_run(base / "beta", "2026-01-02_00-00-00", "b2", {"s": "b2-s"})
+        r3 = _make_run(base, "2026-01-03_00-00-00", "top", {"s": "top-s"})
+        r4 = _make_run(base / "beta" / "deeper", "2026-01-04_00-00-00", "d1", {"s": "d1-s"})
+        _write_archive_manifest(tmp_path, "acme", [r1, r2, r3, r4])
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$acme.results.beta/*", ["b1", "b2"]),
+            ("$acme.results.*", ["top"]),
+            ("$acme.results.beta/*/*", ["d1"]),
+        ],
+    )
+    def test_a_trailing_star_is_every_run_at_that_level(self, archive, reference, expected):
+        assert sorted(_finder(reference, archive).query().uuids) == expected

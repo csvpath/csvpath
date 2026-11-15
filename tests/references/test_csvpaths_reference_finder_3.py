@@ -3989,3 +3989,11 @@ class TestHavingByContentIsResultsOnly:
     def test_raises(self):
         with pytest.raises(ReferenceException3):
             _finder('$acme.csvpaths.:having(:errors(:idchain("add[0]")))').query()
+
+
+class TestATrailingStarHasNoPathHere:
+    # compendium 4.1a: a csvpaths name_one holds no path, so a `*` there
+    # raises, as any path segment does
+    def test_raises(self):
+        with pytest.raises(ReferenceException3):
+            _finder("$acme.csvpaths.*").query()

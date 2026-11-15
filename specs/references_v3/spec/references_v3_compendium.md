@@ -561,6 +561,14 @@ each fully occupy their `name_one` or `name_three` segment:
 #### 4.1
 `*` flattens its position in the reference into one pooled search space.
 
+#### 4.1a
+A trailing `*` in `name_one` means every item at that level: every file
+directly under a named-file path, or every run directly under a results
+path. It is legal in every datatype whose `name_one` holds a path (`files`,
+`results`). E.g. `$alpha.files.*` is every file directly under `alpha`, and
+`$acme.results.beta/*` every run directly under the `beta` template. A
+`csvpaths` `name_one` holds no path, so a `*` there raises.
+
 #### 4.1b
 As the root, `$*` (every named-file, named-paths group or named-results
 name) mimics grouping: a pointer or range applies within each named entity,
