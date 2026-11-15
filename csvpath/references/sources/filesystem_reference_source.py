@@ -82,18 +82,30 @@ class FilesystemReferenceSource(ReferenceSource):
         with DataFileReader(manifest_path) as reader:
             entries = json.load(reader.source)
         return self._run_homes_from(
-            entries=entries, root_major=root_major, name_filter=name_filter
+            entries=entries,
+            root_major=root_major,
+            name_filter=name_filter,
+            logger=getattr(self.csvpaths, "logger", None),
         )
 
     @staticmethod
     def _run_homes_from(
-        *, entries: list, root_major: str | None, name_filter: str | None
+        *, entries: list, root_major: str | None, name_filter: str | None, logger=None
     ) -> list[tuple[str, str]]:
         """the distinct, still-existing (run_home, named_paths_name) pairs
         in archive ledger entries, in ledger order. shared with the SQL
-        source, which passes the same entries from its mirror."""
+        source, which passes the same entries from its mirror. An entry with
+        no uuid raises, logged when a logger is given: there should be none
+        (David, 2026-10-31), as every FILES, CSVPATHS and RESULTS ledger read
+        checks (decisions D20, D21)."""
         if entries is None or not isinstance(entries, list):
             raise TypeError("Entries must be a list")
+        for entry in entries:
+            if not entry.get("uuid"):
+                msg = f"A results ledger entry has no uuid: {entry}"
+                if logger is not None:
+                    logger.error(msg)
+                raise ValueError(msg)
         homes = []
         seen = set()
         for entry in entries:

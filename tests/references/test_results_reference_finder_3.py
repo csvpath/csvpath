@@ -2404,8 +2404,8 @@ class TestDiscoveryFromArchiveManifest:
         _write_json(
             tmp_path / "manifest.json",
             [
-                {"named_paths_name": "acme", "run_home": acme_run},
-                {"named_paths_name": "other", "run_home": other_run},
+                {"named_paths_name": "acme", "run_home": acme_run, "uuid": "a-i"},
+                {"named_paths_name": "other", "run_home": other_run, "uuid": "o-i"},
             ],
         )
         results = _finder("$acme.results.:flatten()", str(tmp_path)).query()
@@ -3821,6 +3821,7 @@ class TestArchiveLedgerFallback:
                 {
                     "run_uuid": "run1-uuid",
                     "identity": "company_names",
+                    "uuid": "instance-uuid",
                     "named_paths_name": "widgets",
                     "run_home": str(run_dir),
                     "archive_name": "archive-2026",
@@ -3842,6 +3843,7 @@ class TestArchiveLedgerFallback:
                 {
                     "run_uuid": "run1-uuid",
                     "identity": "company_names",
+                    "uuid": "instance-uuid",
                     "named_paths_name": "widgets",
                     "run_home": str(run_dir),
                     "archive_path": "/archives/archive-2026",
@@ -3882,6 +3884,7 @@ class TestArchiveLedgerFallback:
                     # itself finds nothing.
                     "run_uuid": "some-other-run-uuid",
                     "identity": "company_names",
+                    "uuid": "instance-uuid",
                     "named_paths_name": "widgets",
                     "run_home": str(run_dir),
                 }
@@ -5134,7 +5137,7 @@ class TestStarTraversal:
         archive_manifest = Path(two_group_archive) / "manifest.json"
         entries = json.loads(archive_manifest.read_text())
         entries.append(
-            {"named_paths_name": "acme", "run_home": str(yesterday_dir)}
+            {"named_paths_name": "acme", "run_home": str(yesterday_dir), "uuid": "y-i"}
         )
         _write_json(archive_manifest, entries)
         results = _finder("$*.results.:all():yesterday()", two_group_archive).query()
@@ -8564,3 +8567,41 @@ class TestAClockValueInsideName:
             "$acme.results.customers/:name(:year())/*",
         ):
             assert _finder(reference, str(tmp_path)).query().uuids == ["c1"], reference
+
+
+class TestALedgerEntryWithNoUuid:
+    # David, 2026-10-31 (v3_part_2_lifecycle_gate.md): "a ledger entry with no
+    # `uuid` raises (there should be none)". Only _manifest_set_runs() checked
+    # until 2026-11-15; run discovery, the literal-root gates and the
+    # ledger-fallback fields read past one, so another group's bad entry was
+    # ignored or, under '*', included silently (reviewer on #652; triage A18,
+    # decision D21). Every read of the archive ledger now raises, as FILES
+    # (D20) and CSVPATHS check theirs.
+    @pytest.fixture
+    def archive(self, tmp_path):
+        r1 = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s": "r1-s"})
+        b1 = _make_run(tmp_path / "beta", "2026-01-02_00-00-00", "b1", {"s": "b1-s"})
+        _write_json(
+            tmp_path / "manifest.json",
+            [
+                {"named_paths_name": "acme", "run_home": r1, "run_uuid": "r1", "uuid": "r1-s", "identity": "s", "lifecycle": "active"},
+                {"named_paths_name": "beta", "run_home": b1, "run_uuid": "b1", "identity": "s", "lifecycle": "active"},
+            ],
+        )
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$acme.results.:last()",
+            "$acme.results.:last():lifecycle()",
+            '$acme.results.:lifecycle("active"):last()',
+            '$*.results.:lifecycle("active")',
+            '$:choice("acme").results.:lifecycle("active")',
+            "$*.results.:manifest():first()",
+        ],
+    )
+    def test_a_ledger_read_raises_naming_the_entry(self, archive, reference):
+        finder = _finder(reference, archive)
+        with pytest.raises(ValueError, match="results ledger entry has no uuid"):
+            finder.resolve()
