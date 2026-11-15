@@ -2179,7 +2179,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # a chained ':idchain()' reads values inside errors.json, not the
         # file, so several resolve (5.3; reviewer on #636)
         reads_a_file = (
-            selector["accessor"] is not None and selector["gate_call"] is None
+            selector["accessor"] is not None
+            and selector["gate_call"] is None
+            and not self._narrows_to_records(accessor=selector["accessor"])
         ) or (
             selector["manifest_call"] is not None and selector["value_field"] is None
         )
@@ -3165,6 +3167,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         name_one :manifest(), even with a field; '*' counted none."""
         reference = self.ref.parsed
         if accessor is not None:
+            if self._narrows_to_records(accessor=accessor):
+                return False
             # an :idchain() chained beside :errors() reads values inside
             # the file, one list per result, not the file (2026-11-14)
             if reference.name_three is not None:
@@ -3181,6 +3185,19 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             return False
         calls = self._combined_name_one_calls(reference.name_one)
         return not self._has_unargued_field(self._build_chain(calls))
+
+    @staticmethod
+    def _narrows_to_records(*, accessor) -> bool:
+        """true when a content accessor's nested filter narrows its file to
+        matching records: ':errors(:idchain("add[0]"))' and
+        ':errors(:message(...))' resolve to the matching errors (compendium
+        847: "resolves to all errors with matching idchains"), so several
+        resolve at once, as the chained ':errors():idchain()' does ("records
+        resolve, files don't", David 2026-11-14; 5.3). A nested ':count()'
+        gates the whole file instead (Count3), so it is still a file."""
+        if accessor is None:
+            raise ValueError("accessor cannot be None")
+        return accessor.name == "errors" and isinstance(accessor.arg, (Idchain3, Message3))
 
     @classmethod
     def _combined_name_one_calls(cls, name_one) -> list:
