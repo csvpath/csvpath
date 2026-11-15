@@ -8780,3 +8780,70 @@ class TestAnInstanceManifestIsReadOncePerCall:
         counts = self._counting(finder)
         finder.query()
         assert counts["reads"] == 4
+
+
+class TestAScalarFieldFilters:
+    # compendium 6.40: an argument to a field accessor filters the instances
+    # to those whose field matches (RC triage A6/H; they refused one until
+    # 2026-11-15). A missing value never matches (decision W3).
+    @pytest.fixture
+    def archive(self, tmp_path):
+        run = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s0": "u0", "s1": "u1", "s2": "u2"}
+        )
+        for i, completed in enumerate((True, False, True)):
+            _write_json(
+                Path(run) / f"s{i}" / "manifest.json",
+                {
+                    "uuid": f"u{i}",
+                    "instance_identity": f"s{i}",
+                    # stored as a string, as Result.run_index writes it
+                    "instance_index": str(i),
+                    "completed": completed,
+                },
+            )
+        _write_archive_manifest(tmp_path, "acme", [run])
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "chain, expected",
+        [
+            (':identity("s1")', ["u1"]),
+            (':identity("nope")', []),
+            (":instance_index(2)", ["u2"]),
+            (":completed(:true())", ["u0", "u2"]),
+            (":completed(:false())", ["u1"]),
+            (":instance_index(:above(0))", ["u1", "u2"]),
+            (":identity(:has_value())", ["u0", "u1", "u2"]),
+        ],
+    )
+    def test_the_field_filters_the_instances(self, archive, chain, expected):
+        uuids = _finder(f"$acme.results.:last().*{chain}", archive).query().uuids
+        assert sorted(uuids) == expected
+
+    def test_a_wrong_type_still_raises(self, archive):
+        with pytest.raises(ReferenceException3):
+            _finder('$acme.results.:last().*:instance_index("2")', archive).query()
+
+    def test_the_bare_index_reads_as_an_int(self, archive):
+        # decision D23: it resolved to the stored string ("0") until then
+        (result,) = _finder("$acme.results.:last().s1:instance_index()", archive).resolve().results
+        assert result.data == 1
+
+    def test_nre_212_a_run_field_with_no_value(self, archive):
+        # NRE: '$acme.results.*:host(:does_not_have_value())' -- this run
+        # manifest has no hostname
+        assert _finder("$acme.results.*:host(:does_not_have_value())", archive).query().uuids == ["r1"]
+
+    @pytest.mark.parametrize(
+        "root", ["$*", "$:regex(/^ac/)", '$:choice("acme")', "$acme"]
+    )
+    @pytest.mark.parametrize(
+        "chain", [":identity()", ':identity("s1")', ":instance_index(1)", ":run_dir(:has_value())"]
+    )
+    @pytest.mark.parametrize("prefix", [":manifest()", ":last()", ":all()", ""])
+    def test_a_name_three_field_is_not_legal_on_name_one(self, archive, root, chain, prefix):
+        # every root raises as the literal one does, with or without the
+        # ledger set; '$*' gave [] or None (reviewer on #659, rounds 2-3)
+        with pytest.raises(ReferenceException3, match="not legal at name_one"):
+            _finder(f"{root}.results.{prefix}{chain}", archive).query()

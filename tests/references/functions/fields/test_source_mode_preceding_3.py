@@ -21,6 +21,7 @@ def test_no_arg_is_valid():
     SourceModePreceding3().check_valid()  # should not raise
 
 
-def test_arg_is_rejected():
+def test_a_string_arg_raises():
+    # a flag: it takes a predicate (:true()/:false()), as :valid() does
     with pytest.raises(ReferenceException3):
         SourceModePreceding3(arg="x").check_valid()

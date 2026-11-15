@@ -4055,3 +4055,17 @@ class TestALedgerEntryWithNoUuid:
 
     def test_a_form_that_reads_only_the_named_paths_manifest_is_unchanged(self):
         assert self._finder("$acme.csvpaths.:last()").query().uuids == ["a4"]
+
+
+class TestAScalarFieldFilters:
+    # compendium 6.40: an argument to a field accessor filters (RC triage
+    # A6/H; ':group_file()' and others refused one until 2026-11-15)
+    @pytest.mark.parametrize(
+        "chain, expected",
+        [
+            (':group_file("named_paths/acme/group.csvpaths")', ["a1", "a2", "a3", "a4"]),
+            (':group_file("nope")', []),
+        ],
+    )
+    def test_the_field_filters_the_versions(self, chain, expected):
+        assert _gate_finder(f"$acme.csvpaths.:manifest(){chain}").query().uuids == expected
