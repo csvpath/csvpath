@@ -2001,7 +2001,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
             value = live.get(key)
             if value is not None:
                 return value
-        return entry.get(key or field_call.LEDGER_KEY.get(Reference3.FILES))
+        # the ledger's own key when it has one: ':file_path()' is `file` on
+        # the manifest, `file_path` on the ledger (RC triage A8)
+        return entry.get(field_call.LEDGER_KEY.get(Reference3.FILES) or key)
 
     def _pointer_into_status_matches(
         self, reference: Reference3, matched: list

@@ -7272,6 +7272,17 @@ class TestStatusChainGatesReadLive:
         finder = self._finder('$orders.files.:status("complete"):type("csv")', self.LEDGER, live)
         assert finder.query().uuids == ["o1"]
 
+    def test_a_ledger_fallback_reads_the_ledgers_own_key(self):
+        # ':origin()' is `from` on a named-file manifest but `origin_path` on
+        # the ledger (LEDGER_KEY). With no `from` on the live entry, the
+        # fallback read `from` from the ledger entry too and found nothing;
+        # latent until #659 let the field take an argument (reviewer on
+        # #615; RC triage A8). (':file_path()' differs the same way, but a
+        # live version always has its `file`.)
+        ledger = dict(self.LEDGER, origin_path="/landing/orders.csv")
+        finder = self._finder('$orders.files.:status("complete"):origin("/landing/orders.csv")', ledger, self.LIVE)
+        assert finder.query().uuids == ["o1"]
+
     def test_a_manifest_entry_with_no_uuid_does_not_make_a_failure_live(self):
         # it raised "ValueError: uuid cannot be None or empty"; before #613
         # the failure came back as a live version
