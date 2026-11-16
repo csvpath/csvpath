@@ -30,16 +30,19 @@ class Url(Type):
         self.value = self.match
 
     def _decide_match(self, skip=None) -> None:
-        val = self._value_one()
-        val = f"{val}".strip()
+        val = self._value_one(skip=skip)
         self._distinct_if(skip=skip)
-        if val == "" and self.notnone:
+        #
+        # None is missing, like "", as in email() and uuid(). this used to
+        # stringify first, so None became "None" and failed validation:
+        # url(none()) did not match even without notnone.
+        #
+        if (val is None or f"{val}".strip() == "") and self.notnone:
             self.match = False
-            return
-        elif isinstance(val, str) and val.strip() == "":
+        elif val is None or f"{val}".strip() == "":
             self.match = True
-            return
-        self.match = Url._is_match(val)
+        else:
+            self.match = Url._is_match(f"{val}".strip())
 
     @classmethod
     def _is_match(cls, value: str) -> bool:
