@@ -2868,8 +2868,7 @@
       "severity": "1:LOW 2:MEDIUM 100:HIGH",
       "fidelity": "B",
       "source": "https://docs.aws.amazon.com/macie/latest/user/mdis-reference-phi.html",
-      "retrieved": "2026-11-07",
-      "partial": "Only GS1 and HIBCC UDIs are detected, not ICCBBA ISBT 128 UDIs"
+      "retrieved": "2026-11-07"
     },
     "SPAIN_SOCIAL_SECURITY_NUMBER": {
       "category": "PERSONAL_INFORMATION",
@@ -4560,7 +4559,7 @@
     "udi": {
       "notes": [
         "Macie: MEDICAL_DEVICE_UDI detects UDIs in the formats the US FDA accepts, GS1, HIBCC and ICCBBA (ISBT 128), near a keyword. UDIs are LOW for one occurrence, MEDIUM from 2, HIGH from 100.",
-        "Ours, human readable forms: GS1 as (01) and a GTIN-14 with its GS1 check digit, then optional (11) (17) (10) (21) parts; HIBCC as + and a labeler code, product code and unit of measure digit, with any secondary data after /, ending in the HIBCC mod 43 check character. ISBT 128 is not detected yet (David, 2026-11-07)."
+        "Ours, human readable forms: GS1 as (01) and a GTIN-14 with its GS1 check digit, then optional (11) (17) (10) (21) parts; HIBCC as + and a labeler code, product code and unit of measure digit, with any secondary data after /, ending in the HIBCC mod 43 check character; ISBT 128 as =/ and the 16 character Device Identifier, then optional production identifiers (=, serial, = DIN with flags, => expiration, =} manufacturing date, &,1 lot), from ICCBBA's Coding and Labeling of Medical Devices Containing MPHO v1.0.1 (2026-11-16). ISBT 128 UDIs have no check character."
       ]
     },
     "es_ssn": {

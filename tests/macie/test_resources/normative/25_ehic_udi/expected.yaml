@@ -4,7 +4,9 @@
 # FINLAND_EUROPEAN_HEALTH_INSURANCE_NUMBER and MEDICAL_DEVICE_UDI, all
 # requiring a keyword. An EHIC card number is 20 digits, 80 and the
 # issuing country's numeric code (Finland 246); a UDI is GS1 or HIBCC,
-# with its check.
+# with its check, or ISBT 128 (rows 9 and 10, 2026-11-16): =/ and the
+# Device Identifier, then production identifiers, with no check
+# character. Row 10's DI has no keyword near it, so it is not reported.
 #
 #   conversion:     MacieConverter.convert() arguments (see below)
 #   csvpath:        file in expected/ to run; the converter's exact output
@@ -29,7 +31,7 @@ conversion:
 runs:
   - csvpath: group-a-ehic-udi.csvpath
     data: claims.csv
-    finding_lines: [1, 2, 4, 5]
+    finding_lines: [1, 2, 4, 5, 8]
     printouts:
       macie: printouts.macie.txt
     errors:

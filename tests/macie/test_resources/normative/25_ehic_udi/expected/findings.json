@@ -45,7 +45,7 @@
         },
         {
           "type": "MEDICAL_DEVICE_UDI",
-          "count": 2,
+          "count": 3,
           "severity": "MEDIUM",
           "occurrences": {
             "cells": [
@@ -60,12 +60,18 @@
                 "column": 3,
                 "columnName": "notes",
                 "row": 6
+              },
+              {
+                "cellReference": null,
+                "column": 3,
+                "columnName": "notes",
+                "row": 9
               }
             ]
           }
         }
       ],
-      "totalCount": 5
+      "totalCount": 6
     }
   ],
   "csvpath": {

@@ -76,8 +76,9 @@ last. Add an item the moment something is deferred.
      card magnetic stripe, pair 16_group_a_more.
    - **Done:** Canada health number (British Columbia, Ontario, Quebec;
      pair 24_ca_health). EHIC card numbers (EU and Finland) and medical
-     device UDIs (GS1 and HIBCC), pair 25_ehic_udi. Group A is complete
-     apart from ISBT 128 UDIs.
+     device UDIs (GS1 and HIBCC), pair 25_ehic_udi. ISBT 128 UDIs
+     (2026-11-16, from ICCBBA's MPHO medical devices standard). Group A
+     is complete.
    - **Group B, done:** `FormatDetector` and the format notation; UK
      NINO, US and Canada bank account, card security code, pair
      17_group_b_first. Passports (7), pair 18_passports. Phone numbers
@@ -177,8 +178,11 @@ fidelity item in transpile-design.md.
 - **Spain SSN: format only.** The control digits of a NAF are not
   checked (item 26), so any 12 digits of the right layout near a keyword
   count. Ask testers with Spanish payroll data for false positives.
-- **UDI: GS1 and HIBCC only.** ISBT 128 (blood and tissue products) is
-  missed, as are GS1 UDIs written without their parentheses.
+- **UDI: written forms only.** GS1 UDIs without their parentheses are
+  missed. ISBT 128 UDIs are found in their human readable form, `=/`
+  and the Device Identifier; with no check character in the UDI, the
+  format is all there is (fidelity B). Ask testers with tissue or blood
+  product data whether theirs are found.
 - **German ID: no form reported by Macie** (live probes, 2026-11-14).
   We report 2010-format and older numbers with valid check digits; Macie
   reported none of seven. Marked partial in the catalog. Ask testers
