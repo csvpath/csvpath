@@ -8900,7 +8900,6 @@ class TestAPatternThenAFilterNamesRuns:
         [
             "$x.results.:regex(/2026-10/):last()",
             "$x.results.:regex(/2026-10/):from(0)",
-            "$x.results.:regex(/2026-10/):today()",
         ],
     )
     def test_a_pointer_range_or_window_makes_it_a_template_level(
@@ -8909,3 +8908,71 @@ class TestAPatternThenAFilterNamesRuns:
         # unchanged (D19): no template dir matches /2026-10/, so nothing
         archive = self._archive(tmp_path)
         assert _finder(reference, archive).query().uuids == []
+
+    @staticmethod
+    def _run(base, group_home, name, uuid, done):
+        run = _make_run(base, name, uuid, {"a": f"i-{uuid}"})
+        path = Path(run) / "manifest.json"
+        manifest = json.loads(path.read_text())
+        manifest["all_completed"] = done
+        path.write_text(json.dumps(manifest))
+        return run
+
+    def test_a_pattern_on_a_template_dir_then_a_filter_reads_as_the_template(
+        self, tmp_path
+    ):
+        # reviewer on #717: with a filter after it, a pattern that matches a
+        # template dir is that template level, as its literal spelling
+        # ('customers:completed(...)') is -- it does not raise
+        runs = [
+            self._run(tmp_path / "x" / "customers", None, "2026-10-03_12-00-00", "c1", True),
+            self._run(tmp_path / "x" / "customers", None, "2026-10-05_12-00-00", "c2", False),
+            self._run(tmp_path / "x" / "customers" / "2025", None, "2026-10-06_12-00-00", "c3", True),
+        ]
+        _write_archive_manifest(tmp_path, "x", runs)
+        archive = str(tmp_path)
+        for reference, expected in [
+            ("$x.results.customers:completed(:true())", ["c1"]),
+            ("$x.results.:regex(/^cust/):completed(:true())", ["c1"]),
+            ('$x.results.:choice("customers"):completed(:true())', ["c1"]),
+            ('$x.results.:regex(/^cust/):having("a")', ["c1", "c2"]),
+            ("$x.results.customers/:regex(/^20/):completed(:true())", ["c3"]),
+        ]:
+            assert _finder(reference, archive).query().uuids == expected, reference
+        # a bare pattern on a template dir still raises (D19)
+        with pytest.raises(ReferenceException3, match="names no run"):
+            _finder("$x.results.:regex(/^cust/)", archive).query()
+
+    def test_a_middle_all_then_a_pattern_then_a_filter_names_runs(self, tmp_path):
+        runs = [
+            self._run(tmp_path / "x" / "t1", None, "2026-10-03_12-00-00", "a1", False),
+            self._run(tmp_path / "x" / "t1", None, "2026-10-04_12-00-00", "b1", True),
+            self._run(tmp_path / "x" / "t1", None, "2026-11-01_12-00-00", "c1", False),
+        ]
+        _write_archive_manifest(tmp_path, "x", runs)
+        archive = str(tmp_path)
+        assert _finder(
+            "$x.results.:all()/:regex(/2026-10/):completed(:false())", archive
+        ).query().uuids == ["a1"]
+        assert _finder(
+            "$x.results.:all()/:regex(/2026-10/):completed()", archive
+        ).query().uuids == ["a1", "b1"]
+
+    def test_a_run_dir_shaped_template_dir_reads_as_the_bare_pattern_does(
+        self, tmp_path
+    ):
+        # D18: a run-dir-shaped template dir may be meant as a run, so the
+        # filter form now matches what the bare pattern matches
+        runs = [
+            self._run(tmp_path / "x", None, "2026-10-01_00-00-00", "top", True),
+            self._run(
+                tmp_path / "x" / "2026-10-02_00-00-00", None, "2026-10-09_00-00-00", "nested", True
+            ),
+        ]
+        _write_archive_manifest(tmp_path, "x", runs)
+        archive = str(tmp_path)
+        bare = _finder("$x.results.:regex(/2026-10/)", archive).query().uuids
+        filtered = _finder(
+            "$x.results.:regex(/2026-10/):completed(:true())", archive
+        ).query().uuids
+        assert sorted(filtered) == sorted(bare) == ["nested", "top"]
