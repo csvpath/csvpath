@@ -2,7 +2,6 @@ import os
 import json
 from csvpath.util.nos import Nos
 from csvpath.util.file_readers import DataFileReader
-from csvpath.util.file_writers import DataFileWriter
 
 
 class ResultFileReader:
@@ -10,10 +9,12 @@ class ResultFileReader:
 
     @classmethod
     def json_file(self, path: str) -> dict | None:
+        #
+        # a read never writes (issue #609): writing {} for a missing file
+        # could land on top of a manifest a run was still writing
+        #
         if not Nos(path).exists():
-            with DataFileWriter(path=path) as file:
-                json.dump({}, file.sink, indent=2)
-                return {}
+            return {}
         with DataFileReader(path) as file:
             d = json.load(file.source)
             return d
