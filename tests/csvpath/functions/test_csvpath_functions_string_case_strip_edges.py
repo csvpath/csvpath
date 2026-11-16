@@ -168,7 +168,7 @@ def test_strip_does_not_accept_a_term():
     assert any("arg 1 is an unexpected type" in e.message for e in path.errors)
 
 
-@pytest.mark.parametrize("function", ["lower", "caps"])
+@pytest.mark.parametrize("function", ["upper", "lower", "caps"])
 def test_number_term_raises_in_raise_mode(function):
     path = CsvPath()
     path.parse(f"{RAISE} ${VALUES}[1][ @result = {function}(42) ]")
