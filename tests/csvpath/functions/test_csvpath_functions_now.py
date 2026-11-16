@@ -1,6 +1,7 @@
 import unittest
 import os
 from csvpath import CsvPath
+from csvpath.util.date_util import DateUtility as daut
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 NUMBERS = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}numbers.csv"
@@ -9,8 +10,14 @@ NUMBERS = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}numbers.csv"
 class TestCsvPathFunctionsNow(unittest.TestCase):
     def test_function_now1(self):
         path = CsvPath()
-        # TODO: obviously this will break and need updating 1x a year. :(
-        path.parse(f'${PATH}[*][now("%Y") == "2026"]')
+        #
+        # compare with this year, not a hard-coded one, so the test does not
+        # break every January. use the framework's clock: CVL now() is UTC
+        # plus DateUtility's offsets, not local time. it can still fail if
+        # run across midnight UTC on December 31st.
+        #
+        year = daut.now().strftime("%Y")
+        path.parse(f'${PATH}[*][now("%Y") == "{year}"]')
         lines = path.collect()
         assert len(lines) == 9
 
