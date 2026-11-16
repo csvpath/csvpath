@@ -809,6 +809,38 @@ class ReferenceFinder3(ABC):
             return False
         return any(c.name == "manifest" for c in calls)
 
+    def _check_manifest_has_no_name_three(self, reference: Reference3) -> None:
+        """a bare ':manifest()' name_one followed by a name_three, e.g.
+        '$:regex(/^al/).files.:manifest().:all()', raises a clear error:
+        the selection goes in the ':manifest()' chain. It raised "Does not
+        yet support :manifest() as a name_one path segment".
+        RC triage B4, David 2026-11-16; making the form legal is issue
+        #710. FILES only: in CSVPATHS a name_three after ':manifest()' is a
+        statement identity, index or range, a legal read (reviewer on
+        #711)."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        if reference.name_three is None:
+            return
+        name_one = reference.name_one
+        if not (
+            not name_one.functions
+            and len(name_one.path) == 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == "manifest"
+        ):
+            return
+        msg = (
+            f"{reference.datatype}: ':manifest()' does not take a name_three "
+            f"selector ('.{reference.name_three}'). Put the pointer or range "
+            "in the ':manifest()' chain instead, e.g. ':manifest():last()' or "
+            "':manifest():from(-3)'; a bare ':manifest()' is every record."
+        )
+        logger = getattr(self.csvpaths, "logger", None)
+        if logger is not None:
+            logger.error(msg)
+        raise ReferenceException3(msg)
+
     @staticmethod
     def _is_bare_pointer_reference(reference: Reference3, name: str) -> bool:
         """true when name_one's entire content is a single, argument-
