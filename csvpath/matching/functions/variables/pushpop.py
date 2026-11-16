@@ -436,5 +436,13 @@ class PeekSize(ValueProducer):
             stack = []
         self.value = len(stack)
 
-    def matches(self, *, skip=None) -> bool:
-        self.matches = self.default_match()  # pragma: no cover
+    def _decide_match(self, skip=None) -> None:
+        #
+        # this used to override matches() with self.matches =
+        # self.default_match(), which replaced the method with a bool and
+        # returned None: a bare size("s") did not match on the first line and
+        # raised TypeError on the second. calculate the value, so argument
+        # errors still surface, and take the default match, like add().
+        #
+        self.to_value(skip=skip)
+        self.match = self.default_match()
