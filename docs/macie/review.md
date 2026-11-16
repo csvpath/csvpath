@@ -1,6 +1,6 @@
 # Reviewing findings with Jev
 
-An optional step after a file is scanned: Jev
+An optional step after a file is scanned: [Jev](https://docs.typesafe.ai)
 reads the context of each group of findings and says how likely they are
 to be real. It does not change the findings. Every count, severity and
 cell stays as the rules found it; the review is added beside them, so a

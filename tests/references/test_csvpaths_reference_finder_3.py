@@ -4146,6 +4146,15 @@ class TestATraversalNameReadsTheOwningGroup:
         assert counts["manifests"] == len(GATE_BY_NAME)
 
 
+
+class TestManifestNameThreeIsAStatement:
+    # RC triage B4 is FILES only: in CSVPATHS a name_three after
+    # ':manifest()' picks a statement, a legal read (reviewer on #711)
+    def test_a_statement_identity_after_manifest_still_resolves(self):
+        finder = _finder("$acme.csvpaths.:manifest().company_names")
+        assert [r.data for r in finder.resolve().results] == ["stmt text A"]
+
+
 class TestCollectionFieldsTakeValuePredicates:
     # RC triage B5 (David, 2026-11-16): ':named_paths()' and
     # ':named_paths_identities()' filter by :has_value()/
