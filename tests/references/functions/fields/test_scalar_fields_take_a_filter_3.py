@@ -14,7 +14,8 @@ from csvpath.references.reference_exceptions_3 import ReferenceException3
 # a str (as :type()), a count an int or a predicate (as :error_count()), a
 # flag a predicate (as :valid()). Time and collection fields are RC triage B5.
 INT_FIELDS = ["instance_index", "named_file_size", "named_paths_count"]
-BOOL_FIELDS = ["completed", "files_complete", "has_errors", "serial", "source_mode_preceding"]
+# files_complete is disabled (RC triage B3), so not registered
+BOOL_FIELDS = ["completed", "has_errors", "serial", "source_mode_preceding"]
 STR_FIELDS = (
     "actual_data_file archive file_home file_name file_path group_file group_home "
     "host identity instance_home manifest_path mark method named_file_path origin "

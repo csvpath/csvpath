@@ -5,6 +5,13 @@ from ..filters.predicate_function_3 import PredicateFunction3
 
 class FilesComplete3(Function3):
     #
+    # DISABLED 2026-11-15 (David, RC triage B3): not registered in
+    # ReferenceFunctionFactory, so :files_complete() is an unknown function.
+    # The manifest's all_expected_files/files_expected flags are not
+    # reliable yet (normative_reference_examples.txt ~843: "relates to
+    # existing but incorrect/imperfect functionality and it should not be
+    # made available"). Kept so re-enabling is one registration.
+    #
     # aggregate/individual pair, same shape as valid_3.py/completed_3.py.
     # name deliberately avoids reusing either source key
     # (all_expected_files/files_expected), since both are slightly
