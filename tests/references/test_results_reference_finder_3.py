@@ -2745,7 +2745,7 @@ class TestFieldAccessorFunctions:
         assert resolve("manifest_path") == str(run_dir / "manifest.json")
         assert resolve("named_paths_name") == "widgets"
 
-    def test_completed_and_files_complete_scope_dependent_keys(self, tmp_path):
+    def test_completed_scope_dependent_keys_files_complete_disabled(self, tmp_path):
         base = tmp_path / "widgets"  # direct child of the groups own home
         run_dir = base / "2026-01-01_00-00-00"
         _write_json(
@@ -2767,21 +2767,23 @@ class TestFieldAccessorFunctions:
         ).resolve()
         assert run_completed.results[0].data is True
 
-        run_files_complete = _finder(
-            "$widgets.results.:first():files_complete()", str(tmp_path)
-        ).resolve()
-        assert run_files_complete.results[0].data is False
+        # :files_complete() is disabled (David, 2026-11-15, RC triage B3):
+        # an unknown function in both scopes
+        with pytest.raises(ReferenceException3, match="Unknown reference function"):
+            _finder(
+                "$widgets.results.:first():files_complete()", str(tmp_path)
+            ).resolve()
 
         instance_completed = _finder(
             "$widgets.results.:first().company_names:completed()", str(tmp_path)
         ).resolve()
         assert instance_completed.results[0].data is True
 
-        instance_files_complete = _finder(
-            "$widgets.results.:first().company_names:files_complete()",
-            str(tmp_path),
-        ).resolve()
-        assert instance_files_complete.results[0].data is True
+        with pytest.raises(ReferenceException3, match="Unknown reference function"):
+            _finder(
+                "$widgets.results.:first().company_names:files_complete()",
+                str(tmp_path),
+            ).resolve()
 
     def test_named_file_name_shared_key_both_scopes(self, tmp_path):
         base = tmp_path / "widgets"  # direct child of the groups own home

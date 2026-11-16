@@ -73,7 +73,6 @@ class ReferenceFunctionFactory:
         from .fields.file_manifest_3 import FileManifest3
         from .fields.file_name_3 import FileName3
         from .fields.file_path_3 import FilePath3
-        from .fields.files_complete_3 import FilesComplete3
         from .fields.fingerprint_3 import Fingerprint3
         from .fields.group_file_3 import GroupFile3
         from .fields.group_home_3 import GroupHome3
@@ -260,7 +259,10 @@ class ReferenceFunctionFactory:
             Serial3.NAME: Serial3,
             Valid3.NAME: Valid3,
             Completed3.NAME: Completed3,
-            FilesComplete3.NAME: FilesComplete3,
+            # :files_complete() (FilesComplete3) is disabled, not registered:
+            # David, 2026-11-15 (RC triage B3); the NRE says it "should not be
+            # made available". The manifest flags behind it are unreliable.
+            # Re-enable by importing and registering it here again.
             NamedFileName3.NAME: NamedFileName3,
             NamedFileHome3.NAME: NamedFileHome3,
             NamedResultsName3.NAME: NamedResultsName3,
