@@ -69,3 +69,19 @@ class TestCsvPathsManagersResultsMetadata(unittest.TestCase):
             }
         )
         assert m.named_file_size == 224
+
+    def test_from_manifest_reads_named_file_last_change(self) -> None:
+        # same empty-key bug as named_file_size: the value was dropped on
+        # every rebuild (results_metadata.py:140, David 2026-11-16)
+        m = ResultsMetadata(None)
+        m.from_manifest(
+            {
+                "run_home": "some/run/home",
+                "uuid": str(uuid4()),
+                "run_uuid": str(uuid4()),
+                "named_paths_uuid": str(uuid4()),
+                "named_file_uuid": str(uuid4()),
+                "named_file_last_change": "2026-01-01T00:00:00+00:00",
+            }
+        )
+        assert m.named_file_last_change == "2026-01-01T00:00:00+00:00"
