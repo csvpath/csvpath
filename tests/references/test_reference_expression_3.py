@@ -1083,7 +1083,7 @@ class TestPathsSideCarriesPathsAndUuids:
             right='$*.results.:flatten():run_uuid("a1")',
             csvpaths=orders_archive,
         )
-        with pytest.raises(ReferenceException3):
+        with pytest.raises(ReferenceException3, match="UNION cannot combine"):
             expr.resolve()
 
     def test_a_worksheet_paths_side_on_a_csv_is_not_read(
