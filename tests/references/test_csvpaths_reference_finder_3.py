@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from csvpath.references.csvpaths_reference_finder_3 import CsvpathsReferenceFinder3
@@ -4152,3 +4153,107 @@ class TestManifestNameThreeIsAStatement:
     def test_a_statement_identity_after_manifest_still_resolves(self):
         finder = _finder("$acme.csvpaths.:manifest().company_names")
         assert [r.data for r in finder.resolve().results] == ["stmt text A"]
+
+
+class TestCollectionFieldsTakeValuePredicates:
+    # RC triage B5 (David, 2026-11-16): ':named_paths()' and
+    # ':named_paths_identities()' filter by :has_value()/
+    # :does_not_have_value(); a gate filters first, then the pointer picks
+    def _manifest(self):
+        manifest = [dict(e) for e in ACME_MANIFEST]
+        manifest.append(
+            {
+                **manifest[-1],
+                "uuid": "v-empty",
+                "named_paths": [],
+                "named_paths_identities": [],
+            }
+        )
+        return manifest
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$acme.csvpaths.:all():named_paths_identities(:has_value())", ["v0-uuid", "v1-uuid"]),
+            ("$acme.csvpaths.:all():named_paths(:does_not_have_value())", ["v-empty"]),
+            ("$acme.csvpaths.:last():named_paths(:has_value())", ["v1-uuid"]),
+            ("$acme.csvpaths.:manifest():named_paths_identities(:has_value())", ["v0-uuid", "v1-uuid"]),
+        ],
+    )
+    def test_a_value_predicate_filters(self, reference, expected):
+        assert _finder(reference, manifest=self._manifest()).query().uuids == expected
+
+    def test_an_equality_arg_raises(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$acme.csvpaths.:all():named_paths_identities("company_names")',
+                manifest=self._manifest(),
+            ).query()
+
+
+class TestCollectionPredicatesOnSetRoots:
+    # B5 at the positions #659-class bugs hid in (reviewer on #716): set
+    # roots, the ledger set (a deleted, ledger-only version included), a
+    # missing key and an empty list. a1 [x], a2 [], a3 no key, a4 [y];
+    # b1 [], b2 [z]; g1 [w] (deleted, ledger only)
+    IDS = {"a1": ["x"], "a2": [], "a4": ["y"], "b1": [], "b2": ["z"], "g1": ["w"]}
+
+    def _with_ids(self, entry):
+        entry = dict(entry)
+        if entry["uuid"] in self.IDS:
+            entry["named_paths_identities"] = self.IDS[entry["uuid"]]
+        return entry
+
+    def _finder(self, reference):
+        return _finder(
+            reference,
+            by_name={
+                name: [self._with_ids(e) for e in es] for name, es in GATE_BY_NAME.items()
+            },
+            ledger=[self._with_ids(e) for e in GATE_LEDGER],
+            inputs_csvpaths_path="named_paths",
+        )
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$*.csvpaths.:last():named_paths_identities(:has_value())", ["a4", "b2"]),
+            ("$*.csvpaths.:all():named_paths_identities(:does_not_have_value())", ["a2", "a3", "b1"]),
+            ("$:regex(/^ac/).csvpaths.:all():named_paths_identities(:has_value())", ["a1", "a4"]),
+            ('$:choice("beta").csvpaths.:last():named_paths_identities(:has_value())', ["b2"]),
+            ("$*.csvpaths.:manifest():named_paths_identities(:has_value())", ["a1", "a4", "b2", "g1"]),
+            ("$*.csvpaths.:manifest():named_paths_identities(:does_not_have_value())", ["a2", "a3", "b1"]),
+            ("$:regex(/^(acme|gone)$/).csvpaths.:manifest():named_paths_identities(:has_value())", ["a1", "a4", "g1"]),
+        ],
+    )
+    def test_a_value_predicate_filters_on_a_set_root(self, reference, expected):
+        assert sorted(self._finder(reference).query().uuids) == expected
+
+
+class TestDefinitionCollectionsTakeValuePredicates:
+    # B5: the CSVPATHS definition-backed collections filter groups through
+    # the ':definition()' chain (reviewer on #716 corrected D27). acme has
+    # destinations and scripts; beta has scripts only; neither has webhooks
+    # or transfers.
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$*.csvpaths.:destinations(:has_value())", ["acme"]),
+            ("$*.csvpaths.:destinations(:does_not_have_value())", ["beta"]),
+            ("$*.csvpaths.:definition():destinations(:has_value())", ["acme"]),
+            ("$*.csvpaths.:scripts(:has_value())", ["acme", "beta"]),
+            ("$*.csvpaths.:scripts(:does_not_have_value())", []),
+            ("$*.csvpaths.:webhooks(:has_value())", []),
+            ("$*.csvpaths.:webhooks_on_complete_all(:does_not_have_value())", ["acme", "beta"]),
+            ("$*.csvpaths.:transfers(:does_not_have_value())", ["acme", "beta"]),
+            ("$acme.csvpaths.:destinations(:does_not_have_value())", []),
+        ],
+    )
+    def test_a_value_predicate_filters_groups(self, reference, expected):
+        files = _def_chain_finder(reference).query().files
+        # the group is the definition.json's parent dir, on any OS
+        assert sorted(os.path.basename(os.path.dirname(f)) for f in files) == expected
+
+    def test_an_equality_arg_raises(self):
+        with pytest.raises(ReferenceException3):
+            _def_chain_finder('$*.csvpaths.:destinations("myd")').query()

@@ -8851,6 +8851,50 @@ class TestAScalarFieldFilters:
             _finder(f"{root}.results.{prefix}{chain}", archive).query()
 
 
+class TestFileFingerprintsTakesValuePredicates:
+    # RC triage B5 (David, 2026-11-16): ':file_fingerprints()' filters
+    # instances by :has_value()/:does_not_have_value()
+    def _archive(self, tmp_path):
+        run = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"a": "u-a", "b": "u-b"})
+        manifest = json.loads((Path(run) / "a" / "manifest.json").read_text())
+        manifest["file_fingerprints"] = {"x.csv": "abc"}
+        (Path(run) / "a" / "manifest.json").write_text(json.dumps(manifest))
+        _write_archive_manifest(tmp_path, "acme", [run])
+        return str(tmp_path)
+
+    def test_an_empty_dict_and_a_missing_key_have_no_value(self, tmp_path):
+        run = _make_run(
+            tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"a": "u-a", "e": "u-e", "m": "u-m"}
+        )
+        for name, value in (("a", {"x.csv": "abc"}), ("e", {})):
+            path = Path(run) / name / "manifest.json"
+            manifest = json.loads(path.read_text())
+            manifest["file_fingerprints"] = value
+            path.write_text(json.dumps(manifest))
+        _write_archive_manifest(tmp_path, "acme", [run])
+        has = "$acme.results.:last().*:file_fingerprints(:has_value())"
+        not_has = "$acme.results.:last().*:file_fingerprints(:does_not_have_value())"
+        assert _finder(has, str(tmp_path)).query().uuids == ["u-a"]
+        assert sorted(_finder(not_has, str(tmp_path)).query().uuids) == ["u-e", "u-m"]
+
+    def test_has_value_keeps_the_instance_with_fingerprints(self, tmp_path):
+        archive = self._archive(tmp_path)
+        assert _finder(
+            "$acme.results.:last().*:file_fingerprints(:has_value())", archive
+        ).query().uuids == ["u-a"]
+
+    def test_does_not_have_value_keeps_the_others(self, tmp_path):
+        archive = self._archive(tmp_path)
+        assert _finder(
+            "$acme.results.:last().*:file_fingerprints(:does_not_have_value())", archive
+        ).query().uuids == ["u-b"]
+
+    def test_the_bare_field_still_reads_the_dict(self, tmp_path):
+        archive = self._archive(tmp_path)
+        results = _finder("$acme.results.:last().a:file_fingerprints()", archive).resolve()
+        assert [r.data for r in results.results] == [{"x.csv": "abc"}]
+
+
 class TestAPatternThenAFilterNamesRuns:
     # RC triage B6 (David, 2026-11-16): a trailing pattern followed only by
     # filters (field accessors, ':having()') stays the run-dir slot, so
