@@ -1,4 +1,5 @@
 import unittest
+from tests.skip_utility import SkipUtility as skut
 import tempfile
 import os
 import shutil
@@ -29,6 +30,7 @@ PATH = os.path.join(
 
 class TestCsvPathsExamplesTransferSftp(unittest.TestCase):
     def test_transfer_parquet_1(self):
+        skut.skip_unless_enabled(backend="sftp")
         paths = Builder().build()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")

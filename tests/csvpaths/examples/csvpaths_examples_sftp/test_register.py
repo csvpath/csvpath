@@ -1,4 +1,5 @@
 import unittest
+from tests.skip_utility import SkipUtility as skut
 import os
 from csvpath import CsvPaths
 from csvpath.util.backend_check import BackendCheck
@@ -7,6 +8,7 @@ from csvpath.util.file_writers import DataFileWriter
 
 class TestSftpRegister(unittest.TestCase):
     def test_sftp_register_remote_file(self):
+        skut.skip_unless_enabled(backend="sftp")
         paths = CsvPaths()
         #
         # this test is setup for sftpgo on localhost:2022 (the sftpgo default)
