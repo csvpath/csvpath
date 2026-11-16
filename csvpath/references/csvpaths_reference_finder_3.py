@@ -127,6 +127,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         log_results = self._query_log_call(reference)
         if log_results is not None:
             return log_results
+        self._check_manifest_has_no_name_three(reference)
         self._star_means_all(reference.name_one)
         root_major = reference.root_major
         if isinstance(root_major, Star3):

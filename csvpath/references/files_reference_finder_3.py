@@ -149,6 +149,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         log_results = self._query_log_call(reference)
         if log_results is not None:
             return log_results
+        self._check_manifest_has_no_name_three(reference)
         root_major = reference.root_major
         if isinstance(root_major, Star3):
             status_chain = self._bare_status_gate_chain(reference.name_one)
@@ -1685,6 +1686,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
         David 2026-11-02). Otherwise the long-standing message."""
         if name_one is None:
             raise ValueError("name_one cannot be None")
+        if (
+            len(name_one.path) == 1
+            and isinstance(name_one.path[0], FunctionCall3)
+            and name_one.path[0].name == "manifest"
+        ):
+            # e.g. ':manifest():all()'. The general message sent the user to
+            # name_three, which ':manifest()' does not take (RC triage B4)
+            functions = "".join(str(call) for call in name_one.functions)
+            return (
+                f"FilesReferenceFinder3 does not support ':manifest(){functions}'. "
+                "A bare ':manifest()' is every record; to select, use a pointer "
+                "or range in the chain, e.g. ':manifest():last()' or "
+                "':manifest():from(0)' (issue #710)."
+            )
         has_field = False
         for call in name_one.functions:
             function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
