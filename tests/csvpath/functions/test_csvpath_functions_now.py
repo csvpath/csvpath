@@ -1,7 +1,7 @@
 import unittest
 import os
-import datetime
 from csvpath import CsvPath
+from csvpath.util.date_util import DateUtility as daut
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 NUMBERS = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}numbers.csv"
@@ -12,10 +12,11 @@ class TestCsvPathFunctionsNow(unittest.TestCase):
         path = CsvPath()
         #
         # compare with this year, not a hard-coded one, so the test does not
-        # break every January. it can still fail if run across midnight on
-        # December 31st.
+        # break every January. use the framework's clock: CVL now() is UTC
+        # plus DateUtility's offsets, not local time. it can still fail if
+        # run across midnight UTC on December 31st.
         #
-        year = datetime.datetime.now().strftime("%Y")
+        year = daut.now().strftime("%Y")
         path.parse(f'${PATH}[*][now("%Y") == "{year}"]')
         lines = path.collect()
         assert len(lines) == 9
