@@ -8976,3 +8976,20 @@ class TestAPatternThenAFilterNamesRuns:
             "$x.results.:regex(/2026-10/):completed(:true())", archive
         ).query().uuids
         assert sorted(filtered) == sorted(bare) == ["nested", "top"]
+
+    def test_under_star_each_group_decides_its_own_reading(self, tmp_path):
+        # x has only a run; y has a run and a template dir the pattern
+        # matches. x's run must not drop out because of y's template dir
+        # (reviewer on #717)
+        x1 = self._run(tmp_path / "x", None, "2026-10-01_00-00-00", "x1", False)
+        y1 = self._run(tmp_path / "y", None, "2026-10-03_00-00-00", "y1", False)
+        y2 = self._run(tmp_path / "y" / "2026-10-t", None, "2026-10-04_00-00-00", "y2", False)
+        _write_archive_manifest_multi(tmp_path, {"x": [x1], "y": [y1, y2]})
+        archive = str(tmp_path)
+        star = _finder("$*.results.:regex(/2026-10/):completed(:false())", archive)
+        x = _finder("$x.results.:regex(/2026-10/):completed(:false())", archive)
+        y = _finder("$y.results.:regex(/2026-10/):completed(:false())", archive)
+        assert x.query().uuids == ["x1"]
+        assert y.query().uuids == ["y2"]
+        assert sorted(star.query().uuids) == ["x1", "y2"]
+

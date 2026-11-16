@@ -1145,18 +1145,26 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             (rh, group, self.csvpaths.results_manager.get_named_results_home(group))
             for rh, group in self._discover_run_homes(None, name_filter)
         ]
-        run_slot = self._run_slot_for(
-            reference=reference,
-            name_one=name_one,
-            path=name_one.path,
-            pattern=pattern,
-            pairs=[(rh, home) for rh, _, home in in_play],
-        )
+        # the run-slot reading is decided per group: '*' mimics grouping
+        # (4.1b), so one group's template dir must not change another
+        # group's answer (reviewer on #717)
+        run_slot_by_home = {}
+        for home in dict.fromkeys(home for _, _, home in in_play):
+            run_slot_by_home[home] = self._run_slot_for(
+                reference=reference,
+                name_one=name_one,
+                path=name_one.path,
+                pattern=pattern,
+                pairs=[(rh, h) for rh, _, h in in_play if h == home],
+            )
         partitioned = [
             (rh, (group,))
             for rh, group, home in in_play
             if self._plain_path_matches(
-                run_home=rh, home=home, pattern=pattern, run_slot=run_slot
+                run_home=rh,
+                home=home,
+                pattern=pattern,
+                run_slot=run_slot_by_home[home],
             )
         ]
         return self._star_group_and_reduce(
