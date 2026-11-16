@@ -858,8 +858,11 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                         return self._find_manifest_entry_by_uuid(
                             ledger, result.uuid
                         )
-                    # global-ledger case (Rule 1a) -- result.path is
-                    # already the ledger file itself.
+                    # the ledger path with no uuid. A bare '$*' or
+                    # ':regex()'/':choice()' ':manifest()' returned its
+                    # records above (RC triage B1; D13), so no Rule 1a read
+                    # reaches here any more; any other shape still reads
+                    # the file as it did.
                     return self._read_well_known_file(result.path)
                 # else: a genuine traversal-selected version -- fall
                 # through to the ordinary has_manifest branch below,
