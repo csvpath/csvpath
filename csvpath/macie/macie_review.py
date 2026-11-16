@@ -164,6 +164,13 @@ class MacieReview:
 
     @classmethod
     def _file(cls, *, csvpath) -> str:
+        #
+        # in a group run the scanner reads the stored copy, whose name is
+        # a content hash: the named-file name is what the file is known by
+        #
+        named = getattr(csvpath, "named_file_name", None)
+        if isinstance(named, str) and named.strip() != "":
+            return named.strip()
         scanner = getattr(csvpath, "scanner", None)
         name = getattr(scanner, "filename", None) if scanner else None
         return os.path.basename(f"{name}") if name else "unknown"
@@ -241,6 +248,8 @@ class MacieReview:
             )
         if result["status"] == JevReviewer.FAILED:
             lines.append(f"macie review: failed: {result['reason']}")
+        elif result["questions"] == 0 and not result["not_reviewed"]:
+            lines.append("macie review: nothing to review")
         else:
             tokens = (
                 f", {result['input_tokens']} tokens in, {result['output_tokens']} out"

@@ -124,3 +124,9 @@ def test_macie_review_printouts() -> None:
     assert MacieReview.printouts(result=_result("failed")) == [
         "macie review: failed: ConnectionError: down"
     ]
+
+
+def test_macie_review_printouts_nothing_to_review() -> None:
+    result = _result()
+    result.update({"questions": 0, "entries": [], "model": None, "seconds": None})
+    assert MacieReview.printouts(result=result) == ["macie review: nothing to review"]

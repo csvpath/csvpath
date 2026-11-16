@@ -155,3 +155,35 @@ run; David's earlier figure is $0.01 for about 43,000 tokens.
    verdicts, and p(likely) as the confidence.
 4. **Still annotate, never remove.** One case in 30 was wrong, and the
    ambiguous ones need a person.
+
+## A live run of the built review, 2026-11-16
+
+The review as built (#667, #668, #670), in a real group run: the
+`csvpath-live-include` job's wrapper over the seven live-check files
+(`tests/macie/live/README.md`), with `[macie] review` on for
+`USA_SOCIAL_SECURITY_NUMBER`, `CREDIT_CARD_NUMBER`, `PHONE_NUMBER`,
+`BRAZIL_CPF_NUMBER`, `DATE_OF_BIRTH` and `EmployeeId`. A dry run with a
+recording fake came first; it found two bugs, fixed before the live run:
+Jev was told the stored copy's hash name instead of the named-file name,
+and an empty review printed `complete, 0 questions, None`.
+
+| File | Reviewed | Verdict (p likely) |
+|---|---|---|
+| employees | `EmployeeId` in `employee_id`, in `notes` | likely (0.54), likely (0.51) |
+| latam_health | `BRAZIL_CPF_NUMBER` in `cpf` | likely (0.56) |
+| payments | `CREDIT_CARD_NUMBER` in `card_number` | likely (0.50) |
+| people_us | `DATE_OF_BIRTH`, `PHONE_NUMBER`, `USA_SOCIAL_SECURITY_NUMBER` | likely (0.79), likely (0.80), likely (0.58) |
+| clean, credentials, people_eu | nothing reviewed found | `nothing to review` |
+
+4 requests, 7 questions, 3,051 tokens in and 292 out, 0.10 to 0.15 s a
+request. Every run valid; each run dir holds
+`_extra_data/macie/review.csvpath-live-include.json`.
+
+All seven are real and all came back `likely`, but with lower
+confidence than in the experiments (0.50 to 0.80 against 0.7 to 0.97).
+The likely reason is the files themselves: each holds one or two
+flagged rows among about 3,800 padding rows ("Flagged in 2 of 3713
+rows"), unlike any experiment case. A question the review might ask
+better later: the "why" for an in-cell keyword is vague ("a keyword is
+near the value in the cell, or the value needs none") because
+`MacieReview.why()` reads only the header.
