@@ -522,19 +522,34 @@ class TestGlobalArrivalsLedger:
         assert results.files == [pathu.resep("inputs/named_files/manifest.json")]
         assert results.results[0].uuid is None
 
-    def test_resolve_reads_the_global_ledgers_raw_bytes(self, tmp_path):
-        content = b'[{"named_file_name": "alpha"}, {"named_file_name": "beta"}]'
-        root = tmp_path / "named_files"
-        root.mkdir()
-        (root / "manifest.json").write_bytes(content)
+    def test_resolve_is_the_global_ledgers_records(self):
+        # RC triage B1 (David, 2026-11-15): records, not bytes -- the
+        # ledger as stored, as ':regex()' gives it filtered
+        ledger = [
+            {"named_file_name": "alpha", "uuid": "u1"},
+            {"named_file_name": "beta", "uuid": "u2"},
+        ]
         finder = _finder(
             "$*.files.:manifest()",
             ALPHA_HOME,
             ALPHA_MANIFEST,
-            inputs_files_path=str(root),
+            ledger=ledger,
+            inputs_files_path="inputs/named_files",
         )
         results = finder.resolve()
-        assert results.results[0].data == content
+        assert results.results[0].data == ledger
+
+    def test_resolve_raises_for_a_ledger_entry_with_no_uuid(self):
+        finder = _finder(
+            "$*.files.:manifest()",
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+            ledger=[{"named_file_name": "alpha"}],
+            inputs_files_path="inputs/named_files",
+        )
+        finder.csvpaths.logger = _FakeLogger()
+        with pytest.raises(ValueError, match="no uuid"):
+            finder.resolve()
 
     # :manifest() alone stays the one function with a real GLOBAL
     # resource to fall back to at "*" root_major (Rule 1a, above) --
@@ -773,8 +788,8 @@ class TestGlobalArrivalsLedgerOrdinalIndexing:
         self, tmp_path
     ):
         # decision D13: the ledger's records as stored, filtered by name --
-        # json.loads of what '$*.files.:manifest()' resolves to (that form
-        # gives the file's raw bytes; reviewer on #616)
+        # what '$*.files.:manifest()' resolves to (records too since RC
+        # triage B1, David 2026-11-15; it gave the file's raw bytes)
         ledger = self._regex_ledger()
         (tmp_path / "manifest.json").write_text(json.dumps(ledger))
 
@@ -792,8 +807,8 @@ class TestGlobalArrivalsLedgerOrdinalIndexing:
         (filtered,) = [
             r.data for r in finder("$:regex(/.*/).files.:manifest()").resolve().results
         ]
-        assert isinstance(star, bytes)
-        assert filtered == json.loads(star)
+        assert star == ledger
+        assert filtered == star
 
     def test_a_literal_root_reads_its_own_manifest_in_both_orders(self):
         # unchanged: '$alpha' reads alpha's own manifest.json

@@ -787,9 +787,18 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # ledger set filtered by name: the ledger's records, as stored,
             # whose group name matches, a list of dicts (David, 2026-11-14,
             # W1 option B; decision D13): what '$*.csvpaths.:manifest()'
-            # holds, filtered ('$*' itself resolves to the file's raw
-            # bytes). It resolved the whole, unfiltered ledger.
+            # resolves to, filtered. It resolved the whole, unfiltered
+            # ledger.
             #
+            # '$*' gives the whole ledger set the same way, its records as
+            # stored, as RESULTS gives its set (David, 2026-11-15, RC triage
+            # B1: "align on the records, not bytes"). It resolved to the
+            # ledger file's raw bytes.
+            #
+            if isinstance(
+                reference.root_major, Star3
+            ) and self._is_bare_pointer_reference(reference, "manifest"):
+                return self._paths_ledger()
             if isinstance(
                 reference.root_major, FunctionCall3
             ) and self._is_bare_pointer_reference(reference, "manifest"):

@@ -451,18 +451,20 @@ class TestBareDefinitionFieldAccessors:
 class TestGlobalArrivalsLedger:
     # doc line "### Global arrivals ledger -- every named-file's own
     # arrival, one flat array"
-    def test_resolves_the_ledgers_raw_bytes(self, tmp_path):
-        content = b'[{"named_file_name": "alpha"}, {"named_file_name": "beta"}]'
-        root = tmp_path / "named_files"
-        root.mkdir()
-        (root / "manifest.json").write_bytes(content)
+    def test_resolves_the_ledgers_records(self):
+        # RC triage B1 (David, 2026-11-15): records, not bytes
+        ledger = [
+            {"named_file_name": "alpha", "uuid": "u1"},
+            {"named_file_name": "beta", "uuid": "u2"},
+        ]
         results = _finder(
             "$*.files.:manifest()",
             ALPHA_HOME,
             ALPHA_MANIFEST,
-            inputs_files_path=str(root),
+            ledger=ledger,
+            inputs_files_path="inputs/named_files",
         ).resolve()
-        assert results.results[0].data == content
+        assert results.results[0].data == ledger
 
 
 LEDGER = [

@@ -2544,8 +2544,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
         """a bare ':manifest()' under a ':regex()' or ':choice()' root: the
         ledger set filtered by name (6.13b). One result, the ledger's path
         with uuid None (5.7), resolving to the matching ledger records as
-        stored, a list of dicts: what '$*.files.:manifest()' holds, filtered
-        by name ('$*' itself resolves to the file's raw bytes). David,
+        stored, a list of dicts: what '$*.files.:manifest()' resolves to,
+        filtered by name (both records since RC triage B1). David,
         2026-11-14, W1 option B; decision D13. RESULTS already did this. It raised "Does not yet support :manifest() as a
         name_one path segment"."""
         if reference is None:
@@ -2841,6 +2841,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
         manifest_chain = None
         definition_calls = None
         if reference.name_three is None:
+            if isinstance(
+                reference.root_major, Star3
+            ) and self._is_bare_pointer_reference(reference, "manifest"):
+                # the whole ledger set: its records as stored, a list of
+                # dicts, as ':regex()'/':choice()' give it filtered and
+                # RESULTS gives its set (David, 2026-11-15, RC triage B1:
+                # "align on the records, not bytes"). It resolved to the
+                # ledger file's raw bytes.
+                return self._files_ledger()
             if self._is_bare_filtered_manifest(reference):
                 pattern = self._build(reference.root_major).pattern
                 return [
