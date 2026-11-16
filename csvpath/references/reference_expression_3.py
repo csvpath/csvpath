@@ -18,8 +18,9 @@ class ReferenceExpression3:
     # settled 2026-08-17). Each side is either a plain reference string
     # (dispatched through ReferenceFinderFactory3, so it can be any of
     # the three datatypes) or another ReferenceExpression3
-    # (sub-expressions) -- either way, each side is fully resolve()d to
-    # its own ReferenceResults3 before the operation combines them.
+    # (sub-expressions) -- either way, each side is reduced to its own
+    # ReferenceResults3 before the operation combines them: a values side
+    # is resolved, a paths side only queried (RC triage B2, 2026-11-16).
     #
     # UNION never looks at resolved data at all -- it is pure
     # concatenation of both sides' own native results, with duplicates
@@ -100,9 +101,10 @@ class ReferenceExpression3:
     # accessor-equality rule -- see _check_union_compatible and the
     # UNION paragraph in this class's own top comment block).
     # A side is VALUES if its own terminal function chain includes a
-    # ROLE == VALUE function (a real scalar lands in .data), or PATHS
-    # if it does not (a path+uuid result; .data is whatever that path
-    # resolves to, e.g. a version's bytes or a statement's text). Computed
+    # ROLE == VALUE function that is not a filter -- unargued, or
+    # key-selecting (a real scalar lands in .data) -- or PATHS if it does
+    # not (a path+uuid result, queried only, .data None; RC triage B2,
+    # David 2026-11-16: "a filter is just a filter not a field value"). Computed
     # statically, from the parsed reference's own terminal_functions
     # (Reference3.terminal_functions), never from resolved data -- a
     # per-item legitimate None (e.g. an optional field absent for one
@@ -247,15 +249,19 @@ class ReferenceExpression3:
         finder = ReferenceFinderFactory3.for_reference(
             reference=side, csvpaths=self._csvpaths
         )
-        # every side is resolved one result at a time: each item keeps its
-        # own data, as the expressions spec's architecture notes say, and a
-        # FILES side with several versions -- a paths side, or a gate such
-        # as ':type("csv")', which _kind() counts as values -- does not read
-        # several files in one resolve (compendium 5.3; #639). A side its
-        # own finder flags as several whole-file reads raises, as it did
-        # when resolved whole. Whether a paths side should carry content
-        # at all is a spec question for David (the spec says both).
         selection = finder.query()
+        if self._kind(side) == self.PATHS:
+            # a paths side carries just paths and uuids: it is queried, not
+            # resolved, so no content is read (expressions spec, "paths vs.
+            # values sides": ".data is None"; David, 2026-11-16, RC triage
+            # B2). It resolved every item, reading each version's bytes.
+            return selection
+        # a values side is resolved one result at a time: each item keeps
+        # its own data, as the expressions spec's architecture notes say,
+        # and a FILES side with several versions does not read several
+        # files in one resolve (compendium 5.3; #639). A side its own
+        # finder flags as several whole-file reads raises, as it did when
+        # resolved whole.
         if selection.ambiguous_content_read:
             return finder.resolve_from(selection)
         return finder.resolve_each(selection)
@@ -285,7 +291,8 @@ class ReferenceExpression3:
 
     def _terminal_value_call(self, side: "str | ReferenceExpression3"):
         """the first ROLE == VALUE FunctionCall3 in `side`'s own terminal
-        chain, or None if the side is PATHS (no such accessor at all).
+        chain that is not a field filter (_is_field_filter()), or None if
+        the side is PATHS (no such accessor at all).
         Shared by _kind (True/False only) and _check_union_compatible,
         which needs the actual call -- not just whether one exists -- to
         compare accessor identity (name+arg together) via FunctionCall3's
@@ -293,9 +300,32 @@ class ReferenceExpression3:
         parsed = self._side_reference_parsed(side)
         for f in parsed.terminal_functions:
             function_cls = ReferenceFunctionFactory.get_registered_class(f.name)
-            if function_cls is not None and function_cls.ROLE == Function3.VALUE:
-                return f
+            if function_cls is None or function_cls.ROLE != Function3.VALUE:
+                continue
+            if self._is_field_filter(call=f, function_cls=function_cls):
+                continue
+            return f
         return None
+
+    @staticmethod
+    def _is_field_filter(*, call, function_cls) -> bool:
+        """a field accessor given an argument is a filter, not a value
+        (compendium 6.40): ':type("csv")' keeps the csv versions, it does
+        not make the side's data a type. "A filter is just a filter not a
+        field value" (David, 2026-11-16, RC triage B2). A key-selecting
+        field, e.g. ':source_port("email")', still reads a value: its
+        argument names the key (KEY "sources.{}.port")."""
+        if call is None or function_cls is None:
+            raise ValueError("call and function_cls cannot be None")
+        if call.arg is None:
+            return False
+        if function_cls.SOURCE not in ("manifest", "definition"):
+            return False
+        # the key-selecting fields (source_*, destination_*,
+        # transfer_on_complete_*) are the only ones today, the documented
+        # exception of B5/D27; a new one needs a "{}" KEY slot to be seen
+        keyed = any("{}" in str(key) for key in (function_cls.KEY or {}).values())
+        return not keyed
 
     def _check_union_compatible(self) -> None:
         """UNION's own compatibility rule -- LHS-driven, revised twice
@@ -348,12 +378,11 @@ class ReferenceExpression3:
         return function_cls.KIND if function_cls is not None else None
 
     def _produces_uuid(self, side: "str | ReferenceExpression3") -> bool:
-        parsed = self._side_reference_parsed(side)
-        for f in parsed.terminal_functions:
-            function_cls = ReferenceFunctionFactory.get_registered_class(f.name)
-            if function_cls is not None and function_cls.KIND == "uuid":
-                return True
-        return False
+        # the side's value accessor, not any uuid-KIND call in its chain: a
+        # uuid gate filters, it does not make the side's data a uuid
+        # (':named_file_uuid("x"):named_paths_name()' is names; reviewer on
+        # #715). The same accessor _kind() and UNION read.
+        return self._terminal_kind(self._terminal_value_call(side)) == "uuid"
 
     @staticmethod
     def _union(left: ReferenceResults3, right: ReferenceResults3) -> ReferenceResults3:

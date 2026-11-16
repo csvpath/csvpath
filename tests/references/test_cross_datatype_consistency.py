@@ -72,11 +72,14 @@ def _union_compatible(left_fn: str, right_fn: str) -> bool:
     method at all, confirmed live: _terminal_value_call() only
     inspects the parsed FunctionCall3's own name+ROLE+KIND via the
     registry, never DATATYPES/POSITIONS), so ".files." is used
-    uniformly regardless of each function's own real datatype."""
+    uniformly regardless of each function's own real datatype. The
+    accessors are bare: an argued field is a filter, not a value (RC
+    triage B2, David 2026-11-16), so ':uuid("x")' would make a paths
+    side, which unions with anything."""
     expr = ReferenceExpression3(
-        left=f'$x.files.:{left_fn}("x")',
+        left=f"$x.files.:{left_fn}()",
         op=ReferenceExpression3.UNION,
-        right=f'$x.files.:{right_fn}("x")',
+        right=f"$x.files.:{right_fn}()",
         csvpaths=_PLACEHOLDER_CSVPATHS,
     )
     try:
