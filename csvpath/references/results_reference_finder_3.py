@@ -3869,14 +3869,31 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     @staticmethod
     def _pattern_is_run_slot(*, name_one, path: list) -> bool:
         """true when the last segment of `path` (name_one's path, or the
-        part after a middle ':all()') is the run-dir slot: nothing follows it
-        in name_one, and it is not a written '*' -- in ':choice("beta")/*'
-        the '*' is the run slot and the pattern a template level (reviewer
-        on #647)."""
+        part after a middle ':all()') is the run-dir slot: only filters
+        follow it in name_one, and it is not a written '*' -- in
+        ':choice("beta")/*' the '*' is the run slot and the pattern a
+        template level (reviewer on #647).
+
+        A pointer, a range, a grouping function or a time window after the
+        pattern stands in for the run, so the pattern is a template level
+        (D19, 6.37): ':regex("2026-01-01_"):last()'. A filter does not:
+        ':regex(/2026-10/):completed(:false())' is October's incomplete runs
+        (David, 2026-11-16, RC triage B6). A filter here is a field accessor
+        (argued or not) or ':having()'."""
         if name_one is None or path is None:
             raise ValueError("name_one and path cannot be None")
-        if name_one.functions or not path:
+        if not path:
             return False
+        for call in name_one.functions:
+            if call.name == "having":
+                continue
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            if (
+                function_cls is None
+                or function_cls.ROLE != Function3.VALUE
+                or function_cls.SOURCE not in ("manifest", "definition")
+            ):
+                return False
         return not isinstance(path[-1], Star3)
 
     def _check_pattern_names_runs(

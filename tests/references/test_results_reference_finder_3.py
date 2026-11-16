@@ -8849,3 +8849,63 @@ class TestAScalarFieldFilters:
         # ledger set; '$*' gave [] or None (reviewer on #659, rounds 2-3)
         with pytest.raises(ReferenceException3, match="not legal at name_one"):
             _finder(f"{root}.results.{prefix}{chain}", archive).query()
+
+
+class TestAPatternThenAFilterNamesRuns:
+    # RC triage B6 (David, 2026-11-16): a trailing pattern followed only by
+    # filters (field accessors, ':having()') stays the run-dir slot, so
+    # ':regex(/2026-10/):completed(:false())' is October's incomplete runs.
+    # A pointer, range, grouping function or time window after it stands
+    # in for the run, so the pattern is a template level (D19, 6.37). Every
+    # filter form below gave [] until then.
+    def _archive(self, tmp_path):
+        runs = []
+        for name, uuid, done in [
+            ("2026-10-03_12-00-00", "r1", False),
+            ("2026-10-05_12-00-00", "r2", True),
+            ("2026-11-01_12-00-00", "r3", False),
+        ]:
+            run = _make_run(tmp_path / "x", name, uuid, {"a": f"i-{uuid}"})
+            path = Path(run) / "manifest.json"
+            manifest = json.loads(path.read_text())
+            manifest["all_completed"] = done
+            path.write_text(json.dumps(manifest))
+            runs.append(run)
+        _write_archive_manifest(tmp_path, "x", runs)
+        return str(tmp_path)
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$x.results.:regex(/2026-10/):completed(:false())", ["r1"]),
+            ("$x.results.:regex(/2026-10/):completed(:true())", ["r2"]),
+            ("$x.results.:regex(/2026-10/):completed()", ["r1", "r2"]),
+            ('$x.results.:regex(/2026-10/):having("a")', ["r1", "r2"]),
+            ('$x.results.:choice("2026-10-03_12-00-00"):completed(:false())', ["r1"]),
+            ("$*.results.:regex(/2026-10/):completed(:false())", ["r1"]),
+            ("$x.results.:regex(/2026-10/)", ["r1", "r2"]),
+        ],
+    )
+    def test_a_filter_keeps_the_pattern_on_run_names(self, tmp_path, reference, expected):
+        archive = self._archive(tmp_path)
+        assert _finder(reference, archive).query().uuids == expected
+
+    def test_a_filter_reads_the_runs_value(self, tmp_path):
+        archive = self._archive(tmp_path)
+        results = _finder("$x.results.:regex(/2026-10/):completed()", archive).resolve()
+        assert [r.data for r in results.results] == [False, True]
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$x.results.:regex(/2026-10/):last()",
+            "$x.results.:regex(/2026-10/):from(0)",
+            "$x.results.:regex(/2026-10/):today()",
+        ],
+    )
+    def test_a_pointer_range_or_window_makes_it_a_template_level(
+        self, tmp_path, reference
+    ):
+        # unchanged (D19): no template dir matches /2026-10/, so nothing
+        archive = self._archive(tmp_path)
+        assert _finder(reference, archive).query().uuids == []
