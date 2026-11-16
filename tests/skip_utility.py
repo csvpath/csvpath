@@ -20,6 +20,13 @@ class SkipUtility:
     costs money and the safe default is not to make one. Any other value is
     a ValueError, so a typo in a config fails loudly rather than silently
     running, or silently skipping, the cloud tests.
+
+    The flag is read with Config.get, so an all-caps value such as
+    s3.skip = S3_SKIP is swapped for that env var when var sub is on. That
+    lets a CI job drive the flag from its environment.
+
+    For a test that swaps to its own config file, gate before the swap: the
+    flags that count are the ones in the config the run started with.
     """
 
     BACKENDS = ("azure", "gcs", "s3", "sftp")
