@@ -32,9 +32,8 @@ the last row) under their own scratch subdirectory.
 
 Note: template date tokens (":year", ":month_name", etc., in
 TemplateUtility.transform_template) read DateUtility.now() since issue #437,
-so they follow the offsets here. Template-preserving
-a source file's own folder structure uses positional tokens (":0", ":1",
-...) instead, which is why acme_invoices in assets.yaml has no template at
+so they follow the offsets here. Preserving a source file's own folder
+structure needs positional tokens (":0", ":1", ...), which is why acme_invoices in assets.yaml has no template at
 all yet despite its source tree already having a real year/month structure
 -- positional tokens are indexed against whatever path string is passed to
 add_named_file(), which makes them fragile to the exact repo-relative depth

@@ -1,6 +1,8 @@
 import unittest
 from datetime import datetime, timezone
 
+from dateutil.relativedelta import relativedelta
+
 from csvpath.util.date_util import DateUtility as daut
 from csvpath.util.template_util import TemplateUtility as temu
 
@@ -33,7 +35,9 @@ class TestTemplateClockTokensUseDateUtility(unittest.TestCase):
 
     def test_a_month_offset_moves_the_month_name(self):
         daut.OFFSET_MONTHS = -1
-        expected = daut.now().strftime("%B")
+        expected = (datetime.now(timezone.utc) + relativedelta(months=-1)).strftime(
+            "%B"
+        )
         real = datetime.now(timezone.utc).strftime("%B")
         t = temu.transform_template(":month_name")
         assert t == expected
