@@ -971,54 +971,90 @@ class TestHavingAndFlattenPlusStarTraversalNowWork:
         ]
 
 
-class TestPathsSideResolvesEachResult:
-    # #639: a paths side is resolved one result at a time, so each item
-    # keeps its own data (the expressions spec's architecture notes) and a
-    # FILES side with several versions does not read several files in one
-    # resolve (compendium 5.3). Main's output and errors are unchanged.
-    def test_a_files_paths_side_keeps_each_versions_bytes(
-        self, orders_archive_with_files
+class TestPathsSideCarriesPathsAndUuids:
+    # RC triage B2 (David, 2026-11-16): a paths side is queried, not
+    # resolved -- it carries just paths and uuids, .data is None, and no
+    # content is read (expressions spec, "paths vs. values sides"). It
+    # resolved each item, reading every version's bytes (#639).
+    def test_a_files_paths_side_reads_no_content(
+        self, orders_archive_with_files, monkeypatch
     ):
+        from csvpath.references.files_reference_finder_3 import (
+            FilesReferenceFinder3,
+        )
+
+        def _no_read(self, path, **kwargs):
+            raise AssertionError(f"a paths side read {path}")
+
+        monkeypatch.setattr(FilesReferenceFinder3, "_read_version_file", _no_read)
         expr = ReferenceExpression3(
             left="$finn.files.:all().:last()",
             op=ReferenceExpression3.UNION,
             right="$finn.files.:all().:last()",
             csvpaths=orders_archive_with_files,
         )
-        data = sorted(r.data for r in expr.resolve().results)
-        assert data == sorted([b"a,b\n1,2\n", b"c,d\n3,4\n"])
+        results = expr.resolve().results
+        assert len(results) == 2
+        assert all(r.data is None for r in results)
+        assert all(r.uuid is not None and r.path for r in results)
 
     @pytest.mark.parametrize(
         "side",
         ['$finn.files.:all().:type("csv")', '$finn.files.:all().:all():type("csv")'],
     )
-    def test_a_gate_shaped_files_side_keeps_each_versions_bytes(
+    def test_a_gate_is_a_filter_so_the_side_is_paths(
         self, orders_archive_with_files, side
     ):
-        # reviewer #8 on #639: _kind() counts an argued gate as values, so
-        # this side resolved whole and raised on the second version file
+        # "a filter is just a filter not a field value" (B2 part 2):
+        # ':type("csv")' keeps the csv versions; the side stays paths
         expr = ReferenceExpression3(
             left=side,
             op=ReferenceExpression3.UNION,
             right=side,
             csvpaths=orders_archive_with_files,
         )
-        data = sorted(r.data for r in expr.resolve().results)
-        assert data == sorted([b"a,b\n1,2\n", b"c,d\n3,4\n"])
+        assert expr._kind(side) == ReferenceExpression3.PATHS
+        results = expr.resolve().results
+        assert len(results) == 2
+        assert all(r.data is None for r in results)
 
-    def test_a_worksheet_paths_side_on_a_csv_still_raises(
-        self, orders_archive_with_files
-    ):
+    def test_a_bare_field_is_still_a_values_side(self, orders_archive_with_files):
         expr = ReferenceExpression3(
-            left="$finn.files.*#sheet1.:last()",
+            left="$finn.files.:all().:last():type()",
             op=ReferenceExpression3.UNION,
-            right="$finn.files.:all().:last()",
+            right="$finn.files.:all().:last():type()",
             csvpaths=orders_archive_with_files,
         )
-        with pytest.raises(ReferenceException3, match="worksheet"):
-            expr.resolve()
+        assert expr._kind("$finn.files.:all().:last():type()") == (
+            ReferenceExpression3.VALUES
+        )
 
-    def test_a_statement_range_side_keeps_its_texts(self, orders_archive):
+    def test_a_key_selecting_field_is_still_a_values_side(self, orders_archive):
+        # its argument names the key (B5: a documented exception to 6.40)
+        expr = ReferenceExpression3(
+            left='$a.files.:source_port("email")',
+            op=ReferenceExpression3.UNION,
+            right='$a.files.:source_port("email")',
+            csvpaths=orders_archive,
+        )
+        assert expr._kind('$a.files.:source_port("email")') == (
+            ReferenceExpression3.VALUES
+        )
+
+    def test_a_paths_side_against_a_gated_side_compares_identity(
+        self, orders_archive_with_files
+    ):
+        # a gated right side was counted as values, and a paths left side
+        # against a values right side raised "cannot compare"
+        expr = ReferenceExpression3(
+            left="$finn.files.:all().:last()",
+            op=ReferenceExpression3.INTERSECT,
+            right='$finn.files.:all().:type("csv")',
+            csvpaths=orders_archive_with_files,
+        )
+        assert len(expr.resolve().results) == 2
+
+    def test_a_statement_range_side_carries_no_text(self, orders_archive):
         expr = ReferenceExpression3(
             left="$groupa.csvpaths.:last().:from(0)",
             op=ReferenceExpression3.UNION,
@@ -1026,7 +1062,7 @@ class TestPathsSideResolvesEachResult:
             csvpaths=orders_archive,
         )
         results = expr.resolve().results
-        assert results and all(isinstance(r.data, str) for r in results)
+        assert results and all(r.data is None for r in results)
 
 
 class TestFromString:
