@@ -7567,10 +7567,13 @@ class TestManifestTakesNoNameThree:
         ]
 
     def test_the_named_range_works_for_a_literal_and_a_set_root(self, tmp_path):
-        assert self._finder("$alpha.files.:manifest():from(-3)", tmp_path).query().uuids
+        # a negative range keeps only the tail, so it is not "everything"
         assert self._finder(
-            "$:regex(/^al/).files.:manifest():from(-3)", tmp_path
-        ).query().uuids == ["u1"]
+            "$alpha.files.:manifest():from(-2)", tmp_path
+        ).query().uuids == ["u-one-1", "u-one-2"]
+        assert self._finder(
+            "$:regex(/^(al|be)/).files.:manifest():from(-1)", tmp_path
+        ).query().uuids == ["u2"]
 
     def test_a_pointer_chain_then_a_name_three_says_drop_it(self, tmp_path):
         with pytest.raises(ReferenceException3, match="takes no name_three"):
