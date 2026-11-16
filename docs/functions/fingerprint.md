@@ -9,7 +9,7 @@ To simply get a sha256 digest of the entire file in one go, use the `file_finger
 
 The fingerprint functions can take an arbitrary name qualifier to name their metadata keys and intermediate variables. If you do not provide your own variable names you will see:
 - `line_fingerprint()` values in a `by_line_fingerprint`
-- `file_fingerprint()` in a `fingerprint`
+- `file_fingerprint()` in a `file_fingerprint`
 
 If you give `line_fingerprint()` a name you must use the same name on `store_line_fingerprint()`.
 
@@ -21,14 +21,14 @@ The metadata will also receive a `hash_algorithm` key with the value `sha256`
     $[*][
         firstline() -> file_fingerprint()
         line_fingerprint.lineshash()
-        last() -> store_fingerprint.lineshash()
+        last() -> store_line_fingerprint.lineshash()
     ]
 ```
 
 This csvpath will result in the CsvPath instance's metadata looking like this:
 
 ```json
-    { "fingerprint":"6541e28c6330b910e47f1ef406259c17690612630936ce5784522cf05afadffa",
+    { "file_fingerprint":"6541e28c6330b910e47f1ef406259c17690612630936ce5784522cf05afadffa",
       "lineshash":"c299f3f275efc3999d733af13d02dfb2aaef2b707616443160a24c0f96f026b3",
       "hash_algorithm":"sha256"
     }

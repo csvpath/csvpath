@@ -97,8 +97,8 @@ class BriefStackTrace(SideEffect):
                 """\
                    Writes a shallow stack trace to the log or to print().
 
-                   If a second argument, either 'log' or 'print', is not provided the default
-                   is to print to the default printout stream.
+                   Takes one optional argument, either 'log' or 'print'. If it is not provided
+                   the default is to print to the default printout stream.
                 """
             ),
         ]

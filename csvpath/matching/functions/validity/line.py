@@ -194,7 +194,7 @@ class Line(MatchDecider):
                 self, name, skip=skip, sibs=sibs
             )
             if len(lines) > 1:
-                msg = "Duplicate line found where a distict set of values is expected"
+                msg = "Duplicate line found where a distinct set of values is expected"
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.matcher.csvpath.do_i_raise():
                     raise MatchException(msg)
