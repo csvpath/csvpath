@@ -1,7 +1,6 @@
-from datetime import datetime, timezone
-
 from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.path_util import PathUtility as pathu
+from csvpath.util.date_util import DateUtility as daut
 
 
 class TemplateUtility:
@@ -36,7 +35,7 @@ class TemplateUtility:
 
     @classmethod
     def transform_template(cls, template: str) -> str:
-        dt = datetime.now(timezone.utc)
+        dt = daut.now()
         t = template
         t = t.replace(":day", str(dt.day))
         t = t.replace(":month_name", dt.strftime("%B"))
