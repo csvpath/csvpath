@@ -1054,6 +1054,51 @@ class TestPathsSideCarriesPathsAndUuids:
         )
         assert len(expr.resolve().results) == 2
 
+    def test_a_uuid_gate_then_a_name_is_not_uuid_valued(
+        self, orders_archive_with_files
+    ):
+        # the right side's data is names; its uuid gate only filters, so a
+        # paths left side has nothing to compare and raises, as it does
+        # without the gate (reviewer on #715)
+        for right in (
+            '$*.results.:flatten():named_file_uuid("file-uuid-1"):named_paths_name()',
+            "$*.results.:flatten():named_paths_name()",
+        ):
+            expr = ReferenceExpression3(
+                left="$finn.files.:all().:last()",
+                op=ReferenceExpression3.SUBTRACT,
+                right=right,
+                csvpaths=orders_archive_with_files,
+            )
+            with pytest.raises(ReferenceException3, match="cannot compare"):
+                expr.resolve()
+
+    def test_a_values_side_does_not_union_with_an_argued_one(self, orders_archive):
+        # an argued ':run_uuid("a1")' is a filter, so that side is paths;
+        # a values left side and a paths right side raise (the matrix's
+        # UNION row). It unioned on main, by KIND.
+        expr = ReferenceExpression3(
+            left="$*.results.:flatten():run_uuid()",
+            op=ReferenceExpression3.UNION,
+            right='$*.results.:flatten():run_uuid("a1")',
+            csvpaths=orders_archive,
+        )
+        with pytest.raises(ReferenceException3):
+            expr.resolve()
+
+    def test_a_worksheet_paths_side_on_a_csv_is_not_read(
+        self, orders_archive_with_files
+    ):
+        # the worksheet error belonged to the read; a paths side reads
+        # nothing, so it no longer raises (it did before B2)
+        expr = ReferenceExpression3(
+            left="$finn.files.*#sheet1.:last()",
+            op=ReferenceExpression3.UNION,
+            right="$finn.files.:all().:last()",
+            csvpaths=orders_archive_with_files,
+        )
+        assert all(r.data is None for r in expr.resolve().results)
+
     def test_a_statement_range_side_carries_no_text(self, orders_archive):
         expr = ReferenceExpression3(
             left="$groupa.csvpaths.:last().:from(0)",

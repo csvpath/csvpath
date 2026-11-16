@@ -18,8 +18,9 @@ class ReferenceExpression3:
     # settled 2026-08-17). Each side is either a plain reference string
     # (dispatched through ReferenceFinderFactory3, so it can be any of
     # the three datatypes) or another ReferenceExpression3
-    # (sub-expressions) -- either way, each side is fully resolve()d to
-    # its own ReferenceResults3 before the operation combines them.
+    # (sub-expressions) -- either way, each side is reduced to its own
+    # ReferenceResults3 before the operation combines them: a values side
+    # is resolved, a paths side only queried (RC triage B2, 2026-11-16).
     #
     # UNION never looks at resolved data at all -- it is pure
     # concatenation of both sides' own native results, with duplicates
@@ -100,9 +101,10 @@ class ReferenceExpression3:
     # accessor-equality rule -- see _check_union_compatible and the
     # UNION paragraph in this class's own top comment block).
     # A side is VALUES if its own terminal function chain includes a
-    # ROLE == VALUE function (a real scalar lands in .data), or PATHS
-    # if it does not (a path+uuid result; .data is whatever that path
-    # resolves to, e.g. a version's bytes or a statement's text). Computed
+    # ROLE == VALUE function that is not a filter -- unargued, or
+    # key-selecting (a real scalar lands in .data) -- or PATHS if it does
+    # not (a path+uuid result, queried only, .data None; RC triage B2,
+    # David 2026-11-16: "a filter is just a filter not a field value"). Computed
     # statically, from the parsed reference's own terminal_functions
     # (Reference3.terminal_functions), never from resolved data -- a
     # per-item legitimate None (e.g. an optional field absent for one
@@ -289,7 +291,8 @@ class ReferenceExpression3:
 
     def _terminal_value_call(self, side: "str | ReferenceExpression3"):
         """the first ROLE == VALUE FunctionCall3 in `side`'s own terminal
-        chain, or None if the side is PATHS (no such accessor at all).
+        chain that is not a field filter (_is_field_filter()), or None if
+        the side is PATHS (no such accessor at all).
         Shared by _kind (True/False only) and _check_union_compatible,
         which needs the actual call -- not just whether one exists -- to
         compare accessor identity (name+arg together) via FunctionCall3's
@@ -318,6 +321,9 @@ class ReferenceExpression3:
             return False
         if function_cls.SOURCE not in ("manifest", "definition"):
             return False
+        # the key-selecting fields (source_*, destination_*,
+        # transfer_on_complete_*) are the only ones today, the documented
+        # exception of B5/D27; a new one needs a "{}" KEY slot to be seen
         keyed = any("{}" in str(key) for key in (function_cls.KEY or {}).values())
         return not keyed
 
@@ -372,12 +378,11 @@ class ReferenceExpression3:
         return function_cls.KIND if function_cls is not None else None
 
     def _produces_uuid(self, side: "str | ReferenceExpression3") -> bool:
-        parsed = self._side_reference_parsed(side)
-        for f in parsed.terminal_functions:
-            function_cls = ReferenceFunctionFactory.get_registered_class(f.name)
-            if function_cls is not None and function_cls.KIND == "uuid":
-                return True
-        return False
+        # the side's value accessor, not any uuid-KIND call in its chain: a
+        # uuid gate filters, it does not make the side's data a uuid
+        # (':named_file_uuid("x"):named_paths_name()' is names; reviewer on
+        # #715). The same accessor _kind() and UNION read.
+        return self._terminal_kind(self._terminal_value_call(side)) == "uuid"
 
     @staticmethod
     def _union(left: ReferenceResults3, right: ReferenceResults3) -> ReferenceResults3:
