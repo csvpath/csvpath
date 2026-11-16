@@ -1,7 +1,6 @@
 import json
 import os
 from tabulate import tabulate
-from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_expression_3 import ReferenceExpression3
 from csvpath.references.reference_expression_parser_3 import (
     ReferenceExpressionParser3,
@@ -40,13 +39,7 @@ class ReferenceRunner:
     #
     MAX_RECENT = 10
     HISTORY_FILE_NAME = "cli_reference_history.json"
-    #
-    # a standalone UNION/INTERSECT/SUBTRACT keyword, surrounded by
-    # whitespace -- matches the compendium's and #416's own worked
-    # examples exactly (uppercase only, deliberately -- a lowercase
-    # match risks firing on a literal word inside some unrelated
-    # construct).
-    #
+
     def __init__(self, cli):
         self._cli = cli
 
@@ -133,14 +126,16 @@ class ReferenceRunner:
         self._cli.action(f"Running {expression}\n")
         try:
             # issue #444: the expression parser skips quoted strings and
-            # regexes and allows parenthesized nesting
-            if ReferenceExpressionParser3.is_expression(expression):
-                finder = ReferenceExpression3.from_string(
-                    expression=expression, csvpaths=self._cli.csvpaths
+            # regexes and allows parenthesized nesting. A plain reference
+            # comes back with any grouping parentheses removed.
+            tree = ReferenceExpressionParser3.parse(expression)
+            if isinstance(tree, tuple):
+                finder = ReferenceExpression3.from_tree(
+                    tree=tree, csvpaths=self._cli.csvpaths
                 )
             else:
                 finder = ReferenceFinderFactory3.for_reference(
-                    reference=expression, csvpaths=self._cli.csvpaths
+                    reference=tree, csvpaths=self._cli.csvpaths
                 )
             results = finder.resolve()
             self._remember(expression)

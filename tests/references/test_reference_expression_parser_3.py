@@ -50,6 +50,24 @@ class TestSplit:
         ref = '$a.files.:name(/a"b/)'
         assert Parser.split(f"{ref} UNION {B}") == [ref, "union", B]
 
+    def test_an_escaped_slash_stays_inside_the_regex(self):
+        ref = r"$a.files.:name(/x\/ UNION y/)"
+        assert Parser.split(ref) == [ref]
+
+    def test_whitespace_before_a_regex_arg_still_starts_a_regex(self):
+        ref = "$a.files.:regex( /x) UNION y/ )"
+        assert Parser.split(f"{ref} UNION {B}") == [ref, "union", B]
+
+    def test_a_quoted_operator_inside_a_nested_function_does_not_split(self):
+        ref = '$acme.results.:last().*:having(:identity("x UNION y"))'
+        assert Parser.split(f"{ref} UNION {B}") == [ref, "union", B]
+
+    def test_only_grammar_whitespace_bounds_an_operator(self):
+        # the grammar's WS is space, tab, form feed, CR and LF; a
+        # non-breaking space is not one, so no split here
+        ref = "$a.files.x union\xa0$b.files.y"
+        assert Parser.split(ref) == [ref]
+
     def test_a_path_slash_is_not_a_regex(self):
         ref = "$a.results.:all()/:regex(/01-01/)"
         assert Parser.split(f"{ref} UNION {B}") == [ref, "union", B]
@@ -160,6 +178,27 @@ class TestParse:
     def test_not_a_string_raises(self):
         with pytest.raises(TypeError):
             Parser.parse(None)
+
+    def test_an_error_inside_a_group_quotes_the_whole_expression(self):
+        text = f"{A} UNION (UNION {B})"
+        with pytest.raises(ReferenceException3) as e:
+            Parser.parse(text)
+        assert repr(text) in str(e.value)
+
+    def test_an_operator_word_after_whitespace_is_reserved(self):
+        # decision D26: the grammar ignores whitespace, so each of these
+        # is a valid plain reference to a segment named "union". At the
+        # expression level the word is an operator; the sides then fail
+        # to parse as references (loudly, at resolve).
+        assert Parser.parse("$acme.files.x. union :first()") == (
+            "$acme.files.x.",
+            "union",
+            ":first()",
+        )
+        with pytest.raises(ReferenceException3, match="both sides"):
+            Parser.parse("$acme.files. union")
+        # without the space it is a name, not an operator
+        assert Parser.parse("$acme.files.union") == "$acme.files.union"
 
     def test_a_syntax_error_is_logged(self, caplog):
         with pytest.raises(ReferenceException3):

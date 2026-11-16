@@ -1,3 +1,5 @@
+import logging
+
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_exceptions_3 import ReferenceException3
@@ -149,27 +151,47 @@ class ReferenceExpression3:
         $b.files.:last()) SUBTRACT $c.files.:first()' -- issue #444. See
         ReferenceExpressionParser3 for the written form. Text with no
         operator is a plain reference, not an expression, and raises."""
-        if csvpaths is None:
-            raise ValueError("ReferenceExpression3 csvpaths cannot be None")
         tree = ReferenceExpressionParser3.parse(expression)
         if not isinstance(tree, tuple):
-            raise ReferenceException3(
+            msg = (
                 "Not a reference expression, no UNION/INTERSECT/SUBTRACT: "
                 f"{expression!r}"
             )
-        return cls._from_tree(tree=tree, csvpaths=csvpaths)
+            logging.getLogger(cls.__name__).error(msg)
+            raise ReferenceException3(msg)
+        return cls.from_tree(tree=tree, csvpaths=csvpaths)
 
     @classmethod
-    def _from_tree(cls, *, tree: "str | tuple", csvpaths) -> "str | ReferenceExpression3":
-        if isinstance(tree, str):
-            return tree
+    def from_tree(cls, *, tree: tuple, csvpaths) -> "ReferenceExpression3":
+        """builds the expression from a ReferenceExpressionParser3.parse()
+        tree: a (left, op, right) tuple whose sides are reference strings
+        or such tuples."""
+        if not isinstance(tree, tuple) or len(tree) != 3:
+            msg = (
+                "A reference expression tree must be (left, op, right), "
+                f"not {tree!r}"
+            )
+            logging.getLogger(cls.__name__).error(msg)
+            raise TypeError(msg)
+        if csvpaths is None:
+            msg = "ReferenceExpression3 csvpaths cannot be None"
+            logging.getLogger(cls.__name__).error(msg)
+            raise ValueError(msg)
         left, op, right = tree
         return cls(
-            left=cls._from_tree(tree=left, csvpaths=csvpaths),
+            left=cls._side_from_tree(tree=left, csvpaths=csvpaths),
             op=op,
-            right=cls._from_tree(tree=right, csvpaths=csvpaths),
+            right=cls._side_from_tree(tree=right, csvpaths=csvpaths),
             csvpaths=csvpaths,
         )
+
+    @classmethod
+    def _side_from_tree(
+        cls, *, tree: "str | tuple", csvpaths
+    ) -> "str | ReferenceExpression3":
+        if isinstance(tree, str):
+            return tree
+        return cls.from_tree(tree=tree, csvpaths=csvpaths)
 
     @property
     def left(self) -> "str | ReferenceExpression3":

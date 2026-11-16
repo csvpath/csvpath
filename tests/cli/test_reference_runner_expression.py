@@ -1,6 +1,6 @@
 """The CLI's run reference expressions menu dispatches a line through
 ReferenceExpressionParser3 (issue #444): an expression goes to
-ReferenceExpression3.from_string(), a plain reference to the finder
+ReferenceExpression3.from_tree(), a plain reference to the finder
 factory. The CLI is a fake and nothing resolves."""
 
 import builtins
@@ -33,15 +33,15 @@ class _Finder:
 def runner(monkeypatch):
     calls = []
 
-    def _from_string(*, expression, csvpaths):
-        calls.append(("expression", expression))
+    def _from_tree(*, tree, csvpaths):
+        calls.append(("expression", tree))
         return _Finder()
 
     def _for_reference(*, reference, csvpaths):
         calls.append(("reference", reference))
         return _Finder()
 
-    monkeypatch.setattr(rr.ReferenceExpression3, "from_string", _from_string)
+    monkeypatch.setattr(rr.ReferenceExpression3, "from_tree", _from_tree)
     monkeypatch.setattr(rr.ReferenceFinderFactory3, "for_reference", _for_reference)
     monkeypatch.setattr(builtins, "input", lambda prompt="": "")
     r = ReferenceRunner(_Cli())
@@ -50,15 +50,25 @@ def runner(monkeypatch):
     return r, calls
 
 
-def test_an_expression_goes_to_from_string(runner):
+def test_an_expression_goes_to_from_tree(runner):
     r, calls = runner
     r._run("($a.files.:last() union $b.files.:last()) SUBTRACT $c.files.:first()")
     assert calls == [
         (
             "expression",
-            "($a.files.:last() union $b.files.:last()) SUBTRACT $c.files.:first()",
+            (
+                ("$a.files.:last()", "union", "$b.files.:last()"),
+                "subtract",
+                "$c.files.:first()",
+            ),
         )
     ]
+
+
+def test_a_grouped_plain_reference_goes_to_the_factory_unwrapped(runner):
+    r, calls = runner
+    r._run("( $a.files.:last() )")
+    assert calls == [("reference", "$a.files.:last()")]
 
 
 def test_a_quoted_operator_is_a_plain_reference(runner):

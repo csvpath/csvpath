@@ -1079,6 +1079,8 @@ class TestFromString:
             csvpaths=orders_archive,
         )
         assert expr.resolve().results == []
+        # every run (5) UNION the groups-with-orders versions that match
+        # a run's group (both groups: 2) -- the documented 7
         expr = ReferenceExpression3.from_string(
             expression=f"{left} UNION ({right} INTERSECT {left})",
             csvpaths=orders_archive,
@@ -1103,4 +1105,29 @@ class TestFromString:
         with pytest.raises(ValueError):
             ReferenceExpression3.from_string(
                 expression="$a.files.:last() UNION $b.files.:last()", csvpaths=None
+            )
+
+    def test_from_tree_builds_the_same_expression(self, orders_archive):
+        expr = ReferenceExpression3.from_tree(
+            tree=(
+                ("$a.files.:last()", "union", "$b.files.:last()"),
+                "subtract",
+                "$c.files.:first()",
+            ),
+            csvpaths=orders_archive,
+        )
+        assert expr.left.op == ReferenceExpression3.UNION
+        assert expr.right == "$c.files.:first()"
+
+    def test_from_tree_rejects_a_plain_reference(self, orders_archive):
+        with pytest.raises(TypeError):
+            ReferenceExpression3.from_tree(
+                tree="$a.files.:last()", csvpaths=orders_archive
+            )
+
+    def test_from_tree_rejects_a_bad_operator(self, orders_archive):
+        with pytest.raises(ValueError):
+            ReferenceExpression3.from_tree(
+                tree=("$a.files.:last()", "join", "$b.files.:last()"),
+                csvpaths=orders_archive,
             )
