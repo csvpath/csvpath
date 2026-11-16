@@ -196,8 +196,12 @@ def test_nand_nor_with_header_equalities(expression, expected):
 @pytest.mark.parametrize("function", ["nand", "nor"])
 def test_nand_nor_need_at_least_two_args(function):
     # the data and call signatures in docs/func_gen/nand.md and nor.md
-    # both list two required arguments, so one argument is a language error
+    # both list two required arguments, so one argument is a language error.
+    # raise mode is set explicitly so the test does not depend on the
+    # config's [errors] policy.
     path = CsvPath()
     with pytest.raises(ChildrenException):
-        path.parse(f"${PATH}[1][ @result = {function}(yes()) ]")
+        path.parse(
+            f"~ validation-mode: raise ~ ${PATH}[1][ @result = {function}(yes()) ]"
+        )
         path.fast_forward()
