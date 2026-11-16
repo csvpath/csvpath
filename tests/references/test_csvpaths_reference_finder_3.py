@@ -4143,3 +4143,39 @@ class TestATraversalNameReadsTheOwningGroup:
         counts = self._counting(finder)
         finder.query()
         assert counts["manifests"] == len(GATE_BY_NAME)
+
+
+class TestCollectionFieldsTakeValuePredicates:
+    # RC triage B5 (David, 2026-11-16): ':named_paths()' and
+    # ':named_paths_identities()' filter by :has_value()/
+    # :does_not_have_value(); a gate filters first, then the pointer picks
+    def _manifest(self):
+        manifest = [dict(e) for e in ACME_MANIFEST]
+        manifest.append(
+            {
+                **manifest[-1],
+                "uuid": "v-empty",
+                "named_paths": [],
+                "named_paths_identities": [],
+            }
+        )
+        return manifest
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            ("$acme.csvpaths.:all():named_paths_identities(:has_value())", ["v0-uuid", "v1-uuid"]),
+            ("$acme.csvpaths.:all():named_paths(:does_not_have_value())", ["v-empty"]),
+            ("$acme.csvpaths.:last():named_paths(:has_value())", ["v1-uuid"]),
+            ("$acme.csvpaths.:manifest():named_paths_identities(:has_value())", ["v0-uuid", "v1-uuid"]),
+        ],
+    )
+    def test_a_value_predicate_filters(self, reference, expected):
+        assert _finder(reference, manifest=self._manifest()).query().uuids == expected
+
+    def test_an_equality_arg_raises(self):
+        with pytest.raises(ReferenceException3):
+            _finder(
+                '$acme.csvpaths.:all():named_paths_identities("company_names")',
+                manifest=self._manifest(),
+            ).query()
