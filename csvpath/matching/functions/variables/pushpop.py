@@ -255,7 +255,12 @@ class Peek(ValueProducer):
 
         self._register_internal_var_name(k)
         stack = self.matcher.get_variable(k, set_if_none=[])
-        if v < len(stack):
+        #
+        # out of range in either direction is None. v < len(stack) let a
+        # negative index past the start through, so peek("s", -2) on a
+        # one-item stack, or peek() on an empty one, raised IndexError.
+        #
+        if -len(stack) <= v < len(stack):
             self.value = stack[v]
 
     def _decide_match(self, skip=None) -> None:
@@ -335,7 +340,12 @@ class PeekEq(ValueProducer):
         self._register_internal_var_name(s)
         stack = self.matcher.get_variable(s, set_if_none=[])
         siv = None
-        if abs(i) < len(stack):
+        #
+        # a valid Python index, negative included. abs(i) < len(stack)
+        # refused -len(stack), so -1 failed on a one-item stack and -2 on a
+        # two-item stack.
+        #
+        if -len(stack) <= i < len(stack):
             siv = stack[i]
             if self.name == "peek_eq":
                 self.value = v == siv
