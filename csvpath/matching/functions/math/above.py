@@ -85,17 +85,24 @@ class AboveBelow(MatchDecider):
             self.match = False  # pragma: no cover
 
     def _above(self) -> bool:
-        if self.name in ["gt", "above", "after", "gte"]:
+        if self.name in ["gt", "above", "after", "gte", "ge"]:
             return True
-        if self.name in ["lt", "below", "before", "lte"]:
+        if self.name in ["lt", "below", "before", "lte", "le"]:
             return False
 
+    def _or_equal(self) -> bool:
+        #
+        # ge and le are aliases of gte and lte. they were missing here and
+        # in _above(), so both behaved as lt().
+        #
+        return self.name in ["gte", "ge", "lte", "le"]
+
     def _try_numbers(self, a, b) -> bool:
-        if self._above() and self.name != "gte":
+        if self._above() and not self._or_equal():
             return float(a) > float(b)
         elif self._above():
             return float(a) >= float(b)
-        if not self._above() and self.name != "lte":
+        if not self._above() and not self._or_equal():
             return float(a) < float(b)
         return float(a) <= float(b)
 
@@ -103,21 +110,21 @@ class AboveBelow(MatchDecider):
         if ExpressionUtility.all([a, b], [datetime]):
             a = ExpressionUtility.to_datetime(a)
             b = ExpressionUtility.to_datetime(b)
-            if self._above() and self.name != "gte":
+            if self._above() and not self._or_equal():
                 return a.timestamp() > b.timestamp()
             elif self._above():
                 return a.timestamp() >= b.timestamp()
-            if not self._above() and self.name != "lte":
+            if not self._above() and not self._or_equal():
                 return a.timestamp() < b.timestamp()
             return a.timestamp() <= b.timestamp()
         if ExpressionUtility.all([a, b], [date]):
             a = ExpressionUtility.to_date(a)
             b = ExpressionUtility.to_date(b)
-            if self._above() and self.name != "gte":
+            if self._above() and not self._or_equal():
                 return a > b
             elif self._above():
                 return a >= b
-            if not self._above() and self.name != "lte":
+            if not self._above() and not self._or_equal():
                 return a < b
             return a <= b
         return None
@@ -125,10 +132,10 @@ class AboveBelow(MatchDecider):
     def _try_strings(self, a, b) -> bool:
         a = f"{a}".strip()
         b = f"{b}".strip()
-        if self._above() and self.name != "gte":
+        if self._above() and not self._or_equal():
             return a > b
         elif self._above():
             return a >= b
-        if not self._above() and self.name != "lte":
+        if not self._above() and not self._or_equal():
             return a < b
         return a <= b

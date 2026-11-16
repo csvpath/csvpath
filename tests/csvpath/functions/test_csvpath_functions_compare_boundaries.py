@@ -1,6 +1,7 @@
 """Boundary tests for the comparison functions implemented by AboveBelow
 (csvpath/matching/functions/math/above.py): gt, above, after, gte, lt,
-below, before, and lte.
+below, before, lte, and the aliases ge and le (ge and le acted as lt until
+they were added here).
 
 Every name is checked for less-than, equal, and greater-than operands of
 each value kind AboveBelow compares: numbers (int and float), strings,
@@ -27,10 +28,12 @@ EXPECTED = {
     "above": lambda a, b: a > b,
     "after": lambda a, b: a > b,
     "gte": lambda a, b: a >= b,
+    "ge": lambda a, b: a >= b,
     "lt": lambda a, b: a < b,
     "below": lambda a, b: a < b,
     "before": lambda a, b: a < b,
     "lte": lambda a, b: a <= b,
+    "le": lambda a, b: a <= b,
 }
 
 #

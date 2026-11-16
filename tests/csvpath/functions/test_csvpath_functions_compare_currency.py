@@ -1,5 +1,6 @@
-"""gt(), lt(), gte(), lte() and their aliases compare a currency string like
-"$10" as a string, not a number (#576, David 2026-11-14). A numeric
+"""gt(), lt(), gte(), lte() and their aliases (including ge and le) compare a
+currency string like "$10" as a string, not a number (#576, David
+2026-11-14). A numeric
 comparison is written explicitly: gt(int(#a), 9).
 
 Before the fix, AboveBelow asked ExpressionUtility.all([a, b], [float, int]),
@@ -34,10 +35,12 @@ EXPECTED = {
     "above": lambda a, b: a > b,
     "after": lambda a, b: a > b,
     "gte": lambda a, b: a >= b,
+    "ge": lambda a, b: a >= b,
     "lt": lambda a, b: a < b,
     "below": lambda a, b: a < b,
     "before": lambda a, b: a < b,
     "lte": lambda a, b: a <= b,
+    "le": lambda a, b: a <= b,
 }
 
 
