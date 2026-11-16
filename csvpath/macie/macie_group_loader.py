@@ -3,6 +3,7 @@ import logging
 import os
 from collections import Counter
 
+from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
 
@@ -246,7 +247,9 @@ class MacieGroupLoader:
         is refused before anything is written: replacing it would change
         what an earlier csvpath in the group allows. The same entries are
         fine. Without append the group's csvpaths are replaced, so its lists
-        are too."""
+        are too: lists an earlier Macie load wrote that the new wrapper does
+        not have are removed. Lists stored otherwise, with store_list(), are
+        not, as no wrapper names them."""
         if paths_manager is None:
             raise ValueError("paths_manager cannot be None")
         if not isinstance(name, str) or name.strip() == "":
@@ -271,11 +274,44 @@ class MacieGroupLoader:
                     )
                     cls.logger().error(msg)
                     raise MacieException(msg)
+        if append is not True and paths_manager.has_named_paths(name):
+            for stale in sorted(
+                cls.wrapper_list_names(paths_manager=paths_manager, name=name)
+                - set(lists)
+            ):
+                am.delete_asset_file(name, f"{stale}{am.LIST_SUFFIX}")
         paths_manager.configure_named_paths(name)
         return [
             am.store_list(name=name, list_name=k, values=list(v))
             for k, v in lists.items()
         ]
+
+    @classmethod
+    def wrapper_list_names(cls, *, paths_manager, name: str) -> set[str]:
+        """the text allow list names the Macie wrappers in a group home
+        stored: each s3WordsList list's id (MacieConverter._list_name). Read
+        before a reload removes the old wrapper copies"""
+        if paths_manager is None:
+            raise ValueError("paths_manager cannot be None")
+        home = paths_manager.named_paths_home(name)
+        names = set()
+        for f in Nos(home).listdir(files_only=True):
+            n = f.rsplit("/", 1)[-1]
+            if not MacieWrapperLoader.is_wrapper_path(path=n):
+                continue
+            with DataFileReader(Nos(home).join(n)) as reader:
+                try:
+                    wrapper = json.loads(reader.read())
+                except json.JSONDecodeError:
+                    cls.logger().exception("Cannot read Macie wrapper copy %s", n)
+                    raise
+            for a in wrapper.get("allowLists") or []:
+                settings = a.get("settings") or {}
+                if "s3WordsList" in (settings.get("criteria") or {}) and settings.get(
+                    "id"
+                ):
+                    names.add(settings["id"])
+        return names
 
     @classmethod
     def name_for(cls, *, wrapper: dict, path: str) -> str | None:

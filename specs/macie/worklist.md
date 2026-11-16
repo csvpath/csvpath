@@ -204,13 +204,17 @@ fidelity item in transpile-design.md.
 
 ## Clean-ups (not blockers)
 
-- **Stale source copies in group homes (Macie and ODCS).** Reloading a
-  group without append rewrites `group.csvpaths` but leaves the wrapper and
-  contract copies, and their `.report.json` files, from earlier loads. The
-  group home can then describe rules it no longer runs. Cleanup should be
-  automatic (David, 2026-10-31). Text allow lists in `assets/` are the
-  same: a reload without append replaces the lists the new wrapper has,
-  and leaves the others.
+- ~~**Stale source copies in group homes (Macie and ODCS).**~~ Done
+  (2026-11-16): a reload without append removes earlier ODCS contract and
+  Macie wrapper copies and their reports from the group home
+  (`PathsManager._remove_source_copies`), and the text allow lists
+  earlier Macie loads wrote that the new wrapper does not have
+  (`MacieGroupLoader.store_lists`). Lists stored with `store_list()` are
+  kept. Left: a plain csvpath reload over a Macie group keeps the Macie
+  catalog and lists in `assets/`, unread.
+- **Versioning for named-paths groups**, as named-files have (David,
+  2026-11-16). The idea was that people version their csvpaths in git;
+  that has not held up well. Future work, not Macie-specific.
 - **Directory loads under a name** refuse Macie wrappers, as they refuse
   ODCS contracts. Appending with `add_named_paths_from_file(append=True)`
   works for both.
