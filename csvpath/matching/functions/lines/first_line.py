@@ -69,7 +69,18 @@ class FirstLine(MatchDecider):
                 if self.matcher.csvpath.do_i_raise():
                     raise ChildrenException(msg)
 
-        if self.name not in ["firstmatch", "firstscan", "firstline", "first_line"]:
+        #
+        # first_scan and first_match are registered aliases too. they were
+        # missing here, so both were rejected as unknown functions.
+        #
+        if self.name not in [
+            "firstmatch",
+            "first_match",
+            "firstscan",
+            "first_scan",
+            "firstline",
+            "first_line",
+        ]:
             # correct as structure / children exception
             msg = f"Unknown function name: {self.name}"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
