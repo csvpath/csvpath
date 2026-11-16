@@ -57,10 +57,11 @@ class Equals(MatchDecider):
         left = child.left.to_value(skip=skip)
         right = child.right.to_value(skip=skip)
         #
-        # a missing value (None or "") only equals another missing value.
-        # this used to be a truthiness test, so a falsy but real value like
-        # 0 was treated as missing: eq("0", 0) was False while
-        # eq(1, "1.0") was True.
+        # a missing value (None or "") never equals a present value. two
+        # missing values are compared below as before: None == None and
+        # "" == "", but "" != None. this used to be a truthiness test, so a
+        # falsy but real value like 0 was treated as missing: eq("0", 0) was
+        # False while eq(1, "1.0") was True.
         #
         if self._missing(left) != self._missing(right):
             ret = False

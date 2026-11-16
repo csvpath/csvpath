@@ -1,9 +1,10 @@
 """eq(), equals(), equal(), neq() and not_equal_to() on zero-like and missing
 values.
 
-A missing value (None or "") equals only another missing value. Numbers are
-compared as numbers, so "0", 0, "0.0" and 0.0 are all equal, as 1 and "1.0"
-already were.
+A missing value (None or "") never equals a present value. Two missing
+values compare as before: None equals None and "" equals "", but "" does not
+equal None. Numbers are compared as numbers, so "0", 0, "0.0" and 0.0 are all
+equal, as 1 and "1.0" already were.
 
 Before the fix, a truthiness test ran first, so a falsy but real value such as
 0 was treated as missing: eq("0", 0) was False. eq(0, none()) raised a
