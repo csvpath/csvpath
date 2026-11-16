@@ -6,7 +6,8 @@ Before the fix, integer.strict("$10") and decimal.strict("$10.50") matched,
 because both go through ExpressionUtility.to_int() / to_float(), which strip
 $, euro and pound signs.
 
-Commas are left as they are ("1,000" passes strict), pending a ruling.
+Commas fail strict too (David, 2026-11-15): see
+test_csvpath_functions_strict_numbers.py.
 datatype() calls Decimal._is_match(strict=True) to infer types; the currency
 check is in Decimal._decide_match, so datatype() is unchanged.
 """
@@ -36,7 +37,7 @@ class TestCsvPathFunctionsStrictCurrency:
         assert _matched("integer") == ["$10", "10", "£3", "1,000"]
 
     def test_integer_strict_rejects_currency(self):
-        assert _matched("integer.strict") == ["10", "1,000"]
+        assert _matched("integer.strict") == ["10"]
 
     def test_decimal_accepts_currency(self):
         assert _matched("decimal") == ALL
@@ -44,9 +45,9 @@ class TestCsvPathFunctionsStrictCurrency:
     def test_decimal_strict_rejects_currency(self):
         #
         # strict decimal also requires a "." (unchanged), so 10, £3 and
-        # 1,000 were never strict decimals.
+        # 1,000 were never strict decimals. 1,000.50 has a comma.
         #
-        assert _matched("decimal.strict") == ["10.5", "1,000.50"]
+        assert _matched("decimal.strict") == ["10.5"]
 
     @pytest.mark.parametrize("function", ["integer.strict", "decimal.strict"])
     def test_strict_currency_raises_in_raise_mode(self, function):

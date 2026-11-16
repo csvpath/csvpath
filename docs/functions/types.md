@@ -21,7 +21,7 @@ See the links below for more discussion and examples of CsvPath's structural val
 
 To limit matching to values with a `.` character add the qualifier `strict`.
 
-`strict` also rejects a currency symbol (`$`, `€`, `£`) for both `decimal()` and `integer()`: `integer("$10")` matches, `integer.strict("$10")` does not.
+`strict` allows only numbers, for both `decimal()` and `integer()`: an optional leading `+` or `-`, the digits `0`-`9` and, for `decimal()`, a `.`. Surrounding whitespace is trimmed. Without `strict` these functions are permissive: `integer("$10")` and `integer("1,000")` match; `integer.strict("$10")`, `integer.strict("1,000")`, `integer.strict("1_000")` and `decimal.strict("1e5")` do not.
 
 ## Integer
 `integer()` is the same as `decimal()`, except whole numbers only, no decimal points.

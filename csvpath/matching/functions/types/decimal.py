@@ -1,4 +1,6 @@
 # pylint: disable=C0114
+import re
+from typing import Any
 from csvpath.matching.util.expression_utility import ExpressionUtility as exut
 from csvpath.matching.util.exceptions import MatchException
 from csvpath.matching.productions import Header, Variable, Reference, Term
@@ -9,6 +11,13 @@ from .type import Type
 
 
 class Decimal(Type):
+    #
+    # a strict number: optional sign, ASCII digits, at most one ".", and at
+    # least one digit. "10.", ".5", "+5" and "-1.5" are strict numbers;
+    # "1,000", "1_000", "1e5", "nan" and "$10" are not.
+    #
+    STRICT_NUMBER = re.compile(r"[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)")
+
     def check_valid(self) -> None:
         self.value_qualifiers.append("notnone")
         self.value_qualifiers.append("strict")
@@ -108,12 +117,13 @@ class Decimal(Type):
 
         strict = self.has_qualifier("strict")
         #
-        # a currency symbol is not a strict numeric character: integer("$10")
-        # matches, integer.strict("$10") does not. the check is here, not in
-        # _is_match(), so datatype()'s inference is unchanged.
+        # strict allows only numbers: integer("$10") matches, integer.strict("$10")
+        # does not. the check is here, not in _is_match(), so datatype()'s
+        # inference is unchanged.
         #
-        if strict and exut.has_currency_symbol(h):
-            ret = (False, f"'{h}' has 'strict' but contains a currency symbol")
+        problem = Decimal._strict_problem(value=h) if strict else None
+        if problem is not None:
+            ret = (False, problem)
         else:
             ret = Decimal._is_match(
                 name=self.name,
@@ -154,6 +164,25 @@ class Decimal(Type):
         if m is False:
             return (False, "Value is out of bounds")
         return (True, None)
+
+    @classmethod
+    def _strict_problem(cls, *, value: Any) -> str | None:
+        """returns why a value is not a strict number, or None if it is one.
+        strict allows only an optional leading + or -, the digits 0-9 and at
+        most one "." -- surrounding whitespace is trimmed. whether a "." is
+        required (decimal) or refused (integer) is _dot()'s job. a value that
+        is not a string, e.g. an int from a variable, is already a number.
+        """
+        if not isinstance(value, str):
+            return None
+        if exut.has_currency_symbol(value):
+            return f"'{value}' has 'strict' but contains a currency symbol"
+        if cls.STRICT_NUMBER.fullmatch(value.strip()) is None:
+            return (
+                f"'{value}' has 'strict' but is not only digits, "
+                "an optional sign and an optional '.'"
+            )
+        return None
 
     @classmethod
     def _dot(cls, *, name: str, h: str, strict: bool) -> tuple[bool, str | None]:
