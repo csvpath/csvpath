@@ -46,5 +46,10 @@ class TestCsvPathFunctionsUrl(unittest.TestCase):
             path.fast_forward()
 
     def test_function_url_4(self):
+        #
+        # docs/functions/email.md ("Email and Url"): unless notnone is
+        # present, none() or None are accepted values. this used to assert
+        # False, which pinned the bug fixed with url() stringifying None.
+        #
         path = CsvPath().parse(f"""${URLS}[1][ @v = url( none() ) ]""").fast_forward()
-        assert path.variables["v"] is False
+        assert path.variables["v"] is True
