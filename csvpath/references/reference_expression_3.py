@@ -1,6 +1,7 @@
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_exceptions_3 import ReferenceException3
+from .reference_expression_parser_3 import ReferenceExpressionParser3
 from .reference_finder_factory_3 import ReferenceFinderFactory3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResults3
@@ -141,6 +142,46 @@ class ReferenceExpression3:
         self._op = op
         self._right = right
         self._csvpaths = csvpaths
+
+    @classmethod
+    def from_string(cls, *, expression: str, csvpaths) -> "ReferenceExpression3":
+        """parses a written expression, e.g. '($a.files.:last() UNION
+        $b.files.:last()) SUBTRACT $c.files.:first()' -- issue #444. See
+        ReferenceExpressionParser3 for the written form. Text with no
+        operator is a plain reference, not an expression, and raises."""
+        if csvpaths is None:
+            raise ValueError("ReferenceExpression3 csvpaths cannot be None")
+        tree = ReferenceExpressionParser3.parse(expression)
+        if not isinstance(tree, tuple):
+            raise ReferenceException3(
+                "Not a reference expression, no UNION/INTERSECT/SUBTRACT: "
+                f"{expression!r}"
+            )
+        return cls._from_tree(tree=tree, csvpaths=csvpaths)
+
+    @classmethod
+    def _from_tree(cls, *, tree: "str | tuple", csvpaths) -> "str | ReferenceExpression3":
+        if isinstance(tree, str):
+            return tree
+        left, op, right = tree
+        return cls(
+            left=cls._from_tree(tree=left, csvpaths=csvpaths),
+            op=op,
+            right=cls._from_tree(tree=right, csvpaths=csvpaths),
+            csvpaths=csvpaths,
+        )
+
+    @property
+    def left(self) -> "str | ReferenceExpression3":
+        return self._left
+
+    @property
+    def op(self) -> str:
+        return self._op
+
+    @property
+    def right(self) -> "str | ReferenceExpression3":
+        return self._right
 
     def resolve(self) -> ReferenceResults3:
         left_results = self._resolve_side(self._left)

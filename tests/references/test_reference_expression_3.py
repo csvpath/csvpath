@@ -1027,3 +1027,80 @@ class TestPathsSideResolvesEachResult:
         )
         results = expr.resolve().results
         assert results and all(isinstance(r.data, str) for r in results)
+
+
+class TestFromString:
+    #
+    # issue #444: ReferenceExpression3.from_string() builds the same
+    # expression a caller builds by hand, nesting through parentheses
+    #
+    def test_one_operator_builds_left_op_right(self, orders_archive):
+        expr = ReferenceExpression3.from_string(
+            expression=f"{_left_side(orders_archive)} intersect "
+            f"{_right_side(orders_archive)}",
+            csvpaths=orders_archive,
+        )
+        assert expr.left == _left_side(orders_archive)
+        assert expr.op == ReferenceExpression3.INTERSECT
+        assert expr.right == _right_side(orders_archive)
+
+    def test_a_group_builds_a_sub_expression(self, orders_archive):
+        expr = ReferenceExpression3.from_string(
+            expression="($a.files.:last() UNION $b.files.:last()) "
+            "SUBTRACT $c.files.:first()",
+            csvpaths=orders_archive,
+        )
+        assert isinstance(expr.left, ReferenceExpression3)
+        assert expr.left.left == "$a.files.:last()"
+        assert expr.left.op == ReferenceExpression3.UNION
+        assert expr.left.right == "$b.files.:last()"
+        assert expr.op == ReferenceExpression3.SUBTRACT
+        assert expr.right == "$c.files.:first()"
+        assert expr.left._csvpaths is orders_archive
+
+    def test_resolves_as_the_hand_built_expression(self, orders_archive):
+        # the documented orders example, written as one line; the right
+        # side's :having("orders") is a quoted argument
+        expr = ReferenceExpression3.from_string(
+            expression=f"{_left_side(orders_archive)} INTERSECT "
+            f"{_right_side(orders_archive)}",
+            csvpaths=orders_archive,
+        )
+        result = expr.resolve()
+        assert sorted(r.uuid for r in result.results) == ["a1", "a2", "b1", "b2", "b3"]
+
+    def test_a_nested_expression_resolves(self, orders_archive):
+        # (every run INTERSECT groups with orders) SUBTRACT groups with
+        # orders: every surviving run's group has orders, so none remain
+        left = _left_side(orders_archive)
+        right = _right_side(orders_archive)
+        expr = ReferenceExpression3.from_string(
+            expression=f"({left} INTERSECT {right}) SUBTRACT {right}",
+            csvpaths=orders_archive,
+        )
+        assert expr.resolve().results == []
+        expr = ReferenceExpression3.from_string(
+            expression=f"{left} UNION ({right} INTERSECT {left})",
+            csvpaths=orders_archive,
+        )
+        assert len(expr.resolve()) == 7
+
+    def test_a_plain_reference_raises(self, orders_archive):
+        with pytest.raises(ReferenceException3, match="Not a reference expression"):
+            ReferenceExpression3.from_string(
+                expression=_right_side(orders_archive), csvpaths=orders_archive
+            )
+
+    def test_two_ungrouped_operators_raise(self, orders_archive):
+        with pytest.raises(ReferenceException3, match="Use parentheses"):
+            ReferenceExpression3.from_string(
+                expression="$a.files.:last() UNION $b.files.:last() "
+                "SUBTRACT $c.files.:first()",
+                csvpaths=orders_archive,
+            )
+
+    def test_no_csvpaths_raises(self):
+        with pytest.raises(ValueError):
+            ReferenceExpression3.from_string(
+                expression="$a.files.:last() UNION $b.files.:last()", csvpaths=None
+            )
