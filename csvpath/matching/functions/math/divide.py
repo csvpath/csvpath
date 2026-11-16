@@ -42,6 +42,12 @@ class Divide(ValueProducer):
             if i == 0:
                 ret = v
             else:
+                #
+                # the dividend can be a string, e.g. from a header. convert it
+                # before isnan(): math.isnan("10") raised TypeError, which
+                # to_value() swallowed, so divide(#a, 2) was silently None.
+                #
+                ret = ExpressionUtility.to_float(ret)
                 if math.isnan(ret) or ExpressionUtility.to_float(v) == 0:
                     ret = float("nan")
                 else:
