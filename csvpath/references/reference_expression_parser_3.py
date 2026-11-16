@@ -47,7 +47,7 @@ class ReferenceExpressionParser3:
     @classmethod
     def parse(cls, expression: str) -> "str | tuple":
         cls._check_input(expression)
-        return cls._parse(expression, whole=expression)
+        return cls._parse(text=expression, whole=expression)
 
     @classmethod
     def is_expression(cls, expression: str) -> bool:
@@ -59,24 +59,24 @@ class ReferenceExpressionParser3:
         Each operand is stripped text, which may be a group in
         parentheses; each op is lowercase. An empty operand raises."""
         cls._check_input(expression)
-        return cls._split(expression, whole=expression)
+        return cls._split(text=expression, whole=expression)
 
     @classmethod
-    def _parse(cls, text: str, *, whole: str) -> "str | tuple":
-        parts = cls._split(text, whole=whole)
+    def _parse(cls, *, text: str, whole: str) -> "str | tuple":
+        parts = cls._split(text=text, whole=whole)
         if len(parts) == 1:
-            return cls._operand(parts[0], whole=whole)
+            return cls._operand(text=parts[0], whole=whole)
         if len(parts) > 3:
             cls._raise(f"Use parentheses to group more than one operator in {whole!r}")
         left, op, right = parts
         return (
-            cls._operand(left, whole=whole),
+            cls._operand(text=left, whole=whole),
             op,
-            cls._operand(right, whole=whole),
+            cls._operand(text=right, whole=whole),
         )
 
     @classmethod
-    def _split(cls, text: str, *, whole: str) -> list[str]:
+    def _split(cls, *, text: str, whole: str) -> list[str]:
         parts = []
         start = 0
         depth = 0
@@ -117,10 +117,10 @@ class ReferenceExpressionParser3:
         return parts
 
     @classmethod
-    def _operand(cls, text: str, *, whole: str) -> "str | tuple":
+    def _operand(cls, *, text: str, whole: str) -> "str | tuple":
         if not text.startswith("("):
             return text
-        close = cls._matching_paren(text, whole=whole)
+        close = cls._matching_paren(text=text, whole=whole)
         if close != len(text) - 1:
             cls._raise(
                 f"Unexpected text after a group in {whole!r}: "
@@ -129,10 +129,10 @@ class ReferenceExpressionParser3:
         inner = text[1:-1]
         if inner.strip(cls.WHITESPACE) == "":
             cls._raise(f"Empty parentheses in {whole!r}")
-        return cls._parse(inner, whole=whole)
+        return cls._parse(text=inner, whole=whole)
 
     @classmethod
-    def _matching_paren(cls, text: str, *, whole: str) -> int:
+    def _matching_paren(cls, *, text: str, whole: str) -> int:
         depth = 0
         i = 0
         while i < len(text):
