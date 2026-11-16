@@ -1,4 +1,5 @@
 import unittest
+from tests.skip_utility import SkipUtility as skut
 from csvpath.util.nos import Nos
 
 from csvpath.managers.server_config import ServerConfig
@@ -11,6 +12,7 @@ from csvpath.util.file_writers import DataFileWriter
 
 class TestUtilNos(unittest.TestCase):
     def test_nos_server_config_1(self) -> None:
+        skut.skip_unless_enabled(backend="sftp")
         paths = Builder().build()
         #
         # get the usual creds, server port, and a path

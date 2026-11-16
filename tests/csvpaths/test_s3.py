@@ -1,4 +1,5 @@
 import unittest
+from tests.skip_utility import SkipUtility as skut
 import os
 from csvpath import CsvPaths
 from csvpath.util.file_readers import DataFileReader
@@ -13,6 +14,7 @@ class TestS3NoEnv(unittest.TestCase):
     # trouble.
     #
     def test_s3_without_os_env_creds(self) -> None:
+        skut.skip_unless_enabled(backend="s3")
         ak = os.environ["AWS_ACCESS_KEY_ID"]
         sk = os.environ["AWS_SECRET_ACCESS_KEY"]
         try:
