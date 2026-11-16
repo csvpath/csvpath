@@ -84,6 +84,7 @@ national id can become a legal problem, so a shortfall must be visible.
 | [Getting the rules from AWS](aws.md) | Read a Macie job from your account into a group; the IAM policy |
 | [What gets translated](translation.md) | Custom and managed identifiers, allow lists, keywords, severity, the conversion report |
 | [Results and findings](results.md) | Printouts, errors, the `macie_findings` document, limits |
+| [Reviewing findings with Jev](review.md) | The optional, masked Jev review of findings |
 | [Reproducibility](reproducibility.md) | Group runs as an auditable record; standalone runs for fast checks |
 | [Customizing the stand-ins](customizing.md) | The project rulesbase: tuning keywords, formats and severities |
 | [Limitations](limitations.md) | What is not supported yet, and what we want road-test feedback on |

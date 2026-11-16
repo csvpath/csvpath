@@ -114,6 +114,23 @@ class RunInputs:
             return reader.read()
 
     @classmethod
+    def macie_dir(cls, *, run_dir: str) -> str:
+        """<run dir>/_extra_data/macie"""
+        if not isinstance(run_dir, str) or run_dir.strip() == "":
+            raise ValueError("run_dir must be a non-empty str")
+        return Nos(Nos(run_dir).join(cls.EXTRA)).join(cls.DIR)
+
+    @classmethod
+    def write(cls, *, path: str, text: str) -> None:
+        """writes a file in a run's macie directory, e.g. the Jev review's
+        record"""
+        if not isinstance(path, str) or path.strip() == "":
+            raise ValueError("path must be a non-empty str")
+        if not isinstance(text, str):
+            raise TypeError(f"text must be a str, not {type(text)}")
+        cls._write(path=path, text=text)
+
+    @classmethod
     def _write(cls, *, path: str, text: str) -> None:
         parent = path.rsplit("/", 1)[0]
         if not Nos(parent).dir_exists():
