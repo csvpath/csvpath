@@ -1,4 +1,5 @@
 import unittest
+from tests.skip_utility import SkipUtility as skut
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.nos import Nos
 from csvpath.util.stopwatch import Stopwatch
@@ -10,6 +11,7 @@ DIR = "testdir"
 
 class TestWalkPerf(unittest.TestCase):
     def test_do_walks(self):
+        skut.skip_unless_enabled(backend="azure")
         protocol = "azure"
         bucket = "csvpath"
         dirpath = f"{protocol}://{bucket}/testdir"
