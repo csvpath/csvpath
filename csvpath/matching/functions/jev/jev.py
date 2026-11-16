@@ -122,7 +122,6 @@ class Jev(SideEffect):
                 if answer.type == "noul":
                     stack.append(answer.noul)
                 elif answer.type in ["score", "choice"]:
-                    print(f"{answer.model_dump()}")
                     stack.append(answer.model_dump())
             self.value = stack
 
