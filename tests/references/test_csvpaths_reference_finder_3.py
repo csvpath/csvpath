@@ -4069,3 +4069,64 @@ class TestAScalarFieldFilters:
     )
     def test_the_field_filters_the_versions(self, chain, expected):
         assert _gate_finder(f"$acme.csvpaths.:manifest(){chain}").query().uuids == expected
+
+
+class TestATraversalNameReadsTheOwningGroup:
+    # decision D25, for CSVPATHS (triage A22; reviewer on #662): under a
+    # traversal root a live version's name is the group whose manifest holds
+    # it, both when a ':regex()'/':choice()' root selects it and when
+    # ':named_paths_name()' reads it. Here a1 says "acme-renamed" in the
+    # ledger and in its own entry, but group acme holds it.
+    def _finder(self, reference):
+        by_name = {name: [dict(e) for e in es] for name, es in GATE_BY_NAME.items()}
+        by_name["acme"][0]["named_paths_name"] = "acme-renamed"
+        ledger = [dict(e) for e in GATE_LEDGER]
+        for e in ledger:
+            if e["uuid"] == "a1":
+                e["named_paths_name"] = "acme-renamed"
+        return _finder(reference, by_name=by_name, ledger=ledger, inputs_csvpaths_path="named_paths")
+
+    @pytest.mark.parametrize("root", ['$:choice("acme")', "$:regex(/^acme$/)"])
+    def test_the_owning_group_selects_and_names_it(self, root):
+        records = self._finder(f"{root}.csvpaths.:manifest()").resolve().results[0].data
+        assert "a1" in [r["uuid"] for r in records]
+        (first,) = self._finder(f"{root}.csvpaths.:manifest():first():named_paths_name()").resolve().results
+        assert first.data == "acme"
+        (last,) = self._finder(f"{root}.csvpaths.:first():named_paths_name()").resolve().results
+        assert last.data == "acme"
+
+    def test_the_old_name_selects_nothing(self):
+        assert self._finder('$:choice("acme-renamed").csvpaths.:manifest():first()').query().uuids == []
+
+    def test_a_gate_reads_the_owning_group(self):
+        uuids = self._finder('$*.csvpaths.:manifest():named_paths_name("acme")').query().uuids
+        assert "a1" in uuids
+        assert self._finder('$*.csvpaths.:manifest():named_paths_name("acme-renamed")').query().uuids == []
+
+    @staticmethod
+    def _counting(finder):
+        counts = {"manifests": 0}
+        source = finder.source
+        real = source.paths_manifest
+
+        def counted(name):
+            counts["manifests"] += 1
+            return real(name)
+
+        source.paths_manifest = counted
+        return counts
+
+    def test_a_literal_root_is_the_group_itself(self):
+        # as FILES returns the literal root (reviewer on #663); no index
+        finder = self._finder('$acme.csvpaths.:manifest():named_paths_name("acme")')
+        counts = self._counting(finder)
+        assert finder.query().uuids == ["a1", "a2", "a3", "a4"]
+        assert counts["manifests"] == 1
+        (first,) = self._finder("$acme.csvpaths.:first():named_paths_name()").resolve().results
+        assert first.data == "acme"
+
+    def test_a_ledger_set_query_reads_each_group_once(self):
+        finder = self._finder('$*.csvpaths.:manifest():named_paths_name("acme")')
+        counts = self._counting(finder)
+        finder.query()
+        assert counts["manifests"] == len(GATE_BY_NAME)
