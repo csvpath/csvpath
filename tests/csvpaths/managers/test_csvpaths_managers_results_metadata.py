@@ -81,7 +81,9 @@ class TestCsvPathsManagersResultsMetadata(unittest.TestCase):
                 "run_uuid": str(uuid4()),
                 "named_paths_uuid": str(uuid4()),
                 "named_file_uuid": str(uuid4()),
-                "named_file_last_change": "2026-01-01T00:00:00+00:00",
+                # the registrar writes FileInfo's last_mod: a float epoch
+                # (os.stat().st_mtime), None for a remote file
+                "named_file_last_change": 1763312345.123,
             }
         )
-        assert m.named_file_last_change == "2026-01-01T00:00:00+00:00"
+        assert m.named_file_last_change == 1763312345.123
