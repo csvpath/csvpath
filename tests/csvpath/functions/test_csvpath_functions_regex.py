@@ -1,3 +1,4 @@
+import re
 import unittest
 import pytest
 import os
@@ -108,7 +109,10 @@ class TestCsvPathFunctionsRegex(unittest.TestCase):
                             @sniffle = regex(/^sniffl[Ee]/, #say)
                         ]"""
         )
-        path.fast_forward()
+        lines = path.collect()
+        # only the Bug Bat row says "sniffle sniffle...", so regex() as a
+        # match component matches that one row
+        assert lines == [["Bug", "Bat", "sniffle sniffle..."]]
 
     def test_function_headers_regex_0(self):
         path = CsvPath()
@@ -159,8 +163,28 @@ class TestCsvPathFunctionsRegex(unittest.TestCase):
         $[*][regex("(?i)a\\(*b", #0)]
         $[*][regex("(?<!\\?)"(.*?)(?<!\\?)"", #0)]
         """
+        #
+        # docs/functions/regex.md: regex syntax is "enforced by Python's
+        # regex parser" and "you should be able use your regular
+        # expressions unchanged". so for each line, the regex that reaches
+        # regex() must be exactly the text written in the csvpath, and it
+        # must compile with Python's re. these are positive cases only, so
+        # every one must compile.
+        #
+        count = 0
         with open(REGEXES) as file:
             for i, line in enumerate(file):
                 line = line.strip()
+                if line == "":
+                    continue
+                count += 1
+                written = line[line.index('regex("') + 7 : line.rindex('", #0)')]
                 path = CsvPath()
-                path.parse(line, disposably=True)
+                matcher = path.parse(line, disposably=True)
+                function = matcher.expressions[0][0].children[0]
+                assert function.name == "regex", f"line {i}: {line}"
+                pattern = function.siblings()[0].to_value()
+                assert pattern == written, f"line {i}: {pattern!r} != {written!r}"
+                re.compile(pattern)
+        # guards against an empty or truncated resource file
+        assert count == 285
