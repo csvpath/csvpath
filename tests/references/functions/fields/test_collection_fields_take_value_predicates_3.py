@@ -11,12 +11,24 @@ from csvpath.references.reference_exceptions_3 import ReferenceException3
 #
 # RC triage B5 (David, 2026-11-16): a manifest-backed collection field
 # takes only the two value predicates. An equality test on a list or a
-# dict means nothing (compendium 6.40). The definition-backed collections
-# (sources, destinations, webhooks*, scripts, transfers) still refuse an
-# argument: their finders' gates read manifest fields only (decision D27).
+# dict means nothing (compendium 6.40). FILES ':sources()' still refuses
+# an argument: after a version pointer the FILES finder would ignore it
+# silently (decision D27, reviewer on #716).
 #
-COLLECTIONS = ["named_paths", "named_paths_identities", "file_fingerprints"]
-DEFINITION_COLLECTIONS = ["sources", "destinations", "webhooks", "scripts", "transfers"]
+COLLECTIONS = [
+    "named_paths",
+    "named_paths_identities",
+    "file_fingerprints",
+    "destinations",
+    "webhooks",
+    "webhooks_on_complete_all",
+    "webhooks_on_complete_valid",
+    "webhooks_on_complete_invalid",
+    "webhooks_on_complete_error",
+    "scripts",
+    "transfers",
+]
+DEFINITION_COLLECTIONS = ["sources"]
 
 
 def _build(name: str, arg):
@@ -44,6 +56,7 @@ def test_a_collection_rejects_another_predicate(name):
 
 
 @pytest.mark.parametrize("name", DEFINITION_COLLECTIONS)
-def test_a_definition_collection_still_refuses_an_arg(name):
+@pytest.mark.parametrize("arg", [HasValue3(), DoesNotHaveValue3()])
+def test_sources_still_refuses_an_arg(name, arg):
     with pytest.raises(ReferenceException3):
-        _build(name, HasValue3()).check_valid()
+        _build(name, arg).check_valid()
