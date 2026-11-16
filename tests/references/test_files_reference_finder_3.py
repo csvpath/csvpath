@@ -7566,6 +7566,16 @@ class TestManifestTakesNoNameThree:
             "u2",
         ]
 
+    def test_the_named_range_works_for_a_literal_and_a_set_root(self, tmp_path):
+        assert self._finder("$alpha.files.:manifest():from(-3)", tmp_path).query().uuids
+        assert self._finder(
+            "$:regex(/^al/).files.:manifest():from(-3)", tmp_path
+        ).query().uuids == ["u1"]
+
+    def test_a_pointer_chain_then_a_name_three_says_drop_it(self, tmp_path):
+        with pytest.raises(ReferenceException3, match="takes no name_three"):
+            self._finder("$alpha.files.:manifest():last().:last()", tmp_path).query()
+
     def test_manifest_all_names_the_working_forms(self, tmp_path):
         with pytest.raises(ReferenceException3, match="A bare ':manifest\\(\\)' is every record"):
             self._finder("$*.files.:manifest():all()", tmp_path).query()

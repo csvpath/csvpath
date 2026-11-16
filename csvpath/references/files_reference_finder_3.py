@@ -1694,6 +1694,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # e.g. ':manifest():all()'. The general message sent the user to
             # name_three, which ':manifest()' does not take (RC triage B4)
             functions = "".join(str(call) for call in name_one.functions)
+            selectors = ("first", "last", "index", "from", "to")
+            if all(call.name in selectors for call in name_one.functions):
+                # a pointer or range chain is legal on its own, so what
+                # failed is a name_three after it (reviewer on #711)
+                return (
+                    f"FilesReferenceFinder3: a ':manifest(){functions}' chain "
+                    "takes no name_three -- drop the '.' selector after it."
+                )
             return (
                 f"FilesReferenceFinder3 does not support ':manifest(){functions}'. "
                 "A bare ':manifest()' is every record; to select, use a pointer "

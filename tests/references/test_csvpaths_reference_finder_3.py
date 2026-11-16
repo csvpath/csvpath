@@ -4145,24 +4145,10 @@ class TestATraversalNameReadsTheOwningGroup:
         assert counts["manifests"] == len(GATE_BY_NAME)
 
 
-class TestManifestTakesNoNameThree:
-    # RC triage B4 (David, 2026-11-16), as FILES
-    @pytest.mark.parametrize(
-        "reference",
-        [
-            "$:regex(/^ac/).csvpaths.:manifest().:all()",
-            "$*.csvpaths.:manifest().:all()",
-            "$acme.csvpaths.:manifest().:last()",
-        ],
-    )
-    def test_a_name_three_after_manifest_raises_clearly(self, reference):
-        with pytest.raises(ReferenceException3, match="does not take a name_three"):
-            _gate_finder(reference).query()
 
-    def test_the_chain_form_works(self):
-        assert _gate_finder("$:regex(/^ac/).csvpaths.:manifest():all()").query().uuids == [
-            "a1",
-            "a2",
-            "a3",
-            "a4",
-        ]
+class TestManifestNameThreeIsAStatement:
+    # RC triage B4 is FILES only: in CSVPATHS a name_three after
+    # ':manifest()' picks a statement, a legal read (reviewer on #711)
+    def test_a_statement_identity_after_manifest_still_resolves(self):
+        finder = _finder("$acme.csvpaths.:manifest().company_names")
+        assert [r.data for r in finder.resolve().results] == ["stmt text A"]

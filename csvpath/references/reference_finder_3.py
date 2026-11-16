@@ -813,9 +813,11 @@ class ReferenceFinder3(ABC):
         """a bare ':manifest()' name_one followed by a name_three, e.g.
         '$:regex(/^al/).files.:manifest().:all()', raises a clear error:
         the selection goes in the ':manifest()' chain. It raised "Does not
-        yet support :manifest() as a name_one path segment" (FILES) or
-        ":all() is not legal at name_three" (CSVPATHS). RC triage B4,
-        David 2026-11-16; making the form legal is issue #710."""
+        yet support :manifest() as a name_one path segment".
+        RC triage B4, David 2026-11-16; making the form legal is issue
+        #710. FILES only: in CSVPATHS a name_three after ':manifest()' is a
+        statement identity, index or range, a legal read (reviewer on
+        #711)."""
         if reference is None:
             raise ValueError("reference cannot be None")
         if reference.name_three is None:
