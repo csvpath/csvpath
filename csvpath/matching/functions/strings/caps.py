@@ -41,14 +41,18 @@ class Capitalize(ValueProducer):
         v = v.strip() if v else ""
         v2 = self._value_two(skip=skip)
         v3 = None
+        #
+        # [:1] rather than [0]: "" and the empty words between two spaces have
+        # no first character, and v[0] raised IndexError.
+        #
         if v2:
             ws = []
             for w in v.split(" "):
-                w = w[0].upper() + w[1:]
+                w = w[:1].upper() + w[1:]
                 ws.append(w)
             v3 = " ".join(ws)
         else:
-            v3 = v[0].upper() + v[1:]
+            v3 = v[:1].upper() + v[1:]
         self.value = v3
 
     def _decide_match(self, skip=None) -> None:
