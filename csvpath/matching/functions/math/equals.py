@@ -56,7 +56,14 @@ class Equals(MatchDecider):
         ret = False
         left = child.left.to_value(skip=skip)
         right = child.right.to_value(skip=skip)
-        if (left and not right) or (right and not left):
+        #
+        # a missing value (None or "") never equals a present value. two
+        # missing values are compared below as before: None == None and
+        # "" == "", but "" != None. this used to be a truthiness test, so a
+        # falsy but real value like 0 was treated as missing: eq("0", 0) was
+        # False while eq(1, "1.0") was True.
+        #
+        if self._missing(left) != self._missing(right):
             ret = False
         elif left is None and right is None:
             ret = True
@@ -70,9 +77,15 @@ class Equals(MatchDecider):
             ret = not ret
         self.match = ret
 
+    def _missing(self, v) -> bool:
+        return v is None or (isinstance(v, str) and v == "")
+
     def _is_float(self, fs) -> bool:
         try:
             float(fs)
-        except (OverflowError, ValueError):
+        except (OverflowError, ValueError, TypeError):
+            #
+            # TypeError: float(None) or float([]). eq(0, none()) raised it.
+            #
             return False
         return True
