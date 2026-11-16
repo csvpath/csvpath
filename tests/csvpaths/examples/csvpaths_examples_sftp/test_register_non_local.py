@@ -1,4 +1,5 @@
 import unittest
+from tests.skip_utility import SkipUtility as skut
 import os
 
 
@@ -14,6 +15,7 @@ from csvpath.util.var_utility import VarUtility as vaut
 
 class TestCsvpathsExamplesSftpRegisterNonLocal(unittest.TestCase):
     def test_sftp_register_none_local_file(self):
+        skut.skip_unless_enabled(backend="sftp")
 
         paths = Builder().build()
         #

@@ -179,6 +179,10 @@ def test_csvpaths_macie_review_sends_no_value(tmp_path, monkeypatch) -> None:
     for question in _Client.sent[0].values():
         assert "EMP-123456" not in question
         assert "AAA-######" in question
+        #
+        # the file as the user knows it, not the stored copy's hash name
+        #
+        assert f"File: {NAMED_FILE}." in question
 
 
 def test_csvpaths_macie_review_printouts_and_record(tmp_path, monkeypatch) -> None:
