@@ -1191,16 +1191,29 @@ class TestGlobalLoadsLedger:
         assert results.files == [pathu.resep("inputs/named_paths/manifest.json")]
         assert results.results[0].uuid is None
 
-    def test_resolve_reads_the_global_ledgers_raw_bytes(self, tmp_path):
-        content = b'[{"named_paths_name": "acme"}, {"named_paths_name": "beta"}]'
-        root = tmp_path / "named_paths"
-        root.mkdir()
-        (root / "manifest.json").write_bytes(content)
+    def test_resolve_is_the_global_ledgers_records(self):
+        # RC triage B1 (David, 2026-11-15): records, not bytes -- the
+        # ledger as stored, as ':regex()' gives it filtered
+        ledger = [
+            {"named_paths_name": "acme", "uuid": "u1"},
+            {"named_paths_name": "beta", "uuid": "u2"},
+        ]
         finder = _finder(
-            "$*.csvpaths.:manifest()", inputs_csvpaths_path=str(root)
+            "$*.csvpaths.:manifest()",
+            ledger=ledger,
+            inputs_csvpaths_path="inputs/named_paths",
         )
         results = finder.resolve()
-        assert results.results[0].data == content
+        assert results.results[0].data == ledger
+
+    def test_resolve_raises_for_a_ledger_entry_with_no_uuid(self):
+        finder = _finder(
+            "$*.csvpaths.:manifest()",
+            ledger=[{"named_paths_name": "acme"}],
+            inputs_csvpaths_path="inputs/named_paths",
+        )
+        with pytest.raises(ValueError, match="no uuid"):
+            finder.resolve()
 
     def test_star_with_definition_is_one_file_per_group(self):
         # raised until 2026-11-10; now each live group's definition.json,
