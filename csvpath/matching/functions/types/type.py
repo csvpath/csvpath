@@ -26,7 +26,7 @@ class Type(MatchDecider):
                     self, name, skip=skip, sibs=[value]
                 )
             if len(lines) > 1:
-                msg = f"Duplicate found on line {self.matcher.csvpath.line_monitor.physical_line_number} where a distict set of values is expected"
+                msg = f"Duplicate found on line {self.matcher.csvpath.line_monitor.physical_line_number} where a distinct set of values is expected"
                 self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
                 if self.matcher.csvpath.do_i_raise():
                     raise MatchException(msg)

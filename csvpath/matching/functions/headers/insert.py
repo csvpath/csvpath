@@ -14,10 +14,10 @@ class Insert(SideEffect):
                 """\
                 Inserts a new header-value at a certain position within the output data.
 
-                For e.g.: insert(3, @critter)
+                For e.g.: insert(3, "critter", @critter)
 
-                This match component creates a new header at index 3 (0-based) and sets the
-                value for each line of output to the @critter variable.
+                This match component creates a new header named critter at index 3 (0-based)
+                and sets the value for each line of output to the @critter variable.
 
             """
             ),
