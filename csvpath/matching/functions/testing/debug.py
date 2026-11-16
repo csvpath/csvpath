@@ -125,6 +125,11 @@ class BriefStackTrace(SideEffect):
             LogUtility.log_brief_trace(logger=self.matcher.csvpath.logger)
         else:
             LogUtility.log_brief_trace(printer=self.matcher.csvpath)
+        #
+        # a side effect does not decide the line. match was never set, so a
+        # bare brief_stack_trace() made the line fail to match.
+        #
+        self.match = self.default_match()
 
 
 class VoteStack(SideEffect):
