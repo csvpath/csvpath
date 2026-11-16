@@ -7522,3 +7522,63 @@ class TestATraversalNameReadsTheManifestOwner:
 
     def test_the_status_chain_agrees(self):
         assert self._finder('$*.files.:status("complete"):named_file_name("orders")').query().uuids == ["o1"]
+
+
+class TestManifestTakesNoNameThree:
+    # RC triage B4 (David, 2026-11-16): a bare ':manifest()' followed by a
+    # name_three raises a clear error naming the chain form (issue #710
+    # may make it legal later)
+    LEDGER = [
+        {"named_file_name": "alpha", "uuid": "u1"},
+        {"named_file_name": "beta", "uuid": "u2"},
+    ]
+
+    def _finder(self, reference, tmp_path):
+        (tmp_path / "manifest.json").write_text(json.dumps(self.LEDGER))
+        return _finder(
+            reference,
+            STAR_ALPHA_HOME,
+            STAR_ALPHA_MANIFEST,
+            by_name=STAR_BY_NAME,
+            ledger=self.LEDGER,
+            inputs_files_path=str(tmp_path),
+        )
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$:regex(/^al/).files.:manifest().:all()",
+            "$:regex(/^al/).files.:manifest().:last()",
+            "$*.files.:manifest().:all()",
+            "$alpha.files.:manifest().:first()",
+        ],
+    )
+    def test_a_name_three_after_manifest_raises_clearly(self, reference, tmp_path):
+        with pytest.raises(ReferenceException3, match="does not take a name_three"):
+            self._finder(reference, tmp_path).query()
+
+    def test_the_chain_forms_the_error_names_work(self, tmp_path):
+        assert self._finder(
+            "$:regex(/^al/).files.:manifest():last()", tmp_path
+        ).query().uuids == ["u1"]
+        assert self._finder("$*.files.:manifest():from(0)", tmp_path).query().uuids == [
+            "u1",
+            "u2",
+        ]
+
+    def test_the_named_range_works_for_a_literal_and_a_set_root(self, tmp_path):
+        # a negative range keeps only the tail, so it is not "everything"
+        assert self._finder(
+            "$alpha.files.:manifest():from(-2)", tmp_path
+        ).query().uuids == ["u-one-1", "u-one-2"]
+        assert self._finder(
+            "$:regex(/^(al|be)/).files.:manifest():from(-1)", tmp_path
+        ).query().uuids == ["u2"]
+
+    def test_a_pointer_chain_then_a_name_three_says_drop_it(self, tmp_path):
+        with pytest.raises(ReferenceException3, match="takes no name_three"):
+            self._finder("$alpha.files.:manifest():last().:last()", tmp_path).query()
+
+    def test_manifest_all_names_the_working_forms(self, tmp_path):
+        with pytest.raises(ReferenceException3, match="A bare ':manifest\\(\\)' is every record"):
+            self._finder("$*.files.:manifest():all()", tmp_path).query()
