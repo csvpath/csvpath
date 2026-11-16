@@ -1,4 +1,5 @@
 import unittest
+from tests.skip_utility import SkipUtility as skut
 import os
 from csvpath.csvpaths import CsvPaths
 from csvpath.util.file_writers import DataFileWriter
@@ -11,6 +12,7 @@ DIR = "testdir"
 
 class TestCsvPathsBackendDirs(unittest.TestCase):
     def test_dirs(self) -> None:
+        skut.skip_unless_enabled(backend="azure")
         config = CsvPaths().config
 
         """

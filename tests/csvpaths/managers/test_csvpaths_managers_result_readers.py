@@ -234,19 +234,29 @@ class TestCsvPathsManagersResultReaders(unittest.TestCase):
         f = os.path.join(p, "meta.json")
         if os.path.exists(f):
             os.remove(f)
+        #
+        # a missing file reads as {} and is NOT created: a read never writes
+        # (issue #609, David 2026-11-16). Writing {} could land on top of a
+        # manifest a run was still writing.
+        #
         m = ResultFileReader.meta(p)
-        assert m is not None
-        assert len(m) == 0
-        assert os.path.exists(f)
-        os.remove(f)
+        assert m == {}
         assert not os.path.exists(f)
         #
         #
         #
         f = os.path.join(p, "manifest.json")
+        if os.path.exists(f):
+            os.remove(f)
         m = ResultFileReader.manifest(p)
-        assert m is not None
-        assert len(m) == 0
-        assert os.path.exists(f)
-        os.remove(f)
+        assert m == {}
+        assert not os.path.exists(f)
+        #
+        #
+        #
+        f = os.path.join(p, "vars.json")
+        if os.path.exists(f):
+            os.remove(f)
+        m = ResultFileReader.vars(p)
+        assert m == {}
         assert not os.path.exists(f)
