@@ -74,13 +74,11 @@ def test_without_onmatch_the_value_is_produced_anyway(call, value):
     assert variables["r"] == value
 
 
-@pytest.mark.parametrize("call,value", CASES)
-def test_non_matching_assignment_stores_none(call, value):
-    # pinned: the docs do not say whether the plain assignment still
-    # happens. It does, with None.
-    variables, _ = _run(expression=f"@r = {call} no()")
-    assert "r" in variables
-    assert variables["r"] is None
+#
+# not pinned yet, pending David's ruling (decision log T27): whether a
+# non-matching @r = f.onmatch(...) stores None or leaves r unset, and so
+# whether a later non-matching row overwrites an earlier match.
+#
 
 
 @pytest.mark.parametrize("call,value", CASES)
@@ -94,11 +92,9 @@ def test_onmatch_on_the_variable_leaves_it_unset(call, value):
 @pytest.mark.parametrize(
     "condition,expected",
     [
-        # the last row is a Frog Bat, so the last match sets FROG
+        # the last row is a Frog Bat, so the last match sets FROG. a case
+        # where the last row does not match is left out until T27.
         ('#lastname == "Bat"', "FROG"),
-        # only line 2 is a Fish. Later rows do not match, and their
-        # assignments store None (see test_non_matching_assignment_stores_none)
-        ('#firstname == "Fish"', None),
     ],
 )
 def test_onmatch_over_a_whole_file(condition, expected):
