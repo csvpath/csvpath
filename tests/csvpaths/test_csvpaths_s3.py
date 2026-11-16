@@ -1,4 +1,5 @@
 import unittest
+from tests.skip_utility import SkipUtility as skut
 from os import environ
 from csvpath.csvpaths import CsvPaths
 from csvpath.util.file_writers import DataFileWriter
@@ -15,6 +16,12 @@ TEMP_FILE_NAME = "abc.txt"
 
 
 class TestCsvPathsS3(unittest.TestCase):
+    def setUp(self):
+        #
+        # every test here reads or writes s3://csvpath-example-1
+        #
+        skut.skip_unless_enabled(backend="s3")
+
     def test_s3_add_bucket_file(self):
         if not environ.get("AWS_ACCESS_KEY_ID") or not environ.get(
             "AWS_SECRET_ACCESS_KEY"

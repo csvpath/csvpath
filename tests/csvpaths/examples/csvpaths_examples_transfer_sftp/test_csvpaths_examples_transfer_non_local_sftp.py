@@ -1,4 +1,5 @@
 import unittest
+from tests.skip_utility import SkipUtility as skut
 import os
 
 from csvpath.util.nos import Nos
@@ -26,6 +27,7 @@ PATH = os.path.join(
 
 class TestCsvPathsExamplesTransferNonlocalSftp(unittest.TestCase):
     def test_transfer_non_local_1(self):
+        skut.skip_unless_enabled(backend="sftp")
         paths = Builder().build()
         paths.add_to_config("errors", "csvpaths", "raise, collect, print")
         paths.add_to_config("errors", "csvpath", "raise, collect, print")

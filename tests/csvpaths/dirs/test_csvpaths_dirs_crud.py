@@ -1,4 +1,5 @@
 import unittest
+from tests.skip_utility import SkipUtility as skut
 import os
 from csvpath.util.file_writers import DataFileWriter
 from csvpath.util.file_readers import DataFileReader
@@ -26,6 +27,16 @@ class TestCsvPathsBackendCrud(unittest.TestCase):
             ),
             ("", f"tests{os.sep}test_resources"),
         ]:
+            #
+            # the local backend always runs. each remote backend runs only
+            # when its [testing] <backend>.skip flag is "no"
+            #
+            protocol = _[0]
+            if protocol != "":
+                backend = "gcs" if protocol == "gs" else protocol
+                if skut.is_skipped(backend=backend, config=config):
+                    print(f"skipping {protocol}: [testing] {backend}.skip")
+                    continue
             self.do_test(paths, _)
 
     def do_test(self, paths: CsvPaths, backend: tuple):
