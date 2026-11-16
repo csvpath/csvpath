@@ -97,3 +97,61 @@ on false cases; a second run should ask `choice()` across both labels.
 3. **A second run** (cents): the plain-words column facts, `choice()` on
    real and false cases alike, and a few more cases with little context,
    to see whether the `uncertain` band shrinks.
+
+## The second run
+
+The same 29 cases plus 4 with little context (`ssn-bare`,
+`iban-payroll`, `ssn-testdata`, `card-game`), with two changes
+(`--run 2`):
+
+- **Column facts in plain words**, computed by our code from the counts:
+  "Every one of the 400 flagged values is the same value."; "Only 9
+  distinct values among 1400 flagged cells: the same few values
+  repeat."; "Every flagged value is different."; and, where our code
+  would see it, "The flagged values are consecutive".
+- **`choice()` on every case**, real and false alike, as well as
+  `noul()`.
+
+| | First run | Second run |
+|---|---|---|
+| Questions | 39 | 66 |
+| Tokens in / out | 7,807 / 955 | 16,194 / 2,023 |
+| Time | 0.63 s | 0.85 s (8 requests) |
+| `noul()` AUC | 0.869 | **0.980** |
+| `noul()` right at 0.5 | 19 of 26 | 27 of 30 |
+| `noul()` committed (three bands), wrong | 11 of 26, 0 wrong | **19 of 30, 0 wrong** |
+| `choice()` AUC (on p(likely)) | (real cases only) | **0.996** |
+| `choice()` right (likely = real) | (real cases only) | **29 of 30** |
+
+**The column facts fixed the cases Jev had missed:** the placeholder SSN
+went from 0.66 to 0.24, the `1900-01-01` default from 0.62 to 0.27, the
+consecutive photo ids from 0.55 to 0.25. The one left is `phone-sku`
+(9 distinct SKUs in 1,400 rows): 0.59 by `noul()`, and the only case
+`choice()` got wrong (`likely`, at 0.52).
+
+**`choice()` is the better question.** Its three answers are the
+review's verdicts, and its p(likely) separates almost perfectly. It also
+said more about the ambiguous cases: dogs' dates of birth `doubtful`,
+vendors' support lines `likely`, and the "SSN ending in" note
+`unrelated` (wrong: the full number is in the note too).
+
+**Weakest real cases** are still the ones with least context:
+`iban-note` (0.49 / 0.50) and `dni-es` (0.53 / 0.59). They come out
+right under `choice()`, but only just.
+
+**Cost:** 18,000 tokens in total for the second run, about 275 a
+question with the facts. The $4.99 balance had not moved after the first
+run; David's earlier figure is $0.01 for about 43,000 tokens.
+
+## Conclusions
+
+1. **Build it.** Masked context plus our own column facts, asked as a
+   `choice()`, gets 29 of 30 right, in under a second for a whole run,
+   for a fraction of a cent.
+2. **The column facts are ours**: same value throughout, few distinct
+   values, consecutive values. Compute them exactly and state them in
+   the question; record them in the review beside Jev's verdict.
+3. **Use `choice()`** with `likely`, `doubtful`, `unrelated` as the
+   verdicts, and p(likely) as the confidence.
+4. **Still annotate, never remove.** One case in 30 was wrong, and the
+   ambiguous ones need a person.

@@ -91,6 +91,7 @@ def _case(
     distinct: int,
     why: str,
     samples: list[str],
+    sequential: bool = False,
 ) -> dict:
     if label not in ("real", "false", "ambiguous"):
         raise ValueError(f"bad label {label!r}")
@@ -109,6 +110,7 @@ def _case(
         "distinct": distinct,
         "why": why,
         "samples": samples,
+        "sequential": sequential,
     }
 
 
@@ -422,6 +424,7 @@ CASES = [
         distinct=900,
         why="the column header holds the keyword passport (passport_photo_id)",
         samples=["100234871", "100234872", "100234873"],
+        sequential=True,
     ),
     _case(
         cid="nhs-supplier",
@@ -450,6 +453,7 @@ CASES = [
         distinct=12,
         why="the keyword dl# is in the cell",
         samples=["dl# A1000001 resumed", "dl# A1000002 failed checksum"],
+        sequential=True,
     ),
     _case(
         cid="bank-crm",
@@ -565,14 +569,107 @@ CASES = [
 ]
 
 
-def question(case: dict) -> str:
+#
+# the second run (2026-11-15): four cases with little context, asked only
+# then, so the first run's requests stay as they were sent
+#
+EXTRA_CASES = [
+    _case(
+        cid="ssn-bare",
+        label="real",
+        identifier="USA_SOCIAL_SECURITY_NUMBER",
+        meaning="a US Social Security number",
+        file="export.csv",
+        columns=["col1", "ssn", "col3"],
+        column="ssn",
+        rows=120,
+        found=120,
+        distinct=120,
+        why="the column header is the keyword ssn",
+        samples=["412-56-7788", "530-21-0094", "288-73-6105"],
+    ),
+    _case(
+        cid="iban-payroll",
+        label="real",
+        identifier="GERMANY_BANK_ACCOUNT_NUMBER",
+        meaning="a German bank account as an IBAN (it passed mod 97)",
+        file="payroll_eu.csv",
+        columns=["employee", "iban", "bic", "net_pay"],
+        column="iban",
+        rows=260,
+        found=260,
+        distinct=260,
+        why="an IBAN needs no keyword",
+        samples=["DE89370400440532013000", "DE02120300000000202051"],
+    ),
+    _case(
+        cid="ssn-testdata",
+        label="false",
+        identifier="USA_SOCIAL_SECURITY_NUMBER",
+        meaning="a US Social Security number",
+        file="export.csv",
+        columns=["col1", "ssn", "col3"],
+        column="ssn",
+        rows=5000,
+        found=5000,
+        distinct=3,
+        why="the column header is the keyword ssn",
+        samples=["111-22-3333", "222-33-4444", "111-22-3333"],
+    ),
+    _case(
+        cid="card-game",
+        label="false",
+        identifier="CREDIT_CARD_NUMBER",
+        meaning="a payment card number (it passed the Luhn check)",
+        file="game_events.csv",
+        columns=["player", "deck", "card", "turn"],
+        column="card",
+        rows=40000,
+        found=3900,
+        distinct=52,
+        why="the column header is the keyword card",
+        samples=["4000000000000002", "4000000000000010"],
+    ),
+]
+
+
+def column_facts(case: dict) -> list[str]:
+    """what our own code can say exactly about the flagged values, in plain
+    words: Jev did not weigh the bare counts in the first run"""
+    found, distinct = case["found"], case["distinct"]
+    facts = []
+    if found > 1 and distinct == 1:
+        facts.append(f"Every one of the {found} flagged values is the same value.")
+    elif found > 1 and distinct / found <= 0.05:
+        facts.append(
+            f"Only {distinct} distinct values among {found} flagged cells: "
+            "the same few values repeat."
+        )
+    elif found > 1 and distinct == found:
+        facts.append("Every flagged value is different.")
+    if case["sequential"]:
+        facts.append(
+            "The flagged values are consecutive: each is the one before plus one."
+        )
+    return facts
+
+
+def question(case: dict, *, run: int = 1) -> str:
     samples = "\n".join(f'  "{mask_cell(s)}"' for s in case["samples"])
+    facts = ""
+    if run == 2:
+        lines = column_facts(case)
+        if lines:
+            facts = "Facts the scan computed about the flagged values:\n" + "".join(
+                f"  - {line}\n" for line in lines
+            )
     return (
         f"Identifier: {case['identifier']} ({case['meaning']}).\n"
         f"File: {case['file']}. Columns: {', '.join(case['columns'])}.\n"
         f"Flagged column: {case['column']}.\n"
         f"Flagged in {case['found']} of {case['rows']} rows; "
         f"{case['distinct']} distinct flagged values.\n"
+        f"{facts}"
         f"Why the scan flagged them: {case['why']}.\n"
         f"Masked samples of flagged cells:\n{samples}\n"
         f"Is it likely that the flagged values in the {case['column']} "
@@ -580,49 +677,61 @@ def question(case: dict) -> str:
     )
 
 
-def requests() -> list[dict]:
-    """the noul() requests in batches, then one choice() request"""
+def cases(*, run: int = 1) -> list[dict]:
+    if run not in (1, 2):
+        raise ValueError(f"run must be 1 or 2, not {run!r}")
+    return CASES if run == 1 else CASES + EXTRA_CASES
+
+
+def requests(*, run: int = 1) -> list[dict]:
+    """the noul() requests in batches, then the choice() requests: in the
+    first run, the first CHOICE_CASES cases (all real, an oversight); in
+    the second, every case"""
+    asked = cases(run=run)
     out = []
-    for i in range(0, len(CASES), BATCH):
-        batch = CASES[i : i + BATCH]
+    for i in range(0, len(asked), BATCH):
+        batch = asked[i : i + BATCH]
         out.append(
             {
                 "kind": "noul",
-                "questions": {c["id"]: question(c) for c in batch},
+                "questions": {c["id"]: question(c, run=run) for c in batch},
             }
         )
-    out.append(
-        {
-            "kind": "choice",
-            "questions": {c["id"]: question(c) for c in CASES[:CHOICE_CASES]},
-        }
-    )
+    chosen = asked[:CHOICE_CASES] if run == 1 else asked
+    for i in range(0, len(chosen), BATCH if run == 2 else CHOICE_CASES):
+        batch = chosen[i : i + (BATCH if run == 2 else CHOICE_CASES)]
+        out.append(
+            {
+                "kind": "choice",
+                "questions": {c["id"]: question(c, run=run) for c in batch},
+            }
+        )
     return out
 
 
-def plan(*, out: str) -> list[dict]:
+def plan(*, out: str, run: int = 1) -> list[dict]:
     if not isinstance(out, str) or out.strip() == "":
         raise ValueError("out must be a directory path")
     os.makedirs(out, exist_ok=True)
-    reqs = requests()
+    reqs = requests(run=run)
     with open(os.path.join(out, "requests.json"), "w", encoding="utf-8") as f:
         json.dump({"state": STATE, "choices": CHOICES, "requests": reqs}, f, indent=2)
     return reqs
 
 
-def send(*, out: str, pilot: bool) -> dict:
+def send(*, out: str, pilot: bool, run: int = 1) -> dict:
     from typesafe_sdk import TypeSafeClient
     from typesafe_sdk._core.question_types import Choice, Noul
 
     key = os.environ.get("JEV_KEY")
     if not key:
         raise ValueError("JEV_KEY is not set")
-    reqs = plan(out=out)
+    reqs = plan(out=out, run=run)
     if pilot:
         first = reqs[0]
         keep = list(first["questions"])[:PILOT_QUESTIONS]
         reqs = [{"kind": "noul", "questions": {k: first["questions"][k] for k in keep}}]
-    results = {"pilot": pilot, "requests": []}
+    results = {"pilot": pilot, "run": run, "requests": []}
     with TypeSafeClient(model="jev-latest", api_key=key) as client:
         for r in reqs:
             if r["kind"] == "noul":
@@ -651,26 +760,49 @@ def send(*, out: str, pilot: bool) -> dict:
     return results
 
 
+def _auc(*, scored: list[tuple[float, str]]) -> float | None:
+    """the chance a real case scores above a false one"""
+    real = [p for p, label in scored if label == "real"]
+    false = [p for p, label in scored if label == "false"]
+    pairs = [(r, f) for r in real for f in false]
+    if not pairs:
+        return None
+    return round(
+        sum(1.0 if r > f else 0.5 if r == f else 0.0 for r, f in pairs) / len(pairs),
+        3,
+    )
+
+
+def _band(p: float) -> str:
+    #
+    # the design note's three bands
+    #
+    return "likely" if p >= 0.7 else "doubtful" if p <= 0.3 else "uncertain"
+
+
 def summarize(*, results: dict) -> dict:
-    labels = {c["id"]: c["label"] for c in CASES}
-    noul = {}
+    labels = {c["id"]: c["label"] for c in CASES + EXTRA_CASES}
+    noul, choice = {}, {}
     for r in results["requests"]:
-        if r["kind"] == "noul":
-            for k, a in r["answers"].items():
+        for k, a in r["answers"].items():
+            if r["kind"] == "noul":
                 noul[k] = a["noul"]
+            else:
+                choice[k] = (a["choice"], a["probabilities"].get("likely", 0.0))
     scored = [(noul[k], labels[k]) for k in noul if labels[k] != "ambiguous"]
     real = [p for p, label in scored if label == "real"]
     false = [p for p, label in scored if label == "false"]
-    #
-    # AUC: the chance a real case scores above a false one
-    #
-    pairs = [(r, f) for r in real for f in false]
-    auc = (
-        sum(1.0 if r > f else 0.5 if r == f else 0.0 for r, f in pairs) / len(pairs)
-        if pairs
-        else None
-    )
-    return {
+    wrong_band = [
+        k
+        for k in noul
+        if labels[k] != "ambiguous"
+        and _band(noul[k]) != "uncertain"
+        and (_band(noul[k]) == "likely") != (labels[k] == "real")
+    ]
+    committed = [
+        k for k in noul if labels[k] != "ambiguous" and _band(noul[k]) != "uncertain"
+    ]
+    summary = {
         "questions": sum(len(r["answers"]) for r in results["requests"]),
         "input_tokens": sum(r["input_tokens"] or 0 for r in results["requests"]),
         "output_tokens": sum(r["output_tokens"] or 0 for r in results["requests"]),
@@ -681,24 +813,43 @@ def summarize(*, results: dict) -> dict:
             1 for p, label in scored if (p >= 0.5) == (label == "real")
         ),
         "scored": len(scored),
-        "auc": round(auc, 3) if auc is not None else None,
+        "auc": _auc(scored=scored),
+        "committed": len(committed),
+        "wrong_band": wrong_band,
         "per_case": {k: (labels[k], round(v, 3)) for k, v in noul.items()},
     }
+    if choice:
+        cscored = [
+            (choice[k][1], labels[k]) for k in choice if labels[k] != "ambiguous"
+        ]
+        summary["choice_auc"] = _auc(scored=cscored)
+        summary["choice_correct"] = sum(
+            1
+            for k in choice
+            if labels[k] != "ambiguous"
+            and (choice[k][0] == "likely") == (labels[k] == "real")
+        )
+        summary["choice_scored"] = len(cscored)
+        summary["choice_per_case"] = {
+            k: (labels[k], c, round(p, 3)) for k, (c, p) in choice.items()
+        }
+    return summary
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 3 or sys.argv[1] not in ("plan", "send"):
         sys.stderr.write(
-            "usage: jev_review_experiment.py plan|send <out dir> [--pilot]\n"
+            "usage: jev_review_experiment.py plan|send <out dir> [--pilot] [--run 2]\n"
         )
         sys.exit(2)
+    run = 2 if "--run" in sys.argv[3:] and "2" in sys.argv[3:] else 1
     if sys.argv[1] == "plan":
-        reqs = plan(out=sys.argv[2])
+        reqs = plan(out=sys.argv[2], run=run)
         n = sum(len(r["questions"]) for r in reqs)
         sys.stdout.write(
-            f"{len(CASES)} cases; {len(reqs)} requests, {n} questions; "
-            f"written to {sys.argv[2]}/requests.json\n"
+            f"run {run}: {len(cases(run=run))} cases; {len(reqs)} requests, "
+            f"{n} questions; written to {sys.argv[2]}/requests.json\n"
         )
     else:
-        result = send(out=sys.argv[2], pilot="--pilot" in sys.argv[3:])
+        result = send(out=sys.argv[2], pilot="--pilot" in sys.argv[3:], run=run)
         sys.stdout.write(json.dumps(result["summary"], indent=2) + "\n")

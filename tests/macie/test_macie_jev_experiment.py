@@ -94,3 +94,47 @@ def test_macie_jev_summary() -> None:
     assert s["correct_at_0_5"] == 2
     assert s["auc"] == 1.0
     assert s["per_case"]["dob-dogs"] == ("ambiguous", 0.5)
+    assert s["committed"] == 2
+    assert s["wrong_band"] == []
+    assert "choice_auc" not in s
+
+
+def test_macie_jev_column_facts() -> None:
+    by_id = {c["id"]: c for c in jre.cases(run=2)}
+    assert jre.column_facts(by_id["ssn-placeholder"]) == [
+        "Every one of the 400 flagged values is the same value."
+    ]
+    assert jre.column_facts(by_id["phone-sku"])[0].startswith("Only 9 distinct values")
+    assert jre.column_facts(by_id["passport-photo"]) == [
+        "Every flagged value is different.",
+        "The flagged values are consecutive: each is the one before plus one.",
+    ]
+    #
+    # 41 distinct of 41: different, and no repeat or sequence claim
+    #
+    assert jre.column_facts(by_id["ssn-note"]) == ["Every flagged value is different."]
+
+
+def test_macie_jev_run_2_plan(tmp_path) -> None:
+    reqs = jre.plan(out=str(tmp_path), run=2)
+    asked = jre.cases(run=2)
+    noul = [r for r in reqs if r["kind"] == "noul"]
+    choice = [r for r in reqs if r["kind"] == "choice"]
+    assert sum(len(r["questions"]) for r in noul) == len(asked)
+    assert sum(len(r["questions"]) for r in choice) == len(asked)
+    assert "Facts the scan computed" in noul[0]["questions"]["ssn-hr"]
+    #
+    # the first run's questions carry no facts
+    #
+    assert "Facts the scan computed" not in jre.question(asked[0], run=1)
+    with pytest.raises(ValueError):
+        jre.cases(run=3)
+
+
+def test_macie_jev_no_value_reaches_a_run_2_question() -> None:
+    for case in jre.cases(run=2):
+        q = jre.question(case, run=2)
+        for sample in case["samples"]:
+            for token in sample.split(" "):
+                if any(c.isdigit() for c in token):
+                    assert token not in q, (case["id"], token)
