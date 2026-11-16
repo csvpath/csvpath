@@ -127,8 +127,14 @@ last. Add an item the moment something is deferred.
    fixed. Second probe done (2026-11-14, same report). German ID marked
    partial (2026-11-15). Third probe done (2026-11-15): keywords match
    as whole words, and phones with a country code and no keyword count
-   only unbroken or parenthesized; both rules now follow Macie. Next:
-   the Jev review experiment (design note first).
+   only unbroken or parenthesized; both rules now follow Macie.
+9. **Jev review of findings** (optional, masked). Design:
+   `specs/macie/jev-review-design.md`. First experiment done
+   (2026-11-15, `specs/macie/jev-experiment-2026-11-15.md`): AUC 0.87,
+   about 225 tokens a question, and with three bands no committed
+   verdict wrong. Second run (same report): with our column facts in
+   plain words, `choice()` got 29 of 30 right (AUC 0.996). Recommended:
+   build it with `choice()` and our column facts; David to decide.
 
 ## Ask road-testers about
 
