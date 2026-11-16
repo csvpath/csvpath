@@ -27,14 +27,23 @@ class ColumnFacts:
     #
     FEW = 0.05
 
-    def __init__(self, *, identifier: str, column: int, column_name: str) -> None:
+    def __init__(
+        self, *, identifier: str, column: int, column_name: str, why: str | None = None
+    ) -> None:
         if not isinstance(identifier, str) or identifier.strip() == "":
             raise ValueError("identifier must be a non-empty str")
         if not isinstance(column, int) or isinstance(column, bool) or column < 1:
             raise ValueError(f"column must be a positive int, not {column!r}")
         if not isinstance(column_name, str):
             raise TypeError(f"column_name must be a str, not {type(column_name)}")
+        if why is not None and (not isinstance(why, str) or why.strip() == ""):
+            raise ValueError("why must be a non-empty str when given")
         self.identifier = identifier
+        #
+        # why the scan flagged the cells, in words, e.g. "the column header
+        # holds a keyword"; the second Jev experiment asked with it
+        #
+        self.why = why
         self.column = column
         self.column_name = column_name
         self.cells = 0
@@ -121,6 +130,7 @@ class ColumnFacts:
             "identifier": self.identifier,
             "column": self.column,
             "columnName": self.column_name,
+            "why": self.why,
             "cells": self.cells,
             "occurrences": self.occurrences,
             "distinct": self.distinct,

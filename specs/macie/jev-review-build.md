@@ -131,6 +131,8 @@ Three PRs, each with its own tests.
 
 ## Decisions for David
 
+Settled as proposed, all four (David, 2026-11-15).
+
 1. **When Jev fails** (no key, network error, bad answer). The findings
    are complete either way. Proposed: the run is still valid; the
    review's status is `failed` with the reason, a `macie review: failed:

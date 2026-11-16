@@ -133,8 +133,12 @@ last. Add an item the moment something is deferred.
    (2026-11-15, `specs/macie/jev-experiment-2026-11-15.md`): AUC 0.87,
    about 225 tokens a question, and with three bands no committed
    verdict wrong. Second run (same report): with our column facts in
-   plain words, `choice()` got 29 of 30 right (AUC 0.996). Recommended:
-   build it with `choice()` and our column facts; David to decide.
+   plain words, `choice()` got 29 of 30 right (AUC 0.996). Building it
+   (David, 2026-11-15): `specs/macie/jev-review-build.md`, three PRs.
+   PR 1, masks and column facts (#667): done. PR 2, `JevReviewer`: done.
+   Next: PR 3, wiring into `MacieRun`, the `review.json` record, and
+   `docs/macie/review.md`. The build design's four decisions are settled
+   as proposed (David, 2026-11-15).
 
 ## Ask road-testers about
 

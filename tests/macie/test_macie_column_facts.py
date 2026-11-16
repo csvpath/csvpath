@@ -104,6 +104,11 @@ def test_macie_column_facts_counts_occurrences_and_cells() -> None:
     assert (f.cells, f.occurrences, f.distinct) == (2, 3, 2)
     d = f.to_dict()
     assert d["columnName"] == "notes"
+    assert d["why"] is None
+    assert (
+        ColumnFacts(identifier="X", column=1, column_name="n", why="a keyword").why
+        == "a keyword"
+    )
     assert d["samples"] == ["AAA-###### and AAA-######", "AAA-######"]
     assert d["facts"] == ["Every flagged value is different."]
 
@@ -130,6 +135,7 @@ def test_macie_column_facts_bad_input() -> None:
         {"identifier": "", "column": 1, "column_name": "x"},
         {"identifier": "X", "column": 0, "column_name": "x"},
         {"identifier": "X", "column": True, "column_name": "x"},
+        {"identifier": "X", "column": 1, "column_name": "x", "why": " "},
     ]:
         with pytest.raises(ValueError):
             ColumnFacts(**kw)
