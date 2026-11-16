@@ -15,11 +15,16 @@ from ..args import Args
 class Datatype(ValueProducer):
     def check_valid(self) -> None:
         # self.value_qualifiers.append("notnone")
+        self.value_qualifiers.append("strict")
         self.description = [
             """datatype() returns the best fitting type for a header value on a given line.
               String is considered the least specific type, meaning that a type is only
               considered a string if all other types do not match. For example, "" is
               considered a none() match and "false" is considered a boolean() match.
+            """,
+            """With the strict qualifier, a value is only a decimal or an integer if
+              decimal.strict() or integer.strict() would accept it: "$10.50" and "1,000"
+              are strings, not numbers.
             """,
         ]
         self.args = Args(matchable=self)
@@ -38,9 +43,16 @@ class Datatype(ValueProducer):
     def _produce_value(self, skip=None) -> None:
         v = self._value_one(skip=skip)
         t = "unknown"
-        if Decimal._is_match(name="decimal", value=v, strict=True)[0]:
+        #
+        # strict=True on _is_match only means the "." rule that tells a
+        # decimal from an integer. datatype.strict additionally requires the
+        # value to be only a number, exactly as integer.strict and
+        # decimal.strict do, using the same rule.
+        #
+        number = not self.strict or Decimal._strict_problem(value=v) is None
+        if number and Decimal._is_match(name="decimal", value=v, strict=True)[0]:
             t = "decimal"
-        elif Decimal._is_match(name="integer", value=v, strict=True)[0]:
+        elif number and Decimal._is_match(name="integer", value=v, strict=True)[0]:
             t = "integer"
         elif Boolean._is_match(value=v, strict=True)[0]:
             t = "boolean"
