@@ -58,9 +58,15 @@ class TestCsvPathFunctionsXPath(unittest.TestCase):
             ]"""
         )
         #
-        # should pass, not raise exception
+        # should pass, not raise exception: the data signature accepts ''
+        # and None for the XML. the docs do not say what xpath() gives
+        # for no XML at all (an empty list is for no selected nodes); this
+        # pins None.
         #
         path.fast_forward()
+        assert "s" in path.variables
+        assert path.variables["s"] is None
+        assert path.errors == []
 
     def test_function_xpath5(self):
         path = CsvPath()
@@ -72,9 +78,15 @@ class TestCsvPathFunctionsXPath(unittest.TestCase):
             ]"""
         )
         #
-        # should pass, not raise exception
+        # should pass, not raise exception: the data signature accepts ''
+        # and None for the XML. the docs do not say what xpath() gives
+        # for no XML at all (an empty list is for no selected nodes); this
+        # pins None.
         #
         path.fast_forward()
+        assert "s" in path.variables
+        assert path.variables["s"] is None
+        assert path.errors == []
 
 
 #

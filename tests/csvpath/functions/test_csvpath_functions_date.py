@@ -28,6 +28,9 @@ class TestCsvPathFunctionsDate(unittest.TestCase):
             ]"""
         )
         path.fast_forward()
+        # docs/func_gen/date.md: "date() recognizes dates without needing a
+        # format string"
+        assert path.variables["dates"] == [date(2024, 1, 1)]
 
     def test_function_date2(self):
         path = CsvPath()

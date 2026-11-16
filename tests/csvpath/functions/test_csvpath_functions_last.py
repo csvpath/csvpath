@@ -2,6 +2,7 @@ import unittest
 import pytest
 import os
 from csvpath import CsvPath
+from csvpath.util.printer import TestPrinter
 from csvpath.matching.matcher import Matcher
 from csvpath.matching.util.exceptions import MatchException
 
@@ -164,9 +165,17 @@ class TestCsvPathFunctionsLast(unittest.TestCase):
         path.collect()
         assert len(path.variables["lastish"]) == 1
 
-    # FIXME: this is not really a deterministic test.
     def test_function_last3(self):
+        #
+        # docs/functions/last.md: last() "matches when the current row is the
+        # last row in the file". a printer captures the output, so we can see
+        # that the last() message comes exactly once, after every row's
+        # message. the message text after "the last row is" is not asserted;
+        # see the PR body about $.csvpath.line_count.
+        #
         path = CsvPath()
+        printer = TestPrinter()
+        path.set_printers([printer])
         path.parse(
             f""" ${PATH}[*] [ yes() -> print("$.csvpath.line_count")
                 last() -> print("the last row is $.csvpath.line_count")
@@ -174,6 +183,11 @@ class TestCsvPathFunctionsLast(unittest.TestCase):
             """
         )
         path.fast_forward()
+        # 9 rows, one message each, then the last() message
+        assert len(printer.lines) == 10
+        assert [p.startswith("the last row is") for p in printer.lines] == [
+            False
+        ] * 9 + [True]
 
     def test_function_last4(self):
         path = CsvPath()
