@@ -3,9 +3,10 @@
 
 nor() tests if its contained match components are all False.
 
-nor() is the inverse of and(). Matching is ANDed by default. Like
-and() nor() helps simplify expressions, in this case by minimizing the
-number of not() functions needed.
+nor() is the inverse of or(): nor(a, b) is not(or(a, b)). Matching is
+ANDed by default. Like and() and or(), nor() helps simplify
+expressions, in this case by minimizing the number of not() functions
+needed.
 
 | Data signatures                                                                                                                          |
 |:-----------------------------------------------------------------------------------------------------------------------------------------|

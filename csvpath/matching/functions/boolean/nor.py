@@ -10,9 +10,9 @@ class Nor(MatchDecider):
             self.wrap(
                 f"""{self.name}() tests if its contained match components are all False.
 
-                {self.name}() is the inverse of and(). Matching is ANDed by default. Like and()
-                {self.name}() helps simplify expressions, in this case by minimizing the number
-                of not() functions needed.
+                {self.name}() is the inverse of or(): nor(a, b) is not(or(a, b)). Matching is
+                ANDed by default. Like and() and or(), {self.name}() helps simplify expressions,
+                in this case by minimizing the number of not() functions needed.
             """
             ),
         ]
