@@ -1,5 +1,6 @@
 import os
 import json
+from pathlib import Path
 
 from openlineage.client.facet_v2 import (
     job_type_job,
@@ -15,6 +16,7 @@ from csvpath.managers.files.file_metadata import FileMetadata
 from csvpath.managers.results.result_metadata import ResultMetadata
 from csvpath.managers.results.results_metadata import ResultsMetadata
 from csvpath.managers.run.run_metadata import RunMetadata
+from csvpath.util.nos import Nos
 
 
 class JobException(Exception):
@@ -48,10 +50,19 @@ class JobBuilder:
             return None
         raise JobException(f"Unknown metadata: {mdata}")
 
+    def _location(self, path: str) -> str:
+        # issue #225: the URL comes from the path itself, not os.getcwd() +
+        # path, which doubled an absolute path and mangled a cloud one
+        if path is None or str(path).strip() == "":
+            raise ValueError("A job location path cannot be None or empty")
+        if Nos(path).is_local:
+            return Path(path).resolve().as_uri()
+        return path
+
     def build_file_job(self, mdata: Metadata):
         try:
             facets = {}
-            location = f"file:////{mdata.base_path}{os.sep}{mdata.file_path}"
+            location = self._location(mdata.file_path)
             facets["sourceCodeLocation"] = (
                 source_code_location_job.SourceCodeLocationJobFacet(
                     type="CsvPath", url=location, tag=f"{mdata.fingerprint}"
@@ -70,7 +81,7 @@ class JobBuilder:
     def build_paths_job(self, mdata: Metadata):
         try:
             facets = {}
-            location = f"file:////{mdata.base_path}{os.sep}{mdata.group_file_path}"
+            location = self._location(mdata.group_file_path)
             facets["sourceCodeLocation"] = (
                 source_code_location_job.SourceCodeLocationJobFacet(
                     type="CsvPath", url=location, tag=f"{mdata.fingerprint}"
