@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from csvpath.references.csvpaths_reference_finder_3 import CsvpathsReferenceFinder3
@@ -4241,7 +4242,8 @@ class TestDefinitionCollectionsTakeValuePredicates:
     )
     def test_a_value_predicate_filters_groups(self, reference, expected):
         files = _def_chain_finder(reference).query().files
-        assert sorted(f.split("/")[-2] for f in files) == expected
+        # the group is the definition.json's parent dir, on any OS
+        assert sorted(os.path.basename(os.path.dirname(f)) for f in files) == expected
 
     def test_an_equality_arg_raises(self):
         with pytest.raises(ReferenceException3):
