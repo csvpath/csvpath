@@ -48,7 +48,7 @@ class MacieReport(SideEffect):
         was_frozen = csvpath.is_frozen
         csvpath.is_frozen = False
         try:
-            MacieRun.for_matcher(matcher=self.matcher).report()
+            MacieRun.for_matcher(matcher=self.matcher).report(source=self)
         finally:
             csvpath.is_frozen = was_frozen
         self.match = self.default_match()

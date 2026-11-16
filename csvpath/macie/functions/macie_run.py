@@ -6,6 +6,7 @@ from ..allow_list_set import AllowListSet
 from ..util.arn_utility import ArnUtility as arut
 from ..findings_tally import FindingsTally, IdentifierTally
 from ..macie_exceptions import MacieException
+from ..macie_review import MacieReview
 from ..managed_catalog import ManagedCatalog
 from ..project_rulesbase import ProjectRulesbase
 from ..run_inputs import RunInputs
@@ -19,6 +20,8 @@ class MacieRun:
     - one error per detailed occurrence, to the csvpath's error manager
     - the same line, and the summary, to the "macie" print stream
     - the findings, to the macie_findings variable (vars.json)
+    - with [macie] review on, a Jev review of the findings, added to all
+      three, and recorded in the run dir (MacieReview)
 
     Limits come from the csvpath's metadata (written by the transpiler),
     then config.ini [macie], then the defaults."""
@@ -53,6 +56,7 @@ class MacieRun:
         )
         self.reported = False
         self._catalog = None
+        self.review = MacieReview(config=matcher.csvpath.config)
 
     @property
     def standalone(self) -> bool:
@@ -107,9 +111,21 @@ class MacieRun:
             n = identifier.occurrences(
                 cell=f"{cell}", header=f"{header}", allow_lists=self.allow_lists
             )
-            for _ in range(n):
-                if self.tally.tripped:
-                    break
+            #
+            # the occurrences the breaker lets through. The review's facts
+            # are collected first: record() reports, and so reviews, when
+            # it trips the breaker
+            #
+            k = min(n, self.tally.max_findings - self.tally.total)
+            if k > 0:
+                self._collect(
+                    identifier=identifier,
+                    column=i + 1,
+                    header=f"{header}",
+                    cell=f"{cell}",
+                    occurrences=k,
+                )
+            for _ in range(k):
                 found = True
                 self.record(
                     source=source,
@@ -119,6 +135,18 @@ class MacieRun:
                     column_name=f"{header}",
                 )
         return found
+
+    def _collect(
+        self, *, identifier, column: int, header: str, cell: str, occurrences: int
+    ) -> None:
+        if self.review.reviews(name=identifier.name):
+            self.review.collect(
+                identifier=identifier,
+                column=column,
+                header=header,
+                cell=cell,
+                occurrences=occurrences,
+            )
 
     @classmethod
     def logger(cls) -> logging.Logger:
@@ -201,21 +229,38 @@ class MacieRun:
             # stop() ends the run before last(), so macie_report() would
             # never run. we report here instead.
             #
-            self.report()
+            self.report(source=source)
             self.matcher.csvpath.stop()
 
-    def report(self) -> None:
+    def report(self, *, source=None) -> None:
         """prints the summary and stores the findings in the macie_findings
         variable, once. last() lifts the final pass's variable freeze for
-        its child (#324), so macie_report() can always store them."""
+        its child (#324), so macie_report() can always store them. With the
+        review on, the review runs first and is added to both."""
         if self.reported:
             return
         self.reported = True
+        csvpath = self.matcher.csvpath
         for msg in self.tally.summary_messages():
-            self.matcher.csvpath.print_to(self.PRINTER, msg)
+            csvpath.print_to(self.PRINTER, msg)
+        findings = self.tally.to_findings()
+        if self.review.on:
+            result = self.review.run(csvpath=csvpath)
+            for msg in MacieReview.printouts(result=result):
+                csvpath.print_to(self.PRINTER, msg)
+            if result["status"] == "failed" and source is not None:
+                #
+                # loud, but the run stays valid: the findings are complete
+                # without the review (David, 2026-11-15)
+                #
+                csvpath.error_manager.handle_error(
+                    source=source, msg=f"macie review failed: {result['reason']}"
+                )
+            findings = MacieReview.attach(findings=findings, result=result)
+            MacieReview.record(csvpath=csvpath, result=result)
         if self.standalone:
-            self.matcher.csvpath.print_to(self.PRINTER, self.STANDALONE)
-        self.matcher.csvpath.set_variable(self.VARIABLE, value=self.tally.to_findings())
+            csvpath.print_to(self.PRINTER, self.STANDALONE)
+        csvpath.set_variable(self.VARIABLE, value=findings)
 
     def _source_arn(self) -> str | None:
         #

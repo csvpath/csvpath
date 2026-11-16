@@ -135,9 +135,11 @@ last. Add an item the moment something is deferred.
    verdict wrong. Second run (same report): with our column facts in
    plain words, `choice()` got 29 of 30 right (AUC 0.996). Building it
    (David, 2026-11-15): `specs/macie/jev-review-build.md`, three PRs.
-   PR 1, masks and column facts (#667): done. PR 2, `JevReviewer`: done.
-   Next: PR 3, wiring into `MacieRun`, the `review.json` record, and
-   `docs/macie/review.md`. The build design's four decisions are settled
+   PR 1, masks and column facts (#667): done. PR 2, `JevReviewer`
+   (#668): done. PR 3, wiring into `MacieRun` (`MacieReview`), the
+   `review.<csvpath>.json` record, and `docs/macie/review.md`: done.
+   Next: one live run with the review on (David's OK), and the CVL Jev
+   tests should get a fake client too (they call the live API). The build design's four decisions are settled
    as proposed (David, 2026-11-15).
 
 ## Ask road-testers about

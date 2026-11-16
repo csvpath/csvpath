@@ -113,6 +113,12 @@ the group is loaded:
 
   and the findings document has `"stopped": true` and the line.
 
+## The Jev review
+
+With `[macie] review` on, each reviewed detection gains a `review` list and
+the `csvpath` section a `review` summary. Nothing else in the document
+changes. See [reviewing findings with Jev](review.md).
+
 ## When setup fails
 
 If a Macie function cannot be set up (a bad allow list, a missing catalog
