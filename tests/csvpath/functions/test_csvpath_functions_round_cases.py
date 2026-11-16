@@ -130,7 +130,9 @@ def test_round_quoted_string_term():
 )
 def test_round_none(expression):
     # the data signature accepts None, but the docs do not say what None
-    # rounds to. The value is converted to 0.0. This pins it.
+    # rounds to. The value is converted to 0.0. This pins it, pending
+    # David's ruling on missing operands in arithmetic (decision log T13);
+    # the older round test pins 0 too.
     assert _rounded(expression=expression) == 0.0
 
 
