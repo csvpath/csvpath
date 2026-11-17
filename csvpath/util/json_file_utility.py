@@ -52,13 +52,14 @@ class JsonFileUtility:
         """what probably happened, from where and why parsing stopped."""
         if text is None or error is None:
             raise ValueError("text and error cannot be None")
-        if text.strip("\x00 \t\r\n") == "" or "\x00" in text:
-            # a zero-filled tail is what some filesystems leave after a crash
-            if text.strip("\x00 \t\r\n") != "":
-                return (
-                    "ends in zero bytes: a write was probably interrupted "
-                    "(a crash or a full disk)"
-                )
+        blank = text.strip("\x00 \t\r\n") == ""
+        if not blank and "\x00" in text:
+            # zero bytes are what some filesystems leave after a crash
+            return (
+                "contains zero bytes: a write was probably interrupted "
+                "(a crash or a full disk)"
+            )
+        if blank:
             return (
                 "is empty: a write was probably interrupted (a crash, a "
                 "killed process or a full disk)"

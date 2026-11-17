@@ -51,7 +51,7 @@ def test_a_file_cut_off_inside_a_string_was_probably_interrupted(tmp_path, text)
 def test_a_zero_filled_tail_was_probably_interrupted(tmp_path):
     path = tmp_path / "manifest.json"
     path.write_bytes(b'[{"uuid": "u1"}]' + b"\x00" * 64)
-    with pytest.raises(ValueError, match="ends in zero bytes"):
+    with pytest.raises(ValueError, match="contains zero bytes"):
         jsut.load(path=str(path))
 
 
