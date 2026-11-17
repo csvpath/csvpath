@@ -186,3 +186,31 @@ and `~/macie-live/expected_probe2.json` (do not upload).
   - no custom identifiers, no allow lists.
 
 **Hand over** the job id once it shows **Complete**.
+
+## 7. The fourth probe (2026-11-16)
+
+The second probe found Macie reports a `+1` number with no keyword only
+when it is unbroken (`+12125550148`) or has a group in parentheses
+(`+1 (212) 555-0148`). Our rule applies that to every country's phone
+identifier; this probe checks the other six. Each country's number in
+four forms with no keyword (unbroken, parentheses, spaces, dashes), and
+once after the keyword `phone`.
+
+```
+poetry run python tests/macie/live/make_probe_files.py ~/macie-live 3
+```
+
+writes `~/macie-live/probe3/probe3_phones.csv` and
+`~/macie-live/expected_probe3.json` (do not upload).
+
+**Set up (David):**
+
+- upload `probe3/probe3_phones.csv` under `probe3/` in the same bucket;
+- create one one-time job, **`csvpath-probe-3`**:
+  - object criterion: key prefix `probe3/`;
+  - managed data identifiers **Custom**, *include* these 6:
+    `UK_PHONE_NUMBER`, `FRANCE_PHONE_NUMBER`, `GERMANY_PHONE_NUMBER`,
+    `ITALY_PHONE_NUMBER`, `SPAIN_PHONE_NUMBER`, `BRAZIL_PHONE_NUMBER`;
+  - no custom identifiers, no allow lists.
+
+**Hand over** the job id once it shows **Complete**.

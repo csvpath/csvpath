@@ -230,12 +230,83 @@ def phones_2(rng) -> mlf.LiveFile:
 
 
 FILES_2 = [keywords, phones_2]
+
+#
+# the fourth live probe (2026-11-16): the phone rule for the countries
+# other than the US. The second probe found Macie reports a +1 number with
+# no keyword only unbroken or with a group in parentheses; our rule
+# applies that to every country. Each country's identifier, its number in
+# four forms with no keyword, and once near a keyword
+#
+SEED_3 = 20261116
+PHONES_3 = {
+    "UK_PHONE_NUMBER": [
+        "+442079460958",
+        "+44 (20) 7946 0958",
+        "+44 20 7946 0958",
+        "+44-20-7946-0958",
+    ],
+    "FRANCE_PHONE_NUMBER": [
+        "+33123456789",
+        "+33 (1) 23 45 67 89",
+        "+33 1 23 45 67 89",
+        "+33-1-23-45-67-89",
+    ],
+    "GERMANY_PHONE_NUMBER": [
+        "+4930123456",
+        "+49 (30) 123456",
+        "+49 30 123456",
+        "+49-30-123456",
+    ],
+    "ITALY_PHONE_NUMBER": [
+        "+393123456789",
+        "+39 (312) 345 6789",
+        "+39 312 345 6789",
+        "+39-312-345-6789",
+    ],
+    "SPAIN_PHONE_NUMBER": [
+        "+34612345678",
+        "+34 (612) 34 56 78",
+        "+34 612 34 56 78",
+        "+34-612-34-56-78",
+    ],
+    "BRAZIL_PHONE_NUMBER": [
+        "+5511961234567",
+        "+55 (11) 96123-4567",
+        "+55 11 96123 4567",
+        "+55-11-96123-4567",
+    ],
+}
+
+
+def phones_3(rng) -> mlf.LiveFile:
+    f = mlf.LiveFile(name="probe3_phones.csv", headers=["id", "notes"])
+    for identifier, (unbroken, parens, spaced, dashed) in PHONES_3.items():
+        for value, n, note in [
+            (unbroken, 1, "unbroken"),
+            (parens, 1, "a group in parentheses"),
+            (spaced, 0, "spaces between the groups"),
+            (dashed, 0, "dashes between the groups"),
+        ]:
+            f.add(
+                cells={"id": "r", "notes": f"call {value}"},
+                expect=[("notes", identifier, n, f"no keyword; {note}")],
+            )
+        f.add(
+            cells={"id": "r", "notes": f"phone {spaced}"},
+            expect=[("notes", identifier, 1, "keyword in the cell, spaces")],
+        )
+    return f
+
+
+FILES_3 = [phones_3]
 #
 # probe number -> seed, files, directory, expectations file
 #
 PROBES = {
     1: (SEED, FILES, "probe", "expected_probe.json"),
     2: (SEED_2, FILES_2, "probe2", "expected_probe2.json"),
+    3: (SEED_3, FILES_3, "probe3", "expected_probe3.json"),
 }
 
 
