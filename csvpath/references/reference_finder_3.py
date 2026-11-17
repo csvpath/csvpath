@@ -1195,7 +1195,8 @@ class ReferenceFinder3(ABC):
         does not exist yet. Since 2026-11-16 a bare ':manifest()' or
         ':definition()' reads its JSON through _read_well_known_json()
         instead (_read_bare_metadata_file()); this serves README.md and
-        RESULTS' file content (data, printouts, :file()). manifest.json is always created once
+        RESULTS' file content (data, printouts, :file()).
+        manifest.json is always created once
         anything is registered/loaded, but definition.json is genuinely
         optional -- a named-file/named-paths group that was never
         explicitly configured has no definition.json on disk at all.
