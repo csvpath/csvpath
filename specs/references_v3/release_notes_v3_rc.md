@@ -83,14 +83,14 @@ It is no longer a registered function, so it raises "Unknown reference function"
 
 These give a different answer, quietly, so check any reference that relies on them:
 - **Instances in the RESULTS ledger set count in declaration order** (#643): `$*.results.:manifest():last().:first()`, `:index(0)` and `:all()` follow the statement order in the group, not arrival. An `s1` that arrived before `s0` used to come first.
-- **A FILES ledger record is named by its live manifest's owner** (#662): after a rename, `$*.files.:manifest():named_file_name("orders-renamed")` finds the records; the old ledger name no longer does.
-- **A CSVPATHS version is named by its owning group** (#663): `$:choice("acme-renamed").csvpaths.:manifest():first()` changes in the same way.
+- **A FILES ledger record is named by its live manifest's owner** (#662): a ledger record that says `orders-renamed`, held by the live named-file `orders`, is now found by `$*.files.:manifest():named_file_name("orders")`, and no longer by `named_file_name("orders-renamed")`.
+- **A CSVPATHS version is named by its owning group** (#663), in the same way: `$:choice("acme-renamed").csvpaths.:manifest():first()` went from `[a1]` to `[]`, and the `acme` forms now include a1.
 - **Reloading named-paths without `append`** (#719) now deletes the earlier source copies (`*.yml`, `*.yaml`, `*.macie.json`), their reports and stale Macie allow lists.
 - **A pointer or range under `*` gives one result per group** (#518, #547), as `$name` would for each name:
   - `$*.results.:last()` gave `w1`; it now gives `a2, w1`;
   - `$*.results.:from(0):to(1)` gave `a0, a1`; it now gives `a0, a1, w0, w1`;
   - FILES groups by named-file: `$*.files.*.:last()` gave `two-2` and now gives `one-2, two-2`, and `$*.files.:last()`, which raised, gives one result per named-file;
-  - `:flatten()`, `:manifest()`, `:all()` and `:groups()` still pool across groups, so use them for one pooled answer.
+  - `:flatten()` and `:manifest()` give one pooled answer across groups; the `:all()` and `:groups()` forms are unchanged.
 - **Bare `$*` field reads see only live versions** (#494); only `:manifest()` reaches the whole ledger:
   - `$*.csvpaths.:uuid()`, `:fingerprint()` and `:named_paths_name()` no longer include deleted versions or unchanged reloads;
   - `$*.files.:status("failed")` and `$orders.files.:status("failed")` are always `[]`, because a failed registration is never a live version. Use `$*.files.:manifest():status("failed")`.
