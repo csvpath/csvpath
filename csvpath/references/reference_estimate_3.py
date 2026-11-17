@@ -38,7 +38,7 @@ FILE_KINDS = (
 KINDS = FILE_KINDS + LISTING_KINDS + SQL_KINDS
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class Read:
     """reads of one kind that a part of a reference makes"""
 
@@ -49,16 +49,20 @@ class Read:
     because: str
 
     def __post_init__(self) -> None:
+        problem = None
         if self.part not in PARTS:
-            raise ValueError(f"part must be one of {PARTS}, not {self.part!r}")
-        if self.kind not in KINDS:
-            raise ValueError(f"kind must be one of {KINDS}, not {self.kind!r}")
-        if not isinstance(self.count, int) or isinstance(self.count, bool) or self.count < 0:
-            raise ValueError(f"count must be an int >= 0, not {self.count!r}")
-        if self.basis not in BASES:
-            raise ValueError(f"basis must be one of {BASES}, not {self.basis!r}")
-        if not isinstance(self.because, str) or self.because.strip() == "":
-            raise ValueError("because must name the part of the reference")
+            problem = f"part must be one of {PARTS}, not {self.part!r}"
+        elif self.kind not in KINDS:
+            problem = f"kind must be one of {KINDS}, not {self.kind!r}"
+        elif not isinstance(self.count, int) or isinstance(self.count, bool) or self.count < 0:
+            problem = f"count must be an int >= 0, not {self.count!r}"
+        elif self.basis not in BASES:
+            problem = f"basis must be one of {BASES}, not {self.basis!r}"
+        elif not isinstance(self.because, str) or self.because.strip() == "":
+            problem = "because must name the part of the reference"
+        if problem is not None:
+            logging.getLogger(type(self).__name__).error(problem)
+            raise ValueError(problem)
 
 
 class CostWeights:
@@ -84,11 +88,18 @@ class CostWeights:
         "instance_manifest",
     ) + LISTING_KINDS
 
-    def __init__(self, *, overrides: str | None = None) -> None:
+    def __init__(self, *, overrides: "str | list | None" = None) -> None:
         self.backends = dict(self.DEFAULTS)
         self.sql_query = self.SQL_QUERY
-        if overrides is not None and str(overrides).strip() != "":
-            self._apply(str(overrides))
+        if overrides is None:
+            return
+        # Config splits a value with commas into a list
+        if isinstance(overrides, (list, tuple)):
+            overrides = ",".join(str(o) for o in overrides)
+        if not isinstance(overrides, str):
+            raise TypeError(f"cost_weights must be a str or a list, not {type(overrides)}")
+        if overrides.strip() != "":
+            self._apply(overrides)
 
     @classmethod
     def for_config(cls, config) -> "CostWeights":
@@ -97,15 +108,22 @@ class CostWeights:
         return cls(overrides=config.get(section="references", name="cost_weights"))
 
     def _apply(self, overrides: str) -> None:
+        seen = set()
         for item in overrides.split(","):
             parts = [p.strip() for p in item.strip().split(":")]
             if parts == [""]:
                 continue
             try:
-                if parts[0] == "sql" and len(parts) == 2:
+                name = parts[0].lower()
+                if name == "":
+                    raise ValueError("a backend name is required")
+                if name in seen:
+                    raise ValueError(f"{name} is given twice")
+                seen.add(name)
+                if name == "sql" and len(parts) == 2:
                     self.sql_query = self._number(parts[1])
-                elif len(parts) == 3:
-                    self.backends[parts[0]] = (
+                elif name != "sql" and len(parts) == 3:
+                    self.backends[name] = (
                         self._number(parts[1]),
                         self._number(parts[2]),
                     )
@@ -119,8 +137,8 @@ class CostWeights:
     @staticmethod
     def _number(text: str) -> float:
         value = float(text)
-        if value < 0:
-            raise ValueError("a weight cannot be negative")
+        if not math.isfinite(value) or value < 0:
+            raise ValueError("a weight must be a finite number >= 0")
         return value
 
     def weight(self, *, kind: str, backend: str, sql: bool = False) -> float:
@@ -152,8 +170,8 @@ class ReferenceEstimate3:
         self,
         *,
         reference: str,
-        reads: list,
-        why: list,
+        reads: "list[Read]",
+        why: "list[str]",
         backend: str,
         weights: CostWeights,
         sql: bool = False,
@@ -165,6 +183,10 @@ class ReferenceEstimate3:
             raise ValueError("reads and why cannot be None")
         if any(not isinstance(r, Read) for r in reads):
             raise TypeError("reads must be Read records")
+        if any(not isinstance(w, str) for w in why):
+            raise TypeError("why must be a list of str")
+        if not isinstance(backend, str) or not isinstance(sql, bool):
+            raise TypeError("backend must be a str and sql a bool")
         if weights is None:
             raise ValueError("weights cannot be None")
         weights.weight(kind="ledger", backend=backend)  # an unknown backend raises
@@ -180,12 +202,22 @@ class ReferenceEstimate3:
     def score_for(cls, weighted: float) -> int:
         """the 1..MAX_SCORE bucket of a weighted read total: 1 is up to 10,
         and each step up is x4"""
-        if weighted is None or weighted < 0:
-            raise ValueError("weighted reads must be >= 0")
-        if weighted <= cls.SCORE_1_UP_TO:
-            return 1
-        steps = math.ceil(math.log(weighted / cls.SCORE_1_UP_TO, cls.STEP))
-        return min(cls.MAX_SCORE, 1 + steps)
+        if weighted is None or isinstance(weighted, bool):
+            raise ValueError("weighted reads must be a number >= 0")
+        if isinstance(weighted, float):
+            if not math.isfinite(weighted):
+                raise ValueError("weighted reads must be a finite number >= 0")
+            # a sum of float weights is rounded first, so 40.0000000000003
+            # stays in the 40 bucket
+            weighted = round(weighted, 9)
+        if weighted < 0:
+            raise ValueError("weighted reads must be a number >= 0")
+        # integer thresholds, not a float log: exact at the edges, and no
+        # overflow for a huge int
+        for score in range(1, cls.MAX_SCORE):
+            if weighted <= cls.SCORE_1_UP_TO * cls.STEP ** (score - 1):
+                return score
+        return cls.MAX_SCORE
 
     def weighted(self, part: str | None = None) -> float:
         """weighted reads for one part, or for both when part is None"""
@@ -296,6 +328,10 @@ class ExpressionEstimate3:
         self.left = left
         self.right = right
 
+    @staticmethod
+    def _indent(text: str) -> str:
+        return "\n".join("    " + line for line in text.splitlines())
+
     def to_dict(self) -> dict:
         return {
             "expression": self.expression,
@@ -304,13 +340,12 @@ class ExpressionEstimate3:
         }
 
     def summary(self) -> str:
-        indent = lambda text: "\n".join("    " + line for line in text.splitlines())  # noqa: E731
         return "\n".join(
             [
                 self.expression,
                 "  left:",
-                indent(self.left.summary()),
+                self._indent(self.left.summary()),
                 "  right:",
-                indent(self.right.summary()),
+                self._indent(self.right.summary()),
             ]
         )

@@ -40,6 +40,8 @@ class TestScore:
             (11, 2),
             (40, 2),
             (41, 3),
+            (160, 3),
+            (161, 4),
             (640, 4),
             (641, 5),
             (2560, 5),
@@ -51,9 +53,16 @@ class TestScore:
     def test_the_buckets_are_x4_from_10(self, weighted, score):
         assert ReferenceEstimate3.score_for(weighted) == score
 
-    def test_a_negative_total_raises(self):
+    @pytest.mark.parametrize("bad", [-1, float("nan"), float("inf")])
+    def test_a_bad_total_raises(self, bad):
         with pytest.raises(ValueError):
-            ReferenceEstimate3.score_for(-1)
+            ReferenceEstimate3.score_for(bad)
+
+    def test_float_noise_at_an_edge_stays_in_its_bucket(self):
+        assert ReferenceEstimate3.score_for(sum([0.1] * 400)) == 2
+
+    def test_a_huge_total_is_the_maximum(self):
+        assert ReferenceEstimate3.score_for(10**400) == 10
 
     def test_the_maximum_is_published(self):
         assert ReferenceEstimate3.MAX_SCORE == 10
@@ -64,9 +73,9 @@ class TestTheSpecExamples:
     def test_the_corpus_star_valid_on_s3_is_4(self):
         est = _estimate(
             [
-                Read(QUERY, "ledger", 1, EXACT, "$*"),
-                Read(QUERY, "run_listing", 11, UPPER_BOUND, ".*"),
-                Read(QUERY, "instance_manifest", 23, EXACT, ".*"),
+                Read(part=QUERY, kind="ledger", count=1, basis=EXACT, because="$*"),
+                Read(part=QUERY, kind="run_listing", count=11, basis=UPPER_BOUND, because=".*"),
+                Read(part=QUERY, kind="instance_manifest", count=23, basis=EXACT, because=".*"),
             ]
         )
         assert (est.score, est.query_score, est.resolve_score) == (4, 4, 1)
@@ -74,9 +83,9 @@ class TestTheSpecExamples:
     def test_nine_thousand_runs_is_9(self):
         est = _estimate(
             [
-                Read(QUERY, "ledger", 1, EXACT, "$*"),
-                Read(QUERY, "run_listing", 9000, UPPER_BOUND, ".*"),
-                Read(QUERY, "instance_manifest", 18900, EXACT, ".*"),
+                Read(part=QUERY, kind="ledger", count=1, basis=EXACT, because="$*"),
+                Read(part=QUERY, kind="run_listing", count=9000, basis=UPPER_BOUND, because=".*"),
+                Read(part=QUERY, kind="instance_manifest", count=18900, basis=EXACT, because=".*"),
             ]
         )
         assert est.score == 9
@@ -84,10 +93,10 @@ class TestTheSpecExamples:
     def test_having_by_content_is_7(self):
         est = _estimate(
             [
-                Read(QUERY, "ledger", 1, EXACT, "$acme"),
-                Read(QUERY, "run_listing", 200, UPPER_BOUND, ":having()"),
-                Read(QUERY, "instance_manifest", 800, EXACT, ":having()"),
-                Read(QUERY, "errors_json", 800, UPPER_BOUND, ":having(:errors())"),
+                Read(part=QUERY, kind="ledger", count=1, basis=EXACT, because="$acme"),
+                Read(part=QUERY, kind="run_listing", count=200, basis=UPPER_BOUND, because=":having()"),
+                Read(part=QUERY, kind="instance_manifest", count=800, basis=EXACT, because=":having()"),
+                Read(part=QUERY, kind="errors_json", count=800, basis=UPPER_BOUND, because=":having(:errors())"),
             ]
         )
         assert est.score == 7
@@ -96,10 +105,10 @@ class TestTheSpecExamples:
         # the spec's example: query 430 (4) + resolve 400 (4) = 830 (5)
         est = _estimate(
             [
-                Read(QUERY, "ledger", 1, EXACT, "$acme"),
-                Read(QUERY, "run_listing", 1, EXACT, ":last()"),
-                Read(QUERY, "instance_manifest", 40, EXACT, ".*"),
-                Read(RESOLVE, "errors_json", 40, EXACT, ":errors()"),
+                Read(part=QUERY, kind="ledger", count=1, basis=EXACT, because="$acme"),
+                Read(part=QUERY, kind="run_listing", count=1, basis=EXACT, because=":last()"),
+                Read(part=QUERY, kind="instance_manifest", count=40, basis=EXACT, because=".*"),
+                Read(part=RESOLVE, kind="errors_json", count=40, basis=EXACT, because=":errors()"),
             ]
         )
         assert (est.query_score, est.resolve_score, est.score) == (4, 4, 5)
@@ -127,7 +136,9 @@ class TestWeights:
         assert w.weight(kind="ledger", backend="s3", sql=True) == 1
         assert w.weight(kind="ledger", backend="azure") == 10
 
-    @pytest.mark.parametrize("bad", ["s3:x:1", "s3:1", "s3:-1:2", "sql:a"])
+    @pytest.mark.parametrize(
+        "bad", ["s3:x:1", "s3:1", "s3:-1:2", "sql:a", "s3:nan:1", "s3:inf:1", ":1:2", "s3:1:2, s3:3:4"]
+    )
     def test_a_bad_override_raises_naming_it(self, bad):
         with pytest.raises(ValueError, match="cost_weights"):
             CostWeights(overrides=bad)
@@ -135,6 +146,16 @@ class TestWeights:
     def test_an_unknown_backend_raises(self):
         with pytest.raises(ValueError):
             CostWeights().weight(kind="ledger", backend="ftp")
+
+    def test_backend_names_are_case_insensitive(self):
+        w = CostWeights(overrides="S3:3:4, Sql:1")
+        assert w.weight(kind="ledger", backend="s3") == 3
+        assert w.weight(kind="ledger", backend="s3", sql=True) == 1
+
+    def test_a_list_from_config_parses(self):
+        # Config splits a value with commas into a list
+        w = CostWeights(overrides=["s3:10:20", "sftp:6:7"])
+        assert w.weight(kind="ledger", backend="sftp") == 6
 
     def test_from_config(self):
         class _Config:
@@ -158,18 +179,24 @@ class TestRead:
         ],
     )
     def test_a_bad_read_raises(self, args):
+        names = ("part", "kind", "count", "basis", "because")
         with pytest.raises(ValueError):
-            Read(*args)
+            Read(**dict(zip(names, args)))
+
+    def test_a_read_takes_keywords_only(self):
+        positional = (QUERY, "ledger", 1, EXACT, "x")
+        with pytest.raises(TypeError):
+            Read(*positional)
 
 
 class TestTheParts:
     def _est(self):
         return _estimate(
             [
-                Read(QUERY, "ledger", 1, EXACT, "$acme"),
-                Read(QUERY, "instance_manifest", 4, EXACT, ".*"),
-                Read(QUERY, "instance_manifest", 2, UPPER_BOUND, ".*"),
-                Read(RESOLVE, "errors_json", 4, EXACT, ":errors()"),
+                Read(part=QUERY, kind="ledger", count=1, basis=EXACT, because="$acme"),
+                Read(part=QUERY, kind="instance_manifest", count=4, basis=EXACT, because=".*"),
+                Read(part=QUERY, kind="instance_manifest", count=2, basis=UPPER_BOUND, because=".*"),
+                Read(part=RESOLVE, kind="errors_json", count=4, basis=EXACT, because=":errors()"),
             ],
             why=["'.*' reads each instance's manifest", ":errors() reads one file each"],
         )
@@ -201,9 +228,13 @@ class TestTheParts:
         assert "why:" in text and "estimated:" in text
 
     def test_would_raise_keeps_the_scores(self):
-        est = _estimate([Read(QUERY, "ledger", 1, EXACT, "$x")], would_raise="several files (5.3)")
+        est = _estimate([Read(part=QUERY, kind="ledger", count=1, basis=EXACT, because="$x")], would_raise="several files (5.3)")
         assert est.to_dict()["would_raise"] == "several files (5.3)"
         assert est.query_score == 1 and "would raise" in est.summary()
+
+    def test_no_reads_scores_1(self):
+        est = _estimate([])
+        assert (est.score, est.query_score, est.resolve_score) == (1, 1, 1)
 
     def test_bad_construction_raises(self):
         with pytest.raises(TypeError):
@@ -214,8 +245,8 @@ class TestTheParts:
 
 class TestExpressionEstimate:
     def test_one_estimate_per_side(self):
-        left = _estimate([Read(QUERY, "ledger", 1, EXACT, "$a")])
-        right = _estimate([Read(QUERY, "ledger", 1, EXACT, "$b")])
+        left = _estimate([Read(part=QUERY, kind="ledger", count=1, basis=EXACT, because="$a")])
+        right = _estimate([Read(part=QUERY, kind="ledger", count=1, basis=EXACT, because="$b")])
         ex = ExpressionEstimate3(expression="$a UNION $b", left=left, right=right)
         assert ex.to_dict()["left"]["reference"] == "$x.results.:last()"
         assert "left:" in ex.summary() and "right:" in ex.summary()
