@@ -68,7 +68,8 @@ def test_the_estimate_reads_only_the_ledger(csvpaths):
 def test_several_whole_files_would_raise(csvpaths):
     est = _finder(csvpaths, "$*.results.:last().*:errors()").estimate()
     assert est.would_raise and "5.3" in est.would_raise
-    assert est.query_score >= 1 and est.resolve_reads == {"errors_json": 8}
+    # it raises before reading anything at resolve
+    assert est.query_reads["instance_manifest"] == 8 and est.resolve_reads == {}
 
 
 def test_selecting_records_does_not_raise(csvpaths):
@@ -81,6 +82,8 @@ def test_a_time_window_is_an_upper_bound(csvpaths):
     assert all(r.basis == UPPER_BOUND for r in est.reads if r.kind != "ledger")
     assert any("time window" in w for w in est.why)
     assert est.estimated
+    # the window may leave one run, so several files only may raise
+    assert est.would_raise.startswith("may raise")
 
 
 def test_having_by_content_is_an_upper_bound_and_explained(csvpaths):

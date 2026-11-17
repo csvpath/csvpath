@@ -1,0 +1,73 @@
+#
+# RESULTS reference shapes the estimate is checked against on the corpus:
+# the PR's own, and a reviewer's probes on #733 (gates before pointers,
+# :manifest() forms, :having(), $* with ranges, name_three gates, :log()).
+#
+VO = "$validate_orders.results"
+
+SHAPES = [
+    f"{VO}.:last().*",
+    f"{VO}.:last()",
+    "$*.results.:all().*:valid(:true())",
+    f'{VO}.:flatten().*:errors():idchain("add[0]")',
+    f'{VO}.:having(:errors(:idchain("add[0]")))',
+    f"{VO}.:last().*:uuid()",
+    "$*.results.:last().*",
+    f"{VO}.:first().*",
+    "$*.results.:last().*:errors()",
+    '$*.results.:last().*:errors():idchain("add[0]")',
+    f"{VO}.:flatten():yesterday().*:errors()",
+    '$:regex(/^v/).results.:last().*',
+    '$:choice("validate_orders|scan_invoices").results.:last()',
+    f"{VO}.2026-08-14_19-17-06",
+    f"{VO}.2026-08-14_19-17-06.*",
+    f"{VO}.:index(1).*",
+    f"{VO}.:index(-1)",
+    f"{VO}.:index(99)",
+    f"{VO}.:from(1):to(3)",
+    f"{VO}.:last():completed()",
+    f"{VO}.:last():run_uuid()",
+    f"{VO}.:completed(:false())",
+    f"{VO}.:error_count(0).*",
+    f"{VO}.:last().:first()",
+    f"{VO}.:last().:index(1)",
+    f"{VO}.:last().*:vars()",
+    f"{VO}.:last().*:meta()",
+    # :manifest() forms
+    f"{VO}.:last():manifest()",
+    f"{VO}.2026-08-14_19-17-06:manifest()",
+    "$*.results.:flatten():manifest():named_file_uuid()",
+    '$*.results.:manifest():lifecycle("active"):last()',
+    "$*.results.:manifest()",
+    "$*.results.:manifest():last()",
+    f"{VO}.:last().:last():manifest()",
+    "$*.results.:flatten():manifest()",
+    "$*.results.:all():manifest()",
+    f"{VO}.:last().*:manifest()",
+    f"{VO}.:last().*:errors(:count(:above(1)))",
+    # gates before pointers (6.28)
+    f"{VO}.:flatten():error_count(:above(3)):last()",
+    '$*.results.:groups():named_file_name("orders"):first()',
+    f'{VO}.:all():having("first type"):last()',
+    "$*.results.:flatten():from(0):to(1):error_count(:above(3)):last()",
+    # :having() by identity
+    f'{VO}.:having("first type")',
+    '$*.results.:flatten():having("baseline scan")',
+    f'{VO}.:having("first type").*',
+    # name_three :having() by content
+    f'{VO}.:last().:all():having(:errors(:idchain("add[0]")))',
+    # ranges over $*, gates' survivors, name_three gates and ranges
+    "$*.results.:flatten():from(0):to(1)",
+    "$*.results.:flatten():from(0):to(1).*",
+    f"{VO}.:error_count(:above(3))",
+    f"{VO}.:completed(:true())",
+    f"{VO}.:completed(:true()):valid(:true())",
+    f'{VO}.:named_file_name("orders")',
+    f"{VO}.:completed(:true()).*",
+    f'{VO}.:error_count(:above(0)).*:errors(:idchain("add[0]"))',
+    f"{VO}.:last().:from(1):to(2):uuid()",
+    f"{VO}.:last().:all():valid(:false()):uuid()",
+    f"{VO}.:last().*:valid(:false()):errors()",
+    # the log
+    "$*.results.:log()",
+]
