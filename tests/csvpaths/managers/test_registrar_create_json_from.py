@@ -451,3 +451,30 @@ class TestResultRegistrarCreateJsonFrom:
         assert mdata.manifest_entry == _read_json(mp)
         assert mdata.manifest_entry["manifest_path"] == mp
         assert mdata.manifest_entry == reg.create_json_from(mdata, manifest_path=mp)
+
+
+class TestResultRegistrarManifestReadNeverWrites:
+    # issue #609 (David, 2026-11-16): ResultRegistrar.manifest wrote {} for a
+    # missing manifest.json, which could land on top of one a run was still
+    # writing. A missing manifest reads as {} and is not created.
+    def test_a_missing_manifest_reads_as_empty_and_is_not_created(
+        self, csvpaths, tmp_path
+    ):
+        registrar = ResultRegistrar(
+            csvpaths=csvpaths,
+            result=_StubResult(str(tmp_path)),
+            result_serializer=_StubSerializer(str(tmp_path / "inst")),
+        )
+        assert registrar.manifest == {}
+        assert not (tmp_path / "inst" / "manifest.json").exists()
+
+    def test_an_existing_manifest_is_read(self, csvpaths, tmp_path):
+        (tmp_path / "inst").mkdir()
+        (tmp_path / "inst" / "manifest.json").write_text('{"uuid": "u1"}')
+        registrar = ResultRegistrar(
+            csvpaths=csvpaths,
+            result=_StubResult(str(tmp_path)),
+            result_serializer=_StubSerializer(str(tmp_path / "inst")),
+        )
+        assert registrar.manifest == {"uuid": "u1"}
+

@@ -229,9 +229,11 @@ class ResultRegistrar(Registrar, Listener):
         nos = self.nos
         nos.path = mp
         if not nos.exists():
-            with DataFileWriter(path=self.manifest_path) as file:
-                json.dump({}, file.sink, indent=2)
-                return {}
+            #
+            # a read never writes (issue #609): writing {} for a missing file
+            # could land on top of a manifest a run was still writing
+            #
+            return {}
         with DataFileReader(self.manifest_path) as file:
             d = json.load(file.source)
             return d
