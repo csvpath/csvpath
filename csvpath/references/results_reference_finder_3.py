@@ -3991,6 +3991,14 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 return False
         return True
 
+    def estimate(self):
+        """what query() and resolve() will probably read, as a
+        ReferenceEstimate3 (references_v3_cost_estimates.md). It reads only
+        the archive ledger."""
+        from .results_estimator_3 import ResultsEstimator3
+
+        return ResultsEstimator3(finder=self).estimate()
+
     def resolve_from(self, selection: ReferenceResults3 | list) -> ReferenceResults3:
         # instance manifests are read once per resolve, never carried over
         # from an earlier call (triage A13)
