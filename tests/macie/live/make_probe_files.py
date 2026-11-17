@@ -300,6 +300,74 @@ def phones_3(rng) -> mlf.LiveFile:
 
 
 FILES_3 = [phones_3]
+
+#
+# the fifth live probe (2026-11-17), following the fourth: national
+# numbers after a keyword, in the cell and as the column header; an
+# international number with spaces under a phone header; other unbroken
+# numbers for Germany and Italy, whose first were not reported; and
+# Brazil, which the fourth probe's job left out
+#
+SEED_4 = 20261117
+PHONES_4 = {
+    #
+    # identifier: (national, international with spaces, other unbroken)
+    #
+    "UK_PHONE_NUMBER": ("020 7946 0958", "+44 20 7946 0958", ["+441214960123"]),
+    "FRANCE_PHONE_NUMBER": ("01 23 45 67 89", "+33 1 23 45 67 89", ["+33612345678"]),
+    "GERMANY_PHONE_NUMBER": (
+        "030 12345678",
+        "+49 30 12345678",
+        ["+493012345678", "+4915112345678", "+498912345678"],
+    ),
+    "ITALY_PHONE_NUMBER": (
+        "06 1234 5678",
+        "+39 06 1234 5678",
+        ["+390612345678", "+393471234567"],
+    ),
+    "SPAIN_PHONE_NUMBER": ("612 34 56 78", "+34 612 34 56 78", ["+34912345678"]),
+    "BRAZIL_PHONE_NUMBER": (
+        "(11) 96123-4567",
+        "+55 11 96123 4567",
+        ["+5511961234567", "+552133334444"],
+    ),
+}
+
+
+def phones_4(rng) -> mlf.LiveFile:
+    f = mlf.LiveFile(name="probe4_phones.csv", headers=["id", "phone", "notes"])
+    for identifier, (national, spaced, unbroken) in PHONES_4.items():
+        f.add(
+            cells={"id": "r", "notes": f"tel {national}"},
+            expect=[("notes", identifier, 1, "national, keyword in the cell")],
+        )
+        f.add(
+            cells={"id": "r", "phone": national},
+            expect=[("phone", identifier, 1, "national, keyword as the header")],
+        )
+        f.add(
+            cells={"id": "r", "phone": spaced},
+            expect=[("phone", identifier, 1, "international with spaces, header")],
+        )
+        for value in unbroken:
+            f.add(
+                cells={"id": "r", "notes": f"call {value}"},
+                expect=[("notes", identifier, 1, "unbroken, no keyword")],
+            )
+    #
+    # Brazil's rows from the fourth probe, which its job did not run
+    #
+    br = "BRAZIL_PHONE_NUMBER"
+    for cell, n, note in [
+        ("call +55 (11) 96123-4567", 1, "a group in parentheses, no keyword"),
+        ("call +55 11 96123 4567", 0, "spaces, no keyword"),
+        ("phone +55 11 96123 4567", 1, "keyword in the cell, spaces"),
+    ]:
+        f.add(cells={"id": "r", "notes": cell}, expect=[("notes", br, n, note)])
+    return f
+
+
+FILES_4 = [phones_4]
 #
 # probe number -> seed, files, directory, expectations file
 #
@@ -307,6 +375,7 @@ PROBES = {
     1: (SEED, FILES, "probe", "expected_probe.json"),
     2: (SEED_2, FILES_2, "probe2", "expected_probe2.json"),
     3: (SEED_3, FILES_3, "probe3", "expected_probe3.json"),
+    4: (SEED_4, FILES_4, "probe4", "expected_probe4.json"),
 }
 
 
