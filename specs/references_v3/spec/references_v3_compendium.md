@@ -1730,9 +1730,9 @@ kinds are limited:
   only with `:has_value()` or `:does_not_have_value()`: an equality test on
   a list or a dict means nothing. `:has_value()` does not match an empty
   list or dict. FILES `:sources()` takes no argument yet.
-- The time fields (`:time()`, `:time_completed()`, `:named_file_last_change()`)
-  and six definition-sourced fields take no argument yet; a time filter is
-  written with a date window or a range.
+- Among others, the time fields (`:time()`, `:time_completed()`,
+  `:named_file_last_change()`) and six definition-sourced fields take no
+  argument yet; a time filter is written with a date window or a range.
 
 (David, 2026-11-16.)
 
