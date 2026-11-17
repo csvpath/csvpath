@@ -1,22 +1,74 @@
 # Macie worklist
 
-Ordered roughly by when we expect to do it. Blockers first; clean-ups
-last. Add an item the moment something is deferred.
+Open work in two kinds (David, 2026-11-16):
 
-## Next
+- **Completeness**: what Macie does that we do not do yet, or do
+  differently. This is the road to fidelity.
+- **Extensions**: what goes beyond Macie.
 
-1. ~~**Transpiler: wrapper -> CVL.**~~ Done: `MacieConverter`. Pair 1 is
-   reproduced exactly. Not in it yet: per-identifier detail caps from the
-   rulesbase (`macie_cdi`'s optional 8th argument).
-2. ~~**Loading `.macie.json` into named-paths groups.**~~ Done:
-   `add_named_paths_from_file` and `add_named_paths_from_dir` load
-   wrappers like ODCS contracts. The wrapper is copied into the group home
-   with `<file>.report.json` beside it. A Macie csvpath's id must be
-   unique in its group (David, 2026-10-31).
-3. ~~**Pair 03_breaker.**~~ Done. It needed the `stop()` fix (#483, PR
-   #484) so the line that trips the breaker is matched.
+Then what to settle before a first release, and a record of what is
+done. Add an item the moment something is deferred.
 
-## Design questions to revisit
+## Completeness: closing the gaps with Macie
+
+### Identifiers
+
+- **Driver's licenses, backlog** (David, 2026-11-06): Finland, Greece,
+  Hungary, Ireland, Latvia, Lithuania, Luxembourg, Malta, Netherlands,
+  Poland, Portugal, Romania, Slovakia, Slovenia, Sweden. Microsoft
+  Purview's per-country pages have the patterns (about 4k tokens each to
+  fetch). 17 jurisdictions are done (pair 21).
+- **Partial stand-ins**, each marked in the catalog and reported by every
+  conversion that uses it:
+  - Brazil CNPJ: no alphanumeric CNPJs (issued from July 2026); see
+    release planning below.
+  - Australia TFN: no 8 digit TFNs.
+  - UK tax identification: UTRs only, no TRNs.
+  - US HICN: SSN-based only, no Railroad Retirement Board numbers.
+  - Canada health number: British Columbia, Ontario and Quebec only;
+    other provinces publish no check.
+  - Germany identity card: not confirmed against Macie, which reported
+    none of seven forms (live probes, 2026-11-14).
+- **Checks not confirmed from an authoritative source**: Italy's BBAN CIN
+  letter (not checked), the Spain NAF's control digits (not checked), the
+  EHIC as 80 and a country code (and the card's personal ID, not
+  detected). Add each check when a source confirms it.
+- **NAME and ADDRESS** (Macie's machine learning identifiers): reported
+  as not translated. Rules cannot do these; see the Jev review under
+  extensions.
+
+### Fidelity
+
+- **The open fidelity items** in `transpile-design.md` (1 to 26, less
+  those settled by the live check and probes). Road-testers settle some;
+  a probe settles one for cents.
+- **Phones without a keyword for countries other than the US**: the
+  unbroken-or-parenthesized rule was seen for `PHONE_NUMBER` only and
+  applied to the UK, France, Germany, Italy, Spain and Brazil. A probe
+  of `UK_PHONE_NUMBER` and one other would confirm it.
+- **A keyword written against a value** (`SSN123-45-6789`): not a word
+  for us; not seen for Macie.
+
+### The download
+
+- **`template=True` is not checked live**: the live check downloaded
+  jobs; automated sensitive data discovery was not enabled (README step
+  5). One enable-and-download in David's account would check it.
+
+### Real-world files
+
+- **Header handling (#479).** The generated scan `$[1*]` assumes the
+  header is line 0. Headerless files, leading blank lines, prolegomena
+  lines and header-only files need a graceful answer. Related bug:
+  `skip()` in the last expression skips the next line (#478).
+- **Directory loads under a name** refuse Macie wrappers, as they refuse
+  ODCS contracts. Appending with `add_named_paths_from_file(append=True)`
+  works for both.
+- **Per-identifier detail caps from the rulesbase** are not wired yet
+  (`macie_cdi`'s optional 8th argument exists; the converter does not
+  write it).
+
+### Design questions to revisit
 
 - **Should findings ever make a run invalid?** A Macie csvpath stays
   `is_valid` even with HIGH findings, so a group can look valid while it
@@ -24,124 +76,9 @@ last. Add an item the moment something is deferred.
 - **A csvpath after a Macie csvpath with `source-mode: preceding`** gets
   only the lines with findings. That could be a feature (e.g. redaction)
   or a surprise.
-- **Limits are fixed when the group is loaded**: changing `[macie]` in config.ini
-  takes effect when the group is reloaded. David is not worried about this
-  for now (2026-10-31).
-
-## After that
-
-4. ~~**Managed identifiers, group A, first batch: credit cards.**~~ Done:
-   `macie_mdi`, the packaged catalog, `CreditCardDetector`, Luhn, and pair
-   02_credit_card. Second batch done: US SSN and NPI, pair 04_us_ids.
-   Third batch done: IBANs, all 52 countries, pair 05_iban. Fourth batch
-   done: Canada SIN, UK NHS, VIN, pair 06_sin_nhs_vin. Fifth batch done:
-   Brazil CPF and CNPJ, Chile RUT, Argentina SUBE, pair 07_latam. Sixth
-   batch done: Spain DNI and NIE, India Aadhaar, pair 10_es_in. Seventh
-   batch done: France NIR (INSEE), Mexico CURP, Italy Codice Fiscale
-   (people's 16 character codes and organizations' 11 digit codes), pair
-   11_fr_mx_it. Eighth batch done: Germany IdNr, Argentina CUIT and CUIL
-   (individuals and organizations), Australia TFN (partial: no 8 digit
-   TFNs), UK UTR (partial: no TRNs), pair 12_tax_ids. Ninth batch done:
-   Spain NIF and CIF, Mexico RFC and Colombia NIT (each for individuals
-   and organizations), France TIN, pair 13_tax_ids_2; the splits agreed
-   with David on 2026-11-03. Credentials done: all nine of Macie's
-   credential identifiers, pair 14_credentials. Group A left: the
-   Germany national id card, the US DEA number, US ITIN, Medicare MBI.
-   Then group B (David, 2026-11-03: either order, as long as both get
-   done).
-4b. ~~**BBANs for France, Germany, Italy, Spain and the UK**~~ Done: the
-   bank detector, pair 08_bban. The five identifiers are no longer
-   partially translated. Italy's CIN letter is not checked (rule not
-   confirmed from an authoritative source); if it is confirmed, add it.
-4a. **Project rulesbase for the stand-ins.** Design agreed 2026-11-07:
-   `specs/macie/rulesbase-design.md` (an overrides file merged over the
-   packaged catalog; the merged catalog snapshotted into the group; group
-   runs copy their Macie inputs into `_extra_data/macie/`; `common.json`
-   deferred). PR 1 (merge, #549), PR 2 (load and snapshot, #550) and PR 3
-   (run dir copies, the standalone line, #552) built. User docs, first
-   draft for partner review: `docs/macie/` (8 pages; the managed
-   identifier reference is generated from the catalog and checked by
-   `tests/macie/test_macie_docs.py`).
-5. ~~**Text allow lists**~~ Done: `macie_allow_words` via `load_list()`
-   (#499) and `configure_named_paths()` (#502); lists stored in the group's
-   assets on load; a conflicting list on append is refused. Pair
-   09_text_allow_list.
-6. **Managed identifiers still to build** (inventory from Macie's PII,
-   PHI, financial and credentials pages, 2026-11-04). Group A has a check
-   or a fixed structure; group B is format plus keyword; group C needs
-   ML or a gazetteer.
-   - **Done:** US DEA, Medicare MBI, US ITIN, HICN (partial), NDC,
-     HCPCS, pair 15_us_health.
-   - **Done:** Germany identity card, France health insurance number,
-     card magnetic stripe, pair 16_group_a_more.
-   - **Done:** Canada health number (British Columbia, Ontario, Quebec;
-     pair 24_ca_health). EHIC card numbers (EU and Finland) and medical
-     device UDIs (GS1 and HIBCC), pair 25_ehic_udi. ISBT 128 UDIs
-     (2026-11-16, from ICCBBA's MPHO medical devices standard). Group A
-     is complete.
-   - **Group B, done:** `FormatDetector` and the format notation; UK
-     NINO, US and Canada bank account, card security code, pair
-     17_group_b_first. Passports (7), pair 18_passports. Phone numbers
-     (7), pair 19_phones; national numbers can be several countries'
-     (accepted for the first release, David 2026-11-05). Next, in
-     `group-b-design.md` order: dates done (birth date, card expiration,
-     pair 20_dates); driver's licenses done for 17 jurisdictions (pair
-     21_drivers_licenses). The rest of group B's shapes done (Argentina
-     DNI, Brazil RG and CEP, Colombia cedula, Canada permanent resident,
-     India PAN, UK electoral roll, pair 22_group_b_rest). GPS
-     coordinates and HTTP cookies done (`LatLongDetector`,
-     `CookieDetector`, pair 23_gps_cookie). Group B is complete apart
-     from the driver's license backlog below.
-   - **Backlog, driver's licenses** (David, 2026-11-06): Finland, Greece,
-     Hungary, Ireland, Latvia, Lithuania, Luxembourg, Malta, Netherlands,
-     Poland, Portugal, Romania, Slovakia, Slovenia, Sweden. Microsoft
-     Purview's per-country pages have the patterns (about 4k tokens each
-     to fetch).
-   - **Group B:** driver's licenses (32 identifiers; the US one covers
-     50+ state formats), passports (7), phone numbers (7), UK NINO, UK
-     electoral roll, Canada permanent resident card, India PAN, Brazil RG,
-     Argentina DNI, Colombia cedula, US and Canada bank account numbers
-     (9-17 digits, no spaces), credit card expiration and security code,
-     birth dates, GPS coordinates, HTTP cookies, Brazil CEP codes.
-   - **Group C, report as not supported:** NAME and ADDRESS.
-   Order (David, 2026-11-04: either order is fine as long as both get
-   done): finish group A first, as it reuses the existing detectors,
-   then group B after a design pass with David on a generic pattern
-   detector.
-6b. ~~**`SPAIN_SOCIAL_SECURITY_NUMBER`**~~ Done: missed by the item 6
-   inventory, found 2026-11-08 when building the recommended-list assets
-   (it is in every recommended set). Format only, fidelity B: the NAF's
-   control digits are not checked, as no authoritative rule was found.
-   Pair 26_es_ssn.
-7. **boto3 download** into a wrapper. Design draft:
-   `specs/macie/download-design.md` (2026-11-08). Offline first with
-   botocore's Stubber; one live check in David's account later (one
-   bucket, 5 to 10 small files, under a dollar a month). Built: the
-   recommended sets (#560), `MacieDownloader`, and
-   `add_named_paths_from_macie()` with `docs/macie/aws.md`. Live check
-   done (2026-11-11): the download needs nothing beyond the docs policy.
-   Report: `specs/macie/live-check-2026-11-11.md`.
-8. **Fidelity scan against real Macie** (billed; ask first) to confirm
-   the interpretations in transpile-design.md. First scan done with the
-   live check: 34 of 43 identifier-file comparisons match exactly, and
-   the one difference on our side (a cell listed once per occurrence) is
-   fixed. Second probe done (2026-11-14, same report). German ID marked
-   partial (2026-11-15). Third probe done (2026-11-15): keywords match
-   as whole words, and phones with a country code and no keyword count
-   only unbroken or parenthesized; both rules now follow Macie.
-9. **Jev review of findings** (optional, masked). Design:
-   `specs/macie/jev-review-design.md`. First experiment done
-   (2026-11-15, `specs/macie/jev-experiment-2026-11-15.md`): AUC 0.87,
-   about 225 tokens a question, and with three bands no committed
-   verdict wrong. Second run (same report): with our column facts in
-   plain words, `choice()` got 29 of 30 right (AUC 0.996). Building it
-   (David, 2026-11-15): `specs/macie/jev-review-build.md`, three PRs.
-   PR 1, masks and column facts (#667): done. PR 2, `JevReviewer`
-   (#668): done. PR 3, wiring into `MacieRun` (`MacieReview`), the
-   `review.<csvpath>.json` record, and `docs/macie/review.md`: done.
-   Next: one live run with the review on (David's OK), and the CVL Jev
-   tests should get a fake client too (they call the live API). The build design's four decisions are settled
-   as proposed (David, 2026-11-15).
+- **Limits are fixed when the group is loaded**: changing `[macie]` in
+  config.ini takes effect when the group is reloaded. David is not
+  worried about this for now (2026-10-31).
 
 ## Ask road-testers about
 
@@ -189,9 +126,39 @@ fidelity item in transpile-design.md.
   with German data whether Macie reports any, and in what form. (The
   phone and Codice Fiscale differences seen with it were fixed on
   2026-11-15.)
+- **The Jev review sends words without digits as written**, names
+  included (decision 3, 2026-11-15). Ask testers whether they need names
+  masked too.
 
-## Decide at release planning
+## Extensions: beyond Macie
 
+- **The Jev review, next steps** (built: #667, #668, #670; run live,
+  #672):
+  - a sharper "why" for a keyword in the cell: `MacieReview.why()` reads
+    only the header, so it says "a keyword is near the value in the cell,
+    or the value needs none";
+  - `review_mask_words`, masking capitalised words too, if road-testers
+    ask (decision 3);
+  - `review = all`, left out of the first build on purpose (decision 4);
+  - NAME and ADDRESS: a review question could flag columns that hold
+    names or addresses, from masked context and column facts. A separate
+    design; it would be ours, not Macie's.
+- **CVL `jev()` uses `jev-latest`**, which moves; a config key to pin the
+  model would make CVL results comparable over time (core, not Macie).
+- **Rulesbase `common.json`**, deferred in `rulesbase-design.md`.
+- **Italy's 11 digit organization codes** (partita IVA) are detected
+  beyond what Macie documents (pair 11); keep, and say so in the docs.
+- **Versioning for named-paths groups**, as named-files have (David,
+  2026-11-16). The idea was that people version their csvpaths in git;
+  that has not held up well. Future work, not Macie-specific.
+- **A plain csvpath reload over a Macie group** keeps the Macie catalog
+  and lists in `assets/`. Unread, since there is no Macie run without
+  Macie functions; remove them if it ever matters.
+
+## Before a first release
+
+- **Docs for bTrade**: `docs/macie/` (10 pages, including `aws.md` and
+  `review.md`) is the first draft; more as the partner review asks.
 - **Alphanumeric CNPJs** (Brazil, issued from July 2026). Needs the
   check-digit rule for letters confirmed from Receita Federal before it
   is built. Until then the converter reports BRAZIL_CNPJ_NUMBER as
@@ -199,33 +166,62 @@ fidelity item in transpile-design.md.
   target market, and the users most exposed to the gap would be unlikely
   to rely on the MVP for such sensitive use. A gap to close, with a final
   decision when deciding on a first release (David, 2026-11-02).
+- **The SFTP tests**: deselected since the server went down
+  (2026-11-03); they need one run against everything since #502.
 
-## After the MVP release
+## Done
 
-- **Jev as a double check on warnings** (David, 2026-11-08). David is
-  adding Jev functions to CVL first (issue #558) to get a feel for it;
-  if it works as hoped, consider how Macie could use it.
+A record, oldest first. Details are in the PRs and the specs named.
 
-## Clean-ups (not blockers)
-
-- ~~**Stale source copies in group homes (Macie and ODCS).**~~ Done
-  (2026-11-16): a reload without append removes earlier ODCS contract and
-  Macie wrapper copies and their reports from the group home
-  (`PathsManager._remove_source_copies`), and the text allow lists
-  earlier Macie loads wrote that the new wrapper does not have
-  (`MacieGroupLoader.store_lists`). Lists stored with `store_list()` are
-  kept. Left: a plain csvpath reload over a Macie group keeps the Macie
-  catalog and lists in `assets/`, unread.
-- **Versioning for named-paths groups**, as named-files have (David,
-  2026-11-16). The idea was that people version their csvpaths in git;
-  that has not held up well. Future work, not Macie-specific.
-- **Directory loads under a name** refuse Macie wrappers, as they refuse
-  ODCS contracts. Appending with `add_named_paths_from_file(append=True)`
-  works for both.
-
-- **Header handling (#479).** The generated scan `$[1*]` assumes the
-  header is line 0. Headerless files, leading blank lines, prolegomena
-  lines and header-only files need a graceful answer. Related bug:
-  `skip()` in the last expression skips the next line (#478).
-- **Group C managed identifiers** (NAME, ADDRESS): unsupported. Report
-  them as not translated rather than silently dropping them.
+- **The translation:** `MacieConverter`, wrapper to CVL (pair 01). Loading
+  `.macie.json` into named-paths groups, with the wrapper and its report
+  copied into the group home; Macie csvpath ids unique in a group (David,
+  2026-10-31). The breaker, pair 03 (needed the `stop()` fix, #483/#484).
+- **Text allow lists:** `macie_allow_words` via `load_list()` (#499,
+  #502), stored in the group's assets; a conflicting list on append is
+  refused (pair 09).
+- **Managed identifiers, group A** (a check or a fixed structure): credit
+  cards (pair 02); US SSN and NPI (04); IBANs, 52 countries (05); Canada
+  SIN, UK NHS, VIN (06); Brazil CPF and CNPJ, Chile RUT, Argentina SUBE
+  (07); BBANs for France, Germany, Italy, Spain and the UK (08); Spain DNI
+  and NIE, India Aadhaar (10); France NIR, Mexico CURP, Italy Codice
+  Fiscale and organization codes (11); Germany IdNr, Argentina CUIT and
+  CUIL, Australia TFN, UK UTR (12); Spain NIF and CIF, Mexico RFC,
+  Colombia NIT, France TIN (13; splits agreed 2026-11-03); all nine
+  credentials (14); US DEA, Medicare MBI, ITIN, HICN, NDC, HCPCS (15);
+  Germany identity card, France health insurance number, magnetic
+  stripe (16); Canada health number (24); EHIC and UDIs, GS1 and HIBCC
+  (25), ISBT 128 (2026-11-16, #718); Spain social security number (26).
+  Group A is complete.
+- **Managed identifiers, group B** (format and keyword): `FormatDetector`
+  and its notation; UK NINO, US and Canada bank accounts, card security
+  code (17); passports (18); phones (19; several countries' national
+  numbers accepted for the first release, David 2026-11-05); dates (20);
+  driver's licenses, 17 jurisdictions (21); Argentina DNI, Brazil RG and
+  CEP, Colombia cedula, Canada PR, India PAN, UK electoral roll (22); GPS
+  and cookies (23). Complete apart from the driver's license backlog.
+- **Project rulesbase:** `specs/macie/rulesbase-design.md` (2026-11-07);
+  the overrides merge (#549), load and snapshot (#550), run dir copies
+  and the standalone line (#552). User docs, first draft:
+  `docs/macie/`, with the managed identifier reference generated from the
+  catalog.
+- **The download:** `specs/macie/download-design.md`; the recommended sets
+  (#560), `MacieDownloader`, `add_named_paths_from_macie()` and
+  `docs/macie/aws.md`. Live check 2026-11-11: the docs policy is enough
+  (`specs/macie/live-check-2026-11-11.md`).
+- **Fidelity against real Macie:** the live check (34 of 43 comparisons
+  exact; one cell per location, fixed) and three probes (2026-11-14 and
+  -15, same report): keywords match as whole words; a phone with a
+  country code and no keyword counts only unbroken or parenthesized;
+  the German ID marked partial.
+- **The Jev review:** design (`jev-review-design.md`), two experiments
+  (`jev-experiment-2026-11-15.md`: `choice()` with our column facts, 29
+  of 30 right), the build (`jev-review-build.md`; #667 masks and column
+  facts, #668 `JevReviewer`, #670 wiring and `docs/macie/review.md`), a
+  live run (#672) and a fake client for the CVL `jev()` tests (#673).
+  Decisions settled as proposed (David, 2026-11-15). This replaces the
+  earlier idea of Jev as a double check on warnings (2026-11-08).
+- **Clean-ups:** a reload without append removes earlier source copies,
+  their reports, and the lists only they brought; lists stored with
+  `store_list()` are kept (#719, 2026-11-16).
+  NAME and ADDRESS are reported as not translated, not dropped.
