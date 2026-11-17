@@ -83,7 +83,12 @@ class ResultsEstimator3:
     #
     def estimate(self) -> ReferenceEstimate3:
         archive = self.csvpaths.config.archive_path
-        if self.finder._bare_log_call(self.reference) is not None:
+        problem = self._query_would_raise()
+        if problem is not None:
+            # query() raises before it reads past the ledger
+            self.would_raise = f"query: {problem}"
+            self._read(part=QUERY, kind="ledger", count=1, basis=UPPER_BOUND, because="the archive ledger")
+        elif self.finder._bare_log_call(self.reference) is not None:
             self._read(part=RESOLVE, kind="log", count=1, basis=EXACT, because=":log()")
             self.why.append(":log() reads the log file at resolve")
         elif self._is_bare_manifest_set():
@@ -100,6 +105,34 @@ class ResultsEstimator3:
             sql=self.csvpaths.config.references_sql == "on",
             would_raise=self.would_raise,
         )
+
+    def _query_would_raise(self) -> "str | None":
+        """the static checks query() makes that this estimate can see"""
+        if self.finder._bare_log_call(self.reference) is not None:
+            if not isinstance(self.reference.root_major, Star3):
+                return ":log() requires root_major '*'"
+            return None
+        calls = self._calls()
+        three = self.reference.name_three
+        for call in calls + (list(three.functions) if three else []):
+            if call.name != "having" or not isinstance(call.arg, FunctionCall3):
+                continue
+            if call.arg.name != "errors":
+                return f":having() cannot take :{call.arg.name}() as content (compendium 6.39)"
+            if call.arg.arg is None:
+                return ":having(:errors()) does not say what the errors must have"
+        if three is not None:
+            names = [c.name for c in three.functions]
+            for call in three.functions:
+                if call.name == "having" and not isinstance(call.arg, FunctionCall3):
+                    return ":having() by identity is not a name_three function"
+                if call.name == "file" and call.arg is None:
+                    return ":file() needs a file name"
+            if any(n in RECORD_SELECTORS for n in names) and not any(
+                n in WHOLE_FILES for n in names
+            ):
+                return f":{next(n for n in names if n in RECORD_SELECTORS)}() needs :errors()"
+        return None
 
     def _estimate_runs(self, archive: str) -> None:
         ledger = self._ledger(archive)
@@ -141,6 +174,15 @@ class ResultsEstimator3:
                 basis=basis,
                 because=f":{gates[0].name}(...)",
             )
+            for gate in gates[1:]:
+                # each further gate rereads its candidates' run manifests
+                self._read(
+                    part=QUERY,
+                    kind="run_manifest",
+                    count=n_candidates,
+                    basis=UPPER_BOUND,
+                    because=f":{gate.name}(...)",
+                )
             self.why.append(f":{gates[0].name}(...) reads each candidate run's manifest")
         if having:
             self._having_costs(
@@ -336,10 +378,26 @@ class ResultsEstimator3:
                 basis=UPPER_BOUND,
                 because=f":{gates[0].name}(...)",
             )
-        self._read(part=RESOLVE, kind="ledger", count=1, basis=UPPER_BOUND, because=":manifest()")
+        calls = self._calls()
+        ranged = [c for c in calls if c.name in ("from", "to")]
+        records = 1
+        if ranged:
+            # a range rereads the ledger for each record it selects
+            records = sum(len(self._ranged(runs[g], calls)) for g in groups) or 1
+        self._read(part=RESOLVE, kind="ledger", count=records, basis=UPPER_BOUND, because=":manifest()")
         self.why.append(":manifest() selects records from the ledger set")
 
     def _run_result_costs(self, *, n_picked: int, manifest: bool, gated: bool, having: bool) -> None:
+        fields = self._value_fields(self._calls())
+        if (gated or having) and (fields or manifest):
+            # the survivors' value or manifest, read at resolve
+            self._read(
+                part=RESOLVE,
+                kind="run_manifest",
+                count=n_picked,
+                basis=UPPER_BOUND,
+                because=f":{(fields[-1].name if fields else 'manifest')}()",
+            )
         if having:
             # :having() already read each candidate's manifest
             return
@@ -356,7 +414,6 @@ class ResultsEstimator3:
             return
         basis = UPPER_BOUND if self.uncertain else EXACT
         self._read(part=QUERY, kind="run_manifest", count=n_picked, basis=basis, because="a run result")
-        fields = self._value_fields(self._calls())
         if not manifest:
             if fields:
                 self._read(
@@ -405,7 +462,7 @@ class ResultsEstimator3:
 
     def _name_three_costs(self, *, three, runs: list, relisted: bool) -> None:
         basis = UPPER_BOUND if self.uncertain else EXACT
-        listings = len(runs) * (2 if relisted else 1)
+        listings = len(runs)
         self._read(part=QUERY, kind="run_listing", count=listings, basis=UPPER_BOUND, because=f".{three}")
         if not relisted:
             self._read(

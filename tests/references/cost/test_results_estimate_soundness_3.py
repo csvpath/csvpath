@@ -11,7 +11,8 @@ from tests.references.cost.results_shapes import SHAPES
 #
 # The estimate's contract, checked on every shape: a count marked exact is
 # the measured count, an upper bound is never below it, nothing measured is
-# missing from the estimate, and would_raise fires when resolve raises.
+# missing from the estimate, and would_raise fires when query or resolve
+# raises.
 #
 CORPUS_CONFIG = os.path.join(os.path.dirname(__file__), "..", "..", "corpus", "config", "config.ini")
 
@@ -33,7 +34,12 @@ def _measure(csvpaths, reference):
     finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=csvpaths)
     raised = None
     with ReadCounter.for_csvpaths(csvpaths) as query:
-        selection = finder.query()
+        try:
+            selection = finder.query()
+        except Exception as e:
+            raised = e
+    if raised is not None:
+        return {QUERY: dict(query.reads), RESOLVE: {}}, raised
     with ReadCounter.for_csvpaths(csvpaths) as resolve:
         try:
             finder.resolve_from(selection)
