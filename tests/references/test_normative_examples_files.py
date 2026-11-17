@@ -390,7 +390,7 @@ class TestManifestEitherOrder:
 class TestDefinitionBare:
     # doc line "$alpha.files.:definition()" -- bare, no :name(.../version
     # needed, since definition.json is per named-file not per-version.
-    def test_resolves_the_raw_definition_bytes(self, tmp_path):
+    def test_resolves_the_definition_json(self, tmp_path):
         content = b'{"sources": {}}'
         home = tmp_path / "alpha"
         home.mkdir()
@@ -398,7 +398,7 @@ class TestDefinitionBare:
         results = _finder(
             "$alpha.files.:definition()", str(home), ALPHA_MANIFEST
         ).resolve()
-        assert results.results[0].data == content
+        assert results.results[0].data == json.loads(content)
 
 
 RICH_HOME = "inputs/named_files/rich"
@@ -836,7 +836,7 @@ class TestPredicateSupportExamples:
         finder = _predicate_finder("$*.files.:on_arrival(:has_value())", tmp_path)
         results = finder.query()
         assert results.files == [str(tmp_path / "orders" / "definition.json")]
-        assert json.loads(finder.resolve().results[0].data) == {
+        assert finder.resolve().results[0].data == {
             "on_arrival": {"named_paths_name": "checks"}
         }
 

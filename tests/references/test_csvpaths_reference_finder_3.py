@@ -1,3 +1,4 @@
+import json
 import os
 import pytest
 
@@ -1064,7 +1065,7 @@ class TestManifestFunction:
         assert results.files == [pathu.resep(f"{GROUP_HOME}/manifest.json")]
         assert results.results[0].uuid is None
 
-    def test_resolve_reads_the_manifest_files_raw_bytes(self, tmp_path):
+    def test_resolve_reads_the_manifest_files_records(self, tmp_path):
         content = b"[]"
         home = tmp_path / "acme"
         home.mkdir()
@@ -1073,7 +1074,8 @@ class TestManifestFunction:
         ref = ReferenceParser3(string="$acme.csvpaths.:manifest()", csvpaths=csvpaths)
         finder = CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
         results = finder.resolve()
-        assert results.results[0].data == content
+        # a JSON structure, not raw bytes (David, 2026-11-16)
+        assert results.results[0].data == json.loads(content)
 
     def test_manifest_beside_a_version_pointer_gives_the_one_matched_entry(self):
         # :manifest() never narrows/selects itself (VALUE role, not
@@ -2414,7 +2416,7 @@ class TestDefinitionFunction:
         assert results.files == [pathu.resep(f"{GROUP_HOME}/definition.json")]
         assert results.results[0].uuid is None
 
-    def test_resolve_reads_the_definition_files_raw_bytes(self, tmp_path):
+    def test_resolve_reads_the_definition_files_json(self, tmp_path):
         content = b'{"_config": {}}'
         home = tmp_path / "acme"
         home.mkdir()
@@ -2425,7 +2427,8 @@ class TestDefinitionFunction:
         )
         finder = CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
         results = finder.resolve()
-        assert results.results[0].data == content
+        # a JSON structure, not raw bytes (David, 2026-11-16)
+        assert results.results[0].data == json.loads(content)
 
     def test_resolve_gives_none_when_never_configured(self, tmp_path):
         home = tmp_path / "acme"

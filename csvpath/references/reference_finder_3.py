@@ -1162,7 +1162,9 @@ class ReferenceFinder3(ABC):
             raise ValueError("path cannot be None or empty")
         _, values = self._split_definition_fields(calls=calls)
         if not values:
-            return self._read_well_known_file(path)
+            # the definition.json as a JSON structure (David, 2026-11-16:
+            # records, not bytes, are better for agents)
+            return self._read_well_known_json(path)
         if isinstance(reference.root_major, str):
             name = reference.root_major
         else:
@@ -1337,6 +1339,22 @@ class ReferenceFinder3(ABC):
         data = b"".join(reversed(blocks))
         text = data.decode("utf-8", errors="replace")
         return "\n".join(text.splitlines()[-lines:])
+
+    def _read_bare_metadata_file(self, *, reference: Reference3, path: str):
+        """resolve() for a bare ':manifest()'/':definition()'/':readme()':
+        a manifest.json or definition.json as its JSON structure -- the
+        manifest's records, the definition's object -- and a README.md as
+        its bytes. They resolved to the JSON file's raw bytes until
+        2026-11-16 (David: "returning records will be better for agents in
+        general and lead to slightly more explainable agent actions"; the
+        '$*' ledger forms moved first, RC triage B1)."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        if not path:
+            raise ValueError("path cannot be None or empty")
+        if self._is_bare_pointer_reference(reference, "readme"):
+            return self._read_well_known_file(path)
+        return self._read_well_known_json(path)
 
     @staticmethod
     def _read_well_known_json(path: str):

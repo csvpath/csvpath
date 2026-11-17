@@ -3002,7 +3002,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # 2026-08-27). ':readme()' added 2026-09-21 -- not wired
                 # into '*' traversal (no worked example demonstrates or
                 # requires it there; see the bucket list).
-                return self._read_well_known_file(result.path)
+                return self._read_bare_metadata_file(
+                    reference=reference, path=result.path
+                )
             if (
                 isinstance(reference.root_major, str)
                 and reference.name_three is None

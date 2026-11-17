@@ -16,6 +16,8 @@ shadow (step 5) the same references must find no difference between the
 two sources.
 """
 
+import json
+
 import pytest
 
 from csvpath import CsvPaths
@@ -698,8 +700,9 @@ def test_definition_chains_on_a_real_filesystem(paths):
         finder = _finder("$people.files.:definition(:template(:has_value()))")
         results = finder.resolve().results
         assert len(results) == 1
+        # the definition as a JSON structure, not bytes (David, 2026-11-16)
         with open(results[0].path, "rb") as f:
-            assert results[0].data == f.read()
+            assert results[0].data == json.loads(f.read())
         finder = _finder("$*.files.:definition(:template(:has_value()))")
         home = paths.file_manager.named_file_home("people")
         assert finder.query().files == [Nos(home).join("definition.json")]
@@ -711,8 +714,9 @@ def test_definition_chains_on_a_real_filesystem(paths):
         finder = _finder("$*.files.:template(:has_value())")
         results = finder.resolve().results
         assert len(results) == 1
+        # the definition as a JSON structure, not bytes (David, 2026-11-16)
         with open(results[0].path, "rb") as f:
-            assert results[0].data == f.read()
+            assert results[0].data == json.loads(f.read())
         finder = _finder('$:choice("people").files.:template()')
         assert [r.data for r in finder.resolve().results] == ["people/:filename"]
     finally:
