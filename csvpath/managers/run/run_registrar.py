@@ -1,6 +1,6 @@
 import json
 from csvpath.util.file_writers import DataFileWriter
-from csvpath.util.file_readers import DataFileReader
+from csvpath.util.json_file_utility import JsonFileUtility as jsut
 from csvpath.util.nos import Nos
 from csvpath.util.exceptions import InputException
 from csvpath.util.ledger_utility import LedgerUtility as leut
@@ -29,8 +29,8 @@ class RunRegistrar(Registrar, Listener):
         if not Nos(self.manifest_path).exists():
             with DataFileWriter(path=self.manifest_path) as file:
                 json.dump([], file.sink, indent=2)
-        with DataFileReader(self.manifest_path) as file:
-            return json.load(file.source)
+        # a corrupt ledger raises naming the file and the likely cause (A19)
+        return jsut.load(path=self.manifest_path)
 
     def metadata_update(self, mdata: Metadata) -> None:
         m = {}
