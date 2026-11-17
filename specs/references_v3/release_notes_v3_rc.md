@@ -4,14 +4,22 @@ Draft, 2026-11-17, for David to edit. "Before" is the last release, v0.0.631 (ta
 
 ## Removed functions
 
-These raise "Unknown reference function" now:
-- **`:home()`** (#504). It never matched a real registration, so a reference that used it gave `[]`. Write the path without it.
+These raise now:
+- **`:home()`** (#504). The replacements:
+  - `$alpha.results.:home()` (the zero-level runs) becomes `$alpha.results.:all()` or `:from(0)`;
+  - `$*.results.:home()` becomes `$*.results.:from(0)`;
+  - `$*.files.:home():definition(...)` becomes `$*.files.:definition(...)`;
+  - a FILES name_one `:home()` never matched a real registration (it gave `[]`), so write the path without it.
+
+  RESULTS raises "Unknown reference function: home"; FILES gives its usual rejection of an unknown name_one function.
 - **`:none()`, `:not_none()`, `:empty()`, `:not_empty()`** (#509). Use `:has_value()` and `:does_not_have_value()` instead. A field has a value when it holds a primitive, including `0` and `false`, or a non-empty list or dict. Every field matches exactly one of the two.
-- **`:files_complete()`** (#671). It is disabled: the manifest flags behind it are not reliable yet.
+- **`:files_complete()`** (#671), "Unknown reference function". It is disabled: the manifest flags behind it are not reliable yet.
 
 ## Ledger values that changed
 
-- **Every named-files and named-paths ledger entry has an explicit `status`** (#456). A registration or load used to have none on success; it now writes `complete`. A failed FILES registration writes `failed` instead of `Registration failed`. A `:status("Registration failed")` filter needs updating.
+- **Every named-files and named-paths ledger entry has an explicit `status`** (#456). A registration or load used to have none on success; it now writes `complete`. A failed FILES registration writes `failed` instead of `Registration failed`. A `:status("Registration failed")` filter needs updating. Entries written before this release have no `status`, so they match no `:status()` value, `:status("complete")` included.
+- **An unchanged named-paths reload writes a ledger entry** (#455), with `"status": "unchanged"` and a `version_uuid`.
+- **The root ledgers are always written** (#452), whatever `[listeners] groups` says. If you had left `default` out, you will now get ledgers.
 - **Every new ledger entry has a lifecycle** (#458, #529): `active` on write, `deleted` when the entity is deleted. Ledger reads keep deleted entries, marked, so use `:lifecycle("active")` to leave them out. Entries written before this release have no lifecycle value, so they do not match `:lifecycle("active")`.
 - **`ResultMetadata.named_paths_uuid` is always the named-paths group uuid** (#445). The group run uuid moved to `ResultMetadata.group_run_uuid`. OpenLineage v1 result events now always name the group run as their parent (start events already did; completion events named the group). This matters to listener authors.
 
@@ -78,7 +86,16 @@ These give a different answer, quietly, so check any reference that relies on th
 - **A FILES ledger record is named by its live manifest's owner** (#662): after a rename, `$*.files.:manifest():named_file_name("orders-renamed")` finds the records; the old ledger name no longer does.
 - **A CSVPATHS version is named by its owning group** (#663): `$:choice("acme-renamed").csvpaths.:manifest():first()` changes in the same way.
 - **Reloading named-paths without `append`** (#719) now deletes the earlier source copies (`*.yml`, `*.yaml`, `*.macie.json`), their reports and stale Macie allow lists.
-- **A bare pointer under `*` gives one result per group** (#518, #547), as `$name` would for each name.
+- **A pointer or range under `*` gives one result per group** (#518, #547), as `$name` would for each name:
+  - `$*.results.:last()` gave `w1`; it now gives `a2, w1`;
+  - `$*.results.:from(0):to(1)` gave `a0, a1`; it now gives `a0, a1, w0, w1`;
+  - FILES groups by named-file: `$*.files.*.:last()` gave `two-2` and now gives `one-2, two-2`, and `$*.files.:last()`, which raised, gives one result per named-file;
+  - `:flatten()`, `:manifest()`, `:all()` and `:groups()` still pool across groups, so use them for one pooled answer.
+- **Bare `$*` field reads see only live versions** (#494); only `:manifest()` reaches the whole ledger:
+  - `$*.csvpaths.:uuid()`, `:fingerprint()` and `:named_paths_name()` no longer include deleted versions or unchanged reloads;
+  - `$*.files.:status("failed")` and `$orders.files.:status("failed")` are always `[]`, because a failed registration is never a live version. Use `$*.files.:manifest():status("failed")`.
+- **A `:date()` upper bound is that day's first moment** (#587): `:to(:date("2026-01-31"))` no longer includes the 31st. The same goes for directional anchors such as `:yesterday()`.
+- **A comparison on a missing value never matches** (#611): `:above()`/`:below()` on a field with no value used to raise a bare `TypeError`; the record is now left out, with a warning.
 
 ### New
 
@@ -86,7 +103,8 @@ These give a different answer, quietly, so check any reference that relies on th
 - A RESULTS run dir can be named directly (#644): `$acme.results.beta/2026-01-01_00-00-00`.
 - `:having()` filters by content (#641): `$acme.results.:having(:errors(:idchain("add[0]")))` is the runs with that error.
 - `:definition()` takes a field chain (#501), and a bare definition field is a one-field chain (#506).
-- A CLI function browser for references (#440), and a "check SQL coverage" item (#471).
+- An argued `:uuid()` or `:fingerprint()` next to a pointer is a filter (#542); it used to raise. `$acme.csvpaths.:last():uuid("a1")` is a1 even when a1 is not the last version.
+- A "check SQL coverage" item in the CLI's references menu (#471).
 
 ### Ordering is deterministic
 
@@ -117,7 +135,7 @@ Functions in a chain are order-independent: a range applies first, then every fi
 - **The SQL setting, `[references] sql`** (new; #447, #459, #462, #465):
   - `off`, the default and blank: references read the filesystem, the source of truth.
   - `on`: references read FILES, CSVPATHS and RESULTS metadata from SQL.
-  - `shadow`: every read goes to both, the two are compared, any difference is logged, and the filesystem result is returned. It is for proving a SQL setup in dev and test; it reads twice, so it is not a production setting.
+  - `shadow`: every read goes to both, the two are compared, any difference is logged, and the filesystem result is returned. A SQL read that raises is logged and re-raised; it does not fall back. It is for proving a SQL setup in dev and test; it reads twice, so it is not a production setting.
   - Anything else raises a `ConfigurationException`.
   - Under `on` and `shadow`, a startup check runs before the first reference read. It raises if `[sql]` dialect or connection string is unset, if one of the four SQL listeners is not configured, or if the database cannot be reached.
   - SQL listener failures used to be logged and swallowed. Under `on` a failed write now always raises `RequiredListenerException`; under `off` and `shadow` it follows the CsvPaths error policy, so with a `raise` policy it now raises.
