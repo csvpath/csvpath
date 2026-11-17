@@ -38,7 +38,6 @@ catalog, and every conversion that uses one says so in its report.
 | `AUSTRALIA_TAX_FILE_NUMBER` | The older 8 digit TFNs |
 | `UK_TAX_IDENTIFICATION_NUMBER` | TRNs (temporary reference numbers); only UTRs |
 | `USA_HEALTH_INSURANCE_CLAIM_NUMBER` | Railroad Retirement Board numbers; only SSN-based HICNs |
-| `MEDICAL_DEVICE_UDI` | ICCBBA ISBT 128 UDIs; only GS1 and HIBCC |
 | `CANADA_HEALTH_NUMBER` | Provinces other than British Columbia, Ontario and Quebec |
 
 ## Known to differ from Macie
@@ -93,7 +92,8 @@ description of the value (not the value), and the column name.
   Paulo's shape; the Canada PR number is the immigration client number
   (UCI), not the card's document number; an EHIC is its 20 digit card
   number (80 and a country code), not the personal id on the card; a GS1
-  UDI must be written with its parentheses; a Spanish Social Security
+  UDI must be written with its parentheses, and an ISBT 128 UDI in its
+  human readable form, starting `=/`; a Spanish Social Security
   number's control digits are not checked (we found no authoritative
   statement of the rule).
 - **Separators and layouts.** We accept the common printed layouts of

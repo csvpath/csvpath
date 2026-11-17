@@ -1,5 +1,5 @@
 """EHIC card numbers and medical device UDIs, the last group A leftovers:
-EhicDetector (the EU and Finland), UdiDetector (GS1 and HIBCC), their
+EhicDetector (the EU and Finland), UdiDetector (GS1, HIBCC, ISBT 128), their
 checks, and the catalog entries. The GS1 check is also compared with
 python-stdnum in test_macie_checksum_oracle.py."""
 
@@ -103,6 +103,16 @@ def test_macie_gs1_and_hibcc_checks() -> None:
         "(01)00614141999996(11)240101(17)290101(10)LOT-7/B(21)SN12345",
         "+A123BJC5D6E71G",
         "+H123ABC01234567890D",
+        #
+        # ISBT 128, from ICCBBA's "Coding and Labeling of Medical Devices
+        # Containing MPHO" v1.0.1: the DI alone; the Figure 10 human
+        # readable text; the full example with every PI; and the same as a
+        # scanned compound message, with its =+06000 header
+        #
+        "=/A9997XYZ100T0479",
+        "=/A9997XYZ100T0479=A99991712345600=,000012=>019031",
+        "=/A9999XYZ100T0476=,000025=A99971712345600=>019032=}017032&,1000000000000XYZ123",
+        "=+06000=/A9999XYZ100T0476=,000025=A99971712345600=>019032=}017032&,1000000000000XYZ123",
     ],
 )
 def test_macie_udi_forms(cell: str) -> None:
@@ -114,7 +124,7 @@ def test_macie_udi_forms(cell: str) -> None:
     [
         #
         # a failed GS1 or mod 43 check; a short GTIN; touching letters;
-        # lower case HIBCC; no labeler code; ISBT 128 (not detected yet)
+        # lower case HIBCC; no labeler code
         #
         "(01)00614141999997",
         "(01)0061414199999",
@@ -123,7 +133,15 @@ def test_macie_udi_forms(cell: str) -> None:
         "+a123BJC5D6E71G",
         "x+A123BJC5D6E71G",
         "+1234567",
-        "=/A9999XYZ100T0944",
+        #
+        # ISBT 128: O is never in a Facility Identification Number; a DI
+        # one short, one long, touching a letter, or in lower case
+        #
+        "=/O9997XYZ100T0479",
+        "=/A9997XYZ100T047",
+        "=/A9997XYZ100T04790",
+        "x=/A9997XYZ100T0479",
+        "=/a9997xyz100t0479",
     ],
 )
 def test_macie_udi_not_detected(cell: str) -> None:
@@ -133,6 +151,34 @@ def test_macie_udi_not_detected(cell: str) -> None:
 def test_macie_udi_in_text() -> None:
     cell = "udi +A123BJC5D6E71G and (01)00614141999996"
     assert UDI.matches(cell=cell) == [(4, 19), (24, 42)]
+    #
+    # the standard allows the DI on one line and the PIs, spaced, on the
+    # next; in a cell, the spaced PIs are not read, the DI is
+    #
+    cell = "udi =/A9997XYZ100T0479=A999917 12345600=,000012"
+    assert [cell[s:e] for s, e in UDI.matches(cell=cell)] == ["=/A9997XYZ100T0479"]
+
+
+@pytest.mark.parametrize(
+    "pi",
+    [
+        "=,000012",
+        "=A99991712345600",
+        "=>019031",
+        "=}017032",
+        "&,1000000000000XYZ123",
+    ],
+)
+def test_macie_udi_isbt_production_identifiers(pi: str) -> None:
+    #
+    # each PI after the DI, in any order; one that does not fit is not part
+    # of the UDI, and the DI still is
+    #
+    di = "=/A9997XYZ100T0479"
+    assert UDI.matches(cell=di + pi) == [(0, len(di + pi))]
+    assert UDI.matches(cell=di + "=>01903") == [(0, len(di))]
+    assert UDI.matches(cell=di + "&,1SHORT") == [(0, len(di))]
+    assert UDI.matches(cell=di + " =>019031") == [(0, len(di))]
 
 
 def test_macie_udi_bad_input() -> None:
@@ -165,9 +211,9 @@ def test_macie_ehic_udi_catalog(catalog) -> None:
     assert udi["severity"] == "1:LOW 2:MEDIUM 100:HIGH"
     assert "med" in udi["keywords"]
     #
-    # Macie names ISBT 128 too; the converter reports the shortfall
+    # GS1, HIBCC and ISBT 128: all three formats Macie names
     #
-    assert "ISBT 128" in udi["partial"]
+    assert udi.get("partial") is None
 
 
 @pytest.mark.parametrize(

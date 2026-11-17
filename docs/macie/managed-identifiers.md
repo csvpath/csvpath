@@ -140,7 +140,7 @@ Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia and Sweden
 | `ITALY_PASSPORT_NUMBER` | required, `italy_passport` | `italy_passport` | 1:MEDIUM 2:HIGH | B |  |
 | `ITALY_PHONE_NUMBER` | required, `phone` | `it_phone` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `LATITUDE_LONGITUDE` | required, `lat_long` | `lat_long` | 1:LOW 2:MEDIUM | B |  |
-| `MEDICAL_DEVICE_UDI` | required, `udi` | `udi` | 1:LOW 2:MEDIUM 100:HIGH | B | Only GS1 and HIBCC UDIs are detected, not ICCBBA ISBT 128 UDIs |
+| `MEDICAL_DEVICE_UDI` | required, `udi` | `udi` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `MEXICO_CURP_NUMBER` | required, `mx_curp` | `mx_curp` | 1:HIGH | A |  |
 | `MEXICO_INDIVIDUAL_RFC_NUMBER` | required, `mx_rfc` | `mx_rfc_individual` | 1:HIGH | B |  |
 | `MEXICO_ORGANIZATION_RFC_NUMBER` | required, `mx_rfc` | `mx_rfc_organization` | 1:MEDIUM 100:HIGH | B |  |

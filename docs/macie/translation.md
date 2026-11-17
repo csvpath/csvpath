@@ -89,7 +89,7 @@ A stand-in that detects less than Macie says Macie detects is marked
 
 ```json
 { "feature": "managedDataIdentifier.partial",
-  "reason": "Only GS1 and HIBCC UDIs are detected, not ICCBBA ISBT 128 UDIs" }
+  "reason": "Only 9 digit TFNs are detected, not the older 8 digit TFNs" }
 ```
 
 The partial stand-ins are listed in [limitations](limitations.md).

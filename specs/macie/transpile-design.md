@@ -891,7 +891,13 @@ with their checks).
   and serial; HIBCC, `+`, a labeler code, product code and unit of measure
   digit, optional secondary data after `/`, and the mod 43 check character
   over the whole (`chut.hibcc_mod43`, checked against two HIBCC
-  specification examples). ISBT 128 is not detected yet. Macie's keywords
+  specification examples); ISBT 128 (2026-11-16), `=/` and the 16
+  character Device Identifier (Facility Identification Number, product
+  code, Product Description Code), then optional production identifiers
+  in any order (`=,` serial, `=` DIN with its flags, `=>` and `=}`
+  dates, `&,1` lot), per ICCBBA's "Coding and Labeling of Medical Devices
+  Containing MPHO" v1.0.1. An ISBT 128 UDI has no check character, so it
+  is format only. Macie's keywords
   include `med` and `blood`, which match only as whole words (item 3,
   settled 2026-11-15); the check characters keep the false positives
   down.
