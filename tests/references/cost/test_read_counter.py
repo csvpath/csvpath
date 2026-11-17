@@ -99,6 +99,18 @@ def test_counters_nest(tmp_path):
     assert outer.reads["ledger"] == inner.reads["ledger"] == 1
 
 
+def test_a_bounded_log_tail_is_one_log_read(tmp_path):
+    from csvpath.references.reference_finder_3 import ReferenceFinder3
+
+    log = tmp_path / "csvpath.log"
+    log.write_text("one\ntwo\nthree\n")
+    roots = {"archive": "/a", "files": "/f", "csvpaths": "/c", "log_file": str(log)}
+    with ReadCounter(**roots) as counter:
+        tail = ReferenceFinder3._read_log_file(str(log), 2)
+    assert "three" in tail
+    assert dict(counter.reads) == {"log": 1}
+
+
 def test_for_csvpaths_needs_csvpaths():
     with pytest.raises(ValueError):
         ReadCounter.for_csvpaths(None)

@@ -69,7 +69,8 @@ class ReadCounter:
     #
     def read_kind(self, path: str) -> str | None:
         """the read kind of a file read at `path`, or None when the path is
-        outside the three roots (config, logs and the like)."""
+        outside the four roots (the archive, the named-files and named-paths
+        homes, and the log file): config files and the like."""
         path = os.path.abspath(str(path))
         name = os.path.basename(path)
         parent = os.path.dirname(path)
