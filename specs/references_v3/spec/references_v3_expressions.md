@@ -192,9 +192,10 @@ matter.
 `left`, `op` (`UNION`/`SUBTRACT`/`INTERSECT`), `right` -- each side is either a
 plain reference string or another `ReferenceExpression3` (sub-expressions
 nest freely). A `values` side is resolved, one item at a time, since
-INTERSECT/SUBTRACT's join key is resolved field-accessor data (`.data`). A
-`paths` side is only queried: its items carry their path and uuid, and
-`.data` is `None` (2026-11-16). Output is a flat list of `ReferenceResults3`, the same
+INTERSECT/SUBTRACT's join key is resolved field-accessor data (`.data`); a
+side its finder flags as several whole-file reads is resolved whole and
+raises (compendium 5.3). A `paths` side is only queried: its items carry
+their path and uuid, and `.data` is `None` (2026-11-16). Output is a flat list of `ReferenceResults3`, the same
 shape as a single reference's results -- each item keeps its own real
 path/uuid/data intact, never collapsed down to just the key that made it
 match.
