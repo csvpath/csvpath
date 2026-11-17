@@ -77,7 +77,7 @@ sub-expression gives a nested pair.
 ```python
 est = finder.estimate()          # ReferenceEstimate3, from any ReferenceFinder3
 
-est.score            # int 1..MAX_SCORE: the bucket of query + resolve together
+est.score            # int 1..MAX_SCORE: the bucket of query + resolve (proposed; see below)
 est.query_score      # int: query() alone
 est.resolve_score    # int: what resolve() adds after query()
 est.would_raise      # None, or why query() or resolve() would raise (e.g. 5.3)
@@ -96,14 +96,27 @@ ex.summary(), ex.to_dict()
 ```
 
 Each part is its own attribute, so a UI can show the two part scores and the
-breakdown, and an agent can take `summary()` (David, 2026-11-17). `resolve()`
-runs `query()` first, so its total work is query plus resolve: that is why
-`score` buckets the sum, and a caller that only queries reads `query_score`.
+breakdown, and an agent can take `summary()` (David, 2026-11-17).
+
+**Proposed change to the Q2 ruling, for David.** Q2 (2026-11-17) set the
+combined `score` to the larger part. This spec proposes the bucket of query
+plus resolve instead: `resolve()` runs `query()` first, so a caller that
+resolves pays both. The two differ by at most one step, since the sum is never
+more than twice the larger part. For example, `$acme.results.:last().*:errors():idchain("x")`
+on S3 with 40 instances is query 430 (4) and resolve 400 (4); the larger part
+gives 4 and the sum, 830, gives 5. A caller that only queries reads
+`query_score` either way. If David keeps the larger part, only this line and
+`score` change.
+
+When a reference would raise, `would_raise` says why, and the scores and reads
+are still filled in for the part that runs (query, for a resolve-time raise),
+so a UI can show both.
 
 Read kinds are a fixed vocabulary: `ledger`, `name_listing`, `run_listing`,
 `named_file_manifest`, `group_manifest`, `run_manifest`, `instance_manifest`,
 `definition`, `errors_json`, `vars_json`, `meta_json`, `version_file`,
-`data_file`. Each count's `basis` is `exact`, `upper_bound` or `estimate`, and
+`data_file` (data, unmatched, printouts, the original file, `:file()`),
+`readme`, `log`, `sql_query`. Each count's `basis` is `exact`, `upper_bound` or `estimate`, and
 `because` names the part of the reference that causes it.
 
 ## The score
@@ -146,7 +159,8 @@ first, a ledger read a directory check as well, and a name listing an
 
 Under `sql = on` the ledger, manifest and listing reads become SQL queries;
 content files (errors.json, version and data files, definitions) still come
-from the backend. Your note's cases (an expensive local-seeming file share,
+from the backend, and so does the one existence check per run that run
+discovery makes. Your note's cases (an expensive local-seeming file share,
 cheap local S3-compatible storage) are what the setting is for. Calibrating on
 real cloud backends is after the MVP, and would cost cloud spend, so it needs a
 go.
@@ -159,7 +173,7 @@ the root ledger, and applies these read factors (measured on main, 2026-11-17):
 | in the reference | query reads | resolve reads |
 |---|---|---|
 | FILES/CSVPATHS literal root | that name's manifest | -- |
-| `*`, `:regex()`, `:choice()` root | a name listing, then each name's manifest | -- |
+| FILES/CSVPATHS `*`, `:regex()`, `:choice()` root | a name listing, then each name's manifest | -- |
 | a ledger-set form (`$*...:manifest()...`, a status or lifecycle gate) | the ledger, plus every named-file or group manifest (the live index) | -- |
 | RESULTS, any root | the ledger | -- |
 | a RESULTS run result, or a name_one field gate (`:completed(:false())`) | 1 run manifest per candidate run, per gate | -- |
@@ -173,8 +187,10 @@ the root ledger, and applies these read factors (measured on main, 2026-11-17):
 | a date window, a range, a pointer | narrows the counts, from ledger timestamps | -- |
 
 Counts and their basis:
-- **exact:** names, the ledger's entries, instances per run (the results ledger
-  has one entry per instance), and anything a window or pointer narrows;
+- **exact:** the ledger's entries, instances per run (the results ledger has
+  one entry per instance), and anything a window or pointer narrows; names are
+  exact where a deleted entity is marked in its ledger (its lifecycle), and an
+  upper bound otherwise;
 - **upper bound:** runs (a run deleted without a ledger mark is still listed),
   and `:having()` content reads;
 - **estimate:** what only a manifest would say: FILES live versus deleted
