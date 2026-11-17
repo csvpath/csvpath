@@ -64,6 +64,12 @@ WHOLE_FILES = {
 # data files may not exist for an instance, so their counts are bounds
 OPTIONAL_FILES = ("data", "unmatched", "printouts", "original", "file")
 RECORD_SELECTORS = ("idchain", "message")
+NAMED_FILES = {
+    "errors.json": "errors_json",
+    "vars.json": "vars_json",
+    "meta.json": "meta_json",
+    "manifest.json": "instance_manifest",
+}
 
 
 class ResultsEstimator3:
@@ -77,6 +83,7 @@ class ResultsEstimator3:
         self.why = []
         self.would_raise = None
         self.uncertain = False
+        self.windowed = False
 
     #
     # entry point
@@ -85,9 +92,17 @@ class ResultsEstimator3:
         archive = self.csvpaths.config.archive_path
         problem = self._query_would_raise()
         if problem is not None:
-            # query() raises before it reads past the ledger
+            # query() raises somewhere along the way: what it would read up
+            # to there is at most the normal query estimate, and resolve
+            # never runs
+            if self.finder._bare_log_call(self.reference) is None:
+                self._estimate_runs(archive)
+            self.reads = [
+                Read(part=r.part, kind=r.kind, count=r.count, basis=UPPER_BOUND, because=r.because)
+                for r in self.reads
+                if r.part == QUERY
+            ]
             self.would_raise = f"query: {problem}"
-            self._read(part=QUERY, kind="ledger", count=1, basis=UPPER_BOUND, because="the archive ledger")
         elif self.finder._bare_log_call(self.reference) is not None:
             self._read(part=RESOLVE, kind="log", count=1, basis=EXACT, because=":log()")
             self.why.append(":log() reads the log file at resolve")
@@ -96,6 +111,15 @@ class ResultsEstimator3:
             self.why.append("the whole :manifest() set is the ledger, read at resolve")
         else:
             self._estimate_runs(archive)
+            if self.windowed:
+                # an unnarrowed window may leave fewer runs than every count
+                # beyond the ledger assumes
+                self.reads = [
+                    Read(part=r.part, kind=r.kind, count=r.count, basis=UPPER_BOUND, because=r.because)
+                    if r.basis == EXACT and r.kind != "ledger"
+                    else r
+                    for r in self.reads
+                ]
         return ReferenceEstimate3(
             reference=str(self.finder.ref.reference),
             reads=self.reads,
@@ -114,6 +138,16 @@ class ResultsEstimator3:
             return None
         calls = self._calls()
         three = self.reference.name_three
+        if any(c.name == "log" for c in calls):
+            return ":log() must be standalone"
+        bare_window = any(
+            (cls := ReferenceFunctionFactory.get_registered_class(c.name)) is not None
+            and cls.SOURCE == "clock"
+            for c in calls
+        )
+        index_range = any(c.name in ("from", "to") and isinstance(c.arg, int) for c in calls)
+        if bare_window and index_range:
+            return "a bare time window cannot be combined with an index range"
         for call in calls + (list(three.functions) if three else []):
             if call.name != "having" or not isinstance(call.arg, FunctionCall3):
                 continue
@@ -126,6 +160,8 @@ class ResultsEstimator3:
             for call in three.functions:
                 if call.name == "having" and not isinstance(call.arg, FunctionCall3):
                     return ":having() by identity is not a name_three function"
+                if call.name == "message":
+                    return ":message() is not a name_three function; use :errors(:message(...))"
                 if call.name == "file" and call.arg is None:
                     return ":file() needs a file name"
             if any(n in RECORD_SELECTORS for n in names) and not any(
@@ -150,6 +186,7 @@ class ResultsEstimator3:
         windows = [c for c in calls if self._is_window(c)]
         if windows:
             self.uncertain = True
+            self.windowed = True
             self.why.append(
                 f":{windows[0].name}() is a time window, not narrowed in this estimate"
             )
@@ -382,8 +419,19 @@ class ResultsEstimator3:
         ranged = [c for c in calls if c.name in ("from", "to")]
         records = 1
         if ranged:
-            # a range rereads the ledger for each record it selects
-            records = sum(len(self._ranged(runs[g], calls)) for g in groups) or 1
+            # the set is one pool in arrival order, and a range rereads the
+            # ledger for each record it selects
+            pooled = sorted((r for g in groups for r in runs[g]), key=lambda r: str(r["time"]))
+            records = len(self._ranged(pooled, calls)) or 1
+        fields = self._value_fields(calls)
+        if fields:
+            self._read(
+                part=RESOLVE,
+                kind="run_manifest",
+                count=records,
+                basis=UPPER_BOUND,
+                because=f":{fields[-1].name}()",
+            )
         self._read(part=RESOLVE, kind="ledger", count=records, basis=UPPER_BOUND, because=":manifest()")
         self.why.append(":manifest() selects records from the ledger set")
 
@@ -401,6 +449,11 @@ class ResultsEstimator3:
         if having:
             # :having() already read each candidate's manifest
             return
+        if gated and manifest and not fields and n_picked > 1:
+            self._raise_or_warn(
+                message=f"resolve: up to {n_picked} whole run manifests at once (compendium 5.3)",
+                definite=False,
+            )
         if gated:
             # the gate read each candidate's manifest; the survivors' run
             # results are read again, and how many survive is unknown
@@ -514,6 +567,8 @@ class ResultsEstimator3:
             kind = (
                 "instance_manifest" if accessor.name == "manifest" else WHOLE_FILES[accessor.name]
             )
+            if accessor.name == "file" and isinstance(accessor.arg, str):
+                kind = NAMED_FILES.get(accessor.arg, "data_file")
             count_basis = UPPER_BOUND if accessor.name in OPTIONAL_FILES else picked_basis
             self._read(
                 part=RESOLVE, kind=kind, count=picked, basis=count_basis, because=f":{accessor.name}()"
