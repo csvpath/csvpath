@@ -6,6 +6,7 @@ from typing import NewType
 from json import JSONDecodeError
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.json_file_utility import JsonFileUtility as jsut
 from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.references.files_reference_finder_2 import (
     FilesReferenceFinder2 as FilesReferenceFinder,
@@ -224,8 +225,8 @@ class FileManager:
         paths_root_manifest. used by FilesReferenceFinder3 to resolve
         "*" root_major references (bare :manifest(), optionally with a
         pointer to select one entry by ordinal)."""
-        with DataFileReader(self.files_root_manifest_path) as reader:
-            return json.load(reader.source)
+        # a corrupt ledger raises naming the file and the likely cause (A19)
+        return jsut.load(path=self.files_root_manifest_path)
 
     def get_manifest(self, name: NamedFileName) -> json:
         if name is None:

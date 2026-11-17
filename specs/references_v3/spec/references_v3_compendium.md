@@ -320,6 +320,10 @@ Note that `:regex(...)` and `:choice(...)` are pattern-matching analogs
 of `:name(...)`.
 
 #### 3.9d
+(Not implemented, and superseded by E2 option C, 2026-11-02, which rules
+out undotted field chains on name_one: name_one picks the file, name_three
+the version (6.27d). Kept for
+history.)
 The following two `name_one` values are functionally the same:
 - `$acme.files.:type("csv")`
 - `$acme.files.*:type("csv")`
@@ -356,6 +360,28 @@ functions.
 Note that in the `results` named-entity data type name_one must include a
 run dir form-name or a wild card that would match a run dir-form name. the
 absence of a run dir or a wild card allowing for a run dir name is an error.
+
+A trailing pattern (`:regex()`, `:choice()`, `:name(/re/)`) is that run dir
+slot: it matches run dir names, e.g.
+`$alpha.results.:regex("2026-01-01_").header_checks:errors()`. Followed only
+by filters -- field accessors, argued or not, or `:having()` -- it still
+names runs:
+`$x.results.:regex(/2026-10/):completed(:false())` is the runs whose names
+match that did not complete (David, 2026-11-16). A pointer, range, grouping
+function or time window after it stands in for the run instead, so the
+pattern then matches a template level: `:regex("2026-01-01_"):last()`. So
+`:regex(/2026-10/):completed(:false()):last()` is `[]`, not the last
+incomplete October run: the pointer makes the pattern a template level,
+whatever the order of the functions (6.28).
+
+If the pattern matches a template directory anywhere in the group, it reads
+as that template level for the whole group, as its literal spelling does --
+quietly, with filters after it: runs `2026-10-01_...` and `2026-10-02_...`
+beside a `2026-10-reports` template give `[]` for
+`:regex(/2026-10/):completed(:false())`. A bare pattern that matches a
+template directory names no run and raises. A template directory shaped
+like a run dir name may be meant as a run, so it does not count (decision
+D18). Under `*` each group is read on its own.
 
 
 #### 3.11 Example finding a file registration by arrival time
@@ -786,7 +812,13 @@ paths+uuid to the definition files on `query()` but will raise an error on
 #### 5.9
 **Resolve**: pulls actual content a reference points to. When a reference
 points to a file, resolving returns either bytes (if the reference is to a
-binary file, such as an `.xlsx`) or a JSON structure. When a reference
+binary file, such as an `.xlsx`) or a JSON structure. A framework JSON file
+resolves to its JSON structure: a `manifest.json` (its records), a
+`definition.json` (its object), a ledger, and a run instance's `errors.json`,
+`vars.json` and `meta.json` (`:errors()`, `:variables()`, `:meta()`). Other
+file content, text or binary -- version files, run data and unmatched files,
+printouts, the original data file, `README.md`, `:file(...)` -- resolves to
+bytes (David, 2026-11-16). When a reference
 points to a field the return is a string, int, date, UUID, etc.
 
 #### 5.10
@@ -916,6 +948,12 @@ Functions are the mechanism for narrowing and pointing within a reference.
 **Form**: `:name(arg)` or `:name()` — a colon, a name, parentheses, at most
 one argument. Functions chain with no separator (`:before(:yesterday()):
 index(3)`) and are implicitly ANDed together without regard for order.
+
+Order independence is deterministic: a range applies first, then every
+filter, then a pointer picks from what is left, whatever the written order
+(6.28). So `$acme.results.:completed(:false()):last()` and
+`$acme.results.:last():completed(:false())` mean the same: the last run that
+did not complete.
 
 Order independence achieves three things:
 - It eliminates subtle differences between orderings
@@ -1145,10 +1183,19 @@ Records
       (compendium 5.6).
     - If the instance's own manifest no longer exists (e.g. a
       deleted run), a name_three :manifest() resolves to None.
+- In FILES and CSVPATHS, a bare :manifest() with `*` resolves to every
+  record in the set, as stored: $*.files.:manifest() and
+  $*.csvpaths.:manifest() are their ledgers' records, not the files'
+  bytes (David, 2026-11-15). RESULTS arranges its set as runs, each
+  holding its instances (above).
 - In every datatype, a bare :manifest() under a :regex() or :choice()
   root is the set filtered by name: still one result (the ledger's
   path, uuid None), resolving to the matching records. E.g.
   $:regex(/^al/).files.:manifest().
+- A name_three selector after a bare :manifest() in FILES raises,
+  naming the chain form: put the pointer or range in the :manifest()
+  chain, e.g. $:regex(/^al/).files.:manifest():last(). In CSVPATHS a
+  name_three there picks a statement, as elsewhere.
 
 #### 6.13b(i)
 Membership
@@ -1160,6 +1207,12 @@ Order
 - Arrival order. Pointers and index ranges count in it. For
   RESULTS run records, a run's position is that of its first
   instance's manifest record arrival.
+- RESULTS name_three positions -- instance pointers and ranges within
+  a run -- count in declaration order, the order of the statements in
+  the named-paths group (FILES name_three positions count versions in
+  arrival order). A run whose directory is gone keeps arrival order,
+  with a warning, and an instance with no `instance_index` counts as
+  position 0 (decision D17).
 
 #### 6.13b(iii)
 Named-entity home manifests
@@ -1665,6 +1718,23 @@ number of errors. But `:errors():error_count(:above(2))` is selecting the
 path to a run instance's `errors.json` (on query()) and the contents of the
 same `errors.json` (on resolve()) but only if there were more than `2` errors
 in the run of that csvpath instance.
+
+One kind of field accessor takes an argument that does not filter, and two
+kinds are limited:
+- A key-selecting field names a key with its argument: `:source_port("email")`
+  reads `sources.email.port` from the definition. The argument is part of the
+  field's name, so it is the one documented exception to this rule. It covers
+  the `source_*`, `destination_*` and `transfer_on_complete_*` fields.
+- A collection field (a list or a dict, e.g. `:named_paths_identities()`,
+  `:file_fingerprints()`, `:destinations()`, `:webhooks()`) filters, but
+  only with `:has_value()` or `:does_not_have_value()`: an equality test on
+  a list or a dict means nothing. `:has_value()` does not match an empty
+  list or dict. FILES `:sources()` takes no argument yet.
+- Among others, the time fields (`:time()`, `:time_completed()`,
+  `:named_file_last_change()`) and six definition-sourced fields take no
+  argument yet; a time filter is written with a date window or a range.
+
+(David, 2026-11-16.)
 
 #### 6.41
 By contrast to the last example,

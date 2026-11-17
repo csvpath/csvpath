@@ -12,6 +12,7 @@ from csvpath.util.metadata_parser import MetadataParser
 from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.json_file_utility import JsonFileUtility as jsut
 from csvpath.util.nos import Nos
 
 from .paths_registrar import PathsRegistrar
@@ -125,8 +126,8 @@ class PathsManager:
     def paths_root_manifest(self) -> str:
         """@private"""
         p = self.paths_root_manifest_path
-        with DataFileReader(p) as reader:
-            return json.load(reader.source)
+        # a corrupt ledger raises naming the file and the likely cause (A19)
+        return jsut.load(path=p)
 
     def get_manifest_for_name(self, name: str) -> dict:
         if name.startswith("$"):
