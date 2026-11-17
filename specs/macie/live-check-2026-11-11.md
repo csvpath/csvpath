@@ -262,3 +262,25 @@ two `+1` forms have been seen reported.
   pairs 11 (two Codice Fiscale codes under `codice_fiscale`) and 19 (four
   international numbers written with spaces and no keyword) changed
   accordingly.
+
+## The template download, 2026-11-16
+
+`add_named_paths_from_macie(template=True)`, live for the first time,
+after David enabled automated sensitive data discovery and added
+`EmployeeId` to its settings. As `macie-test-user`, with the docs policy:
+
+- `MacieDownloader.download_template()`: 1.22 s, no warnings. Template
+  `a0406f6b5a62d76d4036166a7132f4d8`; selector `RECOMMENDED`, resolved to
+  35 identifiers from `automated-discovery-recommended@2026-11-08` (the
+  account was first enabled after 2023-08-02, so not the static set of
+  100); `EmployeeId`; no allow lists.
+- Loaded as a group: 0.98 s; the home holds
+  `automated-sensitive-data-discovery.macie.json` and its report; the
+  manifest's `source_path` is
+  `aws:macie2:us-east-1:724414611418:sensitivity-inspection-template/a0406f6b5a62d76d4036166a7132f4d8`.
+- Run on `people_us.csv`: valid, and the same four identifiers as Job
+  `csvpath-live-recommended` found there (driver's license, ITIN,
+  passport, SSN).
+
+The static set of 100 (accounts first enabled before 2023-08-02) can be
+checked only with stubbed responses.
