@@ -313,3 +313,46 @@ which the account offers, was not in it, so the Brazil rows are untested.
    the UK's, France's and Spain's were. `+4930123456` (a six digit Berlin
    subscriber number) and `+393123456789` may fail a stricter numbering
    plan check than ours; one number each does not say.
+
+## The fifth probe, 2026-11-17: phones outside the US, continued
+
+Job `csvpath-probe-4b` (`c162f5d55bfd644cf412fb59aeef0ef9`; the first,
+`356c69b3...`, ran before the file was uploaded and scanned nothing), all
+six identifiers, the file from `make_probe_files.py <out> 4` under
+`probe4/` (ETag equal to the local MD5). 16 of 31 rows agree.
+
+| Form | UK | France | Germany | Italy | Spain | Brazil | Ours |
+|---|---|---|---|---|---|---|---|
+| national, `tel` in the cell | 1 | 1 | **0** | **0** | **0** | 1 | 1 |
+| national, `phone` header | 1 | 1 | **0** | **0** | **0** | 1 | 1 |
+| international with spaces, `phone` header | **0** | **0** | **0** | **0** | **0** | 1 | 1 |
+| unbroken, no keyword | 1 | 1 | 1, 1, 1 | **0, 0** | 1 | 1, 1 | 1 |
+| Brazil only: parentheses, no keyword | | | | | | **0** | 1 |
+| Brazil only: `phone` in the cell, spaces | | | | | | **0** | 1 |
+
+Every number in the probe is valid by Google's `phonenumbers`
+(`is_valid_number`), so the misses are not invalid numbers.
+
+### With the fourth probe
+
+| | UK | France | Germany | Italy | Spain | Brazil |
+|---|---|---|---|---|---|---|
+| unbroken, no keyword | 2 of 2 | 2 of 2 | 3 of 4 | **0 of 3** | 2 of 2 | 2 of 2 |
+| parentheses, no keyword | 0 of 1 | 0 of 1 | 0 of 1 | 0 of 1 | 0 of 1 | 0 of 1 |
+| international with spaces or dashes, any keyword | 0 of 2 | 0 of 2 | 0 of 2 | 0 of 2 | 0 of 2 | 1 of 2 (header yes, cell no) |
+| national after a keyword | 2 of 2 | 2 of 2 | **0 of 2** | **0 of 2** | **0 of 2** | 2 of 2 |
+
+What holds across the countries:
+
+1. **An international number counts when unbroken**: 11 of 12 outside
+   Italy. The miss is `+4930123456`, a short Berlin number.
+2. **Parentheses are a US form** (0 of 6), and **an international number
+   written with spaces or dashes is not reported** (1 of 12, Brazil
+   under a header).
+
+What does not, and is not explained by the format:
+
+3. **Italy: nothing reported**, in 8 rows over the two probes, in any
+   form, with or without a keyword.
+4. **National numbers after a keyword**: reported for the UK, France and
+   Brazil; not for Germany, Italy or Spain, with the same keywords.
