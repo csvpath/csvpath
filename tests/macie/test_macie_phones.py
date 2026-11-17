@@ -57,7 +57,15 @@ def _mdi(catalog, name: str) -> ManagedIdentifier:
     )
 
 
-def _examples() -> list[tuple[str, str]]:
+#
+# outside the US and Canada, an international number is found only
+# unbroken (the fourth and fifth live probes): phonenumbers' INTERNATIONAL
+# format, with spaces, is not found there
+#
+UNBROKEN_ONLY = {"GB", "FR", "DE", "IT", "ES", "BR"}
+
+
+def _examples() -> list[tuple[str, str, bool]]:
     out = []
     for region in REGIONS:
         for t in TYPES:
@@ -69,22 +77,39 @@ def _examples() -> list[tuple[str, str]]:
                 PhoneNumberFormat.INTERNATIONAL,
                 PhoneNumberFormat.E164,
             ]:
-                out.append((region, phonenumbers.format_number(n, f)))
+                found = not (
+                    f == PhoneNumberFormat.INTERNATIONAL and region in UNBROKEN_ONLY
+                )
+                out.append((region, phonenumbers.format_number(n, f), found))
             e164 = phonenumbers.format_number(n, PhoneNumberFormat.E164)
-            out.append((region, "00" + e164[1:]))
+            out.append((region, "00" + e164[1:], True))
     return out
 
 
-@pytest.mark.parametrize("region, cell", _examples())
-def test_macie_phone_oracle_examples(catalog, region: str, cell: str) -> None:
+@pytest.mark.parametrize("region, cell, found", _examples())
+def test_macie_phone_oracle_examples(
+    catalog, region: str, cell: str, found: bool
+) -> None:
     detector = _detector(catalog, REGIONS[region][0])
-    assert detector.matches(cell=cell) == [(0, len(cell))]
+    assert detector.matches(cell=cell) == ([(0, len(cell))] if found else [])
+
+
+def test_macie_phone_unbroken_only_is_catalog_data(catalog) -> None:
+    for region, (name, _) in REGIONS.items():
+        d = _detector(catalog, name)
+        assert d.international_unbroken_only is (region in UNBROKEN_ONLY)
+    with pytest.raises(MacieException):
+        PhoneDetector(
+            config={
+                **catalog.detector(name="gb_phone"),
+                "international_unbroken_only": "yes",
+            }
+        )
 
 
 @pytest.mark.parametrize(
     "name, cell",
     [
-        ("gb_phone", "+44 (0)20 7946 0958"),
         ("gb_phone", "020.7946.0958"),
         ("us_phone", "1-212-555-0100"),
         ("us_phone", "212.555.0100"),
@@ -122,8 +147,10 @@ def test_macie_phone_not_detected(catalog, name: str, cell: str) -> None:
 
 def test_macie_phone_country_code_is_keyword_exempt(catalog) -> None:
     #
-    # unbroken, or with a group in parentheses; not with spaces, dashes or
-    # dots between the groups (the live probes, 2026-11-14 and -15)
+    # outside the US, an international number is found only unbroken (the
+    # fourth and fifth live probes, 2026-11-16 and -17), and is then exempt;
+    # a national number needs a keyword. With parentheses, spaces or
+    # dashes, an international number is not found at all
     #
     d = _detector(catalog, "gb_phone")
     cell = (
@@ -131,14 +158,25 @@ def test_macie_phone_country_code_is_keyword_exempt(catalog) -> None:
         "+44 20 7946 0958 or +44-20-7946-0958 or 020 7946 0958"
     )
     spans = d.matches(cell=cell)
+    assert [cell[s:e] for s, e in spans] == [
+        "+442079460958",
+        "00442079460958",
+        "020 7946 0958",
+    ]
     assert [d.keyword_exempt(cell=cell, start=s, end=e) for s, e in spans] == [
         True,
         True,
-        True,
-        False,
-        False,
         False,
     ]
+    assert _detector(catalog, "gb_phone").matches(cell="+44 (0)20 7946 0958") == []
+    #
+    # the US keeps the second probe's rule: parentheses are exempt
+    #
+    us = _detector(catalog, "us_phone")
+    cell = "call +1 (212) 555-0148"
+    assert [
+        us.keyword_exempt(cell=cell, start=s, end=e) for s, e in us.matches(cell=cell)
+    ] == [True]
 
 
 @pytest.mark.parametrize(
@@ -151,10 +189,10 @@ def test_macie_phone_country_code_is_keyword_exempt(catalog) -> None:
         #
         ("020 7946 0958", "phone", 1),
         ("tel 020 7946 0958", "x", 1),
-        ("+44 20 7946 0958", "phone", 1),
+        ("+44 20 7946 0958", "phone", 0),
         ("020 7946 0958", "notes", 0),
         ("+442079460958", "notes", 1),
-        ("+44 (20) 7946 0958", "notes", 1),
+        ("+44 (20) 7946 0958", "notes", 0),
         ("+44 20 7946 0958", "notes", 0),
         ("0044 20 7946 0958", "notes", 0),
         ("+442079460958 / 020 7946 0958", "notes", 1),

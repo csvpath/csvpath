@@ -356,3 +356,13 @@ What does not, and is not explained by the format:
    form, with or without a keyword.
 4. **National numbers after a keyword**: reported for the UK, France and
    Brazil; not for Germany, Italy or Spain, with the same keywords.
+
+### Changed (David, 2026-11-17)
+
+Outside the US, an international phone number is found only unbroken,
+with or without a keyword (`international_unbroken_only`, catalog data
+on each of the six detectors; the US keeps the parentheses form).
+Agreement with Macie: fourth probe 15 to 23 of 25 (Brazil not run),
+fifth probe 16 to 22 of 31. What is left is what format does not
+explain: Italy, and German, Italian and Spanish national numbers after a
+keyword; and one row lost, Brazil's spaced number under a header.

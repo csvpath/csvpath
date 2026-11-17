@@ -42,13 +42,12 @@ done. Add an item the moment something is deferred.
 - **The open fidelity items** in `transpile-design.md` (1 to 26, less
   those settled by the live check and probes). Road-testers settle some;
   a probe settles one for cents.
-- **Phones for countries other than the US**: the fourth probe
-  (2026-11-16) found the parenthesized form is a US form, an
-  international number with spaces is not reported even after a keyword,
-  and Germany's and Italy's unbroken numbers were not reported. The fifth
-  probe (README section 8) checks national numbers after a keyword, the
-  header, other German and Italian numbers, and Brazil; then one rule
-  change.
+- **Phones for countries other than the US**: after the fourth and
+  fifth probes (2026-11-16, -17), an international number is found only
+  unbroken (`international_unbroken_only` in the catalog, 2026-11-17).
+  Left, not explained by format: Macie reports no Italian number in any
+  form, and no German, Italian or Spanish national number after a
+  keyword (`limitations.md`).
 - **A keyword written against a value** (`SSN123-45-6789`): not a word
   for us; not seen for Macie.
 
@@ -94,10 +93,11 @@ fidelity item in transpile-design.md.
   The old risk, short keywords inside longer words, is gone. The new
   one: a keyword written directly against a value (`SSN123-45-6789`) is
   not a word, and we have not seen what Macie does there.
-- **Phones with a country code and no keyword** count only unbroken or
-  with a group in parentheses (seen for the US, applied to every
-  country). Ask testers with UK, French, German, Italian, Spanish or
-  Brazilian numbers whether Macie finds ones we do not.
+- **Phones outside the US.** An international number counts only
+  unbroken; national numbers need a keyword. Macie reported no Italian
+  number at all in the probes, and no German, Italian or Spanish
+  national number after a keyword. Ask testers with numbers from those
+  countries what Macie finds.
 - **Keywords need their accents** (item 22). `cedula de ciudadania`
   without accents is not Colombia's keyword, so a cedula labeled that way
   is missed. Brazil's CEP list has both forms only because Macie lists
