@@ -147,6 +147,7 @@ class CostWeights:
             raise ValueError(f"kind must be one of {KINDS}, not {kind!r}")
         if kind == "sql_query" or (sql and kind in self.SQL_SERVED):
             return self.sql_query
+        backend = str(backend).lower()
         if backend not in self.backends:
             raise ValueError(f"no cost weights for backend {backend!r}")
         read, listing = self.backends[backend]
@@ -177,18 +178,21 @@ class ReferenceEstimate3:
         sql: bool = False,
         would_raise: str | None = None,
     ) -> None:
-        if not reference:
-            raise ValueError("reference cannot be None or empty")
-        if reads is None or why is None:
-            raise ValueError("reads and why cannot be None")
-        if any(not isinstance(r, Read) for r in reads):
-            raise TypeError("reads must be Read records")
-        if any(not isinstance(w, str) for w in why):
-            raise TypeError("why must be a list of str")
-        if not isinstance(backend, str) or not isinstance(sql, bool):
-            raise TypeError("backend must be a str and sql a bool")
-        if weights is None:
-            raise ValueError("weights cannot be None")
+        problem = None
+        if not isinstance(reference, str) or reference.strip() == "":
+            problem = ValueError("reference must be a non-empty str")
+        elif reads is None or why is None or weights is None:
+            problem = ValueError("reads, why and weights cannot be None")
+        elif any(not isinstance(r, Read) for r in reads):
+            problem = TypeError("reads must be Read records")
+        elif any(not isinstance(w, str) for w in why):
+            problem = TypeError("why must be a list of str")
+        elif not isinstance(backend, str) or not isinstance(sql, bool):
+            problem = TypeError("backend must be a str and sql a bool")
+        if problem is not None:
+            logging.getLogger(type(self).__name__).error(str(problem))
+            raise problem
+        backend = backend.lower()
         weights.weight(kind="ledger", backend=backend)  # an unknown backend raises
         self.reference = reference
         self.reads = list(reads)
@@ -319,8 +323,8 @@ class ExpressionEstimate3:
     estimates")"""
 
     def __init__(self, *, expression: str, left, right) -> None:
-        if not expression:
-            raise ValueError("expression cannot be None or empty")
+        if not isinstance(expression, str) or expression.strip() == "":
+            raise ValueError("expression must be a non-empty str")
         for side in (left, right):
             if not isinstance(side, (ReferenceEstimate3, ExpressionEstimate3)):
                 raise TypeError("a side must be a ReferenceEstimate3 or ExpressionEstimate3")

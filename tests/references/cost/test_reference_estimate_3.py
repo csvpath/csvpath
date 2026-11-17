@@ -143,6 +143,9 @@ class TestWeights:
         with pytest.raises(ValueError, match="cost_weights"):
             CostWeights(overrides=bad)
 
+    def test_a_backend_name_is_case_insensitive_on_lookup(self):
+        assert CostWeights().weight(kind="ledger", backend="S3") == 10
+
     def test_an_unknown_backend_raises(self):
         with pytest.raises(ValueError):
             CostWeights().weight(kind="ledger", backend="ftp")
