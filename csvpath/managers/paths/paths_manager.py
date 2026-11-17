@@ -604,6 +604,8 @@ class PathsManager:
                 self.csvpaths.logger.debug("Adding %s to %s", _, name)
             self._refuse_shared_macie_ids(name=name, paths=paths, append=append)
             s = self._str_from_list(paths)
+            if append is not True and self.has_named_paths(name):
+                self._remove_source_copies(name)
             group_file_path = self._copy_in(name, s, append=append)
             #
             # capture the fingerprint here before/as soon as we write the bytes
@@ -1122,6 +1124,41 @@ class PathsManager:
             len(report["skipped"]),
         )
         return (paths, report)
+
+    #
+    # the files a load copies into a group home beside the csvpaths: ODCS
+    # contracts, Macie wrappers, and their conversion reports
+    #
+    SOURCE_COPY_SUFFIXES = (".yml", ".yaml", ".macie.json")
+    REPORT_SUFFIX = ".report.json"
+
+    def _remove_source_copies(self, name: NamedPathsName) -> list[str]:
+        #
+        # a reload without append replaces the group's csvpaths, so the
+        # source copies and reports of earlier loads go too: otherwise the
+        # home, and every Macie run's copy of it, describes rules the group
+        # no longer runs. this load's copy and report are written after.
+        # group.csvpaths, manifest.json and assets/ are not touched.
+        # returns the paths removed.
+        #
+        if name is None or str(name).strip() == "":
+            raise ValueError("Named-paths group name cannot be None or empty")
+        home = self.named_paths_home(name)
+        removed = []
+        for f in Nos(home).listdir(files_only=True):
+            n = f.rsplit("/", 1)[-1]
+            base = n[: -len(self.REPORT_SUFFIX)] if n.endswith(self.REPORT_SUFFIX) else n
+            if base.endswith(self.SOURCE_COPY_SUFFIXES):
+                path = Nos(home).join(n)
+                Nos(path).remove()
+                removed.append(path)
+        if removed:
+            self.csvpaths.logger.info(
+                "Removed %s earlier source copies from named-paths group %s",
+                len(removed),
+                name,
+            )
+        return removed
 
     def _write_conversion_report(
         self, *, name: NamedPathsName, file_path: str, report: dict

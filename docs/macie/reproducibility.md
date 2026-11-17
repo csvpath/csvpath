@@ -77,6 +77,12 @@ These are refused, before anything is written:
 Each says what to do: reload the group without `append`, or give the list
 a new id.
 
+A reload without `append` replaces the group: the earlier wrappers, their
+conversion reports, and the text allow lists they brought are removed, so
+the group home, and the next run's `_extra_data/macie/`, hold only the
+rules the group now runs. Lists you stored yourself with `store_list()`
+are kept.
+
 ## Standalone runs
 
 A converted csvpath also runs on its own, with `CsvPath`, outside any
