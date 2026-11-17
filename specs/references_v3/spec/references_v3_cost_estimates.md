@@ -1,6 +1,6 @@
 # References v3: cost estimates
 
-Draft for David's approval, 2026-11-17. It turns `notes/v3 - part 2 - cost estimates.txt`
+Approved by David, 2026-11-17. It turns `notes/v3 - part 2 - cost estimates.txt`
 (David) and the rulings of 2026-11-15/17 (decision log) into the shape the code
 will follow. Fan-out is not part of this; it comes after the v3 MVP.
 
@@ -77,7 +77,7 @@ sub-expression gives a nested pair.
 ```python
 est = finder.estimate()          # ReferenceEstimate3, from any ReferenceFinder3
 
-est.score            # int 1..MAX_SCORE: the bucket of query + resolve (proposed; see below)
+est.score            # int 1..MAX_SCORE: the bucket of query + resolve (see below)
 est.query_score      # int: query() alone
 est.resolve_score    # int: what resolve() adds after query()
 est.would_raise      # None, or why query() or resolve() would raise (e.g. 5.3)
@@ -98,15 +98,13 @@ ex.summary(), ex.to_dict()
 Each part is its own attribute, so a UI can show the two part scores and the
 breakdown, and an agent can take `summary()` (David, 2026-11-17).
 
-**Proposed change to the Q2 ruling, for David.** Q2 (2026-11-17) set the
-combined `score` to the larger part. This spec proposes the bucket of query
-plus resolve instead: `resolve()` runs `query()` first, so a caller that
+**The combined score is the bucket of query plus resolve** (David approved
+this with the spec, 2026-11-17, amending Q2's "larger part"): `resolve()` runs `query()` first, so a caller that
 resolves pays both. The two differ by at most one step, since the sum is never
 more than twice the larger part. For example, `$acme.results.:last().*:errors():idchain("x")`
 on S3 with 40 instances is query 430 (4) and resolve 400 (4); the larger part
 gives 4 and the sum, 830, gives 5. A caller that only queries reads
-`query_score` either way. If David keeps the larger part, only this line and
-`score` change.
+`query_score` either way.
 
 When a reference would raise, `would_raise` says why, and the scores and reads
 are still filled in for the part that runs (query, for a resolve-time raise),
