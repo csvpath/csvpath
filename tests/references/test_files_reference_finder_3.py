@@ -487,14 +487,32 @@ class TestManifestFunction:
         assert results.files == [pathu.resep(f"{ALPHA_HOME}/manifest.json")]
         assert results.results[0].uuid is None
 
-    def test_resolve_reads_the_manifest_files_raw_bytes(self, tmp_path):
+    def test_resolve_reads_the_manifest_files_records(self, tmp_path):
         content = b'[{"file_home": "zero.csv"}]'
         home = tmp_path / "alpha"
         home.mkdir()
         (home / "manifest.json").write_bytes(content)
         finder = _finder("$alpha.files.:manifest()", str(home), ALPHA_MANIFEST)
         results = finder.resolve()
-        assert results.results[0].data == content
+        # a JSON structure, not raw bytes (David, 2026-11-16)
+        assert results.results[0].data == json.loads(content)
+
+    def test_a_manifest_that_is_not_json_raises_naming_the_file(self, tmp_path):
+        # parsing is now part of the read, so a corrupt file is loud (#653)
+        home = tmp_path / "alpha"
+        home.mkdir()
+        (home / "manifest.json").write_bytes(b"[{not json")
+        finder = _finder("$alpha.files.:manifest()", str(home), ALPHA_MANIFEST)
+        with pytest.raises(ReferenceException3, match="manifest.json is not valid JSON"):
+            finder.resolve()
+
+    def test_a_definition_that_is_not_json_raises_naming_the_file(self, tmp_path):
+        home = tmp_path / "alpha"
+        home.mkdir()
+        (home / "definition.json").write_bytes(b"{not json")
+        finder = _finder("$alpha.files.:definition()", str(home), ALPHA_MANIFEST)
+        with pytest.raises(ReferenceException3, match="definition.json is not valid JSON"):
+            finder.resolve()
 
     def test_manifest_with_extra_path_narrowing_is_not_yet_supported(self):
         # :manifest() must be name_one's entire content -- combining it
@@ -3102,7 +3120,7 @@ class TestDefinitionChain:
             [],
             definitions={"alpha": DEF_ALPHA},
         )
-        assert finder.resolve().results[0].data == b'{"on_arrival": {}}'
+        assert finder.resolve().results[0].data == {"on_arrival": {}}
 
 
 class TestBareDefinitionField:
@@ -3209,7 +3227,7 @@ class TestBareDefinitionField:
             by_name=homes,
             definitions={"alpha": {"template": ":0/:filename"}, "beta": {}},
         )
-        assert finder.resolve().results[0].data == b'{"template": ":0/:filename"}'
+        assert finder.resolve().results[0].data == {"template": ":0/:filename"}
 
     def test_name_three_raises(self):
         with pytest.raises(ReferenceException3):
@@ -3599,7 +3617,7 @@ class TestStarTraversalDefinition:
                 definitions={"alpha": {"on_arrival": {"a": 1}}},
             ).query()
 
-    def test_on_arrival_predicate_survivor_resolves_its_real_definition_bytes(
+    def test_on_arrival_predicate_survivor_resolves_its_real_definition(
         self, tmp_path
     ):
         # end-to-end: the fake describer drives the FILTER decision
@@ -3650,10 +3668,9 @@ class TestStarTraversalDefinition:
             },
         ).resolve()
         assert len(results.results) == 1
-        assert results.results[0].data == (
-            b'{"on_arrival": {"named_paths_name": "validations", '
-            b'"run_method": "fast_forward"}}'
-        )
+        assert results.results[0].data == {
+            "on_arrival": {"named_paths_name": "validations", "run_method": "fast_forward"}
+        }
 
 
 class TestAllForOneNamedFile:
@@ -5742,14 +5759,15 @@ class TestDefinitionFunction:
         assert results.files == [pathu.resep(f"{ALPHA_HOME}/definition.json")]
         assert results.results[0].uuid is None
 
-    def test_resolve_reads_the_definition_files_raw_bytes(self, tmp_path):
+    def test_resolve_reads_the_definition_files_json(self, tmp_path):
         content = b'{"sources": {}}'
         home = tmp_path / "alpha"
         home.mkdir()
         (home / "definition.json").write_bytes(content)
         finder = _finder("$alpha.files.:definition()", str(home), ALPHA_MANIFEST)
         results = finder.resolve()
-        assert results.results[0].data == content
+        # a JSON structure, not raw bytes (David, 2026-11-16)
+        assert results.results[0].data == json.loads(content)
 
     def test_resolve_gives_none_when_never_configured(self, tmp_path):
         # a named-file that was never explicitly configured has no

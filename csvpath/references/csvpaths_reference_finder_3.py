@@ -819,7 +819,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # added 2026-09-21 -- not wired into '*' traversal (no
                 # worked example demonstrates or requires it there; see
                 # the bucket list).
-                return self._read_well_known_file(result.path)
+                return self._read_bare_metadata_file(
+                    reference=reference, path=result.path
+                )
             if self._is_traversal_root(reference.root_major):
                 # ':regex()'/':choice()' too since 2026-11-12: they reach
                 # the same set, filtered by name (6.13b), but a ledger-only
@@ -861,9 +863,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                     # the ledger path with no uuid. A bare '$*' or
                     # ':regex()'/':choice()' ':manifest()' returned its
                     # records above (RC triage B1; D13), so no Rule 1a read
-                    # reaches here any more; any other shape still reads
-                    # the file as it did.
-                    return self._read_well_known_file(result.path)
+                    # reaches here any more; any other shape reads the
+                    # ledger's records as stored, not its bytes (2026-11-16).
+                    return self._read_well_known_json(result.path)
                 # else: a genuine traversal-selected version -- fall
                 # through to the ordinary has_manifest branch below,
                 # which already reads the matched group's own manifest

@@ -1212,3 +1212,23 @@ class TestFromString:
                 tree=("$a.files.:last()", "join", "$b.files.:last()"),
                 csvpaths=orders_archive,
             )
+
+
+class TestAWholeFileJsonSideIsNotAJoinKey:
+    # 2026-11-16 (#724): a bare ':definition()' resolves to its JSON object,
+    # not bytes, so it is a values side whose key is a dict -- INTERSECT
+    # raises, as a '$*' ledger side does since #674 (B1). It compared byte
+    # strings, which was whitespace-sensitive anyway.
+    def test_intersecting_two_definitions_raises(self, orders_archive_with_files):
+        home = Path(orders_archive_with_files.file_manager.named_file_home("finn"))
+        home.mkdir(parents=True, exist_ok=True)
+        (home / "definition.json").write_text('{"template": ":0/:filename"}')
+        expr = ReferenceExpression3(
+            left="$finn.files.:definition()",
+            op=ReferenceExpression3.INTERSECT,
+            right="$finn.files.:definition()",
+            csvpaths=orders_archive_with_files,
+        )
+        with pytest.raises(ReferenceException3, match="join key"):
+            expr.resolve()
+
