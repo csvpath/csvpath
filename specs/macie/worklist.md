@@ -42,18 +42,22 @@ done. Add an item the moment something is deferred.
 - **The open fidelity items** in `transpile-design.md` (1 to 26, less
   those settled by the live check and probes). Road-testers settle some;
   a probe settles one for cents.
-- **Phones without a keyword for countries other than the US**: the
-  unbroken-or-parenthesized rule was seen for `PHONE_NUMBER` only and
-  applied to the UK, France, Germany, Italy, Spain and Brazil. A probe
-  of `UK_PHONE_NUMBER` and one other would confirm it.
+- **Phones for countries other than the US**: the fourth probe
+  (2026-11-16) found the parenthesized form is a US form, an
+  international number with spaces is not reported even after a keyword,
+  and Germany's and Italy's unbroken numbers were not reported. The fifth
+  probe (README section 8) checks national numbers after a keyword, the
+  header, other German and Italian numbers, and Brazil; then one rule
+  change.
 - **A keyword written against a value** (`SSN123-45-6789`): not a word
   for us; not seen for Macie.
 
 ### The download
 
-- **`template=True` is not checked live**: the live check downloaded
-  jobs; automated sensitive data discovery was not enabled (README step
-  5). One enable-and-download in David's account would check it.
+- ~~**`template=True` is not checked live**~~ Done (2026-11-16): David
+  enabled automated discovery; the download, the load and a run work
+  live (35 identifiers, the post-2023 set; `live-check-2026-11-11.md`).
+  The static set of 100 can only be checked with stubs.
 
 ### Real-world files
 
