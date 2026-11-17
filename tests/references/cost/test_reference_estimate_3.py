@@ -227,7 +227,7 @@ class TestTheParts:
 
     def test_summary_has_the_scores_reads_and_why(self):
         text = self._est().summary()
-        assert "score" in text and "query:" in text and "resolve: 4 errors_json" in text
+        assert "score" in text and "query:" in text and "resolve: 4 errors.json files" in text
         assert "why:" in text and "estimated:" in text
 
     def test_would_raise_keeps_the_scores(self):

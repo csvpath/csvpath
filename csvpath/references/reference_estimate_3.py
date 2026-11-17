@@ -293,11 +293,53 @@ class ReferenceEstimate3:
             "weights": self.weights.to_dict(),
         }
 
-    @staticmethod
-    def _describe(reads: dict) -> str:
+    # how summary() names a read kind: (one, several)
+    KIND_NAMES = {
+        "ledger": ("ledger", "ledger reads"),
+        "name_listing": ("name listing", "name listings"),
+        "run_listing": ("run listing", "run listings"),
+        "named_file_manifest": ("named-file manifest", "named-file manifests"),
+        "group_manifest": ("group manifest", "group manifests"),
+        "run_manifest": ("run manifest", "run manifests"),
+        "instance_manifest": ("instance manifest", "instance manifests"),
+        "definition": ("definition", "definitions"),
+        "errors_json": ("errors.json", "errors.json files"),
+        "vars_json": ("vars.json", "vars.json files"),
+        "meta_json": ("meta.json", "meta.json files"),
+        "version_file": ("version file", "version files"),
+        "data_file": ("data file", "data files"),
+        "readme": ("readme", "readmes"),
+        "log": ("log", "log reads"),
+        "sql_query": ("SQL query", "SQL queries"),
+    }
+
+    @classmethod
+    def _describe(cls, reads: dict) -> str:
         if not reads:
             return "0"
-        return " + ".join(f"{count} {kind}" for kind, count in reads.items())
+        parts = []
+        for kind, count in reads.items():
+            one, several = cls.KIND_NAMES.get(kind, (kind, kind))
+            parts.append(f"{count} {one if count == 1 else several}")
+        return " + ".join(parts)
+
+    def without_resolve(self, *, because: str) -> "ReferenceEstimate3":
+        """this estimate for a caller that only queries, e.g. an
+        expression's paths side, which is queried and never resolved"""
+        if not isinstance(because, str) or because.strip() == "":
+            raise ValueError("because must say why resolve is dropped")
+        would_raise = self.would_raise
+        if would_raise and not would_raise.startswith("query"):
+            would_raise = None
+        return ReferenceEstimate3(
+            reference=self.reference,
+            reads=[r for r in self.reads if r.part == QUERY],
+            why=list(self.why) + [because],
+            backend=self.backend,
+            weights=self.weights,
+            sql=self.sql,
+            would_raise=would_raise,
+        )
 
     def summary(self) -> str:
         lines = [self.reference]
