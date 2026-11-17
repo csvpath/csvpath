@@ -13,7 +13,12 @@ from tests.references.cost.read_counter import ReadCounter
 # (references_v3_cost_estimates.md). These tests pin its classification and
 # what the corpus's references really read today, on the local backend.
 #
-ROOTS = {"archive": "/a/archive", "files": "/a/named_files", "csvpaths": "/a/named_paths"}
+ROOTS = {
+    "archive": "/a/archive",
+    "files": "/a/named_files",
+    "csvpaths": "/a/named_paths",
+    "log_file": "/a/logs/csvpath.log",
+}
 RUN = "/a/archive/validate_orders/2026-08-14_19-17-06"
 
 
@@ -41,6 +46,12 @@ def _counter() -> ReadCounter:
         (f"{RUN}/orders/data.csv", "data_file"),
         ("/a/archive/validate_orders/2026-08-14_19-17-06_1/manifest.json", "run_manifest"),
         ("/somewhere/config.ini", None),
+        # a nested template, and a D18 run-dir-shaped template dir
+        ("/a/archive/orders/2026/march/2026-03-01_00-00-00/s/manifest.json", "instance_manifest"),
+        ("/a/archive/orders/2026-03-01_00-00-00/2026-03-02_00-00-00/manifest.json", "run_manifest"),
+        (f"{RUN}/orders/printouts.txt", "data_file"),
+        ("/a/archive2/x/manifest.json", None),
+        ("/a/logs/csvpath.log", "log"),
     ],
 )
 def test_a_read_is_classified_by_its_path(path, kind):
@@ -55,6 +66,7 @@ def test_a_read_is_classified_by_its_path(path, kind):
         (RUN, "run_listing"),
         ("/a/archive/validate_orders", "other_listing"),
         ("/elsewhere", None),
+        ("/a/archive2", None),
     ],
 )
 def test_a_listing_is_classified_by_its_path(path, kind):
@@ -68,11 +80,28 @@ def test_the_roots_are_required():
 
 def test_it_restores_what_it_patched():
     listdir, exists = Nos.listdir, Nos.exists
-    had_open = hasattr(file_readers, "open")
+    had_open = "open" in file_readers.__dict__
     with _counter():
         assert Nos.listdir is not listdir
     assert Nos.listdir is listdir and Nos.exists is exists
-    assert hasattr(file_readers, "open") == had_open
+    assert ("open" in file_readers.__dict__) == had_open
+
+
+def test_counters_nest(tmp_path):
+    path = tmp_path / "archive" / "manifest.json"
+    path.parent.mkdir()
+    path.write_text("[]")
+    roots = {"archive": str(tmp_path / "archive"), "files": "/f", "csvpaths": "/c"}
+    with ReadCounter(**roots) as outer:
+        with ReadCounter(**roots) as inner:
+            with file_readers.DataFileReader(str(path)) as reader:
+                reader.source.read()
+    assert outer.reads["ledger"] == inner.reads["ledger"] == 1
+
+
+def test_for_csvpaths_needs_csvpaths():
+    with pytest.raises(ValueError):
+        ReadCounter.for_csvpaths(None)
 
 
 #
@@ -135,4 +164,26 @@ def _measure(csvpaths, reference):
     ],
 )
 def test_the_corpus_reads_what_the_spec_models(csvpaths, reference, query_reads, resolve_reads):
+    # literals from the frozen corpus snapshot (11 runs, 23 instances; 6 runs
+    # and 16 instances in validate_orders): regenerating the corpus changes them
     assert _measure(csvpaths, reference) == (query_reads, resolve_reads)
+
+
+def test_a_log_tail_is_counted(csvpaths):
+    log = csvpaths.config.log_file
+    if not os.path.exists(log):
+        pytest.skip("the corpus log file is not present")
+    finder = ReferenceFinderFactory3.for_reference(reference="$*.files.:log(3)", csvpaths=csvpaths)
+    with ReadCounter.for_csvpaths(csvpaths) as counter:
+        finder.resolve()
+    assert counter.reads["log"] >= 1
+
+
+def test_every_read_is_checked_first(csvpaths):
+    # the spec folds existence checks into the weights; pin that they happen
+    finder = ReferenceFinderFactory3.for_reference(
+        reference="$validate_orders.results.:last().*", csvpaths=csvpaths
+    )
+    with ReadCounter.for_csvpaths(csvpaths) as counter:
+        finder.query()
+    assert counter.checks >= counter.total()
