@@ -284,3 +284,32 @@ after David enabled automated sensitive data discovery and added
 
 The static set of 100 (accounts first enabled before 2023-08-02) can be
 checked only with stubbed responses.
+
+## The fourth probe, 2026-11-16: phones outside the US
+
+Job `csvpath-probe-3` (`49d371bb0e2d9a2cb3633eb3d502ea3a`), the file from
+`make_probe_files.py <out> 3` under `probe3/` (ETag equal to the local
+MD5). The job ran five of the six identifiers: `BRAZIL_PHONE_NUMBER`,
+which the account offers, was not in it, so the Brazil rows are untested.
+
+| Form | UK | France | Germany | Italy | Spain | Ours |
+|---|---|---|---|---|---|---|
+| unbroken, no keyword | 1 | 1 | **0** | **0** | 1 | 1 |
+| group in parentheses, no keyword | **0** | **0** | **0** | **0** | **0** | 1 |
+| spaces, no keyword | 0 | 0 | 0 | 0 | 0 | 0 |
+| dashes, no keyword | 0 | 0 | 0 | 0 | 0 | 0 |
+| `phone` and spaces | **0** | **0** | **0** | **0** | **0** | 1 |
+
+15 of 30 rows agree. Three things:
+
+1. **Parentheses are a US form.** The `+1 (212) 555-0148` form Macie
+   reported in the second probe is not reported for any of the five
+   other countries.
+2. **An international number written with spaces is not reported even
+   after a keyword**, in all five countries. For the US it was (`phone
+   +1 212 555 0148`, second probe). National numbers after a keyword
+   (`tel 06 12 34 56 78`, pair 19) are not yet checked live.
+3. **Germany's and Italy's unbroken numbers were not reported**, where
+   the UK's, France's and Spain's were. `+4930123456` (a six digit Berlin
+   subscriber number) and `+393123456789` may fail a stricter numbering
+   plan check than ours; one number each does not say.
