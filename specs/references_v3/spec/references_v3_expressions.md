@@ -107,8 +107,13 @@ This uses INTERSECT in order to return the runs, not the instances within the ru
 ### `paths` vs. `values` sides
 
 A side is **`paths`** if its reference has no trailing `VALUE`-role
-accessor (a plain path+uuid result -- `.data` is `None`), or **`values`**
-if it does (a real scalar in `.data`). Every result, regardless of kind,
+accessor that supplies a value (a plain path+uuid result -- `.data` is
+`None`), or **`values`** if it does (a real scalar in `.data`). An argued
+field is a filter, not a value (compendium 6.40): `:type("csv")` keeps the
+csv items and the side stays `paths`. A key-selecting field such as
+`:source_port("email")` still supplies a value, since its argument names the
+key (6.40). A `paths` side is queried, not resolved, so no content is read
+(David, 2026-11-16). Every result, regardless of kind,
 always has its own real `path`/`uuid` from `query()` -- `values` doesn't
 mean "no path," it means "also has a value."
 
@@ -118,7 +123,7 @@ Settled compatibility matrix (David, 2026-08-23):
 |---|---|---|
 | UNION | LHS is `paths` | normal -- RHS unions freely, by path alone, regardless of RHS's own kind |
 | UNION | LHS is `values`, RHS's terminal accessor shares the LHS's own conceptual `KIND` (e.g. both `"uuid"`, both `"name"`), or is the literally identical accessor when neither declares a `KIND` | normal -- dedup by full `ReferenceResult3` equality |
-| UNION | LHS is `values`, RHS's terminal accessor shares neither a `KIND` nor literal identity with the LHS's own (or RHS is `paths`) | **raise** -- e.g. `:type()` vs. `:status()` (both happen to resolve to a string, but a file extension and a status message are not the same kind of thing, and neither declares a `KIND`), or `:type("csv")` vs. `:type("xlsx")` (same function, different argument, no `KIND`) |
+| UNION | LHS is `values`, RHS's terminal accessor shares neither a `KIND` nor literal identity with the LHS's own (or RHS is `paths`) | **raise** -- e.g. `:type()` vs. `:status()` (both happen to resolve to a string, but a file extension and a status message are not the same kind of thing, and neither declares a `KIND`). An argued field is a filter, so `:type("csv")` vs. `:type("xlsx")` are two `paths` sides and union freely. A `values` LHS against an argued RHS raises, e.g. `:run_uuid()` vs. `:run_uuid("a1")` |
 | SUBTRACT / INTERSECT | `values`/`values` | normal -- compare by each side's own `.data` (established behavior, unchanged) |
 | SUBTRACT / INTERSECT | `paths`/`paths` | compare by identity (`path`+`uuid` together -- `path` alone is not always enough, e.g. CSVPATHS shares one `group.csvpath` path across every version) |
 | SUBTRACT / INTERSECT | `values`(LHS)/`paths`(RHS) | RHS has no value to compare, so fall back to identity: compare LHS's own `path`+`uuid` against RHS's `path`+`uuid`. The *output* still carries LHS's own `.data` intact -- the comparison basis changed, the result shape (`values`) didn't. |
@@ -186,10 +191,10 @@ matter.
 `ReferenceExpression3` (`csvpath/references/reference_expression_3.py`) holds
 `left`, `op` (`UNION`/`SUBTRACT`/`INTERSECT`), `right` -- each side is either a
 plain reference string or another `ReferenceExpression3` (sub-expressions
-nest freely). It works internally through `.resolve()` only -- there is no
-meaningful `.query()`-only mode, since INTERSECT/SUBTRACT's join key is
-resolved field-accessor data (`.data`), not something query-time path/uuid
-alone can express. Output is a flat list of `ReferenceResults3`, the same
+nest freely). A `values` side is resolved, one item at a time, since
+INTERSECT/SUBTRACT's join key is resolved field-accessor data (`.data`). A
+`paths` side is only queried: its items carry their path and uuid, and
+`.data` is `None` (2026-11-16). Output is a flat list of `ReferenceResults3`, the same
 shape as a single reference's results -- each item keeps its own real
 path/uuid/data intact, never collapsed down to just the key that made it
 match.
