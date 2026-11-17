@@ -1,5 +1,4 @@
 # pylint: disable=C0114
-import json
 import os
 import re
 from uuid import UUID
@@ -11,8 +10,8 @@ from csvpath.util.references.reference_parser import ReferenceParser
 from csvpath.util.references.results_reference_finder_2 import (
     ResultsReferenceFinder2 as ResultsReferenceFinder,
 )
-from csvpath.util.file_readers import DataFileReader
 from csvpath.util.file_writers import DataFileWriter
+from csvpath.util.json_file_utility import JsonFileUtility as jsut
 from csvpath.util.nos import Nos
 
 from csvpath.scanning.scanner2 import Scanner2 as Scanner
@@ -88,8 +87,8 @@ class ResultsManager:  # pylint: disable=C0115
         ResultsReferenceFinder3 to resolve "*" root_major references
         (bare :manifest(), optionally with a pointer to select one
         entry by ordinal)."""
-        with DataFileReader(self.results_root_manifest_path) as reader:
-            return json.load(reader.source)
+        # a corrupt ledger raises naming the file and the likely cause (A19)
+        return jsut.load(path=self.results_root_manifest_path)
 
     def complete_run(self, *, run_dir, pathsname, results) -> ResultsMetadata:
         """@private"""
