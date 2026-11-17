@@ -1191,9 +1191,11 @@ class ReferenceFinder3(ABC):
 
     @staticmethod
     def _read_well_known_file(path: str):
-        """reads a well-known, home-directory-scoped JSON resource
-        (manifest.json, definition.json) as raw bytes -- None if it
-        does not exist yet. manifest.json is always created once
+        """reads a well-known file's content as raw bytes -- None if it
+        does not exist yet. Since 2026-11-16 a bare ':manifest()' or
+        ':definition()' reads its JSON through _read_well_known_json()
+        instead (_read_bare_metadata_file()); this serves README.md and
+        RESULTS' file content (data, printouts, :file()). manifest.json is always created once
         anything is registered/loaded, but definition.json is genuinely
         optional -- a named-file/named-paths group that was never
         explicitly configured has no definition.json on disk at all.

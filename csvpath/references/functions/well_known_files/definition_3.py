@@ -50,7 +50,7 @@ class Definition3(Function3):
     NAME = "definition"
     SUMMARY = (
         "Points at the whole definition.json for the enclosing named-file "
-        "or named-paths group -- its stored configuration (sources, "
+        "or named-paths group, as a JSON object -- its stored configuration (sources, "
         "on_arrival behavior, scripts, webhooks, etc). Not currently "
         "versioned; resolves to None if the group/file was never "
         "explicitly configured (no definition.json written yet). May take "

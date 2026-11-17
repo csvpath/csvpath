@@ -1065,6 +1065,16 @@ class TestManifestFunction:
         assert results.files == [pathu.resep(f"{GROUP_HOME}/manifest.json")]
         assert results.results[0].uuid is None
 
+    def test_a_manifest_that_is_not_json_raises_naming_the_file(self, tmp_path):
+        home = tmp_path / "acme"
+        home.mkdir()
+        (home / "manifest.json").write_bytes(b"[{not json")
+        csvpaths = _FakeCsvPaths(_FakePathsManager(ACME_MANIFEST, home=str(home)))
+        ref = ReferenceParser3(string="$acme.csvpaths.:manifest()", csvpaths=csvpaths)
+        finder = CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
+        with pytest.raises(ReferenceException3, match="manifest.json is not valid JSON"):
+            finder.resolve()
+
     def test_resolve_reads_the_manifest_files_records(self, tmp_path):
         content = b"[]"
         home = tmp_path / "acme"

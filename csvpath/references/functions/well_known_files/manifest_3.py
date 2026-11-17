@@ -25,7 +25,8 @@ class Manifest3(Function3):
     # same as a computed value like a future :year() would be.
     #
     # Wired in for two name_one-terminal shapes: bare/sole-content
-    # (e.g. "$acme.files.:manifest()" -- the whole raw manifest.json) and
+    # (e.g. "$acme.files.:manifest()" -- the whole manifest.json, as its
+    # list of records since 2026-11-16) and
     # combined with real path/version narrowing in name_three, where it
     # resolves to the matched entry/entries instead (see
     # FilesReferenceFinder3/CsvpathsReferenceFinder3's own handling).
@@ -33,7 +34,7 @@ class Manifest3(Function3):
     NAME = "manifest"
     SUMMARY = (
         "Points at the manifest data for the enclosing named-file or "
-        "named-paths group -- the whole file when nothing else narrows "
+        "named-paths group -- all its records when nothing else narrows "
         "scope, or the matched entry/entries when combined with real "
         "path/version narrowing."
     )

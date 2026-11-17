@@ -506,6 +506,14 @@ class TestManifestFunction:
         with pytest.raises(ReferenceException3, match="manifest.json is not valid JSON"):
             finder.resolve()
 
+    def test_a_definition_that_is_not_json_raises_naming_the_file(self, tmp_path):
+        home = tmp_path / "alpha"
+        home.mkdir()
+        (home / "definition.json").write_bytes(b"{not json")
+        finder = _finder("$alpha.files.:definition()", str(home), ALPHA_MANIFEST)
+        with pytest.raises(ReferenceException3, match="definition.json is not valid JSON"):
+            finder.resolve()
+
     def test_manifest_with_extra_path_narrowing_is_not_yet_supported(self):
         # :manifest() must be name_one's entire content -- combining it
         # with real path narrowing falls through to the ordinary

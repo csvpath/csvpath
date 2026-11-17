@@ -9,7 +9,7 @@ class ReferenceSource(ABC):
     when shadow) is not their concern.
 
     real data reads -- data files, errors.json, vars.json, definition.json,
-    readmes, logs, and a bare :manifest()'s raw bytes -- are not part of
+    readmes, logs, and a bare :manifest()'s records -- are not part of
     a source. they always come from the filesystem.
     """
 
