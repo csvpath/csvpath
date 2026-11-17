@@ -2138,6 +2138,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
         self._version_reads = 0
         return super().resolve_from(self.query())
 
+    def estimate(self):
+        """what query() and resolve() will probably read, as a
+        ReferenceEstimate3 (references_v3_cost_estimates.md). It reads only
+        the named-files ledger."""
+        from .files_estimator_3 import FilesEstimator3
+
+        return FilesEstimator3(finder=self).estimate()
+
     def resolve_from(self, selection: ReferenceResults3 | list) -> ReferenceResults3:
         # the live entries are read at most once per call (_live_index())
         self._live_entries = None
