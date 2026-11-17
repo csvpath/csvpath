@@ -42,6 +42,34 @@ def test_a_file_that_stops_mid_entry_was_probably_interrupted(tmp_path):
         jsut.load(path=path)
 
 
+@pytest.mark.parametrize("text", ['[{"uuid": "u1', '[{"uuid": "u1"}, {"time": "2026-'])
+def test_a_file_cut_off_inside_a_string_was_probably_interrupted(tmp_path, text):
+    with pytest.raises(ValueError, match="ends partway through an entry"):
+        jsut.load(path=_write(tmp_path, text))
+
+
+def test_a_zero_filled_tail_was_probably_interrupted(tmp_path):
+    path = tmp_path / "manifest.json"
+    path.write_bytes(b'[{"uuid": "u1"}]' + b"\x00" * 64)
+    with pytest.raises(ValueError, match="ends in zero bytes"):
+        jsut.load(path=str(path))
+
+
+def test_an_all_zero_file_reads_as_empty(tmp_path):
+    path = tmp_path / "manifest.json"
+    path.write_bytes(b"\x00" * 64)
+    with pytest.raises(ValueError, match="is empty"):
+        jsut.load(path=str(path))
+
+
+def test_bytes_that_are_not_utf8_name_the_file(tmp_path):
+    path = tmp_path / "manifest.json"
+    path.write_bytes(b'[{"uuid": "\xff\xfe"}]')
+    with pytest.raises(ValueError, match="is not UTF-8 text") as e:
+        jsut.load(path=str(path))
+    assert str(path) in str(e.value)
+
+
 def test_anything_else_may_be_a_hand_edit(tmp_path):
     path = _write(tmp_path, '[{"uuid": "u1",, }]')
     with pytest.raises(ValueError, match="not valid JSON at line 1, column .*edited by hand"):
@@ -59,7 +87,13 @@ def test_the_error_is_logged(tmp_path, caplog):
     assert "manifest.json" in caplog.text
 
 
-@pytest.mark.parametrize("bad", [None, "", "  "])
-def test_a_missing_path_raises(bad):
+@pytest.mark.parametrize("bad", ["", "  "])
+def test_an_empty_path_raises(bad):
     with pytest.raises(ValueError):
+        jsut.load(path=bad)
+
+
+@pytest.mark.parametrize("bad", [None, 3])
+def test_a_path_that_is_not_a_str_raises(bad):
+    with pytest.raises(TypeError):
         jsut.load(path=bad)
