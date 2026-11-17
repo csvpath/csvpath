@@ -214,3 +214,33 @@ writes `~/macie-live/probe3/probe3_phones.csv` and
   - no custom identifiers, no allow lists.
 
 **Hand over** the job id once it shows **Complete**.
+
+## 8. The fifth probe (2026-11-17)
+
+The fourth probe found that, outside the US, a number with its group in
+parentheses is not reported without a keyword, an international number
+with spaces is not reported even after a keyword, and Germany's and
+Italy's unbroken numbers were not reported. This probe asks what the
+fourth could not: national numbers after a keyword (in the cell and as
+the column header), an international number with spaces under a `phone`
+header, other unbroken numbers for Germany and Italy, and Brazil, which
+the fourth probe's job left out.
+
+```
+poetry run python tests/macie/live/make_probe_files.py ~/macie-live 4
+```
+
+writes `~/macie-live/probe4/probe4_phones.csv` and
+`~/macie-live/expected_probe4.json` (do not upload).
+
+**Set up (David):**
+
+- upload `probe4/probe4_phones.csv` under `probe4/` in the same bucket;
+- create one one-time job, **`csvpath-probe-4`**:
+  - object criterion: key prefix `probe4/`;
+  - managed data identifiers **Custom**, *include* all 6:
+    `UK_PHONE_NUMBER`, `FRANCE_PHONE_NUMBER`, `GERMANY_PHONE_NUMBER`,
+    `ITALY_PHONE_NUMBER`, `SPAIN_PHONE_NUMBER`, **`BRAZIL_PHONE_NUMBER`**;
+  - no custom identifiers, no allow lists.
+
+**Hand over** the job id once it shows **Complete**.
