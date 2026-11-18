@@ -283,8 +283,12 @@ def phones_3(rng) -> mlf.LiveFile:
     f = mlf.LiveFile(name="probe3_phones.csv", headers=["id", "notes"])
     for identifier, (unbroken, parens, spaced, dashed) in PHONES_3.items():
         for value, n, note in [
+            #
+            # the counts are ours since the rule change (2026-11-17): an
+            # international number outside the US is found only unbroken
+            #
             (unbroken, 1, "unbroken"),
-            (parens, 1, "a group in parentheses"),
+            (parens, 0, "a group in parentheses"),
             (spaced, 0, "spaces between the groups"),
             (dashed, 0, "dashes between the groups"),
         ]:
@@ -294,7 +298,7 @@ def phones_3(rng) -> mlf.LiveFile:
             )
         f.add(
             cells={"id": "r", "notes": f"phone {spaced}"},
-            expect=[("notes", identifier, 1, "keyword in the cell, spaces")],
+            expect=[("notes", identifier, 0, "keyword in the cell, spaces")],
         )
     return f
 
@@ -347,7 +351,7 @@ def phones_4(rng) -> mlf.LiveFile:
         )
         f.add(
             cells={"id": "r", "phone": spaced},
-            expect=[("phone", identifier, 1, "international with spaces, header")],
+            expect=[("phone", identifier, 0, "international with spaces, header")],
         )
         for value in unbroken:
             f.add(
@@ -359,9 +363,9 @@ def phones_4(rng) -> mlf.LiveFile:
     #
     br = "BRAZIL_PHONE_NUMBER"
     for cell, n, note in [
-        ("call +55 (11) 96123-4567", 1, "a group in parentheses, no keyword"),
+        ("call +55 (11) 96123-4567", 0, "a group in parentheses, no keyword"),
         ("call +55 11 96123 4567", 0, "spaces, no keyword"),
-        ("phone +55 11 96123 4567", 1, "keyword in the cell, spaces"),
+        ("phone +55 11 96123 4567", 0, "keyword in the cell, spaces"),
     ]:
         f.add(cells={"id": "r", "notes": cell}, expect=[("notes", br, n, note)])
     return f

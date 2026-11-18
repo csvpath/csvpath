@@ -54,9 +54,23 @@ does not.
 Two earlier differences were fixed by following Macie (2026-11-15):
 keywords now match as whole words, so `codice fiscale` is not the
 Italian keyword `codice fiscal`; and a phone number with a country code
-needs no keyword only when it is unbroken (`+12125550148`) or has a
-group in parentheses (`+1 (212) 555-0148`). The phone rule was seen for
-US numbers and is applied to every country's.
+needs no keyword only when it is unbroken (`+12125550148`) or, for the
+US, has a group in parentheses (`+1 (212) 555-0148`). Outside the US an
+international number is found only unbroken, keyword or not
+(2026-11-17): Macie did not report `+44 (20) 7946 0958`, nor
+`phone +44 20 7946 0958`.
+
+Still different for phones (live probes, 2026-11-16 and -17, numbers
+valid by Google's `phonenumbers`):
+
+- **`ITALY_PHONE_NUMBER`**: Macie reported no Italian number in any form,
+  with or without a keyword. We report them as we report other
+  countries'.
+- **German, Italian and Spanish national numbers after a keyword**
+  (`tel 030 12345678`): Macie did not report them; UK, French and
+  Brazilian ones it did. We report all six countries'.
+- **A spaced Brazilian international number under a `phone` header** was
+  reported by Macie; we no longer report it.
 
 ## Also not translated
 
