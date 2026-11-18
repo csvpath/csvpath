@@ -2671,35 +2671,15 @@ class TestResolveTargetLastWins:
     # _find_field_function_call()), not the one a user chaining two of
     # them almost certainly means to read. "$acme.csvpaths.:last():
     # uuid():named_paths_name()" used to resolve to :uuid()'s own value
-    # instead of :named_paths_name()'s.
-    def test_last_of_two_chained_field_accessors_wins(self):
-        manifest = [
-            {**RICH_MANIFEST[0], "named_paths_name": "acme"},
-            {**RICH_MANIFEST[1], "named_paths_name": "acme"},
-        ]
-        finder = _finder(
-            "$acme.csvpaths.:last():uuid():named_paths_name()", manifest
-        )
-        results = finder.resolve()
-        assert results.results[0].data == "acme"
-        assert results.results[0].data != "v1-uuid"
-        # 2 qualifying field accessors -> the ambiguity warning fires.
-        assert len(finder.csvpaths.logger.warnings) == 1
-
-    def test_reversed_order_still_picks_the_last_one(self):
-        # proves this is genuinely about CHAIN POSITION, not just
-        # ":named_paths_name()" always winning regardless of order --
-        # users can choose the order to get the value they want
-        # (David: "they know they can choose the correct order, if
-        # there is a lack of clarity").
-        manifest = [
-            {**RICH_MANIFEST[0], "named_paths_name": "acme"},
-            {**RICH_MANIFEST[1], "named_paths_name": "acme"},
-        ]
-        results = _finder(
-            "$acme.csvpaths.:last():named_paths_name():uuid()", manifest
-        ).resolve()
-        assert results.results[0].data == "v1-uuid"
+    # instead of :named_paths_name()'s. Since 2026-11-18 (David) two value
+    # fields raise instead of the last winning: a reference has one value.
+    @pytest.mark.parametrize(
+        "chain", [":uuid():named_paths_name()", ":named_paths_name():uuid()"]
+    )
+    def test_two_chained_field_accessors_raise(self, chain):
+        finder = _finder(f"$acme.csvpaths.:last(){chain}", RICH_MANIFEST)
+        with pytest.raises(ReferenceException3, match="resolves to one value"):
+            finder.query()
 
     def test_single_field_accessor_is_not_ambiguous_no_warning(self):
         finder = _finder("$acme.csvpaths.:last():uuid()", RICH_MANIFEST)
@@ -3195,10 +3175,11 @@ class TestDefinitionChain:
         none = _def_chain_finder(f"{base}:template(:does_not_have_value())")
         assert none.query().results == []
 
-    def test_the_last_value_field_wins_with_a_warning(self):
+    def test_two_value_fields_raise(self):
+        # was: the last wins, with a warning (5.20b); David, 2026-11-18
         finder = _def_chain_finder("$acme.csvpaths.:definition():scripts():template()")
-        assert [r.data for r in finder.resolve().results] == [":1/:2"]
-        assert len(finder.csvpaths.logger.warnings) == 1
+        with pytest.raises(ReferenceException3, match="resolves to one value"):
+            finder.query()
 
     def test_with_no_value_field_resolves_the_file(self):
         # a filter only: the whole definition.json, one group, so it

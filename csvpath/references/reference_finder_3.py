@@ -67,8 +67,8 @@ class ReferenceFinder3(ABC):
         #
         self._variables: dict = dict(variables) if variables else {}
         self._source: ReferenceSource | None = None
-        # the 5.20b ambiguity warnings this finder has already logged; one
-        # resolve() reads the same chain once per result (2026-11-13)
+        # the warnings this finder has already logged; one resolve() reads
+        # the same records once per result (2026-11-13)
         self._warned: set = set()
 
     @property
@@ -1106,15 +1106,8 @@ class ReferenceFinder3(ABC):
                 "':definition()' chain with name_three -- definition.json is "
                 "not versioned, there is no version to select."
             )
+        # two values raise in query() (_check_one_value(), 5.20b)
         filters, values = self._split_definition_fields(calls=calls)
-        if len(values) > 1:
-            self.csvpaths.logger.warning(
-                "Reference resolves to the value of the last field-accessor "
-                "function in its chain (:%s()) -- :%s() earlier in the same "
-                "chain could also have provided a value; see compendium 5.20b.",
-                values[-1].name,
-                "(), :".join(f.name for f in values[:-1]),
-            )
         if isinstance(reference.root_major, str):
             names = [reference.root_major]
         else:
@@ -1251,6 +1244,67 @@ class ReferenceFinder3(ABC):
         if not isinstance(call, FunctionCall3) or call.name != "log":
             return None
         return call
+
+    # a field after one of these reads from it, so they supply no value of
+    # their own: ':manifest():template()' is one value, the template
+    CHAIN_HEADS = ("manifest", "definition")
+
+    def _value_calls(self, reference: Reference3) -> list:
+        """every top-level function in `reference` that supplies the value
+        resolve() returns: an unargued field, a key-selecting field
+        (':source_port("email")'), or a content accessor (':errors()',
+        ':vars()', ':readme()', ...). Not counted: a gate (an argued field
+        is a filter, 6.40), a pointer, range or selector, a clock value, a
+        predicate (only ever an argument), or a chain head (CHAIN_HEADS).
+        Functions nested in another's argument are not top-level and are
+        not counted. Functions not registered for this datatype are left to
+        the checks that reject them."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        calls = [s for s in reference.name_one.path if isinstance(s, FunctionCall3)]
+        calls += reference.name_one.functions
+        if reference.name_three is not None:
+            calls += reference.name_three.functions
+        values = []
+        for call in calls:
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            if function_cls is None or function_cls.ROLE != Function3.VALUE:
+                continue
+            if issubclass(function_cls, TimeWindowFunction3):
+                continue
+            if reference.datatype not in function_cls.DATATYPES:
+                continue
+            if function_cls.SOURCE is None:
+                # a predicate has no position of its own: it is an argument
+                if call.name in self.CHAIN_HEADS or not function_cls.POSITIONS:
+                    continue
+            elif function_cls.filters_with(call.arg):
+                continue
+            values.append(call)
+        return values
+
+    def _check_one_value(self, reference: Reference3) -> None:
+        """a reference resolves to at most one value. Two value-supplying
+        functions (_value_calls()) anywhere in it raise, before anything is
+        read. It was "the last value-producing function wins", with a
+        warning (compendium 5.20b); David, 2026-11-18: "We can't have the
+        ambiguity of not raising an error ... it would complicate
+        interpreting the references an agent used in reaching a
+        conclusion." The message gives each single-value spelling."""
+        values = self._value_calls(reference)
+        if len(values) < 2:
+            return
+        text = str(reference)
+        spellings = []
+        for call in values:
+            spelling = text.replace(str(call), "", 1).rstrip(".")
+            if spelling not in spellings:
+                spellings.append(spelling)
+        names = ", ".join(str(call) for call in values)
+        raise ReferenceException3(
+            f"A reference resolves to one value, but {names} each supply one "
+            f"(compendium 5.20b). Keep one: {' or '.join(spellings)}"
+        )
 
     def _query_log_call(self, reference: Reference3) -> "ReferenceResults3 | None":
         """query()'s own entry point for :log() -- shared by all three
@@ -1964,28 +2018,10 @@ class ReferenceFinder3(ABC):
         it was simply what the single-match helper happened to return,
         confirmed live-wrong once a second field accessor could reach
         the same chain, e.g. CsvpathsReferenceFinder3's own
-        ':last():uuid():named_paths_name()'). Logs a warning (never
-        raises) whenever 2+ candidates qualify, since that is the
-        genuinely ambiguous case compendium 5.20b exists to resolve --
-        a single candidate is not ambiguous at all and is silent.
-
-        Each distinct warning is logged once per finder (2026-11-13,
-        reviewer on #590): query() and each result's extraction read the
-        same chain, so one resolve() over N results logged it 1 + N
-        times. A second finder warns again."""
+        ':last():uuid():named_paths_name()'). Since 2026-11-18 two
+        value-supplying fields raise in query() (_check_one_value()), so
+        when the candidates include gates, the last one is the value."""
         calls = self._find_field_function_calls(functions, self.ref.parsed.datatype)
-        if len(calls) > 1:
-            names = tuple(f.name for f in calls)
-            if names not in self._warned:
-                self._warned.add(names)
-                self.csvpaths.logger.warning(
-                    "Reference resolves to the value of the last field-"
-                    "accessor function in its chain (:%s()) -- :%s() earlier "
-                    "in the same chain could also have provided a value; "
-                    "see compendium 5.20b.",
-                    calls[-1].name,
-                    "(), :".join(f.name for f in calls[:-1]),
-                )
         return calls[-1] if calls else None
 
     @staticmethod

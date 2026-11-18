@@ -169,6 +169,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # instance manifests are read once per query() (triage A13)
         self._manifest_reads = {}
         reference = self.ref.parsed
+        # one value per reference, before anything is read (5.20b)
+        self._check_one_value(reference)
         log_results = self._query_log_call(reference)
         if log_results is not None:
             return log_results
@@ -2772,8 +2774,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         (compendium 6.40; :uuid(\"...\") is a pointer, 6.44) and was
         already applied on query, so it never supplies the value -- a
         filter doesn't return a value (David, 2026-10-29). Only the
-        unargued ones compete under 5.20b's last-wins, which is also
-        what decides whether its ambiguity warning fires. Every RESULTS
+        unargued ones supply a value, and two raise in query() (5.20b,
+        _check_one_value(), since 2026-11-18). Every RESULTS
         field argument is a filter: none uses its argument to pick a
         key the way CSVPATHS' ':sources(\"email\")'-style fields do (see
         _apply_key_arg()), so this lives here rather than in the shared
@@ -3202,8 +3204,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
     def _has_unargued_field(self, calls: list) -> bool:
         """true when a built chain has a field accessor with no argument,
         one that supplies a value (5.20b); an argued one is a filter
-        (6.40). Unlike _last_value_field_call(), it logs no 5.20b
-        warning, so it can be asked more than once per reference."""
+        (6.40)."""
         if calls is None:
             raise ValueError("Calls cannot be None")
         fields = self._find_field_function_calls(calls, self.ref.parsed.datatype)
@@ -3519,11 +3520,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # reason as manifest_field_call's own identical change in
             # _extract_data(). Instance call (not the class-qualified
             # staticmethod this used to be), since _last_field_function_
-            # call() needs self.csvpaths.logger to warn on ambiguity.
             field_call = self._last_value_field_call(built)
-            # every field accessor passes the dispatch below: the last
-            # unargued one supplies the value, with a warning when there
-            # are two (5.20b), and each argued one is a gate on the
+            # every field accessor passes the dispatch below: the unargued
+            # one supplies the value (two raise in query(), 5.20b), and
+            # each argued one is a gate on the
             # instances (6.40, 6.1; a filter doesn't return a value, David
             # 2026-10-29), applied by _results_for_run() through
             # _name_three_gates(). Until 2026-11-12 an argued field was

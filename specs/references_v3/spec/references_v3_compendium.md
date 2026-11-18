@@ -896,15 +896,30 @@ error dictionary in the list contained by `errors.json`: an error records
 its idchain there.
 
 #### 5.20b
-In the case there are two possible interpretation of a reference's resolve
-value(s) due to there being multiple functions which could provide the value
-the last value-producing function wins and provides its value on resolve.
-This limited case is the only exception to the order indeterminacy of
-functions.
+A reference resolves to at most one value. A reference with more than one
+function that could provide the value is an error: query() raises a
+`ReferenceException3` before anything is read, and the message gives each
+single-value spelling. The functions that provide a value are unargued
+fields, key-selecting fields (`:source_port("email")`, 6.40), and content
+accessors (`:errors()`, `:vars()`, `:readme()`, ...). A gate (an argued
+field) is a filter and provides no value (6.40); nor do pointers, ranges,
+selectors, clock values, or `:manifest()`/`:definition()` when a field
+follows and reads from them. The rule counts every segment of the
+reference, and a repeated function counts each time.
 
-For example, in `$a.files.:name("orders.csv").:fingerprint():template()` the
-value returned on resolve() is the template string. Implementations should
-log a warning when this situation occurs, but should not raise an error.
+For example, `$a.files.:name("orders.csv").:fingerprint():template()` raises:
+write `$a.files.:name("orders.csv").:fingerprint()` or
+`$a.files.:name("orders.csv").:template()`. So does
+`$acme.results.:last().s:errors(:idchain("add[0]")):error_count()`, where a
+content accessor and a field would each provide a value.
+`$a.files.:name("orders.csv").:type("csv"):fingerprint()` is one value: the
+`:type("csv")` gate filters.
+
+(Until 2026-11-18 the last value-producing function won, with a warning.
+David, 2026-11-18: an ambiguity that does not raise "would complicate
+interpreting the references an agent used in reaching a conclusion and that
+wouldn't build trust." With it gone, the order of functions in a chain never
+changes what a reference resolves to.)
 
 The full resolve matrix by termination point and pointer kind:
 #### 5.21
@@ -954,6 +969,8 @@ filter, then a pointer picks from what is left, whatever the written order
 (6.28). So `$acme.results.:completed(:false()):last()` and
 `$acme.results.:last():completed(:false())` mean the same: the last run that
 did not complete.
+A reference supplies at most one value (5.20b), so order never decides
+which value it resolves to either.
 
 Order independence achieves three things:
 - It eliminates subtle differences between orderings

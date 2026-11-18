@@ -12,6 +12,7 @@ from .reference_estimate_3 import (
     Read,
     ReferenceEstimate3,
 )
+from .reference_exceptions_3 import ReferenceException3
 from .sources.filesystem_reference_source import FilesystemReferenceSource
 from .sources.sql_reference_source import SqlReferenceSource
 from csvpath.util.nos import Nos
@@ -335,6 +336,11 @@ class FilesEstimator3:
         return calls
 
     def _definite_raise(self, ledger: list) -> "str | None":
+        try:
+            # two value-supplying functions raise first; it reads nothing
+            self.finder._check_one_value(self.reference)
+        except ReferenceException3 as e:
+            return f"query: {e}"
         for call in self._all_calls():
             if call.name == "definition":
                 # the finder reads a ':definition()' filter itself, not by

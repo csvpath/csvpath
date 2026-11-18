@@ -2208,13 +2208,14 @@ class TestManifestGeneralChain:
         assert _gate_uuids(reference) == []
         assert _chain_values(reference) == []
 
-    def test_the_last_value_field_wins_with_a_warning(self):
+    def test_two_value_fields_raise(self):
+        # one value per reference (David, 2026-11-18; was: the last wins,
+        # with a warning, compendium 5.20b)
         finder = _gate_finder("$alpha.files.:manifest():last():uuid():fingerprint()")
-        logger = _FakeLogger()
-        finder.csvpaths.logger = logger
-        assert [r.data for r in finder.resolve().results] == ["f-a2"]
-        assert len(logger.warnings) == 1
-        assert ":fingerprint()" in logger.warnings[0]
+        with pytest.raises(ReferenceException3, match="resolves to one value") as e:
+            finder.query()
+        assert "$alpha.files.:manifest():last():fingerprint()" in str(e.value)
+        assert "$alpha.files.:manifest():last():uuid()" in str(e.value)
 
     def test_one_value_field_does_not_warn(self):
         finder = _gate_finder('$alpha.files.:manifest():type("csv"):uuid()')
@@ -2795,21 +2796,18 @@ class TestNameThreeGates:
 
 
 class TestNameThreeValueField:
-    # compendium 5.20b: the last value field wins, with a warning.
-    def test_the_last_field_wins(self, tmp_path):
-        assert _g_values(f"{ORDERS}.:last():fingerprint():template()", tmp_path) == [
-            ""
-        ]
-        assert _g_values(f"{ORDERS}.:last():template():fingerprint()", tmp_path) == [
-            "f-g3"
-        ]
+    # compendium 5.20b: one value per reference; two value fields raise
+    # (David, 2026-11-18; was: the last wins, with a warning)
+    @pytest.mark.parametrize(
+        "chain", [":fingerprint():template()", ":template():fingerprint()", ":uuid():uuid()"]
+    )
+    def test_two_value_fields_raise(self, tmp_path, chain):
+        finder = _g_finder(f"{ORDERS}.:last(){chain}", tmp_path)
+        with pytest.raises(ReferenceException3, match="resolves to one value"):
+            finder.query()
 
-    def test_two_value_fields_warn(self, tmp_path):
-        finder = _g_finder(f"{ORDERS}.:last():fingerprint():uuid()", tmp_path)
-        logger = _FakeLogger()
-        finder.csvpaths.logger = logger
-        assert [r.data for r in finder.resolve().results] == ["g3"]
-        assert len(logger.warnings) == 1
+    def test_one_value_field_resolves(self, tmp_path):
+        assert _g_values(f"{ORDERS}.:last():fingerprint()", tmp_path) == ["f-g3"]
 
     def test_a_gate_does_not_count_toward_the_warning(self, tmp_path):
         finder = _g_finder(f'{ORDERS}.:last():type("csv"):uuid()', tmp_path)
@@ -2842,9 +2840,11 @@ class TestStarNameThreeGates:
         reference = '$*.files.:name("orders.csv").:from(0):to(1):type("csv"):uuid()'
         assert _g_values(reference, tmp_path, star=True) == ["g0"]
 
-    def test_the_last_field_wins(self, tmp_path):
+    def test_two_value_fields_raise(self, tmp_path):
+        # was: the last wins (5.20b); David, 2026-11-18
         reference = '$*.files.:name("orders.csv").:last():fingerprint():template()'
-        assert _g_values(reference, tmp_path, star=True) == [""]
+        with pytest.raises(ReferenceException3, match="resolves to one value"):
+            _g_finder(reference, tmp_path, star=True).query()
 
     def test_with_only_a_gate_resolve_gives_the_version_bytes(self, tmp_path):
         finder = _g_finder('$*.files.*.:type("xlsx"):last()', tmp_path, star=True)
@@ -2868,8 +2868,8 @@ class TestAttachedFieldFunctionsMessage:
         "reference, suggestion",
         [
             (
-                '$alpha.files.:name("one.csv"):fingerprint():template()',
-                ':name("one.csv").:fingerprint():template()',
+                '$alpha.files.:name("one.csv"):fingerprint()',
+                ':name("one.csv").:fingerprint()',
             ),
             (
                 '$alpha.files.:name("one.csv"):last():uuid()',
@@ -3068,12 +3068,12 @@ class TestDefinitionChain:
             _def_path(STAR_ALPHA_HOME)
         ]
 
-    def test_the_last_value_field_wins_with_a_warning(self):
-        finder = _def_finder("$alpha.files.:definition():template():run_method()")
-        assert [r.data for r in finder.resolve().results] == ["collect_paths"]
-        assert len(finder.csvpaths.logger.warnings) == 1
-        reversed_ = "$alpha.files.:definition():run_method():template()"
-        assert _def_values(reversed_) == [":0/:filename"]
+    @pytest.mark.parametrize("chain", [":template():run_method()", ":run_method():template()"])
+    def test_two_value_fields_raise(self, chain):
+        # was: the last wins, with a warning (5.20b); David, 2026-11-18
+        finder = _def_finder(f"$alpha.files.:definition(){chain}")
+        with pytest.raises(ReferenceException3, match="resolves to one value"):
+            finder.query()
 
     def test_a_filter_does_not_count_toward_the_warning(self):
         finder = _def_finder(
@@ -4950,22 +4950,23 @@ class TestBareManifestFieldAccessor:
                 "$alpha.files.:manifest():uuid().:last()", ALPHA_HOME, ALPHA_MANIFEST
             ).query()
 
-    def test_more_than_one_chained_function_is_a_general_chain(self):
+    def test_more_than_one_value_field_raises(self):
         # changed 2026-11-02 (finding E, was: raises "functions attached
-        # directly to name_one"). Two value fields are a general
-        # ':manifest()' chain: the last one supplies the value, with a
-        # warning (compendium 5.20b).
+        # directly to name_one"), when the last of two value fields won
+        # with a warning (compendium 5.20b). Since 2026-11-18 (David) a
+        # reference has one value: two raise.
         finder = _finder(
             "$alpha.files.:manifest():time():uuid()", ALPHA_HOME, ALPHA_MANIFEST
         )
-        logger = _FakeLogger()
-        finder.csvpaths.logger = logger
-        assert [r.data for r in finder.resolve().results] == [
-            "u-zero-1",
-            "u-one-1",
-            "u-one-2",
-        ]
-        assert len(logger.warnings) == 1
+        with pytest.raises(ReferenceException3, match="resolves to one value"):
+            finder.query()
+
+    def test_a_gate_and_a_value_field_are_a_general_chain(self):
+        # a gate filters and supplies no value, so this is one value
+        finder = _finder(
+            '$alpha.files.:manifest():uuid("u-one-1"):time()', ALPHA_HOME, ALPHA_MANIFEST
+        )
+        assert len(finder.resolve().results) == 1
 
     def test_chaining_a_pointer_is_not_recognized_here(self):
         # ':last()' is a POINTER, not a registered field accessor

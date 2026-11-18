@@ -6473,10 +6473,11 @@ class TestFilterNeverSuppliesTheResolveValue:
         finder.resolve()
         assert finder.csvpaths.logger.warnings == []
 
-    def test_warning_for_two_unargued_fields(self, runs):
+    def test_two_unargued_fields_raise(self, runs):
+        # was: the last wins, with a warning (5.20b); David, 2026-11-18
         finder = _finder('$acme.results.:last():run_uuid():status()', runs)
-        assert [r.data for r in finder.resolve().results] == ["complete"]
-        assert len(finder.csvpaths.logger.warnings) == 1
+        with pytest.raises(ReferenceException3, match="resolves to one value"):
+            finder.query()
 
     def test_last_value_field_call_rejects_none(self, runs):
         finder = _finder('$acme.results.:last()', runs)
@@ -7089,12 +7090,12 @@ class TestStarManifestSetInstanceRecords:
         assert [{"message": "k3-t"}, {"message": "k3-t"}] in data
         assert len(data) == 2
 
-    def test_a_content_accessor_wins_over_a_field(self, archive):
-        # the same order as the run-dir branch: the file is read
+    def test_a_content_accessor_and_a_field_raise(self, archive):
+        # was: the content accessor won over the field; both supply a value,
+        # and a reference has one (David, 2026-11-18)
         ref = "$*.results.:manifest():last().t:errors():error_count()"
-        assert self._data(ref, archive) == [
-            [{"message": "k3-t"}, {"message": "k3-t"}]
-        ]
+        with pytest.raises(ReferenceException3, match="resolves to one value"):
+            _finder(ref, archive).query()
 
     def test_a_deleted_runs_content_accessor_resolves_to_none(self, archive):
         data = self._data("$*.results.:manifest():index(1).t:errors()", archive)
@@ -7105,9 +7106,11 @@ class TestStarManifestSetInstanceRecords:
             _finder("$*.results.:manifest():last().*:errors()", archive).resolve()
 
     def test_a_field_does_not_lift_the_one_file_rule_for_an_accessor(self, archive):
+        # an accessor and a field are two values: it raises at query now,
+        # before the one-file rule is reached at resolve
         ref = "$*.results.:manifest():last().*:errors():error_count()"
-        with pytest.raises(ReferenceException3, match="more than one match"):
-            _finder(ref, archive).resolve()
+        with pytest.raises(ReferenceException3, match="resolves to one value"):
+            _finder(ref, archive).query()
 
     # --- raises
 
@@ -7805,10 +7808,10 @@ class TestRunDirNameThreeGates:
 
 
 class TestRunDirNameThreeTwoFields:
-    # two unargued fields in a run-dir name_three: the last supplies the
-    # value, with a warning (compendium 5.20b), as in name_one. The
-    # first one raised "does not support :uuid() as a name_three
-    # function" until 2026-11-12 (reviewer on #589).
+    # two unargued fields in a run-dir name_three raise: a reference has one
+    # value (David, 2026-11-18). Until then the last supplied the value,
+    # with a warning (compendium 5.20b); the first raised "does not support
+    # :uuid() as a name_three function" until 2026-11-12 (reviewer on #589).
     @pytest.fixture
     def runs(self, tmp_path):
         run_dir = tmp_path / "widgets" / "2026-01-01_00-00-00"
@@ -7824,20 +7827,31 @@ class TestRunDirNameThreeTwoFields:
         return str(tmp_path)
 
     @pytest.mark.parametrize(
-        "reference, expected",
+        "reference",
         [
-            (".:all():uuid():valid()", [True, False]),
-            (".:all():valid():uuid()", ["checks-1", "rules-1"]),
-            (".checks:uuid():valid()", [True]),
-            (".:last():uuid():valid()", [False]),
-            (".:all():manifest():uuid():valid()", [True, False]),
-            # with a gate too: it filters, the last unargued field is the value
-            (".:all():uuid():valid(:false()):valid()", [False]),
+            ".:all():uuid():valid()",
+            ".:all():valid():uuid()",
+            ".checks:uuid():valid()",
+            ".:last():uuid():valid()",
+            ".:all():manifest():uuid():valid()",
+            # a gate filters and does not count; the two unargued fields do
+            ".:all():uuid():valid(:false()):valid()",
         ],
     )
-    def test_the_last_unargued_field_supplies_the_value(
-        self, runs, reference, expected
-    ):
+    def test_two_unargued_fields_raise(self, runs, reference):
+        finder = _finder(f"$widgets.results.:first(){reference}", runs)
+        with pytest.raises(ReferenceException3, match="resolves to one value"):
+            finder.query()
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            (".:all():valid()", [True, False]),
+            (".checks:uuid()", ["checks-1"]),
+            (".:all():valid(:false()):uuid()", ["rules-1"]),
+        ],
+    )
+    def test_one_unargued_field_supplies_the_value(self, runs, reference, expected):
         results = _finder(f"$widgets.results.:first(){reference}", runs).resolve()
         assert [r.data for r in results.results] == expected
 
@@ -7858,39 +7872,15 @@ class TestRunDirNameThreeTwoFields:
         with pytest.raises(ReferenceException3):
             _finder(f"$widgets.results.:first(){reference}", runs).query()
 
-    def test_two_value_fields_warn(self, runs):
+    def test_two_value_fields_raise_before_any_read(self, runs):
+        # the raise is in query(), before anything is read; it was a warning
+        # logged once per finder (2026-11-13, reviewer on #590)
         finder = _finder("$widgets.results.:first().checks:uuid():valid()", runs)
-        finder.resolve()
-        # query and resolve each read the selector; it warns once per
-        # finder (2026-11-13; it warned twice)
-        warnings = finder.csvpaths.logger.warnings
-        assert len(warnings) == 1
-        assert "5.20b" in warnings[0]
-
-    def test_two_value_fields_over_many_statements_warn_once(self, tmp_path):
-        # one resolve() over N statements read the chain 1 + N times and
-        # logged 1 + N warnings (reviewer on #590)
-        run = _make_run(
-            tmp_path / "acme",
-            "2026-01-01_00-00-00",
-            "acme-run",
-            {f"s{i}": f"u{i}" for i in range(4)},
-        )
-        _write_archive_manifest(tmp_path, "acme", [run])
-        finder = _finder("$acme.results.:last().:all():uuid():valid()", str(tmp_path))
-        assert len(finder.resolve().results) == 4
-        assert len(finder.csvpaths.logger.warnings) == 1
-
-    def test_each_finder_warns_on_its_own(self, tmp_path):
-        run = _make_run(
-            tmp_path / "acme", "2026-01-01_00-00-00", "acme-run", {"s0": "u0"}
-        )
-        _write_archive_manifest(tmp_path, "acme", [run])
-        reference = "$acme.results.:last().s0:uuid():valid()"
-        for _ in range(2):
-            finder = _finder(reference, str(tmp_path))
-            finder.resolve()
-            assert len(finder.csvpaths.logger.warnings) == 1
+        with pytest.raises(ReferenceException3, match="resolves to one value") as e:
+            finder.query()
+        assert "$widgets.results.:first().checks:valid()" in str(e.value)
+        assert "$widgets.results.:first().checks:uuid()" in str(e.value)
+        assert finder.csvpaths.logger.warnings == []
 
 
 class TestMixedIndexAndDateRange:
