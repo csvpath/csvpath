@@ -78,7 +78,9 @@ done. Add an item the moment something is deferred.
   holds sensitive data.
 - **A csvpath after a Macie csvpath with `source-mode: preceding`** gets
   only the lines with findings. That could be a feature (e.g. redaction)
-  or a surprise.
+  or a surprise. Collecting the clean lines instead works today with
+  `return-mode: no-matches` (tried 2026-11-18); a build would add a
+  config key, a loud breaker and a printout: `clean-lines-design.md`.
 - **Limits are fixed when the group is loaded**: changing `[macie]` in
   config.ini takes effect when the group is reloaded. David is not
   worried about this for now (2026-10-31).
@@ -154,8 +156,9 @@ fidelity item in transpile-design.md.
     ask (decision 3);
   - `review = all`, left out of the first build on purpose (decision 4);
   - NAME and ADDRESS: a review question could flag columns that hold
-    names or addresses, from masked context and column facts. A separate
-    design; it would be ours, not Macie's.
+    names or addresses, from masked context and column facts. Ours, not
+    Macie's. Draft: `jev-names-addresses-design.md` (2026-11-18), with
+    decisions for David and an experiment to run first.
 - **CVL `jev()` uses `jev-latest`**, which moves; a config key to pin the
   model would make CVL results comparable over time (core, not Macie).
 - **Rulesbase `common.json`**, deferred in `rulesbase-design.md`.
