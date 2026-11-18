@@ -1177,6 +1177,14 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
 
     _live_entries = None
 
+    def estimate(self):
+        """what query() and resolve() will probably read, as a
+        ReferenceEstimate3 (references_v3_cost_estimates.md). It reads only
+        the named-paths ledger."""
+        from .csvpaths_estimator_3 import CsvpathsEstimator3
+
+        return CsvpathsEstimator3(finder=self).estimate()
+
     def resolve_from(self, selection: "ReferenceResults3 | list") -> ReferenceResults3:
         """ReferenceFinder3.resolve_from(), with the live index reset so
         nothing read in an earlier call is reused (triage A22)."""
