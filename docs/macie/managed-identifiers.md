@@ -84,7 +84,7 @@ Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia and Sweden
 | `UNITED_ARAB_EMIRATES_BANK_ACCOUNT_NUMBER` | none | `iban:AE` | 1:HIGH | A |  |
 | `VIRGIN_ISLANDS_BANK_ACCOUNT_NUMBER` | none | `iban:VG` | 1:HIGH | A |  |
 
-## PERSONAL_INFORMATION (82)
+## PERSONAL_INFORMATION (97)
 
 | Identifier | Keywords | Detector | Severity | Fidelity | Partial |
 |---|---|---|---|---|---|
@@ -119,6 +119,7 @@ Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia and Sweden
 | `DRIVERS_LICENSE` | required, `us_drivers_license` | `us_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `ESTONIA_DRIVERS_LICENSE` | required, `estonia_drivers_license` | `estonia_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `EUROPEAN_HEALTH_INSURANCE_CARD_NUMBER` | required, `eu_ehic` | `eu_ehic` | 1:HIGH | B |  |
+| `FINLAND_DRIVERS_LICENSE` | required, `finland_drivers_license` | `finland_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `FINLAND_EUROPEAN_HEALTH_INSURANCE_NUMBER` | required, `fi_ehic` | `fi_ehic` | 1:HIGH | B |  |
 | `FRANCE_DRIVERS_LICENSE` | required, `france_drivers_license` | `france_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `FRANCE_HEALTH_INSURANCE_NUMBER` | required, `fr_health` | `fr_nir` | 1:HIGH | A |  |
@@ -131,20 +132,33 @@ Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia and Sweden
 | `GERMANY_PASSPORT_NUMBER` | required, `germany_passport` | `germany_passport` | 1:MEDIUM 2:HIGH | B |  |
 | `GERMANY_PHONE_NUMBER` | required, `phone` | `de_phone` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `GERMANY_TAX_IDENTIFICATION_NUMBER` | required, `de_tax` | `de_idnr` | 1:HIGH | A |  |
+| `GREECE_DRIVERS_LICENSE` | required, `greece_drivers_license` | `greece_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `HTTP_COOKIE` | none | `http_cookie` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
+| `HUNGARY_DRIVERS_LICENSE` | required, `hungary_drivers_license` | `hungary_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `INDIA_AADHAAR_NUMBER` | required, `in_aadhaar` | `in_aadhaar` | 1:HIGH | A |  |
 | `INDIA_DRIVERS_LICENSE` | required, `india_drivers_license` | `india_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `INDIA_PERMANENT_ACCOUNT_NUMBER` | required, `in_pan` | `in_pan` | 1:HIGH | B |  |
+| `IRELAND_DRIVERS_LICENSE` | required, `ireland_drivers_license` | `ireland_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `ITALY_DRIVERS_LICENSE` | required, `italy_drivers_license` | `italy_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `ITALY_NATIONAL_IDENTIFICATION_NUMBER` | required, `it_cf` | `it_cf` | 1:HIGH | A |  |
 | `ITALY_PASSPORT_NUMBER` | required, `italy_passport` | `italy_passport` | 1:MEDIUM 2:HIGH | B |  |
 | `ITALY_PHONE_NUMBER` | required, `phone` | `it_phone` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `LATITUDE_LONGITUDE` | required, `lat_long` | `lat_long` | 1:LOW 2:MEDIUM | B |  |
+| `LATVIA_DRIVERS_LICENSE` | required, `latvia_drivers_license` | `latvia_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
+| `LITHUANIA_DRIVERS_LICENSE` | required, `lithuania_drivers_license` | `lithuania_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
+| `LUXEMBOURG_DRIVERS_LICENSE` | required, `luxembourg_drivers_license` | `luxembourg_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
+| `MALTA_DRIVERS_LICENSE` | required, `malta_drivers_license` | `malta_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `MEDICAL_DEVICE_UDI` | required, `udi` | `udi` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `MEXICO_CURP_NUMBER` | required, `mx_curp` | `mx_curp` | 1:HIGH | A |  |
 | `MEXICO_INDIVIDUAL_RFC_NUMBER` | required, `mx_rfc` | `mx_rfc_individual` | 1:HIGH | B |  |
 | `MEXICO_ORGANIZATION_RFC_NUMBER` | required, `mx_rfc` | `mx_rfc_organization` | 1:MEDIUM 100:HIGH | B |  |
+| `NETHERLANDS_DRIVERS_LICENSE` | required, `netherlands_drivers_license` | `netherlands_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `PHONE_NUMBER` | required, `phone` | `us_phone` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
+| `POLAND_DRIVERS_LICENSE` | required, `poland_drivers_license` | `poland_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
+| `PORTUGAL_DRIVERS_LICENSE` | required, `portugal_drivers_license` | `portugal_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
+| `ROMANIA_DRIVERS_LICENSE` | required, `romania_drivers_license` | `romania_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
+| `SLOVAKIA_DRIVERS_LICENSE` | required, `slovakia_drivers_license` | `slovakia_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
+| `SLOVENIA_DRIVERS_LICENSE` | required, `slovenia_drivers_license` | `slovenia_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `SPAIN_DNI_NUMBER` | required, `es_dni` | `es_dni` | 1:HIGH | B |  |
 | `SPAIN_DRIVERS_LICENSE` | required, `spain_drivers_license` | `spain_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `SPAIN_NIE_NUMBER` | required, `es_tax` | `es_nie` | 1:HIGH | A |  |
@@ -153,6 +167,7 @@ Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia and Sweden
 | `SPAIN_PHONE_NUMBER` | required, `phone` | `es_phone` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `SPAIN_SOCIAL_SECURITY_NUMBER` | required, `es_ssn` | `es_ssn` | 1:HIGH | B |  |
 | `SPAIN_TAX_IDENTIFICATION_NUMBER` | required, `es_tax` | `es_cif` | 1:HIGH | B |  |
+| `SWEDEN_DRIVERS_LICENSE` | required, `sweden_drivers_license` | `sweden_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `UK_DRIVERS_LICENSE` | required, `uk_drivers_license` | `uk_drivers_license` | 1:LOW 2:MEDIUM 100:HIGH | B |  |
 | `UK_ELECTORAL_ROLL_NUMBER` | required, `gb_electoral` | `gb_electoral` | 1:HIGH | B |  |
 | `UK_NATIONAL_INSURANCE_NUMBER` | required, `gb_nino` | `gb_nino` | 1:HIGH | A |  |
@@ -185,4 +200,4 @@ Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia and Sweden
 | `PUTTY_PRIVATE_KEY` | none | `putty` | 1:HIGH | A |  |
 | `STRIPE_CREDENTIALS` | none | `stripe` | 1:HIGH | A |  |
 
-149 identifiers.
+164 identifiers.

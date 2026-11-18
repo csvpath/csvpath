@@ -1,7 +1,8 @@
-"""Driver's license stand-ins, the fifth group B step: 17 of Macie's 32
+"""Driver's license stand-ins, the fifth group B step: Macie's 32
 driver's license identifiers as FormatDetector formats, the US one the
 union of the states' formats, each tagged with its states (David,
-2026-11-05). The other 15 countries are on the worklist."""
+2026-11-05). 17 came first (pair 21); the other 15 countries followed
+from the worklist (2026-11-18)."""
 
 import pytest
 
@@ -30,6 +31,21 @@ COUNTRIES = [
     "SPAIN",
     "UK",
     "US",
+    "FINLAND",
+    "GREECE",
+    "HUNGARY",
+    "IRELAND",
+    "LATVIA",
+    "LITHUANIA",
+    "LUXEMBOURG",
+    "MALTA",
+    "NETHERLANDS",
+    "POLAND",
+    "PORTUGAL",
+    "ROMANIA",
+    "SLOVAKIA",
+    "SLOVENIA",
+    "SWEDEN",
 ]
 STATES = set(
     """AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS
@@ -113,6 +129,31 @@ def test_macie_us_drivers_license_covers_every_state(catalog) -> None:
         ("CANADA", "P123456789012"),
         ("CANADA", "1234567"),
         ("CANADA", "123456-789"),
+        ("FINLAND", "123456-789A"),
+        ("FINLAND", "123456-7890"),
+        ("GREECE", "123456789"),
+        ("HUNGARY", "AB123456"),
+        ("IRELAND", "123456ABCD"),
+        ("LATVIA", "ABC123456"),
+        ("LITHUANIA", "12345678"),
+        ("LUXEMBOURG", "123456"),
+        ("MALTA", "AB123456"),
+        ("MALTA", "12 345 678"),
+        ("MALTA", "A1 345678"),
+        ("MALTA", "AB123 456"),
+        ("NETHERLANDS", "1234567890"),
+        ("POLAND", "12345/67/8901"),
+        ("POLAND", "12345/67/8901234"),
+        ("PORTUGAL", "AB-12345 6"),
+        ("PORTUGAL", "AB-123456 7"),
+        ("PORTUGAL", "A-123456 7"),
+        ("PORTUGAL", "A-12345678 9"),
+        ("ROMANIA", "A12345678"),
+        ("ROMANIA", "123456789"),
+        ("SLOVAKIA", "A1234567"),
+        ("SLOVAKIA", "12345678"),
+        ("SLOVENIA", "123456789"),
+        ("SWEDEN", "123456-7890"),
     ],
 )
 def test_macie_drivers_license_formats(catalog, country: str, cell: str) -> None:
@@ -162,6 +203,18 @@ def test_macie_us_drivers_license_state_formats(catalog, state: str, cell: str) 
         # pieces of a hyphen-joined token are not numbers on their own
         #
         ("CANADA", "A1234-56789-07234"),
+        ("FINLAND", "1234567890"),
+        ("SWEDEN", "123456-789A"),
+        ("HUNGARY", "ABC12345"),
+        ("IRELAND", "123456ABC"),
+        ("LATVIA", "AB123456"),
+        ("LUXEMBOURG", "1234567"),
+        ("MALTA", "ABC12345"),
+        ("POLAND", "12345/67/89012"),
+        ("PORTUGAL", "AB-1234 5"),
+        ("PORTUGAL", "A-1234567 8"),
+        ("ROMANIA", "AB1234567"),
+        ("SLOVAKIA", "AB123456"),
     ],
 )
 def test_macie_drivers_license_not_detected(catalog, country: str, cell: str) -> None:
@@ -182,6 +235,28 @@ def test_macie_drivers_license_catalog(catalog) -> None:
         "permis de conduire"
     ]
     assert "kørekort" in catalog.identifier(name="DENMARK_DRIVERS_LICENSE")["keywords"]
+    assert catalog.identifier(name="IRELAND_DRIVERS_LICENSE")["keywords"] == [
+        "ceadúnas tiomána"
+    ]
+    #
+    # kept as Macie publishes them
+    #
+    assert (
+        "δεια οδήγησης" in catalog.identifier(name="GREECE_DRIVERS_LICENSE")["keywords"]
+    )
+    assert (
+        "dlno# ajokortti"
+        in catalog.identifier(name="SWEDEN_DRIVERS_LICENSE")["keywords"]
+    )
+
+
+def test_macie_drivers_license_every_macie_country(catalog) -> None:
+    #
+    # Macie's 32 driver's license identifiers, all with a stand-in
+    #
+    names = [n for n in catalog.names if n.endswith("DRIVERS_LICENSE")]
+    assert sorted(names) == sorted(_ident(c) for c in COUNTRIES)
+    assert len(names) == 32
 
 
 @pytest.mark.parametrize(
@@ -205,6 +280,31 @@ def test_macie_drivers_license_catalog(catalog) -> None:
         ("DRIVERS_LICENSE", "driver license 12345678", "x", 1),
         ("CANADA_DRIVERS_LICENSE", "driver license 12345678", "x", 1),
         ("AUSTRALIA_DRIVERS_LICENSE", "driver license 12345678", "x", 1),
+        ("NETHERLANDS_DRIVERS_LICENSE", "1234567890", "rijbewijsnummer", 1),
+        ("POLAND_DRIVERS_LICENSE", "prawo jazdy 12345/67/8901", "x", 1),
+        ("PORTUGAL_DRIVERS_LICENSE", "carta de condução AB-12345 6", "x", 1),
+        ("IRELAND_DRIVERS_LICENSE", "ceadúnas tiomána 123456ABCD", "x", 1),
+        #
+        # the EU countries in the backlog have only their own languages'
+        # keywords in Macie's list, no English ones
+        #
+        ("IRELAND_DRIVERS_LICENSE", "driving licence 123456ABCD", "x", 0),
+        ("LATVIA_DRIVERS_LICENSE", "vadītāja apliecība ABC123456", "x", 1),
+        ("MALTA_DRIVERS_LICENSE", "liċenzja tas-sewqan AB 123 456", "x", 1),
+        #
+        # Greece's keyword as Macie publishes it lacks its first letter,
+        # so as a whole word it is not in άδεια οδήγησης
+        #
+        ("GREECE_DRIVERS_LICENSE", "adeia odigisis 123456789", "x", 1),
+        ("GREECE_DRIVERS_LICENSE", "δεια οδήγησης 123456789", "x", 1),
+        ("GREECE_DRIVERS_LICENSE", "άδεια οδήγησης 123456789", "x", 0),
+        #
+        # Sweden's shape is one of Finland's, and they share keywords
+        #
+        ("SWEDEN_DRIVERS_LICENSE", "körkort 123456-7890", "x", 1),
+        ("FINLAND_DRIVERS_LICENSE", "körkort 123456-7890", "x", 1),
+        ("SWEDEN_DRIVERS_LICENSE", "körkort 123456-789A", "x", 0),
+        ("FINLAND_DRIVERS_LICENSE", "ajokortti 123456-789A", "x", 1),
     ],
 )
 def test_macie_drivers_license_identifiers(

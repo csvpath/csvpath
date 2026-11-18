@@ -782,12 +782,19 @@ LOW for one occurrence, MEDIUM from 2, HIGH from 100 (Macie). Fidelity B.
   spaces, slashes and hyphens; a date matching several shapes is one
   occurrence.
 
-**Driver's licenses** (group B step 5): 17 of Macie's 32 driver's license
+**Driver's licenses** (group B step 5): Macie's 32 driver's license
 identifiers, all `FormatDetector` data, PERSONAL_INFORMATION, keyword
 required, LOW for one occurrence, MEDIUM from 2, HIGH from 100. Fidelity
 B. Scope agreed with David on 2026-11-06: the US, UK, Canada, Australia,
 India, Germany, France, Spain, Italy, Austria, Belgium, Bulgaria, Croatia,
-Cyprus, Czechia, Denmark and Estonia; the other 15 are on the worklist.
+Cyprus, Czechia, Denmark and Estonia. The other 15 followed on
+2026-11-18: Finland, Greece, Hungary, Ireland, Latvia, Lithuania,
+Luxembourg, Malta, the Netherlands, Poland, Portugal, Romania, Slovakia,
+Slovenia and Sweden, all from Purview's patterns. Macie lists only their
+own languages' keywords for them, no English ones; Macie's Greek keyword
+(δεια οδήγησης, without its first letter) and Sweden's "dlno# ajokortti"
+are kept as published. Sweden's shape is one of Finland's, and they share
+Swedish keywords, so a Swedish number near körkort is reported for both.
 - **Sources:** Macie publishes only keywords. The formats are Microsoft
   Purview's detection patterns (a vendor's, not the issuers'), Skyhigh
   Security's DLP table for the US states, and the DVLA's structure for the
@@ -859,8 +866,8 @@ the notation cannot check a range or a header's grammar:
   field name in any case, a token name and a non-empty value; a
   Set-Cookie header's attributes (`Secure`, `Path=/`) are part of it. One
   header is one occurrence, however many pairs it has.
-With these, every group B identifier has a stand-in, except the 15
-driver's license countries on the backlog.
+With these, every group B identifier has a stand-in (the last 15
+driver's license countries were added on 2026-11-18).
 
 **Group A leftovers: `CANADA_HEALTH_NUMBER`** (`CaHealthDetector`).
 Macie publishes only the keywords, which point at British Columbia (MSP,

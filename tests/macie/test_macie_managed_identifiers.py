@@ -90,7 +90,10 @@ def test_macie_catalog_packaged(catalog) -> None:
     #
     banks = [n for n in catalog.names if n.endswith("_BANK_ACCOUNT_NUMBER")]
     assert len(banks) == 52
-    assert len(catalog.names) == 149
+    #
+    # with the last 15 driver's license countries (2026-11-18)
+    #
+    assert len(catalog.names) == 164
     cc = catalog.identifier(name="CREDIT_CARD_NUMBER")
     assert cc["category"] == "FINANCIAL_INFORMATION"
     assert cc["keyword_mode"] == "required"
@@ -126,6 +129,21 @@ def test_macie_catalog_packaged(catalog) -> None:
         "czechia_drivers_license",
         "denmark_drivers_license",
         "estonia_drivers_license",
+        "finland_drivers_license",
+        "greece_drivers_license",
+        "hungary_drivers_license",
+        "ireland_drivers_license",
+        "latvia_drivers_license",
+        "lithuania_drivers_license",
+        "luxembourg_drivers_license",
+        "malta_drivers_license",
+        "netherlands_drivers_license",
+        "poland_drivers_license",
+        "portugal_drivers_license",
+        "romania_drivers_license",
+        "slovakia_drivers_license",
+        "slovenia_drivers_license",
+        "sweden_drivers_license",
         "france_drivers_license",
         "germany_drivers_license",
         "india_drivers_license",
