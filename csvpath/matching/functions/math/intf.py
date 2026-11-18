@@ -36,7 +36,11 @@ class Int(ValueProducer):
     def _produce_value(self, skip=None) -> None:
         i = self._value_one(skip=skip)
         if i is None:
-            self.value = None
+            #
+            # docs/functions/intf.md: int() swaps a None for 0. it used to
+            # return None. notnone is checked on the argument, not here.
+            #
+            self.value = 0
         else:
             self.value = ExpressionUtility.to_int(i)
             if not isinstance(self.value, int):
@@ -63,7 +67,11 @@ class Float(ValueProducer):
     def _produce_value(self, skip=None) -> None:
         i = self._value_one(skip=skip)
         if i is None:
-            self.value = None
+            #
+            # float() converts "similar to the way int() does" (intf.md), so
+            # a None is 0.0
+            #
+            self.value = 0.0
         else:
             self.value = ExpressionUtility.to_float(i)
             if not isinstance(self.value, float):

@@ -43,7 +43,8 @@ class TestCsvPathFunctionsInt(unittest.TestCase):
         )
         path.collect()
         assert path.variables["st"] == 0
-        assert path.variables["no"] is None
+        # intf.md: int() swaps a None for 0 (this used to pin None)
+        assert path.variables["no"] == 0
         assert path.variables["bo"] == 0
 
     def test_function_int2(self):
@@ -137,17 +138,8 @@ class TestCsvPathFunctionsInt(unittest.TestCase):
             """
         )
         path.fast_forward()
-        assert path.variables["nofloat"] == [
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ]
+        # float() converts like int(), so a None is 0.0 (this used to pin None)
+        assert path.variables["nofloat"] == [0.0] * 9
 
     def test_function_float_notnone2(self):
         path = CsvPath()
