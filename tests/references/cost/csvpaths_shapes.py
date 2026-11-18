@@ -132,4 +132,15 @@ SHAPES = [
     '$validate_orders.csvpaths.:definition():template().0',
     '$:regex(/^v/).csvpaths.:all():uuid()',
     '$:regex(/^v/).csvpaths.:all().:from(0)',
+    # a reviewer's probes on #734
+    '$validate_orders.csvpaths.:readme().0',
+    '$*.csvpaths.:readme().:from(0)',
+    '$*.csvpaths.:log().0',
+    '$validate_orders.csvpaths.:log().1',
+    '$validate_orders.csvpaths.:definition(:template(:has_value())).0',
+    '$validate_orders.csvpaths.:definition(:template(:has_value())).:from(0)',
+    '$scan_invoices.csvpaths.:definition(:template(:has_value())).0-1',
+    '$validate_orders.csvpaths.first',
+    '$*.csvpaths.somefile.x',
+    '$validate_orders.csvpaths.:last().*',
 ]

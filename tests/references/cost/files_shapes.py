@@ -212,4 +212,15 @@ SHAPES = [
     '$*.files.:all().:last():sources()',
     '$acme_invoices.files.:all().:last():uuid()',
     '$acme_invoices.files.:all().:last():status()',
+    # a reviewer's probes on #734
+    '$orders.files.:status("failed").:last()',
+    '$*.files.:status("failed").:first()',
+    '$:regex(/^o/).files.:lifecycle("active").:index(0)',
+    '$orders.files.:status("failed").:all()',
+    '$orders.files.:status("failed").0',
+    '$orders.files.:lifecycle("active").:from(0):to(1)',
+    '$orders.files.:status("failed").:last():uuid()',
+    '$acme_invoices.files.:readme().:last():uuid()',
+    '$:regex(/^o/).files.:readme().:last():sources()',
+    '$orders.files.:log().:index(0)',
 ]

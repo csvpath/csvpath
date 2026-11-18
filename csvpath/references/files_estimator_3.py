@@ -223,7 +223,7 @@ class FilesEstimator3:
             self._read(part=RESOLVE, kind="name_listing", count=1, basis=UPPER_BOUND, because="a name_one pointer")
             self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=2 * n_names, basis=UPPER_BOUND, because="a name_one pointer")
             return
-        if three is not None and three.body is not None and three.body.isdigit():
+        if three is not None and isinstance(three.body, str) and three.body.isdigit():
             # a literal index selects one version at most
             selected = min(selected, 1)
         if selected > 1:
@@ -351,8 +351,10 @@ class FilesEstimator3:
                 return "query: two range bounds in the same direction are not legal"
             if sum(chain.count(n) for n in POINTERS) > 1:
                 return "query: at most one pointer function per chain"
-        if "definition" in path_names and any(c.name in POINTERS + ("from", "to", "all", "before", "after", "on") for c in self.reference.name_one.functions):
+        if "definition" in path_names and any(self._is_selector(c) for c in self.reference.name_one.functions):
             return "query: ':definition()' is not versioned, so it takes no pointer, range or date bound"
+        if self.reference.name_three is not None and set(path_names + [c.name for c in name_one.functions]) & {"readme", "log"}:
+            return "query: ':readme()' and ':log()' stand alone; they take no name_three"
         if "definition" in path_names:
             # a ':definition()' chain reads definition.json: no manifest
             # fields, no ':manifest()'
@@ -394,11 +396,25 @@ class FilesEstimator3:
         if len(self._calls()) + named >= 2:
             self._loose_shape()
             return "several functions on name_one; the FILES finder takes only some combinations"
-        if self.reference.name_three is not None and any(
-            self._is_gate(c) or self._is_window(c) for c in self._calls()
+        if (
+            self.reference.name_three is not None
+            and not self._ledger_gate_on_name_one()
+            and any(self._is_gate(c) or self._is_window(c) for c in self._calls())
         ):
             return "a name_one gate or window with a name_three; the FILES finder takes only some combinations"
         return None
+
+    @staticmethod
+    def _is_selector(call) -> bool:
+        """a pointer or a context setter (':all()', ranges, date bounds,
+        ':having()'): it selects versions"""
+        cls = ReferenceFunctionFactory.get_registered_class(call.name)
+        return call.name in POINTERS or (cls is not None and cls.ROLE == Function3.CONTEXT_SETTER)
+
+    def _ledger_gate_on_name_one(self) -> bool:
+        """name_one is exactly one argued ledger field, e.g. ':status("failed")'"""
+        calls = self._calls()
+        return len(calls) == 1 and calls[0].arg is not None and self._is_ledger_field(calls[0])
 
     def _loose_shape(self) -> None:
         """an unusual shape: bound the reads it may make loosely, beyond
@@ -424,6 +440,10 @@ class FilesEstimator3:
         if "definition" in path_names and (three is not None or (not isinstance(root, str) and set(functions) & set(selectors))):
             return "query: ':definition()' does not combine with name_three, or with a selector during '*' traversal"
         all_names = path_names + functions
+        if three is not None and self._ledger_gate_on_name_one():
+            pointers = [c.name for c in three.functions]
+            if three.body is not None or len(pointers) != 1 or pointers[0] not in POINTERS:
+                return "query: a bare ':status(...)'/':lifecycle(...)' gate takes a single version-selecting pointer in name_three"
         if three is not None and set(all_names) & set(POINTERS):
             return "query: a name_one pointer takes no name_three; put the version-selecting function in name_three"
         if three is not None and self.finder._bare_definition_field_call(self.reference.name_one) is not None:

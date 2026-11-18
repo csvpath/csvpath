@@ -1,6 +1,7 @@
 from .csvpaths_reference_finder_3 import CsvpathsReferenceFinder3
 from .files_estimator_3 import FilesEstimator3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
+from .reference_3 import FunctionCall3, Star3
 from .reference_estimate_3 import RESOLVE, UPPER_BOUND
 
 #
@@ -55,6 +56,11 @@ class CsvpathsEstimator3(FilesEstimator3):
         where its POSITIONS put it for csvpaths"""
         if "#" in str(self.reference.name_one):
             return "query: CSVPATHS does not take a '#worksheet'"
+        name_one = self.reference.name_one
+        if not any(isinstance(p, FunctionCall3) for p in name_one.path) and not name_one.functions:
+            return "query: CSVPATHS name_one is a version-selecting function chain, not a literal"
+        if self.reference.name_three is not None and isinstance(self.reference.name_three.body, Star3):
+            return "query: CSVPATHS name_three is a statement identity, an index, or :from()/:to()"
         try:
             # the finder's own static check: a definition field beside a
             # version selector (it reads nothing)
@@ -65,7 +71,9 @@ class CsvpathsEstimator3(FilesEstimator3):
         name_one = self.reference.name_one
         is_chain = bool(name_one.functions) or not isinstance(self.reference.root_major, str)
         calls = [c.name for c in self._calls()]
-        is_chain = is_chain or len(calls) > 1
+        # a ':definition(...)' filter is a chain too
+        argued = any(c.name == "definition" and c.arg is not None for c in self._calls())
+        is_chain = is_chain or len(calls) > 1 or argued
         # (a repeated function is uncertain instead: _possible_raise)
         if three is not None and "definition" in calls and is_chain and len(calls) == len(set(calls)):
             return "query: a ':definition()' chain, or one under '*', takes no name_three"
