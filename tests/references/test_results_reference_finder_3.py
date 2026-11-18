@@ -8652,14 +8652,20 @@ class TestAnInvalidJsonFile:
         run = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s": "r1-s"})
         (Path(run) / "s" / "errors.json").write_text("[{not json")
         _write_archive_manifest(tmp_path, "acme", [run])
+        finder = _finder("$acme.results.:last().s:errors()", str(tmp_path))
         with pytest.raises(ReferenceRuntimeException3, match="errors.json is not valid JSON"):
-            _finder("$acme.results.:last().s:errors()", str(tmp_path)).resolve()
+            finder.resolve()
+        # A19: logged before it raises
+        assert any("errors.json is not valid JSON" in e for e in finder.csvpaths.logger.errors)
 
     def test_an_invalid_archive_ledger_names_the_file(self, tmp_path):
         # reviewer on #653: run_homes() parsed the archive ledger itself
         (tmp_path / "manifest.json").write_text("[{not json")
+        finder = _finder("$acme.results.:last()", str(tmp_path))
         with pytest.raises(ReferenceRuntimeException3, match="manifest.json is not valid JSON"):
-            _finder("$acme.results.:last()", str(tmp_path)).query()
+            finder.query()
+        # A19: logged before it raises
+        assert any("manifest.json is not valid JSON" in e for e in finder.csvpaths.logger.errors)
 
 
 class TestALedgerEntryWithNoUuid:

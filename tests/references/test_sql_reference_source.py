@@ -215,8 +215,10 @@ def test_a_row_that_is_not_json_raises_naming_the_table(paths, tmp_path):
     _execute(paths, "update named_file set manifest_entry = '[{not json'")
     with pytest.raises(
         ReferenceRuntimeException3, match="manifest_entry in named_file is not valid JSON"
-    ):
+    ) as e:
         _sql(paths).file_manifest("orders")
+    # the row's text is never echoed: a row can hold a definition secret
+    assert "[{not json" not in str(e.value)
 
 
 # ===================
@@ -688,7 +690,7 @@ def test_duplicate_rows_raise(paths, tmp_path):
         "hostname, username, ip_address, manifest_path, manifest_entry, lifecycle "
         "from named_paths_group_run",
     )
-    with pytest.raises(ValueError, match="2 SQL rows for run"):
+    with pytest.raises(ReferenceRuntimeException3, match="2 SQL rows for run"):
         sql.run_manifest(home)
 
 

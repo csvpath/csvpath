@@ -3901,8 +3901,10 @@ class TestVersionResultPath:
         finder = self._finder()
         with pytest.raises(TypeError):
             finder._version_result_path(version=None, manifest_source=None)
-        with pytest.raises(ValueError):
+        with pytest.raises(ReferenceRuntimeException3, match="has no group_file_path"):
             finder._version_result_path(version={"uuid": "u"}, manifest_source=None)
+        # A19: corrupt framework data is logged before it raises
+        assert any("has no group_file_path" in e for e in finder.csvpaths.logger.errors)
         with pytest.raises(ValueError):
             finder._version_result_path(
                 version=ACME_MANIFEST[0], manifest_source="elsewhere"

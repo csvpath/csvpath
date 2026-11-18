@@ -6923,8 +6923,11 @@ class TestNamedFileManifestPathHelpers:
             finder._named_file_manifest_path(entry=None, names=["alpha"])
         with pytest.raises(ValueError):
             finder._named_file_manifest_path(entry={"file_home": "x"}, names=[])
+        finder.csvpaths.logger = _FakeLogger()
         with pytest.raises(ReferenceRuntimeException3, match="has no file_home"):
             finder._named_file_manifest_path(entry={"uuid": "u"}, names=["alpha"])
+        # A19: logged before it raises
+        assert any("has no file_home" in e for e in finder.csvpaths.logger.errors)
 
     def test_root_manifest_path(self):
         finder = _finder("$alpha.files.:manifest()", ALPHA_HOME, ALPHA_MANIFEST)

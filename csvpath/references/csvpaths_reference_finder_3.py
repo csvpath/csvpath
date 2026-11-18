@@ -1139,7 +1139,12 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             raise TypeError("version must be a dict")
         group_file_path = version.get("group_file_path")
         if not group_file_path:
-            raise ValueError(f"version {version.get('uuid')!r} has no group_file_path")
+            # corrupt framework data, as a ledger entry with no uuid (A19)
+            msg = f"version {version.get('uuid')!r} has no group_file_path"
+            logger = getattr(self.csvpaths, "logger", None)
+            if logger is not None:
+                logger.error(msg)
+            raise ReferenceRuntimeException3(msg)
         if manifest_source is None:
             return group_file_path
         if manifest_source == self.GROUP_MANIFEST:

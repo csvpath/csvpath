@@ -249,7 +249,7 @@ class ResultsEstimator3:
         return (
             FilesystemReferenceSource.read_json(
                 path=Nos(archive).join("manifest.json"),
-                logger=self.finder.csvpaths.logger,
+                logger=getattr(self.finder.csvpaths, "logger", None),
             )
             or []
         )

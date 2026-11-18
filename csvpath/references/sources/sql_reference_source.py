@@ -185,12 +185,15 @@ class SqlReferenceSource(FilesystemReferenceSource):
     #
     def _one(self, stmt, *, what: str, key: str) -> dict | None:
         """the one entry stmt selects, or None. more than one means the
-        database is wrong, not that either is the answer."""
+        database is wrong, not that either is the answer: corrupt framework
+        data, a logged ReferenceRuntimeException3 (A19)."""
         entries = self._entries(stmt)
         if len(entries) > 1:
-            raise ValueError(
-                f"{len(entries)} SQL rows for {what} {key}; expected one"
-            )
+            msg = f"{len(entries)} SQL rows for {what} {key}; expected one"
+            logger = getattr(self.csvpaths, "logger", None)
+            if logger is not None:
+                logger.error(msg)
+            raise ReferenceRuntimeException3(msg)
         return entries[0] if len(entries) == 1 else None
 
     def results_ledger(self) -> list:
