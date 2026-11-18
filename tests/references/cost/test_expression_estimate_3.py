@@ -64,3 +64,10 @@ def test_without_resolve_needs_a_reason(csvpaths):  # noqa: F811
     est = ReferenceFinderFactory3.for_reference(reference=RIGHT, csvpaths=csvpaths).estimate()
     with pytest.raises(ValueError):
         est.without_resolve(because=" ")
+
+
+def test_the_summary_names_estimated_kinds_plainly(csvpaths):  # noqa: F811
+    ex = ReferenceExpression3.from_string(expression=f"{LEFT} UNION {RIGHT}", csvpaths=csvpaths).estimate()
+    text = ex.summary()
+    assert "estimated: 2 name listings (upper bound" in text
+    assert "name_listing" not in text

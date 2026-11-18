@@ -354,8 +354,9 @@ class ReferenceEstimate3:
         lines.append(f"  resolve: {self._describe(self.resolve_reads)}")
         for i, line in enumerate(self.why):
             lines.append(f"  {'why:' if i == 0 else '    '}     {line}")
-        for line in self.estimated:
-            lines.append(f"  estimated: {line}")
+        for r in self.reads:
+            if r.basis != EXACT:
+                lines.append(f"  estimated: {self._describe({r.kind: r.count})} ({r.basis.replace('_', ' ')}, {r.because})")
         return "\n".join(lines)
 
 
