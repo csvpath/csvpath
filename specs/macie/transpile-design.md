@@ -743,8 +743,11 @@ occurrence, MEDIUM from 2, HIGH from 100.
   needed after all. Since the live probes (2026-11-14 and -15), only when
   the number is unbroken (`+442079460958`) or has a group in parentheses
   (`+44 (20) 7946 0958`): Macie did not report `+1 212 555 0148`,
-  `+1-212-555-0148` or `+1.212.555.0148` without a keyword. Seen for the
-  US, applied to every country.
+  `+1-212-555-0148` or `+1.212.555.0148` without a keyword. For the other
+  countries (`international_unbroken_only`, 2026-11-17), an international
+  number is found only unbroken, keyword or not: the fourth and fifth
+  probes found parentheses a US form (0 of 6) and spaced or dashed
+  international numbers almost never reported (1 of 12).
 - **Numbering plans are catalog data** (David, 2026-11-05, option A):
   `country_code`, `trunk`, `trunk_required` and `nsn_formats` in the
   format notation. The trunk is required in the UK, France and Germany,

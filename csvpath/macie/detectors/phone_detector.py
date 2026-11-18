@@ -16,7 +16,15 @@ class PhoneDetector:
     -15) Macie reported +12125550148 and +1 (212) 555-0148 with no keyword,
     and not +1 212 555 0148, +1-212-555-0148 or +1.212.555.0148. So a
     number is exempt only when it is unbroken or has a group in
-    parentheses. Seen for the US; applied to every country, as one rule.
+    parentheses. Seen for the US.
+
+    For the other countries (international_unbroken_only in the catalog),
+    the fourth and fifth probes (2026-11-16, -17) found Macie reports an
+    international number only unbroken: never with a group in parentheses
+    (0 of 6 countries), and with spaces or dashes almost never, even after
+    a keyword (1 of 12). So for them an international number is found only
+    unbroken, +442079460958 or 00442079460958, keyword or not; national
+    numbers are as before.
 
     The catalog detector's data is the country's numbering plan, ours, from
     the national regulators (checked against Google's phonenumbers library
@@ -30,6 +38,9 @@ class PhoneDetector:
         nsn_formats      the national significant number, without the
                          trunk or separators, in FormatDetector's notation,
                          e.g. "[2-9]##[2-9]######" for the US
+        international_unbroken_only
+                         optional, default false: an international number
+                         is found only when written unbroken
 
     A number is digits with spaces, dots, hyphens or parentheses between
     them, after an optional + or 00 and the country code. An international
@@ -51,7 +62,13 @@ class PhoneDetector:
     # the catalog data keys this detector reads; a project rulesbase may
     # override these and no others
     #
-    CONFIG_KEYS = ("country_code", "trunk", "trunk_required", "nsn_formats")
+    CONFIG_KEYS = (
+        "country_code",
+        "trunk",
+        "trunk_required",
+        "nsn_formats",
+        "international_unbroken_only",
+    )
 
     def __init__(self, *, config: dict) -> None:
         if not isinstance(config, dict):
@@ -73,6 +90,11 @@ class PhoneDetector:
             raise MacieException("trunk_required must be true or false")
         if self.trunk_required and self.trunk == "":
             raise MacieException("trunk_required needs a trunk")
+        self.international_unbroken_only = config.get(
+            "international_unbroken_only", False
+        )
+        if not isinstance(self.international_unbroken_only, bool):
+            raise MacieException("international_unbroken_only must be true or false")
         formats = config.get("nsn_formats")
         if not isinstance(formats, list) or len(formats) == 0:
             raise MacieException("nsn_formats must be a non-empty list")
@@ -100,6 +122,11 @@ class PhoneDetector:
         return text[1:].isdigit() or "(" in text
 
     @classmethod
+    def _unbroken(cls, *, text: str) -> bool:
+        """+ or 00 and digits only"""
+        return text[1:].isdigit() if text.startswith("+") else text.isdigit()
+
+    @classmethod
     def _international(cls, *, text: str) -> bool:
         return text.startswith("+") or text.startswith("00")
 
@@ -110,6 +137,8 @@ class PhoneDetector:
         if not self.MIN_DIGITS <= len(digits) <= self.MAX_DIGITS:
             return False
         if self._international(text=text):
+            if self.international_unbroken_only and not self._unbroken(text=text):
+                return False
             if not digits.startswith(self.country_code):
                 return False
             nsn = digits[len(self.country_code) :]
