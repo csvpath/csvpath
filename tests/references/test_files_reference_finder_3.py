@@ -7,7 +7,10 @@ from csvpath.references.files_reference_finder_3 import FilesReferenceFinder3
 from csvpath.references.functions.reference_function_factory_3 import (
     ReferenceFunctionFactory,
 )
-from csvpath.references.reference_exceptions_3 import ReferenceException3
+from csvpath.references.reference_exceptions_3 import (
+    ReferenceException3,
+    ReferenceRuntimeException3,
+)
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.reference_results_3 import ReferenceResult3
 from csvpath.util.date_util import DateUtility as daut
@@ -503,7 +506,7 @@ class TestManifestFunction:
         home.mkdir()
         (home / "manifest.json").write_bytes(b"[{not json")
         finder = _finder("$alpha.files.:manifest()", str(home), ALPHA_MANIFEST)
-        with pytest.raises(ReferenceException3, match="manifest.json is not valid JSON"):
+        with pytest.raises(ReferenceRuntimeException3, match="manifest.json is not valid JSON"):
             finder.resolve()
 
     def test_a_definition_that_is_not_json_raises_naming_the_file(self, tmp_path):
@@ -511,7 +514,7 @@ class TestManifestFunction:
         home.mkdir()
         (home / "definition.json").write_bytes(b"{not json")
         finder = _finder("$alpha.files.:definition()", str(home), ALPHA_MANIFEST)
-        with pytest.raises(ReferenceException3, match="definition.json is not valid JSON"):
+        with pytest.raises(ReferenceRuntimeException3, match="definition.json is not valid JSON"):
             finder.resolve()
 
     def test_manifest_with_extra_path_narrowing_is_not_yet_supported(self):
@@ -566,7 +569,7 @@ class TestGlobalArrivalsLedger:
             inputs_files_path="inputs/named_files",
         )
         finder.csvpaths.logger = _FakeLogger()
-        with pytest.raises(ValueError, match="no uuid"):
+        with pytest.raises(ReferenceRuntimeException3, match="no uuid"):
             finder.resolve()
 
     # :manifest() alone stays the one function with a real GLOBAL
@@ -6920,8 +6923,11 @@ class TestNamedFileManifestPathHelpers:
             finder._named_file_manifest_path(entry=None, names=["alpha"])
         with pytest.raises(ValueError):
             finder._named_file_manifest_path(entry={"file_home": "x"}, names=[])
-        with pytest.raises(ValueError, match="has no file_home"):
+        finder.csvpaths.logger = _FakeLogger()
+        with pytest.raises(ReferenceRuntimeException3, match="has no file_home"):
             finder._named_file_manifest_path(entry={"uuid": "u"}, names=["alpha"])
+        # A19: logged before it raises
+        assert any("has no file_home" in e for e in finder.csvpaths.logger.errors)
 
     def test_root_manifest_path(self):
         finder = _finder("$alpha.files.:manifest()", ALPHA_HOME, ALPHA_MANIFEST)
@@ -7440,7 +7446,7 @@ class TestALedgerEntryWithNoUuid:
     )
     def test_a_ledger_read_raises_naming_the_entry(self, reference):
         finder = self._finder(reference)
-        with pytest.raises(ValueError, match="files ledger entry has no uuid.*0.csv"):
+        with pytest.raises(ReferenceRuntimeException3, match="files ledger entry has no uuid.*0.csv"):
             finder.query()
         assert len(finder.csvpaths.logger.errors) == 1
 
@@ -7448,7 +7454,7 @@ class TestALedgerEntryWithNoUuid:
         # reviewer on #652: the uuid lookup over the whole ledger
         # (_find_manifest_entry_by_uuid) hit the entry with no uuid even when
         # the selected entry had one, as a bare KeyError
-        with pytest.raises(ValueError, match="files ledger entry has no uuid"):
+        with pytest.raises(ReferenceRuntimeException3, match="files ledger entry has no uuid"):
             self._finder("$*.files.:manifest():last():named_file_name()").resolve()
 
 

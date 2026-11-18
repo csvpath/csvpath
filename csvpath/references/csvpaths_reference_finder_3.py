@@ -7,7 +7,7 @@ from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .functions.values.time_window_function_3 import TimeWindowFunction3
 from .reference_3 import FunctionCall3, Reference3, Star3
-from .reference_exceptions_3 import ReferenceException3
+from .reference_exceptions_3 import ReferenceException3, ReferenceRuntimeException3
 from .reference_finder_3 import ReferenceFinder3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
 
@@ -1139,7 +1139,12 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             raise TypeError("version must be a dict")
         group_file_path = version.get("group_file_path")
         if not group_file_path:
-            raise ValueError(f"version {version.get('uuid')!r} has no group_file_path")
+            # corrupt framework data, as a ledger entry with no uuid (A19)
+            msg = f"version {version.get('uuid')!r} has no group_file_path"
+            logger = getattr(self.csvpaths, "logger", None)
+            if logger is not None:
+                logger.error(msg)
+            raise ReferenceRuntimeException3(msg)
         if manifest_source is None:
             return group_file_path
         if manifest_source == self.GROUP_MANIFEST:
@@ -1161,7 +1166,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             if not entry.get("uuid"):
                 msg = f"A paths ledger entry has no uuid: {entry}"
                 self.csvpaths.logger.error(msg)
-                raise ValueError(msg)
+                raise ReferenceRuntimeException3(msg)
         return ledger
 
     def _paths_ledger_path(self) -> str:

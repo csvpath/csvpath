@@ -7,6 +7,7 @@ from csvpath.managers.integrations.sql.tables import Tables
 from csvpath.managers.registrar import Registrar
 from csvpath.util.nos import Nos
 
+from ..reference_exceptions_3 import ReferenceRuntimeException3
 from .filesystem_reference_source import FilesystemReferenceSource
 
 
@@ -58,7 +59,22 @@ class SqlReferenceSource(FilesystemReferenceSource):
             return [r[0] for r in conn.execute(stmt)]
 
     def _entries(self, stmt) -> list[dict]:
-        return [json.loads(e) for e in self._column(stmt)]
+        """each row's manifest_entry, parsed. A row that is not valid JSON
+        raises a logged ReferenceRuntimeException3 naming the table, as a
+        manifest file that is not valid JSON does (A19, decision D24); it
+        raised a bare JSONDecodeError."""
+        entries = []
+        for e in self._column(stmt):
+            try:
+                entries.append(json.loads(e))
+            except json.JSONDecodeError as ex:
+                tables = ", ".join(f.name for f in stmt.get_final_froms())
+                msg = f"A manifest_entry in {tables} is not valid JSON: {ex}"
+                logger = getattr(self.csvpaths, "logger", None)
+                if logger is not None:
+                    logger.error(msg)
+                raise ReferenceRuntimeException3(msg) from ex
+        return entries
 
     def _versions(
         self,
@@ -169,12 +185,15 @@ class SqlReferenceSource(FilesystemReferenceSource):
     #
     def _one(self, stmt, *, what: str, key: str) -> dict | None:
         """the one entry stmt selects, or None. more than one means the
-        database is wrong, not that either is the answer."""
+        database is wrong, not that either is the answer: corrupt framework
+        data, a logged ReferenceRuntimeException3 (A19)."""
         entries = self._entries(stmt)
         if len(entries) > 1:
-            raise ValueError(
-                f"{len(entries)} SQL rows for {what} {key}; expected one"
-            )
+            msg = f"{len(entries)} SQL rows for {what} {key}; expected one"
+            logger = getattr(self.csvpaths, "logger", None)
+            if logger is not None:
+                logger.error(msg)
+            raise ReferenceRuntimeException3(msg)
         return entries[0] if len(entries) == 1 else None
 
     def results_ledger(self) -> list:

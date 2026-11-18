@@ -14,7 +14,7 @@ from .functions.well_known_files.errors_3 import Errors3
 from .functions.values.time_window_function_3 import TimeWindowFunction3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_3 import FunctionCall3, Reference3, Regex3, Star3
-from .reference_exceptions_3 import ReferenceException3
+from .reference_exceptions_3 import ReferenceException3, ReferenceRuntimeException3
 from .reference_finder_3 import ReferenceFinder3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
 
@@ -1780,7 +1780,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 if entry.get(key) is None:
                     msg = f"A results ledger entry has no {key}: {entry}"
                     self.csvpaths.logger.error(msg)
-                    raise ValueError(msg)
+                    raise ReferenceRuntimeException3(msg)
             name = entry.get("named_paths_name")
             if name_filter is not None and not re.search(name_filter, name or ""):
                 continue
@@ -1807,7 +1807,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             if not entry.get("uuid"):
                 msg = f"A results ledger entry has no uuid: {entry}"
                 self.csvpaths.logger.error(msg)
-                raise ValueError(msg)
+                raise ReferenceRuntimeException3(msg)
         return ledger
 
     def _manifest_set_query(
@@ -2160,7 +2160,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if identity is None:
             msg = f"A results ledger entry has no identity: {entry}"
             self.csvpaths.logger.error(msg)
-            raise ValueError(msg)
+            raise ReferenceRuntimeException3(msg)
         instance_dir = Nos(record["run_home"]).join(identity)
         if selector["manifest_call"] is not None:
             return Nos(instance_dir).join("manifest.json")

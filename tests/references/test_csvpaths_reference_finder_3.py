@@ -4,7 +4,10 @@ import pytest
 
 from csvpath.references.csvpaths_reference_finder_3 import CsvpathsReferenceFinder3
 from csvpath.references.reference_3 import Star3
-from csvpath.references.reference_exceptions_3 import ReferenceException3
+from csvpath.references.reference_exceptions_3 import (
+    ReferenceException3,
+    ReferenceRuntimeException3,
+)
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.reference_results_3 import ReferenceResult3
 from csvpath.util.path_util import PathUtility as pathu
@@ -1072,7 +1075,7 @@ class TestManifestFunction:
         csvpaths = _FakeCsvPaths(_FakePathsManager(ACME_MANIFEST, home=str(home)))
         ref = ReferenceParser3(string="$acme.csvpaths.:manifest()", csvpaths=csvpaths)
         finder = CsvpathsReferenceFinder3(csvpaths=csvpaths, ref=ref)
-        with pytest.raises(ReferenceException3, match="manifest.json is not valid JSON"):
+        with pytest.raises(ReferenceRuntimeException3, match="manifest.json is not valid JSON"):
             finder.resolve()
 
     def test_resolve_reads_the_manifest_files_records(self, tmp_path):
@@ -1225,7 +1228,7 @@ class TestGlobalLoadsLedger:
             ledger=[{"named_paths_name": "acme"}],
             inputs_csvpaths_path="inputs/named_paths",
         )
-        with pytest.raises(ValueError, match="no uuid"):
+        with pytest.raises(ReferenceRuntimeException3, match="no uuid"):
             finder.resolve()
 
     def test_star_with_definition_is_one_file_per_group(self):
@@ -3898,8 +3901,10 @@ class TestVersionResultPath:
         finder = self._finder()
         with pytest.raises(TypeError):
             finder._version_result_path(version=None, manifest_source=None)
-        with pytest.raises(ValueError):
+        with pytest.raises(ReferenceRuntimeException3, match="has no group_file_path"):
             finder._version_result_path(version={"uuid": "u"}, manifest_source=None)
+        # A19: corrupt framework data is logged before it raises
+        assert any("has no group_file_path" in e for e in finder.csvpaths.logger.errors)
         with pytest.raises(ValueError):
             finder._version_result_path(
                 version=ACME_MANIFEST[0], manifest_source="elsewhere"
@@ -4069,7 +4074,7 @@ class TestALedgerEntryWithNoUuid:
     )
     def test_a_ledger_read_raises_naming_the_entry(self, reference):
         finder = self._finder(reference)
-        with pytest.raises(ValueError, match="paths ledger entry has no uuid"):
+        with pytest.raises(ReferenceRuntimeException3, match="paths ledger entry has no uuid"):
             finder.query()
         assert len(finder.csvpaths.logger.errors) == 1
 
@@ -4077,7 +4082,7 @@ class TestALedgerEntryWithNoUuid:
         # its query names the ledger only (uuid None); resolve reads it
         finder = self._finder('$:choice("acme").csvpaths.:manifest()')
         assert finder.query().uuids == [None]
-        with pytest.raises(ValueError, match="paths ledger entry has no uuid"):
+        with pytest.raises(ReferenceRuntimeException3, match="paths ledger entry has no uuid"):
             self._finder('$:choice("acme").csvpaths.:manifest()').resolve()
 
     def test_a_form_that_reads_only_the_named_paths_manifest_is_unchanged(self):

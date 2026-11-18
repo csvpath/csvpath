@@ -9,7 +9,7 @@ from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .functions.values.time_window_function_3 import TimeWindowFunction3
 from .reference_3 import FunctionCall3, Reference3, Star3
-from .reference_exceptions_3 import ReferenceException3
+from .reference_exceptions_3 import ReferenceException3, ReferenceRuntimeException3
 from .reference_finder_3 import ReferenceFinder3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
 
@@ -2329,7 +2329,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
             raise ValueError("names cannot be None or empty")
         file_home = entry.get("file_home")
         if not file_home:
-            raise ValueError(f"manifest entry {entry.get('uuid')!r} has no file_home")
+            # corrupt framework data, as a ledger entry with no uuid (A19)
+            msg = f"manifest entry {entry.get('uuid')!r} has no file_home"
+            logger = getattr(self.csvpaths, "logger", None)
+            if logger is not None:
+                logger.error(msg)
+            raise ReferenceRuntimeException3(msg)
         file_parts = pathu.parts(file_home)
         for name in names:
             home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
@@ -2761,7 +2766,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             if not entry.get("uuid"):
                 msg = f"A files ledger entry has no uuid: {entry}"
                 self.csvpaths.logger.error(msg)
-                raise ValueError(msg)
+                raise ReferenceRuntimeException3(msg)
         return ledger
 
     def _filter_by_manifest_chain_gate(

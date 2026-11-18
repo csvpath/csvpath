@@ -246,7 +246,13 @@ class ResultsEstimator3:
         source = self.finder.source
         if isinstance(source, SqlReferenceSource):
             return source.results_ledger() or []
-        return FilesystemReferenceSource.read_json(Nos(archive).join("manifest.json")) or []
+        return (
+            FilesystemReferenceSource.read_json(
+                path=Nos(archive).join("manifest.json"),
+                logger=getattr(self.finder.csvpaths, "logger", None),
+            )
+            or []
+        )
 
     def _runs_by_group(self, ledger: list) -> dict:
         """{group: [run, ...]} in arrival order; a run is {home, time,
