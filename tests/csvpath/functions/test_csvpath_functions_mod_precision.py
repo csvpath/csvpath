@@ -6,6 +6,7 @@ and the rounding made small real remainders look like 0 (10.001 % 5 came
 out as 0.0).
 """
 
+import math
 import os
 
 import pytest
@@ -81,9 +82,15 @@ def test_function_mod_huge_dividend_falls_back_to_float() -> None:
     assert _mod("mod(1000000000000000000000000000000, 0.1)") == 1e30 % 0.1
 
 
-def test_function_mod_zero_divisor_still_raises() -> None:
-    with pytest.raises(ZeroDivisionError):
-        _mod("mod(5, 0)")
+def test_function_mod_zero_divisor_is_nan() -> None:
+    #
+    # a zero divisor gives nan, like divide(x, 0). this test used to pin the
+    # raw ZeroDivisionError; David ruled for nan on 2026-11-18 (triage T4).
+    #
+    assert math.isnan(_mod("mod(5, 0)"))
+    assert math.isnan(_mod("mod(5, 0.0)"))
+    assert math.isnan(_mod("mod(0, 0)"))
+    assert math.isnan(_mod("mod(-3.5, 0)"))
 
 
 def test_function_mod_multiple_of_check_on_cells(tmp_path) -> None:
@@ -102,3 +109,25 @@ def test_function_mod_multiple_of_check_on_cells(tmp_path) -> None:
         f"~ validation-mode: print, no-raise ~ ${data}[1*][ eq( mod(#c, 0.05), 0 ) ]"
     )
     assert [line[0] for line in lines] == ["1", "2", "4", "5"]
+
+
+def test_function_mod_zero_divisor_in_a_match_raises_nothing() -> None:
+    #
+    # nan is a value, not an error: in raise mode the line is still
+    # evaluated and nan is never equal to 0
+    #
+    path = CsvPath()
+    path.config.add_to_config("errors", "csvpath", "raise")
+    path.parse(f"${PATH}[*][ eq( mod(5, 0), 0 ) ]")
+    lines = path.collect()
+    assert len(lines) == 0
+    assert len(path.errors) == 0
+
+
+def test_function_mod_and_divide_agree_on_zero() -> None:
+    path = CsvPath()
+    path.config.add_to_config("errors", "csvpath", "raise")
+    path.parse(f"${PATH}[1][ @m = mod(7, 0) @d = divide(7, 0) ]")
+    path.fast_forward()
+    assert math.isnan(path.variables["m"])
+    assert math.isnan(path.variables["d"])

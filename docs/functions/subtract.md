@@ -25,7 +25,7 @@ Divides any number of numbers. `divide()` will return `nan` when divide by `0` i
 
 ## mod()
 
-Returns the modulus of two numbers. `mod()` upcasts to `float` and rounds to the hundredths.
+Returns the modulus of two numbers. `mod()` upcasts to `float` and gives the exact remainder for decimal operands, so `mod(0.3, 0.1)` is `0`. Like `divide()`, `mod()` returns `nan` when the divisor is `0`.
 
 ## round()
 

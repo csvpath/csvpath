@@ -40,11 +40,18 @@ class Mod(ValueProducer):
         v = siblings[0].to_value(skip=skip)
         m = siblings[1].to_value(skip=skip)
         #
-        # the float modulo comes first so that bad input, zero divisors, and
-        # infinities behave and raise exactly as they always have
+        # the float conversion comes first so that bad input and infinities
+        # behave and raise exactly as they always have
         #
         fv = float(v)
         fm = float(m)
+        if fm == 0:
+            #
+            # a zero divisor gives nan, the same as divide(x, 0). it used
+            # to raise a raw ZeroDivisionError.
+            #
+            self.value = float("nan")
+            return
         ret = fv % fm
         #
         # float noise makes e.g. 0.3 % 0.1 come out as 0.0999..., so for
