@@ -1,6 +1,14 @@
 
 ## too_long()
 
+too_long() and min_length() are True when the value has at least the
+given number of characters. too_short() and max_length() are True when
+it has at most that number.
+
+Read too_long(#name, 5) as "a value that is 5 characters is too long
+for this field": the value must be 4 or fewer characters to pass.
+too_short(#name, 5) is True for a value of 5 or fewer characters.
+
 | Data signatures                                                 |
 |:----------------------------------------------------------------|
 | too_long( $${\color{green}str}$$ ǁ '', $${\color{green}int}$$ ) |
