@@ -366,3 +366,33 @@ Agreement with Macie: fourth probe 15 to 23 of 25 (Brazil not run),
 fifth probe 16 to 22 of 31. What is left is what format does not
 explain: Italy, and German, Italian and Spanish national numbers after a
 keyword; and one row lost, Brazil's spaced number under a header.
+
+## The sixth probe, 2026-11-18: headers (#479)
+
+Job `csvpath-probe-5` (`accc5c0718e915390177666722c240ed`),
+`USA_SOCIAL_SECURITY_NUMBER`, the three files from
+`make_probe_files.py <out> 5` under `probe5/` (ETags equal to the local
+MD5s). **8 of 8 rows agree.**
+
+| File | Macie | Ours |
+|---|---|---|
+| `header_normal.csv` | both SSNs under `ssn`, and the in-cell one | the same |
+| `header_none.csv` | the in-cell SSN only | the same |
+| `header_title.csv` | the in-cell SSN only | the same |
+
+So Macie, too, has no header keyword when the first line is not the
+header: a file with no header, or with a title line first, loses the
+findings that depend on one, as ours does. Detection matches.
+
+**Column names differ.** In the normal file Macie's cells name their
+columns (`ssn`, `notes`); in the other two its `columnName` is null, so
+it judged the first line not to be a header. Ours takes the first line's
+text as the column names, whatever it is: in `header_none.csv` the
+"column name" of column 2 is `673-27-5618`, an SSN, which then appears in
+`macie_findings`, in the printouts and errors, and in a Jev review
+question. A value where the findings promise none.
+
+What makes Macie decide is not known: both of its "no header" first
+lines (`1,673-27-5618,` and `Employee export,,`) have an empty cell, and
+the real header has none, but one probe cannot tell that from other
+rules.
