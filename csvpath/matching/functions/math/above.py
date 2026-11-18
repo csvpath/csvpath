@@ -63,7 +63,12 @@ class AboveBelow(MatchDecider):
         abovethatchild = self.children[0].children[1]
         a = thischild.to_value(skip=skip)
         b = abovethatchild.to_value(skip=skip)
-        if a is None and b is not None or b is None and a is not None:
+        if a is None or b is None:
+            #
+            # docs/functions/above.md: None has no ordinal relationship to
+            # anything, so the answer is False. that includes None vs None,
+            # which used to fall through to float(None) and raise TypeError.
+            #
             self.match = False
         else:
             #
