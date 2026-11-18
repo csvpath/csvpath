@@ -148,6 +148,7 @@ PROBE_FILES = {
     2: (["probe2_keywords.csv", "probe2_phones.csv"], 16),
     3: (["probe3_phones.csv"], 30),
     4: (["probe4_phones.csv"], 31),
+    5: (["header_none.csv", "header_normal.csv", "header_title.csv"], 8),
 }
 
 
@@ -162,7 +163,7 @@ def test_macie_probe_files_written(probe, tmp_path) -> None:
 
 def test_macie_probe_number_is_checked(tmp_path) -> None:
     with pytest.raises(ValueError):
-        mpf.write_all(out=str(tmp_path), probe=5)
+        mpf.write_all(out=str(tmp_path), probe=6)
 
 
 @pytest.mark.parametrize("probe", sorted(PROBE_FILES))

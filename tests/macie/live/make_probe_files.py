@@ -11,6 +11,7 @@ expected to find. As with make_live_files.py, the files are written, not
 committed, and are deterministic.
 """
 
+import csv
 import json
 import os
 import random
@@ -372,6 +373,79 @@ def phones_4(rng) -> mlf.LiveFile:
 
 
 FILES_4 = [phones_4]
+
+#
+# the sixth live probe (2026-11-17), for #479: how Macie reads a CSV whose
+# first line is not the header. The same rows three ways: with a header,
+# with none, and after a title line. Two SSNs are found only through the
+# ssn header; one is found through its cell's own keyword, whatever the
+# header. Our runs, like the stand-ins below, take the first line as the
+# header, so without one the header keyword is gone
+#
+SEED_5 = 20261118
+
+
+class RawFile:
+    """a probe file written line by line as given, for files whose first
+    line is not a header. expected rows are physical, 1-based; a column
+    is named by the first line's cell, as a run reads it"""
+
+    def __init__(self, *, name: str, lines: list[list[str]]) -> None:
+        self.name = name
+        self.lines = lines
+        self.expected: list[dict] = []
+
+    def expect(self, *, row: int, column: int, identifier: str, count: int, note: str):
+        self.expected.append(
+            {
+                "file": self.name,
+                "row": row,
+                "column": self.lines[0][column - 1],
+                "column_number": column,
+                "identifier": identifier,
+                "count": count,
+                "note": note,
+            }
+        )
+
+    def write(self, *, directory: str) -> str:
+        path = os.path.join(directory, self.name)
+        with open(path, "w", encoding="utf-8", newline="") as f:
+            w = csv.writer(f)
+            for line in self.lines:
+                w.writerow(line)
+        return path
+
+
+def _header_rows(rng) -> list[list[str]]:
+    return [
+        ["1", mlf.ssn(rng), ""],
+        ["2", mlf.ssn(rng), ""],
+        ["3", "", f"ssn {mlf.ssn(rng)}"],
+    ]
+
+
+def headers_5(rng) -> list[RawFile]:
+    ssn = "USA_SOCIAL_SECURITY_NUMBER"
+    rows = _header_rows(rng)
+    normal = RawFile(name="header_normal.csv", lines=[["id", "ssn", "notes"]] + rows)
+    normal.expect(row=2, column=2, identifier=ssn, count=1, note="the ssn header")
+    normal.expect(row=3, column=2, identifier=ssn, count=1, note="the ssn header")
+    normal.expect(row=4, column=3, identifier=ssn, count=1, note="keyword in the cell")
+    none = RawFile(name="header_none.csv", lines=list(rows))
+    none.expect(row=2, column=2, identifier=ssn, count=0, note="no header: no keyword")
+    none.expect(row=3, column=3, identifier=ssn, count=1, note="keyword in the cell")
+    title = RawFile(
+        name="header_title.csv",
+        lines=[["Employee export", "", ""], ["id", "ssn", "notes"]] + rows,
+    )
+    title.expect(row=3, column=2, identifier=ssn, count=0, note="title as the header")
+    title.expect(row=4, column=2, identifier=ssn, count=0, note="title as the header")
+    title.expect(row=5, column=3, identifier=ssn, count=1, note="keyword in the cell")
+    return [normal, none, title]
+
+
+FILES_5 = [headers_5]
 #
 # probe number -> seed, files, directory, expectations file
 #
@@ -380,6 +454,7 @@ PROBES = {
     2: (SEED_2, FILES_2, "probe2", "expected_probe2.json"),
     3: (SEED_3, FILES_3, "probe3", "expected_probe3.json"),
     4: (SEED_4, FILES_4, "probe4", "expected_probe4.json"),
+    5: (SEED_5, FILES_5, "probe5", "expected_probe5.json"),
 }
 
 
@@ -394,9 +469,10 @@ def write_all(*, out: str, probe: int = 1) -> dict:
     os.makedirs(data, exist_ok=True)
     expected = []
     for make in files:
-        f = make(rng)
-        f.write(directory=data)
-        expected.extend(f.expected)
+        made = make(rng)
+        for f in made if isinstance(made, list) else [made]:
+            f.write(directory=data)
+            expected.extend(f.expected)
     doc = {"seed": seed, "expected": expected}
     with open(os.path.join(out, expectations), "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2)
