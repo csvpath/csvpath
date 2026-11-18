@@ -13,6 +13,8 @@ The following arguments can be likewise. Additionally, `in()` tests any argument
 
 This match component checks if the value of the `#firstname` header is in the list John, Mary, Jim, or Sally.
 
+If the first argument is not found as is, it is compared again as a stripped string. That way numbers match string Terms: `in(line_number(), 1, 2)` matches lines 1 and 2, and so does `in(line_number(), "1|2")`. `None` is never turned into the string `"None"`.
+
 You can also test against a mixed set of value like this:
 
 ```bash
