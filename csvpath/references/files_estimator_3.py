@@ -36,12 +36,19 @@ from csvpath.util.nos import Nos
 # - a version resolves to its file, one at a time (compendium 5.3); a value
 #   field rereads the name's manifest per selected version.
 #
+# What the finder will refuse is checked from the reference alone: arguments
+# (by building each function, which reads nothing), unknown names, and each
+# datatype's own rules. A definite raise, or a possible one, turns every
+# count into an upper bound, since where it raises is not estimated.
+#
 # First cut: versions per name are an estimate (only the manifests say which
 # registrations are live), and most counts beyond the ledger are upper
 # bounds.
 #
 POINTERS = ("first", "last", "index")
 DEFINITION_FILES = ("definition",)
+# functions that build name_one's path rather than select or read; ':name()'
+# is costed on its own (a manifest reread at resolve)
 PATH_BUILDERS = ("regex", "choice", "name")
 
 
@@ -53,6 +60,9 @@ class FilesEstimator3:
     LEDGER_METHOD = "files_ledger"
     NOUN = "named-files"
     NOT_A_VERSION = ("failed",)
+    DATATYPE = "files"
+    # name_one gates the FILES finder takes (reference_v3 :type()/:status() GATEs)
+    NAME_ONE_GATES = ("type", "status", "lifecycle", "template")
 
     def __init__(self, *, finder) -> None:
         if finder is None:
@@ -74,6 +84,7 @@ class FilesEstimator3:
                 self.would_raise = "query: :log() requires root_major '*'"
         else:
             self._estimate(ledger)
+        self._check_legality(ledger)
         return ReferenceEstimate3(
             reference=str(self.finder.ref.reference),
             reads=self.reads,
@@ -125,6 +136,7 @@ class FilesEstimator3:
 
     def _estimate(self, ledger: list) -> None:
         by_name = self._versions_by_name(ledger)
+        entries = self._entries_by_name(ledger)
         names = self._names_in_play(by_name)
         literal = isinstance(self.reference.root_major, str)
         n_names = len(names)
@@ -136,6 +148,10 @@ class FilesEstimator3:
         three_calls = list(three.functions) if three else []
         if n_names > 1:
             self.why.append(f"'{self.reference.root_major}' over {n_names} {self.NOUN}")
+        # a ':definition()' chain: definition.json, not the manifest
+        if "definition" in self._path_function_names() and not self._is_bare_definition():
+            self._definition_chain_costs(literal=literal, n_names=n_names)
+            return
         # a definition-backed field as name_one's whole content
         definition_call = self.finder._bare_definition_field_call(self.reference.name_one)
         if definition_call is not None and three is None:
@@ -150,25 +166,20 @@ class FilesEstimator3:
             self._ledger_set_costs(calls=calls, all_names=all_names, records=records)
             return
         if "manifest" in call_names and literal and three is None:
-            # the name's own manifest chain: its entries
-            self._read(part=QUERY, kind=self.MANIFEST_KIND, count=1, basis=EXACT, because=":manifest()")
-            self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=1, basis=UPPER_BOUND, because=":manifest()")
+            self._manifest_chain_costs(calls=calls, own_entries=entries.get(self.reference.root_major, 0), records=records)
             return
         # version traversal
         gates = [c for c in calls + three_calls if self._is_gate(c)]
-        windows = [
-            c
-            for c in calls + three_calls
-            if (cls := ReferenceFunctionFactory.get_registered_class(c.name)) is not None
-            and cls.SOURCE == "clock"
-        ]
-        if any(self._is_ledger_field(g) for g in gates):
-            # a ledger field may reread the ledger for each record
-            self._read(part=QUERY, kind="ledger", count=1 + records, basis=UPPER_BOUND, because=f":{gates[0].name}(...)")
+        windows = [c for c in calls + three_calls if self._is_window(c)]
+        ledger_gates = [g for g in gates if self._is_ledger_field(g)]
+        if ledger_gates:
+            # a ledger field gate rereads the ledger per record, and builds
+            # the live index (a name listing and every manifest)
+            self._read(part=QUERY, kind="ledger", count=1 + records, basis=UPPER_BOUND, because=f":{ledger_gates[0].name}(...)")
+            self._read(part=QUERY, kind="name_listing", count=1, basis=UPPER_BOUND, because="the live index")
+            self._read(part=QUERY, kind=self.MANIFEST_KIND, count=all_names, basis=UPPER_BOUND, because="the live index")
         definition_gates = [c for c in calls + three_calls if self._is_definition_gate(c)]
         manifests = n_names * (2 if (gates and not literal) else 1)
-        if "manifest" in call_names:
-            manifests = n_names
         if not literal:
             self._read(part=QUERY, kind="name_listing", count=2 if gates else 1, basis=UPPER_BOUND, because=str(self.reference.root_major))
         if definition_gates and three is None:
@@ -179,13 +190,21 @@ class FilesEstimator3:
             kind=self.MANIFEST_KIND,
             count=manifests,
             basis=EXACT if (literal and not gates) else UPPER_BOUND,
-            because="each named-file's manifest",
+            because=f"each of the {self.NOUN}' manifests",
         )
+        if "name" in self._path_function_names():
+            # a ':name()' segment matches against the name's manifest again
+            self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=n_names, basis=UPPER_BOUND, because=":name()")
         versions = sum(by_name[n] for n in names)
         selected = self._selected(calls=calls + three_calls, names=names, by_name=by_name)
         fields = self._value_fields(calls + three_calls)
+        definition_fields = [c for c in calls + three_calls if self._is_definition_field(c) and c.arg is None]
+        if definition_fields:
+            # a definition field after a version reads the definition
+            self._read(part=RESOLVE, kind="definition", count=max(1, n_names), basis=UPPER_BOUND, because=f":{definition_fields[0].name}()")
+            return
         if fields:
-            self._field_costs(fields=fields, selected=selected, literal=literal)
+            self._field_costs(fields=fields, selected=selected, literal=literal, n_names=n_names)
             return
         if self._version_costs(three=three, call_names=call_names, literal=literal, n_names=n_names, selected=selected):
             return
@@ -195,19 +214,61 @@ class FilesEstimator3:
         if three is None and not literal:
             # a name_one pointer under '*' rereads the names at resolve
             self._read(part=RESOLVE, kind="name_listing", count=1, basis=UPPER_BOUND, because="a name_one pointer")
-            self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=n_names, basis=UPPER_BOUND, because="a name_one pointer")
+            self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=2 * n_names, basis=UPPER_BOUND, because="a name_one pointer")
             return
         if selected > 1:
-            gated = bool(gates) or bool(windows) or versions == 0
+            # a literal name_three (an index, a range, a path's extension)
+            # narrows the versions in ways the ledger cannot see
+            literal_three = three is not None and three.body is not None
+            gated = bool(gates) or bool(windows) or versions == 0 or literal_three
             message = f"resolve: {selected} version files at once (compendium 5.3)"
             self.would_raise = f"may raise -- {message}" if gated else message
         # one version file is read; a second one raises (compendium 5.3)
         self._read(part=RESOLVE, kind="version_file", count=1, basis=UPPER_BOUND, because="the version's file")
         self.why.append("a version resolves to its file, one at a time")
 
-    def _field_costs(self, *, fields: list, selected: int, literal: bool) -> None:
-        """a value field rereads the name's manifest per selected version"""
-        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=selected, basis=UPPER_BOUND, because=f":{fields[-1].name}()")
+    def _entries_by_name(self, ledger: list) -> dict:
+        """every ledger entry per name, versions or not"""
+        entries = {}
+        for entry in ledger:
+            name = entry.get(self.NAME_KEY)
+            if name is not None:
+                entries[name] = entries.get(name, 0) + 1
+        return entries
+
+    def _is_bare_definition(self) -> bool:
+        return self.finder._is_bare_pointer_reference(self.reference, "definition")
+
+    def _definition_chain_costs(self, *, literal: bool, n_names: int) -> None:
+        """':definition()' with a filter or a field: each name's definition"""
+        if not literal:
+            self._read(part=QUERY, kind="name_listing", count=1, basis=UPPER_BOUND, because=str(self.reference.root_major))
+        definition = next(p for p in self.reference.name_one.path if isinstance(p, FunctionCall3) and p.name == "definition")
+        if definition.arg is not None:
+            self._read(part=QUERY, kind="definition", count=max(1, n_names), basis=UPPER_BOUND, because=f"{definition}")
+        if self.reference.name_one.functions:
+            if not literal:
+                self._read(part=RESOLVE, kind="name_listing", count=n_names, basis=UPPER_BOUND, because=":definition() fields")
+            self._read(part=RESOLVE, kind="definition", count=max(1, n_names), basis=UPPER_BOUND, because=":definition() fields")
+        self.why.append(":definition() reads each name's definition.json")
+
+    def _manifest_chain_costs(self, *, calls: list, own_entries: int, records: int) -> None:
+        """a literal name's ':manifest()' chain: its entries, each of which a
+        field, gate or range may reread"""
+        self._read(part=QUERY, kind=self.MANIFEST_KIND, count=1, basis=EXACT, because=":manifest()")
+        if any(self._is_ledger_field(c) and c.arg is not None for c in calls):
+            self._read(part=QUERY, kind="ledger", count=1 + records, basis=UPPER_BOUND, because="a ledger field gate")
+        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=max(1, own_entries), basis=UPPER_BOUND, because=":manifest() entries")
+        if any(self._is_ledger_field(c) and c.arg is None for c in calls):
+            self._read(part=RESOLVE, kind="ledger", count=max(1, own_entries), basis=UPPER_BOUND, because="a ledger field")
+
+    def _field_costs(self, *, fields: list, selected: int, literal: bool, n_names: int) -> None:
+        """a value field rereads the name's manifest per selected version;
+        under '*' it relists the names and reads each manifest again"""
+        count = selected if literal else selected + n_names
+        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=count, basis=UPPER_BOUND, because=f":{fields[-1].name}()")
+        if not literal:
+            self._read(part=RESOLVE, kind="name_listing", count=1, basis=UPPER_BOUND, because=f":{fields[-1].name}()")
         if any(self._is_ledger_field(f) for f in fields):
             self._read(part=RESOLVE, kind="ledger", count=selected, basis=UPPER_BOUND, because=f":{fields[-1].name}()")
 
@@ -222,12 +283,73 @@ class FilesEstimator3:
         if call.arg is not None:
             # a filter on each name's definition
             self._read(part=QUERY, kind="definition", count=n_names, basis=UPPER_BOUND, because=f":{call.name}(...)")
-            self._read(part=RESOLVE, kind="definition", count=n_names, basis=UPPER_BOUND, because=f":{call.name}(...)")
+        if not literal:
+            # each name's definition, relisting the names to find them
+            self._read(part=RESOLVE, kind="name_listing", count=n_names, basis=UPPER_BOUND, because=f":{call.name}()")
+            self._read(part=RESOLVE, kind="definition", count=n_names, basis=UPPER_BOUND, because=f":{call.name}()")
             return
-        if not literal and n_names > 1:
-            self.would_raise = f"resolve: {n_names} definitions at once (compendium 5.3)"
+        self._read(part=RESOLVE, kind="definition", count=1, basis=UPPER_BOUND if call.arg is not None else EXACT, because=f":{call.name}()")
+
+    #
+    # what the finder will refuse, from the reference alone
+    #
+    def _check_legality(self, ledger: list) -> None:
+        reason = self._definite_raise(ledger)
+        if reason is None and self.would_raise is None:
+            possible = self._possible_raise()
+            reason = f"may raise -- {possible}" if possible is not None else None
+        if reason is None:
             return
-        self._read(part=RESOLVE, kind="definition", count=1, basis=EXACT if literal else UPPER_BOUND, because=f":{call.name}()")
+        self.would_raise = reason
+        # where it raises is not estimated: every count becomes a bound
+        self.reads = [Read(part=r.part, kind=r.kind, count=r.count, basis=UPPER_BOUND, because=r.because) for r in self.reads]
+
+    def _all_calls(self) -> list:
+        name_one = self.reference.name_one
+        calls = [p for p in name_one.path if isinstance(p, FunctionCall3)] + list(name_one.functions)
+        if self.reference.name_three is not None:
+            calls += list(self.reference.name_three.functions)
+        if isinstance(self.reference.root_major, FunctionCall3):
+            calls.append(self.reference.root_major)
+        return calls
+
+    def _definite_raise(self, ledger: list) -> "str | None":
+        for call in self._all_calls():
+            if call.name == "definition":
+                # the finder reads a ':definition()' filter itself, not by building it
+                continue
+            try:
+                # builds and checks the arguments; it reads nothing
+                self.finder._build(call)
+            except Exception as e:
+                return f"query: {e}"
+        path_names = self._path_function_names()
+        if "definition" in path_names and any(c.name in POINTERS + ("from", "to") for c in self.reference.name_one.functions):
+            return "query: ':definition()' is not versioned, so it takes no pointer or range"
+        return self._datatype_raise(ledger)
+
+    def _possible_raise(self) -> "str | None":
+        """FILES: a field with an argument attached to name_one selects or
+        gates only where the finder takes it there"""
+        for call in self._calls():
+            cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            if cls is None or cls.SOURCE is None or call.arg is None:
+                continue
+            if call.name not in self.NAME_ONE_GATES:
+                return f"':{call.name}(...)' on name_one; field functions usually go in name_three"
+        return None
+
+    def _datatype_raise(self, ledger: list) -> "str | None":
+        """FILES' own refusals"""
+        root = self.reference.root_major
+        if isinstance(root, str) and root not in self._entries_by_name(ledger):
+            return f"query: no named-file '{root}' in the ledger"
+        path_names = self._path_function_names()
+        if path_names[:1] == ["manifest"] and "all" in [c.name for c in self.reference.name_one.functions]:
+            return "query: ':manifest():all()' is not supported; a bare ':manifest()' is every record (#710)"
+        if isinstance(root, FunctionCall3) and self.finder._is_bare_pointer_reference(self.reference, "readme"):
+            return "query: ':readme()' under a pattern root is not supported"
+        return None
 
     def _bare_well_known(self, calls: list) -> "str | None":
         if self.finder._is_bare_pointer_reference(self.reference, "manifest"):
@@ -268,15 +390,16 @@ class FilesEstimator3:
             kind="ledger",
             count=1 + (records if gates else 0),
             basis=UPPER_BOUND if gates else EXACT,
-            because="the files ledger",
+            because="the ledger",
         )
-        if gates:
-            self._read(part=QUERY, kind="name_listing", count=1, basis=UPPER_BOUND, because="the live index")
-            self._read(part=QUERY, kind=self.MANIFEST_KIND, count=all_names, basis=UPPER_BOUND, because="the live index")
+        # anything beyond the bare set builds the live index at query
+        self._read(part=QUERY, kind="name_listing", count=1, basis=UPPER_BOUND, because="the live index")
+        self._read(part=QUERY, kind=self.MANIFEST_KIND, count=all_names, basis=UPPER_BOUND, because="the live index")
+        # and a field or range may reread it per record
         self._read(part=RESOLVE, kind="ledger", count=max(1, records), basis=UPPER_BOUND, because=":manifest()")
-        self._read(part=RESOLVE, kind="name_listing", count=1, basis=UPPER_BOUND, because="the live index")
-        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=all_names, basis=UPPER_BOUND, because="the live index")
-        self.why.append(":manifest() reads the ledger set; live records also read each named-file's manifest")
+        self._read(part=RESOLVE, kind="name_listing", count=max(1, records), basis=UPPER_BOUND, because="the live index")
+        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=2 * records + all_names, basis=UPPER_BOUND, because="the live index")
+        self.why.append(f":manifest() reads the ledger set; live records also read each of the {self.NOUN}' manifests")
 
     def _selected(self, *, calls: list, names: list, by_name: dict) -> int:
         call_names = [c.name for c in calls]
@@ -301,6 +424,13 @@ class FilesEstimator3:
         )
 
     @staticmethod
+    def _is_window(call) -> bool:
+        """a clock window or a date bound: it narrows by time, which the
+        ledger estimate does not"""
+        cls = ReferenceFunctionFactory.get_registered_class(call.name)
+        return cls is not None and (cls.SOURCE == "clock" or call.name in ("before", "after", "on"))
+
+    @staticmethod
     def _is_definition_field(call) -> bool:
         cls = ReferenceFunctionFactory.get_registered_class(call.name)
         return cls is not None and cls.ROLE == Function3.VALUE and cls.SOURCE == "definition"
@@ -308,10 +438,12 @@ class FilesEstimator3:
     def _is_definition_gate(self, call) -> bool:
         return self._is_definition_field(call) and call.arg is not None
 
-    @staticmethod
-    def _is_ledger_field(call) -> bool:
+    def _is_ledger_field(self, call) -> bool:
+        """a field this datatype reads from its root ledger, not a manifest"""
         cls = ReferenceFunctionFactory.get_registered_class(call.name)
-        return cls is not None and bool(getattr(cls, "LEDGER_KEY", None)) and not cls.KEY
+        if cls is None:
+            return False
+        return self.DATATYPE in (getattr(cls, "LEDGER_KEY", None) or {}) and self.DATATYPE not in (cls.KEY or {})
 
     @staticmethod
     def _value_fields(calls: list) -> list:

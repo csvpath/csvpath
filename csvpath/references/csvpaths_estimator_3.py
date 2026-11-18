@@ -1,4 +1,5 @@
 from .files_estimator_3 import FilesEstimator3
+from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_estimate_3 import RESOLVE, UPPER_BOUND
 
 #
@@ -11,7 +12,9 @@ from .reference_estimate_3 import RESOLVE, UPPER_BOUND
 # - a version selected in name_one reads no content at resolve;
 # - name_three selects statements, and each rereads the group's manifest;
 # - a value field under a '*' root rereads the names and two manifests per
-#   result.
+#   result;
+# - every function goes only where its POSITIONS put it for csvpaths, so a
+#   misplaced one is a definite raise (definition fields only "may raise").
 #
 
 
@@ -22,13 +25,50 @@ class CsvpathsEstimator3(FilesEstimator3):
     LEDGER_METHOD = "paths_ledger"
     NOUN = "named-paths groups"
     NOT_A_VERSION = ("unchanged",)
+    DATATYPE = "csvpaths"
 
-    def _field_costs(self, *, fields: list, selected: int, literal: bool) -> None:
+    def _field_costs(self, *, fields: list, selected: int, literal: bool, n_names: int) -> None:
         if literal:
-            super()._field_costs(fields=fields, selected=selected, literal=literal)
+            super()._field_costs(fields=fields, selected=selected, literal=literal, n_names=n_names)
             return
         self._read(part=RESOLVE, kind="name_listing", count=selected, basis=UPPER_BOUND, because=f":{fields[-1].name}()")
-        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=2 * selected, basis=UPPER_BOUND, because=f":{fields[-1].name}()")
+        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=2 * selected + 1, basis=UPPER_BOUND, because=f":{fields[-1].name}()")
+        if any(self._is_ledger_field(f) for f in fields):
+            self._read(part=RESOLVE, kind="ledger", count=selected, basis=UPPER_BOUND, because=f":{fields[-1].name}()")
+
+    def _possible_raise(self) -> "str | None":
+        # definition fields resolve through definition.json, where the
+        # documented positions are not the whole story
+        for call in self._all_calls():
+            if self._is_definition_field(call) and self._misplaced(call) is not None:
+                return self._misplaced(call)
+        return None
+
+    def _datatype_raise(self, ledger: list) -> "str | None":
+        """CSVPATHS' own refusals: no worksheets, and every function only
+        where its POSITIONS put it for csvpaths"""
+        if "#" in str(self.reference.name_one):
+            return "query: CSVPATHS does not take a '#worksheet'"
+        for call in self._all_calls():
+            if self._is_definition_field(call) or call is self.reference.root_major:
+                continue
+            misplaced = self._misplaced(call)
+            if misplaced is not None:
+                return f"query: {misplaced}"
+        return None
+
+    def _misplaced(self, call) -> "str | None":
+        cls = ReferenceFunctionFactory.get_registered_class(call.name)
+        if cls is None:
+            return None
+        if self.DATATYPE not in cls.DATATYPES:
+            return f"':{call.name}()' is not a {self.DATATYPE} function"
+        positions = getattr(cls, "POSITIONS", {}).get(self.DATATYPE)
+        three = self.reference.name_three
+        position = "name_three" if three is not None and call in three.functions else "name_one"
+        if positions is not None and position not in positions:
+            return f"':{call.name}()' does not go in {position} for {self.DATATYPE}"
+        return None
 
     def _version_costs(self, *, three, call_names: list, literal: bool, n_names: int, selected: int) -> bool:
         if three is None:
