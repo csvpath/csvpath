@@ -49,6 +49,7 @@ class ReferenceRunner:
             "new expression",
             "browse functions",
             "check SQL coverage",
+            "estimate a reference",
             Const.CANCEL2,
         ]
         t = self._cli.ask(choices)
@@ -64,11 +65,43 @@ class ReferenceRunner:
             # not a one-shot action like "rerun recent"/"new expression".
             ReferenceFunctionLister(self._cli).list_functions()
             self.menu()
+        elif t == "estimate a reference":
+            self._estimate()
+            self.menu()
         elif t == "check SQL coverage":
             # back to this submenu, as browse functions: checking
             # coverage usually comes before running references
             self._check_sql_coverage()
             self.menu()
+
+    def _estimate(self) -> None:
+        """what a reference or expression will probably read, before it
+        runs (references_v3_cost_estimates.md); it reads only the ledgers"""
+        self._cli.clear()
+        expression = Asker(
+            self._cli, name_type="none", prompt="Estimate? ", initial_text=""
+        ).ask()
+        if not expression:
+            return
+        try:
+            tree = ReferenceExpressionParser3.parse(expression)
+            if isinstance(tree, tuple):
+                estimate = ReferenceExpression3.from_tree(
+                    tree=tree, csvpaths=self._cli.csvpaths
+                ).estimate()
+            else:
+                estimate = ReferenceFinderFactory3.for_reference(
+                    reference=tree, csvpaths=self._cli.csvpaths
+                ).estimate()
+            print(estimate.summary())
+        except KeyboardInterrupt:
+            # as in _check_sql_coverage(): a remote ledger can be slow
+            print("\nCancelled.\n")
+            return
+        except Exception as e:
+            if not erut.handle(self._cli, e):
+                return
+        input("\nHit return to continue. ")
 
     def _check_sql_coverage(self) -> None:
         self._cli.clear()

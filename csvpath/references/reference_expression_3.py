@@ -1,4 +1,5 @@
 import logging
+from typing import TYPE_CHECKING
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
@@ -7,6 +8,9 @@ from .reference_expression_parser_3 import ReferenceExpressionParser3
 from .reference_finder_factory_3 import ReferenceFinderFactory3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResults3
+
+if TYPE_CHECKING:
+    from .reference_estimate_3 import ExpressionEstimate3, ReferenceEstimate3
 
 
 class ReferenceExpression3:
@@ -206,6 +210,37 @@ class ReferenceExpression3:
     @property
     def right(self) -> "str | ReferenceExpression3":
         return self._right
+
+    def estimate(self) -> "ExpressionEstimate3":
+        """the cost estimate: one ReferenceEstimate3 per side, or an
+        ExpressionEstimate3 for a sub-expression (references_v3_cost_
+        estimates.md; David's note: "a reference expression results in two
+        fully separate estimates"). A paths side is queried and never
+        resolved (RC triage B2), so its estimate keeps only its query part."""
+        from .reference_estimate_3 import ExpressionEstimate3
+
+        return ExpressionEstimate3(
+            expression=str(self),
+            left=self._estimate_side(self._left),
+            right=self._estimate_side(self._right),
+        )
+
+    def _estimate_side(self, side: "str | ReferenceExpression3") -> "ReferenceEstimate3 | ExpressionEstimate3":
+        if isinstance(side, ReferenceExpression3):
+            return side.estimate()
+        finder = ReferenceFinderFactory3.for_reference(reference=side, csvpaths=self._csvpaths)
+        estimate = finder.estimate()
+        if self._kind(side) == self.PATHS:
+            return estimate.without_resolve(
+                because="a paths side of an expression is queried, not resolved"
+            )
+        return estimate
+
+    def __str__(self) -> str:
+        def side(s) -> str:
+            return f"({s})" if isinstance(s, ReferenceExpression3) else s
+
+        return f"{side(self._left)} {self._op.upper()} {side(self._right)}"
 
     def resolve(self) -> ReferenceResults3:
         left_results = self._resolve_side(self._left)
