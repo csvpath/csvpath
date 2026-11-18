@@ -143,4 +143,13 @@ SHAPES = [
     '$validate_orders.csvpaths.first',
     '$*.csvpaths.somefile.x',
     '$validate_orders.csvpaths.:last().*',
+    # a reviewer's probes on #734
+    '$validate_orders.csvpaths.*',
+    '$validate_orders.csvpaths.*.0',
+    '$validate_orders.csvpaths.*.x',
+    '$validate_orders.csvpaths.*.:from(0)',
+    '$*.csvpaths.*',
+    '$*.csvpaths.*.0',
+    '$*.csvpaths.*.:uuid("x")',
+    '$validate_orders.csvpaths.*.:first()',
 ]

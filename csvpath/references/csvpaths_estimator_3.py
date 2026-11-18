@@ -57,7 +57,9 @@ class CsvpathsEstimator3(FilesEstimator3):
         if "#" in str(self.reference.name_one):
             return "query: CSVPATHS does not take a '#worksheet'"
         name_one = self.reference.name_one
-        if not any(isinstance(p, FunctionCall3) for p in name_one.path) and not name_one.functions:
+        # a bare '*' is ':all()' (normative examples; finder tests)
+        star = any(isinstance(p, Star3) for p in name_one.path)
+        if not star and not any(isinstance(p, FunctionCall3) for p in name_one.path) and not name_one.functions:
             return "query: CSVPATHS name_one is a version-selecting function chain, not a literal"
         if self.reference.name_three is not None and isinstance(self.reference.name_three.body, Star3):
             return "query: CSVPATHS name_three is a statement identity, an index, or :from()/:to()"
