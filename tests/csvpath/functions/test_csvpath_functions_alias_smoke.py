@@ -5,9 +5,10 @@ signatures in docs/func_gen/<name>.md. The test only checks that the csvpath
 parses, that collect() runs without an exception, and that no error is
 recorded. It does not check the values; the focused test files do that.
 
-This catches registry regressions: a removed or renamed name, an alias that
-points at the wrong class, or a check_valid() that rejects its own documented
-minimal arguments. test_every_registered_name_is_covered fails when a new
+This catches registry regressions: a removed or renamed name, or a
+check_valid() that rejects its own documented minimal arguments. Because
+values are not checked, it does not catch an alias that points at the wrong
+class. test_every_registered_name_is_covered fails when a new
 name is registered without a row here.
 
 Names that are skipped, and why:
