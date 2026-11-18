@@ -94,6 +94,10 @@ class ReferenceRunner:
                     reference=tree, csvpaths=self._cli.csvpaths
                 ).estimate()
             print(estimate.summary())
+        except KeyboardInterrupt:
+            # as in _check_sql_coverage(): a remote ledger can be slow
+            print("\nCancelled.\n")
+            return
         except Exception as e:
             if not erut.handle(self._cli, e):
                 return

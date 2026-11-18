@@ -71,3 +71,27 @@ def test_the_summary_names_estimated_kinds_plainly(csvpaths):  # noqa: F811
     text = ex.summary()
     assert "estimated: 2 name listings (upper bound" in text
     assert "name_listing" not in text
+
+
+def test_a_paths_side_keeps_a_structural_may_raise(csvpaths):  # noqa: F811
+    # "may raise -- several functions on name_one" can raise at query
+    # (reviewer on #738)
+    ex = ReferenceExpression3.from_string(
+        expression=f'$*.files.:type("csv"):last() UNION {RIGHT}', csvpaths=csvpaths
+    ).estimate()
+    assert ex.left.would_raise and ex.left.would_raise.startswith("may raise")
+
+
+def test_a_paths_side_drops_a_resolve_raise(csvpaths):  # noqa: F811
+    from csvpath.references.reference_estimate_3 import CostWeights, ReferenceEstimate3
+
+    est = ReferenceEstimate3(
+        reference="$a.files.:last()",
+        reads=[],
+        why=[],
+        backend="local",
+        weights=CostWeights.for_config(csvpaths.config),
+        sql=False,
+        would_raise="may raise -- resolve: up to 5 version files at once (compendium 5.3)",
+    )
+    assert est.without_resolve(because="a paths side").would_raise is None

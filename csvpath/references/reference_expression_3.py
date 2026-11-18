@@ -1,4 +1,5 @@
 import logging
+from typing import TYPE_CHECKING
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
@@ -7,6 +8,9 @@ from .reference_expression_parser_3 import ReferenceExpressionParser3
 from .reference_finder_factory_3 import ReferenceFinderFactory3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResults3
+
+if TYPE_CHECKING:
+    from .reference_estimate_3 import ExpressionEstimate3, ReferenceEstimate3
 
 
 class ReferenceExpression3:
@@ -207,7 +211,7 @@ class ReferenceExpression3:
     def right(self) -> "str | ReferenceExpression3":
         return self._right
 
-    def estimate(self):
+    def estimate(self) -> "ExpressionEstimate3":
         """the cost estimate: one ReferenceEstimate3 per side, or an
         ExpressionEstimate3 for a sub-expression (references_v3_cost_
         estimates.md; David's note: "a reference expression results in two
@@ -221,7 +225,7 @@ class ReferenceExpression3:
             right=self._estimate_side(self._right),
         )
 
-    def _estimate_side(self, side):
+    def _estimate_side(self, side: "str | ReferenceExpression3") -> "ReferenceEstimate3 | ExpressionEstimate3":
         if isinstance(side, ReferenceExpression3):
             return side.estimate()
         finder = ReferenceFinderFactory3.for_reference(reference=side, csvpaths=self._csvpaths)

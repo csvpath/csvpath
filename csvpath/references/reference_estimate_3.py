@@ -328,8 +328,11 @@ class ReferenceEstimate3:
         expression's paths side, which is queried and never resolved"""
         if not isinstance(because, str) or because.strip() == "":
             raise ValueError("because must say why resolve is dropped")
+        # keep everything but a resolve-time raise: the estimators write a
+        # structural "may raise -- <reason>" with no part, and it may raise
+        # before anything is read
         would_raise = self.would_raise
-        if would_raise and not would_raise.startswith("query"):
+        if would_raise and (would_raise.startswith("resolve") or would_raise.startswith("may raise -- resolve")):
             would_raise = None
         return ReferenceEstimate3(
             reference=self.reference,
