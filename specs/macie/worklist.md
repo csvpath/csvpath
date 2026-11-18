@@ -60,10 +60,15 @@ done. Add an item the moment something is deferred.
 
 ### Real-world files
 
-- **Header handling (#479).** The generated scan `$[1*]` assumes the
-  header is line 0. Headerless files, leading blank lines, prolegomena
-  lines and header-only files need a graceful answer. Related bug:
-  `skip()` in the last expression skips the next line (#478).
+- ~~**Header handling (#479).**~~ Done (2026-11-18). Measured: leading
+  blank lines and header-only files are handled; a headerless or
+  title-line file loses its header keywords, as Macie does (sixth probe,
+  8 of 8 rows agree). A first line holding a value is read as data: no
+  column names (Macie's are null), no header keywords, and a loud
+  warning, so a value never becomes a column name. `skip()` leaking into
+  the next line (#478) fixed (#737). Left: Macie also gives a title line
+  no column names, by a rule we do not know (road-testers); a way to say
+  where the header is would go beyond Macie (extension).
 - **Directory loads under a name** refuse Macie wrappers, as they refuse
   ODCS contracts. Appending with `add_named_paths_from_file(append=True)`
   works for both.
@@ -130,6 +135,9 @@ fidelity item in transpile-design.md.
   with German data whether Macie reports any, and in what form. (The
   phone and Codice Fiscale differences seen with it were fixed on
   2026-11-15.)
+- **Title lines before the header.** Macie gave the columns of a file with
+  a title line no names; we name them from the title. Ask testers whose
+  exports start with a title what Macie reports.
 - **The Jev review sends words without digits as written**, names
   included (decision 3, 2026-11-15). Ask testers whether they need names
   masked too.
