@@ -352,15 +352,7 @@ class ReferenceExpression3:
         argument names the key (KEY "sources.{}.port")."""
         if call is None or function_cls is None:
             raise ValueError("call and function_cls cannot be None")
-        if call.arg is None:
-            return False
-        if function_cls.SOURCE not in ("manifest", "definition"):
-            return False
-        # the key-selecting fields (source_*, destination_*,
-        # transfer_on_complete_*) are the only ones today, the documented
-        # exception of B5/D27; a new one needs a "{}" KEY slot to be seen
-        keyed = any("{}" in str(key) for key in (function_cls.KEY or {}).values())
-        return not keyed
+        return function_cls.filters_with(call.arg)
 
     def _check_union_compatible(self) -> None:
         """UNION's own compatibility rule -- LHS-driven, revised twice

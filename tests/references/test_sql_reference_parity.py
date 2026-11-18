@@ -670,7 +670,7 @@ def test_name_three_gates_on_a_real_filesystem(paths):
     assert finder.query().uuids == [csv[-1]["uuid"]]
     with open(csv[-1]["file"], "rb") as f:
         assert finder.resolve().results[0].data == f.read()
-    finder = _finder("$people.files.:flatten().:last():fingerprint():template()")
+    finder = _finder("$people.files.:flatten().:last():template()")
     assert [r.data for r in finder.resolve().results] == [people[-1]["template"]]
 
 

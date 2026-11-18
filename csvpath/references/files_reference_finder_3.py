@@ -146,6 +146,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # the live entries are read at most once per call (_live_index())
         self._live_entries = None
         reference = self.ref.parsed
+        # one value per reference, before anything is read (5.20b)
+        self._check_one_value(reference)
         log_results = self._query_log_call(reference)
         if log_results is not None:
             return log_results
@@ -2636,15 +2638,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if chain["pointer"] is not None:
             selected = self._apply_pointer(chain["pointer"], entries)
             entries = [] if selected is None else [selected]
-        values = chain["values"]
-        if len(values) > 1:
-            self.csvpaths.logger.warning(
-                "Reference resolves to the value of the last field-accessor "
-                "function in its chain (:%s()) -- :%s() earlier in the same "
-                "chain could also have provided a value; see compendium 5.20b.",
-                values[-1].name,
-                "(), :".join(f.name for f in values[:-1]),
-            )
+        # chain["values"] holds at most one: two raise in query()
+        # (_check_one_value(), 5.20b)
         # several whole entries resolve, as the ledger's records do: they
         # are records, not files (records resolve, files don't (David,
         # 2026-11-14; compendium 5.3, 5.6)). Several entries of one
@@ -3099,8 +3094,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
             is_manifest_chain = False
             if not is_bare_field_call:
                 #
-                # the last field that is not a gate supplies the value,
-                # with a warning when there are two (compendium 5.20b). it
+                # the field that is not a gate supplies the value; two
+                # raise in query() (compendium 5.20b, since 2026-11-18). it
                 # was the first field, a gate included, until 2026-11-02.
                 #
                 field_call = self._last_field_function_call(

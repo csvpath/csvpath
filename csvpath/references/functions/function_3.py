@@ -367,6 +367,26 @@ class Function3:
             return Reference3.METADATA_FIELD
         return None
 
+    @classmethod
+    def filters_with(cls, arg) -> bool:
+        """true when this field, given `arg`, is a filter, not a value
+        (compendium 6.40): ':type("csv")' keeps the csv versions, it does
+        not supply a type. "A filter is just a filter not a field value"
+        (David, 2026-11-16, RC triage B2). A key-selecting field, e.g.
+        ':source_port("email")', still reads a value: its argument names
+        the key (KEY "sources.{}.port"). Shared by ReferenceExpression3
+        (paths vs values sides) and ReferenceFinder3 (one value per
+        reference)."""
+        if arg is None:
+            return False
+        if cls.SOURCE not in ("manifest", "definition"):
+            return False
+        # the key-selecting fields (source_*, destination_*,
+        # transfer_on_complete_*) are the only ones today, the documented
+        # exception of B5/D27; a new one needs a "{}" KEY slot to be seen
+        keyed = any("{}" in str(key) for key in (cls.KEY or {}).values())
+        return not keyed
+
     def describe(self) -> dict:
         """machine-actionable self-description -- also human-readable
         via SUMMARY. this is what a future type-ahead layer's registry
