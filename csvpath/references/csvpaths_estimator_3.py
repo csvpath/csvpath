@@ -1,3 +1,4 @@
+from .csvpaths_reference_finder_3 import CsvpathsReferenceFinder3
 from .files_estimator_3 import FilesEstimator3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_estimate_3 import RESOLVE, UPPER_BOUND
@@ -36,20 +37,23 @@ class CsvpathsEstimator3(FilesEstimator3):
         if any(self._is_ledger_field(f) for f in fields):
             self._read(part=RESOLVE, kind="ledger", count=selected, basis=UPPER_BOUND, because=f":{fields[-1].name}()")
 
-    def _possible_raise(self) -> "str | None":
-        # definition fields resolve through definition.json, where the
-        # documented positions are not the whole story
-        for call in self._all_calls():
-            if self._is_definition_field(call) and self._misplaced(call) is not None:
-                return self._misplaced(call)
-        return None
 
     def _datatype_raise(self, ledger: list) -> "str | None":
         """CSVPATHS' own refusals: no worksheets, and every function only
         where its POSITIONS put it for csvpaths"""
         if "#" in str(self.reference.name_one):
             return "query: CSVPATHS does not take a '#worksheet'"
+        try:
+            # the finder's own static check: a definition field beside a
+            # version selector (it reads nothing)
+            CsvpathsReferenceFinder3._check_definition_field_has_no_version(self.reference.name_one)
+        except Exception as e:
+            return f"query: {e}"
+        if self.reference.name_three is not None and self.finder._bare_definition_field_call(self.reference.name_one):
+            return "query: a definition field is not versioned, so it takes no name_three"
         for call in self._all_calls():
+            # definition fields resolve through definition.json whatever
+            # their documented datatypes say (measured: ':sources()' works)
             if self._is_definition_field(call) or call is self.reference.root_major:
                 continue
             misplaced = self._misplaced(call)
@@ -74,9 +78,14 @@ class CsvpathsEstimator3(FilesEstimator3):
         if three is None:
             # a version is the group's manifest entry, already read
             return True
-        # each selected statement rereads the group's manifest
+        # each selected statement rereads the group's manifest; under '*' it
+        # also relists the names and reads a second manifest
         statements = self._statements(three=three, selected=selected)
-        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=statements, basis=UPPER_BOUND, because=f".{three}")
+        if literal:
+            self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=statements, basis=UPPER_BOUND, because=f".{three}")
+            return True
+        self._read(part=RESOLVE, kind="name_listing", count=statements, basis=UPPER_BOUND, because=f".{three}")
+        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=2 * statements, basis=UPPER_BOUND, because=f".{three}")
         return True
 
     def _statements(self, *, three, selected: int) -> int:
