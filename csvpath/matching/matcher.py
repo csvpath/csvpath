@@ -289,6 +289,12 @@ class Matcher:  # pylint: disable=R0902
         # re: R0912 this method has been refactoring resistant and since it is
         # working stably there isn't a pressing reason to try again.
         #
+        # a skip() that was the last component of the previous line has
+        # nothing left to skip there; it must not cross into this line (#478)
+        #
+        self.skip = False
+        self.take = False
+        #
         # is this a blank last line, or a last line outside the scan range
         # (#306)? if so, we just want to activate any/all last() in the
         # csvpath. see CsvPath.is_lasts_only_line().
