@@ -24,9 +24,23 @@ Concatenates any number of strings.
 
 Same as you would expect.
 
-### min_length(value, int) and max_length(value, int)
+### min_length(value, int), max_length(value, int), too_long(value, int) and too_short(value, int)
 
-`min_length()` and `max_length()` return True if the stringified value is more than or less than the integer provided. The functionality can also be achieved using `above()` and `below()` or `between()`, but the min and max functions are obviously simpler. Likewise, there is overlap with the newer `string()`; however, you cannot use `string()` to set a min without also setting a max; for that you would need `min_length()`.
+`min_length()` and `too_long()` are True if the stringified value has at least the given number of characters. `max_length()` and `too_short()` are True if it has at most that number. Both ends are inclusive.
+
+The `too_` names read as a sentence: "a value that is N characters is too long for this field". So `too_long(#name, 5)` is True for a 5-character value, and a value must be 4 or fewer characters to pass. Likewise `too_short(#name, 5)` is True for a value of 5 or fewer characters.
+
+```bash
+    too_long("abcde", 5)    # True: 5 characters is too long
+    too_long("abcd", 5)     # False
+    min_length("abcde", 5)  # True: at least 5
+    too_short("abcde", 5)   # True: 5 characters is too short
+    max_length("abcdef", 5) # False: more than 5
+```
+
+A `None` value is an error: these functions need a string, which may be empty. All four take `onmatch`.
+
+The functionality can also be achieved using `above()` and `below()` or `between()`, but these functions are simpler. Likewise, there is overlap with the newer `string()`; however, you cannot use `string()` to set a min without also setting a max; for that you would need `min_length()`.
 
 ### string(value, max, min)
 
