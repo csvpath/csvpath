@@ -13,11 +13,6 @@ done. Add an item the moment something is deferred.
 
 ### Identifiers
 
-- **Driver's licenses, backlog** (David, 2026-11-06): Finland, Greece,
-  Hungary, Ireland, Latvia, Lithuania, Luxembourg, Malta, Netherlands,
-  Poland, Portugal, Romania, Slovakia, Slovenia, Sweden. Microsoft
-  Purview's per-country pages have the patterns (about 4k tokens each to
-  fetch). 17 jurisdictions are done (pair 21).
 - **Partial stand-ins**, each marked in the catalog and reported by every
   conversion that uses it:
   - Brazil CNPJ: no alphanumeric CNPJs (issued from July 2026); see
@@ -108,9 +103,15 @@ fidelity item in transpile-design.md.
   is missed. Brazil's CEP list has both forms only because Macie lists
   both.
 - **One value, several countries.** National phone numbers (item 19),
-  driver's licenses near English keywords (item 21) and digit runs
-  shared by the Argentina DNI, Colombia cedula and Canada PR number can
-  be reported for more than one identifier.
+  driver's licenses near English keywords (item 21), Swedish numbers,
+  which fit Finland's shape too and share its Swedish keywords, and digit
+  runs shared by the Argentina DNI, Colombia cedula and Canada PR number
+  can be reported for more than one identifier.
+- **Keywords kept as Macie publishes them.** Macie's Greek driver's
+  license keyword lacks its first letter (`δεια οδήγησης`), so a number
+  after `άδεια οδήγησης` is missed unless `adeia odigisis` is there too;
+  Sweden's list has `dlno# ajokortti` as one keyword. Ask testers with
+  Greek or Swedish data what Macie finds.
 - **Formats that are ours.** Brazil RG takes only Sao Paulo's shape, so
   other states' RGs are missed; the Canada PR number is the UCI only, not
   the card's document number.
@@ -209,9 +210,10 @@ A record, oldest first. Details are in the PRs and the specs named.
   and its notation; UK NINO, US and Canada bank accounts, card security
   code (17); passports (18); phones (19; several countries' national
   numbers accepted for the first release, David 2026-11-05); dates (20);
-  driver's licenses, 17 jurisdictions (21); Argentina DNI, Brazil RG and
+  driver's licenses, 17 jurisdictions (21) and the other 15 countries
+  (2026-11-18); Argentina DNI, Brazil RG and
   CEP, Colombia cedula, Canada PR, India PAN, UK electoral roll (22); GPS
-  and cookies (23). Complete apart from the driver's license backlog.
+  and cookies (23). Group B is complete.
 - **Project rulesbase:** `specs/macie/rulesbase-design.md` (2026-11-07);
   the overrides merge (#549), load and snapshot (#550), run dir copies
   and the standalone line (#552). User docs, first draft:
