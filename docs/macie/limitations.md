@@ -116,6 +116,16 @@ description of the value (not the value), and the column name.
   numbers only as digit sequences), so we may report some values Macie
   would not.
 
+## Headers
+
+A file with no header, or with a title line before the header, has no
+header keywords, so a value found only through its column's header (an
+SSN under `ssn`) is not reported. Macie behaves the same (live probe,
+2026-11-18). A first line that holds a value is read as data and the run
+says so; see [results](results.md). A title line holds no value, so it
+is still read as the header, and its text names the columns; Macie
+gives them no names, by a rule we do not know.
+
 ## Data
 
 The Macie functions check every cell of the CSV data CsvPath reads.

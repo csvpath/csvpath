@@ -92,7 +92,7 @@ def test_macie_tally_bad_input() -> None:
         with pytest.raises(ValueError):
             t.record(row=row, column=column, column_name="c")
     with pytest.raises(TypeError):
-        t.record(row=1, column=1, column_name=None)
+        t.record(row=1, column=1, column_name=5)
 
 
 def _findings(max_findings: int = 100) -> FindingsTally:
@@ -207,3 +207,19 @@ def test_macie_findings_bad_arns() -> None:
         FindingsTally(max_findings=10, max_detail=1, source_arn="arn:x")
     with pytest.raises(MacieException):
         _tally(arn="arn:x")
+
+
+def test_macie_tally_no_column_name() -> None:
+    #
+    # when the first line is data, not a header, a cell has no column name,
+    # as Macie's columnName is then null (#479)
+    #
+    t = _tally(max_detail=3)
+    t.record(row=2, column=2, column_name=None)
+    assert t.cells == [
+        {"cellReference": None, "column": 2, "columnName": None, "row": 2}
+    ]
+    msg = FindingsTally.detail_message(
+        name="X", occurrence=1, line=1, column=2, column_name=None
+    )
+    assert msg == "macie X: occurrence 1, line 1 (row 2), column 2"

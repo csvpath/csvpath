@@ -70,6 +70,7 @@ class MacieCdi(MatchDecider):
         run = MacieRun.for_matcher(matcher=self.matcher)
         if identifier.name not in run.tally.tallies:
             run.add_identifier(
+                identifier=identifier,
                 name=identifier.name,
                 severity=identifier.severity,
                 max_detail=int(vs[7]) if len(vs) == 8 else None,

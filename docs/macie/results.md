@@ -36,6 +36,23 @@ real Macie findings: `row` is 1-based with the header as row 1, and
 `column` is 1-based. CsvPath line `n` is Macie row `n + 1`. Detail lines
 give both.
 
+### When the first line is not a header
+
+The first line is read as the header. Its names are each cell's
+`columnName`, and a keyword in it covers its column. If the first line
+holds a value one of the csvpath's identifiers finds (a file with no
+header, whose first line is data), it is read as data instead, as Macie
+reads it: cells have no `columnName` (null), detail lines give the
+column number only, no header keyword applies, and the run says so,
+once, on the `macie` stream and in its errors:
+
+```
+macie: the first line holds a value an identifier finds, so it is read as data, not a header: column names and header keywords are not used, and the first line is not scanned
+```
+
+The first line is not scanned, so a value on it is not reported. Give
+such files a header line.
+
 ## The findings document
 
 `macie_findings` follows Macie's sensitive data findings: custom

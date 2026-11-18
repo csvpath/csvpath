@@ -47,13 +47,19 @@ class IdentifierTally:
         self.detailed = 0
         self.cells = []
 
-    def record(self, *, row: int, column: int, column_name: str) -> bool:
+    def record(self, *, row: int, column: int, column_name: str | None) -> bool:
         """records one occurrence. True if it should get detail reporting."""
         for n, v in [("row", row), ("column", column)]:
             if not isinstance(v, int) or isinstance(v, bool) or v < 1:
                 raise ValueError(f"{n} must be a positive int, not {v!r}")
-        if not isinstance(column_name, str):
-            raise TypeError(f"column_name must be a str, not {type(column_name)}")
+        #
+        # None when the first line is data, not a header: Macie's columnName
+        # is then null
+        #
+        if column_name is not None and not isinstance(column_name, str):
+            raise TypeError(
+                f"column_name must be a str or None, not {type(column_name)}"
+            )
         self.count += 1
         #
         # Macie lists a cell once, however many occurrences it holds; the
@@ -120,7 +126,9 @@ class FindingsTally:
             raise ValueError(f"Identifier {tally.name} added twice")
         self.tallies[tally.name] = tally
 
-    def record(self, *, name: str, row: int, column: int, column_name: str) -> bool:
+    def record(
+        self, *, name: str, row: int, column: int, column_name: str | None
+    ) -> bool:
         if name not in self.tallies:
             raise ValueError(f"No identifier named {name!r}")
         if self.tripped:
@@ -171,17 +179,25 @@ class FindingsTally:
 
     @classmethod
     def detail_message(
-        cls, *, name: str, occurrence: int, line: int, column: int, column_name: str
+        cls,
+        *,
+        name: str,
+        occurrence: int,
+        line: int,
+        column: int,
+        column_name: str | None,
     ) -> str:
         #
         # line is CsvPath's 0-based physical line; Macie's row is line + 1.
         # the occurrence number keeps two occurrences in one cell distinct;
         # the error manager drops an error identical to an earlier one.
         #
-        return (
-            f"macie {name}: occurrence {occurrence}, line {line} (row {line + 1}), "
-            f"column {column} {column_name}"
+        named = (
+            f"column {column}"
+            if column_name is None
+            else f"column {column} {column_name}"
         )
+        return f"macie {name}: occurrence {occurrence}, line {line} (row {line + 1}), {named}"
 
     def summary_messages(self) -> list[str]:
         messages = []

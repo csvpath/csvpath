@@ -56,6 +56,13 @@ class MacieRun:
         )
         self.reported = False
         self._catalog = None
+        #
+        # the identifiers the csvpath's Macie functions registered, and
+        # whether the first line is data rather than a header, decided once
+        # with all of them before anything is recorded (#479)
+        #
+        self.identifiers = []
+        self.header_is_data = None
         self.review = MacieReview(config=matcher.csvpath.config)
 
     @property
@@ -103,11 +110,20 @@ class MacieRun:
         csvpath = self.matcher.csvpath
         line = csvpath.line_monitor.physical_line_number
         headers = csvpath.headers
+        if self.header_is_data is None:
+            self._decide_header(source=source, headers=headers)
+        if self.header_is_data:
+            #
+            # Macie reports no column names, and has no header keywords,
+            # when the first line is not a header
+            #
+            headers = []
         found = False
         for i, cell in enumerate(self.matcher.line):
             if self.tally.tripped:
                 break
             header = headers[i] if i < len(headers) else ""
+            column_name = None if self.header_is_data else f"{header}"
             n = identifier.occurrences(
                 cell=f"{cell}", header=f"{header}", allow_lists=self.allow_lists
             )
@@ -132,7 +148,7 @@ class MacieRun:
                     name=identifier.name,
                     line=line,
                     column=i + 1,
-                    column_name=f"{header}",
+                    column_name=column_name,
                 )
         return found
 
@@ -179,6 +195,37 @@ class MacieRun:
         csvpath.stop()
         csvpath.print_to(cls.PRINTER, f"macie: cannot run: {error}")
 
+    HEADER_IS_DATA = (
+        "macie: the first line holds a value an identifier finds, so it is read "
+        "as data, not a header: column names and header keywords are not used, "
+        "and the first line is not scanned"
+    )
+
+    def _decide_header(self, *, source, headers) -> None:
+        """the first line is data, not a header, when an identifier's
+        detector or regex finds a value in one of its cells, keywords aside.
+        Its text must not become a column name: it would put the value in
+        the findings, printouts and errors (live probe, 2026-11-18). Said
+        once, loudly, as the first line is not scanned either"""
+        self.header_is_data = any(
+            self._finds_value(identifier=i, text=f"{h}")
+            for i in self.identifiers
+            for h in (headers or [])
+        )
+        if self.header_is_data:
+            csvpath = self.matcher.csvpath
+            csvpath.logger.warning(self.HEADER_IS_DATA)
+            csvpath.print_to(self.PRINTER, self.HEADER_IS_DATA)
+            csvpath.error_manager.handle_error(source=source, msg=self.HEADER_IS_DATA)
+
+    @classmethod
+    def _finds_value(cls, *, identifier, text: str) -> bool:
+        detector = getattr(identifier, "detector", None)
+        if detector is not None:
+            return len(detector.matches(cell=text)) > 0
+        regex = getattr(identifier, "regex", None)
+        return regex is not None and regex.search(text) is not None
+
     def add_identifier(
         self,
         *,
@@ -187,7 +234,10 @@ class MacieRun:
         max_detail: int | None = None,
         arn: str | None = None,
         category: str | None = None,
+        identifier=None,
     ) -> None:
+        if identifier is not None:
+            self.identifiers.append(identifier)
         self.tally.add(
             tally=IdentifierTally(
                 name=name,
@@ -199,7 +249,7 @@ class MacieRun:
         )
 
     def record(
-        self, *, source, name: str, line: int, column: int, column_name: str
+        self, *, source, name: str, line: int, column: int, column_name: str | None
     ) -> None:
         """records one occurrence at a 0-based line and 1-based column. Trips
         the breaker, and stops the csvpath, when the total reaches the
