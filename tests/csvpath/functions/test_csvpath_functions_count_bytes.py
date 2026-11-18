@@ -18,11 +18,11 @@ So the documented, deterministic properties are:
 count_bytes_utf8.csv has multi-byte UTF-8 values (2, 3 and 4 bytes per
 character). Its data.csv, written with \\r\\n line endings, is 45 bytes.
 
-Not asserted here: that the count is at most the bytes really written so far.
-The documented "runs behind" allows a lower count, never a higher one, but on
-the local backend the count is currently higher. That is reported in the PR
-body rather than pinned. The tests below avoid any exact nonzero value for the
-same reason.
+The documented "runs behind" allows a lower count, never a higher one. Until
+issue C1 was fixed the local count was higher: the spooler decided it was
+remote before it knew its path, and counted the characters of str(line).
+Counts during the run can be 0, because nothing is flushed yet; no test
+pins an exact mid-run value.
 """
 
 import os
@@ -73,3 +73,23 @@ def test_count_bytes_never_goes_down():
     assert all(isinstance(c, int) for c in counts)
     assert all(c >= 0 for c in counts)
     assert counts == sorted(counts)
+
+
+DATA_CSV_BYTES = 45
+
+
+def test_count_bytes_never_exceeds_the_bytes_in_data_csv():
+    # it may run behind, but can never be ahead of what is on disk
+    counts = _group_counts()
+    assert max(counts) <= DATA_CSV_BYTES
+
+
+def test_bytes_written_after_the_run_is_the_data_csv_size():
+    name = f"count_bytes_{uuid.uuid4().hex}"
+    paths = Builder().build()
+    paths.file_manager.add_named_file(name=name, path=PATH)
+    paths.paths_manager.add_named_paths(name=name, paths=[f"~ id: one ~ {PUSH_COUNTS}"])
+    paths.collect_paths(filename=name, pathsname=name)
+    result = paths.results_manager.get_named_results(name)[0]
+    assert os.path.getsize(result.data_file_path) == DATA_CSV_BYTES
+    assert result.csvpath.lines.bytes_written() == DATA_CSV_BYTES

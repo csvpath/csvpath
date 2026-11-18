@@ -238,6 +238,40 @@ class TestUtilCsvLineSpooler(unittest.TestCase):
         spooler._aprox_bytes = 42
         assert spooler.bytes_written() == 42
 
+    def test_path_set_after_construction_is_local(self):
+        #
+        # the real case: a named-paths run creates the spooler before the
+        # data file path is known. locality used to be decided in __init__
+        # from that None path, so a local data.csv was treated as remote and
+        # bytes_written() counted the characters of str(line), not bytes.
+        #
+        spooler = CsvLineSpooler(None, path=None)
+        spooler.path = self._path()
+        spooler.append(["a", "b", "c"])
+        spooler.append(["é", "日本", "🙂"])
+        spooler.close()
+        assert spooler._local is True
+        assert spooler._aprox_bytes == 0
+        assert spooler.bytes_written() == os.path.getsize(self._path())
+
+    def test_path_from_the_result_is_local(self):
+        # the path comes from result.data_file_path on first use
+        result = FakeResult(csvpath=FakeCsvPath(), data_file_path=self._path())
+        spooler = CsvLineSpooler(result)
+        spooler.append(["é", "x"])
+        spooler.close()
+        assert spooler.bytes_written() == os.path.getsize(self._path())
+
+    def test_no_path_yet_is_not_local(self):
+        spooler = CsvLineSpooler(None, path=None)
+        assert spooler._local is False
+
+    def test_changing_the_path_redecides_locality(self):
+        spooler = CsvLineSpooler(None, path="s3://bucket/key.csv")
+        assert spooler._local is False
+        spooler.path = self._path()
+        assert spooler._local is True
+
     #
     # __len__ via meta.json
     #
