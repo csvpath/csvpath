@@ -33,10 +33,22 @@ class CsvpathsEstimator3(FilesEstimator3):
             super()._field_costs(fields=fields, selected=selected, literal=literal, n_names=n_names)
             return
         self._read(part=RESOLVE, kind="name_listing", count=selected, basis=UPPER_BOUND, because=f":{fields[-1].name}()")
-        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=2 * selected + 1, basis=UPPER_BOUND, because=f":{fields[-1].name}()")
+        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=2 * selected + n_names, basis=UPPER_BOUND, because=f":{fields[-1].name}()")
         if any(self._is_ledger_field(f) for f in fields):
             self._read(part=RESOLVE, kind="ledger", count=selected, basis=UPPER_BOUND, because=f":{fields[-1].name}()")
 
+
+    def _possible_raise(self) -> "str | None":
+        # most CSVPATHS rules are its functions' own POSITIONS, which match
+        # the finder (measured), so they are definite (_datatype_raise);
+        # these combinations are uncertain
+        names = [c.name for c in self._calls()]
+        if len(names) != len(set(names)):
+            return "a function repeated on name_one"
+        for i, name in enumerate(names):
+            if name in ("manifest", "definition") and i > 0:
+                return f"':{name}()' after other functions on name_one"
+        return None
 
     def _datatype_raise(self, ledger: list) -> "str | None":
         """CSVPATHS' own refusals: no worksheets, and every function only
@@ -49,6 +61,14 @@ class CsvpathsEstimator3(FilesEstimator3):
             CsvpathsReferenceFinder3._check_definition_field_has_no_version(self.reference.name_one)
         except Exception as e:
             return f"query: {e}"
+        three = self.reference.name_three
+        name_one = self.reference.name_one
+        is_chain = bool(name_one.functions) or not isinstance(self.reference.root_major, str)
+        calls = [c.name for c in self._calls()]
+        is_chain = is_chain or len(calls) > 1
+        # (a repeated function is uncertain instead: _possible_raise)
+        if three is not None and "definition" in calls and is_chain and len(calls) == len(set(calls)):
+            return "query: a ':definition()' chain, or one under '*', takes no name_three"
         if self.reference.name_three is not None and self.finder._bare_definition_field_call(self.reference.name_one):
             return "query: a definition field is not versioned, so it takes no name_three"
         for call in self._all_calls():
@@ -79,13 +99,14 @@ class CsvpathsEstimator3(FilesEstimator3):
             # a version is the group's manifest entry, already read
             return True
         # each selected statement rereads the group's manifest; under '*' it
-        # also relists the names and reads a second manifest
+        # also relists the names and reads more manifests (measured up to
+        # three per statement under a pattern root)
         statements = self._statements(three=three, selected=selected)
         if literal:
             self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=statements, basis=UPPER_BOUND, because=f".{three}")
             return True
         self._read(part=RESOLVE, kind="name_listing", count=statements, basis=UPPER_BOUND, because=f".{three}")
-        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=2 * statements, basis=UPPER_BOUND, because=f".{three}")
+        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=3 * statements, basis=UPPER_BOUND, because=f".{three}")
         return True
 
     def _statements(self, *, three, selected: int) -> int:

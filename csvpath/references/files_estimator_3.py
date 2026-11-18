@@ -174,7 +174,6 @@ class FilesEstimator3:
             self._read(part=QUERY, kind=self.MANIFEST_KIND, count=all_names, basis=UPPER_BOUND, because="the live index")
         # version traversal
         gates = [c for c in calls + three_calls if self._is_gate(c)]
-        windows = [c for c in calls + three_calls if self._is_window(c)]
         ledger_gates = [g for g in gates if self._is_ledger_field(g)]
         if ledger_gates:
             # a ledger field gate rereads the ledger per record, and builds
@@ -199,14 +198,13 @@ class FilesEstimator3:
         if "name" in self._path_function_names():
             # a ':name()' segment matches against the name's manifest again
             self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=n_names, basis=UPPER_BOUND, because=":name()")
-        versions = sum(by_name[n] for n in names)
         selected = self._selected(calls=calls + three_calls, names=names, by_name=by_name)
         fields = self._value_fields(calls + three_calls)
         definition_fields = [c for c in calls + three_calls if self._is_definition_field(c) and c.arg is None]
         if definition_fields:
             # a definition field after a version reads the definition; under
             # '*' it finds the name again first
-            self._read(part=RESOLVE, kind="definition", count=max(1, n_names), basis=UPPER_BOUND, because=f":{definition_fields[0].name}()")
+            self._read(part=RESOLVE, kind="definition", count=selected + n_names, basis=UPPER_BOUND, because=f":{definition_fields[0].name}()")
             if not literal:
                 self._read(part=RESOLVE, kind="name_listing", count=1, basis=UPPER_BOUND, because=f":{definition_fields[0].name}()")
                 self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=selected + all_names, basis=UPPER_BOUND, because=f":{definition_fields[0].name}()")
@@ -229,15 +227,11 @@ class FilesEstimator3:
             # a literal index selects one version at most
             selected = min(selected, 1)
         if selected > 1:
-            # a literal name_three (a range, a path's extension), a ':name()'
-            # match or a range narrows the versions in ways the ledger
-            # cannot see
-            literal_three = three is not None and three.body is not None
-            ranged = any(c.name in ("from", "to") for c in calls + three_calls)
-            named = "name" in self._path_function_names()
-            gated = bool(gates) or bool(windows) or versions == 0 or literal_three or ranged or named
-            message = f"resolve: {selected} version files at once (compendium 5.3)"
-            self.would_raise = f"may raise -- {message}" if gated else message
+            # whether several versions reach resolve depends on how the
+            # name's files are laid out (paths, registrations per path),
+            # which the ledger does not show: the same shape raises on one
+            # name and not another. So the 5.3 raise is always "may".
+            self.would_raise = f"may raise -- resolve: up to {selected} version files at once (compendium 5.3)"
         # one version file is read, after the name's manifest; a second one
         # raises (compendium 5.3)
         if literal:
@@ -312,8 +306,11 @@ class FilesEstimator3:
     # what the finder will refuse, from the reference alone
     #
     def _check_legality(self, ledger: list) -> None:
+        self._ledger_cache = ledger
         reason = self._definite_raise(ledger)
-        if reason is None and self.would_raise is None:
+        if reason is None and (self.would_raise is None or self.would_raise.startswith("may")):
+            # a structural "may" outranks a resolve-time one: it may raise
+            # before anything is read
             possible = self._possible_raise()
             reason = f"may raise -- {possible}" if possible is not None else None
         if reason is None:
@@ -345,8 +342,26 @@ class FilesEstimator3:
             except Exception as e:
                 return f"query: {e}"
         path_names = self._path_function_names()
-        if "definition" in path_names and any(c.name in POINTERS + ("from", "to") for c in self.reference.name_one.functions):
-            return "query: ':definition()' is not versioned, so it takes no pointer or range"
+        name_one = self.reference.name_one
+        chains = [[p.name for p in name_one.path if isinstance(p, FunctionCall3)] + [c.name for c in name_one.functions]]
+        if self.reference.name_three is not None:
+            chains.append([c.name for c in self.reference.name_three.functions])
+        for chain in chains:
+            if sum(chain.count(n) for n in ("from", "after")) > 1 or sum(chain.count(n) for n in ("to", "before")) > 1:
+                return "query: two range bounds in the same direction are not legal"
+            if sum(chain.count(n) for n in POINTERS) > 1:
+                return "query: at most one pointer function per chain"
+        if "definition" in path_names and any(c.name in POINTERS + ("from", "to", "all", "before", "after", "on") for c in self.reference.name_one.functions):
+            return "query: ':definition()' is not versioned, so it takes no pointer, range or date bound"
+        if "definition" in path_names:
+            # a ':definition()' chain reads definition.json: no manifest
+            # fields, no ':manifest()'
+            if "manifest" in path_names:
+                return "query: ':manifest()' is not supported in a ':definition()' chain"
+            for call in self.reference.name_one.functions:
+                cls = ReferenceFunctionFactory.get_registered_class(call.name)
+                if cls is not None and cls.SOURCE == "manifest" and getattr(cls, "BARE_SOURCE", None) != "definition":
+                    return f"query: ':{call.name}()' is not in a {self.NOUN[:-1]}'s definition.json"
         return self._datatype_raise(ledger)
 
     def _possible_raise(self) -> "str | None":
@@ -358,7 +373,40 @@ class FilesEstimator3:
                 continue
             if call.name not in self.NAME_ONE_GATES:
                 return f"':{call.name}(...)' on name_one; field functions usually go in name_three"
+        path_names = self._path_function_names()
+        names = [c.name for c in self._calls()]
+        if len(names) != len(set(names)):
+            return "a function repeated on name_one"
+        if any(self._is_window(c) for c in self._calls()):
+            return "a window on name_one; it usually goes in name_three"
+        if path_names[:1] == ["definition"]:
+            # a definition chain takes definition fields and filters
+            for call in self.reference.name_one.functions:
+                if not (self._is_definition_field(call) or call.name == "template"):
+                    return f"':{call.name}()' in a ':definition()' chain"
+            return None
+        if path_names[:1] == ["manifest"]:
+            return None
+        # the FILES finder refuses many combinations on name_one (about a
+        # dozen structural rules); the common legal ones are a single
+        # selector or gate, so anything more is uncertain
+        named = 1 if "name" in path_names else 0
+        if len(self._calls()) + named >= 2:
+            self._loose_shape()
+            return "several functions on name_one; the FILES finder takes only some combinations"
+        if self.reference.name_three is not None and any(
+            self._is_gate(c) or self._is_window(c) for c in self._calls()
+        ):
+            return "a name_one gate or window with a name_three; the FILES finder takes only some combinations"
         return None
+
+    def _loose_shape(self) -> None:
+        """an unusual shape: bound the reads it may make loosely, beyond
+        what its family estimate gave"""
+        n = max(1, len(self._names_in_play(self._versions_by_name(self._ledger_cache))))
+        for kind in ("name_listing", "definition", self.MANIFEST_KIND):
+            self._read(part=RESOLVE, kind=kind, count=n + 1, basis=UPPER_BOUND, because="an unusual shape")
+        self.why.append("an unusual shape: its reads are bounded loosely")
 
     def _datatype_raise(self, ledger: list) -> "str | None":
         """FILES' own refusals"""
@@ -373,8 +421,19 @@ class FilesEstimator3:
         three = self.reference.name_three
         functions = [c.name for c in self.reference.name_one.functions]
         selectors = POINTERS + ("all", "from", "to")
-        if "definition" in path_names and not isinstance(root, str) and (three is not None or set(functions) & set(selectors)):
-            return "query: ':definition()' does not combine with name_three or a chain during '*' traversal"
+        if "definition" in path_names and (three is not None or (not isinstance(root, str) and set(functions) & set(selectors))):
+            return "query: ':definition()' does not combine with name_three, or with a selector during '*' traversal"
+        all_names = path_names + functions
+        if three is not None and set(all_names) & set(POINTERS):
+            return "query: a name_one pointer takes no name_three; put the version-selecting function in name_three"
+        if three is not None and self.finder._bare_definition_field_call(self.reference.name_one) is not None:
+            return "query: a definition field is not versioned, so it takes no name_three"
+        if not set(path_names + functions) & {"manifest", "definition"}:
+            for call in self._calls():
+                cls = ReferenceFunctionFactory.get_registered_class(call.name)
+                if call in self._value_fields([call]) and self.DATATYPE in (cls.KEY or {}) and getattr(cls, "BARE_SOURCE", None) != "definition":
+                    return f"query: ':{call.name}()' is a field; name_one picks the file, name_three reads its fields"
+
         if path_names[:1] == ["manifest"] and three is not None:
             return "query: a ':manifest()' chain takes no name_three"
         if "flatten" in path_names and any(n in POINTERS + ("all",) for n in functions):
@@ -436,6 +495,9 @@ class FilesEstimator3:
 
     def _selected(self, *, calls: list, names: list, by_name: dict) -> int:
         call_names = [c.name for c in calls]
+        if "all" in call_names:
+            # ':all()' pools every version before any pointer narrows it
+            return sum(by_name[n] for n in names)
         if "flatten" in self._path_function_names() and any(n in POINTERS for n in call_names):
             return 1
         if any(n in POINTERS for n in call_names):

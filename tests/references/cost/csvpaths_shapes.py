@@ -126,4 +126,10 @@ SHAPES = [
     '$*.csvpaths.:manifest().0',
     '$:regex(/^v/).csvpaths.:manifest().0',
     '$validate_orders.csvpaths.:scripts().0',
+    # a reviewer's probes on #734
+    '$*.csvpaths.:definition().0',
+    '$*.csvpaths.:definition():template().0',
+    '$validate_orders.csvpaths.:definition():template().0',
+    '$:regex(/^v/).csvpaths.:all():uuid()',
+    '$:regex(/^v/).csvpaths.:all().:from(0)',
 ]
