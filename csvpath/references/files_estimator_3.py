@@ -102,7 +102,13 @@ class FilesEstimator3:
         source = self.finder.source
         if isinstance(source, SqlReferenceSource):
             return getattr(source, self.LEDGER_METHOD)() or []
-        return FilesystemReferenceSource.read_json(Nos(root).join("manifest.json")) or []
+        return (
+            FilesystemReferenceSource.read_json(
+                path=Nos(root).join("manifest.json"),
+                logger=self.finder.csvpaths.logger,
+            )
+            or []
+        )
 
     def _versions_by_name(self, ledger: list) -> dict:
         by_name = {}

@@ -4,7 +4,7 @@ import re
 from csvpath.util.file_readers import DataFileReader
 from csvpath.util.nos import Nos
 
-from ..reference_exceptions_3 import ReferenceException3
+from ..reference_exceptions_3 import ReferenceRuntimeException3
 from .reference_source import ReferenceSource
 
 
@@ -17,11 +17,13 @@ class FilesystemReferenceSource(ReferenceSource):
     EXTRA_DATA = "_extra_data"
 
     @staticmethod
-    def read_json(path: str):
+    def read_json(*, path: str, logger=None):
         """a parsed JSON file, or None if it does not exist. never writes,
         unlike helpers that create a missing file. A file that is not valid
         JSON raises, naming it; it raised a bare JSONDecodeError with no path
-        (reviewer on #649; fail fast)."""
+        (reviewer on #649; fail fast). The raise is a
+        ReferenceRuntimeException3, logged when a logger is given: the
+        reference is fine, the framework data is not (A19, decision D24)."""
         if path is None or path == "":
             raise ValueError("Path cannot be None or empty")
         if not Nos(path).exists():
@@ -30,7 +32,10 @@ class FilesystemReferenceSource(ReferenceSource):
             try:
                 return json.load(reader.source)
             except json.JSONDecodeError as e:
-                raise ReferenceException3(f"{path} is not valid JSON: {e}") from e
+                msg = f"{path} is not valid JSON: {e}"
+                if logger is not None:
+                    logger.error(msg)
+                raise ReferenceRuntimeException3(msg) from e
 
     #
     # FILES
@@ -84,15 +89,21 @@ class FilesystemReferenceSource(ReferenceSource):
         archive = self.csvpaths.config.get(section="results", name="archive")
         # read_json() names the file if it is not valid JSON (reviewer on
         # #653: this read raised a bare JSONDecodeError)
-        entries = self.read_json(Nos(archive).join(self.MANIFEST))
+        entries = self.read_json(
+            path=Nos(archive).join(self.MANIFEST), logger=self._logger
+        )
         if entries is None:
             return []
         return self._run_homes_from(
             entries=entries,
             root_major=root_major,
             name_filter=name_filter,
-            logger=getattr(self.csvpaths, "logger", None),
+            logger=self._logger,
         )
+
+    @property
+    def _logger(self):
+        return getattr(self.csvpaths, "logger", None)
 
     @staticmethod
     def _run_homes_from(
@@ -103,7 +114,8 @@ class FilesystemReferenceSource(ReferenceSource):
         source, which passes the same entries from its mirror. An entry with
         no uuid raises, logged when a logger is given: there should be none
         (David, 2026-10-31), as every FILES, CSVPATHS and RESULTS ledger read
-        checks (decisions D20, D21)."""
+        checks (decisions D20, D21). A ReferenceRuntimeException3, as for an
+        unparseable file (A19, decision D24)."""
         if entries is None or not isinstance(entries, list):
             raise TypeError("Entries must be a list")
         for entry in entries:
@@ -111,7 +123,7 @@ class FilesystemReferenceSource(ReferenceSource):
                 msg = f"A results ledger entry has no uuid: {entry}"
                 if logger is not None:
                     logger.error(msg)
-                raise ValueError(msg)
+                raise ReferenceRuntimeException3(msg)
         homes = []
         seen = set()
         for entry in entries:
@@ -128,11 +140,15 @@ class FilesystemReferenceSource(ReferenceSource):
 
     def run_manifest(self, run_dir: str) -> dict | None:
         self._check_name(run_dir, "Run dir")
-        return self.read_json(Nos(run_dir).join(self.MANIFEST))
+        return self.read_json(
+            path=Nos(run_dir).join(self.MANIFEST), logger=self._logger
+        )
 
     def instance_manifest(self, instance_dir: str) -> dict | None:
         self._check_name(instance_dir, "Instance dir")
-        return self.read_json(Nos(instance_dir).join(self.MANIFEST))
+        return self.read_json(
+            path=Nos(instance_dir).join(self.MANIFEST), logger=self._logger
+        )
 
     def instance_dirs(self, run_dir: str) -> list[str]:
         self._check_name(run_dir, "Run dir")

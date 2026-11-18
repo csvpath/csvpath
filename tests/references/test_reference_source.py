@@ -11,7 +11,10 @@ run, all under a module-scoped tmp dir.
 import pytest
 
 from csvpath import CsvPaths
-from csvpath.references.reference_exceptions_3 import ReferenceException3
+from csvpath.references.reference_exceptions_3 import (
+    ReferenceException3,
+    ReferenceRuntimeException3,
+)
 from csvpath.references.reference_finder_factory_3 import ReferenceFinderFactory3
 from csvpath.references.sources.filesystem_reference_source import (
     FilesystemReferenceSource,
@@ -93,12 +96,12 @@ def test_non_str_names_raise_type_error(source, method):
 
 def test_read_json_rejects_an_empty_path():
     with pytest.raises(ValueError):
-        FilesystemReferenceSource.read_json("")
+        FilesystemReferenceSource.read_json(path="")
 
 
 def test_read_json_missing_file_is_none_and_not_created(tmp_path):
     path = str(tmp_path / "manifest.json")
-    assert FilesystemReferenceSource.read_json(path) is None
+    assert FilesystemReferenceSource.read_json(path=path) is None
     assert not Nos(path).exists()
 
 
@@ -106,8 +109,34 @@ def test_read_json_invalid_json_raises_naming_the_file(tmp_path):
     # reviewer on #649: a bare JSONDecodeError with no path until 2026-11-15
     path = tmp_path / "errors.json"
     path.write_text("[{not json")
-    with pytest.raises(ReferenceException3, match="errors.json is not valid JSON"):
-        FilesystemReferenceSource.read_json(str(path))
+    with pytest.raises(ReferenceRuntimeException3, match="errors.json is not valid JSON"):
+        FilesystemReferenceSource.read_json(path=str(path))
+
+
+def test_read_json_invalid_json_is_logged_when_given_a_logger(tmp_path):
+    # A19: the static reader logged nothing before raising
+    class _Logger:
+        def __init__(self):
+            self.errors = []
+
+        def error(self, msg):
+            self.errors.append(msg)
+
+    logger = _Logger()
+    path = tmp_path / "manifest.json"
+    path.write_text("[{not json")
+    with pytest.raises(ReferenceRuntimeException3):
+        FilesystemReferenceSource.read_json(path=str(path), logger=logger)
+    assert len(logger.errors) == 1
+    assert "manifest.json is not valid JSON" in logger.errors[0]
+
+
+def test_read_json_raises_a_reference_exception(tmp_path):
+    # A19: a subclass, so a broad except ReferenceException3 still catches it
+    path = tmp_path / "manifest.json"
+    path.write_text("[{not json")
+    with pytest.raises(ReferenceException3):
+        FilesystemReferenceSource.read_json(path=str(path))
 
 
 # ===================
@@ -184,7 +213,7 @@ def test_run_homes_every_group_and_by_pattern(source, run_dir):
 
 def test_run_manifest(source, run_dir):
     m = source.run_manifest(run_dir)
-    assert m == FilesystemReferenceSource.read_json(Nos(run_dir).join("manifest.json"))
+    assert m == FilesystemReferenceSource.read_json(path=Nos(run_dir).join("manifest.json"))
     assert m["named_paths_name"] == "orders"
 
 
@@ -199,7 +228,7 @@ def test_instance_dirs(source, run_dir):
 def test_instance_manifest(source, run_dir):
     inst = Nos(run_dir).join("second")
     m = source.instance_manifest(inst)
-    assert m == FilesystemReferenceSource.read_json(Nos(inst).join("manifest.json"))
+    assert m == FilesystemReferenceSource.read_json(path=Nos(inst).join("manifest.json"))
     assert int(m["instance_index"]) == 1
 
 

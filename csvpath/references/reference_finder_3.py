@@ -1359,16 +1359,18 @@ class ReferenceFinder3(ABC):
             return self._read_well_known_file(path)
         return self._read_well_known_json(path)
 
-    @staticmethod
-    def _read_well_known_json(path: str):
+    def _read_well_known_json(self, path: str):
         """reads a well-known, JSON-shaped resource (results' errors.json/
         vars.json/meta.json) as a parsed Python structure -- None if it
         does not exist yet, same tolerant treatment as
         _read_well_known_file, just parsed rather than raw bytes (per
         the spec's own "Following a reference" section: resolving a
         reference gives bytes, if binary, or a string or JSON
-        structure -- these are the JSON-structure case)."""
-        return FilesystemReferenceSource.read_json(path)
+        structure -- these are the JSON-structure case). A file that is not
+        valid JSON raises a logged ReferenceRuntimeException3 (A19)."""
+        return FilesystemReferenceSource.read_json(
+            path=path, logger=getattr(self.csvpaths, "logger", None)
+        )
 
     @staticmethod
     def _find_manifest_entry_by_uuid(manifest: list, uuid: str) -> dict | None:

@@ -22,6 +22,7 @@ from csvpath import CsvPaths
 from csvpath.managers.integrations.sql.references_sql_check import (
     ReferencesSqlCheck,
 )
+from csvpath.references.reference_exceptions_3 import ReferenceRuntimeException3
 from csvpath.references.reference_finder_factory_3 import ReferenceFinderFactory3
 from csvpath.references.sources.filesystem_reference_source import (
     FilesystemReferenceSource,
@@ -206,6 +207,16 @@ def test_reads_come_from_sql(paths, tmp_path):
     assert _sql(paths).file_manifest("orders") == expected
     assert len(_sql(paths).files_ledger()) == 1
     assert len(_sql(paths).paths_ledger()) == 1
+
+
+def test_a_row_that_is_not_json_raises_naming_the_table(paths, tmp_path):
+    # A19: it raised a bare JSONDecodeError with no table
+    _register(paths, tmp_path)
+    _execute(paths, "update named_file set manifest_entry = '[{not json'")
+    with pytest.raises(
+        ReferenceRuntimeException3, match="manifest_entry in named_file is not valid JSON"
+    ):
+        _sql(paths).file_manifest("orders")
 
 
 # ===================
@@ -704,7 +715,7 @@ def test_run_homes_from_raises_for_an_entry_with_no_uuid():
         {"named_paths_name": "acme", "run_home": "/x/acme/r1", "uuid": "i1"},
         {"named_paths_name": "beta", "run_home": "/x/beta/r1"},
     ]
-    with pytest.raises(ValueError, match="results ledger entry has no uuid"):
+    with pytest.raises(ReferenceRuntimeException3, match="results ledger entry has no uuid"):
         FilesystemReferenceSource._run_homes_from(
             entries=entries, root_major="acme", name_filter=None, logger=logger
         )

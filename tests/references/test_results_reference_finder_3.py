@@ -4,7 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from csvpath.references.reference_exceptions_3 import ReferenceException3
+from csvpath.references.reference_exceptions_3 import (
+    ReferenceException3,
+    ReferenceRuntimeException3,
+)
 from csvpath.references.reference_parser_3 import ReferenceParser3
 from csvpath.references.results_reference_finder_3 import ResultsReferenceFinder3
 from csvpath.util.date_util import DateUtility as daut
@@ -6767,7 +6770,7 @@ class TestStarManifestSetRunRecords:
         }
         del entry[key]
         _write_json(tmp_path / "manifest.json", [entry])
-        with pytest.raises(ValueError):
+        with pytest.raises(ReferenceRuntimeException3):
             _finder("$*.results.:manifest()", str(tmp_path)).resolve()
 
     def test_run_record_field_value_rejects_bad_input(self, archive):
@@ -7123,7 +7126,7 @@ class TestStarManifestSetInstanceRecords:
             tmp_path / "manifest.json",
             [{"uuid": "u", "run_uuid": "r", "run_home": str(tmp_path / "x")}],
         )
-        with pytest.raises(ValueError, match="no identity"):
+        with pytest.raises(ReferenceRuntimeException3, match="no identity"):
             _finder("$*.results.:manifest().*:errors()", str(tmp_path)).query()
 
     # --- the run-dir branches are unchanged
@@ -8649,13 +8652,13 @@ class TestAnInvalidJsonFile:
         run = _make_run(tmp_path / "acme", "2026-01-01_00-00-00", "r1", {"s": "r1-s"})
         (Path(run) / "s" / "errors.json").write_text("[{not json")
         _write_archive_manifest(tmp_path, "acme", [run])
-        with pytest.raises(ReferenceException3, match="errors.json is not valid JSON"):
+        with pytest.raises(ReferenceRuntimeException3, match="errors.json is not valid JSON"):
             _finder("$acme.results.:last().s:errors()", str(tmp_path)).resolve()
 
     def test_an_invalid_archive_ledger_names_the_file(self, tmp_path):
         # reviewer on #653: run_homes() parsed the archive ledger itself
         (tmp_path / "manifest.json").write_text("[{not json")
-        with pytest.raises(ReferenceException3, match="manifest.json is not valid JSON"):
+        with pytest.raises(ReferenceRuntimeException3, match="manifest.json is not valid JSON"):
             _finder("$acme.results.:last()", str(tmp_path)).query()
 
 
@@ -8707,19 +8710,19 @@ class TestALedgerEntryWithNoUuid:
     @pytest.mark.parametrize("call", ["query", "resolve"])
     def test_a_ledger_read_raises_naming_the_entry(self, archive, reference, call):
         finder = _finder(reference, archive)
-        with pytest.raises(ValueError, match="results ledger entry has no uuid"):
+        with pytest.raises(ReferenceRuntimeException3, match="results ledger entry has no uuid"):
             getattr(finder, call)()
 
     def test_the_finder_logs_the_error(self, archive):
         finder = _finder('$acme.results.:lifecycle("active"):last()', archive)
-        with pytest.raises(ValueError):
+        with pytest.raises(ReferenceRuntimeException3):
             finder.query()
         assert any("has no uuid" in e for e in finder.csvpaths.logger.errors)
 
     def test_a_bare_ledger_set_raises_at_resolve(self, archive):
         # its query names the ledger only (uuid None); resolve reads it
         assert _finder("$*.results.:manifest()", archive).query().uuids == [None]
-        with pytest.raises(ValueError, match="results ledger entry has no uuid"):
+        with pytest.raises(ReferenceRuntimeException3, match="results ledger entry has no uuid"):
             _finder("$*.results.:manifest()", archive).resolve()
 
 
