@@ -1334,8 +1334,9 @@ without `:definition()`, in any order. `$acme.files.:on_arrival()`,
 `$acme.files.:on_arrival():definition()` are the same reference. `:template()`
 is the one field in both files: with no pointer it is the definition's
 default, and with a pointer it is that version's own template
-(`$acme.csvpaths.:last():template()`). `:definition()` is not versioned, so
-it takes no pointer. (David, 2026-11-18; this said `:definition()` was
+(`$acme.csvpaths.:last():template()`; in `files` the pointer is in
+name_three, `$acme.files.:flatten().:last():template()`). `:definition()`
+is not versioned, so a pointer in a `:definition()` chain raises. (David, 2026-11-18; this said `:definition()` was
 required, which the normative examples and the code never followed.)
 
 #### 6.19 Examples
@@ -1521,8 +1522,10 @@ written form decides. A time function followed by `/` is a template segment,
 its value naming a directory (as `orders/:year()` in 6.43): with a
 `:year/:run_dir` template, `$acme.results.:year()/*` is every run under the
 `2026/` directory. Alone, or followed by a chain, it is a time window over
-the runs' time: `$acme.results.:year():last()` is the last run made this
-year, whatever its template. In `csvpaths` a time function in name_one is
+the runs' time at that level: `$acme.results.:year():last()` is the last
+run made this year that has no template directory. To include every
+template level, flatten first: `$acme.results.:flatten():year():last()`, as
+the normative examples do. In `csvpaths` a time function in name_one is
 always a window over load time; a named-paths group has no directory levels.
 (David, 2026-11-18.)
 
