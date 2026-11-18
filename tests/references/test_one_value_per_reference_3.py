@@ -12,6 +12,7 @@ from csvpath.references.functions.reference_function_factory_3 import (
 )
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_finder_factory_3 import ReferenceFinderFactory3
+from csvpath.references.reference_results_3 import ReferenceResults3
 
 
 @pytest.fixture(scope="module")
@@ -64,6 +65,13 @@ def _check(reference: str, csvpaths) -> None:
         ("$acme.results.:today():last()", []),
         # a repeated field counts twice
         ("$orders.files.:all().:last():uuid():uuid()", ["uuid", "uuid"]),
+        # chain heads never count: the ledger set and an instance manifest
+        # are a legal pair (reviewer on #742)
+        ("$acme.results.:manifest():last().t:manifest()", []),
+        # a clock value is never the value: an illegal one keeps its own
+        # "not legal" error (reviewer on #742)
+        ("$acme.results.:last():completed():now()", ["completed"]),
+        ("$acme.results.:last():completed():day_name()", ["completed"]),
         # name_one and name_three together
         ("$acme.results.:last():completed().*:valid()", ["completed", "valid"]),
     ],
@@ -121,6 +129,18 @@ def test_the_message_gives_each_single_value_spelling(csvpaths):
     assert ":valid(), :completed()" in message
     assert "$acme.results.:last().s:completed()" in message
     assert "$acme.results.:last().s:valid()" in message
+
+
+def test_resolve_from_a_given_selection_checks_too(csvpaths):
+    # resolve_from(ReferenceResults3) skips query(); it checks first, and
+    # reads nothing (reviewer on #742)
+    finder = ReferenceFinderFactory3.for_reference(
+        reference="$acme.results.:last().s:valid():completed()", csvpaths=csvpaths
+    )
+    with pytest.raises(ReferenceException3, match="resolves to one value"):
+        finder.resolve_from(ReferenceResults3(results=[]))
+    with pytest.raises(ReferenceException3, match="resolves to one value"):
+        finder.resolve_each(ReferenceResults3(results=[]))
 
 
 def test_a_repeated_field_gives_one_spelling(csvpaths):

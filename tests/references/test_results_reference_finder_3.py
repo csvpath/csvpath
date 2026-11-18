@@ -7105,12 +7105,19 @@ class TestStarManifestSetInstanceRecords:
         with pytest.raises(ReferenceException3, match="more than one match"):
             _finder("$*.results.:manifest():last().*:errors()", archive).resolve()
 
-    def test_a_field_does_not_lift_the_one_file_rule_for_an_accessor(self, archive):
-        # an accessor and a field are two values: it raises at query now,
-        # before the one-file rule is reached at resolve
+    def test_an_accessor_and_a_field_are_two_values(self, archive):
+        # they raise at query now, before the one-file rule at resolve
         ref = "$*.results.:manifest():last().*:errors():error_count()"
         with pytest.raises(ReferenceException3, match="resolves to one value"):
             _finder(ref, archive).query()
+
+    def test_a_gate_does_not_lift_the_one_file_rule_for_an_accessor(self, archive):
+        # a gate is a filter, not a value, so the one-file rule is reached
+        # (reviewer on #742: the field form no longer gets there). s and t
+        # both pass the gate (0 and 2 errors): two errors.json files
+        ref = "$*.results.:manifest():last().*:errors():error_count(:below(5))"
+        with pytest.raises(ReferenceException3, match="more than one match"):
+            _finder(ref, archive).resolve()
 
     # --- raises
 
@@ -7872,7 +7879,7 @@ class TestRunDirNameThreeTwoFields:
         with pytest.raises(ReferenceException3):
             _finder(f"$widgets.results.:first(){reference}", runs).query()
 
-    def test_two_value_fields_raise_before_any_read(self, runs):
+    def test_two_value_fields_raise_with_no_warning(self, runs):
         # the raise is in query(), before anything is read; it was a warning
         # logged once per finder (2026-11-13, reviewer on #590)
         finder = _finder("$widgets.results.:first().checks:uuid():valid()", runs)

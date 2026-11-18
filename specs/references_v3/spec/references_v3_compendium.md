@@ -903,9 +903,10 @@ single-value spelling. The functions that provide a value are unargued
 fields, key-selecting fields (`:source_port("email")`, 6.40), and content
 accessors (`:errors()`, `:vars()`, `:readme()`, ...). A gate (an argued
 field) is a filter and provides no value (6.40); nor do pointers, ranges,
-selectors, clock values, or `:manifest()`/`:definition()` when a field
-follows and reads from them. The rule counts every segment of the
-reference, and a repeated function counts each time.
+selectors, clock values, or `:manifest()`/`:definition()`, which open a
+chain (a field after one reads from it; how they combine is governed by
+their own rules). The rule counts every segment of the reference, and a
+repeated function counts each time.
 
 For example, `$a.files.:name("orders.csv").:fingerprint():template()` raises:
 write `$a.files.:name("orders.csv").:fingerprint()` or

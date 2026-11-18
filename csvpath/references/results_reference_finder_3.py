@@ -3516,10 +3516,6 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 set_fields = self._find_field_function_calls(
                     built, self.ref.parsed.datatype
                 )
-            # last-wins (compendium 5.20b, added 2026-10-18) -- same
-            # reason as manifest_field_call's own identical change in
-            # _extract_data(). Instance call (not the class-qualified
-            # staticmethod this used to be), since _last_field_function_
             field_call = self._last_value_field_call(built)
             # every field accessor passes the dispatch below: the unargued
             # one supplies the value (two raise in query(), 5.20b), and

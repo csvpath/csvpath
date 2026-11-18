@@ -159,6 +159,8 @@ class ReferenceFinder3(ABC):
         so query() itself never raises for this -- only resolve()/
         resolve_from() (actually reading content) does.
         """
+        # a selection given as results skips query(); the check reads nothing
+        self._check_one_value(self.ref.parsed)
         if isinstance(selection, ReferenceResults3):
             results = selection
         else:
@@ -183,6 +185,7 @@ class ReferenceFinder3(ABC):
         The selection is used as given; it is not queried again."""
         if selection is None:
             raise ValueError("selection cannot be None")
+        self._check_one_value(self.ref.parsed)
         results = []
         for result in selection.results:
             results.extend(self.resolve_from(ReferenceResults3(results=[result])).results)
@@ -1255,7 +1258,12 @@ class ReferenceFinder3(ABC):
         (':source_port("email")'), or a content accessor (':errors()',
         ':vars()', ':readme()', ...). Not counted: a gate (an argued field
         is a filter, 6.40), a pointer, range or selector, a clock value, a
-        predicate (only ever an argument), or a chain head (CHAIN_HEADS).
+        predicate (only ever an argument), or a chain head (CHAIN_HEADS),
+        which opens a chain. Chain heads are never counted: one in name_one
+        and one in name_three is a legal shape
+        ('$*.results.:manifest():last().t:manifest()', the ledger set and
+        an instance manifest), and the other checks govern how they
+        combine (reviewer on #742).
         Functions nested in another's argument are not top-level and are
         not counted. Functions not registered for this datatype are left to
         the checks that reject them."""
@@ -1270,7 +1278,10 @@ class ReferenceFinder3(ABC):
             function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
             if function_cls is None or function_cls.ROLE != Function3.VALUE:
                 continue
-            if issubclass(function_cls, TimeWindowFunction3):
+            # a clock value is a time window or a path value, never the value
+            if function_cls.SOURCE == "clock" or issubclass(
+                function_cls, TimeWindowFunction3
+            ):
                 continue
             if reference.datatype not in function_cls.DATATYPES:
                 continue
