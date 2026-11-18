@@ -155,7 +155,7 @@ class CsvLineSpooler(LineSpooler):
         self._logger = logger
         self._delimiter = delimiter
         self._quotechar = quotechar
-        self._local = Nos(path).is_local
+        self._local_cache = None
         self._aprox_bytes = 0
 
     @property
@@ -168,6 +168,22 @@ class CsvLineSpooler(LineSpooler):
     def path(self, p: str) -> None:
         p = pathu.resep(p)
         self._path = p
+        self._local_cache = None
+
+    @property
+    def _local(self) -> bool:
+        #
+        # decided from the path once the path is known. it used to be set in
+        # __init__, where the path is usually still None, and Nos(None) is not
+        # local. so every local run took the remote estimate below, which
+        # counts the characters of str(line), not the bytes in data.csv.
+        #
+        if self._local_cache is None:
+            p = self.path
+            if p is None:
+                return False
+            self._local_cache = Nos(p).is_local
+        return self._local_cache
 
     @property
     def logger(self) -> logging.Logger:

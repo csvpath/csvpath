@@ -7,6 +7,8 @@ When you run a named-paths group in a `CsvPaths` instance you can collect matchi
 
 Be aware that `count_bytes()` makes no effort to flush to disk before getting the number of bytes from the OS. It will commonly give numbers that run behind the totally number of bytes that have been directed to be written.
 
+On the local backend the number is the size of `data.csv` on disk. Lines are written through a buffer, so a small file can read `0` on every line until the run ends and the file is closed. On other backends the number is an estimate based on the characters written.
+
 
 ## Examples
 
