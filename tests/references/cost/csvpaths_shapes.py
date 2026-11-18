@@ -152,4 +152,8 @@ SHAPES = [
     '$*.csvpaths.*.0',
     '$*.csvpaths.*.:uuid("x")',
     '$validate_orders.csvpaths.*.:first()',
+    # a reviewer's probes on #734
+    '$*.csvpaths.*:all()',
+    '$:regex(/^v/).csvpaths.*:all()',
+    '$validate_orders.csvpaths.*:all()',
 ]

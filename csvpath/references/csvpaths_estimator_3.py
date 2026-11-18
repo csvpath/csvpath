@@ -59,6 +59,8 @@ class CsvpathsEstimator3(FilesEstimator3):
         name_one = self.reference.name_one
         # a bare '*' is ':all()' (normative examples; finder tests)
         star = any(isinstance(p, Star3) for p in name_one.path)
+        if star and not isinstance(self.reference.root_major, str) and "all" in [c.name for c in name_one.functions]:
+            return "query: ':all()' does not combine with a '*' name_one during '*' traversal"
         if not star and not any(isinstance(p, FunctionCall3) for p in name_one.path) and not name_one.functions:
             return "query: CSVPATHS name_one is a version-selecting function chain, not a literal"
         if self.reference.name_three is not None and isinstance(self.reference.name_three.body, Star3):
