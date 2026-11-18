@@ -1328,8 +1328,17 @@ captured in the global files ledger manifest. To get a reference to the
 manifest as a whole, simply use `:manifest()` alone.
 
 Ledger and entity manifest files can be implicit in a reference, made obvious
-by the context. References to fields in `:definition()` must explicitly
-reference the source file using the `:definition()` function.
+by the context. So can `definition.json`: a definition field reads it with or
+without `:definition()`, in any order. `$acme.files.:on_arrival()`,
+`$acme.files.:definition():on_arrival()` and
+`$acme.files.:on_arrival():definition()` are the same reference. `:template()`
+is the one field in both files: with no pointer it is the definition's
+default, and with a pointer it is that version's own template
+(`$acme.csvpaths.:last():template()`; in `files` the pointer is in
+name_three, `$acme.files.:flatten().:last():template()`). `:definition()`
+is not versioned, so a pointer in a `:definition()` chain raises.
+(David, 2026-11-18; this said `:definition()` was required, which the
+normative examples and the code never followed.)
 
 #### 6.19 Examples
 
@@ -1365,11 +1374,11 @@ Run on `2026-01-04`, with `acme` versions arriving `2026-01-01` through
 - `$*.files.:manifest():yesterday():named_file_name()` - the name of each
   named-file with a registration on `2026-01-03`, from the ledger
 
-The following reference returns the arrival activation field value. Using
-`:definition()` to indicate where the `:on_arrival()` field is found is not
-optional because it is a `definition.json` field, not a `manifest.json`
-field.
+The following two references both return the arrival activation field
+value. `:on_arrival()` is a `definition.json` field, so `:definition()` is
+optional (6.18).
 `$acme.files.:definition():on_arrival()`
+`$acme.files.:on_arrival()`
 
 The following reference returns the definition JSON structure on `resolve()`
 if an arrival activation is found; otherwise, it returns None.
@@ -1508,6 +1517,18 @@ function is a path segment, stringified as above:
 `$acme.files.:yesterday()` is the file home `acme/2026-01-01`, and
 `$acme.files.:yesterday():last()` is the last registration in that home,
 whenever it arrived.
+
+In `results`, name_one holds both the template levels and the runs, so the
+written form decides. A time function followed by `/` is a template segment,
+its value naming a directory (as `orders/:year()` in 6.43): with a
+`:year/:run_dir` template, `$acme.results.:year()/*` is every run under the
+`2026/` directory. Alone, or followed by a chain, it is a time window over
+the runs' time at that level: `$acme.results.:year():last()` is the last
+run made this year that has no template directory. To include every
+template level, flatten first: `$acme.results.:flatten():year():last()`, as
+the normative examples do. In `csvpaths` a time function in name_one is
+always a window over load time; a named-paths group has no directory levels.
+(David, 2026-11-18.)
 
 ### Behavior of time components
 #### 6.27e
@@ -1821,7 +1842,8 @@ What a pointer or value resolves to depends on where it sits and how it is used:
 References are are as simple as we could make them without giving up value.
 They are not intended to give the maximum flexibility in extracting
 data. In the example above, `:errors(:idchain(...))`, the resulting value
-is one or more error dicts with `idchain` keys matching the given idchain.
+is one or more error dicts whose `source` key matches the given idchain
+(5.20).
 We don't allow more than one key to be specified and there's no way to do
 boolean predicates beyond what you see. In the usual case, if you need more
 specificity than a reference gives it is your job to go beyond the basic
