@@ -37,7 +37,7 @@ SHAPES = [
     "$orders.files.:flatten().:today()",
     "$orders.files.:flatten().:last():lifecycle()",
     "$*.files.:log()",
-    # a reviewer's probes on #734
+    # reviewers' probes on #734 and #736
     '$orders.files.orders/food.csv',
     '$orders.files.:flatten().:all()',
     '$*.files.:flatten().:all()',
@@ -153,7 +153,6 @@ SHAPES = [
     '$*.files.:sources(:has_value())',
     '$orders.files.:scripts(:has_value())',
     '$orders.files.:flatten().:last():sources()',
-    # a reviewer's probes on #734
     '$*.files.:definition().:last()',
     '$*.files.:definition().0',
     '$*.files.:definition().:all()',
@@ -188,7 +187,6 @@ SHAPES = [
     '$orders.files.:manifest():last().0',
     '$*.files.:definition(:sources(:has_value()))',
     '$orders.files.:flatten():last()',
-    # a reviewer's probes on #734
     '$orders.files.:all().:all()',
     '$orders.files.:all():all().:all()',
     '$orders.files.:definition(:template(:has_value())):all().:all()',
@@ -212,7 +210,6 @@ SHAPES = [
     '$*.files.:all().:last():sources()',
     '$acme_invoices.files.:all().:last():uuid()',
     '$acme_invoices.files.:all().:last():status()',
-    # a reviewer's probes on #734
     '$orders.files.:status("failed").:last()',
     '$*.files.:status("failed").:first()',
     '$:regex(/^o/).files.:lifecycle("active").:index(0)',

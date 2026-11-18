@@ -28,7 +28,7 @@ SHAPES = [
     f"{VO}.:first()",
     f"{VO}.:index(1):uuid()",
     "$*.csvpaths.:log()",
-    # a reviewer's probes on #734
+    # reviewers' probes on #734 and #736
     '$validate_orders.csvpaths.:first().:first()',
     '$validate_orders.csvpaths.:last().:all()',
     '$validate_orders.csvpaths.:last().:index(1)',
@@ -111,7 +111,6 @@ SHAPES = [
     '$validate_orders.csvpaths.:before("2020-01-01")',
     '$*.csvpaths.:after("2020-01-01"):last()',
     '$validate_orders.csvpaths.:last()#sheet1.x',
-    # a reviewer's probes on #734
     '$validate_orders.csvpaths.:definition().0',
     '$validate_orders.csvpaths.:definition().1',
     '$validate_orders.csvpaths.:definition().0-1',
@@ -126,13 +125,11 @@ SHAPES = [
     '$*.csvpaths.:manifest().0',
     '$:regex(/^v/).csvpaths.:manifest().0',
     '$validate_orders.csvpaths.:scripts().0',
-    # a reviewer's probes on #734
     '$*.csvpaths.:definition().0',
     '$*.csvpaths.:definition():template().0',
     '$validate_orders.csvpaths.:definition():template().0',
     '$:regex(/^v/).csvpaths.:all():uuid()',
     '$:regex(/^v/).csvpaths.:all().:from(0)',
-    # a reviewer's probes on #734
     '$validate_orders.csvpaths.:readme().0',
     '$*.csvpaths.:readme().:from(0)',
     '$*.csvpaths.:log().0',
@@ -143,7 +140,6 @@ SHAPES = [
     '$validate_orders.csvpaths.first',
     '$*.csvpaths.somefile.x',
     '$validate_orders.csvpaths.:last().*',
-    # a reviewer's probes on #734
     '$validate_orders.csvpaths.*',
     '$validate_orders.csvpaths.*.0',
     '$validate_orders.csvpaths.*.x',
@@ -152,7 +148,6 @@ SHAPES = [
     '$*.csvpaths.*.0',
     '$*.csvpaths.*.:uuid("x")',
     '$validate_orders.csvpaths.*.:first()',
-    # a reviewer's probes on #734
     '$*.csvpaths.*:all()',
     '$:regex(/^v/).csvpaths.*:all()',
     '$validate_orders.csvpaths.*:all()',
