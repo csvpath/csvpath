@@ -67,4 +67,12 @@ class In(MatchDecider):
                 else:
                     inf.append(v)
         ret = t in inf
+        if not ret and t is not None:
+            #
+            # Terms become strings above, so a number like line_number()
+            # never matched in(line_number(), 1, 2). compare as stripped
+            # strings when the direct comparison fails.
+            #
+            st = f"{t}".strip()
+            ret = st in [f"{_}".strip() for _ in inf if _ is not None]
         self.match = ret
