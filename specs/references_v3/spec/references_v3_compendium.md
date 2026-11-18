@@ -1336,8 +1336,9 @@ is the one field in both files: with no pointer it is the definition's
 default, and with a pointer it is that version's own template
 (`$acme.csvpaths.:last():template()`; in `files` the pointer is in
 name_three, `$acme.files.:flatten().:last():template()`). `:definition()`
-is not versioned, so a pointer in a `:definition()` chain raises. (David, 2026-11-18; this said `:definition()` was
-required, which the normative examples and the code never followed.)
+is not versioned, so a pointer in a `:definition()` chain raises.
+(David, 2026-11-18; this said `:definition()` was required, which the
+normative examples and the code never followed.)
 
 #### 6.19 Examples
 
