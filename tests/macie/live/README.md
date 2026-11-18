@@ -244,3 +244,35 @@ writes `~/macie-live/probe4/probe4_phones.csv` and
   - no custom identifiers, no allow lists.
 
 **Hand over** the job id once it shows **Complete**.
+
+## 9. The sixth probe (2026-11-17): headers (#479)
+
+How does Macie read a CSV whose first line is not the header? Our runs
+take the first line as the header, so a file with no header, or with a
+title line first, loses every finding that depends on a header keyword,
+silently (pair 01's data: 8 findings, 3 without a header or after a title
+line). If Macie reads such files the same way, we match it and add a
+warning; if it reads them better, we add a way to say where the header
+is.
+
+```
+poetry run python tests/macie/live/make_probe_files.py ~/macie-live 5
+```
+
+writes `~/macie-live/probe5/`: the same rows three ways,
+`header_normal.csv` (a header), `header_none.csv` (no header) and
+`header_title.csv` (a title line, then the header). Two SSNs are found
+only through the `ssn` header; one through `ssn` in its own cell, the
+control. Do not upload `~/macie-live/expected_probe5.json`.
+
+**Set up (David):**
+
+- upload the three files in `probe5/` under `probe5/` in the same
+  bucket (check they are there before creating the job);
+- create one one-time job, **`csvpath-probe-5`**:
+  - object criterion: key prefix `probe5/`;
+  - managed data identifiers **Custom**, *include*
+    `USA_SOCIAL_SECURITY_NUMBER`;
+  - no custom identifiers, no allow lists.
+
+**Hand over** the job id once it shows **Complete**.
