@@ -3,8 +3,9 @@
 
 Uses the Python string formatting mini language.
 
-E.g. to format a float to having two decimal places use a format
-argument of “:.2f”
+The format argument is a format spec alone, with no braces and no
+leading colon. For example, to format a float to two decimal places:
+format(3.14159, ".2f") gives "3.14".
 
 | Data signatures                                                                                   |
 |:--------------------------------------------------------------------------------------------------|
