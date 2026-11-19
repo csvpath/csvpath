@@ -59,8 +59,28 @@ def _chains_of(*, match: str, name: str) -> list:
         ),
         # inner not is child 0 of the outer not: was not[1].not[1]
         ('yes() not(not(add("five", 1)))', "add", ["not[1].not[0].add[0]"]),
-        # an Equality inside a function: add is position 1 of the ==
-        ('yes() not(@a == add("five", 1))', "add", ["not[1].add[1]"]),
+        # a comparison inside a function shows as eq: add is position 1 of
+        # the ==, which is position 0 of not
+        ('yes() not(@a == add("five", 1))', "add", ["not[1].eq[0].add[1]"]),
+        # two comparisons as arguments: was or[0].add[0] twice
+        (
+            'or(add("five", 1) == 1, add("five", 1) == 1)',
+            "add",
+            ["or[0].eq[0].add[0]", "or[0].eq[1].add[0]"],
+        ),
+        ('yes() not(add("five", 1) == 1)', "add", ["not[1].eq[0].add[0]"]),
+        # both sides of one comparison
+        (
+            'or(add("five", 1) == add("five", 1))',
+            "add",
+            ["or[0].eq[0].add[0]", "or[0].eq[0].add[1]"],
+        ),
+        # a comma list of arguments does not show
+        (
+            'concat("a", add("five", 1), add("five", 1))',
+            "add",
+            ["concat[0].add[1]", "concat[0].add[2]"],
+        ),
         # top named component under an assignment, child below it
         (
             '@r = not(add("five", 1)) @s = not(add("five", 1))',
@@ -71,6 +91,20 @@ def _chains_of(*, match: str, name: str) -> list:
 )
 def test_idchain(match, name, expected):
     assert _chains_of(match=match, name=name) == expected
+
+
+@pytest.mark.parametrize(
+    "match,expected",
+    [
+        # a name qualifier stands in for the name, with its index: was a, a
+        ('@r = add.a("five", 1) @s = add.a("five", 1)', ["a[0]", "a[1]"]),
+        ('yes() @r = add.a("five", 1)', ["a[1]"]),
+        ('or(add.a("five", 1), add.a("five", 1))', ["or[0].a[0]", "or[0].a[1]"]),
+        ('@r = add.a("five", 1) @s = add.b("five", 1)', ["a[0]", "b[1]"]),
+    ],
+)
+def test_idchain_qualified_name(match, expected):
+    assert _chains_of(match=match, name="add") == expected
 
 
 def test_idchain_unchanged_deep_chain():
@@ -84,21 +118,24 @@ def test_idchains_are_unique_per_component():
     match = (
         '@r = add("five", 1) @s = add("five", 1) '
         'or(not(add("five", 1)), not(add("five", 1))) '
-        'add("five", 1) == 3'
+        'add("five", 1) == 3 '
+        'or(add("five", 1) == 1, add("five", 1) == 1) '
+        '@t = add.a("five", 1) @u = add.a("five", 1)'
     )
     chains = _chains_of(match=match, name="add")
-    assert len(chains) == 5
-    assert len(set(chains)) == 5
+    assert len(chains) == 9
+    assert len(set(chains)) == 9
 
 
 @pytest.mark.parametrize(
-    "match",
+    "match,sources",
     [
-        '@r = add("five", 1) @s = add("five", 1)',
-        'add("five", 1) == 3  add("five", 1) == 3',
+        ('@r = add("five", 1) @s = add("five", 1)', ["add[0]", "add[1]"]),
+        ('add("five", 1) == 3  add("five", 1) == 3', ["add[0]", "add[1]"]),
+        ('@r = add.a("five", 1) @s = add.a("five", 1)', ["a[0]", "a[1]"]),
     ],
 )
-def test_same_error_from_two_components_collects_twice(match):
+def test_same_error_from_two_components_collects_twice(match, sources):
     # #770: the second add's error was dropped as a duplicate of the first,
     # then its calculation ran and left an unrelated "can only concatenate"
     # error in its place
@@ -106,7 +143,7 @@ def test_same_error_from_two_components_collects_twice(match):
     path.config.add_to_config("errors", "csvpath", "collect")
     path.parse(f"${PATH}[1][ {match} ]")
     path.fast_forward()
-    assert [e.source for e in path.errors] == ["add[0]", "add[1]"]
+    assert [e.source for e in path.errors] == sources
     msgs = [e.message for e in path.errors]
     assert msgs[0] == msgs[1]
     assert msgs[0].startswith("add requires one of")

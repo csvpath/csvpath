@@ -588,12 +588,25 @@ class ExpressionUtility:
     def name_or_class(cls, thing, show_eq_and_exp=False, index=None):
         ret = None
         if not show_eq_and_exp and f"{type(thing)}".find("Equality") > -1:
-            ret = ""
+            #
+            # a comparison inside a function shows as eq, so that two of
+            # them as arguments have different chains: or(a == 1, b == 1)
+            # has or[0].eq[0] and or[0].eq[1]. a comma list, and a top
+            # level Equality like @x = ..., do not show.
+            #
+            if cls._is_inner_comparison(thing):
+                ret = f"eq{index if index is not None else cls._position(thing)}"
+            else:
+                ret = ""
         elif not show_eq_and_exp and f"{type(thing)}".find("Expression") > -1:
             ret = ""
         elif thing.first_non_term_qualifier() is not None:
+            #
+            # a name qualifier stands in for the component's name, with its
+            # index like any other name: add.a(..) is a[0], not a
+            #
             q = thing.first_non_term_qualifier()
-            ret = q
+            ret = f"{q}{index if index is not None else cls._position(thing)}"
         elif not hasattr(thing, "name"):
             ret = cls.simple_class_name(thing)
         elif f"{type(thing)}".find("Term") != -1:
@@ -607,6 +620,19 @@ class ExpressionUtility:
                 i = thing.parent.children.index(thing)
                 ret = f"{thing.name}[{i}]"
         return ret
+
+    @classmethod
+    def _position(cls, thing) -> str:
+        return f"[{thing.parent.children.index(thing)}]"
+
+    @classmethod
+    def _is_inner_comparison(cls, thing) -> bool:
+        if getattr(thing, "op", None) == ",":
+            return False
+        p = thing.parent
+        if p is None:
+            return False
+        return f"{type(p)}".find("Expression") == -1
 
     @classmethod
     def simple_class_name(cls, thing):
