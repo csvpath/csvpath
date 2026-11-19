@@ -83,10 +83,30 @@ def test_count_under_an_assignment_is_the_source():
     assert "unhashable" in path.errors[0].message
 
 
+@pytest.mark.parametrize(
+    "match,source",
+    [
+        # nested in a function that set itself as the current child on the
+        # way in: was add[0] and not[0]
+        ("@r = add(increment(yes(), 0), 1)", "add[0].increment[0]"),
+        ("@r = not(increment(yes(), 0))", "not[0].increment[0]"),
+        ("not(increment(yes(), 0))", "not[0].increment[0]"),
+        ('push("s", "a") @r = add(count(@s), 1)', "add[1].count[0]"),
+    ],
+)
+def test_a_nested_override_is_the_source(match, source):
+    path, _, _, _ = _run(policy="collect", match=match)
+    assert [e.source for e in path.errors] == [source]
+
+
 def test_an_error_below_count_keeps_its_own_source():
     # gt raised, so gt is the source, not count
     path, _, _, _ = _run(policy="collect", match='@x = count(gt("1,000", 9999))')
     assert [e.source for e in path.errors] == ["count[0].gt[0]"]
+    path, _, _, _ = _run(
+        policy="collect", match='@r = add(count(gt("1,000", 9999)), 1)'
+    )
+    assert [e.source for e in path.errors] == ["add[0].count[0].gt[0]"]
 
 
 @pytest.mark.parametrize(
