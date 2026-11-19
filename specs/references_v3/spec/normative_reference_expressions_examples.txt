@@ -15,14 +15,20 @@ Reference expressions combine references using three set operations:
 
 ### What changes from yesterday seem to have had a negative impact on overnight runs?
 Specifically, do:
-- a) find the identities of all csvpaths in named-paths groups loaded in the past 24 hours
-- b) find the identities of all csvpaths statement emitting errors in runs starting 16 hours ago
-- take the intersection of a and b to find the possible negative impact named-paths group changes
+- a) find the named-paths group versions loaded since yesterday
+- b) find the named-paths group versions that ran with errors since yesterday
+- take the intersection of a and b to find the possible negative impact of named-paths group changes
 
+The two sides meet on the version uuid: a csvpaths version's `:uuid()` is what a
+run records as its `:named_paths_uuid()`. (Revised 2026-11-19: it used `:hours()`,
+which does not exist, and `:identity()`, a results field. Statement identities cannot
+be the join key here: in csvpaths they are a list per version,
+`:named_paths_identities()`. And `:identity():has_errors()` supplied two values,
+which raises (5.20b); `:has_errors(:true())` is a filter.)
 
-$*.csvpaths.:from(:hours(-24)).*:identity()
+$*.csvpaths.:from(:yesterday()):uuid()
 INTERSECT
-$*.results.:flatten():from(:hours(-16)).*:identity():has_errors()
+$*.results.:flatten():from(:yesterday()):has_errors(:true()):named_paths_uuid()
 
 
 

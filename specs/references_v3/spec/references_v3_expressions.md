@@ -42,7 +42,7 @@ exp.set("identities", ids = ["my_validations", "new_validations"])
 #
 # fails is on left, changes on right
 #
-fails = exp.results_refrence("$*.csvpaths.:flatten():from(:yesterday()).:identity(@identities)):has_errors():named_paths_uuid()")
+fails = exp.results_refrence("$*.results.:flatten():from(:yesterday()).:identity(@identities):has_errors(:true()):named_paths_uuid()")
 changes = exp.csvpaths_reference("$*.csvpaths.:all():having(:identity(@identities))")
 #
 # get the reference results of executing the expression
