@@ -37,18 +37,11 @@ grown substantially since, with new worked examples for this week's
     `general`") -- STILL genuinely unbuilt, re-confirmed live 2026-10-
     18: `:choice()` is not a registered function at all (raises
     "Does not yet support :choice() as a name_one path segment").
-  - `$acme.results.*/2025:first():type("csv").invoices` ("`invoices`
-    from 1st run w/2-level template ... w/source data CSV") -- STILL
-    genuinely unbuilt, re-confirmed live 2026-10-18, but the REASON has
-    changed: `:type()` is now a real, registered function (built this
-    week for FILES -- the file extension of a registered named-file
-    version), but it is FILES-ONLY (`Type3.DATATYPES = (Reference3.
-    FILES,)`) -- raises "`:type()` is not legal at name_one for
-    results." This specific worked example wants something
-    conceptually different at RESULTS scope (whether the RUN's own
-    SOURCE data was a csv) -- a real, confirmed gap worth flagging to
-    David, not just a stale doc note; no RESULTS-scope "source data
-    type" field/function exists anywhere in the registry today.
+  - `$acme.results.*/2025:first():type("csv").invoices` -- `:type()` is
+    FILES only, so it raised. David, 2026-11-19: the example now reads
+    `$acme.results.*/2025/:first():status("complete").invoices` (the
+    first complete run), and NRE's `:type("parquet")` example became
+    `:valid(:false())`.
 
 The `.:all():data()` example (which raised, since Rule 1 forbids combining
 ':all()' with any content accessor) was removed from the doc entirely; no

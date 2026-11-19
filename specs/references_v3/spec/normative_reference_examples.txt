@@ -654,9 +654,9 @@ $acme.results.:regex(/^M.*/)/2025/:first().invoices
 or `general`
 $acme.results.:choice("acme|star|general")/2025/:first().invoices
 
-#### `invoices` from 1st run w/2-level template ending with `2025/:run_dir` where the file home
-ends in a .csv extension (or in some other future way was judged to be a csv file).
-$acme.results.*/2025/:first():type("csv").invoices
+#### `invoices` from the 1st complete run w/2-level template ending with `2025/:run_dir`
+(`:status()` filters the runs, then the pointer picks; `:type()` is not a results function)
+$acme.results.*/2025/:first():status("complete").invoices
 
 #### Two ways to get manifest of first run with 1-level template `customers/:run_dir`
 $acme.results.customers/:manifest():first()
@@ -734,10 +734,10 @@ $acme.results.:name(@myname)/2025/:first().invoices:file("report.txt")
 first run with a 2-level template ending in `2025/:run_dir`
 $acme.results.*/2025/:first().invoices:file("report.txt")
 
-#### all parquet files output of all of the csvpath statements in the last three runs with a
-1-level template `customers/:run_dir`. Parquet files (ending in .parquet) are created with
-the `parquet()` function.
-$acme.results.customers/:from(:index(-3)).*:type("parquet")
+#### every csvpath statement instance that was not valid in the last three runs with a
+1-level template `customers/:run_dir` (was `:type("parquet")`, the parquet outputs;
+`:type()` is not a results function)
+$acme.results.customers/:from(:index(-3)).*:valid(:false())
 
 #### Get a printouts file named for its stream
 Given the csvpath
