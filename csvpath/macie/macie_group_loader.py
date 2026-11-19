@@ -68,7 +68,9 @@ class MacieGroupLoader:
         catalog = ProjectRulesbase.catalog(config=config, refresh_reference=True)
         converter = MacieConverter(wrapper=wrapper, catalog=catalog)
         conversion = converter.convert(
-            name=cls.name_for(wrapper=wrapper, path=path), **cls.limits(config=config)
+            name=cls.name_for(wrapper=wrapper, path=path),
+            collect=cls.collect(config=config),
+            **cls.limits(config=config),
         )
         source = wrapper["source"]
         report = {
@@ -364,6 +366,22 @@ class MacieGroupLoader:
                 )
             out[key] = i
         return out
+
+    @classmethod
+    def collect(cls, *, config) -> str:
+        """config.ini [macie] collect: findings, the default, or clean"""
+        v = None
+        if config is not None:
+            v = config.get(section=cls.SECTION, name="collect", default=None)
+        if v is None or f"{v}".strip() == "":
+            return MacieConverter.FINDINGS
+        v = f"{v}".strip()
+        if v not in MacieConverter.COLLECT:
+            raise MacieException(
+                f"config.ini [macie] collect must be one of "
+                f"{', '.join(MacieConverter.COLLECT)}, not {v!r}"
+            )
+        return v
 
     @classmethod
     def refuse_shared_ids(cls, *, group: str, paths: list[tuple[str, dict]]) -> None:

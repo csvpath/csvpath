@@ -130,6 +130,44 @@ the group is loaded:
 
   and the findings document has `"stopped": true` and the line.
 
+## Clean lines
+
+A Macie csvpath collects the lines with findings. With
+`[macie] collect = clean` it collects the clean lines instead, those
+with no findings, so a csvpath after it in the group with
+`source-mode: preceding` reads only those. One use is passing on what is
+safe to a less trusted stage, with the findings as the record of what
+was held back. The findings, errors and printouts are the same in both
+modes.
+
+The setting is read when the group is loaded, like the limits. The
+loaded csvpath has `return-mode: no-matches` and `macie-collect: clean`
+in its metadata.
+
+**Clean means clean of the identifiers translated.** `NAME`, `ADDRESS`
+and any other identifier without a stand-in are not checked, and the run
+says which:
+
+```
+macie: clean lines are checked for 7 identifiers; not checked: NAME
+```
+
+**A tripped breaker fails the run.** The lines after the stop are never
+scanned, so they are not among the clean lines, and a csvpath reading
+them would get a short file. In clean mode the run is invalid, and
+the run says so:
+
+```
+macie: breaker tripped at line 4; lines after it were not scanned and are not among the clean lines
+```
+
+The Macie csvpath also calls `stop_all()`. A breadth-first run (the
+`_by_line` methods) or `next_paths()` then stops its other csvpaths at
+that line. `collect_paths()` does not honor `stop_all()`, so there the
+csvpaths after it still run, on the short file, and the invalid run is
+the signal. In findings mode a tripped breaker leaves the run valid, as
+before.
+
 ## The Jev review
 
 With `[macie] review` on, each reviewed detection gains a `review` list and

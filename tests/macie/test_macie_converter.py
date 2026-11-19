@@ -200,6 +200,38 @@ def test_macie_converter_bad_limits(args: dict) -> None:
         MacieConverter(wrapper=_job()).convert(**args)
 
 
+def test_macie_converter_collects_findings_by_default() -> None:
+    md = _metadata(MacieConverter(wrapper=_job()).convert().csvpath)
+    assert "return-mode" not in md
+    assert "macie-collect" not in md
+
+
+def test_macie_converter_collects_clean_lines() -> None:
+    #
+    # specs/macie/clean-lines-design.md: the lines not matched are the
+    # clean lines; NAME is in the wrapper and not translated, so not checked
+    #
+    md = _metadata(MacieConverter(wrapper=_job()).convert(collect="clean").csvpath)
+    assert md["return-mode"] == "no-matches"
+    assert md["macie-collect"] == "clean"
+    assert md["macie-not-checked"] == "NAME"
+
+
+def test_macie_converter_clean_lines_all_checked() -> None:
+    md = _metadata(
+        MacieConverter(wrapper=_handcrafted())
+        .convert(name="x", collect="clean")
+        .csvpath
+    )
+    assert md["macie-not-checked"] == "none"
+
+
+@pytest.mark.parametrize("collect", ["", "Clean", "matches", None, 1])
+def test_macie_converter_bad_collect(collect) -> None:
+    with pytest.raises(ValueError):
+        MacieConverter(wrapper=_job()).convert(collect=collect)
+
+
 # =============
 # body
 # =============

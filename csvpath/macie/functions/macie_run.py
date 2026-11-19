@@ -32,6 +32,13 @@ class MacieRun:
         "macie: standalone run, not a reproducible record; run in a named-paths "
         "group for an auditable one"
     )
+    CLEAN_TRIPPED = (
+        "macie: breaker tripped at line {line}; lines after it were not scanned "
+        "and are not among the clean lines"
+    )
+    CLEAN_CHECKED = (
+        "macie: clean lines are checked for {n} identifiers; not checked: {not_checked}"
+    )
     MAX_FINDINGS = 10000
     MAX_DETAIL = 15
     #
@@ -71,6 +78,14 @@ class MacieRun:
         leaves no copy of its inputs, so it is not a reproducible record"""
         csvpath = self.matcher.csvpath
         return csvpath.csvpaths is None or csvpath.named_paths_name is None
+
+    @property
+    def clean(self) -> bool:
+        """the csvpath collects the clean lines, those without findings
+        (specs/macie/clean-lines-design.md)"""
+        metadata = self.matcher.csvpath.metadata
+        v = metadata.get("macie-collect") if metadata else None
+        return v is not None and f"{v}".strip() == "clean"
 
     @property
     def catalog(self) -> ManagedCatalog:
@@ -280,7 +295,21 @@ class MacieRun:
             # never run. we report here instead.
             #
             self.report(source=source)
+            if self.clean:
+                self._clean_tripped(line=line)
             self.matcher.csvpath.stop()
+
+    def _clean_tripped(self, *, line: int) -> None:
+        """the lines after the trip are never scanned, so they are not
+        collected: a csvpath reading the clean lines would get a short
+        file. That fails the run, loudly, and in a run that honors
+        stop_all() (breadth-first and next_paths()), stops the other
+        csvpaths at this line"""
+        csvpath = self.matcher.csvpath
+        csvpath.is_valid = False
+        csvpath.print_to(self.PRINTER, self.CLEAN_TRIPPED.format(line=line))
+        if csvpath.csvpaths is not None:
+            csvpath.csvpaths.stop_all()
 
     def report(self, *, source=None) -> None:
         """prints the summary and stores the findings in the macie_findings
@@ -308,6 +337,15 @@ class MacieRun:
                 )
             findings = MacieReview.attach(findings=findings, result=result)
             MacieReview.record(csvpath=csvpath, result=result)
+        if self.clean:
+            v = csvpath.metadata.get("macie-not-checked")
+            csvpath.print_to(
+                self.PRINTER,
+                self.CLEAN_CHECKED.format(
+                    n=len(self.tally.tallies),
+                    not_checked="none" if v is None else f"{v}".strip(),
+                ),
+            )
         if self.standalone:
             csvpath.print_to(self.PRINTER, self.STANDALONE)
         csvpath.set_variable(self.VARIABLE, value=findings)
