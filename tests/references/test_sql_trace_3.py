@@ -262,3 +262,98 @@ def test_the_log_switch_can_be_turned_on_while_running(paths):
         assert len(logged) == count
     finally:
         paths.logger.info = real_info
+
+
+# ===================
+# totals through the finders (reviewer on #775)
+# ===================
+
+
+def _log(paths):
+    logged = []
+    paths.logger.info = lambda msg, *args: logged.append(msg % args if args else msg)
+    paths.config.add_to_config("references", "sql_trace", "on")
+    return logged
+
+
+def _totals(logged):
+    return [line for line in logged if " total: " in line]
+
+
+@pytest.mark.parametrize(
+    "reference", ['$*.files.:manifest():type("csv")', "$orders.csvpaths.:all()"]
+)
+def test_resolve_each_logs_one_total(paths, reference):
+    # FILES overrides resolve_each(); it logged one growing total per result
+    sqlt._mode(paths, "on")
+    logged = _log(paths)
+    finder = _finder(paths, reference)
+    selection = finder.query()
+    finder.resolve_each(selection)
+    assert len(_totals(logged)) == 1
+
+
+def test_a_second_resolve_from_starts_its_total_at_zero(paths):
+    sqlt._mode(paths, "on")
+    logged = _log(paths)
+    finder = _finder(paths, '$*.files.:manifest():type("csv")')
+    selection = finder.query()
+    finder.resolve_from(selection)
+    finder.resolve_from(selection)
+    first, second = _totals(logged)
+    # the first total includes the query's reads; the second only resolve's
+    assert first != second
+    with finder.capture_sql() as trace:
+        finder.resolve_from(selection)
+    # the same reads as a fresh capture of one resolve_from (timings vary)
+    assert second.split(" rows, ")[0].endswith(trace.summary().split(" rows, ")[0])
+
+
+def test_an_estimate_is_traced_and_totalled(paths):
+    sqlt._mode(paths, "on")
+    logged = _log(paths)
+    finder = _finder(paths, "$orders.files.:last()")
+    with finder.capture_sql() as trace:
+        finder.estimate()
+    assert trace.statements
+    assert {s.phase for s in trace.statements} == {"estimate"}
+    assert len(_totals(logged)) == 1
+
+
+def test_a_read_after_a_total_is_not_tagged_with_the_last_reference(paths):
+    sqlt._mode(paths, "on")
+    finder = _finder(paths, "$orders.files.:last()")
+    finder.resolve()
+    with finder.capture_sql() as trace:
+        finder.source.files_ledger()
+    assert [(s.reference, s.phase) for s in trace.statements] == [(None, None)]
+
+
+def test_an_expression_captures_both_sides(paths):
+    from csvpath.references.reference_expression_3 import ReferenceExpression3
+
+    sqlt._mode(paths, "on")
+    logged = _log(paths)
+    expression = ReferenceExpression3.from_string(
+        expression="$orders.files.:first() UNION $orders.files.:last()", csvpaths=paths
+    )
+    with expression.capture_sql() as trace:
+        expression.resolve()
+    assert {s.reference for s in trace.statements} == {
+        "$orders.files.:first()",
+        "$orders.files.:last()",
+    }
+    # one total per side, none for the whole expression
+    assert len(_totals(logged)) == 2
+
+
+def test_an_expression_with_sql_off_captures_nothing(paths):
+    from csvpath.references.reference_expression_3 import ReferenceExpression3
+
+    sqlt._mode(paths, "off")
+    expression = ReferenceExpression3.from_string(
+        expression="$orders.files.:first() UNION $orders.files.:last()", csvpaths=paths
+    )
+    with expression.capture_sql() as trace:
+        expression.resolve()
+    assert trace.statements == []

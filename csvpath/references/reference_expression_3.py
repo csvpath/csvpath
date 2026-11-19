@@ -1,4 +1,5 @@
 import logging
+from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 from .functions.function_3 import Function3
@@ -8,6 +9,7 @@ from .reference_expression_parser_3 import ReferenceExpressionParser3
 from .reference_finder_factory_3 import ReferenceFinderFactory3
 from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResults3
+from .sources.sql_trace import SqlTrace
 
 if TYPE_CHECKING:
     from .reference_estimate_3 import ExpressionEstimate3, ReferenceEstimate3
@@ -211,6 +213,20 @@ class ReferenceExpression3:
     def right(self) -> "str | ReferenceExpression3":
         return self._right
 
+    @contextmanager
+    def capture_sql(self):
+        """the SQL this expression's sides run while the block is open, as
+        a SqlTrace, as ReferenceFinder3.capture_sql() gives for one
+        reference. Each side logs its own total; there is no total for the
+        whole expression. Empty when [references] sql is off."""
+        source = getattr(self._csvpaths, "reference_source", None)
+        tracing = getattr(source, "sql_tracing", None)
+        if tracing is None:
+            yield SqlTrace()
+            return
+        with tracing.capture() as trace:
+            yield trace
+
     def estimate(self) -> "ExpressionEstimate3":
         """the cost estimate: one ReferenceEstimate3 per side, or an
         ExpressionEstimate3 for a sub-expression (references_v3_cost_
@@ -290,6 +306,8 @@ class ReferenceExpression3:
             # resolved, so no content is read (expressions spec, "paths vs.
             # values sides": ".data is None"; David, 2026-11-16, RC triage
             # B2). It resolved every item, reading each version's bytes.
+            # Queried only, so its SQL trace total is logged here.
+            finder._trace_total()
             return selection
         # a values side is resolved one result at a time: each item keeps
         # its own data, as the expressions spec's architecture notes say,

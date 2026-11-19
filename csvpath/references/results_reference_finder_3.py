@@ -3997,7 +3997,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         self._trace_phase("estimate")
         from .results_estimator_3 import ResultsEstimator3
 
-        return ResultsEstimator3(finder=self).estimate()
+        estimate = ResultsEstimator3(finder=self).estimate()
+        self._trace_total()
+        return estimate
 
     def resolve_from(self, selection: ReferenceResults3 | list) -> ReferenceResults3:
         # instance manifests are read once per resolve, never carried over

@@ -211,7 +211,7 @@ class ReferenceFinder3(ABC):
             )
         for result in results.results:
             result.data = self._extract_data(result)
-        if not self._resolving_each:
+        if not getattr(self, "_resolving_each", False):
             self._trace_total()
         return results
 
@@ -223,19 +223,26 @@ class ReferenceFinder3(ABC):
         if selection is None:
             raise ValueError("selection cannot be None")
         self._check_one_value(self.ref.parsed)
-        self._trace_phase("resolve")
         results = []
-        # one SQL total for the whole selection, not one per result
-        self._resolving_each = True
-        try:
+        with self._each_resolve():
             for result in selection.results:
                 results.extend(
                     self.resolve_from(ReferenceResults3(results=[result])).results
                 )
+        return ReferenceResults3(results=results)
+
+    @contextmanager
+    def _each_resolve(self):
+        """around a resolve_each() loop (here and in any override): the
+        resolve phase, and one SQL trace total for the whole selection, not
+        one per result (reviewer on #775)"""
+        self._trace_phase("resolve")
+        self._resolving_each = True
+        try:
+            yield
         finally:
             self._resolving_each = False
         self._trace_total()
-        return ReferenceResults3(results=results)
 
     @abstractmethod
     def _extract_data(self, result: ReferenceResult3):

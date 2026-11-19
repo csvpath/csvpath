@@ -51,6 +51,9 @@ class _Finder:
     def resolve(self):
         return [1, 2]
 
+    def capture_sql(self):
+        return _Tracing().capture()
+
 
 @pytest.fixture
 def calls(monkeypatch):

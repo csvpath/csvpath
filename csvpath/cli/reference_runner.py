@@ -135,7 +135,7 @@ class ReferenceRunner:
                 finder = ReferenceFinderFactory3.for_reference(
                     reference=tree, csvpaths=self._cli.csvpaths
                 )
-            with tracing.capture() as trace:
+            with finder.capture_sql() as trace:
                 results = finder.resolve()
             print(f"{len(results)} results; {trace.summary()}\n")
             for statement in trace.statements:

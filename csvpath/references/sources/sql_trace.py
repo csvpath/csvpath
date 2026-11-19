@@ -145,8 +145,13 @@ class SqlTracing:
             self._csvpaths.logger.info("SQL trace: %s", statement.line())
 
     def log_total(self) -> None:
-        """the current reference's total, when logging is on"""
+        """the current reference's total, when logging is on. It ends the
+        reference: the next total starts from zero, and a read outside a
+        finder is not tagged with the last reference (reviewer on #775)."""
         if self.current.statements and self.logging_on():
             self._csvpaths.logger.info(
                 "SQL trace: %s total: %s", self.reference, self.current.summary()
             )
+        self.current = SqlTrace()
+        self.reference = None
+        self.phase = None

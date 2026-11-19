@@ -2215,7 +2215,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
         self._trace_phase("estimate")
         from .files_estimator_3 import FilesEstimator3
 
-        return FilesEstimator3(finder=self).estimate()
+        estimate = FilesEstimator3(finder=self).estimate()
+        self._trace_total()
+        return estimate
 
     def resolve_from(self, selection: ReferenceResults3 | list) -> ReferenceResults3:
         # the live entries are read at most once per call (_live_index())
@@ -2231,13 +2233,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if selection is None:
             raise ValueError("selection cannot be None")
         results = []
-        for result in selection.results:
-            self._version_reads = 0
-            results.extend(
-                ReferenceFinder3.resolve_from(
-                    self, ReferenceResults3(results=[result])
-                ).results
-            )
+        with self._each_resolve():
+            for result in selection.results:
+                self._version_reads = 0
+                results.extend(
+                    ReferenceFinder3.resolve_from(
+                        self, ReferenceResults3(results=[result])
+                    ).results
+                )
         return ReferenceResults3(results=results)
 
     def _read_version_file(self, path: str, *, worksheet: "str | None" = None):

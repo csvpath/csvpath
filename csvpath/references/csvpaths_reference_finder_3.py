@@ -1194,7 +1194,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         self._trace_phase("estimate")
         from .csvpaths_estimator_3 import CsvpathsEstimator3
 
-        return CsvpathsEstimator3(finder=self).estimate()
+        estimate = CsvpathsEstimator3(finder=self).estimate()
+        self._trace_total()
+        return estimate
 
     def resolve_from(self, selection: "ReferenceResults3 | list") -> ReferenceResults3:
         """ReferenceFinder3.resolve_from(), with the live index reset so
