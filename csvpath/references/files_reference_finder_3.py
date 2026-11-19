@@ -431,7 +431,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # above). This is restating the design, not deferring it.
             raise ReferenceException3(
                 self._attached_functions_message(
-                    name_one=name_one, star_traversal=False
+                    name_one=name_one,
+                    star_traversal=False,
+                    name_three=reference.name_three,
                 )
             )
         # bare ':all()'/':flatten()'/':groups()' for ONE named-file --
@@ -619,7 +621,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # literal path, e.g. "orders/:after(...)".
                 raise ReferenceException3(
                     self._attached_functions_message(
-                        name_one=name_one, star_traversal=False
+                        name_one=name_one,
+                        star_traversal=False,
+                        name_three=reference.name_three,
                     )
                 )
             pattern = self._compile_path_pattern(name_one.path)
@@ -1279,7 +1283,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # branch (not-yet-supported sweep #3), for '*' traversal.
                 raise ReferenceException3(
                     self._attached_functions_message(
-                        name_one=name_one, star_traversal=True
+                        name_one=name_one,
+                        star_traversal=True,
+                        name_three=reference.name_three,
                     )
                 )
             if name_one_pointer is not None and name_one.name_two is not None:
@@ -1679,7 +1685,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
         ]
 
     @staticmethod
-    def _attached_functions_message(*, name_one, star_traversal: bool) -> str:
+    def _attached_functions_message(
+        *, name_one, star_traversal: bool, name_three=None
+    ) -> str:
         """the error for functions attached directly to name_one with no
         separating '.'. When one of them is a field function, e.g.
         ':name("orders.csv"):fingerprint()', the message gives the
@@ -1712,18 +1720,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
             )
         calls = [s for s in name_one.path if isinstance(s, FunctionCall3)]
         calls += list(name_one.functions)
-        for call in calls:
-            # as every other datatype says it (Reference3); this message
-            # said "put the version-selecting function in name_three" for
-            # a typo (found 2026-11-03)
-            if ReferenceFunctionFactory.get_registered_class(call.name) is None:
-                raise ReferenceException3(f"Unknown reference function: {call.name}")
+        # as every other datatype says it (Reference3); this message said
+        # "put the version-selecting function in name_three" for a typo
+        # (found 2026-11-03), arguments included (reviewer on #761)
+        FilesReferenceFinder3._check_known_functions(calls)
         has_field = False
         for call in name_one.functions:
             function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
             if function_cls is not None and function_cls.SOURCE not in (None, "clock"):
                 has_field = True
-        suggestion = FilesReferenceFinder3._name_three_form(name_one)
+        suggestion = FilesReferenceFinder3._name_three_form(
+            name_one=name_one, name_three=name_three
+        )
         if not has_field:
             if star_traversal:
                 return (
@@ -1748,14 +1756,32 @@ class FilesReferenceFinder3(ReferenceFinder3):
     VERSION_SELECTORS = ("first", "last", "index", "from", "to", "before", "after")
 
     @staticmethod
-    def _name_three_form(name_one) -> str:
+    def _check_known_functions(calls: list) -> None:
+        """raises for the first function in `calls`, or nested in their
+        arguments, that is not registered, or not a files function (e.g.
+        ':having()', CSVPATHS and RESULTS only)."""
+        if calls is None:
+            raise ValueError("calls cannot be None")
+        for call in calls:
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            if function_cls is None:
+                raise ReferenceException3(f"Unknown reference function: {call.name}")
+            if Reference3.FILES not in function_cls.DATATYPES:
+                raise ReferenceException3(f"':{call.name}()' is not a files function")
+            if isinstance(call.arg, FunctionCall3):
+                FilesReferenceFinder3._check_known_functions([call.arg])
+
+    @staticmethod
+    def _name_three_form(*, name_one, name_three=None) -> str:
         """name_one rewritten with its version selectors and fields moved
         after a '.', for the attached-functions message. Literal segments,
-        '*' and path functions (':name()', ':regex()', ':flatten()', a
-        clock value as a path value, 6.27d) stay in name_one; if none is
-        left, ':flatten().' reaches every version (#556). It suggested
-        ':last().:uuid("o1")' for '$x.files.:last():uuid("o1")', which
-        raises in turn (found 2026-11-06)."""
+        '*' and path functions (':name()', ':regex()', a clock value as a
+        path value, 6.27d) stay in name_one; if no path is left it is '*',
+        as a function starting
+        name_one implies (3.9c). An existing name_three follows the moved
+        functions. It suggested ':last().:uuid("o1")' for
+        '$x.files.:last():uuid("o1")', which raises in turn (found
+        2026-11-06)."""
         if name_one is None:
             raise ValueError("name_one cannot be None")
         stays = []
@@ -1769,8 +1795,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
             else:
                 stays.append(segment)
         moves += list(name_one.functions)
-        path = "/".join(str(segment) for segment in stays) if stays else ":flatten()"
+        path = "/".join(str(segment) for segment in stays) if stays else "*"
         functions = "".join(str(call) for call in moves)
+        if name_three is not None:
+            functions += str(name_three)
         return f"{path}.{functions}"
 
     def _name_one_pointer(self, name_one) -> "FunctionCall3 | None":

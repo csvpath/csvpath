@@ -2857,18 +2857,36 @@ class TestNameOneMessages:
     # was told to write ':last().:uuid("o1")', which raises in turn. Each
     # suggested form here queries without raising.
     @pytest.mark.parametrize(
-        "reference", ["$alpha.files.:nosuch()", "$alpha.files.nested/:nosuch():uuid()"]
+        "reference",
+        [
+            "$alpha.files.:nosuch()",
+            "$alpha.files.nested/:nosuch():uuid()",
+            # in an argument too (reviewer on #761)
+            "$alpha.files.*:after(:nosuch(1))",
+        ],
     )
     def test_an_unknown_function_says_so(self, reference):
         with pytest.raises(ReferenceException3, match="Unknown reference function: nosuch"):
             _finder(reference, ALPHA_HOME, ALPHA_MANIFEST).query()
 
+    def test_a_function_of_another_datatype_says_so(self):
+        # ':having()' is CSVPATHS and RESULTS only; it was told to move to
+        # name_three, where it raises in turn (reviewer on #761)
+        with pytest.raises(ReferenceException3, match="':having\\(\\)' is not a files function"):
+            _finder(
+                '$alpha.files.:having(:type("csv")).:last()', ALPHA_HOME, ALPHA_MANIFEST
+            ).query()
+
     @pytest.mark.parametrize(
         "reference, form",
         [
-            ('$alpha.files.:last():uuid("u-one-1")', ':flatten().:last():uuid("u-one-1")'),
-            ("$alpha.files.:first():fingerprint()", ":flatten().:first():fingerprint()"),
+            # with no path left, '*', as a function starting name_one
+            # implies (3.9c); it was ':flatten().' (reviewer on #761)
+            ('$alpha.files.:last():uuid("u-one-1")', '*.:last():uuid("u-one-1")'),
+            ("$alpha.files.:first():fingerprint()", "*.:first():fingerprint()"),
             ('$alpha.files.:name("one.csv"):fingerprint()', ':name("one.csv").:fingerprint()'),
+            # an existing name_three is kept (reviewer on #761)
+            ("$alpha.files.:from(0):last().:uuid()", "*.:from(0):last():uuid()"),
         ],
     )
     def test_the_suggested_form_queries(self, reference, form):
@@ -2877,9 +2895,19 @@ class TestNameOneMessages:
         assert str(error.value).endswith(f"'{form}'")
         _finder(f"$alpha.files.{form}", ALPHA_HOME, ALPHA_MANIFEST).query()
 
+    def test_in_a_nested_home_the_form_means_the_same_as_the_bare_pointer(self):
+        # '*' is one level, as the implied '*' of the original; ':flatten()'
+        # would also reach nested/deep.csv (reviewer on #761)
+        with pytest.raises(ReferenceException3) as error:
+            _finder("$mixed.files.:last():uuid()", MIXED_HOME, MIXED_MANIFEST).query()
+        assert str(error.value).endswith("'*.:last():uuid()'")
+        form = _finder("$mixed.files.*.:last()", MIXED_HOME, MIXED_MANIFEST).query()
+        bare = _finder("$mixed.files.:last()", MIXED_HOME, MIXED_MANIFEST).query()
+        assert form.uuids == bare.uuids
+
     def test_name_three_form_rejects_none(self):
         with pytest.raises(ValueError):
-            FilesReferenceFinder3._name_three_form(None)
+            FilesReferenceFinder3._name_three_form(name_one=None)
 
 
 class TestAttachedFieldFunctionsMessage:
