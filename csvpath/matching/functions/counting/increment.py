@@ -44,7 +44,14 @@ class Increment(ValueProducer):
     @has_internal_variables.setter
     def has_internal_variables(self, b: bool) -> None: ...
 
-    def to_value(self, *, skip=None) -> Any:  # pylint: disable=R0912
+    def to_value(self, *, skip=None) -> Any:
+        try:
+            return self._increment_value(skip=skip)
+        except Exception:
+            self._claim_error_source()
+            raise
+
+    def _increment_value(self, *, skip=None) -> Any:  # pylint: disable=R0912
         # re: R0912: not pretty, but tested. whole needs to be reworked in
         # any case so we can get it into _produce_value() -- current
         # onmatch is too low.

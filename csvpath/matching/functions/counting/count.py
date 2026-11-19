@@ -69,6 +69,13 @@ class Count(ValueProducer):
     # deeper in the logic. can be done, but a PIA. later.
     #
     def to_value(self, *, skip=None) -> Any:
+        try:
+            return self._count_value(skip=skip)
+        except Exception:
+            self._claim_error_source()
+            raise
+
+    def _count_value(self, *, skip=None) -> Any:
         if skip and self in skip:  # pragma: no cover
             return self._noop_value()
             # return self.value if self.value is not None else True
