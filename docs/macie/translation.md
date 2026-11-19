@@ -24,8 +24,8 @@ you can read exactly what will be checked.
 | Macie | CsvPath | Notes |
 |---|---|---|
 | Custom data identifier | `macie_cdi(...)` | regex, keywords, ignore words, `maximumMatchDistance`, severity levels |
-| Managed data identifier with a stand-in | `macie_mdi(...)` | 149 of them; see the [reference](managed-identifiers.md) |
-| Managed data identifier without one | reported, not translated | `NAME`, `ADDRESS`, 15 driver's license countries |
+| Managed data identifier with a stand-in | `macie_mdi(...)` | 164 of them; see the [reference](managed-identifiers.md) |
+| `NAME`, `ADDRESS` (Macie's machine learning) | `macie_jev(...)` | checked by Jev when `[macie] review` names them; reported apart, in a `jev` section ([review](review.md#name-and-address)) |
 | Regex allow list | `macie_allow_regex(...)` | |
 | Text (S3 words) allow list | `macie_allow_words(...)` with `load_list()` | entries stored in the group's assets |
 | Text allow list unreadable at download | reported, not translated | its identifiers still run, without it |
@@ -122,8 +122,8 @@ home. For example (illustrative values):
   "skipped": [
     { "object": "hr-employee-ids",
       "location": "managedDataIdentifiers.resolved[2]",
-      "feature": "managedDataIdentifier",
-      "reason": "Managed data identifier NAME is not translated yet" }
+      "feature": "managedDataIdentifier.jev",
+      "reason": "Managed data identifier NAME is found by Macie with machine learning; it is checked by Jev, not by rules, only when config.ini [macie] review names it, and reported apart from the Macie findings" }
   ],
   "rulesbase": { "overrides_path": null, "applied": [] }
 }

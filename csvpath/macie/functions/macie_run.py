@@ -3,6 +3,8 @@ import logging
 import weakref
 
 from ..allow_list_set import AllowListSet
+from ..column_shapes import ColumnShapes
+from ..jev_detector import JevDetector
 from ..util.arn_utility import ArnUtility as arut
 from ..findings_tally import FindingsTally, IdentifierTally
 from ..macie_exceptions import MacieException
@@ -22,6 +24,8 @@ class MacieRun:
     - the findings, to the macie_findings variable (vars.json)
     - with [macie] review on, a Jev review of the findings, added to all
       three, and recorded in the run dir (MacieReview)
+    - with macie_jev() for NAME or ADDRESS and [macie] review naming it,
+      Jev's check of the columns, in its own jev section
 
     Limits come from the csvpath's metadata (written by the transpiler),
     then config.ini [macie], then the defaults."""
@@ -71,6 +75,13 @@ class MacieRun:
         self.identifiers = []
         self.header_is_data = None
         self.review = MacieReview(config=matcher.csvpath.config)
+        #
+        # NAME and ADDRESS, checked by Jev from the columns' masked shapes,
+        # collected once per line
+        #
+        self.jev_identifiers: list[str] = []
+        self.shapes: dict[int, ColumnShapes] = {}
+        self._shaped_line = None
 
     @property
     def standalone(self) -> bool:
@@ -166,6 +177,36 @@ class MacieRun:
                     column_name=column_name,
                 )
         return found
+
+    def add_jev(self, *, name: str) -> None:
+        if name not in JevDetector.IDENTIFIERS:
+            raise MacieException(
+                f"macie_jev() checks {sorted(JevDetector.IDENTIFIERS)}, not {name!r}"
+            )
+        if name not in self.jev_identifiers:
+            self.jev_identifiers.append(name)
+
+    def shape_line(self) -> None:
+        """adds the current line's cells to the columns' shapes, once per
+        line however many macie_jev() functions call it. Nothing is kept
+        unless [macie] review names one of them"""
+        if not any(self.review.checks(name=n) for n in self.jev_identifiers):
+            return
+        csvpath = self.matcher.csvpath
+        line = csvpath.line_monitor.physical_line_number
+        if line == self._shaped_line:
+            return
+        self._shaped_line = line
+        headers = csvpath.headers or []
+        for i, cell in enumerate(self.matcher.line):
+            shapes = self.shapes.get(i + 1)
+            if shapes is None:
+                name = None
+                if not self.header_is_data and i < len(headers):
+                    name = f"{headers[i]}"
+                shapes = ColumnShapes(column=i + 1, column_name=name)
+                self.shapes[i + 1] = shapes
+            shapes.add(cell=f"{cell}")
 
     def _collect(
         self, *, identifier, column: int, header: str, cell: str, occurrences: int
@@ -337,6 +378,8 @@ class MacieRun:
                 )
             findings = MacieReview.attach(findings=findings, result=result)
             MacieReview.record(csvpath=csvpath, result=result)
+        if self.jev_identifiers:
+            findings = self._jev(source=source, findings=findings)
         if self.clean:
             v = csvpath.metadata.get("macie-not-checked")
             csvpath.print_to(
@@ -349,6 +392,32 @@ class MacieRun:
         if self.standalone:
             csvpath.print_to(self.PRINTER, self.STANDALONE)
         csvpath.set_variable(self.VARIABLE, value=findings)
+
+    def _jev(self, *, source, findings: dict) -> dict:
+        csvpath = self.matcher.csvpath
+        result = self.review.detect(
+            csvpath=csvpath,
+            shapes=[self.shapes[c] for c in sorted(self.shapes)],
+            identifiers=list(self.jev_identifiers),
+        )
+        for msg in MacieReview.jev_printouts(result=result):
+            csvpath.print_to(self.PRINTER, msg)
+        if result["status"] == "failed" and source is not None:
+            #
+            # loud, but the run stays valid: NAME and ADDRESS are reported
+            # as not checked (David, 2026-11-18)
+            #
+            csvpath.error_manager.handle_error(
+                source=source,
+                msg=f"macie jev: {', '.join(self.jev_identifiers)} not checked: "
+                f"{result['reason']}",
+            )
+        findings = MacieReview.attach_jev(findings=findings, result=result)
+        if result["status"] != MacieReview.OFF:
+            MacieReview.record(
+                csvpath=csvpath, result=result, kind=MacieReview.JEV_RECORD
+            )
+        return findings
 
     def _source_arn(self) -> str | None:
         #
