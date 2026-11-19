@@ -1,11 +1,14 @@
 """SPAIN_SOCIAL_SECURITY_NUMBER: the 12 digit affiliation number (NAF),
-format only (FormatDetector). Missed by the first inventory, found when
-building the recommended-list assets (2026-11-08)."""
+with its control digits checked (GroupedDigitsDetector, check es_naf):
+the seventh live probe (2026-11-18) found Macie checks them. Missed by
+the first inventory, found when building the recommended-list assets
+(2026-11-08)."""
 
 import pytest
 
 from csvpath.macie.allow_list_set import AllowListSet
-from csvpath.macie.detectors.format_detector import FormatDetector
+from csvpath.macie.detectors.grouped_digits_detector import GroupedDigitsDetector
+from csvpath.macie.util.checksum_utility import ChecksumUtility as chut
 from csvpath.macie.managed_catalog import ManagedCatalog
 from csvpath.macie.managed_identifier import ManagedIdentifier
 from csvpath.macie.recommended_lists import RecommendedLists
@@ -38,7 +41,7 @@ def _mdi(catalog) -> ManagedIdentifier:
     "cell", ["281234567840", "28/12345678/40", "28 12345678 40", "28-12345678-40"]
 )
 def test_macie_es_ssn_formats(catalog, cell: str) -> None:
-    d = FormatDetector(config=catalog.detector(name="es_ssn"))
+    d = GroupedDigitsDetector(config=catalog.detector(name="es_ssn"))
     assert d.matches(cell=cell) == [(0, len(cell))]
 
 
@@ -52,11 +55,36 @@ def test_macie_es_ssn_formats(catalog, cell: str) -> None:
         "28/12345678-40",
         "2812345678401",
         "28123456784",
+        #
+        # control digits wrong
+        #
+        "281234567841",
+        "28/12345678/41",
     ],
 )
 def test_macie_es_ssn_not_detected(catalog, cell: str) -> None:
-    d = FormatDetector(config=catalog.detector(name="es_ssn"))
+    d = GroupedDigitsDetector(config=catalog.detector(name="es_ssn"))
     assert d.matches(cell=cell) == []
+
+
+def test_macie_es_naf() -> None:
+    assert chut.es_naf(digits="281234567840")
+    assert not chut.es_naf(digits="281234567841")
+    #
+    # province 00 is never valid
+    #
+    assert not chut.es_naf(digits="000000000000")
+    #
+    # a number below 10,000,000: either published way of computing it
+    #
+    plain = "2801234567" + f"{int('2801234567') % 97:02d}"
+    other = "2801234567" + f"{(28 * 10_000_000 + 1234567) % 97:02d}"
+    assert chut.es_naf(digits=plain)
+    assert chut.es_naf(digits=other)
+    with pytest.raises(ValueError):
+        chut.es_naf(digits="28123456784")
+    with pytest.raises(TypeError):
+        chut.es_naf(digits=None)
 
 
 def test_macie_es_ssn_catalog(catalog) -> None:

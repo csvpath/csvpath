@@ -9,15 +9,12 @@
       "detections": [
         {
           "type": "USA_SOCIAL_SECURITY_NUMBER",
-          "count": 6,
+          "count": 3,
           "severity": "HIGH",
           "occurrences": {
             "cells": [
               { "cellReference": null, "column": 2, "columnName": "ssn", "row": 2 },
-              { "cellReference": null, "column": 2, "columnName": "ssn", "row": 3 },
-              { "cellReference": null, "column": 4, "columnName": "notes", "row": 4 },
-              { "cellReference": null, "column": 2, "columnName": "ssn", "row": 12 },
-              { "cellReference": null, "column": 4, "columnName": "notes", "row": 13 }
+              { "cellReference": null, "column": 2, "columnName": "ssn", "row": 12 }
             ]
           }
         },
@@ -34,7 +31,7 @@
           }
         }
       ],
-      "totalCount": 9
+      "totalCount": 6
     }
   ],
   "csvpath": {

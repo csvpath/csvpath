@@ -160,14 +160,14 @@ def test_macie_group_b_rest_catalog(catalog) -> None:
             1,
         ),
         #
-        # keywords are matched as Macie lists them: without its accents
-        # this is not Colombia's keyword
+        # keywords match without their accents: the seventh live probe
+        # (2026-11-18)
         #
         (
             "COLOMBIA_CITIZENSHIP_CARD_NUMBER",
             "cedula de ciudadania 1.234.567.890",
             "x",
-            0,
+            1,
         ),
         ("CANADA_NATIONAL_IDENTIFICATION_NUMBER", "PR number 1234-5678", "x", 1),
         ("CANADA_NATIONAL_IDENTIFICATION_NUMBER", "1234-5678", "notes", 0),

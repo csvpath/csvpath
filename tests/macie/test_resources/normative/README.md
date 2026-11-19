@@ -33,7 +33,8 @@ Design decisions are in `specs/macie/transpile-design.md`.
   regex allow list, a detail cap of 3. No managed identifiers.
 - `02_credit_card`: the managed identifiers `CREDIT_CARD_NUMBER` and
   `CREDIT_CARD_NUMBER_(NO_KEYWORD)` as our stand-ins. Keywords in the
-  header and before and after the number in a cell, a keyword too far
+  header and before and after the number in a cell (only before
+  counts), a keyword too far
   away, grouped numbers, two cards in one cell, a bad check digit, a Luhn
   number with no brand prefix, an issuer test number, a regex allow list,
   and a 20-digit run.
@@ -44,7 +45,7 @@ Design decisions are in `specs/macie/transpile-design.md`.
   print at the trip, and findings record `stopped_at_line`.
 - `04_us_ids`: the managed identifiers `USA_SOCIAL_SECURITY_NUMBER` and
   `USA_NATIONAL_PROVIDER_IDENTIFIER`. Header and in-cell keywords, no
-  keyword, the three SSN layouts, a never-issued area, an excluded
+  keyword, the three SSN layouts (only hyphens count), a never-issued area, an excluded
   example SSN, a bad NPI check digit, two SSNs in one cell, and an SSN and
   an NPI in the same cell.
 - `05_iban`: three of the 52 IBAN identifiers (UK, Germany, Netherlands),
@@ -99,7 +100,7 @@ Design decisions are in `specs/macie/transpile-design.md`.
   keyword.
 - `14_credentials`: all nine credential identifiers. AWS keys with a
   header and an in-cell keyword, Macie's AWS examples, a hex
-  hash, Macie's Basic header examples, Bearer (not Basic), signed and
+  key, Macie's Basic header examples, Bearer (not Basic), signed and
   unsigned JWTs, a JWT whose 40 character header is near an AWS keyword
   (a JWT, not an AWS key), and six identifiers with nothing to report.
   Key blocks and Google and Stripe keys are only in the unit tests, built

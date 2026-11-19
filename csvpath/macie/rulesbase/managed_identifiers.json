@@ -5030,17 +5030,20 @@
     "es_ssn": {
       "notes": [
         "Macie publishes only the keywords for SPAIN_SOCIAL_SECURITY_NUMBER, and scores Social Security numbers HIGH from one occurrence.",
-        "The format is ours (Tesoreria General de la Seguridad Social): the 12 digit affiliation number (NAF), a 2 digit province code, an 8 digit number and 2 control digits, contiguous or written 28/12345678/40, with slashes, spaces or hyphens. The control digits are commonly described as mod 97 of the first 10, but we found no authoritative statement of the rule, so they are not verified (format only, like Brazil's RG)."
+        "The format is ours (Tesoreria General de la Seguridad Social): the 12 digit affiliation number (NAF), a 2 digit province code (not 00), an 8 digit number and 2 control digits, contiguous or written 28/12345678/40, with slashes, spaces or hyphens. The control digits are checked, mod 97 of the first 10: the seventh live probe (2026-11-18) found Macie does not report a NAF whose control digits are wrong. A number below 10,000,000 is accepted under either of the two published ways of computing it."
+      ],
+      "length": 12,
+      "layouts": [
+        [
+          2,
+          8,
+          2
+        ]
       ],
       "formats": [
-        "#{12}",
-        "##/#{8}/##",
-        "## #{8} ##",
-        "##-#{8}-##"
+        "##/########/##"
       ],
-      "exclude_prefixes": [
-        "00"
-      ]
+      "check": "es_naf"
     }
   }
 }

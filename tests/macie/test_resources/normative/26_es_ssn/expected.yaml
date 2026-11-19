@@ -39,7 +39,7 @@ runs:
     #   line  cell                                            reported as
     #   1     ssn column "28/12345678/40"                     Spain
     #   2     ssn column "123-45-6789"                        US
-    #   3     "número de la seguridad social 41 87654321 12"  Spain
+    #   3     "número de la seguridad social 41 87654321 03"  Spain
     #   4     "28/12345678/40"                                nothing: no keyword
     #
     # Both HIGH from one occurrence. Totals: Spain 2, US 1.

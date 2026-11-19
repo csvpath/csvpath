@@ -524,7 +524,7 @@ def fidelity_6(rng) -> mlf.LiveFile:
     rows = [
         # item 1: where and how far the keyword may be
         ("1", f"ssn {mlf.ssn(rng)}", [(ssn, 1, "control: keyword just before")]),
-        ("1", f"{mlf.ssn(rng)} ssn", [(ssn, 1, "keyword just after")]),
+        ("1", f"{mlf.ssn(rng)} ssn", [(ssn, 0, "keyword just after")]),
         (
             "1",
             f"ssn {gap_25} {mlf.ssn(rng)}",
@@ -536,11 +536,11 @@ def fidelity_6(rng) -> mlf.LiveFile:
             [(ssn, 0, "keyword 42 characters before")],
         ),
         # item 5: SSN separators
-        ("5", "ssn " + mlf.ssn(rng).replace("-", " "), [(ssn, 1, "SSN with spaces")]),
+        ("5", "ssn " + mlf.ssn(rng).replace("-", " "), [(ssn, 0, "SSN with spaces")]),
         (
             "5",
             "ssn " + mlf.ssn(rng).replace("-", ""),
-            [(ssn, 1, "SSN with no separator")],
+            [(ssn, 0, "SSN with no separator")],
         ),
         # item 6: IBAN layouts
         (
@@ -567,7 +567,7 @@ def fidelity_6(rng) -> mlf.LiveFile:
         (
             "7",
             f"vin {_vin(valid=False)}",
-            [("VEHICLE_IDENTIFICATION_NUMBER", 1, "check digit wrong")],
+            [("VEHICLE_IDENTIFICATION_NUMBER", 0, "check digit wrong")],
         ),
         # item 8: RUT without a hyphen; a repeated-digit CNPJ
         (
@@ -578,7 +578,7 @@ def fidelity_6(rng) -> mlf.LiveFile:
         (
             "8",
             "rut " + mlf.rut(rng).replace(".", "").replace("-", ""),
-            [("CHILE_RUT_NUMBER", 1, "no dots, no hyphen")],
+            [("CHILE_RUT_NUMBER", 0, "no dots, no hyphen")],
         ),
         ("8", f"cnpj {cnpj_repeated}", [("BRAZIL_CNPJ_NUMBER", 0, "repeated digits")]),
         # item 10: a DNI without its letter
@@ -605,7 +605,7 @@ def fidelity_6(rng) -> mlf.LiveFile:
         (
             "14",
             f"aws_secret_access_key {aws_hex}",
-            [("AWS_CREDENTIALS", 0, "a hex secret key")],
+            [("AWS_CREDENTIALS", 1, "a hex secret key")],
         ),
         ("14", stripe_rk, [("STRIPE_CREDENTIALS", 1, "a restricted key")]),
         (
@@ -622,7 +622,7 @@ def fidelity_6(rng) -> mlf.LiveFile:
         (
             "15",
             "ndc 00093715201",
-            [("USA_NATIONAL_DRUG_CODE", 1, "11 digits, no hyphens")],
+            [("USA_NATIONAL_DRUG_CODE", 0, "11 digits, no hyphens")],
         ),
         ("15", "hcpcs 99213", [("USA_HEALTHCARE_PROCEDURE_CODE", 1, "a CPT code")]),
         # item 17: a bank account against letters; NINO spacing
@@ -664,7 +664,7 @@ def fidelity_6(rng) -> mlf.LiveFile:
         (
             "22",
             "cedula de ciudadania 1234567890",
-            [("COLOMBIA_CITIZENSHIP_CARD_NUMBER", 0, "keyword without accents")],
+            [("COLOMBIA_CITIZENSHIP_CARD_NUMBER", 1, "keyword without accents")],
         ),
         (
             "22",
@@ -679,7 +679,7 @@ def fidelity_6(rng) -> mlf.LiveFile:
         (
             "23",
             "coordinates 41.948614 -87.655311",
-            [("LATITUDE_LONGITUDE", 1, "a space, no comma")],
+            [("LATITUDE_LONGITUDE", 0, "a space, no comma")],
         ),
         (
             "23",
@@ -706,7 +706,7 @@ def fidelity_6(rng) -> mlf.LiveFile:
         (
             "26",
             f"social security number {_naf(rng, valid=False)}",
-            [("SPAIN_SOCIAL_SECURITY_NUMBER", 1, "control digits wrong")],
+            [("SPAIN_SOCIAL_SECURITY_NUMBER", 0, "control digits wrong")],
         ),
     ]
     for item, cell, expects in rows:

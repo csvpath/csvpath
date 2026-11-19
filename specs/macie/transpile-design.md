@@ -952,7 +952,24 @@ Each managed identifier is a catalog entry plus a detector in
 several detector names. A test checks that
 every detector the catalog names exists, and every detector is used.
 
-**Interpretations to confirm** in the fidelity scan:
+**Interpretations to confirm** in the fidelity scan. The seventh live
+probe (2026-11-18, `live-check-2026-11-11.md`) settled, and we changed to
+follow Macie:
+- item 1: keywords count only before the value (the distance is still
+  open);
+- item 5: SSNs need hyphens;
+- item 7: North American VINs need their check digit;
+- item 8: a RUT needs its hyphen; repeated-digit CNPJs are not reported;
+- item 14: hex AWS keys are reported; a BEGIN line alone is not a key;
+- item 15: NDCs need hyphens; CPT codes count for HCPCS;
+- item 22: keywords match without accents;
+- item 23: GPS coordinates need the comma; a Cookie header is one
+  occurrence;
+- item 26: the NAF's control digits are checked.
+
+It also confirmed, with no change, items 10, 11 (CURP with sex X; the
+organization code stays ours), 12, 17, 20 and 25.
+
 1. In-cell keywords count before or after the occurrence, within 30
    characters of the gap.
 2. Grouped card numbers: does Macie detect them? Its docs explicitly

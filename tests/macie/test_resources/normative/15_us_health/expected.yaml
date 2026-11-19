@@ -69,10 +69,10 @@ runs:
     #         medicare beneficiary 9Y99Y99YY99"       with its keyword before
     #   15    notes "cpt 99213"                       nothing: cpt is not one of
     #                                                 Macie's keywords
-    #   16    notes "ndc 1234567890 hcpcs 0001F"      NDC (contiguous) and HCPCS (a
-    #                                                 CPT category II code)
+    #   16    notes "ndc 1234567890 hcpcs 0001F"      HCPCS (a CPT category II code)
+    #                                                 only: an NDC needs its hyphens
+    #                                                 (seventh live probe)
     #
     # On each line the identifiers run in the wrapper's resolved order.
-    # Totals: DEA 2, MBI 2, ITIN 2, HICN 1, NDC 3 (lines 10, 11, 16; the
-    # third past the cap of 2), HCPCS 2. All HIGH from one occurrence. All
-    # are PERSONAL_INFORMATION: totalCount 12.
+    # Totals: DEA 2, MBI 2, ITIN 2, HICN 1, NDC 2 (lines 10, 11), HCPCS 2. All HIGH from one occurrence. All
+    # are PERSONAL_INFORMATION: totalCount 11.

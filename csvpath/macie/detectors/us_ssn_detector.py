@@ -8,14 +8,12 @@ class UsSsnDetector:
     USA_SOCIAL_SECURITY_NUMBER. Macie publishes only its keywords, so the
     format is the Social Security Administration's: area-group-serial,
     AAA-GG-SSSS, with no area 000, 666 or 900-999, no group 00 and no
-    serial 0000. Hyphens, spaces (one separator throughout) or no
-    separator. Numbers in the catalog's exclusions are never reported."""
+    serial 0000. Hyphens only: the seventh live probe (2026-11-18) found
+    no SSN with spaces or no separator, even after a keyword. Numbers in
+    the catalog's exclusions are never reported."""
 
     CANDIDATES = re.compile(
-        r"(?<!\d)(?:"
-        r"(?P<a1>\d{3})(?P<s>[ -])(?P<g1>\d{2})(?P=s)(?P<n1>\d{4})"
-        r"|(?P<a2>\d{3})(?P<g2>\d{2})(?P<n2>\d{4})"
-        r")(?!\d)",
+        r"(?<!\d)(?P<a>\d{3})-(?P<g>\d{2})-(?P<n>\d{4})(?!\d)",
         re.ASCII,
     )
 
@@ -42,10 +40,7 @@ class UsSsnDetector:
             raise TypeError(f"cell must be a str, not {type(cell)}")
         found = []
         for m in self.CANDIDATES.finditer(cell):
-            area = m.group("a1") or m.group("a2")
-            group = m.group("g1") or m.group("g2")
-            serial = m.group("n1") or m.group("n2")
-            if self.is_ssn(area=area, group=group, serial=serial):
+            if self.is_ssn(area=m.group("a"), group=m.group("g"), serial=m.group("n")):
                 found.append((m.start(), m.end()))
         return found
 

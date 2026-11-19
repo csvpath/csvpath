@@ -15,9 +15,9 @@ class CredentialDetector:
 
         aws_secret    AWS_CREDENTIALS: a secret access key, 40 characters
                       of A-Z a-z 0-9 / +, not touching others, and not
-                      one part of a dotted token such as a JWT. Ours: one
-                      that is all lower case hex (a SHA-1 hash, say) is not
-                      a key
+                      one part of a dotted token such as a JWT. One that
+                      is all lower case hex is a key too: the seventh live
+                      probe (2026-11-18) found Macie reports it
         gcp_api_key   GCP_API_KEY: the key string, AIza and 35 characters
                       of A-Z a-z 0-9 _ -
         http_basic    HTTP_BASIC_AUTH_HEADER: a complete header, the field
@@ -97,7 +97,6 @@ class CredentialDetector:
             r"(?<![A-Za-z0-9_])(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9]{24,}(?![A-Za-z0-9_])"
         ),
     }
-    HEX = re.compile(r"[0-9a-f]+")
     SHA256 = re.compile(r"[0-9a-f]{64}")
 
     #
@@ -130,8 +129,6 @@ class CredentialDetector:
         found = []
         for m in self.candidates.finditer(cell):
             if self.exclusions and self.sha256(text=m.group(0)) in self.exclusions:
-                continue
-            if self.form == "aws_secret" and self.HEX.fullmatch(m.group(0)):
                 continue
             if self.form == "jwt" and not self.is_jwt(match=m):
                 continue

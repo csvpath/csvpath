@@ -404,9 +404,41 @@ def _near(cell: str, match: str, *keywords: str, distance: int = 30) -> bool:
     )
 
 
-def test_macie_near_before_and_after() -> None:
+def test_macie_near_before_only() -> None:
+    #
+    # a keyword after the value does not count: the seventh live probe
+    # (2026-11-18)
+    #
     assert _near(f"visa {VISA}", VISA, "visa")
-    assert _near(f"{VISA} (visa)", VISA, "visa")
+    assert not _near(f"{VISA} (visa)", VISA, "visa")
+
+
+def test_macie_near_without_accents() -> None:
+    #
+    # keywords match without their accents, either way round: the seventh
+    # live probe (2026-11-18)
+    #
+    assert _near(f"cedula {VISA}", VISA, "cédula")
+    assert _near(f"cédula {VISA}", VISA, "cedula")
+    assert _near(f"CÉDULA {VISA}", VISA, "cédula")
+
+
+def test_macie_fold() -> None:
+    assert keut.fold(text="cédula de ciudadanía") == "cedula de ciudadania"
+    assert keut.fold(text="Führerschein") == "Fuhrerschein"
+    #
+    # one character for one; letters with no base letter stay
+    #
+    for s in ["ß", "łódź", "İ", "número 12"]:
+        assert len(keut.fold(text=s)) == len(s)
+    assert keut.fold(text="ß") == "ß"
+    with pytest.raises(TypeError):
+        keut.fold(text=None)
+
+
+def test_macie_in_header_without_accents() -> None:
+    variants = keut.all_variants(keywords=["cédula de ciudadanía"])
+    assert keut.in_header(header="cedula_de_ciudadania", variants=variants)
 
 
 def test_macie_near_distance_is_the_gap() -> None:
@@ -416,8 +448,6 @@ def test_macie_near_distance_is_the_gap() -> None:
     #
     assert _near("visa" + "-" * 30 + VISA, VISA, "visa")
     assert not _near("visa" + "-" * 31 + VISA, VISA, "visa")
-    assert _near(VISA + "-" * 30 + "visa", VISA, "visa")
-    assert not _near(VISA + "-" * 31 + "visa", VISA, "visa")
     assert not _near("visax " + VISA, VISA, "visa")
 
 

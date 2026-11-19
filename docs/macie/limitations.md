@@ -71,6 +71,23 @@ valid by Google's `phonenumbers`):
 - **A spaced Brazilian international number under a `phone` header** was
   reported by Macie; we no longer report it.
 
+Nine more were fixed by following Macie after the seventh probe
+(2026-11-18):
+- an in-cell keyword counts only before the value;
+- keywords match without their accents (`cedula` for `cédula`);
+- SSNs need their hyphens;
+- North American VINs need their check digit;
+- a RUT needs its hyphen;
+- an AWS secret key may be lower case hex;
+- an NDC needs its hyphens;
+- GPS coordinates need the comma;
+- a Spanish Social Security number's control digits are checked.
+
+Still open from that probe: how far before the value a keyword may be;
+and, for one value that fits several countries, whether Macie reports
+it for each. It reported `passport AB123456` as Canadian only, and
+`driver license 12345678` as American only.
+
 ## Also not translated
 
 - **Findings filters** act on findings after detection. They are kept in
@@ -92,9 +109,6 @@ description of the value (not the value), and the column name.
   written directly against a value, as in `SSN123-45-6789`, is not a
   word, which may miss some values; we have not seen what Macie does
   there.
-- **Keywords need their accents.** `cedula de ciudadania` without its
-  accents is not Colombia's keyword, so a cedula labeled that way is
-  missed.
 - **One value, several countries.** A national phone number can fit
   several countries' numbering plans, an 8 digit number near "driver
   license" fits the US, Canada and Australia, and digit runs are shared by
@@ -106,9 +120,7 @@ description of the value (not the value), and the column name.
   (UCI), not the card's document number; an EHIC is its 20 digit card
   number (80 and a country code), not the personal id on the card; a GS1
   UDI must be written with its parentheses, and an ISBT 128 UDI in its
-  human readable form, starting `=/`; a Spanish Social Security
-  number's control digits are not checked (we found no authoritative
-  statement of the rule).
+  human readable form, starting `=/`.
 - **Separators and layouts.** We accept the common printed layouts of
   card numbers, IBANs, national ids and phone numbers. Macie's own
   documentation is sometimes narrower (for example, it describes card

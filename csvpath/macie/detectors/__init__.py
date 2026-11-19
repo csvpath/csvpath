@@ -41,7 +41,7 @@ DETECTORS = {
     "lat_long": LatLongDetector,
     "http_cookie": CookieDetector,
     "ar_dni": FormatDetector,
-    "es_ssn": FormatDetector,
+    "es_ssn": GroupedDigitsDetector,
     "br_cep": FormatDetector,
     "br_rg": FormatDetector,
     "ca_pr": FormatDetector,

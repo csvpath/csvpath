@@ -27,14 +27,14 @@ conversion:
 runs:
   - csvpath: clinic-staff.csvpath
     data: staff.csv
-    finding_lines: [1, 2, 3, 7, 9, 11, 12]
+    finding_lines: [1, 7, 9, 11, 12]
     printouts:
       macie: printouts.macie.txt
     errors:
       - { line: 1, message: "macie USA_SOCIAL_SECURITY_NUMBER: occurrence 1, line 1 (row 2), column 2 ssn" }
-      - { line: 2, message: "macie USA_SOCIAL_SECURITY_NUMBER: occurrence 2, line 2 (row 3), column 2 ssn" }
       - { line: 7, message: "macie USA_NATIONAL_PROVIDER_IDENTIFIER: occurrence 1, line 7 (row 8), column 3 provider_npi" }
       - { line: 9, message: "macie USA_NATIONAL_PROVIDER_IDENTIFIER: occurrence 2, line 9 (row 10), column 4 notes" }
+      - { line: 11, message: "macie USA_SOCIAL_SECURITY_NUMBER: occurrence 2, line 11 (row 12), column 2 ssn" }
     findings: findings.json
     #
     # Headers: "ssn" holds an SSN keyword; "provider_npi" holds an NPI
@@ -43,9 +43,9 @@ runs:
     #
     #   line  cell                                   reported as
     #   1     ssn 123-45-6789                        SSN: header keyword, hyphens
-    #   2     ssn 123456789                          SSN: header keyword, no separator
-    #   3     notes "SS# 234 56 7890"                SSN: "ss#" one character before,
-    #                                                spaces
+    #   2     ssn 123456789                          nothing: no hyphens (the seventh
+    #                                                live probe: Macie needs them)
+    #   3     notes "SS# 234 56 7890"                nothing: spaces, not hyphens
     #   4     notes "234-56-7890"                    nothing: no keyword
     #   5     ssn 666-12-3456                        nothing: area 666 is never issued
     #   6     ssn 078-05-1120                        nothing: a widely published
@@ -53,17 +53,18 @@ runs:
     #   7     provider_npi 1234567893                NPI: header keyword; Luhn over
     #                                                80840 + the first nine digits
     #   8     provider_npi 1234567890                nothing: bad check digit
-    #   9     notes "npi 2987654326 (hipaa)"         NPI: keywords before and after
+    #   9     notes "npi 2987654326 (hipaa)"         NPI: the keyword before; the
+    #                                                one after does not count
     #   10    notes "2987654326"                     nothing: no keyword, and 10 digits
     #                                                is not an SSN
     #   11    ssn, two SSNs                          SSN twice
-    #   12    notes "national provider 1234567893    NPI ("national provider" before)
-    #         ssn 345 67 8901"                       and SSN ("ssn" before), both in
-    #                                                one cell
+    #   12    notes "national provider 1234567893    NPI ("national provider" before);
+    #         ssn 345 67 8901"                       the SSN has spaces, not hyphens,
+    #                                                so is not one
     #
     # On each line SSN is applied first, then NPI: the wrapper's resolved
-    # order. Totals: SSN 6, NPI 3; the first 2 of each are detailed
+    # order. Totals: SSN 3, NPI 3; the first 2 of each are detailed
     # (max_detail 2). Macie scores both HIGH from one occurrence. Both are
     # PERSONAL_INFORMATION, so they share one sensitiveData entry with
-    # totalCount 9.
+    # totalCount 6.
     #

@@ -96,8 +96,6 @@ def test_macie_us_dea_check_bad_input() -> None:
         ("us_ndc", "50580-506-02"),
         ("us_ndc", "12345-6789-1"),
         ("us_ndc", "12345-6789-01"),
-        ("us_ndc", "1234567890"),
-        ("us_ndc", "12345678901"),
         ("us_hcpcs", "J1234"),
         ("us_hcpcs", "e0601"),
         ("us_hcpcs", "99213"),
@@ -136,6 +134,12 @@ def test_macie_us_health_formats(catalog, name: str, cell: str) -> None:
         ("us_ndc", "123456789"),
         ("us_ndc", "123456789012"),
         ("us_ndc", "0002-1433-80-1"),
+        #
+        # contiguous: the seventh live probe (2026-11-18) found Macie needs
+        # the hyphens
+        #
+        ("us_ndc", "1234567890"),
+        ("us_ndc", "12345678901"),
         ("us_hcpcs", "W1234"),
         ("us_hcpcs", "J12345"),
         ("us_hcpcs", "1234"),

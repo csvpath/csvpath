@@ -40,7 +40,6 @@ def _mdi(catalog, name: str) -> ManagedIdentifier:
     [
         "41.948614,-87.655311",
         "41.948614, -87.655311",
-        "41.948614 -87.655311",
         "+41.9,+87.6",
         "-90.0,-180.0",
         "0.0,0.0",
@@ -67,6 +66,10 @@ def test_macie_gps_formats(cell: str) -> None:
         "41.9,87.6.1",
         "1.2.3,4.5",
         "41.9°,87.6°",
+        #
+        # a space and no comma: the seventh live probe (2026-11-18)
+        #
+        "41.948614 -87.655311",
     ],
 )
 def test_macie_gps_not_detected(cell: str) -> None:

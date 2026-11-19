@@ -9,7 +9,7 @@
       "detections": [
         {
           "type": "AWS_CREDENTIALS",
-          "count": 2,
+          "count": 3,
           "severity": "HIGH",
           "occurrences": {
             "cells": [
@@ -18,6 +18,12 @@
                 "column": 2,
                 "columnName": "aws_secret_access_key",
                 "row": 2
+              },
+              {
+                "cellReference": null,
+                "column": 2,
+                "columnName": "aws_secret_access_key",
+                "row": 4
               },
               {
                 "cellReference": null,
@@ -89,7 +95,7 @@
           }
         }
       ],
-      "totalCount": 9
+      "totalCount": 10
     }
   ],
   "csvpath": {

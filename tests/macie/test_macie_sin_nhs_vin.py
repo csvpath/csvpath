@@ -176,13 +176,24 @@ def test_macie_vin_valid(vin, cell: str) -> None:
     assert vin.matches(cell=cell) == [(0, 17)]
 
 
-def test_macie_vin_check_digit_is_not_required(vin) -> None:
+def test_macie_vin_check_digit_north_america_only(vin) -> None:
     #
-    # the European VIN has no North American check digit; a North American
-    # one with a wrong check digit is also reported
+    # the European VIN has no North American check digit, so none is
+    # required of it. A North American one (first character 1 to 5) needs
+    # it: the seventh live probe (2026-11-18)
     #
     assert vin.matches(cell=EU_VIN) == [(0, 17)]
-    assert vin.matches(cell="1HGCM82633A004353") == [(0, 17)]
+    assert vin.matches(cell="1HGCM82633A004352") == [(0, 17)]
+    assert vin.matches(cell="1HGCM82633A004353") == []
+    assert vin.matches(cell="1HGCM826133A00435") == []
+
+
+def test_macie_vin_check_digit_ok() -> None:
+    assert VinDetector.check_digit_ok(vin="1HGCM82633A004352")
+    assert VinDetector.check_digit_ok(vin="1HGCM826X33A00435")
+    assert not VinDetector.check_digit_ok(vin="1HGCM826133A00435")
+    with pytest.raises(ValueError):
+        VinDetector.check_digit_ok(vin="1HGCM82633A00435")
 
 
 @pytest.mark.parametrize(

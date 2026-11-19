@@ -184,7 +184,6 @@ def test_macie_grouped_formats_and_prefixes_bad_config() -> None:
     [
         "12.345.678-5",
         "12345678-5",
-        "123456785",
         "7.654.321-6",
         "10.000.013-K",
         "10000013-k",
@@ -204,6 +203,10 @@ def test_macie_rut_formats(rut, cell: str) -> None:
         "12.345.678-",
         "x12.345.678-5",
         "12.345.678-5a",
+        #
+        # no dots and no hyphen: the seventh live probe (2026-11-18)
+        #
+        "123456785",
     ],
 )
 def test_macie_rut_not_a_rut(rut, cell: str) -> None:
