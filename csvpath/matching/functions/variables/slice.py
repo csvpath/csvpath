@@ -68,8 +68,18 @@ class Slice(ValueProducer):
             # the stack. this used to compare ffrom > None, a TypeError that
             # was silently swallowed, leaving the value None.
             #
-            if len(v) == 0:
-                self.value = []
+            # the start index is checked here as it is with an end index:
+            # negative or past the end is an error. slicing an empty stack
+            # from 0 gives an empty stack.
+            #
+            if ffrom >= len(v):
+                if ffrom == 0:
+                    self.value = []
+                    return
+                msg = "Slice start index is past the end of the stack"
+                self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(msg)
                 return
             to = len(v) - 1
         if ffrom > to:
