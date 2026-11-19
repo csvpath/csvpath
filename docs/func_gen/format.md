@@ -7,6 +7,9 @@ The format argument is a format spec alone, with no braces and no
 leading colon. For example, to format a float to two decimal places:
 format(3.14159, ".2f") gives "3.14".
 
+A header value is a string. To format it as a number, convert it
+first: format(float(#price), ".2f").
+
 | Data signatures                                                                                   |
 |:--------------------------------------------------------------------------------------------------|
 | format( value: $${\color{green}None}$$ ǁ $${\color{green}Any}$$, format: $${\color{green}str}$$ ) |

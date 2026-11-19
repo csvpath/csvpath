@@ -18,7 +18,8 @@ jinja() is not covered here because it needs a CsvPaths run and a template.
 
 Not asserted, and reported in the PR body:
 
-- the docs' format example, ":.2f", which gives None instead of "3.14"
+- the docs' format example used to be ":.2f", which gave None instead of
+  "3.14"; the example is now ".2f" (#776), and ":.2f" is an error
 - env() of a name that is not set, which returns the name, not None
 """
 

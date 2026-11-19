@@ -52,3 +52,13 @@ def test_description_examples_match_the_code(name):
     else:
         assert 'interpolate(3.14159, "{:.2f}") gives "3.14"' in text
         assert "{{" not in text
+
+
+def test_a_string_must_be_converted_before_a_number_format():
+    # a header value is a string, as the description says
+    path = _run('@r = format("3.14159", ".2f")')
+    assert path.variables.get("r") is None
+    assert len(path.errors) == 1
+    path = _run('@r = format(float("3.14159"), ".2f")')
+    assert path.errors == []
+    assert path.variables["r"] == "3.14"
