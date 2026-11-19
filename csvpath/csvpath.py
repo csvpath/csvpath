@@ -123,6 +123,13 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
         #
         self.ecoms = ErrorCommunications(csvpath=self)
         """ @private """
+        #
+        # or() pauses raising while it tries its branches, so each branch
+        # behaves as it would without raise in the policy. or() then
+        # raises itself if no branch is True. a count, for nested or()s.
+        #
+        self._raise_paused = 0
+        """ @private """
         self.error_manager = ErrorManager(csvpath=self)
         if csvpaths is not None:
             self.error_manager.add_internal_listener(csvpaths.error_manager)
@@ -502,7 +509,19 @@ class CsvPath(ErrorCollector, Printer):  # pylint: disable=R0902, R0904
 
     def do_i_raise(self) -> bool:
         """@private"""
+        if self._raise_paused > 0:
+            return False
         return self.ecoms.do_i_raise()
+
+    def pause_raise(self) -> None:
+        """@private"""
+        self._raise_paused += 1
+
+    def resume_raise(self) -> None:
+        """@private"""
+        if self._raise_paused <= 0:
+            raise RuntimeError("resume_raise called without pause_raise")
+        self._raise_paused -= 1
 
     @property
     def advance_count(self) -> int:  # pragma: no cover

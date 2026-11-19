@@ -126,3 +126,60 @@ def test_nested_or_true_inner_branch_wins():
     assert raised is False
     assert len(lines) == 1
     assert path.errors == []
+
+
+PARITY = [
+    f"or({BAD}, yes())",
+    f"or({BAD}, no())",
+    'or(add("five", 1), no())',
+    'or(add("five", 1), yes())',
+    f"or(not({BAD}), no())",
+    f"or(or({BAD}, no()), no())",
+    f"or(or({BAD}, yes()), no())",
+    f"not(or({BAD}, no()))",
+    "or(no(), no())",
+    "or(gt(1, 2), yes())",
+]
+
+
+@pytest.mark.parametrize("match", PARITY)
+def test_raise_mode_matches_print_mode(match):
+    # David, 2026-11-19: in raise mode or() raises only if no branch is
+    # True, and otherwise gives the same result as print mode
+    _, p_printed, p_lines, p_raised = _run(policy="print", match=match)
+    path, r_printed, r_lines, r_raised = _run(policy="raise, collect, print", match=match)
+    assert p_raised is False
+    if r_raised:
+        # it raised: no or() branch was True, and print mode printed the
+        # error. (in not(or(..)) the line still matches in print mode,
+        # because not() turns or()'s False into True.)
+        assert len(p_printed) >= 1
+        assert len(path.errors) == 1
+    else:
+        assert len(r_lines) == len(p_lines)
+        assert r_printed == p_printed
+
+
+@pytest.mark.parametrize(
+    "match", ['or(add("five", 1), no())', f"or(not({BAD}), no())"]
+)
+def test_an_erroring_branch_that_is_true_wins_in_raise_mode(match):
+    # in print mode these branches are True despite the error, so they win
+    path, printed, lines, raised = _run(policy="raise, collect, print", match=match)
+    assert raised is False
+    assert len(lines) == 1
+    assert path.errors == []
+
+
+def test_raise_is_resumed_after_or():
+    # raising is paused only while or() runs its branches: an error after
+    # it on the line still raises
+    path, _, _, raised = _run(policy="raise, collect", match=f"or(yes(), {BAD}) {BAD}")
+    assert raised is True
+    assert path._raise_paused == 0
+
+
+def test_resume_without_pause_is_an_error():
+    path = CsvPath()
+    with pytest.raises(RuntimeError):
+        path.resume_raise()
