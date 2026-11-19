@@ -75,6 +75,12 @@ def _chains_of(*, match: str, name: str) -> list:
             "add",
             ["or[0].eq[0].add[0]", "or[0].eq[0].add[1]"],
         ),
+        # an Equality under a top level when/do is not inside a function
+        (
+            'yes() -> @r = add("five", 1)  yes() -> @s = add("five", 1)',
+            "add",
+            ["add[0]", "add[1]"],
+        ),
         # a comma list of arguments does not show
         (
             'concat("a", add("five", 1), add("five", 1))',

@@ -627,12 +627,17 @@ class ExpressionUtility:
 
     @classmethod
     def _is_inner_comparison(cls, thing) -> bool:
+        """a comparison inside a function: an Equality that is not a comma
+        list and has a Function above it. an Equality under a top level
+        when/do (yes() -> @x = 1) is not inside a function."""
         if getattr(thing, "op", None) == ",":
             return False
         p = thing.parent
-        if p is None:
-            return False
-        return f"{type(p)}".find("Expression") == -1
+        while p is not None:
+            if any(c.__name__ == "Function" for c in type(p).__mro__):
+                return True
+            p = p.parent
+        return False
 
     @classmethod
     def simple_class_name(cls, thing):
