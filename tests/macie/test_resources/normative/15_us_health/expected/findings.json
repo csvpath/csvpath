@@ -87,7 +87,7 @@
         },
         {
           "type": "USA_NATIONAL_DRUG_CODE",
-          "count": 3,
+          "count": 2,
           "severity": "HIGH",
           "occurrences": {
             "cells": [
@@ -102,12 +102,6 @@
                 "column": 6,
                 "columnName": "ndc",
                 "row": 12
-              },
-              {
-                "cellReference": null,
-                "column": 8,
-                "columnName": "notes",
-                "row": 17
               }
             ]
           }
@@ -134,7 +128,7 @@
           }
         }
       ],
-      "totalCount": 12
+      "totalCount": 11
     }
   ],
   "csvpath": {

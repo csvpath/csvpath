@@ -93,6 +93,16 @@ def test_macie_credentials_fixtures() -> None:
 # =============
 
 
+def test_macie_aws_secret_hex_is_a_key(catalog) -> None:
+    #
+    # the seventh live probe (2026-11-18): Macie reports a 40 character
+    # lower case hex secret key
+    #
+    d = CredentialDetector(config=catalog.detector(name="aws_secret"))
+    cell = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+    assert d.matches(cell=cell) == [(0, len(cell))]
+
+
 @pytest.mark.parametrize(
     "name, cell",
     [
@@ -130,9 +140,8 @@ def test_macie_credential_forms(catalog, name: str, cell: str) -> None:
         ("stripe", STRIPE_SK_EXAMPLE),
         ("stripe", STRIPE_PK_EXAMPLE),
         #
-        # ours: 40 lower case hex is a hash; 39 or 41 characters
+        # 39 or 41 characters
         #
-        ("aws_secret", "da39a3ee5e6b4b0d3255bfef95601890afd80709"),
         ("aws_secret", AWS[:-1]),
         ("aws_secret", AWS + "x"),
         ("gcp_api_key", GCP[:-1]),

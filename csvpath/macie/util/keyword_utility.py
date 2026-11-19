@@ -1,4 +1,5 @@
 import re
+import unicodedata
 
 
 class KeywordUtility:
@@ -17,16 +18,41 @@ class KeywordUtility:
     Confirmed for managed identifiers by the third live probe
     (2026-11-15); applied to custom identifiers too, as one rule.
 
-    In-cell searches run on the original cell text with re.IGNORECASE, not
+    Keywords match without their accents: cédula de ciudadanía matches
+    "cedula de ciudadania", and the other way round (the seventh live
+    probe, 2026-11-18). Keywords and the text searched are folded one
+    character at a time, each to its base letter, so the folded text keeps
+    the original's positions.
+
+    A keyword in a cell counts only before the occurrence, not after it
+    (the seventh live probe).
+
+    In-cell searches run on the folded cell text with re.IGNORECASE, not
     on a lowercased copy: lowercasing can change a string's length (e.g.
     "İ"), which would misalign positions with the identifier's regex match.
     """
 
     @classmethod
+    def fold(cls, *, text: str) -> str:
+        """each character to its base letter, without accents: "é" to "e",
+        "ç" to "c". One character for one, so positions do not move; a
+        character with no base letter (ß, ł) stays as it is"""
+        if not isinstance(text, str):
+            raise TypeError(f"text must be a str, not {type(text)}")
+        return "".join(cls._fold_char(c) for c in text)
+
+    @classmethod
+    def _fold_char(cls, c: str) -> str:
+        if c.isascii():
+            return c
+        base = unicodedata.normalize("NFD", c)[0]
+        return base if len(base) == 1 else c
+
+    @classmethod
     def variants(cls, *, keyword: str) -> set[str]:
         if not isinstance(keyword, str):
             raise TypeError(f"keyword must be a str, not {type(keyword)}")
-        k = keyword.strip().lower()
+        k = cls.fold(text=keyword.strip().lower())
         if k == "":
             raise ValueError("keyword cannot be empty")
         return {k, k.replace(" ", ""), k.replace(" ", "_"), k.replace(" ", "-")}
@@ -57,7 +83,7 @@ class KeywordUtility:
             raise TypeError(f"header must be a str, not {type(header)}")
         if not isinstance(variants, list):
             raise TypeError(f"variants must be a list, not {type(variants)}")
-        h = header.lower()
+        h = cls.fold(text=header.lower())
         for v in variants:
             start = h.find(v)
             while start != -1:
@@ -106,6 +132,7 @@ class KeywordUtility:
             raise ValueError(
                 f"Bad match span {match_start}..{match_end} for a cell of length {len(cell)}"
             )
+        folded = cls.fold(text=cell)
         for p in patterns:
             #
             # endpos keeps the keyword from running into the match. pos
@@ -113,9 +140,9 @@ class KeywordUtility:
             # text is at most a few characters longer than the pattern.
             #
             pos = max(0, match_end - distance - 2 * len(p.pattern))
-            for m in p.finditer(cell, pos, match_start):
+            for m in p.finditer(folded, pos, match_start):
                 if match_end - m.end(1) <= distance and cls.is_word(
-                    text=cell, start=m.start(1), end=m.end(1)
+                    text=folded, start=m.start(1), end=m.end(1)
                 ):
                     return True
         return False
@@ -131,9 +158,10 @@ class KeywordUtility:
         distance: int,
     ) -> bool:
         """the managed identifier rule: True if a complete keyword is before
-        or after the match, not overlapping it, with at most distance
-        characters between them. Macie: "in proximity", "typically within
-        30 characters (inclusively)" (to confirm in the fidelity scan)."""
+        the match, not overlapping it, with at most distance characters
+        between them. Macie: "in proximity", "typically within 30
+        characters (inclusively)". Before only: the seventh live probe
+        (2026-11-18) found no SSN with its keyword after it"""
         if not isinstance(cell, str):
             raise TypeError(f"cell must be a str, not {type(cell)}")
         if not isinstance(patterns, list):
@@ -144,24 +172,16 @@ class KeywordUtility:
             raise ValueError(
                 f"Bad match span {match_start}..{match_end} for a cell of length {len(cell)}"
             )
+        folded = cls.fold(text=cell)
         for p in patterns:
             #
-            # before: the keyword ends at or before match_start. endpos keeps
-            # it from running into the match
+            # the keyword ends at or before match_start. endpos keeps it from
+            # running into the match
             #
             pos = max(0, match_start - distance - 2 * len(p.pattern))
-            for m in p.finditer(cell, pos, match_start):
+            for m in p.finditer(folded, pos, match_start):
                 if match_start - m.end(1) <= distance and cls.is_word(
-                    text=cell, start=m.start(1), end=m.end(1)
-                ):
-                    return True
-            #
-            # after: the keyword starts at or after match_end
-            #
-            endpos = min(len(cell), match_end + distance + 2 * len(p.pattern))
-            for m in p.finditer(cell, match_end, endpos):
-                if m.start(1) - match_end <= distance and cls.is_word(
-                    text=cell, start=m.start(1), end=m.end(1)
+                    text=folded, start=m.start(1), end=m.end(1)
                 ):
                     return True
         return False

@@ -13,5 +13,5 @@ macie US_DRUG_ENFORCEMENT_AGENCY_NUMBER: 2 occurrences, severity HIGH, detail sh
 macie USA_MEDICARE_BENEFICIARY_IDENTIFIER: 2 occurrences, severity HIGH, detail shown for all 2
 macie USA_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER: 2 occurrences, severity HIGH, detail shown for all 2
 macie USA_HEALTH_INSURANCE_CLAIM_NUMBER: 1 occurrence, severity HIGH, detail shown for all 1
-macie USA_NATIONAL_DRUG_CODE: 3 occurrences, severity HIGH, detail shown for first 2
+macie USA_NATIONAL_DRUG_CODE: 2 occurrences, severity HIGH, detail shown for all 2
 macie USA_HEALTHCARE_PROCEDURE_CODE: 2 occurrences, severity HIGH, detail shown for all 2

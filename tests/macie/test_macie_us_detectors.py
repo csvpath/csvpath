@@ -50,9 +50,7 @@ def _mdi(catalog, name: str) -> ManagedIdentifier:
 # =============
 
 
-@pytest.mark.parametrize(
-    "cell", ["123-45-6789", "123 45 6789", "123456789", "665-01-0001"]
-)
+@pytest.mark.parametrize("cell", ["123-45-6789", "665-01-0001"])
 def test_macie_ssn_formats(ssn, cell: str) -> None:
     assert ssn.matches(cell=cell) == [(0, len(cell))]
 
@@ -72,7 +70,7 @@ def test_macie_ssn_never_issued(ssn, cell: str) -> None:
     assert ssn.matches(cell=cell) == []
 
 
-@pytest.mark.parametrize("cell", ["078-05-1120", "219 09 9999", "457555462"])
+@pytest.mark.parametrize("cell", ["078-05-1120", "219-09-9999", "457-55-5462"])
 def test_macie_ssn_published_examples_are_excluded(ssn, cell: str) -> None:
     assert ssn.matches(cell=cell) == []
 
@@ -89,7 +87,16 @@ def test_macie_ssn_boundaries_and_several(ssn) -> None:
     assert ssn.matches(cell="1123-45-6789") == []
     assert ssn.matches(cell="123-45-67890") == []
     assert ssn.matches(cell="1234567890") == []
-    assert ssn.matches(cell="a 123-45-6789; 234 56 7890") == [(2, 13), (15, 26)]
+    assert ssn.matches(cell="a 123-45-6789; 234-56-7890") == [(2, 13), (15, 26)]
+
+
+@pytest.mark.parametrize("cell", ["123 45 6789", "123456789", "123-45 6789"])
+def test_macie_ssn_hyphens_only(ssn, cell: str) -> None:
+    #
+    # the seventh live probe (2026-11-18): no SSN with spaces or no
+    # separator, even after a keyword
+    #
+    assert ssn.matches(cell=cell) == []
 
 
 def test_macie_ssn_bad_config() -> None:

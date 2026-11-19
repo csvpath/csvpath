@@ -366,6 +366,27 @@ class ChecksumUtility:
         total = sum(int(c) * w for c, w in zip(digits[1:], weights))
         return "21987654321"[total % 11] == digits[0]
 
+    @classmethod
+    def es_naf(cls, *, digits: str) -> bool:
+        """True if 12 ASCII digits are a valid Spanish social security
+        affiliation number (NAF): a 2 digit province code, not 00, an 8
+        digit number and 2 control digits, the remainder mod 97 of the
+        first 10. The seventh live probe (2026-11-18) found Macie checks
+        them. Some descriptions compute a number below 10,000,000 as the
+        province times 10,000,000 plus the number; no authoritative source
+        settles it, so either remainder is accepted (over-reporting is the
+        safer side)"""
+        cls._digits(digits=digits, length=12)
+        if digits[:2] == "00":
+            return False
+        control = int(digits[10:])
+        if int(digits[:10]) % 97 == control:
+            return True
+        number = int(digits[2:10])
+        if number < 10_000_000:
+            return (int(digits[:2]) * 10_000_000 + number) % 97 == control
+        return False
+
     ES_CIF_TYPES = "ABCDEFGHJNPQRSUVW"
     ES_CIF_LETTERS = "JABCDEFGHI"
 
@@ -462,6 +483,7 @@ class ChecksumUtility:
         "au_tfn": "au_tfn",
         "gb_utr": "gb_utr",
         "fr_spi": "fr_spi",
+        "es_naf": "es_naf",
     }
 
     @classmethod

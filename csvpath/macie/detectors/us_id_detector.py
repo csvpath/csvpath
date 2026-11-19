@@ -31,8 +31,9 @@ class UsIdDetector:
                 123-45-6789A, 123456789B1. Railroad Retirement Board
                 numbers are not detected (the entry is partial)
         ndc     NDC (FDA): 10 digits as 4-4-2, 5-3-2 or 5-4-1 with
-                hyphens, the 11 digit 5-4-2 billing form, or 10 or 11
-                digits contiguous
+                hyphens, or the 11 digit 5-4-2 billing form. Hyphens are
+                required: the seventh live probe (2026-11-18) found Macie
+                does not report 11 contiguous digits
         hcpcs   HCPCS (CMS): Level II, a letter A-V and 4 digits (J1234);
                 and, as Macie's keywords include current procedural
                 terminology, CPT codes: 5 digits, or 4 digits and F, T or U
@@ -73,7 +74,7 @@ class UsIdDetector:
         ),
         "ndc": re.compile(
             r"(?<![0-9-])(?:"
-            r"\d{4}-\d{4}-\d{2}|\d{5}-\d{3}-\d{2}|\d{5}-\d{4}-\d{1,2}|\d{10,11}"
+            r"\d{4}-\d{4}-\d{2}|\d{5}-\d{3}-\d{2}|\d{5}-\d{4}-\d{1,2}"
             r")(?![0-9-])",
             re.ASCII,
         ),

@@ -25,8 +25,7 @@ done. Add an item the moment something is deferred.
   - Germany identity card: not confirmed against Macie, which reported
     none of seven forms (live probes, 2026-11-14).
 - **Checks not confirmed from an authoritative source**: Italy's BBAN CIN
-  letter (not checked), the Spain NAF's control digits (not checked), the
-  EHIC as 80 and a country code (and the card's personal ID, not
+  letter (not checked), the EHIC as 80 and a country code (and the card's personal ID, not
   detected). Add each check when a source confirms it.
 - **NAME and ADDRESS** (Macie's machine learning identifiers): reported
   as not translated. Rules cannot do these; see the Jev review under
@@ -98,10 +97,6 @@ fidelity item in transpile-design.md.
   number at all in the probes, and no German, Italian or Spanish
   national number after a keyword. Ask testers with numbers from those
   countries what Macie finds.
-- **Keywords need their accents** (item 22). `cedula de ciudadania`
-  without accents is not Colombia's keyword, so a cedula labeled that way
-  is missed. Brazil's CEP list has both forms only because Macie lists
-  both.
 - **One value, several countries.** National phone numbers (item 19),
   driver's licenses near English keywords (item 21), Swedish numbers,
   which fit Finland's shape too and share its Swedish keywords, and digit
@@ -122,9 +117,6 @@ fidelity item in transpile-design.md.
   and a country code, which no official source confirmed; the personal ID
   on the card is not detected. Ask testers with real cards whether
   theirs are found.
-- **Spain SSN: format only.** The control digits of a NAF are not
-  checked (item 26), so any 12 digits of the right layout near a keyword
-  count. Ask testers with Spanish payroll data for false positives.
 - **UDI: written forms only.** GS1 UDIs without their parentheses are
   missed. ISBT 128 UDIs are found in their human readable form, `=/`
   and the Device Identifier; with no check character in the UDI, the

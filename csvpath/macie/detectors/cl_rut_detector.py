@@ -8,13 +8,15 @@ class ClRutDetector:
     CHILE_RUT_NUMBER. Macie publishes the keywords and that numbers whose
     digits are all zeroes, e.g. 00000000-K, are never reported. The format
     is ours, from Chile's Servicio de Registro Civil: a 7 or 8 digit body,
-    optionally with thousands dots (12.345.678), an optional hyphen, and a
-    check character 0-9 or K (mod 11)."""
+    optionally with thousands dots (12.345.678), a hyphen, and a check
+    character 0-9 or K (mod 11). The hyphen is required: the seventh live
+    probe (2026-11-18) found Macie does not report a RUT with no dots and
+    no hyphen. A hyphen without dots (12345678-5) was not probed."""
 
     CANDIDATES = re.compile(
         r"(?<![\w.])"
         r"(?:(?P<dotted>\d{1,2}\.\d{3}\.\d{3})|(?P<plain>\d{7,8}))"
-        r"-?(?P<check>[0-9Kk])"
+        r"-(?P<check>[0-9Kk])"
         r"(?![\w])",
         re.ASCII,
     )

@@ -449,9 +449,10 @@ did not expect: no extra identifier in any cell.
 | 26 | Spain SSN, control digits right | yes | yes | |
 | 26 | Spain SSN, control digits wrong | yes | **no** | Macie checks the control digits (mod 97 of the first 10) |
 
-### Proposed changes (for David)
+### Changed (David, 2026-11-18)
 
-Each is a rule change on this evidence, one value each:
+Each is a rule change on this evidence, one value each. All nine were
+agreed and made:
 
 1. **Keywords before the value only** (item 1), for in-cell keywords.
 2. **SSN: hyphens only** (item 5).

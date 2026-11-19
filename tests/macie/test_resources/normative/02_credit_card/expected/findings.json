@@ -9,24 +9,24 @@
       "detections": [
         {
           "type": "CREDIT_CARD_NUMBER",
-          "count": 6,
+          "count": 5,
           "severity": "HIGH",
           "occurrences": {
             "cells": [
               { "cellReference": null, "column": 2, "columnName": "card_number", "row": 2 },
               { "cellReference": null, "column": 2, "columnName": "card_number", "row": 3 },
               { "cellReference": null, "column": 3, "columnName": "notes", "row": 4 },
-              { "cellReference": null, "column": 3, "columnName": "notes", "row": 5 },
               { "cellReference": null, "column": 2, "columnName": "card_number", "row": 12 }
             ]
           }
         },
         {
           "type": "CREDIT_CARD_NUMBER_(NO_KEYWORD)",
-          "count": 2,
+          "count": 3,
           "severity": "HIGH",
           "occurrences": {
             "cells": [
+              { "cellReference": null, "column": 3, "columnName": "notes", "row": 5 },
               { "cellReference": null, "column": 3, "columnName": "notes", "row": 6 },
               { "cellReference": null, "column": 3, "columnName": "notes", "row": 11 }
             ]

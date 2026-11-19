@@ -13,7 +13,7 @@ class ManagedIdentifier:
 
     keyword_mode:
       required  a keyword in the column name, or near the occurrence in the
-                cell (before or after, within distance)
+                cell (before it, within distance)
       absent    reported only when there is no keyword there, e.g.
                 CREDIT_CARD_NUMBER_(NO_KEYWORD)
       none      keywords are not considered"""
