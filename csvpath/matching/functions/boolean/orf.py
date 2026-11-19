@@ -12,6 +12,7 @@ from csvpath.matching.productions import (
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function import Function
 from ..args import Args
+from csvpath.matching.util.exceptions import MatchException
 
 
 class Or(MatchDecider):
@@ -64,27 +65,72 @@ class Or(MatchDecider):
     def handle_error(self, source: Matchable, msg: str) -> None:
         self.errors.append(msg)
 
+    def sibling_values(self, skip=None) -> list:
+        #
+        # Function validates our args by taking every branch's value before
+        # _decide_match runs. as in _decide_match, raising is paused while
+        # the branches run: a branch behaves as it would without raise in
+        # the policy, and whether its errors stand is decided after all the
+        # branches are tried. #760.
+        #
+        vs = []
+        self.matcher.csvpath.pause_raise()
+        try:
+            for sib in self.siblings():
+                try:
+                    vs.append(sib.to_value(skip=skip))
+                except Exception as e:
+                    self.matcher.csvpath.logger.debug(
+                        "or() branch %s raised while validating args: %s", sib, e
+                    )
+                    vs.append(None)
+        finally:
+            self.matcher.csvpath.resume_raise()
+        return vs
+
     def _produce_value(self, skip=None) -> None:
         self.value = self.matches(skip=skip)
 
     def _decide_match(self, skip=None) -> None:
+        #
+        # in raise mode, or() gives the same result as without raise: a
+        # True branch wins, and or() raises only if no branch is True and
+        # there were errors (David, 2026-11-19). so raising is paused while
+        # the branches run, and or() raises itself below.
+        #
         child = self.children[0]
         siblings = child.commas_to_list()
         exceptions = []
-        for sib in siblings:
-            try:
-                b = sib.matches(skip=skip)
-            #
-            # should we only catch MatchException?
-            #
-            except Exception as e:
-                exceptions.append(e)
-            if b:
-                self.match = True
-                # if we find a True we succeed and dump any errors
-                self.errors = []
-                return
+        self.matcher.csvpath.pause_raise()
+        try:
+            for sib in siblings:
+                b = False
+                try:
+                    b = sib.matches(skip=skip)
+                #
+                # should we only catch MatchException? with raising paused,
+                # an exception here is not an error-policy raise.
+                #
+                except Exception as e:
+                    self.matcher.csvpath.logger.debug(
+                        "or() branch %s raised: %s", sib, e
+                    )
+                    exceptions.append(e)
+                if b:
+                    self.match = True
+                    # if we find a True we succeed and dump any errors
+                    self.errors = []
+                    return
+        finally:
+            self.matcher.csvpath.resume_raise()
         self.match = False
+        #
+        # with raising paused, a branch's exception is not an error-policy
+        # raise. it may not have been recorded, so add it to the errors.
+        #
+        for e in exceptions:
+            if f"{e}" not in self.errors:
+                self.errors.append(f"{e}")
         #
         # if we fail we progress any errors up the stack. remember that
         # we have to become the source for all these messages. that shouldn't
@@ -93,8 +139,16 @@ class Or(MatchDecider):
         for msg in self.errors:
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
         #
-        # we only get to throw one. is that enough?
+        # no branch is True and there were errors: in raise mode we stop the
+        # run. one exception is enough; the errors are all recorded above.
         #
-        for e in exceptions:
-            for e in self.hold:
-                raise e
+        # Expression records the exception again. we make ourselves its
+        # source, as we are for the errors just sent, so the ErrorManager
+        # drops it as a duplicate. otherwise a parent like not() or an "="
+        # becomes the source and the error is recorded twice.
+        #
+        if self.errors and self.matcher.csvpath.do_i_raise():
+            self.my_expression.current_child = self
+            if exceptions:
+                raise exceptions[0]
+            raise MatchException(self.errors[0])
