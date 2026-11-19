@@ -87,3 +87,42 @@ def test_no_errors_no_change(policy):
     assert raised is False
     assert len(lines) == 1
     assert path.errors == []
+
+
+@pytest.mark.parametrize(
+    "match",
+    [
+        # Expression records the raised error again; with a parent other
+        # than or() as its source, that copy was not dropped
+        f"not(or({BAD}, no()))",
+        f"@x = or({BAD}, no())",
+        f"or({BAD}, no())",
+    ],
+)
+def test_all_branches_fail_records_once_under_a_parent(match):
+    path, printed, _, raised = _run(policy="raise, collect, print", match=match)
+    assert raised is True
+    assert len(path.errors) == 1
+    # or() is the source; the chain format itself is tested elsewhere
+    assert path.errors[0].source.endswith("]")
+    assert "or[" in path.errors[0].source
+    assert len(printed) == 1
+
+
+@pytest.mark.parametrize("policy,raises", [("raise, collect", True), ("collect", False)])
+def test_nested_or_all_fail_stops_in_raise_mode(policy, raises):
+    # the inner or() fails with an error and does not raise a second time;
+    # the outer or() holds that error, so in raise mode the run stops
+    path, _, lines, raised = _run(policy=policy, match=f"or(or({BAD}, no()), no())")
+    assert raised is raises
+    assert len(path.errors) == 1
+    assert lines == []
+
+
+def test_nested_or_true_inner_branch_wins():
+    path, _, lines, raised = _run(
+        policy="raise, collect", match=f"or(or({BAD}, yes()), no())"
+    )
+    assert raised is False
+    assert len(lines) == 1
+    assert path.errors == []

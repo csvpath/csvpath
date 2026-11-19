@@ -12,6 +12,7 @@ from csvpath.matching.productions import (
 from csvpath.matching.util.expression_utility import ExpressionUtility
 from ..function import Function
 from ..args import Args
+from csvpath.matching.util.exceptions import MatchException
 
 
 class Or(MatchDecider):
@@ -117,4 +118,19 @@ class Or(MatchDecider):
         # recorded above, so the first is enough to stop the run.
         #
         if exceptions:
+            #
+            # Expression records the exception again. make us its source,
+            # as we are for the errors just sent, so the ErrorManager sees
+            # a duplicate and drops it. otherwise a parent like not() or
+            # an "=" becomes the source and the error is recorded twice.
+            #
+            self.my_expression.current_child = self
             raise exceptions[0]
+        #
+        # a nested or() that failed with errors may not raise again: its
+        # match is already decided, so the second call returns False. its
+        # errors came to us, so in raise mode we stop the run on them.
+        #
+        if self.errors and self.matcher.csvpath.do_i_raise():
+            self.my_expression.current_child = self
+            raise MatchException(self.errors[0])
