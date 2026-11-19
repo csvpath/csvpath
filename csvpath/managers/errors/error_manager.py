@@ -44,6 +44,12 @@ class ErrorManager(Registrar, Listener):
         self.vetos = {}
         self.error_metrics = None
         self.full_format = None
+        #
+        # the errors handled so far on the current line, for dropping
+        # duplicates whatever the error policy. see _is_duplicate().
+        #
+        self._handled_line = None
+        self._handled = []
 
     @property
     def collector(self):
@@ -144,10 +150,35 @@ class ErrorManager(Registrar, Listener):
         # it happens (at least mainly) when Expression handles and error that bubbled up
         # correctly, but the point of origin also handled it.
         #
-        if self.csvpath and self.csvpath.has_error(error):
+        if self._is_duplicate(error=error, source=source):
             ...
         else:
             self.distribute_update(error)
+
+    def _is_duplicate(self, *, error: Error, source: Any) -> bool:
+        """True if an equal error was already handled. CsvPath.has_error()
+        checks only the collected errors, so with collect off in the error
+        policy every duplicate got through, and e.g. raise, print printed an
+        error twice (#767). we also remember the errors handled on the
+        current line. Error.equals() compares the line count, so errors on
+        different lines are never equal and the record can be per line.
+        Error keeps its source as a string, the component's chain, so two
+        components can look the same. the record therefore also requires
+        the same source object: the same error re-sent by Expression is a
+        duplicate, the same message from a second component is not.
+        """
+        if self.csvpath is None:
+            return False
+        if self.csvpath.has_error(error):
+            return True
+        if error.line_count != self._handled_line:
+            self._handled_line = error.line_count
+            self._handled = []
+        for src, e in self._handled:
+            if src is source and e.equals(error):
+                return True
+        self._handled.append((source, error))
+        return False
 
     def decorate_error(self, *, source, msg: str) -> str:
         #
