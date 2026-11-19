@@ -5,6 +5,8 @@ import os
 from csvpath.util.nos import Nos
 
 from .column_facts import ColumnFacts
+from .column_shapes import ColumnShapes
+from .jev_detector import JevDetector
 from .jev_reviewer import JevReviewer
 from .run_inputs import RunInputs
 from .util.keyword_utility import KeywordUtility as keut
@@ -22,10 +24,18 @@ class MacieReview:
         review = USA_SOCIAL_SECURITY_NUMBER, CREDIT_CARD_NUMBER
         review_model = jev-1.14.0
         review_max_questions = 50
+        review_threshold = 0.7
 
-    with the Jev key in [jev] key, as for the CVL jev() function."""
+    with the Jev key in [jev] key, as for the CVL jev() function.
+
+    NAME and ADDRESS in review are not a review of findings: they turn on
+    the Jev check for those identifiers (JevDetector), whose results are
+    kept apart from the Macie-shaped findings, in a jev section."""
 
     RECORD = "review"
+    JEV_RECORD = "jev"
+    NOT_NAMED = "config.ini [macie] review does not name it"
+    OFF = "off"
     #
     # tests set a fake client factory here; None is the SDK's client
     #
@@ -42,7 +52,9 @@ class MacieReview:
 
     @property
     def on(self) -> bool:
-        return len(self.identifiers) > 0
+        """a review of findings: an identifier other than NAME and ADDRESS
+        is named"""
+        return len(self.identifiers - set(JevDetector.IDENTIFIERS)) > 0
 
     @classmethod
     def _identifiers(cls, *, config) -> set[str]:
@@ -68,6 +80,10 @@ class MacieReview:
 
     def reviews(self, *, name: str) -> bool:
         return name in self.identifiers
+
+    def checks(self, *, name: str) -> bool:
+        """True if the Jev check of NAME or ADDRESS is on for name"""
+        return name in JevDetector.IDENTIFIERS and name in self.identifiers
 
     def collect(
         self, *, identifier, column: int, header: str, cell: str, occurrences: int
@@ -150,6 +166,166 @@ class MacieReview:
     def _model(self) -> str:
         v = self.config.get(section="macie", name="review_model", default=None)
         return JevReviewer.MODEL if v is None else f"{v}".strip()
+
+    def _threshold(self) -> float:
+        v = self.config.get(section="macie", name="review_threshold", default=None)
+        if v is None:
+            return JevDetector.THRESHOLD
+        try:
+            f = float(f"{v}".strip())
+        except ValueError as e:
+            raise ValueError(
+                f"config.ini [macie] review_threshold must be a number, not {v!r}"
+            ) from e
+        if not 0 < f <= 1:
+            raise ValueError(
+                f"config.ini [macie] review_threshold must be in (0, 1], not {f}"
+            )
+        return f
+
+    def detect(
+        self, *, csvpath, shapes: list[ColumnShapes], identifiers: list[str]
+    ) -> dict:
+        """the Jev check for the NAME and ADDRESS identifiers the csvpath
+        holds. Each is checked only if [macie] review names it. Never raises
+        for a check that cannot be done: that is status failed, with the
+        reason, and the identifiers are not checked"""
+        asked = [i for i in identifiers if i in self.identifiers]
+        not_checked = [
+            {"identifier": i, "reason": self.NOT_NAMED}
+            for i in identifiers
+            if i not in self.identifiers
+        ]
+        if not asked:
+            result = self._jev_failed(reason=None, not_checked=not_checked)
+            result["status"] = self.OFF
+            return result
+        problem = self._key_problem()
+        if problem is not None:
+            return self._jev_failed(
+                reason=problem, not_checked=not_checked, asked=asked
+            )
+        try:
+            detector = JevDetector(
+                key=self.config.get(section="jev", name="key"),
+                model=self._model(),
+                max_questions=self._max_questions(),
+                client_factory=type(self).CLIENT_FACTORY,
+            )
+            threshold = self._threshold()
+        except (TypeError, ValueError) as e:
+            self.logger().exception("Cannot set up the Jev check: %s", e)
+            return self._jev_failed(reason=f"{e}", not_checked=not_checked, asked=asked)
+        result = detector.detect(
+            shapes=shapes,
+            identifiers=asked,
+            file=self._file(csvpath=csvpath),
+            columns=[f"{h}" for h in (csvpath.headers or [])],
+            threshold=threshold,
+        )
+        if result["status"] == JevReviewer.FAILED:
+            not_checked += [
+                {"identifier": i, "reason": result["reason"]} for i in asked
+            ]
+        result["not_checked"] = not_checked
+        return result
+
+    @classmethod
+    def _jev_failed(
+        cls, *, reason: str | None, not_checked: list[dict], asked: list[str] = ()
+    ) -> dict:
+        return {
+            "status": JevReviewer.FAILED,
+            "reason": reason,
+            "model": None,
+            "threshold": None,
+            "questions": 0,
+            "input_tokens": None,
+            "output_tokens": None,
+            "seconds": None,
+            "columns": [],
+            "not_asked": [],
+            "not_checked": list(not_checked)
+            + [{"identifier": i, "reason": reason} for i in asked],
+            "request": None,
+            "response": None,
+        }
+
+    @classmethod
+    def attach_jev(cls, *, findings: dict, result: dict) -> dict:
+        """adds the Jev check to macie_findings as its own jev section, kept
+        apart from the Macie-shaped sensitiveData: these are a model's
+        judgments of columns, not Macie's rules (David, 2026-11-19)"""
+        detections = {}
+        for c in result["columns"]:
+            if not c["found"]:
+                continue
+            d = detections.setdefault(
+                c["identifier"], {"type": c["identifier"], "count": 0, "columns": []}
+            )
+            d["count"] += c["count"]
+            d["columns"].append(
+                {
+                    "column": c["column"],
+                    "columnName": c["columnName"],
+                    "count": c["count"],
+                    "verdict": c["verdict"],
+                    "confidence": c["confidence"],
+                }
+            )
+        findings["jev"] = {
+            "detectedBy": "jev",
+            "status": result["status"],
+            "reason": result["reason"],
+            "model": result["model"],
+            "threshold": result["threshold"],
+            "questions": result["questions"],
+            "input_tokens": result["input_tokens"],
+            "output_tokens": result["output_tokens"],
+            "seconds": result["seconds"],
+            "totalCount": sum(d["count"] for d in detections.values()),
+            "detections": list(detections.values()),
+            "not_checked": result.get("not_checked", []),
+            "not_asked": result["not_asked"],
+        }
+        return findings
+
+    @classmethod
+    def jev_printouts(cls, *, result: dict) -> list[str]:
+        lines = []
+        for c in result["columns"]:
+            if c["found"]:
+                lines.append(
+                    f"macie jev {c['identifier']} column {c['column']} "
+                    f"{c['columnName']}: {c['count']} cells "
+                    f"({c['verdict']}, {c['confidence']})"
+                )
+        names = sorted({n["identifier"] for n in result.get("not_checked", [])})
+        if result["status"] == JevReviewer.FAILED:
+            lines.append(
+                f"macie jev: {', '.join(names)} not checked: {result['reason']}"
+            )
+        elif result["status"] == cls.OFF:
+            lines.append(f"macie jev: {', '.join(names)} not checked: {cls.NOT_NAMED}")
+        else:
+            tokens = (
+                f", {result['input_tokens']} tokens in, {result['output_tokens']} out"
+                if result["input_tokens"] is not None
+                else ""
+            )
+            found = sum(1 for c in result["columns"] if c["found"])
+            lines.append(
+                f"macie jev: {result['status']}, {result['questions']} questions, "
+                f"{found} columns found at {result['threshold']}, "
+                f"{result['model']}{tokens}"
+            )
+            if names:
+                lines.append(
+                    f"macie jev: {', '.join(names)} not checked: {cls.NOT_NAMED}"
+                )
+            if result["status"] == JevReviewer.PARTIAL:
+                lines.append(f"macie jev: {result['reason']}")
+        return lines
 
     def _max_questions(self) -> int:
         v = self.config.get(section="macie", name="review_max_questions", default=None)
@@ -268,16 +444,19 @@ class MacieReview:
         return lines
 
     @classmethod
-    def record(cls, *, csvpath, result: dict) -> str | None:
+    def record(cls, *, csvpath, result: dict, kind: str = RECORD) -> str | None:
         """writes the request and response to the run's
-        _extra_data/macie/review.<csvpath>.json in a group run. None, and
-        nothing written, outside one"""
+        _extra_data/macie/<kind>.<csvpath>.json in a group run: review for
+        the review, jev for the NAME and ADDRESS check. None, and nothing
+        written, outside one"""
+        if kind not in (cls.RECORD, cls.JEV_RECORD):
+            raise ValueError(f"kind must be review or jev, not {kind!r}")
         if csvpath.csvpaths is None or csvpath.named_paths_name is None:
             return None
         if csvpath.run_dir is None:
             return None
         target = RunInputs.macie_dir(run_dir=csvpath.run_dir)
         name = f"{csvpath.identity or 'csvpath'}"
-        path = Nos(target).join(f"{cls.RECORD}.{name}.json")
+        path = Nos(target).join(f"{kind}.{name}.json")
         RunInputs.write(path=path, text=json.dumps(result, indent=2) + "\n")
         return path

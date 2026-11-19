@@ -130,3 +130,42 @@ def test_macie_review_printouts_nothing_to_review() -> None:
     result = _result()
     result.update({"questions": 0, "entries": [], "model": None, "seconds": None})
     assert MacieReview.printouts(result=result) == ["macie review: nothing to review"]
+
+
+def test_macie_review_name_and_address_are_the_jev_check() -> None:
+    #
+    # NAME and ADDRESS turn on the Jev check of columns, not a review of
+    # findings
+    #
+    r = MacieReview(config=_Config({("macie", "review"): "NAME, ADDRESS"}))
+    assert r.on is False
+    assert r.checks(name="NAME") and r.checks(name="ADDRESS")
+    r = MacieReview(config=_Config({("macie", "review"): "NAME, A_ID"}))
+    assert r.on is True
+    assert r.checks(name="NAME") and not r.checks(name="ADDRESS")
+    assert not r.checks(name="A_ID")
+
+
+def test_macie_review_threshold() -> None:
+    assert MacieReview(config=_Config({}))._threshold() == 0.7
+    r = MacieReview(config=_Config({("macie", "review_threshold"): " 0.8 "}))
+    assert r._threshold() == 0.8
+    for bad in ("high", "0", "1.5"):
+        r = MacieReview(config=_Config({("macie", "review_threshold"): bad}))
+        with pytest.raises(ValueError):
+            r._threshold()
+
+
+def test_macie_review_jev_printouts() -> None:
+    off = {
+        "status": "off",
+        "reason": None,
+        "columns": [],
+        "not_checked": [
+            {"identifier": "NAME", "reason": MacieReview.NOT_NAMED},
+            {"identifier": "ADDRESS", "reason": MacieReview.NOT_NAMED},
+        ],
+    }
+    assert MacieReview.jev_printouts(result=off) == [
+        f"macie jev: ADDRESS, NAME not checked: {MacieReview.NOT_NAMED}"
+    ]

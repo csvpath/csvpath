@@ -27,9 +27,10 @@ done. Add an item the moment something is deferred.
 - **Checks not confirmed from an authoritative source**: Italy's BBAN CIN
   letter (not checked), the EHIC as 80 and a country code (and the card's personal ID, not
   detected). Add each check when a source confirms it.
-- **NAME and ADDRESS** (Macie's machine learning identifiers): reported
-  as not translated. Rules cannot do these; see the Jev review under
-  extensions.
+- **NAME and ADDRESS** (Macie's machine learning identifiers): checked by
+  Jev from the columns' masked shapes when `[macie] review` names them,
+  in a separate `jev` section (2026-11-19). Names inside free text are
+  missed; ask road-testers how often that matters.
 
 ### Fidelity
 
@@ -147,10 +148,10 @@ fidelity item in transpile-design.md.
   - `review_mask_words`, masking capitalised words too, if road-testers
     ask (decision 3);
   - `review = all`, left out of the first build on purpose (decision 4);
-  - NAME and ADDRESS: a review question could flag columns that hold
-    names or addresses, from masked context and column facts. Ours, not
-    Macie's. Draft: `jev-names-addresses-design.md` (2026-11-18), with
-    decisions for David and an experiment to run first.
+  - NAME and ADDRESS: built (2026-11-19), column level, from
+    `jev-names-addresses-design.md` and the experiment. Next, if
+    road-testers ask: names in free text (option B, sending cell words,
+    an explicit opt-in).
 - **CVL `jev()` uses `jev-latest`**, which moves; a config key to pin the
   model would make CVL results comparable over time (core, not Macie).
 - **Rulesbase `common.json`**, deferred in `rulesbase-design.md`.

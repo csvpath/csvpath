@@ -294,13 +294,25 @@ def _no_custom(w: dict) -> dict:
 
 def test_macie_converter_needs_an_identifier_to_convert() -> None:
     #
-    # no custom identifiers, and no managed ones we have a stand-in for
+    # no custom identifiers, and no managed ones
+    #
+    w = _no_custom(_handcrafted())
+    w["selection"]["managedDataIdentifierIds"] = []
+    w["managedDataIdentifiers"]["resolved"] = []
+    with pytest.raises(MacieException):
+        MacieConverter(wrapper=w).convert(name="t")
+
+
+def test_macie_converter_name_alone_converts() -> None:
+    #
+    # a wrapper whose only identifier is NAME converts: Jev may check it
     #
     w = _no_custom(_handcrafted())
     w["selection"]["managedDataIdentifierIds"] = ["NAME"]
     w["managedDataIdentifiers"]["resolved"] = ["NAME"]
-    with pytest.raises(MacieException):
-        MacieConverter(wrapper=w).convert(name="t")
+    csvpath = MacieConverter(wrapper=w).convert(name="t").csvpath
+    assert "macie_mdi(" not in csvpath
+    assert 'macie_jev.nocontrib("NAME")' in csvpath
 
 
 def test_macie_converter_managed_only() -> None:
@@ -448,9 +460,10 @@ def test_macie_converter_report() -> None:
         ("allowLists[1]", "allowList.s3WordsList.unreadable"),
         #
         # resolved[0] and [1], CREDIT_CARD_NUMBER and
-        # USA_SOCIAL_SECURITY_NUMBER, are translated. NAME is not
+        # USA_SOCIAL_SECURITY_NUMBER, are translated. NAME is checked by
+        # Jev, when [macie] review names it, and reported as such
         #
-        ("managedDataIdentifiers.resolved[2]", "managedDataIdentifier"),
+        ("managedDataIdentifiers.resolved[2]", "managedDataIdentifier.jev"),
         ("findingsFilters[0]", "findingsFilter"),
         ("findingsFilters[1]", "findingsFilter"),
         ("warnings[0]", "warning.ALLOW_LIST_UNREADABLE"),
@@ -460,6 +473,17 @@ def test_macie_converter_report() -> None:
     assert "public-names" in skipped[0].reason
     assert "ACCESS_DENIED" in skipped[0].reason
     assert "NAME" in skipped[1].reason
+
+
+def test_macie_converter_name_and_address_are_macie_jev() -> None:
+    w = _handcrafted()
+    ids = ["CREDIT_CARD_NUMBER", "NAME", "ADDRESS"]
+    w["selection"]["managedDataIdentifierIds"] = list(ids)
+    w["managedDataIdentifiers"]["resolved"] = list(ids)
+    body = MacieConverter(wrapper=w).convert(name="t").csvpath.split("~")[2]
+    assert 'macie_jev.nocontrib("NAME")' in body
+    assert 'macie_jev.nocontrib("ADDRESS")' in body
+    assert body.index("macie_jev") < body.index("macie_report()")
 
 
 def test_macie_converter_text_allow_list_is_not_in_the_csvpath() -> None:

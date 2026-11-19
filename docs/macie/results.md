@@ -144,9 +144,10 @@ The setting is read when the group is loaded, like the limits. The
 loaded csvpath has `return-mode: no-matches` and `macie-collect: clean`
 in its metadata.
 
-**Clean means clean of the identifiers translated.** `NAME`, `ADDRESS`
-and any other identifier without a stand-in are not checked, and the run
-says which:
+**Clean means clean of the identifiers translated.** `NAME` and
+`ADDRESS` are not checked line by line, even when Jev checks them: Jev
+judges whole columns after the last line. The run says which are not
+checked:
 
 ```
 macie: clean lines are checked for 7 identifiers; not checked: NAME
@@ -162,17 +163,23 @@ macie: breaker tripped at line 4; lines after it were not scanned and are not am
 ```
 
 The Macie csvpath also calls `stop_all()`. A breadth-first run (the
-`_by_line` methods) or `next_paths()` then stops its other csvpaths at
-that line. `collect_paths()` does not honor `stop_all()`, so there the
-csvpaths after it still run, on the short file, and the invalid run is
-the signal. In findings mode a tripped breaker leaves the run valid, as
-before.
+`_by_line` methods) then stops its other csvpaths at that line, and a
+serial run (`collect_paths()`, `fast_forward_paths()`, `next_paths()`)
+does not run the csvpaths after it. In findings mode a tripped breaker
+leaves the run valid, as before.
 
 ## The Jev review
 
 With `[macie] review` on, each reviewed detection gains a `review` list and
 the `csvpath` section a `review` summary. Nothing else in the document
 changes. See [reviewing findings with Jev](review.md).
+
+## NAME and ADDRESS
+
+With `NAME` or `ADDRESS` in `[macie] review`, the document gains a `jev`
+section: Jev's check of the file's columns, kept apart from the
+Macie-shaped `sensitiveData` because it is a model's judgment, not
+Macie's rules. See [NAME and ADDRESS](review.md#name-and-address).
 
 ## When setup fails
 
