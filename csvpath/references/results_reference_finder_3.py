@@ -169,6 +169,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # instance manifests are read once per query() (triage A13)
         self._manifest_reads = {}
         reference = self.ref.parsed
+        self._trace_phase("query")
         # each function is this datatype's, and one value per reference
         # (5.20b), before anything is read
         self._check_datatype_functions(reference)
@@ -3993,6 +3994,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         """what query() and resolve() will probably read, as a
         ReferenceEstimate3 (references_v3_cost_estimates.md). It reads only
         the archive ledger."""
+        self._trace_phase("estimate")
         from .results_estimator_3 import ResultsEstimator3
 
         return ResultsEstimator3(finder=self).estimate()

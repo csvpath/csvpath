@@ -1,6 +1,7 @@
 import os
 import re
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from datetime import datetime
 
 from csvpath.util.file_readers import DataFileReader
@@ -28,6 +29,7 @@ from .reference_parser_3 import ReferenceParser3
 from .reference_results_3 import ReferenceResult3, ReferenceResults3
 from .sources.filesystem_reference_source import FilesystemReferenceSource
 from .sources.reference_source import ReferenceSource
+from .sources.sql_trace import SqlTrace
 
 
 class ReferenceFinder3(ABC):
@@ -70,6 +72,8 @@ class ReferenceFinder3(ABC):
         # the warnings this finder has already logged; one resolve() reads
         # the same records once per result (2026-11-13)
         self._warned: set = set()
+        # resolve_each() logs one SQL trace total for its whole selection
+        self._resolving_each = False
 
     @property
     def source(self) -> ReferenceSource:
@@ -125,6 +129,36 @@ class ReferenceFinder3(ABC):
         wants to narrow down first, see resolve_from()."""
         return self.resolve_from(self.query())
 
+    def _trace_total(self) -> None:
+        """logs this reference's SQL total, when the trace log is on"""
+        tracing = self.source.sql_tracing
+        if tracing is not None:
+            tracing.log_total()
+
+    def _trace_phase(self, phase: str) -> None:
+        """tells the SQL trace which reference and phase the next reads are
+        for; a no-op when the source reads no SQL"""
+        tracing = self.source.sql_tracing
+        if tracing is not None:
+            tracing.set_context(reference=self.ref.reference, phase=phase)
+
+    @contextmanager
+    def capture_sql(self):
+        """the SQL every reference over this finder's source runs while the
+        block is open, as a SqlTrace:
+
+            with finder.capture_sql() as trace:
+                finder.resolve()
+            print(trace.summary())
+
+        Empty when [references] sql is off: no SQL runs."""
+        tracing = self.source.sql_tracing
+        if tracing is None:
+            yield SqlTrace()
+            return
+        with tracing.capture() as trace:
+            yield trace
+
     def resolve_from(self, selection: ReferenceResults3 | list) -> ReferenceResults3:
         """
         resolves a selection rather than always re-querying and
@@ -161,6 +195,7 @@ class ReferenceFinder3(ABC):
         """
         # a selection given as results skips query(); the check reads nothing
         self._check_one_value(self.ref.parsed)
+        self._trace_phase("resolve")
         if isinstance(selection, ReferenceResults3):
             results = selection
         else:
@@ -176,6 +211,8 @@ class ReferenceFinder3(ABC):
             )
         for result in results.results:
             result.data = self._extract_data(result)
+        if not self._resolving_each:
+            self._trace_total()
         return results
 
     def resolve_each(self, selection: ReferenceResults3) -> ReferenceResults3:
@@ -186,9 +223,18 @@ class ReferenceFinder3(ABC):
         if selection is None:
             raise ValueError("selection cannot be None")
         self._check_one_value(self.ref.parsed)
+        self._trace_phase("resolve")
         results = []
-        for result in selection.results:
-            results.extend(self.resolve_from(ReferenceResults3(results=[result])).results)
+        # one SQL total for the whole selection, not one per result
+        self._resolving_each = True
+        try:
+            for result in selection.results:
+                results.extend(
+                    self.resolve_from(ReferenceResults3(results=[result])).results
+                )
+        finally:
+            self._resolving_each = False
+        self._trace_total()
         return ReferenceResults3(results=results)
 
     @abstractmethod

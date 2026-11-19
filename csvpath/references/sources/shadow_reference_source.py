@@ -59,6 +59,12 @@ class ShadowReferenceSource(ReferenceSource):
         return self._secondary
 
     @property
+    def sql_tracing(self):
+        # the SQL side; the filesystem side runs no SQL
+        tracing = self._primary.sql_tracing
+        return tracing if tracing is not None else self._secondary.sql_tracing
+
+    @property
     def counts(self) -> dict:
         """per read method: reads, matches, differences and sql_errors"""
         return {method: dict(c) for method, c in self._counts.items()}

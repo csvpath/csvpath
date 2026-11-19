@@ -124,6 +124,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         # the uuid -> (owning group, entry) index is built once per call (A22)
         self._live_entries = None
         reference = self.ref.parsed
+        self._trace_phase("query")
         # each function is this datatype's, and one value per reference
         # (5.20b), before anything is read
         self._check_datatype_functions(reference)
@@ -1190,6 +1191,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         """what query() and resolve() will probably read, as a
         ReferenceEstimate3 (references_v3_cost_estimates.md). It reads only
         the named-paths ledger."""
+        self._trace_phase("estimate")
         from .csvpaths_estimator_3 import CsvpathsEstimator3
 
         return CsvpathsEstimator3(finder=self).estimate()

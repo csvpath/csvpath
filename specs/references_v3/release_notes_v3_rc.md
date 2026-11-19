@@ -142,6 +142,7 @@ Functions in a chain are order-independent: a range applies first, then every fi
   - Under `on` and `shadow`, a startup check runs before the first reference read. It raises if `[sql]` dialect or connection string is unset, if one of the four SQL listeners is not configured, or if the database cannot be reached.
   - SQL listener failures used to be logged and swallowed. Under `on` a failed write now always raises `RequiredListenerException`; under `off` and `shadow` it follows the CsvPaths error policy, so with a `raise` policy it now raises.
   - The SQL listeners store exactly the manifest entry each registrar wrote (#445).
+  - Seeing the SQL (new): `[references] sql_trace = on` logs, at `info`, each SQL statement a reference reads, with its parameters, rows and time, and a total per reference. It is read on every statement, so `csvpaths.config.add_to_config(section="references", key="sql_trace", value="on")` turns it on and off in a running process. `finder.capture_sql()` returns the same statements as a `SqlTrace` (`with finder.capture_sql() as trace: finder.resolve()`), and the CLI's references menu has "show the SQL for a reference". Only reference reads are traced, not the SQL listeners' writes; with `sql = off` there is no SQL.
 
 ## Coming after this release
 

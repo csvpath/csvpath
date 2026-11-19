@@ -22,6 +22,12 @@ class ReferenceSource(ABC):
     def csvpaths(self):
         return self._csvpaths
 
+    @property
+    def sql_tracing(self):
+        """the SqlTracing of the SQL this source reads, or None when it
+        reads no SQL (the filesystem source)"""
+        return None
+
     @staticmethod
     def _check_name(name: str, what: str) -> None:
         if name is None:

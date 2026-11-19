@@ -146,6 +146,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # the live entries are read at most once per call (_live_index())
         self._live_entries = None
         reference = self.ref.parsed
+        self._trace_phase("query")
         # each function is this datatype's, and one value per reference
         # (5.20b), before anything is read
         self._check_datatype_functions(reference)
@@ -2211,6 +2212,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         """what query() and resolve() will probably read, as a
         ReferenceEstimate3 (references_v3_cost_estimates.md). It reads only
         the named-files ledger."""
+        self._trace_phase("estimate")
         from .files_estimator_3 import FilesEstimator3
 
         return FilesEstimator3(finder=self).estimate()

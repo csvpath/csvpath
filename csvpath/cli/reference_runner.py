@@ -50,6 +50,7 @@ class ReferenceRunner:
             "browse functions",
             "check SQL coverage",
             "estimate a reference",
+            "show the SQL for a reference",
             Const.CANCEL2,
         ]
         t = self._cli.ask(choices)
@@ -67,6 +68,9 @@ class ReferenceRunner:
             self.menu()
         elif t == "estimate a reference":
             self._estimate()
+            self.menu()
+        elif t == "show the SQL for a reference":
+            self._show_sql()
             self.menu()
         elif t == "check SQL coverage":
             # back to this submenu, as browse functions: checking
@@ -96,6 +100,48 @@ class ReferenceRunner:
             print(estimate.summary())
         except KeyboardInterrupt:
             # as in _check_sql_coverage(): a remote ledger can be slow
+            print("\nCancelled.\n")
+            return
+        except Exception as e:
+            if not erut.handle(self._cli, e):
+                return
+        input("\nHit return to continue. ")
+
+    def _show_sql(self) -> None:
+        """resolves a reference or expression and prints the SQL it ran,
+        for seeing how simple or complex the SQL behind it is. Only with
+        [references] sql on or shadow; off reads the filesystem."""
+        self._cli.clear()
+        tracing = self._cli.csvpaths.reference_source.sql_tracing
+        if tracing is None:
+            print(
+                "[references] sql is off: references read the filesystem, so "
+                "there is no SQL to show."
+            )
+            input("\nHit return to continue. ")
+            return
+        expression = Asker(
+            self._cli, name_type="none", prompt="Show the SQL for? ", initial_text=""
+        ).ask()
+        if not expression:
+            return
+        try:
+            tree = ReferenceExpressionParser3.parse(expression)
+            if isinstance(tree, tuple):
+                finder = ReferenceExpression3.from_tree(
+                    tree=tree, csvpaths=self._cli.csvpaths
+                )
+            else:
+                finder = ReferenceFinderFactory3.for_reference(
+                    reference=tree, csvpaths=self._cli.csvpaths
+                )
+            with tracing.capture() as trace:
+                results = finder.resolve()
+            print(f"{len(results)} results; {trace.summary()}\n")
+            for statement in trace.statements:
+                print(f"  {statement.line()}")
+        except KeyboardInterrupt:
+            # as in _run(): a slow resolve must not quit the whole CLI
             print("\nCancelled.\n")
             return
         except Exception as e:
