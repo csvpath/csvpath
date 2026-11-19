@@ -3992,12 +3992,17 @@ class TestComparisonOnAMissingValue:
         assert ":above()" in warnings[0]
 
     def test_a_definition_field_comparison_skips_a_group_without_it(self):
-        # acme's definition.json has no on_arrival
-        finder = _gate_finder('$acme.csvpaths.:on_arrival(:above("a"))')
+        # acme's definition.json has no template. It used ':on_arrival()',
+        # a FILES field CSVPATHS accepted silently (reviewer on #761)
+        finder = _gate_finder('$acme.csvpaths.:template(:above("a"))')
         assert finder.query().results == []
         warnings = finder.csvpaths.logger.warnings
         assert len(warnings) == 1
-        assert "acme" in warnings[0] and ":on_arrival()" in warnings[0]
+        assert "acme" in warnings[0] and ":template()" in warnings[0]
+
+    def test_a_files_definition_field_is_not_a_csvpaths_function(self):
+        with pytest.raises(ReferenceException3, match="':on_arrival\\(\\)' is not a csvpaths function"):
+            _gate_finder('$acme.csvpaths.:on_arrival(:above("a"))').query()
 
 
 class TestHavingByContentIsResultsOnly:
