@@ -7,23 +7,37 @@ from ..function_focus import ValueProducer
 
 class Format(ValueProducer):
     def check_valid(self) -> None:
-        s = ""
         self.description = [
             self.wrap(
                 """\
                     Uses the Python string formatting mini language.
-
-                    E.g. to format a float to having two decimal places use a format argument of “:.2f”
                 """
             ),
         ]
         if self.name == "interpolate":
             s = self.wrap(
-                """Interpolates a complete Pythonic formatting string with one replacement value.
-                Use {{ and }} to demarcate your replacement pattern. For example, to set a variable
-                to a value as a string, use: @a = interpolate(uuid(), "{}")"""
+                """\
+                    Interpolates a complete Pythonic formatting string with one
+                    replacement value. Use { and } to demarcate your replacement
+                    pattern. For example, to set a variable to a value as a
+                    string, use: @a = interpolate(uuid(), "{}")
+
+                    To format a float to two decimal places, put the format
+                    inside the braces: interpolate(3.14159, "{:.2f}") gives "3.14".
+                """
             )
-            self.description.append(s)
+        else:
+            s = self.wrap(
+                """\
+                    The format argument is a format spec alone, with no braces
+                    and no leading colon. For example, to format a float to two
+                    decimal places: format(3.14159, ".2f") gives "3.14".
+
+                    A header value is a string. To format it as a number,
+                    convert it first: format(float(#price), ".2f").
+                """
+            )
+        self.description.append(s)
 
         self.args = Args(matchable=self)
         a = self.args.argset(2)

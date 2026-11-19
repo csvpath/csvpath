@@ -3,13 +3,13 @@
 
 Uses the Python string formatting mini language.
 
-E.g. to format a float to having two decimal places use a format
-argument of “:.2f”
-
 Interpolates a complete Pythonic formatting string with one
-replacement value.                 Use {{ and }} to demarcate your
-replacement pattern. For example, to set a variable                 to
-a value as a string, use: @a = interpolate(uuid(), "{}")
+replacement value. Use { and } to demarcate your replacement pattern.
+For example, to set a variable to a value as a string, use: @a =
+interpolate(uuid(), "{}")
+
+To format a float to two decimal places, put the format inside the
+braces: interpolate(3.14159, "{:.2f}") gives "3.14".
 
 | Data signatures                                                                                        |
 |:-------------------------------------------------------------------------------------------------------|
