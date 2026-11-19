@@ -555,15 +555,22 @@ class ExpressionUtility:
         while p is not None:
             ancs.append(p)
             p = p.parent
-        if len(ancs) == 1:
-            x = f"[{cls.get_my_expressions_index(thing)}]"
-            chain = f"{cls.name_or_class(thing, index=x)}"
-        else:
-            chain = f"{cls.name_or_class(thing)}"
+        #
+        # the top named component of the expression carries the
+        # expression's index. every component below it carries its
+        # position among its parent's children. Equality and Expression
+        # show as "" and are left out. the top named component is the
+        # highest one, below the expression, that is not an Equality, so
+        # in `@r = add(...)` it is add, not the "=".
+        #
+        top = None
+        for o in [thing] + ancs[:-1]:
+            if f"{type(o)}".find("Equality") == -1:
+                top = o
+        chain = cls._chain_name(thing, top=top)
         for i, o in enumerate(ancs):
             if i != len(ancs) - 1:
-                x = f"[{cls.get_my_expressions_index(o)}]"
-                n = f"{cls.name_or_class(o, index=x)}"
+                n = cls._chain_name(o, top=top)
             else:
                 n = f"{cls.name_or_class(o)}"
             if n != "":
@@ -571,15 +578,36 @@ class ExpressionUtility:
         return chain
 
     @classmethod
+    def _chain_name(cls, thing, *, top) -> str:
+        if thing is top:
+            x = f"[{cls.get_my_expressions_index(thing)}]"
+            return f"{cls.name_or_class(thing, index=x)}"
+        return f"{cls.name_or_class(thing)}"
+
+    @classmethod
     def name_or_class(cls, thing, show_eq_and_exp=False, index=None):
         ret = None
         if not show_eq_and_exp and f"{type(thing)}".find("Equality") > -1:
-            ret = ""
+            #
+            # a comparison inside a function shows as cmp, so that two of
+            # them as arguments have different chains: or(a == 1, b == 1)
+            # has or[0].cmp[0] and or[0].cmp[1]. a comma list, and a top
+            # level Equality like @x = ..., do not show. not eq or equals:
+            # both are names of the eq() function.
+            #
+            if cls._is_inner_comparison(thing):
+                ret = f"cmp{index if index is not None else cls._position(thing)}"
+            else:
+                ret = ""
         elif not show_eq_and_exp and f"{type(thing)}".find("Expression") > -1:
             ret = ""
         elif thing.first_non_term_qualifier() is not None:
+            #
+            # a name qualifier stands in for the component's name, with its
+            # index like any other name: add.a(..) is a[0], not a
+            #
             q = thing.first_non_term_qualifier()
-            ret = q
+            ret = f"{q}{index if index is not None else cls._position(thing)}"
         elif not hasattr(thing, "name"):
             ret = cls.simple_class_name(thing)
         elif f"{type(thing)}".find("Term") != -1:
@@ -593,6 +621,24 @@ class ExpressionUtility:
                 i = thing.parent.children.index(thing)
                 ret = f"{thing.name}[{i}]"
         return ret
+
+    @classmethod
+    def _position(cls, thing) -> str:
+        return f"[{thing.parent.children.index(thing)}]"
+
+    @classmethod
+    def _is_inner_comparison(cls, thing) -> bool:
+        """a comparison inside a function: an Equality that is not a comma
+        list and has a Function above it. an Equality under a top level
+        when/do (yes() -> @x = 1) is not inside a function."""
+        if getattr(thing, "op", None) == ",":
+            return False
+        p = thing.parent
+        while p is not None:
+            if any(c.__name__ == "Function" for c in type(p).__mro__):
+                return True
+            p = p.parent
+        return False
 
     @classmethod
     def simple_class_name(cls, thing):
