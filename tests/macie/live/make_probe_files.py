@@ -446,6 +446,278 @@ def headers_5(rng) -> list[RawFile]:
 
 
 FILES_5 = [headers_5]
+
+#
+# the seventh probe (2026-11-18): the open fidelity items in
+# specs/macie/transpile-design.md that one value can settle. One variant
+# per row, the keyword in the cell, so a cell's row says which variant
+# Macie reports. The expectations are ours; Macie's answer is compared
+# after. Credential-shaped values are built here, at run time, and never
+# committed
+#
+SEED_6 = 20261119
+VIN_VALUES = {str(d): d for d in range(10)}
+VIN_VALUES.update(
+    dict(zip("ABCDEFGH", range(1, 9)))
+    | dict(zip("JKLMN", range(1, 6)))
+    | {"P": 7, "R": 9}
+    | dict(zip("STUVWXYZ", range(2, 10)))
+)
+VIN_WEIGHTS = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2]
+
+
+def _vin(*, valid: bool) -> str:
+    """a North American VIN, with its position 9 check digit right or
+    wrong"""
+    body = "1HGCM82633A00435"
+    vin = body[:8] + "0" + body[8:]
+    total = sum(VIN_VALUES[c] * w for c, w in zip(vin, VIN_WEIGHTS))
+    check = "X" if total % 11 == 10 else str(total % 11)
+    if not valid:
+        check = "1" if check != "1" else "2"
+    return vin[:8] + check + vin[9:]
+
+
+def _tfn_8(rng) -> str:
+    #
+    # the older 8 digit TFN: weights 10 7 8 4 6 3 5 1, sum divisible by 11
+    #
+    weights = [10, 7, 8, 4, 6, 3, 5, 1]
+    while True:
+        d = mlf._digits(rng, 8)
+        if sum(int(c) * w for c, w in zip(d, weights)) % 11 == 0:
+            return d
+
+
+def _naf(rng, *, valid: bool) -> str:
+    body = "28" + mlf._digits(rng, 8)
+    control = int(body) % 97
+    if not valid:
+        control = (control + 1) % 97
+    return f"{body}{control:02d}"
+
+
+def _dea(rng, *, letter: str) -> str:
+    body = letter + "J" + mlf._digits(rng, 6)
+    return mlf._check_digit(body, lambda s: chut.us_dea(digits=s[2:]))
+
+
+def _gs1_gtin() -> str:
+    return mlf._check_digit("0061414199999", lambda s: chut.gs1_check(digits=s))
+
+
+def fidelity_6(rng) -> mlf.LiveFile:
+    f = mlf.LiveFile(name="probe6_fidelity.csv", headers=["id", "item", "notes"])
+    ssn = "USA_SOCIAL_SECURITY_NUMBER"
+    gap_25 = "x" * 25
+    gap_40 = "x" * 40
+    iban = mlf.iban(rng, country="GB", bban="WEST12345698765432")
+    grouped = " ".join(iban[i : i + 4] for i in range(0, len(iban), 4))
+    cnpj_repeated = "11.111.111/1111-11"
+    curp_x = "GOMA850510XDFRRN0" + chut.mx_curp_check(curp="GOMA850510XDFRRN0")
+    piva = mlf._check_digit(mlf._digits(rng, 7) + "001", lambda s: chut.luhn(digits=s))
+    gtin = _gs1_gtin()
+    aws_hex = "".join(rng.choice("0123456789abcdef") for _ in range(40))
+    stripe_rk = (
+        "rk_" + "live_" + mlf.b64(rng, 24, mlf.string.ascii_letters + "0123456789")
+    )
+    rows = [
+        # item 1: where and how far the keyword may be
+        ("1", f"ssn {mlf.ssn(rng)}", [(ssn, 1, "control: keyword just before")]),
+        ("1", f"{mlf.ssn(rng)} ssn", [(ssn, 1, "keyword just after")]),
+        (
+            "1",
+            f"ssn {gap_25} {mlf.ssn(rng)}",
+            [(ssn, 1, "keyword 27 characters before")],
+        ),
+        (
+            "1",
+            f"ssn {gap_40} {mlf.ssn(rng)}",
+            [(ssn, 0, "keyword 42 characters before")],
+        ),
+        # item 5: SSN separators
+        ("5", "ssn " + mlf.ssn(rng).replace("-", " "), [(ssn, 1, "SSN with spaces")]),
+        (
+            "5",
+            "ssn " + mlf.ssn(rng).replace("-", ""),
+            [(ssn, 1, "SSN with no separator")],
+        ),
+        # item 6: IBAN layouts
+        (
+            "6",
+            f"account number {grouped}",
+            [("UK_BANK_ACCOUNT_NUMBER", 1, "control: groups of four")],
+        ),
+        (
+            "6",
+            f"account number {iban.lower()}",
+            [("UK_BANK_ACCOUNT_NUMBER", 1, "lower case")],
+        ),
+        (
+            "6",
+            f"account number {iban[:8]} {iban[8:]}",
+            [("UK_BANK_ACCOUNT_NUMBER", 0, "a space not in groups of four")],
+        ),
+        # item 7: the North American VIN check digit
+        (
+            "7",
+            f"vin {_vin(valid=True)}",
+            [("VEHICLE_IDENTIFICATION_NUMBER", 1, "control: check digit right")],
+        ),
+        (
+            "7",
+            f"vin {_vin(valid=False)}",
+            [("VEHICLE_IDENTIFICATION_NUMBER", 1, "check digit wrong")],
+        ),
+        # item 8: RUT without a hyphen; a repeated-digit CNPJ
+        (
+            "8",
+            f"rut {mlf.rut(rng)}",
+            [("CHILE_RUT_NUMBER", 1, "control: dotted, hyphen")],
+        ),
+        (
+            "8",
+            "rut " + mlf.rut(rng).replace(".", "").replace("-", ""),
+            [("CHILE_RUT_NUMBER", 1, "no dots, no hyphen")],
+        ),
+        ("8", f"cnpj {cnpj_repeated}", [("BRAZIL_CNPJ_NUMBER", 0, "repeated digits")]),
+        # item 10: a DNI without its letter
+        (
+            "10",
+            "dni " + mlf.dni(rng)[:8],
+            [("SPAIN_DNI_NUMBER", 0, "8 digits, no letter")],
+        ),
+        # item 11: Italy's organization code; a CURP with sex X
+        (
+            "11",
+            f"p. iva {piva}",
+            [("ITALY_NATIONAL_IDENTIFICATION_NUMBER", 1, "11 digit organization code")],
+        ),
+        ("11", f"curp {curp_x}", [("MEXICO_CURP_NUMBER", 1, "sex X")]),
+        # item 12: an 8 digit TFN; a German Steuernummer
+        ("12", f"tfn {_tfn_8(rng)}", [("AUSTRALIA_TAX_FILE_NUMBER", 0, "8 digit TFN")]),
+        (
+            "12",
+            "steuernummer 21/815/08150",
+            [("GERMANY_TAX_IDENTIFICATION_NUMBER", 0, "a Steuernummer")],
+        ),
+        # item 14: credentials
+        (
+            "14",
+            f"aws_secret_access_key {aws_hex}",
+            [("AWS_CREDENTIALS", 0, "a hex secret key")],
+        ),
+        ("14", stripe_rk, [("STRIPE_CREDENTIALS", 1, "a restricted key")]),
+        (
+            "14",
+            "-----BEGIN OPENSSH PRIVATE KEY-----",
+            [("OPENSSH_PRIVATE_KEY", 0, "the BEGIN line alone")],
+        ),
+        # item 15: US health codes
+        (
+            "15",
+            f"dea {_dea(rng, letter='Z')}",
+            [("US_DRUG_ENFORCEMENT_AGENCY_NUMBER", 0, "registrant type Z")],
+        ),
+        (
+            "15",
+            "ndc 00093715201",
+            [("USA_NATIONAL_DRUG_CODE", 1, "11 digits, no hyphens")],
+        ),
+        ("15", "hcpcs 99213", [("USA_HEALTHCARE_PROCEDURE_CODE", 1, "a CPT code")]),
+        # item 17: a bank account against letters; NINO spacing
+        (
+            "17",
+            "account number acct123456789",
+            [("BANK_ACCOUNT_NUMBER", 0, "digits touching letters")],
+        ),
+        ("17", "nino AB123456C", [("UK_NATIONAL_INSURANCE_NUMBER", 1, "unspaced")]),
+        (
+            "17",
+            "nino AB 123456 C",
+            [("UK_NATIONAL_INSURANCE_NUMBER", 0, "spaced 2-6-1")],
+        ),
+        # item 18: one passport number, two countries
+        (
+            "18",
+            "passport AB123456",
+            [
+                ("CANADA_PASSPORT_NUMBER", 1, "Canada's shape"),
+                ("SPAIN_PASSPORT_NUMBER", 1, "and Spain's"),
+            ],
+        ),
+        # item 20: dates
+        ("20", "dob 05.11.1985", [("DATE_OF_BIRTH", 0, "dotted")]),
+        ("20", "dob 19851105", [("DATE_OF_BIRTH", 1, "8 digits")]),
+        ("20", "dob 5 novembre 1985", [("DATE_OF_BIRTH", 0, "a French month name")]),
+        # item 21: one license number, three countries
+        (
+            "21",
+            "driver license 12345678",
+            [
+                ("DRIVERS_LICENSE", 1, "the US"),
+                ("CANADA_DRIVERS_LICENSE", 1, "Canada"),
+                ("AUSTRALIA_DRIVERS_LICENSE", 1, "Australia"),
+            ],
+        ),
+        # item 22: a keyword without accents; an Argentine DNI as Spain's
+        (
+            "22",
+            "cedula de ciudadania 1234567890",
+            [("COLOMBIA_CITIZENSHIP_CARD_NUMBER", 0, "keyword without accents")],
+        ),
+        (
+            "22",
+            "dni 12.345.678",
+            [
+                ("ARGENTINA_DNI_NUMBER", 1, "Argentina's shape"),
+                ("SPAIN_DNI_NUMBER", 0, "not Spain's"),
+            ],
+        ),
+        # item 23: GPS and cookies
+        ("23", "coordinates 41,-87", [("LATITUDE_LONGITUDE", 0, "no decimal part")]),
+        (
+            "23",
+            "coordinates 41.948614 -87.655311",
+            [("LATITUDE_LONGITUDE", 1, "a space, no comma")],
+        ),
+        (
+            "23",
+            "Cookie: session=3948; lang=en; theme=dark",
+            [("HTTP_COOKIE", 1, "three pairs, one header")],
+        ),
+        # item 25: a GS1 UDI without parentheses
+        (
+            "25",
+            f"device identifier (01){gtin}(17)261031(10)A12345",
+            [("MEDICAL_DEVICE_UDI", 1, "control: parentheses")],
+        ),
+        (
+            "25",
+            f"device identifier 01{gtin}17261031" + "10A12345",
+            [("MEDICAL_DEVICE_UDI", 0, "no parentheses")],
+        ),
+        # item 26: the Spain SSN's control digits
+        (
+            "26",
+            f"social security number {_naf(rng, valid=True)}",
+            [("SPAIN_SOCIAL_SECURITY_NUMBER", 1, "control digits right")],
+        ),
+        (
+            "26",
+            f"social security number {_naf(rng, valid=False)}",
+            [("SPAIN_SOCIAL_SECURITY_NUMBER", 1, "control digits wrong")],
+        ),
+    ]
+    for item, cell, expects in rows:
+        f.add(
+            cells={"id": "r", "item": item, "notes": cell},
+            expect=[("notes", i, n, f"item {item}: {note}") for i, n, note in expects],
+        )
+    return f
+
+
+FILES_6 = [fidelity_6]
 #
 # probe number -> seed, files, directory, expectations file
 #
@@ -455,6 +727,7 @@ PROBES = {
     3: (SEED_3, FILES_3, "probe3", "expected_probe3.json"),
     4: (SEED_4, FILES_4, "probe4", "expected_probe4.json"),
     5: (SEED_5, FILES_5, "probe5", "expected_probe5.json"),
+    6: (SEED_6, FILES_6, "probe6", "expected_probe6.json"),
 }
 
 

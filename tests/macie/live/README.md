@@ -276,3 +276,40 @@ control. Do not upload `~/macie-live/expected_probe5.json`.
   - no custom identifiers, no allow lists.
 
 **Hand over** the job id once it shows **Complete**.
+
+## 10. The seventh probe (2026-11-18): the open fidelity items
+
+The open "interpretations to confirm" in `specs/macie/transpile-design.md`
+that one value can settle: item 1 (where and how far a keyword may be),
+5 (SSN separators), 6 (IBAN layouts), 7 (the North American VIN check
+digit), 8 (RUT without a hyphen, a repeated-digit CNPJ), 10 (a DNI
+without its letter), 11 (Italy's organization code, a CURP with sex X),
+12 (an 8 digit TFN, a Steuernummer), 14 (credentials), 15 (US health
+codes), 17 (bank accounts and NINOs), 18, 21 and 22 (one value, several
+countries; a keyword without accents), 20 (dates), 23 (GPS and cookies),
+25 (a GS1 UDI without parentheses) and 26 (the Spain SSN's control
+digits). One file, one variant per row, the keyword in the cell; the
+`item` column names the fidelity item.
+
+```
+poetry run python tests/macie/live/make_probe_files.py ~/macie-live 6
+```
+
+writes `~/macie-live/probe6/probe6_fidelity.csv` and
+`~/macie-live/expected_probe6.json` (do not upload). The file holds
+made-up, credential-shaped values (a hex AWS secret key, a Stripe
+restricted key); they are built when the file is written and are not in
+the repository.
+
+**Set up (David):**
+
+- upload `probe6/probe6_fidelity.csv` under `probe6/` in the same bucket
+  (check it is there before creating the job);
+- create one one-time job, **`csvpath-probe-6`**:
+  - object criterion: key prefix `probe6/`;
+  - managed data identifiers **Custom**, *exclude* `NAME` and `ADDRESS`
+    (so every other identifier runs: the 30 the expectations name, and
+    any others whose reports would say where Macie sees overlaps);
+  - no custom identifiers, no allow lists.
+
+**Hand over** the job id once it shows **Complete**.
