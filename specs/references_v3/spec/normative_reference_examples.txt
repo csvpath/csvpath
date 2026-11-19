@@ -735,7 +735,8 @@ first run with a 2-level template ending in `2025/:run_dir`
 $acme.results.*/2025/:first().invoices:file("report.txt")
 
 #### every csvpath statement instance that was not valid in the last three runs with a
-1-level template `customers/:run_dir` (`:type()` is not a results function)
+1-level template `customers/:run_dir` (was `:type("parquet")`, the parquet outputs;
+`:type()` is not a results function)
 $acme.results.customers/:from(:index(-3)).*:valid(:false())
 
 #### Get a printouts file named for its stream
