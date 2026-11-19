@@ -1267,13 +1267,8 @@ class ReferenceFinder3(ABC):
         Functions nested in another's argument are not top-level and are
         not counted. Functions not registered for this datatype are left to
         the checks that reject them."""
-        if reference is None:
-            raise ValueError("reference cannot be None")
-        calls = [s for s in reference.name_one.path if isinstance(s, FunctionCall3)]
-        calls += reference.name_one.functions
-        if reference.name_three is not None:
-            calls += reference.name_three.functions
         values = []
+        calls = self._top_level_calls(reference)
         for call in calls:
             function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
             if function_cls is None or function_cls.ROLE != Function3.VALUE:
@@ -1293,6 +1288,32 @@ class ReferenceFinder3(ABC):
                 continue
             values.append(call)
         return values
+
+    def _top_level_calls(self, reference: Reference3) -> list:
+        """the functions of `reference`'s chains, not those nested in an
+        argument: name_one's path segments and chain, then name_three's."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        calls = [s for s in reference.name_one.path if isinstance(s, FunctionCall3)]
+        calls += reference.name_one.functions
+        if reference.name_three is not None:
+            calls += reference.name_three.functions
+        return calls
+
+    def _check_datatype_functions(self, reference: Reference3) -> None:
+        """every top-level function is one of this datatype's (its
+        DATATYPES). FILES accepted ':having()', a CSVPATHS and RESULTS
+        function, silently in '$x.files.:having(:type("csv")):last()'
+        (reviewer on #761). An unknown function is left to the checks that
+        name it."""
+        for call in self._top_level_calls(reference):
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            if function_cls is None:
+                continue
+            if reference.datatype not in function_cls.DATATYPES:
+                raise ReferenceException3(
+                    f"':{call.name}()' is not a {reference.datatype} function"
+                )
 
     def _check_one_value(self, reference: Reference3) -> None:
         """a reference resolves to at most one value. Two value-supplying

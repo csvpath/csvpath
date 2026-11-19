@@ -7561,7 +7561,9 @@ class TestAScalarFieldFilters:
     def test_another_datatypes_field_raises(self, root, chain):
         # once these took an argument they matched nothing, silently
         # (reviewer on #659)
-        with pytest.raises(ReferenceException3, match="not a named-file field"):
+        # since 2026-11-18 the datatype check names it first (reviewer on
+        # #761); it said "not a named-file field"
+        with pytest.raises(ReferenceException3, match="is not a files function"):
             _finder(f"{root}.files.:manifest(){chain}", self.HOME, self.MANIFEST).query()
 
 

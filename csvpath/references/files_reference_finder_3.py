@@ -146,7 +146,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # the live entries are read at most once per call (_live_index())
         self._live_entries = None
         reference = self.ref.parsed
-        # one value per reference, before anything is read (5.20b)
+        # each function is this datatype's, and one value per reference
+        # (5.20b), before anything is read
+        self._check_datatype_functions(reference)
         self._check_one_value(reference)
         log_results = self._query_log_call(reference)
         if log_results is not None:

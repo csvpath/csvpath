@@ -133,7 +133,9 @@ class ResultsEstimator3:
     def _query_would_raise(self) -> "str | None":
         """the static checks query() makes that this estimate can see"""
         try:
-            # two value-supplying functions raise first; it reads nothing
+            # a foreign function, then two value-supplying functions, raise
+            # first, as in query(); they read nothing
+            self.finder._check_datatype_functions(self.reference)
             self.finder._check_one_value(self.reference)
         except ReferenceException3 as e:
             return str(e)
