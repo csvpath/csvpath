@@ -69,6 +69,13 @@ class MacieConverter:
     MAX_FINDINGS = 10000
     MAX_DETAIL = 15
     #
+    # what the csvpath collects: the lines with findings, or the clean
+    # lines, those without (specs/macie/clean-lines-design.md)
+    #
+    FINDINGS = "findings"
+    CLEAN = "clean"
+    COLLECT = (FINDINGS, CLEAN)
+    #
     # names become the csvpath id and the named-paths group name
     #
     NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
@@ -95,6 +102,7 @@ class MacieConverter:
         max_findings: int = MAX_FINDINGS,
         max_detail: int = MAX_DETAIL,
         list_dir: str | None = None,
+        collect: str = FINDINGS,
     ) -> MacieConversion:
         """name defaults to the Macie job's or template's name; a
         handcrafted wrapper must be given one. path, if given, is a data
@@ -103,8 +111,14 @@ class MacieConverter:
         Text allow lists are loaded with load_list(). In a named-paths group
         the list name is enough. Stand-alone, outside a group, give
         list_dir: load_list() then reads <list_dir>/<list name>.txt, and
-        the caller writes conversion.lists there."""
+        the caller writes conversion.lists there.
+
+        collect is findings, the lines with findings, or clean, the lines
+        without: a csvpath after this one with source-mode: preceding then
+        reads only the clean lines."""
         path = csut.existing_data_path(path=path)
+        if collect not in self.COLLECT:
+            raise ValueError(f"collect must be one of {self.COLLECT}, not {collect!r}")
         if list_dir is not None and (
             not isinstance(list_dir, str) or list_dir.strip() == ""
         ):
@@ -138,7 +152,10 @@ class MacieConverter:
         self._report_warnings(name=name, report=report)
         body.append("last.nocontrib() -> macie_report()")
         metadata = self._metadata(
-            name=name, max_findings=max_findings, max_detail=max_detail
+            name=name,
+            max_findings=max_findings,
+            max_detail=max_detail,
+            collect=collect,
         )
         csvpath = self._text(metadata=metadata, path=path, body=body)
         return MacieConversion(name=name, csvpath=csvpath, report=report, lists=lists)
@@ -164,7 +181,7 @@ class MacieConverter:
         return name
 
     def _metadata(
-        self, *, name: str, max_findings: int, max_detail: int
+        self, *, name: str, max_findings: int, max_detail: int, collect: str
     ) -> list[tuple[str, str]]:
         source = self.wrapper["source"]
         origin = source["origin"]
@@ -189,10 +206,25 @@ class MacieConverter:
         md.append(("macie-max-findings", f"{max_findings}"))
         md.append(("macie-max-detail", f"{max_detail}"))
         md += self.MODES
+        if collect == self.CLEAN:
+            #
+            # the lines the csvpath does not match are the clean lines. a
+            # clean line is clean only of the identifiers translated, so
+            # the others are named
+            #
+            md.append(("return-mode", "no-matches"))
+            md.append(("macie-collect", self.CLEAN))
+            md.append(("macie-not-checked", ", ".join(self._not_checked()) or "none"))
         for k, v in md:
             if ":" in v or "~" in v or "\n" in v:
                 self._fail(f"Metadata {k} value {v!r} would break the csvpath comment")
         return md
+
+    def _not_checked(self) -> list[str]:
+        managed = self.wrapper.get("managedDataIdentifiers") or {}
+        return [
+            m for m in managed.get("resolved") or [] if not self.catalog.has(name=m)
+        ]
 
     def _source_arn(self) -> str | None:
         aws = self.wrapper.get("aws") or {}

@@ -151,8 +151,10 @@ max_findings = 10000
 max_detail = 15
 # the project rulesbase for customizing the stand-ins
 rulesbase = rulesbase
+# collect the lines with findings, or the clean lines without them
+collect = findings
 ```
 
-All three are optional; the values shown are the defaults. The limits
-are read when a wrapper is loaded and written into the csvpath's
-metadata, so a loaded group keeps them.
+All four are optional; the values shown are the defaults. The limits and
+`collect` are read when a wrapper is loaded and written into the
+csvpath's metadata, so a loaded group keeps them.

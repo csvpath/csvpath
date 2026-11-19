@@ -61,6 +61,21 @@ def test_macie_group_loader_limits_reach_the_csvpath() -> None:
     assert "  macie-max-detail: 3\n" in paths[0]
 
 
+def test_macie_group_loader_collect_from_config() -> None:
+    assert MacieGroupLoader.collect(config=None) == "findings"
+    assert MacieGroupLoader.collect(config=FakeConfig({})) == "findings"
+    config = FakeConfig({("macie", "collect"): " clean "})
+    assert MacieGroupLoader.collect(config=config) == "clean"
+    paths, _, _, _ = MacieGroupLoader.convert_file(path=WRAPPER, config=config)
+    assert "  return-mode: no-matches\n" in paths[0]
+    assert "  macie-collect: clean\n" in paths[0]
+
+
+def test_macie_group_loader_bad_collect() -> None:
+    with pytest.raises(MacieException):
+        MacieGroupLoader.collect(config=FakeConfig({("macie", "collect"): "all"}))
+
+
 def test_macie_group_loader_report_lists_skipped_items() -> None:
     path = os.path.join(WRAPPERS, "job_download.macie.json")
     _, report, lists, _ = MacieGroupLoader.convert_file(path=path, config=None)
