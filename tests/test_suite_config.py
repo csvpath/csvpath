@@ -36,6 +36,14 @@ def test_local_configs_use_the_suite_config(value):
     assert suco.uses_suite_config(value)
 
 
+def test_any_spelling_of_a_local_config_or_the_suite_file_uses_a_copy():
+    # naming the committed suite file must not make it the active, written
+    # file (reviewer on #780)
+    for path in (*suco.LOCAL_CONFIGS, suco.SUITE_CONFIG):
+        assert suco.uses_suite_config(path)
+        assert suco.uses_suite_config(os.path.abspath(path))
+
+
 @pytest.mark.parametrize(
     "value",
     [
@@ -114,9 +122,8 @@ def test_install_leaves_a_backend_config_alone():
 def test_this_run_reads_a_copy_of_the_suite_config():
     # conftest installed it at import (unless a backend config was given)
     path = os.environ[Config.CSVPATH_CONFIG_FILE_ENV]
-    if not suco.uses_suite_config(path) and "csvpath-suite-config-" not in path:
+    if "csvpath-suite-config-" not in path:
         pytest.skip(f"a backend config was given: {path}")
-    assert "csvpath-suite-config-" in path
     assert _read(path).get("config", "path") == path
 
 

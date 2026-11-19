@@ -9,7 +9,8 @@
 # a temporary directory, with its [config] path pointing at the copy: about
 # 40 tests save config (CsvPath(s).add_to_config() saves and reloads), and
 # those writes land in the copy. tests/conftest.py installs it at import,
-# before any test builds a CsvPaths.
+# before any test builds a CsvPaths. pytest-xdist is not supported: workers
+# would share one copy, and their config saves would race.
 #
 import os
 import shutil
@@ -30,12 +31,15 @@ LOCAL_CONFIGS = (
 
 
 def uses_suite_config(env_value: str | None) -> bool:
-    """true when a run with CSVPATH_CONFIG_PATH = `env_value` uses the
-    suite's config: unset, empty, or one of LOCAL_CONFIGS"""
+    """true when a run with CSVPATH_CONFIG_PATH = `env_value` uses a copy of
+    the suite's config: unset, empty, one of LOCAL_CONFIGS, or SUITE_CONFIG
+    itself, however spelled (relative, absolute, a symlink). Naming
+    SUITE_CONFIG must not make it the active file: the tests that save
+    config would write into it (reviewer on #780)."""
     if env_value is None or env_value.strip() == "":
         return True
-    value = os.path.normpath(env_value.strip())
-    return any(value == os.path.normpath(c) for c in LOCAL_CONFIGS)
+    value = os.path.realpath(env_value.strip())
+    return any(value == os.path.realpath(c) for c in (*LOCAL_CONFIGS, SUITE_CONFIG))
 
 
 def make_copy(*, source: str, directory: str) -> str:
