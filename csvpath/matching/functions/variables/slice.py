@@ -13,6 +13,8 @@ class Slice(ValueProducer):
             self.wrap(
                 """\
                 Slice extracts part of a stack into a new stack.
+                The end index is inclusive. Without an end index, the
+                slice runs to the end of the stack.
                 """
             ),
         ]
@@ -60,6 +62,16 @@ class Slice(ValueProducer):
 
         ffrom = self._value_two(skip=skip)
         to = self._value_three(skip=skip)
+        if to is None:
+            #
+            # the end index is optional. without it we slice to the end of
+            # the stack. this used to compare ffrom > None, a TypeError that
+            # was silently swallowed, leaving the value None.
+            #
+            if len(v) == 0:
+                self.value = []
+                return
+            to = len(v) - 1
         if ffrom > to:
             msg = "Slice stop index is before start index"
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
