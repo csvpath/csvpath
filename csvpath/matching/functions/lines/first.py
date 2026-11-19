@@ -41,6 +41,13 @@ class First(ValueProducer):
         self._my_value_or_none = First.NEVER
 
     def to_value(self, *, skip=None) -> Any:
+        try:
+            return self._first_value(skip=skip)
+        except Exception:
+            self._claim_error_source()
+            raise
+
+    def _first_value(self, *, skip=None) -> Any:
         #
         # TODO: needs refactoring. for now cannot do
         # _produce_value() because of how NEVER works.

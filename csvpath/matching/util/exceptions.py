@@ -21,10 +21,14 @@ class ChildrenValidationException(MatchComponentException):
 class DataException(MatchException):
     """raised when a datium is unexpected or incorrect"""
 
-    pass
-
     def __str__(self):
-        return f"""{self.__class__}"""
+        #
+        # the message is what the user reads in the error. it used to be
+        # the class, so every DataException printed as
+        # <class '...DataException'> instead of what was wrong.
+        #
+        msg = super().__str__()
+        return msg if msg else self.__class__.__name__
 
 
 class PrintParserException(Exception):

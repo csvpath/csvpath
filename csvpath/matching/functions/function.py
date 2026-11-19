@@ -367,6 +367,26 @@ class Function(Matchable):
         self.my_expression.current_child = None
         return self.match
 
+    def _claim_error_source(self) -> None:
+        """for a function that overrides to_value(). when its own code
+        raises, it is the source of the error. a function below it that
+        raised would still be the current child. if the current child is
+        empty, or is a function above us that set it on its way in, the
+        error is ours. without this, Expression falls back to the top of
+        the expression (for @x = f(), the "=", with an empty chain), or the
+        error goes to the function above: add[0], not add[0].increment[0]."""
+        cc = self.my_expression.current_child
+        if cc is None or self._is_my_ancestor(cc):
+            self.my_expression.current_child = self
+
+    def _is_my_ancestor(self, thing) -> bool:
+        p = self.parent
+        while p is not None:
+            if p is thing:
+                return True
+            p = p.parent
+        return False
+
     def _produce_value(self, skip=None) -> None:
         pass
 
