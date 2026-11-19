@@ -396,3 +396,86 @@ What makes Macie decide is not known: both of its "no header" first
 lines (`1,673-27-5618,` and `Employee export,,`) have an empty cell, and
 the real header has none, but one probe cannot tell that from other
 rules.
+
+## The seventh probe, 2026-11-18: the open fidelity items
+
+Job `csvpath-probe-6` (`f97554d8071327abb4f1fbe2fa8e4982`), 164 managed
+identifiers (all but `NAME` and `ADDRESS`), prefix `probe6/`, one file
+from `make_probe_files.py <out> 6`; the finding's object ETag equals the
+local MD5. **28 of 46 expectations agree.** Macie reported nothing we
+did not expect: no extra identifier in any cell.
+
+| Item | Variant | Ours | Macie | What it says |
+|---|---|---|---|---|
+| 1 | keyword just before (control) | yes | yes | |
+| 1 | keyword just after | yes | **no** | Macie wants the keyword before the value |
+| 1 | keyword 27 characters before (a 25 letter filler) | yes | **no** | Macie's in-cell window is shorter than 30, or the filler word counts against it; open |
+| 1 | keyword 42 characters before | no | no | |
+| 5 | SSN with spaces | yes | **no** | Macie: hyphens only, at least with an in-cell keyword |
+| 5 | SSN with no separator | yes | **no** | the same |
+| 6 | IBAN in groups of four (control) | yes | **no** | inconclusive: the IBAN was `GB82 WEST 1234 5698 7654 32`, the ISO example, which Macie may exclude as an example value |
+| 6 | IBAN in lower case | yes | no | the same example IBAN; open |
+| 6 | a space not in groups of four | no | no | |
+| 7 | North American VIN, check digit right (control) | yes | yes | |
+| 7 | North American VIN, check digit wrong | yes | **no** | Macie checks the North American check digit |
+| 8 | RUT, dotted with hyphen (control) | yes | yes | |
+| 8 | RUT, no dots, no hyphen | yes | **no** | Macie needs the printed form |
+| 8 | repeated-digit CNPJ | no | no | |
+| 10 | DNI, 8 digits without the letter | no | no | settled with the live check: the letter is needed |
+| 11 | Italy's 11 digit organization code | yes | **no** | Macie does not detect it: ours, an extension (worklist) |
+| 11 | CURP with sex X | yes | yes | |
+| 12 | 8 digit TFN; a Steuernummer | no | no | Macie detects neither |
+| 14 | hex AWS secret key | no | **yes** | Macie reports hex secret keys |
+| 14 | Stripe `rk_live_` key, 24 characters | yes | **no** | not a restricted key to Macie, or too short (real keys are longer now); open |
+| 14 | OpenSSH BEGIN line alone | no | no | the whole block is needed |
+| 15 | DEA with registrant type Z | no | no | |
+| 15 | NDC, 11 digits, no hyphens | yes | **no** | Macie needs the hyphens |
+| 15 | a CPT code near `hcpcs` | yes | yes | Macie counts CPT codes |
+| 17 | `acct123456789` | no | no | |
+| 17 | NINO unspaced | yes | yes | |
+| 17 | NINO spaced 2-6-1 | no | no | |
+| 18 | `passport AB123456`: Canada | yes | yes | |
+| 18 | the same: Spain | yes | **no** | Macie reported one country; whether it chose, or Spain's older two letter form is not Spain's to it, is open |
+| 20 | dotted date; French month name | no | no | |
+| 20 | 8 digit date | yes | yes | |
+| 21 | `driver license 12345678`: US | yes | yes | |
+| 21 | the same: Canada, Australia | yes | **no** | Macie reported the US only: it chose, or 8 digits are not Canada's or Australia's to it; open |
+| 22 | `cedula de ciudadania` (no accents) | no | **yes** | Macie matches the keyword without its accents |
+| 22 | `dni 12.345.678`: Argentina yes, Spain no | | | the same |
+| 23 | GPS without a decimal part | no | no | |
+| 23 | GPS separated by a space | yes | **no** | Macie needs the comma |
+| 23 | Cookie header with 3 pairs | 1 | 1 | one occurrence per header |
+| 25 | GS1 UDI with parentheses (control); without | yes; no | yes; no | |
+| 26 | Spain SSN, control digits right | yes | yes | |
+| 26 | Spain SSN, control digits wrong | yes | **no** | Macie checks the control digits (mod 97 of the first 10) |
+
+### Proposed changes (for David)
+
+Each is a rule change on this evidence, one value each:
+
+1. **Keywords before the value only** (item 1), for in-cell keywords.
+2. **SSN: hyphens only** (item 5).
+3. **VIN: the check digit for North American VINs** (item 7), those whose
+   first character is 1 to 5.
+4. **RUT: the printed form only** (item 8).
+5. **AWS secret keys: hex too** (item 14).
+6. **NDC: hyphens only** (item 15).
+7. **Keywords match without accents** (item 22): `cedula` for `cédula`.
+   This applies to every keyword. It makes our matching wider, never
+   narrower.
+8. **GPS: the comma is needed** (item 23).
+9. **Spain SSN: check the control digits** (item 26), mod 97 of the
+   first 10 digits.
+
+Still open, for a later probe:
+- item 1's distance (put an ordinary sentence between the keyword and
+  the value, not a single long word);
+- item 6, with an IBAN that is not the ISO example;
+- item 14's Stripe key, at a realistic length;
+- items 18 and 21, one value fitting several countries (Spain's three
+  letter passport alone; an 8 digit license under a Canadian or
+  Australian keyword alone).
+
+Settled with no change: items 8 (CNPJ), 10, 11 (CURP; the organization
+code stays ours), 12, 14 (the OpenSSH block), 15 (DEA, CPT), 17, 20, 23
+(cookies) and 25.
