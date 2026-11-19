@@ -84,8 +84,9 @@ class CsvpathsEstimator3(FilesEstimator3):
         if self.reference.name_three is not None and self.finder._bare_definition_field_call(self.reference.name_one):
             return "query: a definition field is not versioned, so it takes no name_three"
         for call in self._all_calls():
-            # definition fields resolve through definition.json whatever
-            # their documented datatypes say (measured: ':sources()' works)
+            # a definition field reads definition.json, so its positions do
+            # not apply; another datatype's field already raised in
+            # _definite_raise() (_check_datatype_functions(), #766)
             if self._is_definition_field(call) or call is self.reference.root_major:
                 continue
             misplaced = self._misplaced(call)
