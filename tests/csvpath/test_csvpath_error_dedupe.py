@@ -63,3 +63,13 @@ def test_different_errors_on_one_line_both_print():
         csvpath=f'${PATH}[1][ @r = add("five", 1) @s = subtract("six", 1) ]',
     )
     assert len(printed) == 2
+
+
+def test_the_same_message_from_two_components_prints_twice():
+    # two separate add() calls on one line have the same chain and message.
+    # they are two problems, not a duplicate, so both print
+    _, printed, _ = _run(
+        policy="print",
+        csvpath=f'${PATH}[1][ @r = add("five", 1) @s = add("five", 1) ]',
+    )
+    assert len(printed) == 2
