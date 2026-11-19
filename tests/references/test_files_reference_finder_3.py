@@ -2851,6 +2851,37 @@ class TestStarNameThreeGates:
         assert finder.resolve().results[0].data == b"id\nh0\n"
 
 
+class TestNameOneMessages:
+    # 2026-11-18 (RC sweep): an unknown function said "put the
+    # version-selecting function in name_three", and a pointer with a field
+    # was told to write ':last().:uuid("o1")', which raises in turn. Each
+    # suggested form here queries without raising.
+    @pytest.mark.parametrize(
+        "reference", ["$alpha.files.:nosuch()", "$alpha.files.nested/:nosuch():uuid()"]
+    )
+    def test_an_unknown_function_says_so(self, reference):
+        with pytest.raises(ReferenceException3, match="Unknown reference function: nosuch"):
+            _finder(reference, ALPHA_HOME, ALPHA_MANIFEST).query()
+
+    @pytest.mark.parametrize(
+        "reference, form",
+        [
+            ('$alpha.files.:last():uuid("u-one-1")', ':flatten().:last():uuid("u-one-1")'),
+            ("$alpha.files.:first():fingerprint()", ":flatten().:first():fingerprint()"),
+            ('$alpha.files.:name("one.csv"):fingerprint()', ':name("one.csv").:fingerprint()'),
+        ],
+    )
+    def test_the_suggested_form_queries(self, reference, form):
+        with pytest.raises(ReferenceException3) as error:
+            _finder(reference, ALPHA_HOME, ALPHA_MANIFEST).query()
+        assert str(error.value).endswith(f"'{form}'")
+        _finder(f"$alpha.files.{form}", ALPHA_HOME, ALPHA_MANIFEST).query()
+
+    def test_name_three_form_rejects_none(self):
+        with pytest.raises(ValueError):
+            FilesReferenceFinder3._name_three_form(None)
+
+
 class TestAttachedFieldFunctionsMessage:
     # E2, option C (David, 2026-11-02): a field chain attached to name_one
     # with no '.' still raises, and the message now gives the reference
@@ -2896,7 +2927,8 @@ class TestAttachedFieldFunctionsMessage:
         ).resolve()
         assert [r.data for r in results.results] == ["u-one-2"]
 
-    def test_without_a_field_the_message_is_unchanged(self):
+    def test_without_a_field_the_message_gives_the_name_three_form(self):
+        # it gave no form until 2026-11-18
         with pytest.raises(ReferenceException3) as error:
             _finder(
                 '$alpha.files.:name("one.csv"):from(1)', ALPHA_HOME, ALPHA_MANIFEST
@@ -2904,7 +2936,7 @@ class TestAttachedFieldFunctionsMessage:
         assert str(error.value) == (
             "FilesReferenceFinder3 does not support functions attached "
             "directly to name_one -- put the version-selecting function in "
-            "name_three instead."
+            "name_three instead: ':name(\"one.csv\").:from(1)'"
         )
         with pytest.raises(ReferenceException3) as error:
             _star_finder('$*.files.:name("one.csv"):from(1)').query()
@@ -5547,7 +5579,7 @@ class TestImpliedStarForNameOneFunctions:
     _MESSAGE = (
         "FilesReferenceFinder3 does not support functions attached "
         "directly to name_one -- put the version-selecting function in "
-        "name_three instead."
+        "name_three instead: "
     )
 
     def test_bare_and_explicit_star_raise_the_identical_message(self):
@@ -5559,7 +5591,8 @@ class TestImpliedStarForNameOneFunctions:
             _finder(
                 "$ranger.files.*:after(:index(3))", RANGE_HOME, RANGE_MANIFEST
             ).query()
-        assert str(bare_exc.value) == str(star_exc.value) == self._MESSAGE
+        assert str(bare_exc.value) == str(star_exc.value)
+        assert str(bare_exc.value) == self._MESSAGE + "'*.:after(:index(3))'"
 
     def test_following_a_path_separator_also_implies_star(self):
         # 3.9c's OTHER clause -- not just "starting name_one," also "a
@@ -5572,7 +5605,7 @@ class TestImpliedStarForNameOneFunctions:
                 MIXED_HOME,
                 MIXED_MANIFEST,
             ).query()
-        assert str(exc.value) == self._MESSAGE
+        assert str(exc.value) == self._MESSAGE + "'nested/*.:after(:index(0))'"
 
     def test_name_three_position_is_unaffected_and_still_works(self):
         # the one currently-legal form for FILES -- ':after()' riding in

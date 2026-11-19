@@ -1710,31 +1710,68 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "or range in the chain, e.g. ':manifest():last()' or "
                 "':manifest():from(0)' (issue #710)."
             )
+        calls = [s for s in name_one.path if isinstance(s, FunctionCall3)]
+        calls += list(name_one.functions)
+        for call in calls:
+            # as every other datatype says it (Reference3); this message
+            # said "put the version-selecting function in name_three" for
+            # a typo (found 2026-11-03)
+            if ReferenceFunctionFactory.get_registered_class(call.name) is None:
+                raise ReferenceException3(f"Unknown reference function: {call.name}")
         has_field = False
         for call in name_one.functions:
             function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
-            if function_cls is not None and function_cls.SOURCE is not None:
+            if function_cls is not None and function_cls.SOURCE not in (None, "clock"):
                 has_field = True
+        suggestion = FilesReferenceFinder3._name_three_form(name_one)
         if not has_field:
             if star_traversal:
                 return (
                     "FilesReferenceFinder3 does not support functions "
                     "attached directly to name_one for '*' traversal -- put "
-                    "the version-selecting function in name_three instead."
+                    "the version-selecting function in name_three instead: "
+                    f"'{suggestion}'"
                 )
             return (
                 "FilesReferenceFinder3 does not support functions attached "
                 "directly to name_one -- put the version-selecting function in "
-                "name_three instead."
+                f"name_three instead: '{suggestion}'"
             )
-        path = "/".join(str(segment) for segment in name_one.path)
-        functions = "".join(str(call) for call in name_one.functions)
         return (
             "FilesReferenceFinder3 does not support field functions attached "
             "directly to name_one: name_one picks the file, name_three picks "
             "the version and reads its fields. Put them in name_three, after "
-            f"a '.': '{path}.{functions}'"
+            f"a '.': '{suggestion}'"
         )
+
+    # pick or narrow versions, so they belong in name_three (E2, option C)
+    VERSION_SELECTORS = ("first", "last", "index", "from", "to", "before", "after")
+
+    @staticmethod
+    def _name_three_form(name_one) -> str:
+        """name_one rewritten with its version selectors and fields moved
+        after a '.', for the attached-functions message. Literal segments,
+        '*' and path functions (':name()', ':regex()', ':flatten()', a
+        clock value as a path value, 6.27d) stay in name_one; if none is
+        left, ':flatten().' reaches every version (#556). It suggested
+        ':last().:uuid("o1")' for '$x.files.:last():uuid("o1")', which
+        raises in turn (found 2026-11-06)."""
+        if name_one is None:
+            raise ValueError("name_one cannot be None")
+        stays = []
+        moves = []
+        for segment in name_one.path:
+            if (
+                isinstance(segment, FunctionCall3)
+                and segment.name in FilesReferenceFinder3.VERSION_SELECTORS
+            ):
+                moves.append(segment)
+            else:
+                stays.append(segment)
+        moves += list(name_one.functions)
+        path = "/".join(str(segment) for segment in stays) if stays else ":flatten()"
+        functions = "".join(str(call) for call in moves)
+        return f"{path}.{functions}"
 
     def _name_one_pointer(self, name_one) -> "FunctionCall3 | None":
         """the version-selecting pointer (:first()/:last()/:index(n))
