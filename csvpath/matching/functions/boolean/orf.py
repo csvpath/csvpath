@@ -64,6 +64,24 @@ class Or(MatchDecider):
     def handle_error(self, source: Matchable, msg: str) -> None:
         self.errors.append(msg)
 
+    def sibling_values(self, skip=None) -> list:
+        #
+        # Function validates our args by taking every branch's value before
+        # _decide_match runs. a branch that raises must not stop the run
+        # from there: a True branch wins, so whether its error stands is
+        # decided in _decide_match, after the branches are tried. #760.
+        #
+        vs = []
+        for sib in self.siblings():
+            try:
+                vs.append(sib.to_value(skip=skip))
+            except Exception as e:
+                self.matcher.csvpath.logger.debug(
+                    "or() branch %s raised while validating args: %s", sib, e
+                )
+                vs.append(None)
+        return vs
+
     def _produce_value(self, skip=None) -> None:
         self.value = self.matches(skip=skip)
 
@@ -72,12 +90,14 @@ class Or(MatchDecider):
         siblings = child.commas_to_list()
         exceptions = []
         for sib in siblings:
+            b = False
             try:
                 b = sib.matches(skip=skip)
             #
             # should we only catch MatchException?
             #
             except Exception as e:
+                self.matcher.csvpath.logger.debug("or() branch %s raised: %s", sib, e)
                 exceptions.append(e)
             if b:
                 self.match = True
@@ -93,8 +113,8 @@ class Or(MatchDecider):
         for msg in self.errors:
             self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
         #
-        # we only get to throw one. is that enough?
+        # we only get to throw one. is that enough? the errors are all
+        # recorded above, so the first is enough to stop the run.
         #
-        for e in exceptions:
-            for e in self.hold:
-                raise e
+        if exceptions:
+            raise exceptions[0]
