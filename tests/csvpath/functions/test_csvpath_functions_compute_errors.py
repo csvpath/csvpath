@@ -96,3 +96,20 @@ def test_only_the_bad_lines_fail(tmp_path):
     lines = path.collect()
     assert [line[0] for line in lines] == ["4", "6", "8"]
     assert len(path.errors) == 2
+
+
+def test_independent_children_each_record_an_error():
+    # the mark suppresses consequences, not independent errors: each child
+    # records its own, and add() adds no third
+    path = _path(
+        mode="collect", csvpath=f'${PATH}[1][ @r = add(mod("", 2), mod("x", 3)) ]'
+    )
+    assert len(path.collect()) == 0
+    assert len(path.errors) == 2
+
+
+def test_not_of_a_compute_error_fails_the_line():
+    # not() must not turn a data error into a match
+    path = _path(mode="collect", csvpath=f'${PATH}[1][ not(gt("1,000", 9999)) ]')
+    assert len(path.collect()) == 0
+    assert len(path.errors) == 1
