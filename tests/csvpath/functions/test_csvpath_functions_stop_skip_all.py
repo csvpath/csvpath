@@ -4,11 +4,9 @@ What the docs say (docs/func_gen/<name>.md, docs/functions/stop.md):
 
 - stop() halts its own csvpath. It "does not prevent any other csvpaths
   currently in progress as part of a named csvpaths set" from continuing.
-- stop_all() halts its csvpath and "shuts down a whole named-paths group run
-  when the run method is either breadth-first or the iterative programmatic
-  next_paths() method". In next_paths() it "prevents subsequent csvpaths from
-  running". The other serial methods are not in that list, so there it acts
-  like stop().
+- stop_all() halts its csvpath and shuts down the whole named-paths group
+  run, in every run method but the dynamic one (#763). In a serial run it
+  prevents later csvpaths from running.
 - skip() jumps to the next line for its own csvpath. Later match components
   on that line are not evaluated.
 - skip_all(): "In a named-paths group run, where the run method is
@@ -133,11 +131,13 @@ def test_next_by_line_yields(function, yielded):
 # ---------------------------------------------------------------------------
 
 
-def test_next_paths_stop_all_prevents_later_csvpaths():
-    # the docs: in next_paths() stop_all() "prevents subsequent csvpaths
-    # from running", so there is no result for the second csvpath
+@pytest.mark.parametrize("method", ["next_paths"] + SERIAL_NOT_NEXT)
+def test_serial_stop_all_prevents_later_csvpaths(method):
+    # stop_all() "prevents subsequent csvpaths from running", so there is no
+    # result for the second csvpath. collect_paths() and fast_forward_paths()
+    # did not honor it before #763
     first, second = _group(where="first", function="stop_all")
-    seen, _ = _run(first=first, second=second, method="next_paths")
+    seen, _ = _run(first=first, second=second, method=method)
     assert seen == {"one": UP_TO_2}
 
 
@@ -147,20 +147,34 @@ def test_next_paths_stop_does_not_prevent_later_csvpaths():
     assert seen == {"one": UP_TO_2, "two": ALL}
 
 
-def test_next_paths_stop_all_in_the_last_csvpath():
+@pytest.mark.parametrize("method", ["next_paths"] + SERIAL_NOT_NEXT)
+def test_serial_stop_all_in_the_last_csvpath(method):
     # the earlier csvpath has already finished, so only the second stops
     first, second = _group(where="second", function="stop_all")
-    seen, _ = _run(first=first, second=second, method="next_paths")
+    seen, _ = _run(first=first, second=second, method=method)
     assert seen == {"one": ALL, "two": UP_TO_2}
 
 
 @pytest.mark.parametrize("method", SERIAL_NOT_NEXT)
-def test_stop_all_acts_like_stop_in_other_serial_methods(method):
-    # stop_all()'s group shutdown is documented only for breadth-first runs
-    # and next_paths()
+def test_serial_stop_all_does_not_carry_into_the_next_run(method):
+    # the signal is cleared when a run ends, so a second run on the same
+    # CsvPaths runs both csvpaths
     first, second = _group(where="first", function="stop_all")
-    seen, _ = _run(first=first, second=second, method=method)
-    assert seen == {"one": UP_TO_2, "two": ALL}
+    name = f"stop_all_twice_{uuid.uuid4().hex}"
+    paths = Builder().build()
+    paths.file_manager.add_named_file(name=name, path=PATH)
+    paths.paths_manager.add_named_paths(
+        name=name, paths=[f"~ id: one ~ {first}", f"~ id: two ~ {second}"]
+    )
+    getattr(paths, method)(filename=name, pathsname=name)
+    other = f"plain_{uuid.uuid4().hex}"
+    paths.paths_manager.add_named_paths(
+        name=other,
+        paths=[f"~ id: one ~ {_plain(var='one')}", f"~ id: two ~ {_plain(var='two')}"],
+    )
+    getattr(paths, method)(filename=name, pathsname=other)
+    results = paths.results_manager.get_named_results(other)
+    assert len(results) == 2
 
 
 @pytest.mark.parametrize("method", ["next_paths"] + SERIAL_NOT_NEXT)

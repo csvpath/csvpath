@@ -14,10 +14,14 @@ a unique name, on the local backend. The failing statement fires on line 3;
 the other csvpath is just yes().
 
 The breadth-first (_by_line) methods are tested with fail_all() in either
-csvpath. For the serial (_paths) methods only next_paths() with fail_all() in
-the first csvpath is tested. The other serial cases, and fail_all() on the
-last line of a breadth-first run, leave the other csvpath valid. That is
-reported in the PR body rather than pinned.
+csvpath. The serial (_paths) methods are tested with fail_all() in the
+first csvpath: collect_paths() and fast_forward_paths() did not honor it
+before #763. In a serial run fail_all() fails its own csvpath and the ones
+after it, not the ones that already finished: their results are already
+saved, published and transferred, and the first failed csvpath shows where
+the failure began. The run as a whole is failed either way (David,
+2026-11-19). fail_all() on the last line of a breadth-first run leaves the
+other csvpath valid.
 """
 
 import os
@@ -94,11 +98,25 @@ def test_fail_all_in_the_second_csvpath_fails_both(method):
     assert group is False
 
 
-def test_fail_all_in_a_serial_run_fails_the_later_csvpath():
-    # next_paths() runs the csvpaths one after the other. fail_all() in the
+@pytest.mark.parametrize(
+    "method", ["next_paths", "collect_paths", "fast_forward_paths"]
+)
+def test_fail_all_in_a_serial_run_fails_the_later_csvpath(method):
+    # a serial run runs the csvpaths one after the other. fail_all() in the
     # first must still fail the second.
-    valid, group = _run(first=FAIL_ALL_ON_3, second=PASSES, method="next_paths")
+    valid, group = _run(first=FAIL_ALL_ON_3, second=PASSES, method=method)
     assert valid == [False, False]
+    assert group is False
+
+
+@pytest.mark.parametrize(
+    "method", ["next_paths", "collect_paths", "fast_forward_paths"]
+)
+def test_fail_all_in_the_last_serial_csvpath_fails_the_run(method):
+    # the first csvpath finished before the second failed all, so it stays
+    # valid; the run is failed
+    valid, group = _run(first=PASSES, second=FAIL_ALL_ON_3, method=method)
+    assert valid == [True, False]
     assert group is False
 
 

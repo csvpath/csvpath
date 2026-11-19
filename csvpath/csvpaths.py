@@ -1025,6 +1025,9 @@ Cache: {cache}
         #
         #
         for i, path in enumerate(paths):
+            if self._stop_all:
+                self.logger.warning("Stop-all set. Shutting down run.")
+                break
             csvpath = self.csvpath()
             if not csvpath.will_run:
                 self.logger.debug(
@@ -1043,6 +1046,11 @@ Cache: {cache}
                 method="collect_paths",
                 template=template,
             )
+            if self._fail_all:
+                self.logger.warning(
+                    "Fail-all set. Failing all remaining CsvPath instances in the run."
+                )
+                csvpath.is_valid = False
             # casting a broad net because if "raise" not in the error policy we
             # want to never fail during a run
             try:
@@ -1201,6 +1209,9 @@ Cache: {cache}
         #
         #
         for i, path in enumerate(paths):
+            if self._stop_all:
+                self.logger.warning("Stop-all set. Shutting down run.")
+                break
             csvpath = self.csvpath()
             if not csvpath.will_run:
                 self.logger.debug(
@@ -1219,6 +1230,11 @@ Cache: {cache}
                 method="fast_forward_paths",
                 template=template,
             )
+            if self._fail_all:
+                self.logger.warning(
+                    "Fail-all set. Failing all remaining CsvPath instances in the run."
+                )
+                csvpath.is_valid = False
             try:
                 self._load_csvpath(
                     csvpath=csvpath,
