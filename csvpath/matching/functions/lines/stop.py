@@ -33,13 +33,15 @@ class Stopper(SideEffect):
             self.description = [
                 self.wrap(
                     """\
-                        Halts the containing csvpath's run abruptly and, in certain
-                        named-paths group runs, prevents subsequent csvpaths from running.
+                        Halts the containing csvpath's run abruptly and, in a named-paths
+                        group run, prevents subsequent csvpaths from running.
 
-                        stop_all() shuts down a whole named-paths group run when the run method is
-                        either breadth-first or the iterative programmatic next_paths() method.
-                        Breadth-first runs are triggered with the collect_by_line(),
-                        fast_forward_by_line(), and next_by_line() methods.
+                        stop_all() shuts down a whole named-paths group run in every run
+                        method except collect_dynamic(). In a breadth-first run
+                        (collect_by_line(), fast_forward_by_line() and next_by_line()) the
+                        other csvpaths stop on the current line. In a serial run
+                        (collect_paths(), fast_forward_paths() and next_paths()) the
+                        csvpaths after this one do not run.
 
                         See stop() for more behavior details.
                 """
