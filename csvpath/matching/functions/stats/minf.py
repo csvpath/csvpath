@@ -156,6 +156,13 @@ class Average(MinMax):
             except (ValueError, TypeError):
                 pass
         #
+        # no numeric values yet, e.g. a blank first value: there is no
+        # average or median. that is not an error; the value stays None.
+        #
+        if len(m) == 0:
+            self.value = None
+            return
+        #
         # once per line, over all the numeric values so far (#572)
         #
         if self.ave_or_med == "average":

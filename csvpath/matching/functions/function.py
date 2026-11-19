@@ -3,7 +3,7 @@ import time
 from textwrap import TextWrapper, dedent
 from typing import Any
 from ..productions.matchable import Matchable
-from csvpath.matching.util.exceptions import ChildrenException
+from csvpath.matching.util.exceptions import ChildrenException, MatchException
 
 
 class CheckedUnset:  # pylint: disable=R0903
@@ -45,6 +45,11 @@ class Function(Matchable):
         self.wrapper = TextWrapper(drop_whitespace=True)
         self.internal_var_names = []
         self._has_internal_variables = False
+        #
+        # the expression error count when this function started work on
+        # the current line. see _mark_start() and _record_compute_error().
+        #
+        self._errors_at_start = None
 
     @property
     def has_internal_variables(self) -> bool:
@@ -102,7 +107,34 @@ class Function(Matchable):
         if self.args:
             self.args.reset()
         self.checked = None
+        self._errors_at_start = None
         super().reset()
+
+    def _mark_start(self) -> None:
+        """remembers the expression error count the first time this
+        function starts work on a line, in either matches() or to_value().
+        any error recorded after that, until the line is reset, came from
+        this function's own argument validation, its children, or itself.
+        """
+        if getattr(self, "_errors_at_start", None) is None:
+            self._errors_at_start = self.my_expression.error_count
+
+    def _record_compute_error(self, e: Exception) -> None:
+        """a ValueError or TypeError raised while a function computes its
+        value or match is a data error. it is recorded and, in raise mode,
+        raised as a MatchException, like any other match error. if an error
+        was already recorded for this function on this line, e.g. by Args
+        validation or by a child, this error is a consequence of that one
+        and is only logged, so a single problem is not reported twice.
+        """
+        self.matcher.csvpath.logger.exception(e)
+        start = getattr(self, "_errors_at_start", None)
+        if start is not None and self.my_expression.error_count > start:
+            return
+        msg = f"{self.name}: {e}"
+        self.matcher.csvpath.error_manager.handle_error(source=self, msg=msg)
+        if self.matcher.csvpath.do_i_raise():
+            raise MatchException(msg) from e
 
     def to_value(self, *, skip=None) -> bool:
         """implements a standard to_value. subclasses either override this
@@ -131,6 +163,7 @@ class Function(Matchable):
             # csvpath writer doesn't know anything about this.
             self.matcher.csvpath.logger.debug("We're frozen in %s", self)
             return self._noop_value()
+        self._mark_start()
         if self.value is None and not isinstance(self.checked, CheckedUnset):
             #
             # exp! start with the default value and let anything move us off that. if we have a non-None
@@ -166,12 +199,10 @@ class Function(Matchable):
                     self._produce_value(skip=skip)
                 except (ValueError, TypeError) as e:
                     #
-                    # value and type should be alreadly handled as match or children exceptions
-                    # by Args. however, that involves risk if we see situations that haven't been
-                    # tested for that cause value or type in another context other than args.
+                    # bad data that Args validation did not catch, e.g. mod("", 2).
+                    # this used to be only logged, leaving a silent None (T1).
                     #
-                    self.matcher.csvpath.logger.exception(e)
-                    # raise
+                    self._record_compute_error(e)
             else:
                 self._apply_default_value()
                 self.matcher.csvpath.logger.debug(
@@ -229,6 +260,7 @@ class Function(Matchable):
             ret = self._noop_value()
             self.matching().result(ret).because("frozen")
             return ret
+        self._mark_start()
         if self.match is None:
             if self.do_onmatch():
                 #
@@ -306,7 +338,16 @@ class Function(Matchable):
                 ):
                     self.match = self.matcher.csvpath.match_validation_errors
                 else:
-                    self._decide_match(skip=skip)
+                    try:
+                        self._decide_match(skip=skip)
+                    except (ValueError, TypeError) as e:
+                        #
+                        # bad data that Args validation did not catch, e.g.
+                        # gt("1,000", 9999). this used to escape to Expression,
+                        # which only logged it, and the line matched (T1).
+                        #
+                        self._record_compute_error(e)
+                        self.match = False
                     self.matcher.csvpath.logger.debug(
                         "Function.matches _decide_match returned %s", self.match
                     )
