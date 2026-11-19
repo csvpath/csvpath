@@ -78,3 +78,11 @@ results?" Otherwise it can safely wait: nothing else depends on it.
 1. Build now, or after the first release?
 2. Is `[macie] collect = findings | clean` the right name and place?
 3. A tripped breaker in clean mode makes the run invalid: agreed?
+
+## Decided (David, 2026-11-18)
+
+Build now (#762). A tripped breaker in clean mode also calls
+`stop_all()` (David's suggestion): a breadth-first run, or
+`next_paths()`, then stops every csvpath at that line. `collect_paths()`
+does not honor `stop_all()`, so there the invalid run and the printout
+are the signal.

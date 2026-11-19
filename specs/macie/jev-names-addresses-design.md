@@ -140,3 +140,14 @@ should fail the run.
 3. Run the experiment (step 1)?
 4. If Jev fails: NAME and ADDRESS "not checked", run valid. Or should
    the run fail?
+
+## Decided (David, 2026-11-18)
+
+1. **Separate.** Jev's results are kept apart from the Macie-shaped
+   findings, so they do not seem to stand for Macie's rules, which cannot
+   be known: a `jev` section of `macie_findings`, not entries in
+   `sensitiveData`. The worked example above changes accordingly.
+2. The case-keeping mask is fine.
+3. Run the experiment.
+4. If Jev fails: NAME and ADDRESS are not checked, loudly, and the run
+   stays valid.
