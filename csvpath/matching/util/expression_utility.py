@@ -555,20 +555,34 @@ class ExpressionUtility:
         while p is not None:
             ancs.append(p)
             p = p.parent
-        if len(ancs) == 1:
-            x = f"[{cls.get_my_expressions_index(thing)}]"
-            chain = f"{cls.name_or_class(thing, index=x)}"
-        else:
-            chain = f"{cls.name_or_class(thing)}"
+        #
+        # the top named component of the expression carries the
+        # expression's index. every component below it carries its
+        # position among its parent's children. Equality and Expression
+        # show as "" and are left out. the top named component is the
+        # highest one, below the expression, that is not an Equality, so
+        # in `@r = add(...)` it is add, not the "=".
+        #
+        top = None
+        for o in [thing] + ancs[:-1]:
+            if f"{type(o)}".find("Equality") == -1:
+                top = o
+        chain = cls._chain_name(thing, top=top)
         for i, o in enumerate(ancs):
             if i != len(ancs) - 1:
-                x = f"[{cls.get_my_expressions_index(o)}]"
-                n = f"{cls.name_or_class(o, index=x)}"
+                n = cls._chain_name(o, top=top)
             else:
                 n = f"{cls.name_or_class(o)}"
             if n != "":
                 chain = f"{n}.{chain}"
         return chain
+
+    @classmethod
+    def _chain_name(cls, thing, *, top) -> str:
+        if thing is top:
+            x = f"[{cls.get_my_expressions_index(thing)}]"
+            return f"{cls.name_or_class(thing, index=x)}"
+        return f"{cls.name_or_class(thing)}"
 
     @classmethod
     def name_or_class(cls, thing, show_eq_and_exp=False, index=None):
