@@ -81,10 +81,20 @@ class Expression(Matchable, Listener):
                 if self.matcher.csvpath.do_i_raise():
                     raise
             #
-            # a ValueError used to be only logged here, and the line matched (T1).
-            # it is now handled like any other exception: recorded, raised in
-            # raise mode, and the line fails.
+            # a ValueError is bad data. it used to be only logged here, and the
+            # line matched (T1). it is now recorded and the line fails. in raise
+            # mode it is raised as a MatchException, as Function does for its
+            # own compute errors, so callers see one exception type for data.
             #
+            except ValueError as e:
+                if self.current_child is None:
+                    self.current_child = child if child else self
+                self.matcher.csvpath.error_manager.handle_error(
+                    source=self.current_child, msg=f"{e}"
+                )
+                self.matcher.csvpath.logger.error(e)
+                if self.matcher.csvpath.do_i_raise():
+                    raise MatchException(f"{e}") from e
             except Exception as e:
                 if self.current_child is None:
                     self.current_child = child if child else self

@@ -14,6 +14,7 @@ import os
 import pytest
 from csvpath import CsvPath
 from csvpath.matching.productions import Equality
+from csvpath.matching.util.exceptions import MatchException
 
 PATH = f"tests{os.sep}csvpath{os.sep}test_resources{os.sep}test.csv"
 
@@ -40,8 +41,9 @@ def test_collect_mode_records_the_error_and_fails_the_line(monkeypatch):
 def test_raise_mode_raises(monkeypatch):
     monkeypatch.setattr(Equality, "matches", _raise_value_error)
     path = _path(mode="raise", csvpath=f'${PATH}[1][ #firstname == "David" ]')
-    with pytest.raises(ValueError, match="bad data in an equality"):
+    with pytest.raises(MatchException, match="bad data in an equality") as e:
         path.collect()
+    assert isinstance(e.value.__cause__, ValueError)
 
 
 def test_one_error_per_bad_line(monkeypatch):
@@ -62,3 +64,9 @@ def test_good_input_is_unchanged():
     path = _path(mode="raise", csvpath=f'${PATH}[1][ #firstname == "David" ]')
     assert len(path.collect()) == 1
     assert len(path.errors) == 0
+
+
+def test_raise_mode_gt_of_a_comma_number_raises_match_exception():
+    path = _path(mode="raise", csvpath=f'${PATH}[1][ gt("1,000", 9999) ]')
+    with pytest.raises(MatchException):
+        path.collect()
