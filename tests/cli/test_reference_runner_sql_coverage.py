@@ -110,6 +110,7 @@ def test_cli_the_menu_offers_the_item_before_cancel():
             "browse functions",
             ITEM,
             "estimate a reference",
+            "show the SQL for a reference",
             Const.CANCEL2,
         ]
     ]

@@ -146,6 +146,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # the live entries are read at most once per call (_live_index())
         self._live_entries = None
         reference = self.ref.parsed
+        self._trace_phase("query")
         # each function is this datatype's, and one value per reference
         # (5.20b), before anything is read
         self._check_datatype_functions(reference)
@@ -2211,9 +2212,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
         """what query() and resolve() will probably read, as a
         ReferenceEstimate3 (references_v3_cost_estimates.md). It reads only
         the named-files ledger."""
+        self._trace_phase("estimate")
         from .files_estimator_3 import FilesEstimator3
 
-        return FilesEstimator3(finder=self).estimate()
+        estimate = FilesEstimator3(finder=self).estimate()
+        self._trace_total()
+        return estimate
 
     def resolve_from(self, selection: ReferenceResults3 | list) -> ReferenceResults3:
         # the live entries are read at most once per call (_live_index())
@@ -2229,13 +2233,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if selection is None:
             raise ValueError("selection cannot be None")
         results = []
-        for result in selection.results:
-            self._version_reads = 0
-            results.extend(
-                ReferenceFinder3.resolve_from(
-                    self, ReferenceResults3(results=[result])
-                ).results
-            )
+        with self._each_resolve():
+            for result in selection.results:
+                self._version_reads = 0
+                results.extend(
+                    ReferenceFinder3.resolve_from(
+                        self, ReferenceResults3(results=[result])
+                    ).results
+                )
         return ReferenceResults3(results=results)
 
     def _read_version_file(self, path: str, *, worksheet: "str | None" = None):

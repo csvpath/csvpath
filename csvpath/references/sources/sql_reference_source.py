@@ -1,4 +1,5 @@
 import json
+import time
 
 from sqlalchemy import Engine, Table, select
 
@@ -9,6 +10,7 @@ from csvpath.util.nos import Nos
 
 from ..reference_exceptions_3 import ReferenceRuntimeException3
 from .filesystem_reference_source import FilesystemReferenceSource
+from .sql_trace import SqlTracing
 
 
 class SqlReferenceSource(FilesystemReferenceSource):
@@ -38,6 +40,11 @@ class SqlReferenceSource(FilesystemReferenceSource):
     def __init__(self, *, csvpaths) -> None:
         super().__init__(csvpaths=csvpaths)
         self._tables = None
+        self._tracing = SqlTracing(csvpaths=csvpaths)
+
+    @property
+    def sql_tracing(self) -> SqlTracing:
+        return self._tracing
 
     @property
     def engine(self) -> Engine:
@@ -55,8 +62,18 @@ class SqlReferenceSource(FilesystemReferenceSource):
         return self._tables
 
     def _column(self, stmt) -> list:
+        """every reference read runs here, so the SQL trace sees each
+        statement (and nothing else that uses the engine)"""
+        tracing = self._tracing.active
+        started = time.perf_counter()
         with self.engine.connect() as conn:
-            return [r[0] for r in conn.execute(stmt)]
+            rows = [r[0] for r in conn.execute(stmt)]
+        if tracing:
+            compiled = stmt.compile(dialect=self.engine.dialect)
+            self._tracing.record(
+                sql=str(compiled), params=compiled.params, rows=len(rows), started=started
+            )
+        return rows
 
     def _entries(self, stmt) -> list[dict]:
         """each row's manifest_entry, parsed. A row that is not valid JSON
