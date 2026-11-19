@@ -589,13 +589,14 @@ class ExpressionUtility:
         ret = None
         if not show_eq_and_exp and f"{type(thing)}".find("Equality") > -1:
             #
-            # a comparison inside a function shows as eq, so that two of
+            # a comparison inside a function shows as cmp, so that two of
             # them as arguments have different chains: or(a == 1, b == 1)
-            # has or[0].eq[0] and or[0].eq[1]. a comma list, and a top
-            # level Equality like @x = ..., do not show.
+            # has or[0].cmp[0] and or[0].cmp[1]. a comma list, and a top
+            # level Equality like @x = ..., do not show. not eq or equals:
+            # both are names of the eq() function.
             #
             if cls._is_inner_comparison(thing):
-                ret = f"eq{index if index is not None else cls._position(thing)}"
+                ret = f"cmp{index if index is not None else cls._position(thing)}"
             else:
                 ret = ""
         elif not show_eq_and_exp and f"{type(thing)}".find("Expression") > -1:

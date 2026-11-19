@@ -59,21 +59,27 @@ def _chains_of(*, match: str, name: str) -> list:
         ),
         # inner not is child 0 of the outer not: was not[1].not[1]
         ('yes() not(not(add("five", 1)))', "add", ["not[1].not[0].add[0]"]),
-        # a comparison inside a function shows as eq: add is position 1 of
+        # a comparison inside a function shows as cmp: add is position 1 of
         # the ==, which is position 0 of not
-        ('yes() not(@a == add("five", 1))', "add", ["not[1].eq[0].add[1]"]),
+        ('yes() not(@a == add("five", 1))', "add", ["not[1].cmp[0].add[1]"]),
         # two comparisons as arguments: was or[0].add[0] twice
         (
             'or(add("five", 1) == 1, add("five", 1) == 1)',
             "add",
-            ["or[0].eq[0].add[0]", "or[0].eq[1].add[0]"],
+            ["or[0].cmp[0].add[0]", "or[0].cmp[1].add[0]"],
         ),
-        ('yes() not(add("five", 1) == 1)', "add", ["not[1].eq[0].add[0]"]),
+        ('yes() not(add("five", 1) == 1)', "add", ["not[1].cmp[0].add[0]"]),
         # both sides of one comparison
         (
             'or(add("five", 1) == add("five", 1))',
             "add",
-            ["or[0].eq[0].add[0]", "or[0].eq[0].add[1]"],
+            ["or[0].cmp[0].add[0]", "or[0].cmp[0].add[1]"],
+        ),
+        # the eq() function keeps its name; a comparison is cmp
+        (
+            '@r = eq(add("five", 1), 1) not(add("five", 1) == 1)',
+            "add",
+            ["eq[0].add[0]", "not[1].cmp[0].add[0]"],
         ),
         # an Equality under a top level when/do is not inside a function
         (
