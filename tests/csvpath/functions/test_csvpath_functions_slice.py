@@ -105,3 +105,72 @@ class TestCsvPathFunctionsSlice(unittest.TestCase):
         )
         with pytest.raises(MatchException):
             path.fast_forward()
+
+
+#
+# the end index is optional: without it the slice runs to the end of the
+# stack. it used to compare the start index with None, a TypeError that
+# was silently swallowed, leaving the value None.
+#
+def _open_end(*, pushes: str, call: str):
+    path = CsvPath()
+    path.config.add_to_config("errors", "csvpath", "raise, collect")
+    path.parse(f"${PATH}[1][ {pushes} @b = {call} ]")
+    path.fast_forward()
+    assert len(path.errors) == 0
+    return path.variables["b"]
+
+
+@pytest.mark.parametrize(
+    "call,expected",
+    [
+        ('slice("a", 0)', [1, 23, 3, -2]),
+        ('slice("a", 1)', [23, 3, -2]),
+        ('slice("a", 3)', [-2]),
+    ],
+)
+def test_slice_without_end_runs_to_the_end(call, expected):
+    pushes = 'push("a", 1) push("a", 23) push("a", 3) push("a", -2)'
+    assert _open_end(pushes=pushes, call=call) == expected
+
+
+def test_slice_without_end_equals_slice_to_last_index():
+    pushes = 'push("a", 1) push("a", 23) push("a", 3)'
+    assert _open_end(pushes=pushes, call='slice("a", 1)') == _open_end(
+        pushes=pushes, call='slice("a", 1, 2)'
+    )
+
+
+def test_slice_without_end_of_a_negative_start_is_an_error():
+    path = CsvPath()
+    path.config.add_to_config("errors", "csvpath", "collect")
+    path.parse(f'${PATH}[1][ push("a", 1) @b = slice("a", -1) ]')
+    path.fast_forward()
+    assert len(path.errors) == 1
+
+
+def _open_end_errors(*, pushes: str, call: str) -> list[str]:
+    path = CsvPath()
+    path.config.add_to_config("errors", "csvpath", "collect")
+    path.parse(f"${PATH}[1][ {pushes} @b = {call} ]")
+    path.fast_forward()
+    return [e.message for e in path.errors]
+
+
+def test_slice_without_end_of_an_empty_stack_from_zero_is_empty():
+    assert _open_end(pushes='@x = stack("z")', call='slice("z", 0)') == []
+
+
+@pytest.mark.parametrize(
+    "pushes,call,message",
+    [
+        # an out of range start is an error with or without an end index
+        ('@x = stack("z")', 'slice("z", 5)', "Slice start index is past the end of the stack"),
+        ('@x = stack("z")', 'slice("z", -1)', "Slice cannot start at a negative index"),
+        ('push("a", 1) push("a", 2)', 'slice("a", 2)', "Slice start index is past the end of the stack"),
+        ('push("a", 1) push("a", 2)', 'slice("a", 5)', "Slice start index is past the end of the stack"),
+        ('push("a", 1) push("a", 2)', 'slice("a", -1)', "Slice cannot start at a negative index"),
+    ],
+)
+def test_slice_without_end_out_of_range_start_is_an_error(pushes, call, message):
+    assert _open_end_errors(pushes=pushes, call=call) == [message]

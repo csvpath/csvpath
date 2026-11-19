@@ -1,7 +1,9 @@
 
 ## slice()
 
-Slice extracts part of a stack into a new stack.
+Slice extracts part of a stack into a new stack. The end index is
+inclusive. Without an end index, the slice runs to the end of the
+stack.
 
 | Data signatures                                                                                                       |
 |:----------------------------------------------------------------------------------------------------------------------|
