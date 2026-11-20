@@ -9,6 +9,7 @@ import pytest
 
 from csvpath.cli import reference_runner as rr
 from csvpath.cli.reference_runner import ReferenceRunner
+from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.sources.sql_trace import SqlStatement, SqlTrace
 
 
@@ -110,3 +111,52 @@ def test_nothing_entered_does_nothing(calls, monkeypatch):
     _ask(monkeypatch, "")
     ReferenceRunner(_Cli(_Tracing()))._show_sql()
     assert calls == []
+
+
+class _RaisingFinder(_Finder):
+    """queries fine, then raises on resolve, as a legal reference to
+    several files does (compendium 5.3)"""
+
+    def resolve(self):
+        raise ReferenceException3("cannot resolve more than one file at once")
+
+
+def _no_error_menu(monkeypatch):
+    seen = []
+
+    def _handle(cli, e):
+        seen.append(e)
+        return False
+
+    monkeypatch.setattr(rr.erut, "handle", _handle)
+    return seen
+
+
+def test_a_resolve_that_raises_still_shows_its_sql(monkeypatch, capsys):
+    # it printed only the error menu (name_one gap review, 2026-11-19)
+    monkeypatch.setattr(builtins, "input", lambda prompt="": "")
+    monkeypatch.setattr(
+        rr.ReferenceFinderFactory3,
+        "for_reference",
+        lambda *, reference, csvpaths: _RaisingFinder(),
+    )
+    seen = _no_error_menu(monkeypatch)
+    _ask(monkeypatch, "$a.results.:all().:manifest()")
+    ReferenceRunner(_Cli(_Tracing()))._show_sql()
+    out = capsys.readouterr().out
+    assert "resolve() raised ReferenceException3: cannot resolve more than one file" in out
+    assert "The SQL that ran before it: 1 statements" in out
+    assert "$a.files.:last() query: SELECT manifest_entry FROM named_file" in out
+    # the usual error handling still runs
+    assert len(seen) == 1
+
+
+def test_a_parse_error_shows_no_sql(monkeypatch, capsys):
+    # nothing was captured, so there is no SQL section
+    monkeypatch.setattr(builtins, "input", lambda prompt="": "")
+    seen = _no_error_menu(monkeypatch)
+    _ask(monkeypatch, "$a.files.")
+    ReferenceRunner(_Cli(_Tracing()))._show_sql()
+    out = capsys.readouterr().out
+    assert "The SQL that ran before it" not in out
+    assert len(seen) == 1

@@ -125,6 +125,14 @@ class ReferenceRunner:
         ).ask()
         if not expression:
             return
+        #
+        # the trace is kept outside the try: when resolve() raises -- e.g. a
+        # legal reference that queries several files but can resolve only
+        # one at a time (compendium 5.3) -- the SQL that ran before the
+        # error is still shown. It printed only the error (name_one gap
+        # review, 2026-11-19).
+        #
+        trace = None
         try:
             tree = ReferenceExpressionParser3.parse(expression)
             if isinstance(tree, tuple):
@@ -138,16 +146,28 @@ class ReferenceRunner:
             with finder.capture_sql() as trace:
                 results = finder.resolve()
             print(f"{len(results)} results; {trace.summary()}\n")
-            for statement in trace.statements:
-                print(f"  {statement.line()}")
+            self._print_statements(trace)
         except KeyboardInterrupt:
             # as in _run(): a slow resolve must not quit the whole CLI
             print("\nCancelled.\n")
             return
         except Exception as e:
+            if trace is not None:
+                # the error menu below does not show the message itself
+                print(f"resolve() raised {type(e).__name__}: {e}\n")
+                print(f"The SQL that ran before it: {trace.summary()}\n")
+                self._print_statements(trace)
+                print("")
             if not erut.handle(self._cli, e):
                 return
         input("\nHit return to continue. ")
+
+    @staticmethod
+    def _print_statements(trace) -> None:
+        if trace is None:
+            raise ValueError("trace cannot be None")
+        for statement in trace.statements:
+            print(f"  {statement.line()}")
 
     def _check_sql_coverage(self) -> None:
         self._cli.clear()
