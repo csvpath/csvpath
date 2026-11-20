@@ -1399,10 +1399,14 @@ class ReferenceFinder3(ABC):
         "does not yet support" message that read as a promise):
         - name_one has at most one grouping wildcard, ':all()' or
           ':groups()', and never both (compendium 4.2b, 4.3b)
-        - no '*' segment after ':flatten()' in name_one (4.3d, 4.5):
-          ':flatten()' already wildcards every level
-        - name_three has at most one wildcard, a '*' body or an ':all()'
-          (4.2b, NRE 479-499)
+        - at most one ':flatten()' in name_one, and no '*' segment
+          directly after it (4.3d, 4.5): ':flatten()' already wildcards
+          every level, so a second any-depth or one-level wildcard right
+          after it cannot be told apart from it. A literal in between
+          removes the ambiguity: ':flatten()/2026/*' is legal.
+          (':flatten()/:all()/*' is not settled by the spec and passes.)
+        - name_three has at most one wildcard, a '*' body or an ':all()',
+          and no ':groups()' or ':flatten()' (4.2b, 4.3e, NRE 474-499)
         Where 4.5's last example ('$acme.files.:all()/*/:all()') says
         two ':all()' are legal it contradicts 4.3b's rule and the NRE
         copy of 4.5; the rule wins (noted for David's spec pass)."""
@@ -1422,6 +1426,13 @@ class ReferenceFinder3(ABC):
                 f"':groups()', and not both (compendium 4.2b, 4.3b); this "
                 f"reference has {names}."
             )
+        flattens = [c for c in calls if c.name == "flatten"]
+        if len(flattens) > 1:
+            raise ReferenceException3(
+                "name_one can have only one ':flatten()': it already "
+                "wildcards every level, so a second one is contradictory "
+                "(compendium 4.3d, 4.5)."
+            )
         flatten_at = next(
             (
                 i
@@ -1430,8 +1441,10 @@ class ReferenceFinder3(ABC):
             ),
             None,
         )
-        if flatten_at is not None and any(
-            isinstance(seg, Star3) for seg in name_one.path[flatten_at + 1 :]
+        if (
+            flatten_at is not None
+            and flatten_at + 1 < len(name_one.path)
+            and isinstance(name_one.path[flatten_at + 1], Star3)
         ):
             raise ReferenceException3(
                 "A '*' segment after ':flatten()' is not legal: ':flatten()' "
@@ -1442,6 +1455,12 @@ class ReferenceFinder3(ABC):
         name_three = reference.name_three
         if name_three is None:
             return
+        deep = [c for c in name_three.functions if c.name in ("groups", "flatten")]
+        if deep:
+            raise ReferenceException3(
+                f":{deep[0].name}() is a name_one wildcard only; name_three "
+                "takes '*' or ':all()' (compendium 4.2b, 4.3e)."
+            )
         wildcards = len([c for c in name_three.functions if c.name == "all"])
         if isinstance(name_three.body, Star3):
             wildcards += 1

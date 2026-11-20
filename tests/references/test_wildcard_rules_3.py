@@ -68,8 +68,37 @@ def test_name_one_has_one_grouping_wildcard(reference, csvpaths):
         "$acme.files.2025/:flatten()/*",
     ],
 )
-def test_no_star_after_flatten(reference, csvpaths):
+def test_no_star_directly_after_flatten(reference, csvpaths):
     with pytest.raises(ReferenceException3, match="after ':flatten\\(\\)' is not legal"):
+        ReferenceFinder3._check_wildcards(_parsed(reference, csvpaths))
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        # accepted in RESULTS; FILES raised "does not yet support"
+        "$acme.results.:flatten():flatten()",
+        "$acme.files.:flatten()/:flatten()",
+        "$acme.results.:flatten()/:flatten()",
+    ],
+)
+def test_one_flatten(reference, csvpaths):
+    with pytest.raises(ReferenceException3, match="only one ':flatten\\(\\)'"):
+        ReferenceFinder3._check_wildcards(_parsed(reference, csvpaths))
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        # NRE 476-477, 4.2b, 4.3e: the finders raised, the estimator did not
+        "$acme.results.:last().:groups()",
+        "$acme.results.:last().:groups():manifest()",
+        "$acme.files.*.:flatten()",
+        "$acme.csvpaths.:last().:groups()",
+    ],
+)
+def test_no_deep_wildcard_in_name_three(reference, csvpaths):
+    with pytest.raises(ReferenceException3, match="name_one wildcard only"):
         ReferenceFinder3._check_wildcards(_parsed(reference, csvpaths))
 
 
@@ -114,6 +143,12 @@ def test_name_three_has_one_wildcard(reference, csvpaths):
         "$acme.files.*/:groups()",
         "$acme.files.:flatten()/:all()",
         "$acme.files.*/:all()/*",
+        # a literal between ':flatten()' and the '*' removes the ambiguity
+        # (reviewer on #785: this worked before and must still)
+        "$acme.files.:flatten()/2026/*",
+        "$acme.files.:flatten()/orders/*/:name(\"four.csv\")",
+        # not settled by the spec; passes (decision log)
+        "$acme.files.:flatten()/:all()/*",
         "$acme.results.:all()/*:last()",
         "$acme.results.:last().:all()",
         "$acme.results.:last().*",
