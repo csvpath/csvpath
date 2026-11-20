@@ -21,6 +21,8 @@ SHAPES = [
     f'{VO}.:having("candy check")',
     "$*.csvpaths.:scripts(:has_value())",
     f"{VO}.:readme()",
+    # ':readme()' stands alone (name_one gap review, 2026-11-19, #784)
+    f"{VO}.:readme():last()",
     "$:regex(/^v/).csvpaths.:manifest()",
     '$*.csvpaths.:lifecycle("active")',
     f"{VO}.:all():fingerprint()",

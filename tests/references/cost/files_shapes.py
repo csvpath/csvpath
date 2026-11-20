@@ -31,6 +31,7 @@ SHAPES = [
     "$orders.files.:readme():last()",
     "$orders.files.:last():readme()",
     "$orders.files.*:readme()",
+    "$orders.files.:readme()#Sheet1",
     "$orders.files.:flatten().:last():file_name()",
     "$*.files.:manifest():first():named_file_name()",
     '$*.files.:manifest():type("csv")',
