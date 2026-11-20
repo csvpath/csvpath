@@ -1391,6 +1391,85 @@ class ReferenceFinder3(ABC):
             f"(compendium 5.20b). Keep one: {' or '.join(spellings)}"
         )
 
+    @staticmethod
+    def _check_wildcards(reference: Reference3) -> None:
+        """the wildcard combinations the spec rules out, raised before
+        anything is read, in every datatype (name_one gap review,
+        2026-11-19: each of these was accepted silently, or raised a
+        "does not yet support" message that read as a promise):
+        - name_one has at most one grouping wildcard, ':all()' or
+          ':groups()', and never both (compendium 4.2b, 4.3b)
+        - at most one ':flatten()' in name_one, and no '*' segment
+          directly after it (4.3d, 4.5): ':flatten()' already wildcards
+          every level, so a second any-depth or one-level wildcard right
+          after it cannot be told apart from it. A literal in between
+          removes the ambiguity: ':flatten()/2026/*' is legal.
+          (':flatten()/:all()/*' is not settled by the spec and passes.)
+        - name_three has at most one wildcard, a '*' body or an ':all()',
+          and no ':groups()' or ':flatten()' (4.2b, 4.3e, NRE 474-499)
+        Where 4.5's last example ('$acme.files.:all()/*/:all()') says
+        two ':all()' are legal it contradicts 4.3b's rule and the NRE
+        copy of 4.5; the rule wins (noted for David's spec pass)."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        name_one = reference.name_one
+        calls = [
+            c
+            for c in [*name_one.path, *name_one.functions]
+            if isinstance(c, FunctionCall3)
+        ]
+        grouping = [c for c in calls if c.name in ("all", "groups")]
+        if len(grouping) > 1:
+            names = ", ".join(f":{c.name}()" for c in grouping)
+            raise ReferenceException3(
+                f"name_one can have only one grouping wildcard, ':all()' or "
+                f"':groups()', and not both (compendium 4.2b, 4.3b); this "
+                f"reference has {names}."
+            )
+        flattens = [c for c in calls if c.name == "flatten"]
+        if len(flattens) > 1:
+            raise ReferenceException3(
+                "name_one can have only one ':flatten()': it already "
+                "wildcards every level, so a second one is contradictory "
+                "(compendium 4.3d, 4.5)."
+            )
+        flatten_at = next(
+            (
+                i
+                for i, seg in enumerate(name_one.path)
+                if isinstance(seg, FunctionCall3) and seg.name == "flatten"
+            ),
+            None,
+        )
+        if (
+            flatten_at is not None
+            and flatten_at + 1 < len(name_one.path)
+            and isinstance(name_one.path[flatten_at + 1], Star3)
+        ):
+            raise ReferenceException3(
+                "A '*' segment after ':flatten()' is not legal: ':flatten()' "
+                "already wildcards every level, so the '*' is contradictory "
+                "(compendium 4.3d). Use ':flatten()', or ':flatten()/:all()' "
+                "to group by the last level."
+            )
+        name_three = reference.name_three
+        if name_three is None:
+            return
+        deep = [c for c in name_three.functions if c.name in ("groups", "flatten")]
+        if deep:
+            raise ReferenceException3(
+                f":{deep[0].name}() is a name_one wildcard only; name_three "
+                "takes '*' or ':all()' (compendium 4.2b, 4.3e)."
+            )
+        wildcards = len([c for c in name_three.functions if c.name == "all"])
+        if isinstance(name_three.body, Star3):
+            wildcards += 1
+        if wildcards > 1:
+            raise ReferenceException3(
+                "name_three can have only one wildcard, a '*' or an ':all()' "
+                "(compendium 4.2b); in name_three they mean the same thing."
+            )
+
     def _query_log_call(self, reference: Reference3) -> "ReferenceResults3 | None":
         """query()'s own entry point for :log() -- shared by all three
         finders since the log file is identical regardless of

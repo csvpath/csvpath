@@ -27,6 +27,11 @@ SHAPES = [
     "$*.files.:flatten().:last()",
     '$*.files.:flatten().:type("csv"):last()',
     "$orders.files.:readme()",
+    # wildcard rules (name_one gap review, 2026-11-19)
+    "$orders.files.:flatten()/*",
+    "$orders.files.:flatten().:all():all()",
+    "$orders.files.:all()/:all()",
+    "$orders.files.:flatten()/orders/*",
     # ':readme()' stands alone (name_one gap review, 2026-11-19)
     "$orders.files.:readme():last()",
     "$orders.files.:last():readme()",

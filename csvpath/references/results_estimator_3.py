@@ -136,6 +136,7 @@ class ResultsEstimator3:
             # a foreign function, then two value-supplying functions, raise
             # first, as in query(); they read nothing
             self.finder._check_datatype_functions(self.reference)
+            self.finder._check_wildcards(self.reference)
             self.finder._check_one_value(self.reference)
         except ReferenceException3 as e:
             return str(e)

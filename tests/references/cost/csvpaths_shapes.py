@@ -7,6 +7,9 @@ VO = "$validate_orders.csvpaths"
 SHAPES = [
     f"{VO}.:last()",
     f"{VO}.:all()",
+    # wildcard rules (name_one gap review, 2026-11-19)
+    f"{VO}.:all():all()",
+    f"{VO}.:last().*:all()",
     "$*.csvpaths.:last()",
     "$*.csvpaths.:all()",
     f"{VO}.:last().:from(0)",
