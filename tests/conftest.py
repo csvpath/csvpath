@@ -5,6 +5,13 @@ from csvpath import CsvPaths
 from csvpath.util.box import Box
 from csvpath.util.config import Config
 from csvpath.util.nos import Nos
+from tests import suite_config
+
+#
+# a fixed config for every run, installed before any test builds a CsvPaths
+# (tests/suite_config.py; David, 2026-11-19)
+#
+_SUITE_CONFIG_DIR = suite_config.install(os.environ)
 
 
 # conftest.py
@@ -34,6 +41,7 @@ def _sqlite_leak_probe(request):
 
 
 def pytest_sessionfinish(session, exitstatus):
+    suite_config.remove(_SUITE_CONFIG_DIR)
     if Box.SQL_ENGINE in Box.STUFF:
         try:
             box = Box()
