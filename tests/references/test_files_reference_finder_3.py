@@ -4041,6 +4041,63 @@ class TestPrefixedFlatten:
             "inputs/named_files/vault/2025/returns.csv",
         }
 
+    def test_star_then_flatten_is_the_file_homes_with_a_template(self):
+        # compendium 4.3c, NRE 429-432: '*/:flatten()' is every file home
+        # with a template. It also gave "vault/orders.csv", which has none:
+        # the '*' matched its file home segment (name_one gap review,
+        # 2026-11-19). RESULTS already reads '*/:flatten()' this way.
+        results = _finder(
+            "$vault.files.*/:flatten()", PREFIXED_FLATTEN_HOME, PREFIXED_FLATTEN_MANIFEST
+        ).query()
+        assert set(results.files) == {
+            "inputs/named_files/vault/2025/orders.csv",
+            "inputs/named_files/vault/2025/q1/orders.csv",
+            "inputs/named_files/vault/2026/orders.csv",
+            "inputs/named_files/vault/2025/returns.csv",
+        }
+
+    def test_a_two_level_prefix_needs_a_file_home_below_both_levels(self):
+        # the "+1" rule at a depth other than one: "2025/orders.csv" has
+        # only one template level, so '*/*' would be its file home
+        results = _finder(
+            "$vault.files.*/*/:flatten()", PREFIXED_FLATTEN_HOME, PREFIXED_FLATTEN_MANIFEST
+        ).query()
+        assert results.files == ["inputs/named_files/vault/2025/q1/orders.csv"]
+
+    def test_a_prefix_never_matches_the_file_home_itself(self):
+        # the prefix is template levels: a no-template "orders.csv" file
+        # home is not a template level named "orders.csv"
+        results = _finder(
+            '$vault.files.:name("orders.csv")/:flatten()',
+            PREFIXED_FLATTEN_HOME,
+            PREFIXED_FLATTEN_MANIFEST,
+        ).query()
+        assert results.files == []
+
+    def test_star_then_flatten_then_a_pointer_skips_no_template_versions(self):
+        # "u-no-prefix" is the last entry in the manifest, but it has no
+        # template, so the last templated version is "u-2025-returns"
+        results = _finder(
+            "$vault.files.*/:flatten().:last()",
+            PREFIXED_FLATTEN_HOME,
+            PREFIXED_FLATTEN_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-2025-returns"]
+
+    def test_a_suffix_still_matches_directly_after_the_prefix(self):
+        # with a suffix, the suffix's last segment is the file home, so a
+        # zero-level gap still matches (unchanged by the fix above)
+        results = _finder(
+            '$vault.files.*/:flatten()/:name("orders.csv")',
+            PREFIXED_FLATTEN_HOME,
+            PREFIXED_FLATTEN_MANIFEST,
+        ).query()
+        assert set(results.files) == {
+            "inputs/named_files/vault/2025/orders.csv",
+            "inputs/named_files/vault/2025/q1/orders.csv",
+            "inputs/named_files/vault/2026/orders.csv",
+        }
+
     def test_prefixed_flatten_rejects_an_argument(self):
         with pytest.raises(ReferenceException3):
             _finder(
@@ -4807,6 +4864,131 @@ def _n3_finder(reference: str) -> FilesReferenceFinder3:
         by_name={"orders": (N3_HOME, [dict(e) for e in N3_MANIFEST])},
         inputs_files_path="inputs/named_files",
     )
+
+
+#
+# two live named-files, arriving interleaved -- orders with three versions,
+# invoices with two -- so a pointer that pools picks a different answer
+# from one applied within each named-file (compendium 4.1b), and an index
+# can run past one group's end but not the other's
+#
+GROUPED_LEDGER = [
+    {"named_file_name": "orders", "status": "complete", "uuid": "o-1"},
+    {"named_file_name": "invoices", "status": "complete", "uuid": "i-1"},
+    {"named_file_name": "orders", "status": "complete", "uuid": "o-2"},
+    {"named_file_name": "invoices", "status": "complete", "uuid": "i-2"},
+    {"named_file_name": "invoices", "status": "failed", "uuid": "i-x"},
+    {"named_file_name": "orders", "status": "complete", "uuid": "o-3"},
+]
+
+
+def _grouped_entry(name: str, uuid: str) -> dict:
+    return {
+        "file": f"inputs/named_files/{name}/{name}.csv/{uuid}.csv",
+        "file_home": f"inputs/named_files/{name}/{name}.csv",
+        "uuid": uuid,
+    }
+
+
+GROUPED_BY_NAME = {
+    "orders": (
+        "inputs/named_files/orders",
+        [
+            _grouped_entry("orders", "o-1"),
+            _grouped_entry("orders", "o-2"),
+            _grouped_entry("orders", "o-3"),
+        ],
+    ),
+    "invoices": (
+        "inputs/named_files/invoices",
+        [_grouped_entry("invoices", "i-1"), _grouped_entry("invoices", "i-2")],
+    ),
+}
+
+
+class TestStatusGatePointerGroupsByNamedFile:
+    """a name_three pointer after a bare ':status()'/':lifecycle()' gate
+    under '*', ':regex()' or ':choice()' applies within each named-file
+    (compendium 4.1b), as RESULTS and CSVPATHS already do. It pooled every
+    named-file's versions and picked one (name_one gap review,
+    2026-11-19)."""
+
+    @staticmethod
+    def _grouped_finder(reference: str) -> FilesReferenceFinder3:
+        ledger = [dict(e, lifecycle="active") for e in GROUPED_LEDGER]
+        return _finder(
+            reference,
+            TYPE_HOME,
+            [],
+            ledger=ledger,
+            by_name=GROUPED_BY_NAME,
+            inputs_files_path="inputs/named_files",
+        )
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # names come in sorted order, as every '*' traversal gives them
+            ('$*.files.:status("complete").:last()', ["i-2", "o-3"]),
+            ('$*.files.:status("complete").:first()', ["i-1", "o-1"]),
+            ('$*.files.:status("complete").:index(1)', ["i-2", "o-2"]),
+            ('$*.files.:lifecycle("active").:last()', ["i-2", "o-3"]),
+            ('$:regex(/s$/).files.:status("complete").:last()', ["i-2", "o-3"]),
+            ('$:choice("orders|invoices").files.:status("complete").:first()', ["i-1", "o-1"]),
+            # a filtered root narrows the groups, not the pointer
+            ('$:regex(/^ord/).files.:status("complete").:last()', ["o-3"]),
+            # an index past a group's end drops that group only
+            ('$*.files.:status("complete").:index(2)', ["o-3"]),
+            ('$*.files.:status("complete").:index(3)', []),
+        ],
+    )
+    def test_the_pointer_applies_within_each_named_file(self, reference, expected):
+        assert self._grouped_finder(reference).query().uuids == expected
+
+    def test_a_literal_root_is_one_group(self):
+        results = self._grouped_finder('$orders.files.:status("complete").:last()').query()
+        assert results.uuids == ["o-3"]
+
+    def test_a_gate_chain_narrows_before_the_pointer(self):
+        results = self._grouped_finder(
+            '$*.files.:status("complete"):named_file_name("orders").:last()'
+        ).query()
+        assert results.uuids == ["o-3"]
+
+    def test_each_result_is_its_own_version_file(self):
+        results = self._grouped_finder('$*.files.:status("complete").:last()').query()
+        assert results.files == [
+            "inputs/named_files/invoices/invoices.csv/i-2.csv",
+            "inputs/named_files/orders/orders.csv/o-3.csv",
+        ]
+
+    def test_resolving_one_version_per_named_file_raises(self):
+        # one version file's content per resolve() (compendium 5.3)
+        with pytest.raises(ReferenceException3):
+            self._grouped_finder('$*.files.:status("complete").:last()').resolve()
+
+    def test_one_result_still_resolves(self):
+        finder = self._grouped_finder('$:regex(/^ord/).files.:status("complete").:last()')
+        assert finder.query().uuids == ["o-3"]
+        assert finder.query().ambiguous_content_read is False
+
+    def test_a_version_held_by_a_name_outside_the_gate_raises(self):
+        # one uuid in two named-files' manifests is corrupt data: the
+        # owner (the first live manifest holding it) is not a name the
+        # gate read, so the version would silently drop out of its group
+        by_name = dict(GROUPED_BY_NAME)
+        by_name["aaa"] = ("inputs/named_files/aaa", [_grouped_entry("aaa", "o-2")])
+        ledger = [dict(e, lifecycle="active") for e in GROUPED_LEDGER]
+        finder = _finder(
+            '$:regex(/^ord/).files.:status("complete").:last()',
+            TYPE_HOME,
+            [],
+            ledger=ledger,
+            by_name=by_name,
+            inputs_files_path="inputs/named_files",
+        )
+        with pytest.raises(ReferenceRuntimeException3):
+            finder.query()
 
 
 class TestLedgerOnlyFieldsAtNameThree:
