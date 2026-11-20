@@ -136,6 +136,38 @@ class FilesReferenceFinder3(ReferenceFinder3):
     def _definition_names(self) -> list:
         return self.source.file_names()
 
+    @staticmethod
+    def _check_readme_is_alone(reference: Reference3) -> None:
+        """':readme()' must be the whole of name_one, with no name_three:
+        there is one README.md per named-file, unrelated to file homes or
+        versions (compendium 6.12, NRE 1119-1122), as CSVPATHS already
+        enforces. '$alpha.files.:readme():last()' read a version and
+        ignored the readme, then raised an internal error on resolve();
+        the other combinations raised, but suggested a ':readme()' in
+        name_three, which is not legal either (name_one gap review,
+        2026-11-19). A bare ':readme()' under any root passes this check;
+        what each root does with it is decided in query()."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        name_one = reference.name_one
+        calls = [*name_one.path, *name_one.functions]
+        if not any(
+            isinstance(c, FunctionCall3) and c.name == "readme" for c in calls
+        ):
+            return
+        if (
+            len(calls) == 1
+            and reference.name_three is None
+            and name_one.name_two is None
+        ):
+            return
+        raise ReferenceException3(
+            "FilesReferenceFinder3 does not support combining ':readme()' "
+            "with anything else -- a named-file has one README.md, so "
+            "':readme()' must be the entire, sole content of name_one, "
+            "with no name_three, e.g. '$alpha.files.:readme()'."
+        )
+
     def _definition_home(self, name: str) -> str:
         return self.csvpaths.file_manager.named_file_home(name)
 
@@ -150,6 +182,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # each function is this datatype's, and one value per reference
         # (5.20b), before anything is read
         self._check_datatype_functions(reference)
+        self._check_readme_is_alone(reference)
         self._check_one_value(reference)
         log_results = self._query_log_call(reference)
         if log_results is not None:
