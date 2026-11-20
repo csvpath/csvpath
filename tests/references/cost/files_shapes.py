@@ -27,6 +27,11 @@ SHAPES = [
     "$*.files.:flatten().:last()",
     '$*.files.:flatten().:type("csv"):last()',
     "$orders.files.:readme()",
+    # ':readme()' stands alone (name_one gap review, 2026-11-19)
+    "$orders.files.:readme():last()",
+    "$orders.files.:last():readme()",
+    "$orders.files.*:readme()",
+    "$orders.files.:readme()#Sheet1",
     "$orders.files.:flatten().:last():file_name()",
     "$*.files.:manifest():first():named_file_name()",
     '$*.files.:manifest():type("csv")',

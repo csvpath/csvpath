@@ -6064,10 +6064,36 @@ class TestReadmeFunction:
         # falls through to ordinary path-narrowing logic instead (which
         # then fails to recognize ":readme()" as a legal path-building
         # segment at all).
-        with pytest.raises(ReferenceException3):
+        with pytest.raises(ReferenceException3, match="sole content of name_one"):
             _finder(
                 "$alpha.files.orders/:readme()", ALPHA_HOME, ALPHA_MANIFEST
             ).query()
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            # a pointer beside it: this one queried to a version and
+            # ignored the readme, then raised an internal error on
+            # resolve() (name_one gap review, 2026-11-19)
+            "$alpha.files.:readme():last()",
+            "$alpha.files.:readme():first()",
+            "$alpha.files.:readme():index(0)",
+            # these raised before, but suggested a ':readme()' in
+            # name_three, which is not legal either
+            "$alpha.files.:readme().:last()",
+            "$alpha.files.:last():readme()",
+            "$alpha.files.*:readme()",
+            '$alpha.files.:name("orders.csv")/:readme()',
+            "$alpha.files.:readme():uuid()",
+            "$*.files.:readme():last()",
+            "$:regex(/^al/).files.:readme():first()",
+        ],
+    )
+    def test_readme_must_be_alone(self, reference):
+        # compendium 6.12, NRE 1119-1122: one README.md per named-file,
+        # unrelated to file homes and versions, as CSVPATHS enforces
+        with pytest.raises(ReferenceException3, match="sole content of name_one"):
+            _finder(reference, ALPHA_HOME, ALPHA_MANIFEST).query()
 
 
 RICH_HOME = "inputs/named_files/rich"

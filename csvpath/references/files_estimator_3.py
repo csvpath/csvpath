@@ -369,6 +369,14 @@ class FilesEstimator3:
             return "query: ':definition()' is not versioned, so it takes no pointer, range or date bound"
         if self.reference.name_three is not None and set(path_names + [c.name for c in name_one.functions]) & {"readme", "log"}:
             return "query: ':readme()' and ':log()' stand alone; they take no name_three"
+        # ':readme()' with anything else in name_one, or a worksheet marker
+        # (FILES _check_readme_is_alone(); CSVPATHS, which subclasses this
+        # estimator, rejects the same shapes); a bare one under any root
+        # goes on
+        if "readme" in path_names + [c.name for c in name_one.functions] and (
+            len(name_one.path) + len(name_one.functions) > 1 or name_one.name_two is not None
+        ):
+            return "query: ':readme()' must be the sole content of name_one"
         if "definition" in path_names:
             # a ':definition()' chain reads definition.json: no manifest
             # fields, no ':manifest()'
