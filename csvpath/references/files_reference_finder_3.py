@@ -2099,31 +2099,33 @@ class FilesReferenceFinder3(ReferenceFinder3):
         return entry.get(field_call.LEDGER_KEY.get(Reference3.FILES) or key)
 
     def _pointer_into_status_matches(
-        self, reference: Reference3, matched: list
+        self, *, reference: Reference3, matched: list, names: list
     ) -> ReferenceResults3:
-        """name_three riding alongside a bare ':status(...)' lookup --
-        added 2026-10-20 (not-yet-supported sweep #2), closing the gap
-        both `query()` call sites above used to reject outright.
-        `matched` is already the status-filtered ledger entries (every
-        candidate the bare chain selects); unlike the per-name manifest
-        shapes elsewhere in this file, ledger entries are NOT guaranteed
-        to also exist in `get_manifest(root_major)` (a failed
-        registration is ledger-only, see `file_manager.py`'s own
-        `_registration_failed()`), so `_extract_data()`'s ordinary
-        METADATA_FIELD-by-uuid re-derivation (which reads
-        `get_manifest(root_major)` for a literal root) cannot safely
-        back a chained field accessor here. Scoped to exactly one
-        version-selecting POINTER (:first()/:last()/:index(n)) and
-        nothing else riding alongside it -- a literal body, a field
-        accessor, or a range function would all need that same ledger-
-        vs-manifest plumbing fixed in `_extract_data()` first, and no
-        worked example asks for any of them yet, so they stay a clear
-        rejection rather than a guess. A lone pointer needs no such
-        fix: it only reduces `matched` to the one entry it selects, and
-        the returned result's own path/uuid already point straight at
-        that entry (the same plain FIRST_PARTY default every other
-        pointer-reduced FILES reference already resolves to -- no
-        `_extract_data()` changes needed at all)."""
+        """name_three riding alongside a bare ':status(...)' or
+        ':lifecycle()' gate -- added 2026-10-20 (not-yet-supported sweep
+        #2). `matched` is the gate's live ledger entries (a failed or
+        deleted registration is not live, _live_ledger_entries()), in
+        ledger order; `names` are the named-files the gate read.
+
+        The pointer applies within each named-file (compendium 4.1b, PR
+        #782): entries are grouped by the named-file whose manifest holds
+        them (D4), the pointer picks from each group, and the results come
+        in `names` order -- one per named-file the pointer finds something
+        in. A literal root is one group. With no pointer the same gate
+        gives every match in ledger order instead; the two orders differ
+        on purpose: a pointer's results are per named-file, a bare gate's
+        are the ledger's records. More than one result sets
+        `ambiguous_content_read`, so resolve() reads one version file at a
+        time (5.3).
+
+        Scoped to exactly one version-selecting POINTER (:first()/:last()/
+        :index(n)) and nothing else in name_three: a literal body, a field
+        accessor or a range raise, as no worked example asks for them yet
+        (name_one gap review, 2026-11-19, item G)."""
+        if matched is None:
+            raise ValueError("matched cannot be None")
+        if names is None:
+            raise ValueError("names cannot be None")
         name_three = reference.name_three
         if name_three.body is not None:
             raise ReferenceException3(
@@ -2143,16 +2145,53 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "not yet supported."
             )
         self._check_position(pointers[0], Reference3.NAME_THREE, Reference3.FILES)
-        selected = self._apply_pointer(pointers[0], matched)
-        if selected is None:
-            return ReferenceResults3(results=[])
-        return ReferenceResults3(
-            results=[
+        #
+        # the pointer applies within each named-file (compendium 4.1b: '*',
+        # ':regex()' and ':choice()' roots mimic grouping; only ':flatten()'
+        # and ':manifest()' pool). It picked one version from all of them
+        # pooled, so '$*.files.:status("complete").:last()' gave one
+        # version, where RESULTS and CSVPATHS give one per name. A literal
+        # root is one group. A version belongs to the named-file whose
+        # manifest holds it (D4); groups come in `names` order, entries in
+        # ledger order.
+        #
+        groups = {}
+        for e in matched:
+            name, _ = self._live_named_file_entry(e.get("uuid"))
+            if name not in names:
+                #
+                # membership comes from the manifests of `names`, the owner
+                # from the first live manifest holding the uuid: they can
+                # only disagree when one uuid is in two named-files'
+                # manifests. Dropping the entry would give a quietly wrong
+                # answer (reviewer on #782).
+                #
+                msg = (
+                    f"Version {e.get('uuid')!r} is held by named-file "
+                    f"{name!r}, not one of {names!r}; a uuid in more than "
+                    "one named-file's manifest is inconsistent framework data."
+                )
+                logger = getattr(self.csvpaths, "logger", None)
+                if logger is not None:
+                    logger.error(msg)
+                raise ReferenceRuntimeException3(msg)
+            groups.setdefault(name, []).append(e)
+        results = []
+        for name in names:
+            selected = self._apply_pointer(pointers[0], groups.get(name, []))
+            if selected is None:
+                continue
+            results.append(
                 ReferenceResult3(
                     path=self._live_version_path(selected.get("uuid")),
                     uuid=selected.get("uuid"),
                 )
-            ]
+            )
+        #
+        # one version's bytes per resolve() (compendium 5.3)
+        #
+        return ReferenceResults3(
+            results=results, ambiguous_content_read=len(results) > 1
         )
 
     def _live_version_path(self, uuid: str) -> str:
@@ -2282,7 +2321,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
         ledger = self._live_ledger_entries(names=names)
         matched = self._filter_ledger_by_gate_chain(ledger, status_chain)
         if reference.name_three is not None:
-            return self._pointer_into_status_matches(reference, matched)
+            return self._pointer_into_status_matches(
+                reference=reference, matched=matched, names=names
+            )
         #
         # the gate selects versions (C1, 2026-11-01), and resolve reads a
         # version's bytes (David, 2026-11-14: only ':manifest()' reaches

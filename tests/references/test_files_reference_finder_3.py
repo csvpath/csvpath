@@ -4809,6 +4809,131 @@ def _n3_finder(reference: str) -> FilesReferenceFinder3:
     )
 
 
+#
+# two live named-files, arriving interleaved -- orders with three versions,
+# invoices with two -- so a pointer that pools picks a different answer
+# from one applied within each named-file (compendium 4.1b), and an index
+# can run past one group's end but not the other's
+#
+GROUPED_LEDGER = [
+    {"named_file_name": "orders", "status": "complete", "uuid": "o-1"},
+    {"named_file_name": "invoices", "status": "complete", "uuid": "i-1"},
+    {"named_file_name": "orders", "status": "complete", "uuid": "o-2"},
+    {"named_file_name": "invoices", "status": "complete", "uuid": "i-2"},
+    {"named_file_name": "invoices", "status": "failed", "uuid": "i-x"},
+    {"named_file_name": "orders", "status": "complete", "uuid": "o-3"},
+]
+
+
+def _grouped_entry(name: str, uuid: str) -> dict:
+    return {
+        "file": f"inputs/named_files/{name}/{name}.csv/{uuid}.csv",
+        "file_home": f"inputs/named_files/{name}/{name}.csv",
+        "uuid": uuid,
+    }
+
+
+GROUPED_BY_NAME = {
+    "orders": (
+        "inputs/named_files/orders",
+        [
+            _grouped_entry("orders", "o-1"),
+            _grouped_entry("orders", "o-2"),
+            _grouped_entry("orders", "o-3"),
+        ],
+    ),
+    "invoices": (
+        "inputs/named_files/invoices",
+        [_grouped_entry("invoices", "i-1"), _grouped_entry("invoices", "i-2")],
+    ),
+}
+
+
+class TestStatusGatePointerGroupsByNamedFile:
+    """a name_three pointer after a bare ':status()'/':lifecycle()' gate
+    under '*', ':regex()' or ':choice()' applies within each named-file
+    (compendium 4.1b), as RESULTS and CSVPATHS already do. It pooled every
+    named-file's versions and picked one (name_one gap review,
+    2026-11-19)."""
+
+    @staticmethod
+    def _grouped_finder(reference: str) -> FilesReferenceFinder3:
+        ledger = [dict(e, lifecycle="active") for e in GROUPED_LEDGER]
+        return _finder(
+            reference,
+            TYPE_HOME,
+            [],
+            ledger=ledger,
+            by_name=GROUPED_BY_NAME,
+            inputs_files_path="inputs/named_files",
+        )
+
+    @pytest.mark.parametrize(
+        "reference, expected",
+        [
+            # names come in sorted order, as every '*' traversal gives them
+            ('$*.files.:status("complete").:last()', ["i-2", "o-3"]),
+            ('$*.files.:status("complete").:first()', ["i-1", "o-1"]),
+            ('$*.files.:status("complete").:index(1)', ["i-2", "o-2"]),
+            ('$*.files.:lifecycle("active").:last()', ["i-2", "o-3"]),
+            ('$:regex(/s$/).files.:status("complete").:last()', ["i-2", "o-3"]),
+            ('$:choice("orders|invoices").files.:status("complete").:first()', ["i-1", "o-1"]),
+            # a filtered root narrows the groups, not the pointer
+            ('$:regex(/^ord/).files.:status("complete").:last()', ["o-3"]),
+            # an index past a group's end drops that group only
+            ('$*.files.:status("complete").:index(2)', ["o-3"]),
+            ('$*.files.:status("complete").:index(3)', []),
+        ],
+    )
+    def test_the_pointer_applies_within_each_named_file(self, reference, expected):
+        assert self._grouped_finder(reference).query().uuids == expected
+
+    def test_a_literal_root_is_one_group(self):
+        results = self._grouped_finder('$orders.files.:status("complete").:last()').query()
+        assert results.uuids == ["o-3"]
+
+    def test_a_gate_chain_narrows_before_the_pointer(self):
+        results = self._grouped_finder(
+            '$*.files.:status("complete"):named_file_name("orders").:last()'
+        ).query()
+        assert results.uuids == ["o-3"]
+
+    def test_each_result_is_its_own_version_file(self):
+        results = self._grouped_finder('$*.files.:status("complete").:last()').query()
+        assert results.files == [
+            "inputs/named_files/invoices/invoices.csv/i-2.csv",
+            "inputs/named_files/orders/orders.csv/o-3.csv",
+        ]
+
+    def test_resolving_one_version_per_named_file_raises(self):
+        # one version file's content per resolve() (compendium 5.3)
+        with pytest.raises(ReferenceException3):
+            self._grouped_finder('$*.files.:status("complete").:last()').resolve()
+
+    def test_one_result_still_resolves(self):
+        finder = self._grouped_finder('$:regex(/^ord/).files.:status("complete").:last()')
+        assert finder.query().uuids == ["o-3"]
+        assert finder.query().ambiguous_content_read is False
+
+    def test_a_version_held_by_a_name_outside_the_gate_raises(self):
+        # one uuid in two named-files' manifests is corrupt data: the
+        # owner (the first live manifest holding it) is not a name the
+        # gate read, so the version would silently drop out of its group
+        by_name = dict(GROUPED_BY_NAME)
+        by_name["aaa"] = ("inputs/named_files/aaa", [_grouped_entry("aaa", "o-2")])
+        ledger = [dict(e, lifecycle="active") for e in GROUPED_LEDGER]
+        finder = _finder(
+            '$:regex(/^ord/).files.:status("complete").:last()',
+            TYPE_HOME,
+            [],
+            ledger=ledger,
+            by_name=by_name,
+            inputs_files_path="inputs/named_files",
+        )
+        with pytest.raises(ReferenceRuntimeException3):
+            finder.query()
+
+
 class TestLedgerOnlyFieldsAtNameThree:
     # ':lifecycle()' and ':status()' at name_three (David, 2026-11-06): a
     # registration's own value, read from its arrivals ledger entry by the
