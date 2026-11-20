@@ -2101,29 +2101,27 @@ class FilesReferenceFinder3(ReferenceFinder3):
     def _pointer_into_status_matches(
         self, *, reference: Reference3, matched: list, names: list
     ) -> ReferenceResults3:
-        """name_three riding alongside a bare ':status(...)' lookup --
-        added 2026-10-20 (not-yet-supported sweep #2), closing the gap
-        both `query()` call sites above used to reject outright.
-        `matched` is already the status-filtered ledger entries (every
-        candidate the bare chain selects); unlike the per-name manifest
-        shapes elsewhere in this file, ledger entries are NOT guaranteed
-        to also exist in `get_manifest(root_major)` (a failed
-        registration is ledger-only, see `file_manager.py`'s own
-        `_registration_failed()`), so `_extract_data()`'s ordinary
-        METADATA_FIELD-by-uuid re-derivation (which reads
-        `get_manifest(root_major)` for a literal root) cannot safely
-        back a chained field accessor here. Scoped to exactly one
-        version-selecting POINTER (:first()/:last()/:index(n)) and
-        nothing else riding alongside it -- a literal body, a field
-        accessor, or a range function would all need that same ledger-
-        vs-manifest plumbing fixed in `_extract_data()` first, and no
-        worked example asks for any of them yet, so they stay a clear
-        rejection rather than a guess. A lone pointer needs no such
-        fix: it only reduces `matched` to the one entry it selects, and
-        the returned result's own path/uuid already point straight at
-        that entry (the same plain FIRST_PARTY default every other
-        pointer-reduced FILES reference already resolves to -- no
-        `_extract_data()` changes needed at all)."""
+        """name_three riding alongside a bare ':status(...)' or
+        ':lifecycle()' gate -- added 2026-10-20 (not-yet-supported sweep
+        #2). `matched` is the gate's live ledger entries (a failed or
+        deleted registration is not live, _live_ledger_entries()), in
+        ledger order; `names` are the named-files the gate read.
+
+        The pointer applies within each named-file (compendium 4.1b, PR
+        #782): entries are grouped by the named-file whose manifest holds
+        them (D4), the pointer picks from each group, and the results come
+        in `names` order -- one per named-file the pointer finds something
+        in. A literal root is one group. With no pointer the same gate
+        gives every match in ledger order instead; the two orders differ
+        on purpose: a pointer's results are per named-file, a bare gate's
+        are the ledger's records. More than one result sets
+        `ambiguous_content_read`, so resolve() reads one version file at a
+        time (5.3).
+
+        Scoped to exactly one version-selecting POINTER (:first()/:last()/
+        :index(n)) and nothing else in name_three: a literal body, a field
+        accessor or a range raise, as no worked example asks for them yet
+        (name_one gap review, 2026-11-19, item G)."""
         if matched is None:
             raise ValueError("matched cannot be None")
         if names is None:
@@ -2160,6 +2158,23 @@ class FilesReferenceFinder3(ReferenceFinder3):
         groups = {}
         for e in matched:
             name, _ = self._live_named_file_entry(e.get("uuid"))
+            if name not in names:
+                #
+                # membership comes from the manifests of `names`, the owner
+                # from the first live manifest holding the uuid: they can
+                # only disagree when one uuid is in two named-files'
+                # manifests. Dropping the entry would give a quietly wrong
+                # answer (reviewer on #782).
+                #
+                msg = (
+                    f"Version {e.get('uuid')!r} is held by named-file "
+                    f"{name!r}, not one of {names!r}; a uuid in more than "
+                    "one named-file's manifest is inconsistent framework data."
+                )
+                logger = getattr(self.csvpaths, "logger", None)
+                if logger is not None:
+                    logger.error(msg)
+                raise ReferenceRuntimeException3(msg)
             groups.setdefault(name, []).append(e)
         results = []
         for name in names:
