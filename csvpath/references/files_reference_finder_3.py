@@ -3459,7 +3459,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if file_parts[: len(home_parts)] != home_parts:
             return False
         segments = file_parts[len(home_parts) :]
-        if len(segments) < len(prefix_pattern) + len(suffix_pattern):
+        #
+        # the prefix is template levels; the file home itself is the last
+        # segment. With no suffix, ':flatten()' stands in for at least that
+        # file home slot, so at least one segment must follow the prefix.
+        # Without that, '*/:flatten()' let '*' match the file home of a
+        # file with no template (compendium 4.3c: '*/:flatten()' is the
+        # file homes WITH a template; RESULTS already reads it that way).
+        # With a suffix, the suffix's last segment is the file home.
+        #
+        if len(segments) < len(prefix_pattern) + max(len(suffix_pattern), 1):
             return False
         leading = segments[: len(prefix_pattern)]
         for actual, expected in zip(leading, prefix_pattern):

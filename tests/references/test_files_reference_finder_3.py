@@ -4041,6 +4041,55 @@ class TestPrefixedFlatten:
             "inputs/named_files/vault/2025/returns.csv",
         }
 
+    def test_star_then_flatten_is_the_file_homes_with_a_template(self):
+        # compendium 4.3c, NRE 429-432: '*/:flatten()' is every file home
+        # with a template. It also gave "vault/orders.csv", which has none:
+        # the '*' matched its file home segment (name_one gap review,
+        # 2026-11-19). RESULTS already reads '*/:flatten()' this way.
+        results = _finder(
+            "$vault.files.*/:flatten()", PREFIXED_FLATTEN_HOME, PREFIXED_FLATTEN_MANIFEST
+        ).query()
+        assert set(results.files) == {
+            "inputs/named_files/vault/2025/orders.csv",
+            "inputs/named_files/vault/2025/q1/orders.csv",
+            "inputs/named_files/vault/2026/orders.csv",
+            "inputs/named_files/vault/2025/returns.csv",
+        }
+
+    def test_a_prefix_never_matches_the_file_home_itself(self):
+        # the prefix is template levels: a no-template "orders.csv" file
+        # home is not a template level named "orders.csv"
+        results = _finder(
+            '$vault.files.:name("orders.csv")/:flatten()',
+            PREFIXED_FLATTEN_HOME,
+            PREFIXED_FLATTEN_MANIFEST,
+        ).query()
+        assert results.files == []
+
+    def test_star_then_flatten_then_a_pointer_skips_no_template_versions(self):
+        # "u-no-prefix" is the last entry in the manifest, but it has no
+        # template, so the last templated version is "u-2025-returns"
+        results = _finder(
+            "$vault.files.*/:flatten().:last()",
+            PREFIXED_FLATTEN_HOME,
+            PREFIXED_FLATTEN_MANIFEST,
+        ).query()
+        assert results.uuids == ["u-2025-returns"]
+
+    def test_a_suffix_still_matches_directly_after_the_prefix(self):
+        # with a suffix, the suffix's last segment is the file home, so a
+        # zero-level gap still matches (unchanged by the fix above)
+        results = _finder(
+            '$vault.files.*/:flatten()/:name("orders.csv")',
+            PREFIXED_FLATTEN_HOME,
+            PREFIXED_FLATTEN_MANIFEST,
+        ).query()
+        assert set(results.files) == {
+            "inputs/named_files/vault/2025/orders.csv",
+            "inputs/named_files/vault/2025/q1/orders.csv",
+            "inputs/named_files/vault/2026/orders.csv",
+        }
+
     def test_prefixed_flatten_rejects_an_argument(self):
         with pytest.raises(ReferenceException3):
             _finder(
