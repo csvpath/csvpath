@@ -8,6 +8,11 @@ VO = "$validate_orders.results"
 SHAPES = [
     f"{VO}.:last().*",
     f"{VO}.:last()",
+    # wildcard rules (name_one gap review, 2026-11-19)
+    f"{VO}.:all():all()",
+    f"{VO}.:last().:all():all()",
+    f"{VO}.:flatten()/*",
+    f"{VO}.:all()/:groups()",
     "$*.results.:all().*:valid(:true())",
     f'{VO}.:flatten().*:errors():idchain("add[0]")',
     f'{VO}.:having(:errors(:idchain("add[0]")))',

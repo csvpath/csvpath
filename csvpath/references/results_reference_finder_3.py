@@ -173,6 +173,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # each function is this datatype's, and one value per reference
         # (5.20b), before anything is read
         self._check_datatype_functions(reference)
+        self._check_wildcards(reference)
         self._check_one_value(reference)
         log_results = self._query_log_call(reference)
         if log_results is not None:
