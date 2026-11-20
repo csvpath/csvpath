@@ -4056,6 +4056,14 @@ class TestPrefixedFlatten:
             "inputs/named_files/vault/2025/returns.csv",
         }
 
+    def test_a_two_level_prefix_needs_a_file_home_below_both_levels(self):
+        # the "+1" rule at a depth other than one: "2025/orders.csv" has
+        # only one template level, so '*/*' would be its file home
+        results = _finder(
+            "$vault.files.*/*/:flatten()", PREFIXED_FLATTEN_HOME, PREFIXED_FLATTEN_MANIFEST
+        ).query()
+        assert results.files == ["inputs/named_files/vault/2025/q1/orders.csv"]
+
     def test_a_prefix_never_matches_the_file_home_itself(self):
         # the prefix is template levels: a no-template "orders.csv" file
         # home is not a template level named "orders.csv"

@@ -1655,16 +1655,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
         additional segments (including zero) allowed in between -- added
         2026-08-27 for the "literal prefix BEFORE :flatten()" shape
         (e.g. "2025/:flatten()/:name('orders.csv')"). An empty
-        `suffix_pattern` still matches -- "prefix, then any depth, no
-        further constraint" (a missing suffix, e.g. "2025/:flatten()"
-        alone)."""
+        `suffix_pattern` still matches -- "prefix, then any depth" (a
+        missing suffix, e.g. "2025/:flatten()" alone) -- but at least the
+        file home must follow the prefix (see
+        _matches_prefix_then_suffix())."""
         manifest = self.source.file_manifest(name)
         home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
         return [
             entry
             for entry in manifest
             if self._matches_prefix_then_suffix(
-                entry, home, prefix_pattern, suffix_pattern
+                entry=entry,
+                home=home,
+                prefix_pattern=prefix_pattern,
+                suffix_pattern=suffix_pattern,
             )
         ]
 
@@ -3444,7 +3448,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
 
     @staticmethod
     def _matches_prefix_then_suffix(
-        entry: dict, home: str, prefix_pattern: list, suffix_pattern: list
+        *, entry: dict, home: str, prefix_pattern: list, suffix_pattern: list
     ) -> bool:
         """like _matches_suffix, but ALSO requires file_home's own
         relative segments to START WITH `prefix_pattern` -- the "literal
@@ -3452,8 +3456,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
         2026-08-27): a fixed prefix, then any depth, then an OPTIONAL
         fixed suffix at the end. `suffix_pattern` may be empty (a
         missing suffix, e.g. "2025/:flatten()" alone) -- in that case
-        only the prefix is checked, "any depth after it" with no further
-        constraint."""
+        the prefix is checked and at least one segment, the file home,
+        must follow it: the prefix is template levels, never the file
+        home itself (compendium 4.3c, PR #783)."""
+        if entry is None:
+            raise ValueError("entry cannot be None")
+        if home is None:
+            raise ValueError("home cannot be None")
+        if prefix_pattern is None or suffix_pattern is None:
+            raise ValueError("prefix_pattern and suffix_pattern cannot be None")
         home_parts = pathu.parts(home)
         file_parts = pathu.parts(entry["file_home"])
         if file_parts[: len(home_parts)] != home_parts:
