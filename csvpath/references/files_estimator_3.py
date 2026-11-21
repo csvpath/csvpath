@@ -164,6 +164,14 @@ class FilesEstimator3:
         call_names = [c.name for c in calls]
         three = self.reference.name_three
         three_calls = list(three.functions) if three else []
+        if not literal and "manifest" in [c.name for c in three_calls]:
+            # a name_three ':manifest()' under a traversal root lists the
+            # named-files to find each version's manifest.json, at query
+            # and again at resolve
+            self._read(part=QUERY, kind="name_listing", count=1, basis=UPPER_BOUND, because="a name_three :manifest()")
+            self._read(part=RESOLVE, kind="name_listing", count=1, basis=UPPER_BOUND, because="a name_three :manifest()")
+            # and reads each candidate named-file's manifest to find the entry
+            self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=all_names + n_names, basis=UPPER_BOUND, because="a name_three :manifest()")
         if n_names > 1:
             self.why.append(f"'{self.reference.root_major}' over {n_names} {self.NOUN}")
         # a ':definition()' chain: definition.json, not the manifest
@@ -482,10 +490,8 @@ class FilesEstimator3:
         if "definition" in path_names and (three is not None or (not isinstance(root, str) and set(functions) & set(selectors))):
             return "query: ':definition()' does not combine with name_three, or with a selector during '*' traversal"
         all_names = path_names + functions
-        if three is not None and self._ledger_gate_on_name_one():
-            pointers = [c.name for c in three.functions]
-            if three.body is not None or len(pointers) != 1 or pointers[0] not in POINTERS:
-                return "query: a bare ':status(...)'/':lifecycle(...)' gate takes a single version-selecting pointer in name_three"
+        # a bare ':status()'/':lifecycle()' gate takes any name_three since
+        # the name_one gap review (item G); it took only a lone pointer
         if three is not None and set(all_names) & set(POINTERS):
             return "query: a name_one pointer takes no name_three; put the version-selecting function in name_three"
         if three is not None and self.finder._bare_definition_field_call(self.reference.name_one) is not None:
