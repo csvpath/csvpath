@@ -789,9 +789,10 @@ class ReferenceFinder3(ABC):
         -- not a new or different outcome, just a more uniform path to
         the identical one.
 
-        Not applied to '*' traversal (_query_star_traversal()) or to
-        CSVPATHS (which has no literal path at all in name_one) -- see
-        the bucket list for the traversal scoping note."""
+        Not applied to CSVPATHS (which has no literal path at all in
+        name_one). RESULTS applies it at a literal root and, since #789,
+        under '*'/':regex()'/':choice()' traversal too
+        (ResultsReferenceFinder3._query_star_traversal())."""
         path = name_one.path
         if not path or not isinstance(path[-1], FunctionCall3):
             return
