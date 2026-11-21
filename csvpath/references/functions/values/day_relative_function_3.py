@@ -53,6 +53,9 @@ class DayRelativeFunction3(TimeWindowFunction3):
             )
         super().check_valid()
 
+    def check_resolved(self) -> None:
+        clut.check_format(function=self, value=self.arg)
+
     def _window(self) -> tuple:
         arg = self.arg
         if isinstance(arg, TimeWindowFunction3):

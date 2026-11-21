@@ -192,7 +192,8 @@ class TestExplicitComponent:
     def test_a_12_hour_value_is_ambiguous(self, hour):
         # the 12-hour clock: ':hour(6)' cannot say am or pm
         with pytest.raises(
-            ReferenceException3, match=r"ambiguous.*Use :hour_24\(\d+\) or :hour_24\(\d+\)"
+            ReferenceException3,
+            match=r"ambiguous.*Use :hour_24\(\d+\) or :hour_24\(\d+\)",
         ):
             Hour3(arg=hour).check_valid()
 
@@ -214,7 +215,9 @@ class TestExplicitComponent:
         assert _valid(function).compute() == value
 
     def test_a_string_that_is_not_a_number_raises(self):
-        with pytest.raises(ReferenceException3, match="a time function or a number"):
+        with pytest.raises(
+            ReferenceException3, match="a whole number written in digits"
+        ):
             Year3(arg="last year").check_valid()
 
 
@@ -432,9 +435,9 @@ class TestThroughAReference:
             reference=reference, csvpaths=csvpaths
         )
         finder.set_variable("d", value="2026-01-02")
-        built = finder._build(finder.ref.parsed.name_three.functions[0])
+        # when the argument resolves, before any reads
         with pytest.raises(ReferenceRuntimeException3, match="format string"):
-            built.compute()
+            finder._build(finder.ref.parsed.name_three.functions[0])
 
     @pytest.mark.parametrize(
         "reference,segment",
@@ -493,3 +496,85 @@ class TestCsvpaths:
             reference=reference, csvpaths=corpus
         )
         assert len(finder.query().results) == count
+
+
+# ===================
+# the estimate with @variables set: a bad value raises at build, so the
+# estimate predicts what query does (reviewer on #788, round 2)
+# ===================
+
+VARIABLES = {
+    "y": 2026,
+    "bad": "abc",
+    "h6": 6,
+    "h18": 18,
+    "d": "2026-08-15",
+    "fmt": "%A",
+}
+
+VARIABLE_SHAPES = [
+    "$validate_orders.results.:flatten():year(@y).*",
+    "$validate_orders.results.:flatten():from(:year(@y)).*",
+    "$validate_orders.results.:flatten():year(@bad).*",
+    "$validate_orders.results.:flatten():hour(@h6).*",
+    "$validate_orders.results.:flatten():from(:yesterday(:hour(@h18))).*",
+    "$validate_orders.results.:flatten():yesterday(@d).*",
+    '$validate_orders.results.:flatten():yesterday("{@d}").*',
+    "$validate_orders.results.:flatten():yesterday(@fmt).*",
+    "$validate_orders.results.:flatten():year(@unset).*",
+    "$orders.files.:flatten().:year(@bad)",
+    "$orders.files.:flatten().:yesterday(@d)",
+    "$validate_orders.csvpaths.:yesterday(@d)",
+    "$validate_orders.csvpaths.:year(@bad)",
+]
+
+
+def _with_variables(corpus, reference: str):
+    finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=corpus)
+    for name, value in VARIABLES.items():
+        finder.set_variable(name, value=value)
+    return finder
+
+
+@pytest.mark.parametrize("reference", VARIABLE_SHAPES)
+def test_the_estimate_keeps_its_contract_with_variables(corpus, reference):
+    from csvpath.references.reference_estimate_3 import QUERY, RESOLVE
+    from tests.references.cost.read_counter import ReadCounter
+    from tests.references.cost.test_results_estimate_soundness_3 import _problems
+
+    est = _with_variables(corpus, reference).estimate()
+    finder = _with_variables(corpus, reference)
+    raised = None
+    resolve_reads = {}
+    with ReadCounter.for_csvpaths(corpus) as query:
+        try:
+            selection = finder.query()
+        except Exception as e:
+            raised = e
+    if raised is None:
+        with ReadCounter.for_csvpaths(corpus) as resolve:
+            try:
+                finder.resolve_from(selection)
+            except Exception as e:
+                raised = e
+        resolve_reads = dict(resolve.reads)
+    measured = {QUERY: dict(query.reads), RESOLVE: resolve_reads}
+    assert _problems(est, measured, raised) == []
+
+
+@pytest.mark.parametrize(
+    "reference,message",
+    [
+        ("$acme.files.*.:year(@bad)", "a whole number"),
+        ("$acme.files.*.:hour(@h6)", "ambiguous"),
+        ("$acme.files.*.:yesterday(@d)", "format string"),
+    ],
+)
+def test_a_bad_variable_value_raises_when_built(csvpaths, reference, message):
+    finder = ReferenceFinderFactory3.for_reference(
+        reference=reference, csvpaths=csvpaths
+    )
+    for name, value in VARIABLES.items():
+        finder.set_variable(name, value=value)
+    with pytest.raises(ReferenceRuntimeException3, match=message):
+        finder._build(finder.ref.parsed.name_three.functions[0])

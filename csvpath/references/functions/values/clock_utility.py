@@ -75,8 +75,8 @@ class ClockUtility:
                 return cls.now()
             if not arg.strip().isdigit():
                 raise ReferenceException3(
-                    f":{function.NAME}() takes a time function or a number, "
-                    f"not {arg!r}."
+                    f":{function.NAME}() takes a time function or a whole "
+                    f"number written in digits, not {arg!r}."
                 )
             arg = int(arg.strip())
         if cls.is_moment(arg):

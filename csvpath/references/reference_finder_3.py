@@ -2060,6 +2060,15 @@ class ReferenceFinder3(ABC):
                 f"{resolved!r}; it must be one of: {allowed}"
             )
         built.arg = resolved
+        try:
+            built.check_resolved()
+        except ReferenceRuntimeException3:
+            raise
+        except ReferenceException3 as e:
+            # the reference is well-formed; the variable's value is not
+            raise ReferenceRuntimeException3(
+                f":{built.name}() argument {original} resolved to {resolved!r}: {e}"
+            ) from None
 
     @staticmethod
     def _apply_key_arg(key_path: str | None, arg) -> str | None:

@@ -329,6 +329,14 @@ class Function3:
             return f":{name}()"
         return f"{arg!r}"
 
+    def check_resolved(self) -> None:
+        """the checks check_valid() makes on a literal argument's VALUE, run
+        again once an @variable or "{...}" argument has resolved: by
+        ReferenceFinder3._resolve_arg(), before any reads, so a bad value
+        raises where a bad literal does (reviewer on #788). Nothing to check
+        by default."""
+        return None
+
     def check_valid(self) -> None:
         """structural check; doesn't test or use the arg's value. mirrors
         csvpath.matching.productions.matchable.Matchable.check_valid()'s

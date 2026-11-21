@@ -30,7 +30,8 @@ class Hour3(TimeWindowFunction3):
     # value cannot say am or pm, so 1-12 raise; 0 and 13-23 can only mean
     # one hour, so ':hour(18)' is 18:00 (NRE 568, "since close of business
     # yesterday", ':yesterday(:hour(18))'). Its value is still the 12-hour
-    # reading, 6.
+    # reading, 6, so in a path segment use ':hour_24(18)', whose value is
+    # 18: 'orders/:hour(18)' names the directory '6'.
     ARG_TYPES = (int, str, TimeWindowFunction3, Now3)
     COMPONENT = "hour"
     ARG_REQUIRED = False

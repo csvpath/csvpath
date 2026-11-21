@@ -60,6 +60,10 @@ class TimeWindowFunction3(Function3):
             # an impossible value raises here, before anything is read
             self.base_datetime()
 
+    def check_resolved(self) -> None:
+        if isinstance(self.arg, (int, str)) and not isinstance(self.arg, bool):
+            self.base_datetime()
+
     def base_datetime(self) -> datetime:
         """the moment this function computes from: now, or its
         argument's (see ClockUtility.base())"""
