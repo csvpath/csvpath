@@ -1,5 +1,6 @@
 from ...reference_3 import Reference3
 from ..function_3 import Function3
+from .bare_name_utility import BareNameUtility as baut
 
 
 class Printouts3(Function3):
@@ -38,3 +39,13 @@ class Printouts3(Function3):
     ARG_TYPES = (str,)
     ARG_REQUIRED = False
     POSITIONS = {Reference3.RESULTS: (Reference3.NAME_THREE,)}
+
+    def check_valid(self) -> None:
+        super().check_valid()
+        # the name becomes '<name>.txt' in the instance's directory, so it
+        # must be a bare name; it was never checked until 2026-11-21
+        if isinstance(self._arg, str):
+            baut.check(function_name=self.NAME, name=self._arg)
+
+    def check_resolved(self) -> None:
+        baut.check(function_name=self.NAME, name=self.arg)

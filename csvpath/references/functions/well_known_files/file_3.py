@@ -1,6 +1,6 @@
 from ...reference_3 import Reference3
-from ...reference_exceptions_3 import ReferenceException3
 from ..function_3 import Function3
+from .bare_name_utility import BareNameUtility as baut
 
 
 class File3(Function3):
@@ -33,13 +33,12 @@ class File3(Function3):
     def check_valid(self) -> None:
         super().check_valid()
         # bare filename only -- no path traversal outside the run
-        # instance's own directory. Skips an InterpolatedString3 arg
-        # (its actual text is not known until evaluation, which is
-        # deferred -- see InterpolatedString3's own docstring).
-        if isinstance(self._arg, str) and (
-            "/" in self._arg or "\\" in self._arg or ".." in self._arg
-        ):
-            raise ReferenceException3(
-                f":{self.NAME}() argument must be a bare filename, not a "
-                f"path: {self._arg!r}"
-            )
+        # instance's own directory (BareNameUtility). An @variable or
+        # "{...}" arg is checked once it resolves, in check_resolved().
+        if isinstance(self._arg, str):
+            baut.check(function_name=self.NAME, name=self._arg)
+
+    def check_resolved(self) -> None:
+        # ':file(@f)' with '../../x.txt' passed until 2026-11-21: only a
+        # literal was checked (reviewer on #790)
+        baut.check(function_name=self.NAME, name=self.arg)
