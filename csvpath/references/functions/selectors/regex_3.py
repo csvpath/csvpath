@@ -76,7 +76,18 @@ class RegexSelector3(Function3):
         build time, not later, deep inside name matching, the first
         time a candidate name happens to be compared against it."""
         super().check_valid()
-        pattern = self._arg.pattern if isinstance(self._arg, Regex3) else self._arg
+        self._check_pattern(self._arg)
+
+    def check_resolved(self) -> None:
+        # an @variable or "{...}" pattern is only known once resolved; it
+        # was never compiled, so an invalid one matched nothing silently in
+        # a path segment, or raised a raw re.error at root_major (reviewer
+        # on #790)
+        self._check_pattern(self.arg)
+
+    @staticmethod
+    def _check_pattern(arg) -> None:
+        pattern = arg.pattern if isinstance(arg, Regex3) else arg
         if isinstance(pattern, str):
             try:
                 re.compile(pattern)

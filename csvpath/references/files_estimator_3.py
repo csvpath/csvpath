@@ -78,14 +78,19 @@ class FilesEstimator3:
     def estimate(self) -> ReferenceEstimate3:
         root = getattr(self.csvpaths.config, self.ROOT_CONFIG)
         ledger = self._ledger(root)
-        if self.finder._bare_log_call(self.reference) is not None:
+        root_problem = self._root_problem()
+        if root_problem is not None:
+            # query() raises building the root, before it reads anything
+            self.would_raise = f"query: {root_problem}"
+        elif self.finder._bare_log_call(self.reference) is not None:
             if isinstance(self.reference.root_major, Star3):
                 self._read(part=RESOLVE, kind="log", count=1, basis=UPPER_BOUND, because=":log()")
             else:
                 self.would_raise = "query: :log() requires root_major '*'"
         else:
             self._estimate(ledger)
-        self._check_legality(ledger)
+        if root_problem is None:
+            self._check_legality(ledger)
         return ReferenceEstimate3(
             reference=str(self.finder.ref.reference),
             reads=self.reads,
@@ -99,6 +104,20 @@ class FilesEstimator3:
     #
     # the ledger, read never written
     #
+    def _root_problem(self) -> "str | None":
+        """why the root_major function cannot be built, or None: a
+        ':regex(@p)' whose resolved pattern is invalid raises when built,
+        and the estimate builds the root to find the names in play, so it
+        must say so, not raise itself (reviewer on #790)"""
+        root = self.reference.root_major
+        if not isinstance(root, FunctionCall3):
+            return None
+        try:
+            self.finder._build(root)
+        except ReferenceException3 as e:
+            return str(e)
+        return None
+
     def _ledger(self, root: str) -> list:
         source = self.finder.source
         if isinstance(source, SqlReferenceSource):
