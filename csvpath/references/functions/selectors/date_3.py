@@ -65,8 +65,8 @@ class Date3(TimeWindowFunction3):
 
     def check_valid(self) -> None:
         super().check_valid()
-        # Function3's own generic ARG_TYPES check only confirms the arg
-        # IS a str, not that its content is a real calendar date -- a
+        # Function3's own generic ARG_TYPES check only confirms a literal
+        # arg IS a str, not that its content is a real calendar date -- a
         # malformed bound would otherwise be silently compared as an
         # ordinary string (or raise a raw, unwrapped ValueError once
         # start_datetime()/end_datetime() are actually called), rather
@@ -74,14 +74,31 @@ class Date3(TimeWindowFunction3):
         # ReferenceFinder3._validate_date_format() exactly, duplicated
         # rather than shared to avoid a finder<->function circular
         # import (finders import functions, never the reverse).
+        #
+        # An @variable or "{...}" argument is not a date yet: it is checked
+        # in check_resolved(), once ReferenceFinder3._resolve_arg() has its
+        # value. Checking it here raised a raw TypeError from strptime()
+        # ("must be str, not Variable3"), so ':from(:date(@d))' could never
+        # work (reviewer on #788).
+        if isinstance(self._arg, str):
+            self._check_date(self._arg)
+
+    def check_resolved(self) -> None:
+        self._check_date(self.arg)
+
+    def _check_date(self, value) -> None:
+        if not isinstance(value, str):
+            raise ReferenceException3(
+                f":date() requires a date string, got {value!r}."
+            )
         try:
-            self._window(self._arg)
+            self._window(value)
         except ValueError:
             raise ReferenceException3(
                 ":date() requires a real calendar date in 'YYYY-MM-DD' "
                 "form, optionally with a time ('YYYY-MM-DD_HH-MM-SS', "
                 "the Framework's own run-dir timestamp form -- the "
-                f"time is never required), got {self._arg!r}."
+                f"time is never required), got {value!r}."
             ) from None
 
     def start_datetime(self) -> datetime:
@@ -99,8 +116,9 @@ class Date3(TimeWindowFunction3):
         -- the time portion is optional, never required (issue #409:
         David -- v2 references allowed this; the code never caught
         up). Raises ValueError, same as a plain strptime() would, if
-        neither form matches -- check_valid() catches it the same way
-        it always has. Mirrors ReferenceFinder3._bound_window()
+        neither form matches -- _check_date() catches it, from
+        check_valid() for a literal and check_resolved() for a resolved
+        value. Mirrors ReferenceFinder3._bound_window()
         exactly, duplicated for the same reason check_valid()'s own
         docstring gives."""
         try:
