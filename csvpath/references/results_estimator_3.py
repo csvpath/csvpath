@@ -220,15 +220,17 @@ class ResultsEstimator3:
         if gates or having:
             self.uncertain = True
         picked = [self._pointed(pool, calls) for pool in candidates]
-        if set(self._path_function_names()) & {"all", "groups"} and picked != candidates:
-            # a pointer after ':all()'/':groups()' picks one run per template
-            # group, and the groups are not narrowed here: up to every
-            # candidate. It counted one per named-results name, so
-            # 'customers/:all()/*:last()' estimated 1 run manifest and read
-            # 2 (name_one gap review, 2026-11-21).
-            picked = candidates
+        if set(self._path_function_names()) & {"all", "groups"}:
+            # a pointer or a range after ':all()'/':groups()' applies within
+            # each template group, and the groups are not narrowed here: up
+            # to every run on the path. It counted per named-results name, so
+            # 'customers/:all()/*:last()' estimated 1 run manifest and read 2,
+            # and ':groups()/*:from(0):to(0)' 1 and read 10 (name_one gap
+            # review, 2026-11-21; reviewer on #789).
+            candidates = pools
+            picked = pools
             self.uncertain = True
-            self.why.append("a pointer after a grouping wildcard picks one run per group")
+            self.why.append("a pointer or range after a grouping wildcard applies per group")
         n_candidates = sum(len(p) for p in candidates)
         n_picked = sum(len(p) for p in picked)
         if gates:
@@ -377,7 +379,10 @@ class ResultsEstimator3:
             if not (isinstance(p, FunctionCall3) and p.name not in PATH_BUILDERS)
         ]
         if not path or (len(path) == 1 and isinstance(path[0], Star3)):
-            if "groups" in self._path_function_names():
+            if self._path_groupers():
+                # the wildcard narrows the runs ('$acme.results.:all()/*' is
+                # the runs under a first-level template), not here: every
+                # run is an upper bound, not an exact count (reviewer on #789)
                 self.uncertain = True
             return runs
         if self._path_groupers():

@@ -1744,7 +1744,7 @@ class ReferenceFinder3(ABC):
             if isinstance(segment, FunctionCall3) and segment.name in self.PATH_WILDCARDS:
                 if segment.arg is not None:
                     raise ReferenceException3(
-                        f"This finder's ':{segment.name}()' does not "
+                        f"{type(self).__name__}'s ':{segment.name}()' does not "
                         "take an argument."
                     )
                 elements.append(("wild", segment.name))

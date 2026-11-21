@@ -434,7 +434,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                     rh for rh in run_homes if self._matches_prefix(rh, home, [])
                 ]
         elif (
-            wildcard_elements := self._results_wildcard_elements(
+            wildcard := self._results_wildcard_elements(
                 name_one=name_one, star_root=False
             )
         ) is not None:
@@ -442,9 +442,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # ':all()' (name_one gap review B, C; compendium 3.20's
             # ':groups()/:from(:index(-2)):to(:index(-1))', 4.5's
             # ':flatten()/:all()')
+            wildcard_elements, run_filter = wildcard
             keys = {
                 rh: self._results_wildcard_key(
-                    run_home=rh, home=home, elements=wildcard_elements
+                    run_home=rh, home=home, elements=wildcard_elements, run_filter=run_filter
                 )
                 for rh in run_homes
             }
@@ -833,6 +834,13 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 "ResultsReferenceFinder3 does not support the '#worksheet' "
                 "marker (name_two) -- it is files-only."
             )
+        # compendium 3.9c: "a function ... following directly after a path
+        # separator implies a '*' wildcard", as the literal root has applied
+        # since 2026-09-24. Under '$*' it was never applied, so
+        # '$*.results.beta/:last()' and 3.20's ':groups()/:from(...)' raised
+        # "Does not yet support :last() as a name_one path segment"
+        # (reviewer on #789).
+        self._apply_implied_star(name_one)
         # the name_one position check the literal root applies, for every
         # traversal path (the run-dir walk and the ledger set): a
         # name_three-only field (':identity()', ':instance_index()', ...) is
@@ -1000,12 +1008,11 @@ class ResultsReferenceFinder3(ReferenceFinder3):
                 upper_call=upper_call,
             )
 
-        wildcard_elements = self._results_wildcard_elements(
-            name_one=name_one, star_root=True
-        )
-        if wildcard_elements is not None:
+        wildcard = self._results_wildcard_elements(name_one=name_one, star_root=True)
+        if wildcard is not None:
             return self._star_wildcard_path(
-                elements=wildcard_elements,
+                elements=wildcard[0],
+                run_filter=wildcard[1],
                 name_one=name_one,
                 name_filter=name_filter,
                 identity=identity,
@@ -3721,7 +3728,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             pointer_call,
         )
 
-    def _results_wildcard_elements(self, *, name_one, star_root: bool) -> "list | None":
+    def _results_wildcard_elements(self, *, name_one, star_root: bool) -> "tuple | None":
         """the wildcard path elements (_wildcard_path_elements()) of a
         name_one the older branches do not take, else None:
         - ':groups()' or ':flatten()' with more path after it, e.g.
@@ -3731,10 +3738,16 @@ class ResultsReferenceFinder3(ReferenceFinder3):
           ':all()/:flatten()'
         - under a '$*'/':regex()'/':choice()' root, also a middle ':all()'
           (':all()/*', 'customers/:all()/*'), which only a literal root had.
-        The elements are the TEMPLATE levels: a trailing '*' or ':all()' is
-        the run-dir slot and is dropped (4.1a; 4.2b: ':all()' at the run dir
-        is '*'), so ':flatten()/:all()' is ':flatten()'. Every other written
-        segment is a template level."""
+        Returns (elements, run_filter). The elements are the TEMPLATE
+        levels: a trailing '*' or ':all()' is the run-dir slot and is
+        dropped (4.1a; 4.2b: ':all()' at the run dir is '*'), so
+        ':flatten()/:all()' is ':flatten()'. A trailing pattern
+        (':regex()', ':choice()', ':name(/re/)') with only filters after it
+        is the run-dir slot too (#647, _pattern_is_run_slot()): it is the
+        run_filter, matched against each run's own name, as a plain path
+        and the literal-root middle ':all()' read it. Until review it was
+        taken as a template level and matched nothing, silently (reviewer
+        on #789). Every other written segment is a template level."""
         if name_one is None:
             raise ValueError("name_one cannot be None")
         path = name_one.path
@@ -3752,18 +3765,30 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         elif not (star_root and middle_all):
             return None
         if path and (isinstance(path[-1], Star3) or names[-1] == "all"):
-            path = path[:-1]
-        return self._wildcard_path_elements(path)
+            return (self._wildcard_path_elements(path[:-1]), None)
+        last = self._compile_path_pattern(path[-1:])[0] if path and names[-1] is None else None
+        if isinstance(last, Regex3) and self._pattern_is_run_slot(
+            name_one=name_one, path=path
+        ):
+            return (self._wildcard_path_elements(path[:-1]), last)
+        return (self._wildcard_path_elements(path), None)
 
-    def _results_wildcard_key(self, *, run_home: str, home: str, elements: list) -> "tuple | None":
-        """None if the run's template levels do not match `elements`, else
-        its group key (ReferenceFinder3._wildcard_segments_key(); the run
-        dir follows the template levels, so a last any-depth wildcard may
-        match none)"""
+    def _results_wildcard_key(
+        self, *, run_home: str, home: str, elements: list, run_filter=None
+    ) -> "tuple | None":
+        """None if the run's template levels do not match `elements`, or
+        its name does not match `run_filter` (a trailing run-slot pattern),
+        else its group key (ReferenceFinder3._wildcard_segments_key(); the
+        run dir follows the template levels, so a last any-depth wildcard
+        may match none)"""
         if run_home is None or home is None or elements is None:
             raise ValueError("run_home, home and elements cannot be None")
         segments = self._prefix_segments(run_home, home)
         if segments is None:
+            return None
+        if run_filter is not None and not self._segment_matches(
+            run_filter, pathu.parts(run_home)[-1]
+        ):
             return None
         return self._wildcard_segments_key(
             segments=segments, elements=elements, last_deep_min=0
@@ -3773,6 +3798,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         self,
         *,
         elements: list,
+        run_filter,
         name_one,
         name_filter,
         identity,
@@ -3789,6 +3815,10 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         files and results"), as FILES does (#787, D34). With no grouping
         wildcard the matches pool, as the trailing-':flatten()' branch
         pools."""
+        if elements is None:
+            raise ValueError("elements cannot be None")
+        if name_one is None:
+            raise ValueError("name_one cannot be None")
         calls = list(name_one.functions)
         (
             pointer,
@@ -3805,7 +3835,9 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         matched = []
         for rh, group in self._discover_run_homes(None, name_filter):
             home = self.csvpaths.results_manager.get_named_results_home(group)
-            key = self._results_wildcard_key(run_home=rh, home=home, elements=elements)
+            key = self._results_wildcard_key(
+                run_home=rh, home=home, elements=elements, run_filter=run_filter
+            )
             if key is not None:
                 matched.append((rh, key if pools else (group, key)))
         tail = dict(

@@ -215,6 +215,51 @@ GROUPED = {
 }
 
 
+# a trailing pattern with only filters after it is the run-dir slot (#647):
+# it matches run names, here every one (they all hold a '_')
+TRAILING_PATTERNS = {
+    '$acme.results.customers/:all()/:regex("_")': [
+        "customers/east#1",
+        "customers/west#1",
+    ],
+    '$acme.results.:all()/2025/:regex("_")': [
+        "north/2025#1",
+        "south/2025#1",
+        "south/2025#2",
+    ],
+    '$acme.results.:flatten()/2025/:regex("_")': [
+        "north/2025#1",
+        "south/2025#1",
+        "south/2025#2",
+    ],
+    '$acme.results.:groups()/east/:regex("_")': ["customers/east#1"],
+    '$acme.results.:all()/2025/:regex("^nomatch")': [],
+}
+
+
+class TestTrailingPatterns:
+    # these matched nothing, silently: the pattern was read as a template
+    # level (reviewer on #789)
+    @pytest.mark.parametrize("reference", sorted(TRAILING_PATTERNS))
+    def test_a_trailing_pattern_filters_run_names(self, runs, reference):
+        assert sorted(_labels(runs, reference)) == sorted(TRAILING_PATTERNS[reference])
+
+    @pytest.mark.parametrize("reference", sorted(TRAILING_PATTERNS))
+    def test_a_star_root_reads_it_the_same(self, runs, reference):
+        star = reference.replace("$acme.", "$*.", 1)
+        assert sorted(_labels(runs, star)) == sorted(_labels(runs, reference))
+
+
+# a function directly after a '/' implies the run '*' (3.9c), under '$*' too
+IMPLIED_STAR = [
+    ":groups()/:from(:index(-2)):to(:index(-1))",
+    ":groups()/:last()",
+    ":all()/:last()",
+    ":flatten()/2025/:last()",
+    "beta/:last()",
+]
+
+
 class TestGroupedReferences:
     @pytest.mark.parametrize("reference", sorted(GROUPED))
     def test_runs(self, runs, reference):
@@ -231,12 +276,17 @@ class TestGroupedReferences:
     def test_equivalent_spellings(self, runs, written, same_as):
         assert _labels(runs, written) == _labels(runs, same_as)
 
-    def test_a_star_root_matches_the_literal_root(self, runs):
-        # one named-results name, so '$*' gives what '$acme' gives
-        for reference in ("customers/:all()/*:last()", ":flatten()/:all()/*:last()"):
-            assert _labels(runs, f"$*.results.{reference}") == _labels(
-                runs, f"$acme.results.{reference}"
-            )
+    @pytest.mark.parametrize(
+        "reference",
+        [r.replace("$acme.results.", "", 1) for r in GROUPED if r.startswith("$acme.")]
+        + IMPLIED_STAR,
+    )
+    def test_a_star_root_matches_the_literal_root(self, runs, reference):
+        # one named-results name, so '$*' gives what '$acme' gives; the
+        # implied-star forms raised under '$*' (reviewer on #789)
+        assert _labels(runs, f"$*.results.{reference}") == _labels(
+            runs, f"$acme.results.{reference}"
+        )
 
 
 @pytest.mark.parametrize(
@@ -246,7 +296,19 @@ class TestGroupedReferences:
         "$acme.results.:groups()/*:last().first_id",
         "$acme.results.:flatten()/:all()/*:last():run_uuid()",
         "$*.results.:all()/*:last().first_id:errors()",
-    ],
+        # ranges apply per group too (reviewer on #789)
+        "$*.results.:groups()/*:from(0):to(0)",
+        "$acme.results.:flatten()/:all()/*:from(0):to(0)",
+        "$*.results.:all()/*:from(0):to(0)",
+        "$acme.results.:groups():from(0):to(0)",
+        "$acme.results.:all()/*:from(0):to(0)",
+        # the path narrows, so counts are bounds, not exact
+        "$acme.results.:all()/:flatten()",
+        "$*.results.:all()/*",
+        "$acme.results.:all()/*",
+    ]
+    + sorted(TRAILING_PATTERNS)
+    + [f"$*.results.{r}" for r in IMPLIED_STAR],
 )
 def test_the_estimate_keeps_its_contract(runs, reference):
     p, _ = runs
