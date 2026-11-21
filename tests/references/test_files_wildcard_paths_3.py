@@ -498,6 +498,25 @@ class TestGroupedReferences:
         assert results and {r.identity for r in results} == {"Sheet1"}
 
     @pytest.mark.parametrize(
+        "reference,count",
+        [
+            # no wildcard, but a function first in a longer path: these
+            # raised on main while '*/:year()/*#Sheet1' and
+            # 'orders/:flatten()#Sheet1' did not (reviewer on #787, round 2)
+            ("$cappa.files.:flatten()/2026/*#Sheet1.:last()", 1),
+            ("$acme.files.:year()/*#Sheet1.:last()", 0),
+        ],
+    )
+    def test_a_function_first_in_a_longer_path_takes_a_worksheet(
+        self, layout, reference, count
+    ):
+        p, _ = layout
+        finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=p)
+        results = finder.query().results
+        assert len(results) == count
+        assert all(r.identity == "Sheet1" for r in results)
+
+    @pytest.mark.parametrize(
         "reference",
         ["$beta.files.:manifest()#Sheet1", "$acme.files.:all()#Sheet1.:last()"],
     )
