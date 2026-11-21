@@ -455,6 +455,16 @@ class Reference3:
     def root_major(self):
         return self._root_major
 
+    def replace_root_major(self, value) -> None:
+        """replaces root_major with what a ':name(...)' root resolved to: a
+        literal name (str) or a pattern root (a FunctionCall3)
+        (ReferenceFinder3._resolve_name_root())"""
+        if value is None or (isinstance(value, str) and value.strip() == ""):
+            raise ValueError("root_major cannot be None or empty")
+        if not isinstance(value, (str, FunctionCall3)):
+            raise TypeError(f"root_major must be a str or a function, not {value!r}")
+        self._root_major = value
+
     @property
     def datatype(self) -> str:
         return self._datatype

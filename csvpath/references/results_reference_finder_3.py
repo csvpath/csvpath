@@ -171,6 +171,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         self._manifest_reads = {}
         reference = self.ref.parsed
         self._trace_phase("query")
+        # a ':name(...)' root is the name it resolves to (3.8)
+        self._resolve_name_root(reference)
         # each function is this datatype's, and one value per reference
         # (5.20b), before anything is read
         self._check_datatype_functions(reference)
