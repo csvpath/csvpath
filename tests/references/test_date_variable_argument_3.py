@@ -65,18 +65,44 @@ QUERIES = [
     ('$orders.files.:flatten().:from(:date("{@dd}")):last()', 1),
     ("$validate_orders.csvpaths.:from(:date(@dd))", 3),
     ("$validate_orders.results.:flatten():from(:date(@dd)).*", 16),
+    # every direction, the bare chain, and inside another time function
+    # (reviewer on #790); the corpus is newer than 2020
+    ("$orders.files.:flatten().:to(:date(@dd))", 0),
+    ("$orders.files.:flatten().:before(:date(@dd))", 0),
+    ("$orders.files.:flatten().:after(:date(@dd))", 5),
+    ("$validate_orders.results.:flatten():after(:date(@dd)).*", 16),
+    ("$validate_orders.results.:flatten():date(@dd).*", 0),
+    ("$validate_orders.csvpaths.:date(@dd)", 0),
+    ("$validate_orders.results.:flatten():from(:yesterday(:date(@dd))).*", 16),
+    ("$orders.files.:flatten().:from(:year(:date(@dd)))", 5),
 ]
 
 
+@pytest.mark.parametrize("value", ["2020-01-01", "2020-01-01_10-00-00"])
 @pytest.mark.parametrize("reference,count", QUERIES)
-def test_a_variable_date_works(corpus, reference, count):
-    assert len(_finder(corpus, reference, "2020-01-01").query().results) == count
+def test_a_variable_date_works(corpus, reference, count, value):
+    assert len(_finder(corpus, reference, value).query().results) == count
 
 
+@pytest.mark.parametrize(
+    "value,message",
+    [
+        ("not-a-date", "resolved to 'not-a-date'"),
+        ("2026-02-30", "real calendar date"),
+        ("", "real calendar date"),
+        # through "{@dd}" it arrives as text, so the date check names it
+        (20200101, "must be one of: a string|real calendar date"),
+        # through "{@dd}" it arrives as text, so the date check names it
+        (None, "must be one of: a string|real calendar date"),
+    ],
+)
 @pytest.mark.parametrize("reference,_", QUERIES)
-def test_a_variable_that_is_not_a_date_raises_before_any_reads(corpus, reference, _):
-    finder = _finder(corpus, reference, "not-a-date")
-    with pytest.raises(ReferenceRuntimeException3, match="resolved to 'not-a-date'"):
+def test_a_variable_that_is_not_a_date_raises_naming_it(
+    corpus, reference, _, value, message
+):
+    # before the matching starts; the estimate predicts it (below)
+    finder = _finder(corpus, reference, value)
+    with pytest.raises(ReferenceRuntimeException3, match=message):
         finder.query()
 
 

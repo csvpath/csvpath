@@ -65,8 +65,8 @@ class Date3(TimeWindowFunction3):
 
     def check_valid(self) -> None:
         super().check_valid()
-        # Function3's own generic ARG_TYPES check only confirms the arg
-        # IS a str, not that its content is a real calendar date -- a
+        # Function3's own generic ARG_TYPES check only confirms a literal
+        # arg IS a str, not that its content is a real calendar date -- a
         # malformed bound would otherwise be silently compared as an
         # ordinary string (or raise a raw, unwrapped ValueError once
         # start_datetime()/end_datetime() are actually called), rather
@@ -116,8 +116,9 @@ class Date3(TimeWindowFunction3):
         -- the time portion is optional, never required (issue #409:
         David -- v2 references allowed this; the code never caught
         up). Raises ValueError, same as a plain strptime() would, if
-        neither form matches -- check_valid() catches it the same way
-        it always has. Mirrors ReferenceFinder3._bound_window()
+        neither form matches -- _check_date() catches it, from
+        check_valid() for a literal and check_resolved() for a resolved
+        value. Mirrors ReferenceFinder3._bound_window()
         exactly, duplicated for the same reason check_valid()'s own
         docstring gives."""
         try:

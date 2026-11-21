@@ -338,7 +338,11 @@ class ResultsEstimator3:
         cls = ReferenceFunctionFactory.get_registered_class(call.name)
         if cls is None:
             return False
-        return cls.SOURCE == "clock" or (
+        # ':date()' is a window too, bare in the chain
+        # ('$x.results.:flatten():date("2020-01-01").*'), though it is not a
+        # clock function: it estimated every run's instances as exact
+        # (reviewer on #790)
+        return cls.SOURCE == "clock" or call.name == "date" or (
             call.name in WINDOWS and not isinstance(call.arg, int)
         )
 
