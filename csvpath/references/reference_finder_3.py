@@ -1405,6 +1405,8 @@ class ReferenceFinder3(ABC):
           after it cannot be told apart from it. A literal in between
           removes the ambiguity: ':flatten()/2026/*' is legal.
           (':flatten()/:all()/*' is not settled by the spec and passes.)
+        - ':flatten()' and ':groups()' never together: both match any
+          number of levels (4.5 pairs ':flatten()' with ':all()' only)
         - name_three has at most one wildcard, a '*' body or an ':all()',
           and no ':groups()' or ':flatten()' (4.2b, 4.3e, NRE 474-499)
         Where 4.5's last example ('$acme.files.:all()/*/:all()') says
@@ -1432,6 +1434,18 @@ class ReferenceFinder3(ABC):
                 "name_one can have only one ':flatten()': it already "
                 "wildcards every level, so a second one is contradictory "
                 "(compendium 4.3d, 4.5)."
+            )
+        if flattens and any(c.name == "groups" for c in grouping):
+            #
+            # both match any number of levels, so nothing says where one
+            # ends and the other begins; 4.5 allows ':flatten()' with
+            # ':all()' and ':groups()' with '*', not these two together
+            #
+            raise ReferenceException3(
+                "':flatten()' and ':groups()' cannot be combined in name_one: "
+                "both match any number of levels (compendium 4.5). Use "
+                "':flatten()/:all()' to group by the last level, or "
+                "':groups()' alone to group by the whole path."
             )
         flatten_at = next(
             (
