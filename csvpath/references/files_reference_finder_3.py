@@ -2627,9 +2627,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
             and name_one.path[0].arg is None
         )
 
-    # the name_one wildcards that occupy a path segment (compendium 4)
-    PATH_WILDCARDS = ("all", "groups", "flatten")
-
     @classmethod
     def _is_wildcard_path_reference(cls, *, name_one, flatten_paths: bool) -> bool:
         """true for a name_one path the wildcard-path matcher takes
@@ -2664,38 +2661,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
             return True
         return "all" in wildcards or "groups" in wildcards
 
-    def _wildcard_path_elements(self, path: list) -> list:
-        """a name_one path as ("wild", name) for each wildcard segment and
-        ("segment", compiled) for every other one, compiled as
-        _compile_path_pattern() compiles it (a literal, '*', ':name()',
-        ':regex()', ':choice()' or a clock value). A tagged pair, so a
-        literal segment that happens to be named "all" is never read as
-        the wildcard. _check_wildcards() has already allowed at most one
-        grouping wildcard and one ':flatten()', never ':groups()' with
-        ':flatten()'."""
-        if path is None:
-            raise ValueError("path cannot be None")
-        elements = []
-        for segment in path:
-            if isinstance(segment, FunctionCall3) and segment.name in self.PATH_WILDCARDS:
-                if segment.arg is not None:
-                    raise ReferenceException3(
-                        f"FilesReferenceFinder3's ':{segment.name}()' does not "
-                        "take an argument."
-                    )
-                elements.append(("wild", segment.name))
-            else:
-                elements.append(("segment", self._compile_path_pattern([segment])[0]))
-        return elements
-
-    @staticmethod
-    def _wildcard_path_groups(elements: list) -> bool:
-        """true when the path has a grouping wildcard, ':all()' or
-        ':groups()', so its matches are reduced per group"""
-        if elements is None:
-            raise ValueError("elements cannot be None")
-        return any(kind == "wild" and value in ("all", "groups") for kind, value in elements)
-
     @staticmethod
     def _wildcard_path_key(*, entry: dict, home: str, elements: list) -> "tuple | None":
         """None if the entry's file home does not match the wildcard path;
@@ -2729,37 +2694,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
         file_parts = pathu.parts(entry["file_home"])
         if file_parts[: len(home_parts)] != home_parts:
             return None
-        segments = file_parts[len(home_parts) :]
-        deep_at = next(
-            (
-                i
-                for i, (kind, value) in enumerate(elements)
-                if kind == "wild" and value in ("groups", "flatten")
-            ),
-            None,
+        return ReferenceFinder3._wildcard_segments_key(
+            segments=file_parts[len(home_parts) :], elements=elements, last_deep_min=1
         )
-        if deep_at is None:
-            if len(segments) != len(elements):
-                return None
-            matched = [[segment] for segment in segments]
-        else:
-            head = len(elements[:deep_at])
-            tail = len(elements[deep_at + 1 :])
-            if len(segments) < head + tail + (0 if tail else 1):
-                return None
-            matched = (
-                [[segment] for segment in segments[:head]]
-                + [segments[head : len(segments) - tail]]
-                + [[segment] for segment in segments[len(segments) - tail :]]
-            )
-        key = ()
-        for (kind, value), parts in zip(elements, matched):
-            if kind == "segment":
-                if not ReferenceFinder3._segment_matches(value, parts[0]):
-                    return None
-            elif value in ("all", "groups"):
-                key = tuple(parts)
-        return key
 
     def _wildcard_candidates_for_name(self, *, name: str, elements: list) -> list:
         """every manifest entry of one named-file whose file home matches
