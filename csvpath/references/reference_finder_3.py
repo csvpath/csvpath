@@ -1880,10 +1880,17 @@ class ReferenceFinder3(ABC):
         ':regex()' (3.9c) and becomes one. Every finder raised ":name() is
         not a legal root_major function" until the name_one gap review
         (item E). Called by query() and by the estimators, once variables
-        are set; idempotent."""
+        are set. It resolves from the WRITTEN root every time, so a variable
+        changed between queries on one finder is seen; the first version
+        froze the first value (reviewer on #794).
+
+        A variable's value is used in its string form (3.8, "the string
+        form of a variable"; 3.12: its __str__ must make sense), so
+        '@w = 5' names "5". A literal ':name(3)' is an int, a statement
+        identity (D12), and raises."""
         if reference is None:
             raise ValueError("reference cannot be None")
-        root = reference.root_major
+        root = reference.written_root_major
         if not isinstance(root, FunctionCall3) or root.name != "name":
             return
         built = self._build(root)
@@ -1891,7 +1898,13 @@ class ReferenceFinder3(ABC):
         if isinstance(value, Regex3):
             reference.replace_root_major(FunctionCall3(name="regex", arg=value))
             return
-        if isinstance(value, bool) or not isinstance(value, str):
+        if isinstance(root.arg, Variable3) and value is not None:
+            value = str(value)
+        if isinstance(value, bool):
+            raise ReferenceException3(
+                f":name({value!r}) at root_major takes a name, not true/false."
+            )
+        if not isinstance(value, str):
             raise ReferenceException3(
                 f":name({value!r}) at root_major takes a name: a string, "
                 "\"{...}\" or an @variable, not "

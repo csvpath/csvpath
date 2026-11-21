@@ -131,3 +131,62 @@ def test_the_estimate_keeps_its_contract(corpus, written, value):
         resolve_reads = dict(resolve.reads)
     measured = {QUERY: dict(query.reads), RESOLVE: resolve_reads}
     assert _problems(est, measured, raised) == []
+
+
+MORE_SAME_AS = [
+    # the NRE form: interpolation plus literal text
+    (
+        '$:name("{@w}_invoices").files.:flatten()',
+        "acme",
+        "$acme_invoices.files.:flatten()",
+    ),
+    # a pattern root in the other datatypes
+    ("$:name(/^valid/).csvpaths.:last()", None, "$:regex(/^valid/).csvpaths.:last()"),
+    ("$:name(/^valid/).results.:last()", None, "$:regex(/^valid/).results.:last()"),
+]
+
+
+@pytest.mark.parametrize("written,value,same_as", MORE_SAME_AS)
+def test_more_plain_spellings(corpus, written, value, same_as):
+    got = _results(corpus, written, value)
+    assert got and got == _results(corpus, same_as)
+
+
+def test_a_variable_changed_between_queries_is_seen(corpus):
+    # the first version froze the first resolved name (reviewer on #794)
+    finder = _finder(corpus, "$:name(@w).files.:flatten()", "orders")
+    first = [str(r.path) for r in finder.query().results]
+    finder.set_variable("w", value="zipcodes")
+    second = [str(r.path) for r in finder.query().results]
+    assert first == [p for p, _ in _results(corpus, "$orders.files.:flatten()")]
+    assert second == [p for p, _ in _results(corpus, "$zipcodes.files.:flatten()")]
+    assert finder.ref.parsed.written_root_major.name == "name"
+
+
+def test_an_estimate_then_a_changed_variable_then_a_query(corpus):
+    finder = _finder(corpus, "$:name(@w).csvpaths.:last()", "validate_orders")
+    finder.estimate()
+    finder.set_variable("w", value="scan_invoices")
+    assert [str(r.path) for r in finder.query().results] == [
+        p for p, _ in _results(corpus, "$scan_invoices.csvpaths.:last()")
+    ]
+
+
+def test_a_non_string_variable_is_its_string_form(corpus):
+    # 3.8 "the string form of a variable": 5 names "5", as "{@w}" would
+    finder = _finder(corpus, "$:name(@w).results.:last()", 5)
+    assert finder.query().results == []
+    assert finder.ref.parsed.root_major == "5"
+
+
+def test_a_missing_name_behaves_as_its_plain_spelling(corpus):
+    # FILES raises for a missing named-file, CSVPATHS and RESULTS give [];
+    # an open question for David, unchanged here
+    with pytest.raises(ValueError) as plain:
+        _results(corpus, "$nope.files.:flatten()")
+    with pytest.raises(ValueError) as named:
+        _results(corpus, '$:name("nope").files.:flatten()')
+    assert str(plain.value) == str(named.value)
+    assert _results(corpus, '$:name("nope").results.:last()') == _results(
+        corpus, "$nope.results.:last()"
+    )

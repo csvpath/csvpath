@@ -455,14 +455,24 @@ class Reference3:
     def root_major(self):
         return self._root_major
 
+    @property
+    def written_root_major(self):
+        """root_major as written, before any replace_root_major(): a
+        ':name(@w)' root is resolved from this on every query, so a variable
+        set later is seen (reviewer on #794)"""
+        return getattr(self, "_written_root_major", self._root_major)
+
     def replace_root_major(self, value) -> None:
         """replaces root_major with what a ':name(...)' root resolved to: a
         literal name (str) or a pattern root (a FunctionCall3)
-        (ReferenceFinder3._resolve_name_root())"""
+        (ReferenceFinder3._resolve_name_root()). The written root is kept
+        (written_root_major)."""
         if value is None or (isinstance(value, str) and value.strip() == ""):
             raise ValueError("root_major cannot be None or empty")
         if not isinstance(value, (str, FunctionCall3)):
             raise TypeError(f"root_major must be a str or a function, not {value!r}")
+        if not hasattr(self, "_written_root_major"):
+            self._written_root_major = self._root_major
         self._root_major = value
 
     @property
