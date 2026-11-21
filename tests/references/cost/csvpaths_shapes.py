@@ -156,4 +156,11 @@ SHAPES = [
     '$*.csvpaths.*:all()',
     '$:regex(/^v/).csvpaths.*:all()',
     '$validate_orders.csvpaths.*:all()',
+    # time functions with an argument (#788, reviewer's probes; 6.27g)
+    '$validate_orders.csvpaths.:year(2026):last()',
+    '$validate_orders.csvpaths.:year(2025)',
+    '$validate_orders.csvpaths.:from(:date("2026-01-01")):to(:year(2027))',
+    '$validate_orders.csvpaths.:yesterday(:date("2026-08-15"))',
+    '$validate_orders.csvpaths.:from(:yesterday(:hour(18)))',
+    '$validate_orders.csvpaths.:month(13)',
 ]

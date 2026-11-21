@@ -7,6 +7,7 @@ from csvpath.references.functions.reference_function_factory_3 import (
     ReferenceFunctionFactory,
 )
 from csvpath.references.functions.selectors.having_3 import Having3
+from csvpath.references.functions.values.now_3 import Now3
 from csvpath.references.functions.values.year_3 import Year3
 from csvpath.references.functions.well_known_files.log_3 import Log3
 
@@ -26,7 +27,9 @@ class TestDescribeOneFunction:
         assert "files" in doc and "csvpaths" in doc and "results" in doc
 
     def test_no_arg_function_says_argument_none(self):
-        doc = Function3Describer.describe(Year3)
+        # :now(); :year() took no argument until it took a time function or
+        # a year (2026-11-21, compendium 6.27g)
+        doc = Function3Describer.describe(Now3)
         assert "none" in doc.lower()
 
     def test_required_arg_function_shows_type_and_required(self):

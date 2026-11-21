@@ -1,12 +1,11 @@
-from datetime import datetime
-
 from ...reference_3 import Reference3
 from ..function_3 import Function3
+from .day_relative_function_3 import DayRelativeFunction3
+from .now_3 import Now3
 from .time_window_function_3 import TimeWindowFunction3
-from csvpath.util.date_util import DateUtility as daut
 
 
-class Today3(TimeWindowFunction3):
+class Today3(DayRelativeFunction3):
     # see year_3.py for the shared SOURCE == "clock" design this
     # follows. Returns a plain "YYYY-MM-DD" string, matching :date()'s
     # own established literal-date format (date_3.py) -- directly
@@ -19,13 +18,16 @@ class Today3(TimeWindowFunction3):
     # (both mean "the current day"); see day_3.py for that extrapolation.
     NAME = "today"
     SUMMARY = (
-        "Today's date as \"YYYY-MM-DD\" -- computed from the clock. "
+        'Today\'s date as "YYYY-MM-DD" -- computed from the clock. '
         "Also usable as a date-range context setter/anchor -- see "
         "TimeWindowFunction3."
+        ' Takes a time function to start from, or a format string for the date, e.g. :today("%A").'
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    ARG_TYPES = ()
+    # a time function to start from, or a format string (6.27g); see
+    # DayRelativeFunction3
+    ARG_TYPES = (str, TimeWindowFunction3, Now3)
     ARG_REQUIRED = False
     SOURCE = "clock"
     # POSITIONS added 2026-10-17 -- see year_3.py's own comment for why.
@@ -34,14 +36,3 @@ class Today3(TimeWindowFunction3):
         Reference3.CSVPATHS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
         Reference3.RESULTS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
     }
-
-    def compute(self) -> str:
-        return daut.now().date().isoformat()
-
-    def start_datetime(self) -> datetime:
-        now = daut.now().replace(tzinfo=None)
-        return now.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    def end_datetime(self) -> datetime:
-        now = daut.now().replace(tzinfo=None)
-        return now.replace(hour=23, minute=59, second=59, microsecond=999999)
