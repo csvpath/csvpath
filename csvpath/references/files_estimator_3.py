@@ -225,6 +225,12 @@ class FilesEstimator3:
         if three is None and not any(n in POINTERS for n in call_names):
             # a name_one result is the named-file, not a version: no file read
             return
+        if three is None and literal and set(call_names) & {"all", "groups"}:
+            # a name_one pointer after a grouping wildcard picks one version
+            # per group, and each resolves to its manifest entry: one read of
+            # the name's manifest per version (5.21 "name_one, file pointer")
+            self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=selected, basis=UPPER_BOUND, because="a name_one pointer per group")
+            return
         if three is None and not literal:
             # a name_one pointer under '*' rereads the names at resolve
             self._read(part=RESOLVE, kind="name_listing", count=1, basis=UPPER_BOUND, because="a name_one pointer")
@@ -479,8 +485,14 @@ class FilesEstimator3:
 
         if path_names[:1] == ["manifest"] and three is not None:
             return "query: a ':manifest()' chain takes no name_three"
-        if "flatten" in path_names and any(n in POINTERS + ("all",) for n in functions):
-            return "query: a pointer after ':flatten()' goes in name_three, after a '.'"
+        #
+        # a pointer after a name_one wildcard is legal ('orders/:flatten():last()'
+        # always worked; ':flatten():last()' and ':all():last()' since the
+        # name_one gap review, compendium 4.2, 6.27d). An ':all()' riding
+        # after one still raises.
+        #
+        if set(path_names) & {"all", "groups", "flatten"} and "all" in functions:
+            return "query: ':all()' after a name_one wildcard is not legal; put it in its own path segment or in name_three"
         if not set(path_names) & {"manifest", "definition"} and any(n in POINTERS + ("all",) for n in path_names + functions):
             if self._value_fields(self._calls()):
                 return "query: name_one picks the file; a field goes in name_three, after a '.'"
@@ -538,8 +550,12 @@ class FilesEstimator3:
 
     def _selected(self, *, calls: list, names: list, by_name: dict) -> int:
         call_names = [c.name for c in calls]
-        if "all" in call_names:
-            # ':all()' pools every version before any pointer narrows it
+        if "all" in call_names or "groups" in call_names:
+            # a pointer after ':all()' or ':groups()' picks one version per
+            # group, and there can be as many groups as versions. ':groups()'
+            # counted as one pointer's worth until the name_one gap review
+            # (2026-11-19), so '$acme.files.:groups().:last()' estimated no
+            # raise and raised at resolve.
             return sum(by_name[n] for n in names)
         if "flatten" in self._path_function_names() and any(n in POINTERS for n in call_names):
             return 1
