@@ -486,6 +486,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             name_one.functions
             and name_one_pointer is None
             and name_one_manifest is None
+            and status_candidates is None
         ):
             # settled, not a gap (not-yet-supported sweep #3): the
             # compendium's own STRUCTURE table draws this exact line --
@@ -2482,20 +2483,23 @@ class FilesReferenceFinder3(ReferenceFinder3):
         three = reference.name_three
         if three is None:
             return False
-        lone_pointer = (
-            three.body is None
-            and len(three.functions) == 1
-            and three.functions[0].name in ("first", "last", "index")
+        if three.body is not None or len(three.functions) != 1:
+            return True
+        function_cls = ReferenceFunctionFactory.get_registered_class(
+            three.functions[0].name
         )
-        return not lone_pointer
+        return function_cls is None or function_cls.ROLE != Function3.POINTER
 
     def _status_gate_candidates(self, *, status_chain: list, names: list) -> tuple:
         """(manifest entries, {file_home: named-file}) for the live
-        versions a bare status gate matches, in ledger (arrival) order: the
-        candidates the name_three pipeline takes. The entries come from the
-        live index the gate already built, so nothing more is read.
-        Membership follows the manifest that holds the uuid (D4), as
-        _pointer_into_status_matches() does."""
+        versions a bare status gate matches: the candidates the name_three
+        pipeline takes, named-file by named-file in `names` order (D31: a
+        traversal root's results come in name order), each named-file's
+        in arrival order. The entries come from the live index the gate
+        already built, so nothing more is read. Membership follows the
+        manifest that holds the uuid (D4); a version held by a named-file
+        the gate did not read is inconsistent framework data and raises,
+        as _pointer_into_status_matches() does (reviewer on #795)."""
         if status_chain is None:
             raise ValueError("status_chain cannot be None")
         if names is None:
@@ -2503,12 +2507,25 @@ class FilesReferenceFinder3(ReferenceFinder3):
         ledger = self._live_ledger_entries(names=names)
         candidates = []
         named_file_of = {}
+        by_name = {name: [] for name in names}
         for record in self._filter_ledger_by_gate_chain(ledger, status_chain):
             name, entry = self._live_named_file_entry(record.get("uuid"))
-            if entry is None or name not in names:
+            if entry is None:
                 continue
-            candidates.append(entry)
+            if name not in by_name:
+                msg = (
+                    f"Version {record.get('uuid')!r} is held by named-file "
+                    f"{name!r}, not one of {names!r}; a uuid in more than "
+                    "one named-file's manifest is inconsistent framework data."
+                )
+                logger = getattr(self.csvpaths, "logger", None)
+                if logger is not None:
+                    logger.error(msg)
+                raise ReferenceRuntimeException3(msg)
+            by_name[name].append(entry)
             named_file_of[entry["file_home"]] = name
+        for name in names:
+            candidates.extend(by_name[name])
         return candidates, named_file_of
 
     def _query_status_gate(

@@ -170,7 +170,8 @@ class FilesEstimator3:
             # and again at resolve
             self._read(part=QUERY, kind="name_listing", count=1, basis=UPPER_BOUND, because="a name_three :manifest()")
             self._read(part=RESOLVE, kind="name_listing", count=1, basis=UPPER_BOUND, because="a name_three :manifest()")
-            # and reads each candidate named-file's manifest to find the entry
+            # and reads manifests to find each entry: the live index (every
+            # named-file's) plus the entry's own
             self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=all_names + n_names, basis=UPPER_BOUND, because="a name_three :manifest()")
         if n_names > 1:
             self.why.append(f"'{self.reference.root_major}' over {n_names} {self.NOUN}")
