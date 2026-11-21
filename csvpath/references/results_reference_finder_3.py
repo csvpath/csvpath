@@ -6,6 +6,7 @@ from csvpath.util.original_file_utility import OriginalFileUtility as orut
 from csvpath.util.path_util import PathUtility as pathu
 
 from .functions.function_3 import Function3
+from .functions.well_known_files.bare_name_utility import BareNameUtility as baut
 from .functions.filters.count_3 import Count3
 from .functions.filters.idchain_3 import Idchain3
 from .functions.filters.message_3 import Message3
@@ -2226,6 +2227,8 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if accessor.name in cls._JSON_ACCESSOR_FILES:
             return Nos(instance_dir).join(cls._JSON_ACCESSOR_FILES[accessor.name])
         if accessor.name == "printouts" and accessor.arg:
+            # checked again here, where the name meets the file system
+            baut.check_at_join(function_name=accessor.name, name=accessor.arg)
             return Nos(instance_dir).join(f"{accessor.arg}.txt")
         if accessor.name == "original":
             nos = Nos(instance_dir)
@@ -2236,6 +2239,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             return Nos(instance_dir).join(orut.NAME)
         if accessor.name in cls._BYTES_ACCESSOR_FILES:
             return Nos(instance_dir).join(cls._BYTES_ACCESSOR_FILES[accessor.name])
+        baut.check_at_join(function_name=accessor.name, name=accessor.arg)
         return Nos(instance_dir).join(accessor.arg)
 
     def _manifest_set_instance_results(
@@ -2911,6 +2915,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
             # default. See Printouts3's own docstring for the normative-
             # doc example this matches ("...printouts('greetings')" and
             # "...file('greetings.txt')" are declared equivalent there).
+            baut.check_at_join(function_name=accessor.name, name=accessor.arg)
             path = Nos(instance_dir).join(f"{accessor.arg}.txt")
             return self._read_well_known_file(path)
         if accessor.name == "original":
@@ -2933,6 +2938,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         if accessor.name in self._BYTES_ACCESSOR_FILES:
             path = Nos(instance_dir).join(self._BYTES_ACCESSOR_FILES[accessor.name])
             return self._read_well_known_file(path)
+        baut.check_at_join(function_name=accessor.name, name=accessor.arg)
         path = Nos(instance_dir).join(accessor.arg)
         return self._read_well_known_file(path)
 
