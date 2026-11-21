@@ -71,6 +71,21 @@ RESULTS_PAIRS = [
         "$acme.results.north/:all()/:manifest()",
         "$acme.results.north/:all()/*:manifest()",
     ),
+    # more segment kinds (reviewer on #793)
+    ("$acme.results.*/:manifest()", "$acme.results.*/*:manifest()"),
+    ("$*.results.*/:manifest()", "$*.results.*/*:manifest()"),
+    (
+        "$acme.results.:regex(/^b/)/:manifest()",
+        "$acme.results.:regex(/^b/)/*:manifest()",
+    ),
+    (
+        '$*.results.:choice("beta|gamma")/:manifest()',
+        '$*.results.:choice("beta|gamma")/*:manifest()',
+    ),
+    (
+        "$acme.results.:flatten()/2025/:manifest()",
+        "$acme.results.:flatten()/2025/*:manifest()",
+    ),
 ]
 
 
@@ -139,7 +154,39 @@ def test_the_results_estimate_keeps_its_contract(runs, pair):  # noqa: F811
 @pytest.mark.parametrize("pair", FILES_PAIRS)
 def test_the_files_estimate_keeps_its_contract(layout, pair):  # noqa: F811
     p, _ = layout
-    reference = pair[0]
+    for reference in pair:
+        finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=p)
+        measured, raised = _measure(p, reference)
+        assert _problems(finder.estimate(), measured, raised) == []
+
+
+@pytest.mark.parametrize(
+    "reference",
+    ["$acme.results.*/:manifest()", "$acme.results.:regex(/^b/)/:manifest()"],
+)
+def test_the_estimate_is_the_same_before_and_after_a_query(runs, reference):  # noqa: F811
+    # the estimator normalizes as query() does; it saw the raw path, so a
+    # query run first changed its answer (reviewer on #793)
+    p, _ = runs
+    finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=p)
+    before = finder.estimate()
+    finder.query()
+    after = finder.estimate()
+    assert before.reads == after.reads and before.would_raise == after.would_raise
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        "$acme.results.*:manifest()",
+        "$*.results.*:manifest()",
+        "$acme.results.*",
+        "$acme.results.:manifest()",
+    ],
+)
+def test_a_lone_star_is_estimated_as_the_zero_level_runs(runs, reference):  # noqa: F811
+    # it counted every run (13 against 2 read; reviewer on #793)
+    p, _ = runs
     finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=p)
     measured, raised = _measure(p, reference)
     assert _problems(finder.estimate(), measured, raised) == []

@@ -79,6 +79,12 @@ class ResultsEstimator3:
         self.finder = finder
         self.csvpaths = finder.csvpaths
         self.reference = finder.ref.parsed
+        # the normalization query() applies, so the estimate sees the same
+        # reference whether or not query() ran first ('beta/:manifest()';
+        # reviewer on #793). It is idempotent.
+        finder._attach_trailing_manifest(
+            name_one=self.reference.name_one, implies_star=True
+        )
         self.reads = []
         self.why = []
         self.would_raise = None
@@ -395,6 +401,15 @@ class ResultsEstimator3:
             if not (isinstance(p, FunctionCall3) and p.name not in PATH_BUILDERS)
         ]
         if not path or (len(path) == 1 and isinstance(path[0], Star3)):
+            if not self._path_groupers():
+                # a lone '*' or no path, with no wildcard function, is the
+                # runs with no template (4.1a; '$acme.results.:last()' is the
+                # last zero-level run): it counted every run, so
+                # '$acme.results.*:manifest()' estimated 13 and read 2
+                # (reviewer on #793). ':all()/*' and the like are left to the
+                # grouping bounds below.
+                home = Nos(archive).join(group)
+                runs = [r for r in runs if self.finder._prefix_segments(r["home"], home) == []]
             if self._path_groupers():
                 # the wildcard narrows the runs ('$acme.results.:all()/*' is
                 # the runs under a first-level template), not here: every

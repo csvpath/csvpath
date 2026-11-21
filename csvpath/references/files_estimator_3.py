@@ -71,6 +71,12 @@ class FilesEstimator3:
         self.finder = finder
         self.csvpaths = finder.csvpaths
         self.reference = finder.ref.parsed
+        # the normalization query() applies, so the estimate sees the same
+        # reference whether or not query() ran first ('beta/:manifest()';
+        # reviewer on #793). It is idempotent.
+        finder._attach_trailing_manifest(
+            name_one=self.reference.name_one, implies_star=False
+        )
         self.reads = []
         self.why = []
         self.would_raise = None
