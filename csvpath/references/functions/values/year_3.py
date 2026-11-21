@@ -2,8 +2,8 @@ from datetime import datetime
 
 from ...reference_3 import Reference3
 from ..function_3 import Function3
+from .now_3 import Now3
 from .time_window_function_3 import TimeWindowFunction3
-from csvpath.util.date_util import DateUtility as daut
 
 
 class Year3(TimeWindowFunction3):
@@ -48,10 +48,14 @@ class Year3(TimeWindowFunction3):
         "The current year, e.g. 2026 -- computed from the clock, not "
         "any resolved entity. Also usable as a date-range context "
         "setter/anchor -- see TimeWindowFunction3."
+        ' Takes a time function to read the year of, e.g. :year(:date("2026-01-02")), or a year, e.g. :year(2025).'
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    ARG_TYPES = ()
+    # a time function to read the year of, or the year itself (6.27g),
+    # as an int or a string of digits (an @variable from data)
+    ARG_TYPES = (int, str, TimeWindowFunction3, Now3)
+    COMPONENT = "year"
     ARG_REQUIRED = False
     SOURCE = "clock"
     #
@@ -71,14 +75,14 @@ class Year3(TimeWindowFunction3):
     }
 
     def compute(self) -> int:
-        return daut.now().year
+        return self.base_datetime().year
 
     def start_datetime(self) -> datetime:
-        now = daut.now().replace(tzinfo=None)
+        now = self.base_datetime()
         return now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
 
     def end_datetime(self) -> datetime:
-        now = daut.now().replace(tzinfo=None)
+        now = self.base_datetime()
         return now.replace(
             month=12, day=31, hour=23, minute=59, second=59, microsecond=999999
         )

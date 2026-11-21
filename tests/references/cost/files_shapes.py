@@ -230,4 +230,17 @@ SHAPES = [
     '$acme_invoices.files.:readme().:last():uuid()',
     '$:regex(/^o/).files.:readme().:last():sources()',
     '$orders.files.:log().:index(0)',
+    # time functions with an argument (#788, reviewer's probes; 6.27g)
+    '$orders.files.:flatten().:year(2026)',
+    '$orders.files.:flatten().:year(2026):last()',
+    '$orders.files.:flatten().:year(2025):last()',
+    '$orders.files.:flatten().:from(:month(:date("2026-08-01"))):last()',
+    '$orders.files.:year(2026):last()',
+    '$orders.files.orders/:year(2026)',
+    '$orders.files.orders/:name(:year(2026))',
+    '$orders.files.orders/food.csv:year(2026)',
+    '$orders.files.:flatten().:hour(18)',
+    '$orders.files.:flatten().:from(:yesterday(:hour(18)))',
+    '$orders.files.:flatten().:from(:month(13))',
+    '$orders.files.:flatten().:yesterday("2026-01-02")',
 ]

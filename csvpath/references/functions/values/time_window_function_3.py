@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from ..function_3 import Function3
+from .clock_utility import ClockUtility as clut
 
 
 class TimeWindowFunction3(Function3):
@@ -45,6 +46,28 @@ class TimeWindowFunction3(Function3):
     2026-11-12 ':to()' and ':after()' used X.end_datetime, a four-way
     rule confirmed 2026-10-17 (decision D8). Bare and standalone, with
     no directional function, it is its whole window, start to end."""
+
+    #
+    # the datetime field an int argument sets, e.g. "year" for ':year(2025)'
+    # (compendium 6.27g; NRE 102 ':year(@the_year)'); None when an int
+    # argument means nothing
+    #
+    COMPONENT = None
+
+    def check_valid(self) -> None:
+        super().check_valid()
+        if isinstance(self._arg, (int, str)) and not isinstance(self._arg, bool):
+            # an impossible value raises here, before anything is read
+            self.base_datetime()
+
+    def check_resolved(self) -> None:
+        if isinstance(self.arg, (int, str)) and not isinstance(self.arg, bool):
+            self.base_datetime()
+
+    def base_datetime(self) -> datetime:
+        """the moment this function computes from: now, or its
+        argument's (see ClockUtility.base())"""
+        return clut.base(function=self, component=self.COMPONENT)
 
     def start_datetime(self) -> datetime:
         raise NotImplementedError(
