@@ -8,7 +8,6 @@
 # built, a resolved value when it resolves, and the name again where it
 # meets the file system.
 #
-import os
 
 import pytest
 
@@ -34,6 +33,8 @@ PATHS = [
     "C:secret.txt",
     "x\x00.txt",
     "..",
+    ".",
+    "...",
     "",
     "   ",
 ]
@@ -66,7 +67,9 @@ class TestFunctions:
     @pytest.mark.parametrize("cls", [File3, Printouts3])
     @pytest.mark.parametrize("name", [p for p in PATHS if p.strip()])
     def test_a_literal_path_raises_when_built(self, cls, name):
-        with pytest.raises(ReferenceException3, match="bare file name|cannot be empty"):
+        with pytest.raises(
+            ReferenceException3, match="bare file name|cannot be empty|only dots"
+        ):
             cls(arg=name).check_valid()
 
     @pytest.mark.parametrize("cls", [File3, Printouts3])
@@ -88,7 +91,7 @@ class TestTheJoinIsGuarded:
     def test_accessor_file_path(self, cls):
         accessor = cls(arg="ok")
         accessor.arg = "../x"
-        with pytest.raises(ReferenceException3, match="bare file name"):
+        with pytest.raises(ReferenceRuntimeException3, match="bare file name"):
             ResultsReferenceFinder3._accessor_file_path(
                 instance_dir="/tmp/instance", accessor=accessor
             )
@@ -135,10 +138,40 @@ class TestThroughAReference:
                 runs, '$acme.results.:last().first_id:printouts("../x")', None
             ).query()
 
+    @pytest.mark.parametrize(
+        "reference,values",
+        [
+            # a path assembled from parts (reviewer on #791)
+            ('$acme.results.:last().first_id:file("{@a}{@b}")', {"a": "..", "b": "/x"}),
+            # inside another function
+            ("$acme.results.:having(:file(@f)).*", {"f": "../x"}),
+            ("$acme.results.:last().first_id:file(@f)", {"f": "."}),
+        ],
+    )
+    def test_assembled_nested_and_dot_paths_raise_and_are_predicted(
+        self,
+        runs,  # noqa: F811
+        reference,
+        values,
+    ):
+        p, _ = runs
+
+        def finder():
+            f = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=p)
+            for name, value in values.items():
+                f.set_variable(name, value=value)
+            return f
+
+        would_raise = finder().estimate().would_raise
+        with pytest.raises(ReferenceRuntimeException3) as e:
+            finder().query()
+        assert would_raise is not None and str(e.value) in would_raise
+
     def test_a_bare_name_still_reads(self, runs):  # noqa: F811
         finder = self._finder(
             runs, "$acme.results.:last().first_id:file(@f)", "vars.json"
         )
-        data = finder.resolve_from(finder.query()).results[0].data
-        assert data is not None
-        assert os.path.basename(finder.query().results[0].path) != "secret.txt"
+        selection = finder.query()
+        data = finder.resolve_from(selection).results[0].data
+        with open(selection.results[0].path, "rb") as f:
+            assert data == f.read()
