@@ -9,7 +9,7 @@ class DayName3(Function3):
     # see year_3.py for the shared SOURCE == "clock" design this follows.
     NAME = "day_name"
     SUMMARY = (
-        "The current day of the week's full name, e.g. \"Wednesday\" -- computed from the clock."
+        'The current day of the week\'s full name, e.g. "Wednesday" -- computed from the clock.'
         " Takes a time function to read the day name of, e.g. :day_name(:yesterday())."
     )
     ROLE = Function3.VALUE

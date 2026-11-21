@@ -48,12 +48,13 @@ class Year3(TimeWindowFunction3):
         "The current year, e.g. 2026 -- computed from the clock, not "
         "any resolved entity. Also usable as a date-range context "
         "setter/anchor -- see TimeWindowFunction3."
-
-        " Takes a time function to read the year of, e.g. :year(:date(\"2026-01-02\")), or a year, e.g. :year(2025)."    )
+        ' Takes a time function to read the year of, e.g. :year(:date("2026-01-02")), or a year, e.g. :year(2025).'
+    )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    # a time function to read the year of, or the year itself (6.27g)
-    ARG_TYPES = (int, TimeWindowFunction3, Now3)
+    # a time function to read the year of, or the year itself (6.27g),
+    # as an int or a string of digits (an @variable from data)
+    ARG_TYPES = (int, str, TimeWindowFunction3, Now3)
     COMPONENT = "year"
     ARG_REQUIRED = False
     SOURCE = "clock"

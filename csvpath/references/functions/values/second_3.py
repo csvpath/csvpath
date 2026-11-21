@@ -18,12 +18,13 @@ class Second3(TimeWindowFunction3):
         "The current second (0-59) -- computed from the clock. Also "
         "usable as a date-range context setter/anchor -- see "
         "TimeWindowFunction3."
-
-        " Takes a time function to read the second of, or a second."    )
+        " Takes a time function to read the second of, or a second."
+    )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    # a time function to read the second of, or the second itself (6.27g)
-    ARG_TYPES = (int, TimeWindowFunction3, Now3)
+    # a time function to read the second of, or the second itself (6.27g),
+    # as an int or a string of digits (an @variable from data)
+    ARG_TYPES = (int, str, TimeWindowFunction3, Now3)
     COMPONENT = "second"
     ARG_REQUIRED = False
     SOURCE = "clock"

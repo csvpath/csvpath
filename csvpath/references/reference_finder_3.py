@@ -2054,10 +2054,10 @@ class ReferenceFinder3(ABC):
         original = built.arg
         resolved = self._resolve_value(original)
         if built.ARG_TYPES and not isinstance(resolved, built.ARG_TYPES):
-            allowed = ", ".join(t.__name__ for t in built.ARG_TYPES)
+            allowed = ", ".join(built._arg_type_name(t) for t in built.ARG_TYPES)
             raise ReferenceRuntimeException3(
-                f":{built.name}() argument {original} resolved to a "
-                f"{type(resolved).__name__}, expected one of ({allowed})"
+                f":{built.name}() argument {original} resolved to "
+                f"{resolved!r}; it must be one of: {allowed}"
             )
         built.arg = resolved
 

@@ -18,12 +18,13 @@ class Day3(TimeWindowFunction3):
         "The current day of the month as a 1-31 int -- computed from "
         "the clock. Also usable as a date-range context setter/anchor, "
         "same window as :today() -- see TimeWindowFunction3."
-
-        " Takes a time function to read the day of, or a day of this month, e.g. :day(6)."    )
+        " Takes a time function to read the day of, or a day of this month, e.g. :day(6)."
+    )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    # a time function to read the day of, or the day itself (6.27g)
-    ARG_TYPES = (int, TimeWindowFunction3, Now3)
+    # a time function to read the day of, or the day itself (6.27g),
+    # as an int or a string of digits (an @variable from data)
+    ARG_TYPES = (int, str, TimeWindowFunction3, Now3)
     COMPONENT = "day"
     ARG_REQUIRED = False
     SOURCE = "clock"

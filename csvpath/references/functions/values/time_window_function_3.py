@@ -56,7 +56,7 @@ class TimeWindowFunction3(Function3):
 
     def check_valid(self) -> None:
         super().check_valid()
-        if isinstance(self._arg, int) and not isinstance(self._arg, bool):
+        if isinstance(self._arg, (int, str)) and not isinstance(self._arg, bool):
             # an impossible value raises here, before anything is read
             self.base_datetime()
 

@@ -12,12 +12,14 @@ class DayRelativeFunction3(TimeWindowFunction3):
     datetime. E.g. ':yesterday(:date("2026-01-02"))' returns the date,
     date range or string beginning at the first moment of 2026-01-01").
 
-    With a time function argument the window is the argument's own window,
-    moved back DAYS_BACK days, so a finer argument keeps its precision:
-    ':yesterday(:hour_24(18))' is 18:00-18:59 yesterday, and as an anchor
-    (':from(:yesterday(:hour_24(18)))', NRE "since close of business
-    yesterday") its first moment, yesterday at 18:00. An argument coarser
-    than a day (:year(), :month()) has no single day to move, so it raises.
+    With a time function argument the window runs from the argument's first
+    moment, moved back DAYS_BACK days, to the end of that day. A whole-day
+    argument gives the whole day (6.27g: "beginning at the first moment of
+    2026-01-01"); a finer one keeps its time of day as the start, so
+    ':yesterday(:hour(18))' is yesterday from 18:00 on, and as an anchor
+    (':from(:yesterday(:hour(18)))', NRE 568, "since close of business
+    yesterday") yesterday at 18:00. An argument coarser than a day
+    (:year(), :month()) has no single day to move, so it raises.
 
     A string argument is a format for the date (6.27g: "when passed a
     format string, the formatted date"): ':yesterday("%A")' is yesterday's
@@ -40,9 +42,9 @@ class DayRelativeFunction3(TimeWindowFunction3):
             )
         if isinstance(arg, str) and "%" not in arg:
             raise ReferenceException3(
-                f":{self.NAME}({arg!r}) takes a format string, e.g. "
-                f':{self.NAME}("%A"); for a day relative to a date use '
-                f":{self.NAME}(:date({arg!r}))."
+                f":{self.NAME}() takes a format string, e.g. "
+                f':{self.NAME}("%A"), and got {arg!r}; for a day relative to '
+                f'a date use :{self.NAME}(:date("YYYY-MM-DD")).'
             )
         if getattr(arg, "NAME", None) in self.TOO_COARSE:
             raise ReferenceException3(
@@ -54,7 +56,8 @@ class DayRelativeFunction3(TimeWindowFunction3):
     def _window(self) -> tuple:
         arg = self.arg
         if isinstance(arg, TimeWindowFunction3):
-            start, end = arg.start_datetime(), arg.end_datetime()
+            start = arg.start_datetime()
+            end = start.replace(hour=23, minute=59, second=59, microsecond=999999)
         else:
             # no argument, a format string, or ':now()': the day of now. An
             # instant has no window of its own to move, and "relative to a
@@ -68,12 +71,14 @@ class DayRelativeFunction3(TimeWindowFunction3):
         return start - back, end - back
 
     def compute(self) -> str:
+        clut.check_format(function=self, value=self.arg)
         start = self._window()[0]
         if isinstance(self.arg, str):
             return start.strftime(self.arg)
         return start.date().isoformat()
 
     def start_datetime(self) -> datetime:
+        clut.check_format(function=self, value=self.arg)
         return self._window()[0]
 
     def end_datetime(self) -> datetime:

@@ -18,17 +18,16 @@ class Today3(DayRelativeFunction3):
     # (both mean "the current day"); see day_3.py for that extrapolation.
     NAME = "today"
     SUMMARY = (
-        "Today's date as \"YYYY-MM-DD\" -- computed from the clock. "
+        'Today\'s date as "YYYY-MM-DD" -- computed from the clock. '
         "Also usable as a date-range context setter/anchor -- see "
         "TimeWindowFunction3."
-
-        " Takes a time function to start from, or a format string for the date, e.g. :today(\"%A\")."    )
+        ' Takes a time function to start from, or a format string for the date, e.g. :today("%A").'
+    )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
     # a time function to start from, or a format string (6.27g); see
     # DayRelativeFunction3
     ARG_TYPES = (str, TimeWindowFunction3, Now3)
-    DAYS_BACK = 0
     ARG_REQUIRED = False
     SOURCE = "clock"
     # POSITIONS added 2026-10-17 -- see year_3.py's own comment for why.

@@ -30,7 +30,10 @@ from csvpath.references.functions.values.second_3 import Second3
 from csvpath.references.functions.values.today_3 import Today3
 from csvpath.references.functions.values.year_3 import Year3
 from csvpath.references.functions.values.yesterday_3 import Yesterday3
-from csvpath.references.reference_exceptions_3 import ReferenceException3
+from csvpath.references.reference_exceptions_3 import (
+    ReferenceException3,
+    ReferenceRuntimeException3,
+)
 from csvpath.references.reference_finder_factory_3 import ReferenceFinderFactory3
 from csvpath.util.date_util import DateUtility as daut
 from tests.references.cost.test_results_estimate_soundness_3 import CORPUS_CONFIG
@@ -77,7 +80,7 @@ class TestClockUtility:
 
     def test_an_int_sets_the_component(self):
         assert clut.base(function=Year3(arg=2024), component="year") == datetime(
-            2024, 1, 4, 12, 30, 15
+            2024, 1, 1, 12, 30, 15
         )
 
     def test_an_int_without_a_component_raises(self):
@@ -85,7 +88,7 @@ class TestClockUtility:
             clut.base(function=DayName3(arg=3))
 
     def test_an_impossible_component_raises(self):
-        with pytest.raises(ReferenceException3, match="not a real month"):
+        with pytest.raises(ReferenceException3, match="not a valid month"):
             clut.base(function=Month3(arg=13), component="month")
 
     def test_true_is_not_an_int(self):
@@ -182,13 +185,92 @@ class TestExplicitComponent:
         [Month3(arg=13), Month3(arg=0), Day3(arg=32), Hour243(arg=24), Minute3(arg=60)],
     )
     def test_an_impossible_value_raises_when_built(self, function):
-        with pytest.raises(ReferenceException3, match="is not a real"):
+        with pytest.raises(ReferenceException3, match="is not a valid"):
             function.check_valid()
 
-    def test_hour_takes_no_int(self):
+    @pytest.mark.parametrize("hour", [1, 6, 12, "6"])
+    def test_a_12_hour_value_is_ambiguous(self, hour):
         # the 12-hour clock: ':hour(6)' cannot say am or pm
-        with pytest.raises(ReferenceException3, match=":hour_24\\(18\\)"):
-            Hour3(arg=6).check_valid()
+        with pytest.raises(
+            ReferenceException3, match=r"ambiguous.*Use :hour_24\(\d+\) or :hour_24\(\d+\)"
+        ):
+            Hour3(arg=hour).check_valid()
+
+    @pytest.mark.parametrize(
+        "hour,start", [(18, "2026-01-04T18:00:00"), (0, "2026-01-04T00:00:00")]
+    )
+    def test_0_and_13_to_23_are_unambiguous(self, hour, start):
+        # NRE 568 ':yesterday(:hour(18))'; the value stays the 12-hour reading
+        f = _valid(Hour3(arg=hour))
+        assert f.start_datetime().isoformat() == start
+        assert f.compute() == int(datetime.fromisoformat(start).strftime("%I"))
+
+    @pytest.mark.parametrize(
+        "function,value",
+        [(Year3(arg="2025"), 2025), (Month3(arg=" 6 "), 6), (Hour243(arg="18"), 18)],
+    )
+    def test_a_string_of_digits_is_the_number(self, function, value):
+        # an @variable taken from data is a string (NRE 102 ':year(@the_year)')
+        assert _valid(function).compute() == value
+
+    def test_a_string_that_is_not_a_number_raises(self):
+        with pytest.raises(ReferenceException3, match="a time function or a number"):
+            Year3(arg="last year").check_valid()
+
+
+class TestCalendarEdges:
+    # an int component used to carry today's day into another month or year
+    # (reviewer on #788)
+    @pytest.mark.parametrize(
+        "today,function,window",
+        [
+            (
+                datetime(2026, 1, 30, 9, tzinfo=timezone.utc),
+                Month3(arg=2),
+                ("2026-02-01T00:00:00", "2026-02-28T23:59:59.999999"),
+            ),
+            (
+                datetime(2026, 3, 31, 9, tzinfo=timezone.utc),
+                Month3(arg=6),
+                ("2026-06-01T00:00:00", "2026-06-30T23:59:59.999999"),
+            ),
+            (
+                datetime(2028, 2, 29, 9, tzinfo=timezone.utc),
+                Year3(arg=2025),
+                ("2025-01-01T00:00:00", "2025-12-31T23:59:59.999999"),
+            ),
+            (
+                datetime(2028, 2, 29, 9, tzinfo=timezone.utc),
+                Year3(arg=2027),
+                ("2027-01-01T00:00:00", "2027-12-31T23:59:59.999999"),
+            ),
+        ],
+    )
+    def test_a_month_or_year_from_a_month_end(
+        self, monkeypatch, today, function, window
+    ):
+        monkeypatch.setattr(daut, "now", classmethod(lambda cls: today))
+        assert _window(_valid(function)) == window
+
+    def test_a_day_that_this_month_lacks_raises_and_names_the_month(self, monkeypatch):
+        monkeypatch.setattr(
+            daut,
+            "now",
+            classmethod(lambda cls: datetime(2026, 4, 10, tzinfo=timezone.utc)),
+        )
+        with pytest.raises(ReferenceException3, match="not a valid day in April 2026"):
+            Day3(arg=31).check_valid()
+
+    @pytest.mark.parametrize(
+        "date,yesterday",
+        [
+            ("2024-03-01", "2024-02-29"),
+            ("2026-01-01", "2025-12-31"),
+            ("2026-03-01", "2026-02-28"),
+        ],
+    )
+    def test_yesterday_across_a_month_or_year(self, date, yesterday):
+        assert _valid(Yesterday3(arg=_date(date))).compute() == yesterday
 
     @pytest.mark.parametrize("function", [DayName3(arg=3), MonthName3(arg=6)])
     def test_a_name_takes_no_int(self, function):
@@ -208,11 +290,18 @@ class TestRelativeDay:
         assert f.compute() == "2026-01-01"
         assert _window(f) == ("2026-01-01T00:00:00", "2026-01-01T23:59:59.999999")
 
-    def test_yesterday_of_an_hour_keeps_the_hour(self):
-        # NRE 568, "since close of business yesterday", with :hour_24()
-        f = _valid(Yesterday3(arg=_valid(Hour243(arg=18))))
+    @pytest.mark.parametrize("hour", [Hour243(arg=18), Hour3(arg=18)])
+    def test_yesterday_of_an_hour_starts_at_that_hour(self, hour):
+        # NRE 568, "since close of business yesterday": from 18:00 to the
+        # end of yesterday
+        f = _valid(Yesterday3(arg=_valid(hour)))
         assert f.compute() == "2026-01-03"
-        assert _window(f) == ("2026-01-03T18:00:00", "2026-01-03T18:59:59.999999")
+        assert _window(f) == ("2026-01-03T18:00:00", "2026-01-03T23:59:59.999999")
+
+    def test_yesterday_of_a_time_of_day_runs_to_the_end_of_the_day(self):
+        # a one-second ':date()' does not make yesterday one second long
+        f = _valid(Yesterday3(arg=_date("2026-01-02_10-00-00")))
+        assert _window(f) == ("2026-01-01T10:00:00", "2026-01-01T23:59:59.999999")
 
     def test_today_of_a_date_is_that_day(self):
         f = _valid(Today3(arg=_date("2025-07-04")))
@@ -244,6 +333,24 @@ class TestRelativeDay:
             ReferenceException3, match="time function or a format string"
         ):
             Today3(arg=arg).check_valid()
+
+
+class TestResolvedValues:
+    # an @variable or "{...}" value is only known once resolved; the format
+    # check runs again on it (reviewer on #788)
+    def test_a_resolved_date_string_raises(self):
+        f = _valid(Yesterday3(arg="%A"))
+        f.arg = "2026-01-02"
+        with pytest.raises(ReferenceRuntimeException3, match="format string"):
+            f.compute()
+        with pytest.raises(ReferenceRuntimeException3, match="format string"):
+            f.start_datetime()
+
+    def test_a_resolved_12_hour_value_raises(self):
+        f = _valid(Hour3(arg=18))
+        f.arg = 6
+        with pytest.raises(ReferenceException3, match="ambiguous"):
+            f.start_datetime()
 
 
 class TestTheArgumentTypeMessage:
@@ -294,9 +401,56 @@ class TestThroughAReference:
     def test_value(self, csvpaths, reference, value):
         assert _built(csvpaths, reference).compute() == value
 
-    def test_from_yesterday_close_of_business(self, csvpaths):
-        built = _built(csvpaths, "$acme.files.*.:from(:yesterday(:hour_24(18)))")
+    @pytest.mark.parametrize("direction", ["from", "to", "before", "after"])
+    def test_close_of_business_as_an_anchor(self, csvpaths, direction):
+        # NRE 568 as written, with each direction (6.27b: the first moment)
+        built = _built(csvpaths, f"$acme.files.*.:{direction}(:yesterday(:hour(18)))")
         assert built.arg.start_datetime() == datetime(2026, 1, 3, 18, 0)
+
+    def test_a_variable_year(self, csvpaths):
+        # NRE 102 ':year(@the_year)', from data as a string or as an int
+        for value in ("2025", 2025):
+            finder = ReferenceFinderFactory3.for_reference(
+                reference="$acme.files.*.:year(@the_year)", csvpaths=csvpaths
+            )
+            finder.set_variable("the_year", value=value)
+            assert (
+                finder._build(finder.ref.parsed.name_three.functions[0]).compute()
+                == 2025
+            )
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$acme.files.*.:yesterday(@d)",
+            '$acme.files.*.:yesterday("{@d}")',
+            '$acme.files.*.:today("{@d}")',
+        ],
+    )
+    def test_a_variable_date_where_a_format_goes_raises(self, csvpaths, reference):
+        finder = ReferenceFinderFactory3.for_reference(
+            reference=reference, csvpaths=csvpaths
+        )
+        finder.set_variable("d", value="2026-01-02")
+        built = finder._build(finder.ref.parsed.name_three.functions[0])
+        with pytest.raises(ReferenceRuntimeException3, match="format string"):
+            built.compute()
+
+    @pytest.mark.parametrize(
+        "reference,segment",
+        [
+            ("$acme.files.orders/:year(2026)", "2026"),
+            ('$acme.files.orders/:year(:date("2025-03-03"))', "2025"),
+            ('$acme.files.orders/:name("{:year(2025)}.csv")', "2025.csv"),
+        ],
+    )
+    def test_a_path_segment(self, csvpaths, reference, segment):
+        finder = ReferenceFinderFactory3.for_reference(
+            reference=reference, csvpaths=csvpaths
+        )
+        assert (
+            finder._compile_path_pattern(finder.ref.parsed.name_one.path)[-1] == segment
+        )
 
     def test_an_interpolated_name(self, csvpaths):
         # NRE 83

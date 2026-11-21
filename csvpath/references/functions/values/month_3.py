@@ -18,12 +18,13 @@ class Month3(TimeWindowFunction3):
         "The current month as a 1-12 int -- computed from the clock. "
         "Also usable as a date-range context setter/anchor -- see "
         "TimeWindowFunction3."
-
-        " Takes a time function to read the month of, or a month, e.g. :month(6)."    )
+        " Takes a time function to read the month of, or a month, e.g. :month(6)."
+    )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    # a time function to read the month of, or the month itself (6.27g)
-    ARG_TYPES = (int, TimeWindowFunction3, Now3)
+    # a time function to read the month of, or the month itself (6.27g),
+    # as an int or a string of digits (an @variable from data)
+    ARG_TYPES = (int, str, TimeWindowFunction3, Now3)
     COMPONENT = "month"
     ARG_REQUIRED = False
     SOURCE = "clock"

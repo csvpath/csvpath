@@ -140,6 +140,18 @@ class ResultsEstimator3:
             self.finder._check_one_value(self.reference)
         except ReferenceException3 as e:
             return str(e)
+        name_one = self.reference.name_one
+        built = [p for p in name_one.path if isinstance(p, FunctionCall3)]
+        built += list(name_one.functions)
+        if self.reference.name_three is not None:
+            built += list(self.reference.name_three.functions)
+        for call in built:
+            try:
+                # builds and checks the arguments (e.g. ':month(13)',
+                # ':hour(6)'), as query() does first; it reads nothing
+                self.finder._build(call)
+            except ReferenceException3 as e:
+                return str(e)
         if self.finder._bare_log_call(self.reference) is not None:
             if not isinstance(self.reference.root_major, Star3):
                 return ":log() requires root_major '*'"

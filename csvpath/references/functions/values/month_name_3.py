@@ -9,7 +9,7 @@ class MonthName3(Function3):
     # see year_3.py for the shared SOURCE == "clock" design this follows.
     NAME = "month_name"
     SUMMARY = (
-        "The current month's full name, e.g. \"August\" -- computed from the clock."
+        'The current month\'s full name, e.g. "August" -- computed from the clock.'
         " Takes a time function to read the month name of."
     )
     ROLE = Function3.VALUE

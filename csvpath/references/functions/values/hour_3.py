@@ -22,14 +22,17 @@ class Hour3(TimeWindowFunction3):
         "clock. Also usable as a date-range context setter/anchor "
         "(the real current hour, not a display convention) -- see "
         "TimeWindowFunction3."
-
-        " Takes a time function to read the hour of; for a given hour use :hour_24()."    )
+        " Takes a time function to read the hour of; for a given hour use :hour_24()."
+    )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    # a time function to read the hour of (6.27g). An int is refused in
-    # check_valid(): a 12-hour value cannot say am or pm, so ':hour(6)'
-    # would be a guess; the hour itself is ':hour_24(18)'
-    ARG_TYPES = (int, TimeWindowFunction3, Now3)
+    # a time function to read the hour of (6.27g), or an hour. A 12-hour
+    # value cannot say am or pm, so 1-12 raise; 0 and 13-23 can only mean
+    # one hour, so ':hour(18)' is 18:00 (NRE 568, "since close of business
+    # yesterday", ':yesterday(:hour(18))'). Its value is still the 12-hour
+    # reading, 6.
+    ARG_TYPES = (int, str, TimeWindowFunction3, Now3)
+    COMPONENT = "hour"
     ARG_REQUIRED = False
     SOURCE = "clock"
     # POSITIONS added 2026-10-17 -- see year_3.py's own comment for why.
@@ -40,13 +43,26 @@ class Hour3(TimeWindowFunction3):
     }
 
     def check_valid(self) -> None:
-        if isinstance(self._arg, int) and not isinstance(self._arg, bool):
-            raise ReferenceException3(
-                f":hour({self._arg}) is ambiguous: :hour() is the 12-hour clock, "
-                "so a number cannot say am or pm. Use :hour_24(), e.g. "
-                ":hour_24(18) for 6pm."
-            )
+        self._check_not_ambiguous(self._arg)
         super().check_valid()
+
+    def base_datetime(self) -> datetime:
+        # again for an @variable's value, only known once resolved
+        self._check_not_ambiguous(self.arg)
+        return super().base_datetime()
+
+    @staticmethod
+    def _check_not_ambiguous(arg) -> None:
+        if isinstance(arg, bool):
+            return
+        if isinstance(arg, str) and arg.strip().isdigit():
+            arg = int(arg.strip())
+        if isinstance(arg, int) and 1 <= arg <= 12:
+            raise ReferenceException3(
+                f":hour({arg}) is ambiguous: :hour() is the 12-hour clock, so "
+                f"{arg} could be am or pm. Use :hour_24({arg % 12}) or "
+                f":hour_24({arg % 12 + 12})."
+            )
 
     def compute(self) -> int:
         return int(self.base_datetime().strftime("%I"))

@@ -19,11 +19,11 @@ class Yesterday3(DayRelativeFunction3):
     # start()/end() rules confirmed against this exact example.
     NAME = "yesterday"
     SUMMARY = (
-        "Yesterday's date as \"YYYY-MM-DD\" -- computed from the clock. "
+        'Yesterday\'s date as "YYYY-MM-DD" -- computed from the clock. '
         "Also usable as a date-range context setter/anchor -- see "
         "TimeWindowFunction3."
-
-        " Takes a time function to count back from, e.g. :yesterday(:hour_24(18)), or a format string for the date, e.g. :yesterday(\"%A\")."    )
+        ' Takes a time function to count back from, e.g. :yesterday(:hour_24(18)), or a format string for the date, e.g. :yesterday("%A").'
+    )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
     # a time function to start from, or a format string (6.27g); see

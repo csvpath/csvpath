@@ -400,7 +400,9 @@ class FilesEstimator3:
         gates only where the finder takes it there"""
         for call in self._calls():
             cls = ReferenceFunctionFactory.get_registered_class(call.name)
-            if cls is None or cls.SOURCE is None or call.arg is None:
+            if cls is None or cls.SOURCE in (None, "clock") or call.arg is None:
+                # a clock value with an argument is a path segment
+                # ('orders/:year(2026)'), not a field
                 continue
             if call.name not in self.NAME_ONE_GATES:
                 return f"':{call.name}(...)' on name_one; field functions usually go in name_three"

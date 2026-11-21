@@ -17,12 +17,13 @@ class Hour243(TimeWindowFunction3):
         "The current hour, 24-hour clock (0-23) -- computed from the "
         "clock. Also usable as a date-range context setter/anchor -- "
         "see TimeWindowFunction3."
-
-        " Takes a time function to read the hour of, or an hour, e.g. :hour_24(18)."    )
+        " Takes a time function to read the hour of, or an hour, e.g. :hour_24(18)."
+    )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    # a time function to read the hour of, or the hour itself (6.27g)
-    ARG_TYPES = (int, TimeWindowFunction3, Now3)
+    # a time function to read the hour of, or the hour itself (6.27g),
+    # as an int or a string of digits (an @variable from data)
+    ARG_TYPES = (int, str, TimeWindowFunction3, Now3)
     COMPONENT = "hour"
     ARG_REQUIRED = False
     SOURCE = "clock"

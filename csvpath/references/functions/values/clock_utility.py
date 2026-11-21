@@ -2,7 +2,7 @@ from datetime import datetime
 
 from csvpath.util.date_util import DateUtility as daut
 
-from ...reference_exceptions_3 import ReferenceException3
+from ...reference_exceptions_3 import ReferenceException3, ReferenceRuntimeException3
 
 
 class ClockUtility:
@@ -21,6 +21,14 @@ class ClockUtility:
     All datetimes are naive UTC wall-clock, as TimeWindowFunction3's own
     docstring explains."""
 
+    #
+    # the coarser fields an int component resets first, so a day or month
+    # that exists today cannot make another month or year impossible:
+    # ':month(2)' on 30 January, ':year(2025)' on 29 February 2028
+    # (reviewer on #788). The component's own window ignores them.
+    #
+    RESETS = {"year": {"month": 1, "day": 1}, "month": {"day": 1}}
+
     @staticmethod
     def is_moment(value) -> bool:
         """true when `value` is a built time function that names a moment:
@@ -28,11 +36,10 @@ class ClockUtility:
         #
         # imported here: both modules import this one
         #
+        from .now_3 import Now3
         from .time_window_function_3 import TimeWindowFunction3
 
-        return isinstance(value, TimeWindowFunction3) or (
-            getattr(value, "NAME", None) == "now"
-        )
+        return isinstance(value, (TimeWindowFunction3, Now3))
 
     @classmethod
     def moment(cls, *, function) -> datetime:
@@ -42,7 +49,7 @@ class ClockUtility:
             raise ValueError("function cannot be None")
         if not cls.is_moment(function):
             raise TypeError(f"{function!r} is not a time function")
-        if getattr(function, "NAME", None) == "now":
+        if function.NAME == "now":
             return cls.now()
         return function.start_datetime()
 
@@ -54,13 +61,24 @@ class ClockUtility:
     def base(cls, *, function, component: "str | None" = None) -> datetime:
         """the moment `function` computes from: now with no argument; the
         argument's moment for a time function argument; now with its
-        `component` field set for an int argument. A string argument (a
-        format string, :yesterday()/:today()) leaves the moment at now."""
+        `component` field set for an int argument, or a string of digits,
+        as an @variable taken from data usually is (NRE 102
+        ':year(@the_year)'). Any other string is a format (:yesterday(),
+        :today()) and leaves the moment at now."""
         if function is None:
             raise ValueError("function cannot be None")
         arg = function.arg
-        if arg is None or isinstance(arg, str):
+        if arg is None:
             return cls.now()
+        if isinstance(arg, str):
+            if component is None:
+                return cls.now()
+            if not arg.strip().isdigit():
+                raise ReferenceException3(
+                    f":{function.NAME}() takes a time function or a number, "
+                    f"not {arg!r}."
+                )
+            arg = int(arg.strip())
         if cls.is_moment(arg):
             return cls.moment(function=arg)
         if isinstance(arg, bool) or not isinstance(arg, int):
@@ -73,10 +91,29 @@ class ClockUtility:
                 f":{function.NAME}() takes a time function argument, e.g. "
                 f':{function.NAME}(:date("2026-01-02")), not an int.'
             )
+        now = cls.now()
         try:
-            return cls.now().replace(**{component: arg})
+            return now.replace(**cls.RESETS.get(component, {})).replace(
+                **{component: arg}
+            )
         except ValueError:
+            where = {"day": f" in {now.strftime('%B %Y')}"}.get(component, "")
             raise ReferenceException3(
-                f":{function.NAME}({arg}) is not a real {component} here (now is "
-                f"{cls.now().isoformat(timespec='seconds')})."
+                f":{function.NAME}({arg}) is not a valid {component}{where}."
             ) from None
+
+    @staticmethod
+    def check_format(*, function, value) -> None:
+        """a :yesterday()/:today() string is a strftime format. One with no
+        '%' would come back unchanged, so a date there is a silent wrong
+        answer: it raises. Checked on the literal when the function is
+        built and again on a resolved @variable or "{...}" value, which is
+        only known later (reviewer on #788)."""
+        if function is None:
+            raise ValueError("function cannot be None")
+        if isinstance(value, str) and "%" not in value:
+            raise ReferenceRuntimeException3(
+                f":{function.NAME}() takes a format string, e.g. "
+                f':{function.NAME}("%A"), and got {value!r}; for a day '
+                f'relative to a date use :{function.NAME}(:date("YYYY-MM-DD")).'
+            )
