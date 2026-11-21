@@ -90,8 +90,12 @@ class ResultsEstimator3:
     #
     def estimate(self) -> ReferenceEstimate3:
         archive = self.csvpaths.config.archive_path
+        root_problem = self.finder._root_major_problem()
         problem = self._query_would_raise()
-        if problem is not None:
+        if root_problem is not None:
+            # query() raises building the root, before it reads anything
+            self.would_raise = f"query: {root_problem}"
+        elif problem is not None:
             # query() raises somewhere along the way: what it would read up
             # to there is at most the normal query estimate, and resolve
             # never runs
