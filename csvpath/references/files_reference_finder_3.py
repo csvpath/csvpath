@@ -286,6 +286,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             name_one.name_two is not None
             and isinstance(name_one.path[0], FunctionCall3)
             and name_one.path[0].name not in ("name", "regex", "choice")
+            and len(name_one.path) == 1
         ):
             # '#worksheet' only means anything against a literal named-
             # file path (there is one specific file to have worksheets
@@ -296,9 +297,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # path segment, so both are exempt here same as they are
             # from _is_bare_function_only's own "bare marker" test; a
             # bare context-setter/pointer/marker function occupying
-            # name_one's entire content (':manifest()', ':all()',
-            # ':flatten()', etc.) has no file of its own to read a
-            # worksheet from.
+            # name_one's entire content (':manifest()', ':definition()',
+            # etc.) has no file of its own to read a worksheet from. In a
+            # longer path a wildcard picks file homes like '*' does, so the
+            # worksheet applies to each result, wherever the wildcard is:
+            # until 2026-11-21 ':all()/*#Sheet1' raised here while
+            # '*/:all()#Sheet1' did not (reviewer on #787).
             raise ReferenceException3(
                 "FilesReferenceFinder3 does not support the '#worksheet' "
                 "marker (name_two) combined with a bare context-setter/"
@@ -493,27 +497,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
         #
         group_key = self._file_home_key
         wildcard_elements = None
-        if self._is_wildcard_path_reference(name_one, flatten_paths=False):
+        if self._is_wildcard_path_reference(name_one=name_one, flatten_paths=False):
             wildcard_elements = self._wildcard_path_elements(name_one.path)
         if wildcard_elements is not None:
             # ':all()'/':groups()' in any position, or a lone wildcard with a
             # name_one pointer (compendium 4.2, 4.5; name_one gap review A, B)
-            wildcard_home = self.csvpaths.file_manager.named_file_home(
-                root_major
-            ).rstrip("/")
-            candidates = [
-                entry
-                for entry, _ in self._wildcard_candidates_for_name(
-                    name=root_major, elements=wildcard_elements
-                )
-            ]
+            candidates = self._wildcard_candidates_for_name(
+                name=root_major, elements=wildcard_elements
+            )
             partitioned = self._wildcard_path_groups(wildcard_elements)
-
-            def group_key(entry: dict) -> tuple:
-                return self._wildcard_path_key(
-                    entry=entry, home=wildcard_home, elements=wildcard_elements
-                )
-
+            group_key = self._wildcard_group_key(
+                elements=wildcard_elements, owner_of=None, pools=False
+            )
         elif is_grouped:
             candidates = self._candidates_for_name(root_major, [Star3()])
         elif is_flattened or is_deep_grouped:
@@ -1275,13 +1270,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
         name_one_pointer = None
         group_key = self._file_home_key
         wildcard_elements = None
-        if self._is_wildcard_path_reference(name_one, flatten_paths=True):
+        if self._is_wildcard_path_reference(name_one=name_one, flatten_paths=True):
             wildcard_elements = self._wildcard_path_elements(name_one.path)
         if wildcard_elements is not None:
             # ':all()'/':groups()' in any position, a ':flatten()' with more
             # path (name_one gap review C0), or a lone wildcard with a
-            # name_one pointer. A group stays within its named-file (4.1b);
-            # ':flatten()' without a grouping wildcard pools across them.
+            # name_one pointer. A group stays within its named-file (4.1b:
+            # '$*' groups per named entity), except with a ':flatten()' in
+            # the path, which pools across them (4.1b: "Two forms pool
+            # across every named entity instead: ':flatten()' in files and
+            # results"), so '$*.files.:flatten()/:all()' groups a file home
+            # name across every named-file, as ':flatten()/:name("x")' pools
+            # it. The candidates are in time order, so a pooled group's
+            # pointer picks by arrival.
             if reference.name_three is None:
                 name_one_pointer = self._name_one_pointer(name_one)
             if name_one.functions and name_one_pointer is None:
@@ -1293,26 +1294,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     )
                 )
             candidates = []
-            wildcard_owner = {}
-            wildcard_homes = {}
+            owner_of = {}
             for name in self._matching_names(self.source.file_names(), name_filter):
-                wildcard_homes[name] = self.csvpaths.file_manager.named_file_home(
-                    name
-                ).rstrip("/")
-                for entry, _ in self._wildcard_candidates_for_name(
+                for entry in self._wildcard_candidates_for_name(
                     name=name, elements=wildcard_elements
                 ):
-                    wildcard_owner[entry["file_home"]] = name
+                    owner_of[entry["file_home"]] = name
                     candidates.append(entry)
+            candidates = sorted(candidates, key=lambda e: e["time"])
             partitioned = self._wildcard_path_groups(wildcard_elements)
-
-            def group_key(entry: dict) -> tuple:
-                owner = wildcard_owner[entry["file_home"]]
-                key = self._wildcard_path_key(
-                    entry=entry, home=wildcard_homes[owner], elements=wildcard_elements
-                )
-                return (owner, key)
-
+            pools = any(element == ("wild", "flatten") for element in wildcard_elements)
+            group_key = self._wildcard_group_key(
+                elements=wildcard_elements, owner_of=owner_of, pools=pools
+            )
         elif is_grouped:
             candidates = []
             for name in self._matching_names(
@@ -2637,7 +2631,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
     PATH_WILDCARDS = ("all", "groups", "flatten")
 
     @classmethod
-    def _is_wildcard_path_reference(cls, name_one, *, flatten_paths: bool) -> bool:
+    def _is_wildcard_path_reference(cls, *, name_one, flatten_paths: bool) -> bool:
         """true for a name_one path the wildcard-path matcher takes
         (_wildcard_path_key()):
         - an ':all()' or ':groups()' in a path of more than one segment,
@@ -2768,20 +2762,47 @@ class FilesReferenceFinder3(ReferenceFinder3):
         return key
 
     def _wildcard_candidates_for_name(self, *, name: str, elements: list) -> list:
-        """(entry, group key) for every manifest entry of one named-file
-        whose file home matches the wildcard path, in manifest order"""
+        """every manifest entry of one named-file whose file home matches
+        the wildcard path, in manifest order"""
         if not name:
             raise ValueError("name cannot be None or empty")
         if elements is None:
             raise ValueError("elements cannot be None")
         manifest = self.source.file_manifest(name)
         home = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
-        found = []
-        for entry in manifest:
-            key = self._wildcard_path_key(entry=entry, home=home, elements=elements)
-            if key is not None:
-                found.append((entry, key))
-        return found
+        return [
+            entry
+            for entry in manifest
+            if self._wildcard_path_key(entry=entry, home=home, elements=elements)
+            is not None
+        ]
+
+    def _wildcard_group_key(self, *, elements: list, owner_of: "dict | None", pools: bool):
+        """the group key function for a wildcard path: what its grouping
+        wildcard matched (_wildcard_path_key()), below each candidate's own
+        named-file home. `owner_of` maps a file_home to its named-file,
+        for a traversal root (None for a literal root: the root is the
+        owner). Under a traversal root a group stays within its named-file
+        unless the path `pools` (has a ':flatten()', compendium 4.1b)."""
+        if elements is None:
+            raise ValueError("elements cannot be None")
+        homes = {}
+
+        def home_of(name: str) -> str:
+            if name not in homes:
+                homes[name] = self.csvpaths.file_manager.named_file_home(name).rstrip("/")
+            return homes[name]
+
+        root_major = self.ref.parsed.root_major
+
+        def group_key(entry: dict) -> tuple:
+            owner = root_major if owner_of is None else owner_of[entry["file_home"]]
+            key = self._wildcard_path_key(entry=entry, home=home_of(owner), elements=elements)
+            if owner_of is None or pools:
+                return key
+            return (owner, key)
+
+        return group_key
 
     @staticmethod
     def _file_home_key(entry: dict) -> str:

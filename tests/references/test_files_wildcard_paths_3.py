@@ -178,7 +178,7 @@ class TestWhichPathsTheMatcherTakes:
         ).parsed
         assert (
             FilesReferenceFinder3._is_wildcard_path_reference(
-                parsed.name_one, flatten_paths=flatten_paths
+                name_one=parsed.name_one, flatten_paths=flatten_paths
             )
             is expected
         )
@@ -205,6 +205,8 @@ class TestWhichPathsTheMatcherTakes:
 #
 # (named-file, directories, file name, versions), registered in this order
 #
+NAMES = ("acme", "alpha", "beta", "cappa", "delta")
+
 LAYOUT = [
     ("alpha", "", "zero.csv", 1),
     ("alpha", "", "one.csv", 2),
@@ -221,6 +223,8 @@ LAYOUT = [
     ("acme", "shipments/jan", "week2.csv", 2),
     ("acme", "shipments/feb", "week1.csv", 2),
     ("acme", "shipments/feb", "week2.csv", 2),
+    # a file home name another named-file has too, registered last
+    ("delta", "west", "two.csv", 1),
 ]
 
 
@@ -278,7 +282,7 @@ def _registered(tmp) -> tuple:
             template = f"{dirs}/:filename" if dirs else None
             p.file_manager.add_named_file(name=name, path=str(data), template=template)
     label = {}
-    for name in ("alpha", "beta", "cappa", "acme"):
+    for name in NAMES:
         seen = {}
         for e in p.file_manager.get_manifest(name):
             rel = e["file_home"].split(f"/named_files/{name}/", 1)[1]
@@ -366,6 +370,7 @@ GROUPED = {
         "beta:EMEA/two.csv#2",
         "cappa:three.csv#1",
         "cappa:orders/2026/four.csv#2",
+        "delta:west/two.csv#1",
     ],
     "$:regex(/^(acme|beta)$/).files.*/:all().:last()": [
         "beta:APAC/five.csv#1",
@@ -381,8 +386,63 @@ GROUPED = {
     ],
     "$acme.files.:flatten():last()": ["acme:shipments/feb/week2.csv#2"],
     # ':flatten()' pools every named-file (4.1b)
-    "$*.files.:flatten():last()": ["acme:shipments/feb/week2.csv#2"],
-    "$*.files.*/:flatten().:last()": ["acme:shipments/feb/week2.csv#2"],
+    "$*.files.:flatten():last()": ["delta:west/two.csv#1"],
+    "$*.files.*/:flatten().:last()": ["delta:west/two.csv#1"],
+    # ':flatten()' pools across named-files (4.1b), so one 'two.csv' group
+    # spans beta and delta; without it a '$*' group stays in its named-file
+    '$*.files.:flatten()/:name("two.csv").:last()': ["delta:west/two.csv#1"],
+    "$:regex(/^(beta|delta)$/).files.:flatten()/:all().:last()": [
+        "beta:APAC/five.csv#1",
+        "delta:west/two.csv#1",
+    ],
+    "$:regex(/^(beta|delta)$/).files.:flatten()/:all().:first()": [
+        "beta:APAC/five.csv#1",
+        "beta:EMEA/two.csv#1",
+    ],
+    "$:regex(/^(beta|delta)$/).files.*/:all().:last()": [
+        "beta:APAC/five.csv#1",
+        "beta:APAC/two.csv#2",
+        "delta:west/two.csv#1",
+    ],
+    # a middle ':groups()' may match no level at all
+    "$beta.files.*/:groups()/*.:last()": ["beta:APAC/five.csv#1"],
+    # pattern and clock segments beside a wildcard
+    "$acme.files.:regex(/^ship/)/:all()/*.:last()": [
+        "acme:shipments/feb/week2.csv#2",
+        "acme:shipments/jan/week2.csv#2",
+    ],
+    # the ':all()' is the second level, so 'invoices/jan' and
+    # 'shipments/jan' are one 'jan' group: the ':choice()' level pools (4.1)
+    '$acme.files.:choice("invoices|shipments")/:all()/*.:first()': [
+        "acme:shipments/feb/week1.csv#1",
+        "acme:invoices/jan/invoice1.csv#1",
+    ],
+    # a named-file with only 0-level file homes: one group
+    "$alpha.files.:groups()/*.:last()": ["alpha:one.csv#2"],
+    # name_three after the new shapes: a time window, a gate, a range
+    "$beta.files.:all()/*.:today():last()": [
+        "beta:APAC/five.csv#1",
+        "beta:EMEA/two.csv#2",
+    ],
+    '$beta.files.:all()/*.:type("csv"):first()': [
+        "beta:APAC/two.csv#1",
+        "beta:EMEA/two.csv#1",
+    ],
+    "$beta.files.:all()/*.:from(:index(-2))": [
+        "beta:APAC/two.csv#2",
+        "beta:APAC/five.csv#1",
+        "beta:EMEA/two.csv#1",
+        "beta:EMEA/two.csv#2",
+    ],
+    # ':manifest()' after a wildcard path: each matched version's entry,
+    # as '*:manifest()' gives
+    "$beta.files.:all()/*:manifest()": [
+        "beta:EMEA/two.csv#1",
+        "beta:EMEA/two.csv#2",
+        "beta:APAC/two.csv#1",
+        "beta:APAC/two.csv#2",
+        "beta:APAC/five.csv#1",
+    ],
 }
 
 
@@ -407,7 +467,7 @@ class TestGroupedReferences:
 
     def test_a_star_root_matches_the_literal_roots_together(self, layout):
         literal = []
-        for name in ("acme", "alpha", "beta", "cappa"):
+        for name in NAMES:
             literal += _labels(layout, f"${name}.files.:groups()/*.:last()")
         assert _labels(layout, "$*.files.:groups()/*.:last()") == literal
 
@@ -417,6 +477,37 @@ class TestGroupedReferences:
             "beta/APAC/two.csv",
             "beta/APAC/five.csv",
         ]
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$beta.files.:all()/*#Sheet1.:last()",
+            "$beta.files.*/:all()#Sheet1.:last()",
+            "$beta.files.*/:groups()#Sheet1.:last()",
+            "$acme.files.:flatten()/:all()#Sheet1.:last()",
+        ],
+    )
+    def test_a_worksheet_applies_to_each_group_whatever_the_wildcard_position(
+        self, layout, reference
+    ):
+        # one rule wherever the wildcard is in a path: until review one in
+        # the first segment raised and one later did not (reviewer on #787)
+        p, _ = layout
+        finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=p)
+        results = finder.query().results
+        assert results and {r.identity for r in results} == {"Sheet1"}
+
+    @pytest.mark.parametrize(
+        "reference",
+        ["$beta.files.:manifest()#Sheet1", "$acme.files.:all()#Sheet1.:last()"],
+    )
+    def test_a_lone_function_has_no_file_for_a_worksheet(self, layout, reference):
+        # a function that is the whole of name_one; test_files_reference_
+        # finder_3's TestNameTwoWorksheetMarker pins ':all()#hello.:last()'
+        p, _ = layout
+        finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=p)
+        with pytest.raises(ReferenceException3, match="#worksheet"):
+            finder.query()
 
     def test_a_grouping_wildcard_with_an_all_function_raises(self, layout):
         p, _ = layout
@@ -433,11 +524,10 @@ class TestGroupedReferences:
 class TestFlattenPathsUnderATraversalRoot:
     # gap review C0: the literal root worked, '$*' and ':regex()' raised
     def test_star_root(self, layout):
-        assert _homes(layout, "$*.files.*/:flatten()") == [
-            h
-            for name in ("acme", "alpha", "beta", "cappa")
-            for h in _homes(layout, f"${name}.files.*/:flatten()")
-        ]
+        # pooled across named-files (4.1b), so in arrival order
+        assert sorted(_homes(layout, "$*.files.*/:flatten()")) == sorted(
+            h for name in NAMES for h in _homes(layout, f"${name}.files.*/:flatten()")
+        )
 
     def test_regex_root(self, layout):
         assert _homes(layout, "$:regex(/^c/).files.*/:flatten()") == [
@@ -448,6 +538,7 @@ class TestFlattenPathsUnderATraversalRoot:
         assert _homes(layout, '$*.files.:flatten()/:name("two.csv")') == [
             "beta/EMEA/two.csv",
             "beta/APAC/two.csv",
+            "delta/west/two.csv",
         ]
 
 
