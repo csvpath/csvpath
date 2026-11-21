@@ -1,0 +1,341 @@
+#
+# time functions that take an argument (compendium 6.27g; NRE "Date and
+# time functions", lines 88-150 and 568): a component of a given moment
+# (':day_name(:date("2026-09-04"))' is Friday), an explicit component value
+# (':year(2025)', ':hour_24(18)'), and a day relative to a moment
+# (':yesterday(:date("2026-01-02"))', ':yesterday(:hour_24(18))'). Every one
+# raised "does not take an argument" until the name_one gap review
+# (2026-11-19, item F).
+#
+# The clock is pinned to Sunday 2026-01-04 12:30 UTC.
+#
+import os
+from datetime import datetime, timezone
+
+import pytest
+
+from csvpath import CsvPaths
+from csvpath.references.functions.function_3 import Function3
+from csvpath.references.functions.selectors.date_3 import Date3
+from csvpath.references.functions.values.clock_utility import ClockUtility as clut
+from csvpath.references.functions.values.day_3 import Day3
+from csvpath.references.functions.values.day_name_3 import DayName3
+from csvpath.references.functions.values.hour_24_3 import Hour243
+from csvpath.references.functions.values.hour_3 import Hour3
+from csvpath.references.functions.values.minute_3 import Minute3
+from csvpath.references.functions.values.month_3 import Month3
+from csvpath.references.functions.values.month_name_3 import MonthName3
+from csvpath.references.functions.values.now_3 import Now3
+from csvpath.references.functions.values.second_3 import Second3
+from csvpath.references.functions.values.today_3 import Today3
+from csvpath.references.functions.values.year_3 import Year3
+from csvpath.references.functions.values.yesterday_3 import Yesterday3
+from csvpath.references.reference_exceptions_3 import ReferenceException3
+from csvpath.references.reference_finder_factory_3 import ReferenceFinderFactory3
+from csvpath.util.date_util import DateUtility as daut
+from tests.references.cost.test_results_estimate_soundness_3 import CORPUS_CONFIG
+
+PINNED = datetime(2026, 1, 4, 12, 30, 15, tzinfo=timezone.utc)
+
+
+@pytest.fixture(autouse=True)
+def pinned_now(monkeypatch):
+    monkeypatch.setattr(daut, "now", classmethod(lambda cls: PINNED))
+
+
+def _valid(function: Function3) -> Function3:
+    function.check_valid()
+    return function
+
+
+def _window(function: Function3) -> tuple:
+    return (function.start_datetime().isoformat(), function.end_datetime().isoformat())
+
+
+def _date(value: str) -> Date3:
+    return _valid(Date3(arg=value))
+
+
+# ===================
+# ClockUtility, the shared part
+# ===================
+
+
+class TestClockUtility:
+    def test_no_argument_is_now(self):
+        assert clut.base(function=Year3()) == datetime(2026, 1, 4, 12, 30, 15)
+
+    def test_a_time_function_argument_is_its_first_moment(self):
+        assert clut.base(function=Year3(arg=_date("2025-03-04"))) == datetime(
+            2025, 3, 4
+        )
+
+    def test_now_as_an_argument_is_now(self):
+        assert clut.base(function=Minute3(arg=Now3())) == datetime(
+            2026, 1, 4, 12, 30, 15
+        )
+
+    def test_an_int_sets_the_component(self):
+        assert clut.base(function=Year3(arg=2024), component="year") == datetime(
+            2024, 1, 4, 12, 30, 15
+        )
+
+    def test_an_int_without_a_component_raises(self):
+        with pytest.raises(ReferenceException3, match="not an int"):
+            clut.base(function=DayName3(arg=3))
+
+    def test_an_impossible_component_raises(self):
+        with pytest.raises(ReferenceException3, match="not a real month"):
+            clut.base(function=Month3(arg=13), component="month")
+
+    def test_true_is_not_an_int(self):
+        with pytest.raises(ReferenceException3):
+            clut.base(function=Year3(arg=True), component="year")
+
+    def test_moment_needs_a_time_function(self):
+        with pytest.raises(ValueError):
+            clut.moment(function=None)
+        with pytest.raises(TypeError):
+            clut.moment(function="2026-01-01")
+
+    def test_base_needs_a_function(self):
+        with pytest.raises(ValueError):
+            clut.base(function=None)
+
+
+# ===================
+# a component of a given moment
+# ===================
+
+
+class TestComponentOfAMoment:
+    @pytest.mark.parametrize(
+        "function,value",
+        [
+            (Year3(arg=Date3(arg="2025-03-04")), 2025),
+            (Month3(arg=Date3(arg="2025-03-04")), 3),
+            (Day3(arg=Date3(arg="2025-03-04")), 4),
+            (Hour243(arg=Date3(arg="2026-01-01_15-04-05")), 15),
+            (Hour3(arg=Date3(arg="2026-01-01_15-04-05")), 3),
+            (Minute3(arg=Date3(arg="2026-01-01_15-04-05")), 4),
+            (Second3(arg=Date3(arg="2026-01-01_15-04-05")), 5),
+            # NRE 141: Friday
+            (DayName3(arg=Date3(arg="2026-09-04")), "Friday"),
+            (MonthName3(arg=Date3(arg="2026-06-01")), "June"),
+            # NRE 133, 137, 149, relative to the pinned clock
+            (DayName3(arg=Yesterday3()), "Saturday"),
+            (DayName3(arg=Today3()), "Sunday"),
+            (Minute3(arg=Now3()), 30),
+            # 6.27g
+            (Year3(arg=Date3(arg="2026-01-01")), 2026),
+        ],
+    )
+    def test_value(self, function, value):
+        assert _valid(function).compute() == value
+
+    def test_the_window_is_the_moments_period(self):
+        assert _window(_valid(Year3(arg=_date("2025-03-04")))) == (
+            "2025-01-01T00:00:00",
+            "2025-12-31T23:59:59.999999",
+        )
+        assert _window(_valid(Month3(arg=_date("2024-02-10")))) == (
+            "2024-02-01T00:00:00",
+            "2024-02-29T23:59:59.999999",
+        )
+        assert _window(_valid(Hour243(arg=_date("2026-01-01_15-04-05")))) == (
+            "2026-01-01T15:00:00",
+            "2026-01-01T15:59:59.999999",
+        )
+
+
+# ===================
+# an explicit component
+# ===================
+
+
+class TestExplicitComponent:
+    @pytest.mark.parametrize(
+        "function,value,window",
+        [
+            (
+                Year3(arg=2024),
+                2024,
+                ("2024-01-01T00:00:00", "2024-12-31T23:59:59.999999"),
+            ),
+            (Month3(arg=6), 6, ("2026-06-01T00:00:00", "2026-06-30T23:59:59.999999")),
+            (Day3(arg=2), 2, ("2026-01-02T00:00:00", "2026-01-02T23:59:59.999999")),
+            (
+                Hour243(arg=18),
+                18,
+                ("2026-01-04T18:00:00", "2026-01-04T18:59:59.999999"),
+            ),
+            (Minute3(arg=5), 5, ("2026-01-04T12:05:00", "2026-01-04T12:05:59.999999")),
+            (Second3(arg=9), 9, ("2026-01-04T12:30:09", "2026-01-04T12:30:09.999999")),
+        ],
+    )
+    def test_value_and_window(self, function, value, window):
+        assert _valid(function).compute() == value
+        assert _window(function) == window
+
+    @pytest.mark.parametrize(
+        "function",
+        [Month3(arg=13), Month3(arg=0), Day3(arg=32), Hour243(arg=24), Minute3(arg=60)],
+    )
+    def test_an_impossible_value_raises_when_built(self, function):
+        with pytest.raises(ReferenceException3, match="is not a real"):
+            function.check_valid()
+
+    def test_hour_takes_no_int(self):
+        # the 12-hour clock: ':hour(6)' cannot say am or pm
+        with pytest.raises(ReferenceException3, match=":hour_24\\(18\\)"):
+            Hour3(arg=6).check_valid()
+
+    @pytest.mark.parametrize("function", [DayName3(arg=3), MonthName3(arg=6)])
+    def test_a_name_takes_no_int(self, function):
+        with pytest.raises(ReferenceException3, match="argument must be one of"):
+            function.check_valid()
+
+
+# ===================
+# a day relative to a moment
+# ===================
+
+
+class TestRelativeDay:
+    def test_yesterday_of_a_date(self):
+        # 6.27g's own example
+        f = _valid(Yesterday3(arg=_date("2026-01-02")))
+        assert f.compute() == "2026-01-01"
+        assert _window(f) == ("2026-01-01T00:00:00", "2026-01-01T23:59:59.999999")
+
+    def test_yesterday_of_an_hour_keeps_the_hour(self):
+        # NRE 568, "since close of business yesterday", with :hour_24()
+        f = _valid(Yesterday3(arg=_valid(Hour243(arg=18))))
+        assert f.compute() == "2026-01-03"
+        assert _window(f) == ("2026-01-03T18:00:00", "2026-01-03T18:59:59.999999")
+
+    def test_today_of_a_date_is_that_day(self):
+        f = _valid(Today3(arg=_date("2025-07-04")))
+        assert f.compute() == "2025-07-04"
+        assert _window(f) == ("2025-07-04T00:00:00", "2025-07-04T23:59:59.999999")
+
+    def test_now_as_the_argument_is_now_s_day(self):
+        assert _window(_valid(Yesterday3(arg=Now3()))) == _window(_valid(Yesterday3()))
+        assert _window(_valid(Today3(arg=Now3()))) == _window(_valid(Today3()))
+
+    def test_a_format_string_formats_the_date(self):
+        assert _valid(Yesterday3(arg="%A")).compute() == "Saturday"
+        assert _valid(Today3(arg="%Y%m%d")).compute() == "20260104"
+        # the window stays the day
+        assert _window(_valid(Yesterday3(arg="%A"))) == _window(_valid(Yesterday3()))
+
+    def test_a_date_string_raises_and_says_use_date(self):
+        with pytest.raises(ReferenceException3, match=":date\\("):
+            Yesterday3(arg="2026-01-02").check_valid()
+
+    @pytest.mark.parametrize("arg", [Year3(), Month3(arg=6)])
+    def test_an_argument_coarser_than_a_day_raises(self, arg):
+        with pytest.raises(ReferenceException3, match="no single day"):
+            Yesterday3(arg=arg).check_valid()
+
+    @pytest.mark.parametrize("arg", [5, True])
+    def test_a_number_raises(self, arg):
+        with pytest.raises(
+            ReferenceException3, match="time function or a format string"
+        ):
+            Today3(arg=arg).check_valid()
+
+
+class TestTheArgumentTypeMessage:
+    def test_it_names_what_is_allowed_in_words(self):
+        with pytest.raises(ReferenceException3) as e:
+            Year3(arg=DayName3()).check_valid()
+        message = str(e.value)
+        assert "an int" in message and "a time function" in message
+        assert "got :day_name()" in message
+        assert "<class" not in message
+
+    def test_type_names(self):
+        assert Function3._arg_type_name(str) == "a string"
+        assert Function3._arg_type_name(int) == "an int"
+        assert Function3._arg_type_name(Now3) == ":now()"
+        with pytest.raises(ValueError):
+            Function3._arg_type_name(None)
+
+
+# ===================
+# through a reference: the NRE's own forms parse, build and compute
+# ===================
+
+
+@pytest.fixture(scope="module")
+def csvpaths():
+    return CsvPaths()
+
+
+def _built(csvpaths, reference: str) -> Function3:
+    finder = ReferenceFinderFactory3.for_reference(
+        reference=reference, csvpaths=csvpaths
+    )
+    return finder._build(finder.ref.parsed.name_three.functions[0])
+
+
+class TestThroughAReference:
+    @pytest.mark.parametrize(
+        "reference,value",
+        [
+            ('$acme.files.*.:day_name(:date("2026-09-04"))', "Friday"),
+            ("$acme.files.*.:day_name(:yesterday())", "Saturday"),
+            ("$acme.files.*.:minute(:now())", 30),
+            ('$acme.files.*.:yesterday(:date("2026-01-02"))', "2026-01-01"),
+            ("$acme.files.*.:year(2025)", 2025),
+        ],
+    )
+    def test_value(self, csvpaths, reference, value):
+        assert _built(csvpaths, reference).compute() == value
+
+    def test_from_yesterday_close_of_business(self, csvpaths):
+        built = _built(csvpaths, "$acme.files.*.:from(:yesterday(:hour_24(18)))")
+        assert built.arg.start_datetime() == datetime(2026, 1, 3, 18, 0)
+
+    def test_an_interpolated_name(self, csvpaths):
+        # NRE 83
+        finder = ReferenceFinderFactory3.for_reference(
+            reference='$acme.files.orders/:name("Summary for {:day_name(:yesterday())}.xlsx")',
+            csvpaths=csvpaths,
+        )
+        name = finder._build(finder.ref.parsed.name_one.path[1])
+        assert name.arg == "Summary for Saturday.xlsx"
+
+
+@pytest.fixture(scope="module")
+def corpus():
+    previous = os.environ.get("CSVPATH_CONFIG_PATH")
+    os.environ["CSVPATH_CONFIG_PATH"] = os.path.abspath(CORPUS_CONFIG)
+    try:
+        yield CsvPaths()
+    finally:
+        if previous is None:
+            os.environ.pop("CSVPATH_CONFIG_PATH", None)
+        else:
+            os.environ["CSVPATH_CONFIG_PATH"] = previous
+
+
+class TestCsvpaths:
+    # its "no filtering mechanism" guard is for field accessors; it raised
+    # for a time function's argument too. The corpus groups were loaded in
+    # 2026, the pinned clock's year.
+    @pytest.mark.parametrize(
+        "reference,count",
+        [
+            ("$validate_orders.csvpaths.:year(:today()):last()", 1),
+            ("$validate_orders.csvpaths.:year(2026):last()", 1),
+            ("$validate_orders.csvpaths.:year(2020):last()", 0),
+            ('$validate_orders.csvpaths.:year(:date("2020-06-01")):last()', 0),
+        ],
+    )
+    def test_query(self, corpus, reference, count):
+        finder = ReferenceFinderFactory3.for_reference(
+            reference=reference, csvpaths=corpus
+        )
+        assert len(finder.query().results) == count

@@ -2,8 +2,8 @@ from datetime import datetime
 
 from ...reference_3 import Reference3
 from ..function_3 import Function3
+from .now_3 import Now3
 from .time_window_function_3 import TimeWindowFunction3
-from csvpath.util.date_util import DateUtility as daut
 
 
 class Hour243(TimeWindowFunction3):
@@ -17,10 +17,13 @@ class Hour243(TimeWindowFunction3):
         "The current hour, 24-hour clock (0-23) -- computed from the "
         "clock. Also usable as a date-range context setter/anchor -- "
         "see TimeWindowFunction3."
-    )
+
+        " Takes a time function to read the hour of, or an hour, e.g. :hour_24(18)."    )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    ARG_TYPES = ()
+    # a time function to read the hour of, or the hour itself (6.27g)
+    ARG_TYPES = (int, TimeWindowFunction3, Now3)
+    COMPONENT = "hour"
     ARG_REQUIRED = False
     SOURCE = "clock"
     # POSITIONS added 2026-10-17 -- see year_3.py's own comment for why.
@@ -31,12 +34,12 @@ class Hour243(TimeWindowFunction3):
     }
 
     def compute(self) -> int:
-        return daut.now().hour
+        return self.base_datetime().hour
 
     def start_datetime(self) -> datetime:
-        now = daut.now().replace(tzinfo=None)
+        now = self.base_datetime()
         return now.replace(minute=0, second=0, microsecond=0)
 
     def end_datetime(self) -> datetime:
-        now = daut.now().replace(tzinfo=None)
+        now = self.base_datetime()
         return now.replace(minute=59, second=59, microsecond=999999)

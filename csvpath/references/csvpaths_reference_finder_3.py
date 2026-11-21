@@ -1521,8 +1521,11 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             # lines below this loop, not silently.
             # A gate (finding A, 2026-11-05) does consume its argument,
             # below, so it is exempt too; see _gate_calls().
+            # A time function's argument is the moment it reads (compendium
+            # 6.27g), not a filter, so it is exempt as well.
             if (
                 f.SOURCE is not None
+                and f.SOURCE != "clock"
                 and not f.SELECTOR_WHEN_ARGUED
                 and not self._key_has_placeholder(f)
                 and f.arg is not None

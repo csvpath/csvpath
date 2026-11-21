@@ -298,6 +298,37 @@ class Function3:
         else."""
         self._arg = value
 
+    @staticmethod
+    def _arg_type_name(arg_type) -> str:
+        """an ARG_TYPES entry in a user's words, for check_valid()'s
+        message (it printed Python class reprs until 2026-11-21)"""
+        if arg_type is None:
+            raise ValueError("arg_type cannot be None")
+        if arg_type is bool:
+            return "true/false"
+        if arg_type is int:
+            return "an int"
+        if arg_type is str:
+            return "a string"
+        name = getattr(arg_type, "NAME", None)
+        if isinstance(name, str) and name:
+            return f":{name}()"
+        if arg_type.__name__ == "TimeWindowFunction3":
+            return "a time function such as :date() or :yesterday()"
+        if arg_type.__name__ == "Regex3":
+            return "a /regex/"
+        if arg_type is Function3:
+            return "a function"
+        return arg_type.__name__
+
+    @staticmethod
+    def _arg_value_name(arg) -> str:
+        """an argument in a user's words, for check_valid()'s message"""
+        name = getattr(arg, "NAME", None)
+        if isinstance(arg, Function3) and isinstance(name, str):
+            return f":{name}()"
+        return f"{arg!r}"
+
     def check_valid(self) -> None:
         """structural check; doesn't test or use the arg's value. mirrors
         csvpath.matching.productions.matchable.Matchable.check_valid()'s
@@ -334,9 +365,10 @@ class Function3:
             if Variable3 not in allowed:
                 allowed = (*allowed, Variable3)
             if not isinstance(self._arg, allowed):
+                expected = ", ".join(self._arg_type_name(t) for t in self.ARG_TYPES)
                 raise ReferenceException3(
-                    f":{self.NAME}() argument must be one of {self.ARG_TYPES}, "
-                    f"got {type(self._arg)}"
+                    f":{self.NAME}() argument must be one of: {expected}; got "
+                    f"{self._arg_value_name(self._arg)}"
                 )
         if isinstance(self._arg, (Function3, InterpolatedString3)):
             self._arg.check_valid()
