@@ -1725,6 +1725,100 @@ class ReferenceFinder3(ABC):
                 raise ReferenceException3(f"Unsupported name_one path segment: {segment!r}")
         return pattern
 
+    # the name_one wildcards that occupy a path segment (compendium 4)
+    PATH_WILDCARDS = ("all", "groups", "flatten")
+
+    def _wildcard_path_elements(self, path: list) -> list:
+        """a name_one path as ("wild", name) for each wildcard segment and
+        ("segment", compiled) for every other one, compiled as
+        _compile_path_pattern() compiles it (a literal, '*', ':name()',
+        ':regex()', ':choice()' or a clock value). A tagged pair, so a
+        literal segment that happens to be named "all" is never read as
+        the wildcard. _check_wildcards() has already allowed at most one
+        grouping wildcard and one ':flatten()', never ':groups()' with
+        ':flatten()'."""
+        if path is None:
+            raise ValueError("path cannot be None")
+        elements = []
+        for segment in path:
+            if isinstance(segment, FunctionCall3) and segment.name in self.PATH_WILDCARDS:
+                if segment.arg is not None:
+                    raise ReferenceException3(
+                        f"This finder's ':{segment.name}()' does not "
+                        "take an argument."
+                    )
+                elements.append(("wild", segment.name))
+            else:
+                elements.append(("segment", self._compile_path_pattern([segment])[0]))
+        return elements
+
+    @staticmethod
+    def _wildcard_path_groups(elements: list) -> bool:
+        """true when the path has a grouping wildcard, ':all()' or
+        ':groups()', so its matches are reduced per group"""
+        if elements is None:
+            raise ValueError("elements cannot be None")
+        return any(kind == "wild" and value in ("all", "groups") for kind, value in elements)
+
+    @staticmethod
+    def _wildcard_segments_key(
+        *, segments: list, elements: list, last_deep_min: int
+    ) -> "tuple | None":
+        """None if `segments` (path segments below a named entity's home)
+        do not match the wildcard path `elements` (from
+        _wildcard_path_elements()); else the group key: the segments the
+        grouping wildcard matched, as a tuple (() with no grouping
+        wildcard). Shared by FILES (segments end with the file home) and
+        RESULTS (segments are the template levels above the run dir).
+
+        Each element matches one segment, except ':groups()' and
+        ':flatten()', which match any number (at most one of them per path,
+        _check_wildcards()). When the any-depth wildcard is the last element
+        it matches at least `last_deep_min` segments: 1 in FILES, where it
+        also stands for the file home (4.3c), 0 in RESULTS, where the run
+        dir follows the template levels.
+
+        The key is what 4.2 says a group is, "the names found at the
+        grouping segment": ':all()' keys by the one name at its position,
+        ':groups()' by every segment it matched. A '*' pools its position
+        (4.1), so it is never part of the key (decision D33, refined)."""
+        if segments is None:
+            raise ValueError("segments cannot be None")
+        if elements is None:
+            raise ValueError("elements cannot be None")
+        if last_deep_min is None or last_deep_min < 0:
+            raise ValueError("last_deep_min must be 0 or more")
+        deep_at = next(
+            (
+                i
+                for i, (kind, value) in enumerate(elements)
+                if kind == "wild" and value in ("groups", "flatten")
+            ),
+            None,
+        )
+        if deep_at is None:
+            if len(segments) != len(elements):
+                return None
+            matched = [[segment] for segment in segments]
+        else:
+            head = len(elements[:deep_at])
+            tail = len(elements[deep_at + 1 :])
+            if len(segments) < head + tail + (0 if tail else last_deep_min):
+                return None
+            matched = (
+                [[segment] for segment in segments[:head]]
+                + [segments[head : len(segments) - tail]]
+                + [[segment] for segment in segments[len(segments) - tail :]]
+            )
+        key = ()
+        for (kind, value), parts in zip(elements, matched):
+            if kind == "segment":
+                if not ReferenceFinder3._segment_matches(value, parts[0]):
+                    return None
+            elif value in ("all", "groups"):
+                key = tuple(parts)
+        return key
+
     @staticmethod
     def _segment_matches(expected, actual: str) -> bool:
         """true if `actual` (one real path/run-directory segment) matches

@@ -208,6 +208,15 @@ class ResultsEstimator3:
         if gates or having:
             self.uncertain = True
         picked = [self._pointed(pool, calls) for pool in candidates]
+        if set(self._path_function_names()) & {"all", "groups"} and picked != candidates:
+            # a pointer after ':all()'/':groups()' picks one run per template
+            # group, and the groups are not narrowed here: up to every
+            # candidate. It counted one per named-results name, so
+            # 'customers/:all()/*:last()' estimated 1 run manifest and read
+            # 2 (name_one gap review, 2026-11-21).
+            picked = candidates
+            self.uncertain = True
+            self.why.append("a pointer after a grouping wildcard picks one run per group")
         n_candidates = sum(len(p) for p in candidates)
         n_picked = sum(len(p) for p in picked)
         if gates:
