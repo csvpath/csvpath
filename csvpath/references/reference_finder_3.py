@@ -1865,9 +1865,10 @@ class ReferenceFinder3(ABC):
                 return None
             except ReferenceException3 as e:
                 problem = str(e)
-        logging.getLogger(type(self).__name__).info(
-            "estimate: root_major cannot be used: %s", problem
+        logger = getattr(self.csvpaths, "logger", None) or logging.getLogger(
+            type(self).__name__
         )
+        logger.info("estimate: root_major cannot be used: %s", problem)
         return problem
 
     @staticmethod
