@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from abc import ABC, abstractmethod
@@ -1841,6 +1842,33 @@ class ReferenceFinder3(ABC):
         if isinstance(expected, Regex3):
             return re.search(expected.pattern, actual) is not None
         return actual == expected
+
+    def _root_major_problem(self) -> "str | None":
+        """why root_major cannot be used, or None, for the estimators: they
+        build a function root to find the names in play before checking
+        anything, so a root query() would reject must be reported, not
+        raised from estimate(). A root other than :regex()/:choice() made
+        estimate() raise an AttributeError (no .pattern); an invalid
+        resolved ':regex(@p)' raised the build error (reviewer on #792).
+        The reason is logged."""
+        root = self.ref.parsed.root_major
+        if not isinstance(root, FunctionCall3):
+            return None
+        if root.name not in ("regex", "choice"):
+            problem = (
+                f":{root.name}() is not a legal root_major function -- only "
+                ":regex()/:choice() are supported."
+            )
+        else:
+            try:
+                self._build(root)
+                return None
+            except ReferenceException3 as e:
+                problem = str(e)
+        logging.getLogger(type(self).__name__).info(
+            "estimate: root_major cannot be used: %s", problem
+        )
+        return problem
 
     @staticmethod
     def _is_traversal_root(root_major) -> bool:

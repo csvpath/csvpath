@@ -86,7 +86,7 @@ class RegexSelector3(Function3):
         self._check_pattern(self.arg)
 
     @staticmethod
-    def _check_pattern(arg) -> None:
+    def _check_pattern(arg: "str | Regex3 | None") -> None:
         pattern = arg.pattern if isinstance(arg, Regex3) else arg
         if isinstance(pattern, str):
             try:

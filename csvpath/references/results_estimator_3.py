@@ -90,8 +90,8 @@ class ResultsEstimator3:
     #
     def estimate(self) -> ReferenceEstimate3:
         archive = self.csvpaths.config.archive_path
-        root_problem = self._root_problem()
-        problem = root_problem or self._query_would_raise()
+        root_problem = self.finder._root_major_problem()
+        problem = self._query_would_raise()
         if root_problem is not None:
             # query() raises building the root, before it reads anything
             self.would_raise = f"query: {root_problem}"
@@ -133,20 +133,6 @@ class ResultsEstimator3:
             sql=self.csvpaths.config.references_sql == "on",
             would_raise=self.would_raise,
         )
-
-    def _root_problem(self) -> "str | None":
-        """why the root_major function cannot be built, or None: a
-        ':regex(@p)' whose resolved pattern is invalid raises when built,
-        and the estimate builds the root to find the names in play, so it
-        must say so, not raise itself (reviewer on #790)"""
-        root = self.reference.root_major
-        if not isinstance(root, FunctionCall3):
-            return None
-        try:
-            self.finder._build(root)
-        except ReferenceException3 as e:
-            return str(e)
-        return None
 
     def _query_would_raise(self) -> "str | None":
         """the static checks query() makes that this estimate can see"""
