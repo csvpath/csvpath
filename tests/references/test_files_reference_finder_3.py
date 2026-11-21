@@ -4784,27 +4784,30 @@ class TestStatusGate:
         results = self._status_finder('$*.files.:status("nope").:last()').query()
         assert results.results == []
 
-    def test_name_three_field_accessor_is_rejected(self):
-        # the ledger-vs-manifest plumbing a chained field accessor would
-        # need in _extract_data() is not built -- see
-        # _pointer_into_status_matches()'s own docstring. Only a lone
-        # pointer is supported.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$*.files.:status("failed").:last():uuid()',
-                TYPE_HOME,
-                [],
-                ledger=STATUS_LEDGER,
-            ).query()
+    def test_name_three_field_accessor_goes_through_the_name_three_pipeline(self):
+        # it raised "not yet supported" until the name_one gap review (item
+        # G); the gate's matches are now the candidates of the ordinary
+        # name_three pipeline. A failed registration has no live version,
+        # so there is nothing to point at (test_status_gate_name_three_3.py
+        # has the live cases)
+        results = _finder(
+            '$*.files.:status("failed").:last():uuid()',
+            TYPE_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+        ).query()
+        assert results.results == []
 
-    def test_name_three_literal_body_is_rejected(self):
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$orders.files.:status("failed").some_fingerprint',
-                TYPE_HOME,
-                [],
-                ledger=STATUS_LEDGER,
-            ).query()
+    def test_name_three_literal_body_is_a_fingerprint_match(self):
+        # also gap review G: a literal body matches a version's fingerprint,
+        # as after any other name_one
+        results = _finder(
+            '$orders.files.:status("failed").some_fingerprint',
+            TYPE_HOME,
+            [],
+            ledger=STATUS_LEDGER,
+        ).query()
+        assert results.results == []
 
     def test_an_uncited_combination_still_raises_clearly(self):
         # ':status()' is genuinely ledger-only -- chaining it onto

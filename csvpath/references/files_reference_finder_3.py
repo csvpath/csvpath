@@ -209,10 +209,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # deleted versions included (compendium 6.19, agreed
                 # with David). status itself is read from the ledger,
                 # the only place it is written.
+                names = self.source.file_names()
+                if self._status_gate_takes_the_pipeline(reference):
+                    return self._query_star_traversal(
+                        reference,
+                        status_candidates=self._status_gate_candidates(
+                            status_chain=status_chain, names=names
+                        ),
+                    )
                 return self._query_status_gate(
-                    reference=reference,
-                    status_chain=status_chain,
-                    names=self.source.file_names(),
+                    reference=reference, status_chain=status_chain, names=names
                 )
             if self._is_bare_pointer_reference(reference, "manifest"):
                 # Rule 1a (manifest_field_functions_proposal.md): "*" at
@@ -261,12 +267,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # named-files, as for '*' above (6.13b(iv): a filtered
                 # '*'). It raised "field functions attached directly to
                 # name_one" until 2026-11-12.
+                names = self._matching_names(self.source.file_names(), built.pattern)
+                if self._status_gate_takes_the_pipeline(reference):
+                    return self._query_star_traversal(
+                        reference,
+                        name_filter=built.pattern,
+                        status_candidates=self._status_gate_candidates(
+                            status_chain=status_chain, names=names
+                        ),
+                    )
                 return self._query_status_gate(
-                    reference=reference,
-                    status_chain=status_chain,
-                    names=self._matching_names(
-                        self.source.file_names(), built.pattern
-                    ),
+                    reference=reference, status_chain=status_chain, names=names
                 )
             if self._is_bare_filtered_manifest(reference):
                 # the ledger set filtered by name: one result, the ledger's
@@ -330,9 +341,18 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # for details", as D4 takes the name from the manifest that
             # holds the uuid (spec pass, 2026-11-14). It filtered on the
             # ledger's name too until then (reviewer on #588).
-            return self._query_status_gate(
-                reference=reference, status_chain=status_chain, names=[root_major]
+            if not self._status_gate_takes_the_pipeline(reference):
+                return self._query_status_gate(
+                    reference=reference, status_chain=status_chain, names=[root_major]
+                )
+            # a range, window, gate, field or ':manifest()' in name_three: the
+            # matched versions go through the ordinary name_three pipeline
+            # below, as candidates (name_one gap review G)
+            status_candidates, _ = self._status_gate_candidates(
+                status_chain=status_chain, names=[root_major]
             )
+        else:
+            status_candidates = None
 
         if self._is_bare_pointer_reference(
             reference, "manifest"
@@ -466,6 +486,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
             name_one.functions
             and name_one_pointer is None
             and name_one_manifest is None
+            and status_candidates is None
         ):
             # settled, not a gap (not-yet-supported sweep #3): the
             # compendium's own STRUCTURE table draws this exact line --
@@ -504,7 +525,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
         wildcard_elements = None
         if self._is_wildcard_path_reference(name_one=name_one, flatten_paths=False):
             wildcard_elements = self._wildcard_path_elements(name_one.path)
-        if wildcard_elements is not None:
+        if status_candidates is not None:
+            candidates = status_candidates
+        elif wildcard_elements is not None:
             # ':all()'/':groups()' in any position, or a lone wildcard with a
             # name_one pointer (compendium 4.2, 4.5; name_one gap review A, B)
             candidates = self._wildcard_candidates_for_name(
@@ -1104,7 +1127,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
         )
 
     def _query_star_traversal(
-        self, reference: Reference3, name_filter: "str | None" = None
+        self,
+        reference: Reference3,
+        name_filter: "str | None" = None,
+        status_candidates: "tuple | None" = None,
     ) -> ReferenceResults3:
         """root_major == "*" -- query across every named-file, not just
         one. `name_filter` (added 2026-08-27, query()'s own :regex()-at-
@@ -1275,9 +1301,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
         name_one_pointer = None
         group_key = self._file_home_key
         wildcard_elements = None
-        if self._is_wildcard_path_reference(name_one=name_one, flatten_paths=True):
+        if status_candidates is None and self._is_wildcard_path_reference(
+            name_one=name_one, flatten_paths=True
+        ):
             wildcard_elements = self._wildcard_path_elements(name_one.path)
-        if wildcard_elements is not None:
+        if status_candidates is not None:
+            # a bare status gate's matches, one group per named-file (4.1b,
+            # D31), for the name_three pipeline below (gap review G)
+            candidates, named_file_of = status_candidates
+        elif wildcard_elements is not None:
             # ':all()'/':groups()' in any position, a ':flatten()' with more
             # path (name_one gap review C0), or a lone wildcard with a
             # name_one pointer. A group stays within its named-file (4.1b:
@@ -1596,12 +1628,16 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 reference=reference, gates=gates, candidates=cands
             )
 
+        # the named-files, listed once, not once per result: each listing is
+        # a read (name_one gap review G; the estimate counted one)
+        manifest_names = self.source.file_names() if has_manifest else None
+
         def _result_path(candidate: dict) -> str:
             # an explicit ':manifest()' names the version's entry in its
             # own named-file's manifest.json (compendium 5.7, 6.13b(iv)).
             if has_manifest:
                 return self._named_file_manifest_path(
-                    entry=candidate, names=self.source.file_names()
+                    entry=candidate, names=manifest_names
                 )
             return candidate["file"]
 
@@ -2434,6 +2470,63 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 return list(reader.next())
         with DataFileReader(path=path, mode="rb") as reader:
             return reader.source.read()
+
+    @staticmethod
+    def _status_gate_takes_the_pipeline(reference: Reference3) -> bool:
+        """true when a bare ':status()'/':lifecycle()' gate has a name_three
+        beyond a lone pointer -- a range, a window, a gate, a field or
+        ':manifest()' -- which the ordinary name_three pipeline handles. A
+        lone pointer, or no name_three, keeps _query_status_gate()'s own
+        ledger-order results."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        three = reference.name_three
+        if three is None:
+            return False
+        if three.body is not None or len(three.functions) != 1:
+            return True
+        function_cls = ReferenceFunctionFactory.get_registered_class(
+            three.functions[0].name
+        )
+        return function_cls is None or function_cls.ROLE != Function3.POINTER
+
+    def _status_gate_candidates(self, *, status_chain: list, names: list) -> tuple:
+        """(manifest entries, {file_home: named-file}) for the live
+        versions a bare status gate matches: the candidates the name_three
+        pipeline takes, named-file by named-file in `names` order (D31: a
+        traversal root's results come in name order), each named-file's
+        in arrival order. The entries come from the live index the gate
+        already built, so nothing more is read. Membership follows the
+        manifest that holds the uuid (D4); a version held by a named-file
+        the gate did not read is inconsistent framework data and raises,
+        as _pointer_into_status_matches() does (reviewer on #795)."""
+        if status_chain is None:
+            raise ValueError("status_chain cannot be None")
+        if names is None:
+            raise ValueError("names cannot be None")
+        ledger = self._live_ledger_entries(names=names)
+        candidates = []
+        named_file_of = {}
+        by_name = {name: [] for name in names}
+        for record in self._filter_ledger_by_gate_chain(ledger, status_chain):
+            name, entry = self._live_named_file_entry(record.get("uuid"))
+            if entry is None:
+                continue
+            if name not in by_name:
+                msg = (
+                    f"Version {record.get('uuid')!r} is held by named-file "
+                    f"{name!r}, not one of {names!r}; a uuid in more than "
+                    "one named-file's manifest is inconsistent framework data."
+                )
+                logger = getattr(self.csvpaths, "logger", None)
+                if logger is not None:
+                    logger.error(msg)
+                raise ReferenceRuntimeException3(msg)
+            by_name[name].append(entry)
+            named_file_of[entry["file_home"]] = name
+        for name in names:
+            candidates.extend(by_name[name])
+        return candidates, named_file_of
 
     def _query_status_gate(
         self, *, reference: Reference3, status_chain: list, names: list
