@@ -189,6 +189,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if log_results is not None:
             return log_results
         self._check_manifest_has_no_name_three(reference)
+        self._attach_trailing_manifest(
+            name_one=reference.name_one, implies_star=False
+        )
         root_major = reference.root_major
         if isinstance(root_major, Star3):
             status_chain = self._bare_status_gate_chain(reference.name_one)

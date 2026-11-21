@@ -847,6 +847,34 @@ class ReferenceFinder3(ABC):
         name_one.functions.insert(0, implied)
 
     @staticmethod
+    def _attach_trailing_manifest(*, name_one, implies_star: bool) -> None:
+        """a ':manifest()' written as its own segment after a path
+        ('orders/:manifest()', 'customers/:manifest():first()') joins the
+        chain, as if written without the '/'. It "doesn't operate as or in a
+        path segment at all" (compendium 3.9c), so it was compiled as one
+        and raised "Does not yet support :manifest() as a name_one path
+        segment" (name_one gap review D). `implies_star`: in RESULTS a
+        ':manifest()' implies a '*', one manifest per run (3.9c), so the
+        run slot is added, and 'customers/:manifest():first()' is NRE
+        662-663's 'customers/:first():manifest()'; in FILES it does not, so
+        'orders/:manifest()' is 'orders:manifest()' (3.9b). A bare
+        ':manifest()', the whole name_one, keeps its own meaning. Mutates
+        name_one in place, as _apply_implied_star() does."""
+        if name_one is None:
+            raise ValueError("name_one cannot be None")
+        path = name_one.path
+        if (
+            len(path) < 2
+            or not isinstance(path[-1], FunctionCall3)
+            or path[-1].name != "manifest"
+        ):
+            return
+        manifest = path.pop()
+        if implies_star:
+            path.append(Star3())
+        name_one.functions.insert(0, manifest)
+
+    @staticmethod
     def _reads_ledger_set(reference: Reference3) -> bool:
         """true when a traversal reference reaches the logical ledger set:
         a ':manifest()' in name_one (6.13b(iv): "Only :manifest() in

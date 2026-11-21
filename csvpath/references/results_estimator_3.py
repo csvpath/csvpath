@@ -216,7 +216,15 @@ class ResultsEstimator3:
             )
         manifest = "manifest" in names
         set_root = not isinstance(self.reference.root_major, str)
-        if manifest and set_root and not self._path_groupers():
+        # the set form is ':manifest()' with no path; after a template path
+        # ('$*.results.beta/*:manifest():last()') it is each run's manifest,
+        # which this costed as the ledger set (name_one gap review D)
+        written_path = [
+            p
+            for p in self.reference.name_one.path
+            if not (isinstance(p, FunctionCall3) and p.name not in PATH_BUILDERS)
+        ]
+        if manifest and set_root and not self._path_groupers() and not written_path:
             self._manifest_set_costs(groups=groups, runs=runs, gates=gates, names=names)
             return
         pools = self._pools(groups=groups, runs=runs, archive=archive)

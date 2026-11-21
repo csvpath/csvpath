@@ -235,6 +235,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # wherever a non-exempt function implied one) rather than
         # needing its own awareness of this rule. See
         # _apply_implied_star()'s own docstring.
+        self._attach_trailing_manifest(name_one=name_one, implies_star=True)
         self._apply_implied_star(name_one)
 
         home = self.csvpaths.results_manager.get_named_results_home(root_major)
@@ -841,6 +842,7 @@ class ResultsReferenceFinder3(ReferenceFinder3):
         # '$*.results.beta/:last()' and 3.20's ':groups()/:from(...)' raised
         # "Does not yet support :last() as a name_one path segment"
         # (reviewer on #789).
+        self._attach_trailing_manifest(name_one=name_one, implies_star=True)
         self._apply_implied_star(name_one)
         # the name_one position check the literal root applies, for every
         # traversal path (the run-dir walk and the ledger set): a
