@@ -517,14 +517,18 @@ class TestManifestFunction:
         with pytest.raises(ReferenceRuntimeException3, match="definition.json is not valid JSON"):
             finder.resolve()
 
-    def test_manifest_with_extra_path_narrowing_is_not_yet_supported(self):
-        # :manifest() must be name_one's entire content -- combining it
-        # with real path narrowing falls through to the ordinary
-        # "which file" pipeline, which does not recognize it as a
-        # function-valued path segment.
-        finder = _finder("$alpha.files.a/:manifest()", ALPHA_HOME, ALPHA_MANIFEST)
-        with pytest.raises(ReferenceException3):
-            finder.query()
+    def test_manifest_after_a_path_is_the_same_as_without_the_slash(self):
+        # compendium 3.9b gives 'orders/:manifest()' as legal; 3.9c: in
+        # FILES ':manifest()' implies no '*', so 'a/:manifest()' is
+        # 'a:manifest()', the entries of the file home 'a' (none here). It
+        # raised "not yet supported" until the name_one gap review item D.
+        slash = _finder("$alpha.files.a/:manifest()", ALPHA_HOME, ALPHA_MANIFEST).query()
+        plain = _finder("$alpha.files.a:manifest()", ALPHA_HOME, ALPHA_MANIFEST).query()
+        assert slash.results == plain.results == []
+        named = _finder(
+            '$alpha.files.:name("one.csv")/:manifest()', ALPHA_HOME, ALPHA_MANIFEST
+        ).query()
+        assert named.uuids == ["u-one-1", "u-one-2"]
 
 
 class TestGlobalArrivalsLedger:
