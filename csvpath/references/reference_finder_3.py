@@ -1871,6 +1871,50 @@ class ReferenceFinder3(ABC):
             return re.search(expected.pattern, actual) is not None
         return actual == expected
 
+    def _resolve_name_root(self, reference: Reference3) -> None:
+        """a ':name(...)' root_major is "a name that may include variable
+        interpolation or be the string form of a variable" (compendium 3.8;
+        NRE '$:name("{@where} orders").files.:flatten()'): it is replaced by
+        the literal name it resolves to, so the reference reads as if the
+        name were written plainly. ':name(/re/)' is the pattern analog of
+        ':regex()' (3.9c) and becomes one. Every finder raised ":name() is
+        not a legal root_major function" until the name_one gap review
+        (item E). Called by query() and by the estimators, once variables
+        are set. It resolves from the WRITTEN root every time, so a variable
+        changed between queries on one finder is seen; the first version
+        froze the first value (reviewer on #794).
+
+        A variable's value is used in its string form (3.8, "the string
+        form of a variable"; 3.12: its __str__ must make sense), so
+        '@w = 5' names "5". A literal ':name(3)' is an int, a statement
+        identity (D12), and raises."""
+        if reference is None:
+            raise ValueError("reference cannot be None")
+        root = reference.written_root_major
+        if not isinstance(root, FunctionCall3) or root.name != "name":
+            return
+        built = self._build(root)
+        value = built.arg
+        if isinstance(value, Regex3):
+            reference.replace_root_major(FunctionCall3(name="regex", arg=value))
+            return
+        if isinstance(root.arg, Variable3) and value is not None:
+            value = str(value)
+        if isinstance(value, bool):
+            raise ReferenceException3(
+                f":name({value!r}) at root_major takes a name, not true/false."
+            )
+        if not isinstance(value, str):
+            raise ReferenceException3(
+                f":name({value!r}) at root_major takes a name: a string, "
+                "\"{...}\" or an @variable, not "
+                f"{type(value).__name__} (an int :name() is a statement "
+                "identity, for name_three)."
+            )
+        if value.strip() == "":
+            raise ReferenceException3(":name() at root_major resolved to an empty name.")
+        reference.replace_root_major(value)
+
     def _root_major_problem(self) -> "str | None":
         """why root_major cannot be used, or None, for the estimators: they
         build a function root to find the names in play before checking
@@ -1879,6 +1923,11 @@ class ReferenceFinder3(ABC):
         estimate() raise an AttributeError (no .pattern); an invalid
         resolved ':regex(@p)' raised the build error (reviewer on #792).
         The reason is logged."""
+        try:
+            # a ':name(...)' root becomes the name it resolves to (3.8)
+            self._resolve_name_root(self.ref.parsed)
+        except ReferenceException3 as e:
+            return str(e)
         root = self.ref.parsed.root_major
         if not isinstance(root, FunctionCall3):
             return None
