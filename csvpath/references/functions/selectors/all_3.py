@@ -30,7 +30,9 @@ class All3(Function3):
     ARG_REQUIRED = False
     POSITIONS = {
         Reference3.FILES: (Reference3.NAME_THREE,),
-        Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+        # name_three: a statement of the version (gap review N; NRE
+        # '$acme.csvpaths.:last().:all()', '.:index(0)')
+        Reference3.CSVPATHS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
         # RESULTS: name_one (one-level GROUP, run-level) AND name_three
         # (:all() pools every instance in the run) -- unlike FILES/
         # CSVPATHS, both positions are genuinely legal, not aliases of

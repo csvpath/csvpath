@@ -353,7 +353,12 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
         GROUP_MANIFEST is the group's own manifest, LEDGER_MANIFEST the
         root ledger (the '*' manifest set). None keeps the group file."""
         from_call = to_call = None
+        pointer = None
+        every = False
         if name_three is not None:
+            # '.*' is '.:all()' (NRE: '$acme.csvpaths.:last().:all()' and
+            # '.*' "are equivalent"; gap review N)
+            name_three.star_body_as_all()
             if name_three.functions:
                 built = self._build_chain(name_three.functions)
                 # replaces a hand-written "unrecognized" check (settled
@@ -374,6 +379,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # and enforces 6.28c's "same direction twice is illegal"
                 # rule.
                 from_call, to_call = self._range_calls_from_built(built)
+                # a statement pointer, ':first()'/':last()'/':index(n)'
+                # (NRE '.:index(0)'), picks from the range if there is
+                # one (6.28); ':all()' is every statement
+                pointers = [f for f in built if f.ROLE == Function3.POINTER]
+                pointer = pointers[0] if pointers else None
+                every = any(f.name == "all" for f in built)
+                if (pointer is not None or every) and name_three.body is not None:
+                    raise ReferenceException3(
+                        "CsvpathsReferenceFinder3 cannot combine a literal "
+                        "identity with a statement pointer or ':all()'."
+                    )
                 for f in (from_call, to_call):
                     # a TimeWindowFunction3-wrapped bound (":date(...)"/
                     # ":year()"/etc, compendium 6.27 -- widened 2026-10-17
@@ -404,10 +420,13 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 name_three.body is None
                 and from_call is None
                 and to_call is None
-            ) or isinstance(name_three.body, Star3):
+                and pointer is None
+                and not every
+            ):
                 raise ReferenceException3(
                     "CsvpathsReferenceFinder3 requires name_three to be a "
-                    "literal statement identity/index, or ':from()'/':to()'."
+                    "statement identity, a statement pointer (:first()/"
+                    ":last()/:index(n)), ':all()'/'*', or ':from()'/':to()'."
                 )
 
         if manifest_source not in (None, self.GROUP_MANIFEST, self.LEDGER_MANIFEST):
@@ -425,7 +444,7 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 )
                 continue
             identities = selected.get("named_paths_identities") or []
-            if from_call is not None or to_call is not None:
+            if from_call is not None or to_call is not None or pointer is not None or every:
                 # ':from()'/':to()' as a name_three statement range --
                 # added 2026-08-13, David's own FlightPath v2 use case:
                 # rewind/replay starting from a specific csvpath
@@ -447,12 +466,17 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # uses it too, since 2026-11-12): a non-matching identity
                 # gives this version no results, and ':after()' moves one
                 # past the resolved position.
-                windowed = self._apply_identity_range(
-                    items=identities,
-                    identities=identities,
-                    lower_call=from_call,
-                    upper_call=to_call,
-                )
+                windowed = identities
+                if from_call is not None or to_call is not None:
+                    windowed = self._apply_identity_range(
+                        items=identities,
+                        identities=identities,
+                        lower_call=from_call,
+                        upper_call=to_call,
+                    )
+                if pointer is not None:
+                    picked = self._apply_pointer(pointer, list(windowed))
+                    windowed = [] if picked is None else [picked]
                 for identity in windowed:
                     results.append(
                         ReferenceResult3(

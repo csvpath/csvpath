@@ -63,8 +63,6 @@ class CsvpathsEstimator3(FilesEstimator3):
             return "query: ':all()' does not combine with a '*' name_one during '*' traversal"
         if not star and not any(isinstance(p, FunctionCall3) for p in name_one.path) and not name_one.functions:
             return "query: CSVPATHS name_one is a version-selecting function chain, not a literal"
-        if self.reference.name_three is not None and isinstance(self.reference.name_three.body, Star3):
-            return "query: CSVPATHS name_three is a statement identity, an index, or :from()/:to()"
         try:
             # the finder's own static check: a definition field beside a
             # version selector (it reads nothing)
@@ -121,6 +119,16 @@ class CsvpathsEstimator3(FilesEstimator3):
         self._read(part=RESOLVE, kind="name_listing", count=statements, basis=UPPER_BOUND, because=f".{three}")
         self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=3 * statements, basis=UPPER_BOUND, because=f".{three}")
         return True
+
+    def _selected(self, *, calls: list, names: list, by_name: dict) -> int:
+        """the versions name_one selects. A name_three pointer picks a
+        STATEMENT within each version (gap review N), not a version, so
+        only name_one's functions count: '$x.csvpaths.*.:first()' is one
+        statement of every version, not one version."""
+        three = self.reference.name_three
+        three_calls = list(three.functions) if three is not None else []
+        own = [c for c in calls if not any(c is t for t in three_calls)]
+        return super()._selected(calls=own, names=names, by_name=by_name)
 
     def _statements(self, *, three, selected: int) -> int:
         # statements per version are not in the ledger: count a pointer or
