@@ -72,6 +72,10 @@ class MacieConverter:
     # what the csvpath collects: the lines with findings, or the clean
     # lines, those without (specs/macie/clean-lines-design.md)
     #
+    #
+    # Macie's machine learning identifiers, checked by Jev
+    #
+    JEV = ("NAME", "ADDRESS")
     FINDINGS = "findings"
     CLEAN = "clean"
     COLLECT = (FINDINGS, CLEAN)
@@ -143,7 +147,9 @@ class MacieConverter:
             )
         body += self._custom_identifiers()
         body += self._managed_identifiers(name=name, report=report)
-        if not any(b.startswith(("macie_cdi(", "macie_mdi(")) for b in body):
+        if not any(
+            b.startswith(("macie_cdi(", "macie_mdi(", "macie_jev.")) for b in body
+        ):
             self._fail(
                 f"Macie wrapper for {name} has no custom or supported managed data "
                 "identifiers to convert"
@@ -329,6 +335,25 @@ class MacieConverter:
         out = []
         managed = self.wrapper.get("managedDataIdentifiers") or {}
         for i, mdi in enumerate(managed.get("resolved") or []):
+            if mdi in self.JEV:
+                #
+                # Macie's machine learning identifiers: checked by Jev, from
+                # the columns' masked shapes, when [macie] review names them
+                # (specs/macie/jev-names-addresses-design.md)
+                #
+                report.skip(
+                    obj=name,
+                    location=f"managedDataIdentifiers.resolved[{i}]",
+                    feature="managedDataIdentifier.jev",
+                    reason=(
+                        f"Managed data identifier {mdi} is found by Macie with machine "
+                        "learning; it is checked by Jev, not by rules, only when "
+                        "config.ini [macie] review names it, and reported apart from "
+                        "the Macie findings"
+                    ),
+                )
+                out.append(f"macie_jev.nocontrib({self._string(value=mdi)})")
+                continue
             if not self.catalog.has(name=mdi):
                 report.skip(
                     obj=name,

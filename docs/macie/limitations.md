@@ -16,15 +16,15 @@ from people running it against real data.
   `specs/macie/transpile-design.md` ("Interpretations to confirm"). Until
   then, treat findings as close to Macie's, not identical.
 
-## Managed identifiers without a stand-in
+## NAME and ADDRESS
 
-| Identifier | Why |
-|---|---|
-| `NAME` | Macie uses machine learning to find names. |
-| `ADDRESS` | An address needs a gazetteer of places and postal codes. |
-
-A wrapper that selects one of these still loads. The conversion report
-lists it as not translated, and the rest of the job runs.
+Macie finds these with machine learning; there is no rule-based stand-in.
+They are checked by Jev, from the columns' masked shapes, only when
+`[macie] review` names them, and reported in their own `jev` section,
+apart from the Macie findings ([NAME and ADDRESS](review.md#name-and-address)).
+Without the review they are not checked, and the run says so. When
+checked, names inside free text are missed, and a mixed column is judged
+as one.
 
 ## Partial stand-ins
 

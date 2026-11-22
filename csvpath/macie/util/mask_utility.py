@@ -5,6 +5,7 @@ class MaskUtility:
     punctuation are kept, so a value's shape is all that is left."""
 
     LETTER = "A"
+    LOWER = "a"
     DIGIT = "#"
 
     @classmethod
@@ -27,4 +28,25 @@ class MaskUtility:
         return " ".join(
             cls.mask(text=w) if any(c.isdigit() for c in w) else w
             for w in text.split(" ")
+        )
+
+    @classmethod
+    def mask_case(cls, *, text: str) -> str:
+        """the case-keeping mask, for the NAME and ADDRESS check
+        (specs/macie/jev-names-addresses-design.md): each upper-case letter
+        becomes A, each lower-case letter a, each digit #; spaces and
+        punctuation are kept. Every word is masked, so no word is sent:
+        "Akua Mansa" -> "Aaaa Aaaaa"; "12 Main St" -> "## Aaaa Aa"
+        """
+        if not isinstance(text, str):
+            raise TypeError(f"text must be a str, not {type(text)}")
+        return "".join(
+            cls.DIGIT
+            if c.isdigit()
+            else cls.LETTER
+            if c.isalpha() and c.isupper()
+            else cls.LOWER
+            if c.isalpha()
+            else c
+            for c in text
         )
