@@ -79,3 +79,68 @@ def test_the_estimate_keeps_its_contract(layout, reference):  # noqa: F811
     finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=p)
     measured, raised = _measure(p, reference)
     assert _problems(finder.estimate(), measured, raised) == []
+
+
+# more shapes after '*' (reviewer on #797)
+CHAINED = [
+    (
+        '$alpha.files.:name("one.csv").*:last()',
+        '$alpha.files.:name("one.csv").:all():last()',
+    ),
+    (
+        '$alpha.files.:name("one.csv").*:uuid()',
+        '$alpha.files.:name("one.csv").:all():uuid()',
+    ),
+    (
+        '$alpha.files.:name("one.csv").*:manifest()',
+        '$alpha.files.:name("one.csv").:all():manifest()',
+    ),
+    (
+        "$acme.files.:flatten().*:from(0):to(1)",
+        "$acme.files.:flatten().:all():from(0):to(1)",
+    ),
+    ('$alpha.files.:status("complete").*', '$alpha.files.:status("complete").:all()'),
+    ("$*.files.:flatten().*:last()", "$*.files.:flatten().:all():last()"),
+]
+
+
+@pytest.mark.parametrize("star,all_form", CHAINED)
+def test_a_chain_after_the_star(layout, star, all_form):  # noqa: F811
+    p, _ = layout
+    got = _query(p=p, reference=star)
+    assert got and got == _query(p=p, reference=all_form)
+
+
+def test_a_worksheet_with_a_star_raises_as_with_all(layout):  # noqa: F811
+    # several versions with a worksheet: no example asks for it (D39)
+    p, _ = layout
+    for reference in (
+        '$beta.files.EMEA/:name("two.csv")#s.*',
+        '$beta.files.EMEA/:name("two.csv")#s.:all()',
+    ):
+        finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=p)
+        with pytest.raises(ReferenceException3, match="version-selecting pointer"):
+            finder.query()
+
+
+@pytest.mark.parametrize("name_one", [":flatten()", ":groups()", "*"])
+def test_a_star_root_is_the_literal_roots_together(layout, name_one):  # noqa: F811
+    p, _ = layout
+    star = _query(p=p, reference=f"$*.files.{name_one}.*")
+    literal = []
+    for name in ("acme", "alpha", "beta", "cappa", "delta"):
+        literal += _query(p=p, reference=f"${name}.files.{name_one}.*")
+    assert sorted(star) == sorted(literal)
+
+
+def test_the_rewrite_is_stable_on_one_finder(layout):  # noqa: F811
+    # it rewrites the parsed reference in place; a second query, or an
+    # estimate first, gives the same answer
+    p, _ = layout
+    finder = ReferenceFinderFactory3.for_reference(
+        reference='$alpha.files.:name("one.csv").*', csvpaths=p
+    )
+    finder.estimate()
+    first = [r.uuid for r in finder.query().results]
+    second = [r.uuid for r in finder.query().results]
+    assert first and first == second
