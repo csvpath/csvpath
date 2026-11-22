@@ -60,6 +60,9 @@ class FilesEstimator3:
     NAME_KEY = "named_file_name"
     ROOT_CONFIG = "inputs_files_path"
     LEDGER_METHOD = "files_ledger"
+    # a ':manifest()' after a plain directory segment implies a '*' in
+    # FILES (D40 c), as query() applies it; CSVPATHS keeps False
+    TRAILING_MANIFEST_IMPLIES_STAR = True
     # the source method listing the live names, for a literal root that is
     # not live (D40 f); None uses the ledger's names instead
     LIVE_NAMES_METHOD = "file_names"
@@ -79,7 +82,9 @@ class FilesEstimator3:
         # reference whether or not query() ran first ('beta/:manifest()';
         # reviewer on #793). It is idempotent.
         finder._attach_trailing_manifest(
-            name_one=self.reference.name_one, implies_star=False
+            name_one=self.reference.name_one,
+            implies_star=self.TRAILING_MANIFEST_IMPLIES_STAR
+            and finder._trailing_manifest_implies_star(self.reference.name_one),
         )
         if self.reference.name_three is not None:
             self.reference.name_three.star_body_as_all()

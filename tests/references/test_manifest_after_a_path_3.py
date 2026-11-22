@@ -132,12 +132,13 @@ class TestFiles:
         got = _query(p, written)
         assert got and got == _query(p, same_as)
 
-    def test_no_star_is_implied(self, layout):  # noqa: F811
-        # 'orders/2026' names a file home 'orders/2026', which cappa does not
-        # have ('orders/2026/four.csv' is one level deeper)
+    def test_a_star_is_implied_after_a_directory(self, layout):  # noqa: F811
+        # 'orders/2026/:manifest()' is the records of the registrations
+        # directly under orders/2026/ (David, 2026-11-22, D40 c); it was []
+        # (D38: read as a file home named 'orders/2026')
         p, _ = layout
-        assert _query(p, "$cappa.files.orders/2026/:manifest()") == []
-        assert _query(p, "$cappa.files.orders/2026/*/:manifest()")
+        implied = _query(p, "$cappa.files.orders/2026/:manifest()")
+        assert implied and implied == _query(p, "$cappa.files.orders/2026/*/:manifest()")
 
 
 @pytest.mark.parametrize("pair", RESULTS_PAIRS)
