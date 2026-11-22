@@ -6962,14 +6962,19 @@ class TestChoiceAsNameOnePathSegment:
         # gives the file home with the worksheet as its identity, so the
         # query succeeds: :choice() is recognized as path-building, same
         # as :name()/:regex() (the "literal path" guard would raise)
-        # one.csv has no workbook version, so it does not match (D40 d);
-        # the guard accepting :choice() is what this pins: no raise
+        # the guard accepts :choice(); a workbook home matches with the
+        # worksheet as identity, and a CSV one does not (D40 d)
+        manifest = [
+            {"file": BOOK1_XLSX, "file_home": f"{ALPHA_HOME}/Book1.xlsx", "uuid": "u-1"}
+        ] + list(ALPHA_MANIFEST)
         results = _finder(
-            '$alpha.files.:choice("one.csv")#sheet1',
+            '$alpha.files.:choice("Book1.xlsx|one.csv")#sheet1',
             ALPHA_HOME,
-            ALPHA_MANIFEST,
+            manifest,
         ).query()
-        assert results.results == []
+        assert [(r.path, r.uuid, r.identity) for r in results.results] == [
+            (f"{ALPHA_HOME}/Book1.xlsx", None, "sheet1")
+        ]
 
 
 def _entry_star_finder(reference: str) -> FilesReferenceFinder3:

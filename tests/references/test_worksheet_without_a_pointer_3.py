@@ -127,3 +127,27 @@ def test_the_estimate_keeps_its_contract(books, reference):
     finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=books)
     measured, raised = _measure(books, reference)
     assert _problems(finder.estimate(), measured, raised) == []
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        "$acme.files.orders/:all()#march.:last()",
+        "$acme.files.orders/:groups()#march.:last()",
+    ],
+)
+def test_a_group_of_workbooks_and_a_csv_keeps_the_workbooks(books, reference):
+    # grouped by file home: each workbook's last version, and not the CSV's
+    # (D40 d); without the worksheet the CSV home's version is there too
+    rows = _rows(p=books, reference=reference)
+    assert len(rows) == 2
+    assert all(
+        path.endswith(".xlsx") and identity == "march" for path, _, identity in rows
+    )
+    assert len(_rows(p=books, reference=reference.replace("#march", ""))) == 3
+
+
+def test_the_pointer_picks_before_the_worksheet_is_judged(books):
+    # pooled, ':last()' is the newest version of all, here plain.csv, which
+    # has no worksheet: no match, rather than the newest workbook
+    assert _rows(p=books, reference="$acme.files.orders/*#march.:last()") == []

@@ -149,3 +149,40 @@ def test_a_csv_named_file_home_with_a_workbook_version_matches():
         .results
     )
     assert [r.uuid for r in last] == ["u-2"] and first == []
+
+
+@pytest.mark.parametrize("tail", [":manifest()", ":manifest():uuid()"])
+def test_a_workbook_with_a_manifest_after_the_pointer_still_matches(tail):
+    # a ':manifest()' result's path is the manifest.json, so the version's
+    # own file is judged where it is built (reviewer on #807: a real
+    # workbook came back empty)
+    from tests.references.test_files_reference_finder_3 import (
+        ALPHA_HOME,
+        BOOK1_XLSX,
+        _finder,
+    )
+
+    book = [
+        {"file": BOOK1_XLSX, "file_home": f"{ALPHA_HOME}/Book1.xlsx", "uuid": "u-1"}
+    ]
+    csv = [
+        {
+            "file": f"{ALPHA_HOME}/one.csv/a1.csv",
+            "file_home": f"{ALPHA_HOME}/one.csv",
+            "uuid": "u-2",
+        }
+    ]
+    matched = (
+        _finder(
+            f'$alpha.files.:name("Book1.xlsx")#hello.:last(){tail}', ALPHA_HOME, book
+        )
+        .query()
+        .results
+    )
+    assert [r.uuid for r in matched] == ["u-1"]
+    nothing = (
+        _finder(f'$alpha.files.:name("one.csv")#hello.:last(){tail}', ALPHA_HOME, csv)
+        .query()
+        .results
+    )
+    assert nothing == []

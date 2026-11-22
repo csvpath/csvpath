@@ -197,10 +197,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
         name_one = self.ref.parsed.name_one
         if name_one is None or name_one.name_two is None:
             return results
+        # a ':manifest()' result's path is the manifest.json: its version
+        # was judged where the result was built
         dropped = [
             str(r.path)
             for r in results.results
-            if r.uuid is not None and not XlsxReaderHelper.is_xlsx(str(r.path))
+            if r.uuid is not None
+            and not self._is_a_manifest_path(str(r.path))
+            and not XlsxReaderHelper.is_xlsx(str(r.path))
         ]
         if not dropped:
             return results
@@ -209,6 +213,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
             results=[r for r in results.results if str(r.path) not in dropped],
             ambiguous_content_read=results.ambiguous_content_read,
         )
+
+    @staticmethod
+    def _is_a_manifest_path(path: str) -> bool:
+        """whether a result's path is a manifest.json (a ':manifest()'
+        result), not a version file"""
+        if path is None:
+            raise ValueError("path cannot be None")
+        return path.replace("\\", "/").rsplit("/", 1)[-1] == "manifest.json"
 
     def _warn_no_worksheet(self, *, worksheet: str, paths: list) -> None:
         """the D40 d warning: these files have no worksheets, so no match"""
@@ -1178,6 +1190,21 @@ class FilesReferenceFinder3(ReferenceFinder3):
         # so query() gives the named-file's manifest.json (compendium 5.7).
         #
         manifest_path = self._root_manifest_path(root_major) if has_manifest else None
+        if name_one.name_two is not None and manifest_path is not None:
+            # a worksheet is judged by the selected version's own file here,
+            # before the result's path becomes the manifest.json (D40 d;
+            # reviewer on #807: a real workbook with ':manifest()' came back
+            # empty). _without_worksheets_on_non_workbooks() skips these.
+            without = [
+                c["file"]
+                for c in selected_candidates
+                if not XlsxReaderHelper.is_xlsx(str(c["file"]))
+            ]
+            if without:
+                self._warn_no_worksheet(worksheet=name_one.name_two, paths=without)
+                selected_candidates = [
+                    c for c in selected_candidates if c["file"] not in without
+                ]
         return ReferenceResults3(
             results=[
                 ReferenceResult3(

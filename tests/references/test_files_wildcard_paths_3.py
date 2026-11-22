@@ -215,6 +215,7 @@ def _every_file_is_a_workbook(monkeypatch) -> None:
 
     monkeypatch.setattr(XlsxReaderHelper, "is_xlsx", classmethod(lambda cls, path: True))
 
+
 LAYOUT = [
     ("alpha", "", "zero.csv", 1),
     ("alpha", "", "one.csv", 2),
