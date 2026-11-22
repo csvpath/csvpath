@@ -183,8 +183,9 @@ class FilesEstimator3:
         names = self._names_in_play(by_name)
         literal = isinstance(self.reference.root_major, str)
         if literal and not self._is_present(name=self.reference.root_major, entries=entries):
-            # a named-file that is not live -- never registered, or deleted
-            # (still in the ledger: reviewer on #803) -- has no manifest: the
+            # a named-file that is not live -- never registered, deleted
+            # (still in the ledger), or a home with no manifest.json (an
+            # interrupted registration; reviewer on #803) -- has no manifest: the
             # query only checks for it, finds nothing and reads nothing (D40
             # f), and a well-known file ('$nope.files.:readme()') is a path
             # that resolves to None
