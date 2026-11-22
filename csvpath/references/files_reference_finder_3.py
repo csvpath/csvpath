@@ -567,14 +567,19 @@ class FilesReferenceFinder3(ReferenceFinder3):
         field_call = self._extract_gate_field_call(name_one)
         name_one_pointer = None
         name_one_manifest = None
+        name_one_chain = None
         if reference.name_three is None:
             name_one_pointer = self._name_one_pointer(name_one)
             if name_one_pointer is None:
                 name_one_manifest = self._name_one_manifest_call(name_one)
+            if name_one_pointer is None and name_one_manifest is None:
+                # 'APAC/*:manifest():first()' (6.13b)
+                name_one_chain = self._name_one_manifest_chain(name_one)
         if (
             name_one.functions
             and name_one_pointer is None
             and name_one_manifest is None
+            and name_one_chain is None
             and status_candidates is None
         ):
             # settled, not a gap (not-yet-supported sweep #3): the
@@ -782,10 +787,17 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     name_one_pointer = self._name_one_pointer(name_one)
                 if name_one_pointer is None and name_one_manifest is None:
                     name_one_manifest = self._name_one_manifest_call(name_one)
+                if (
+                    name_one_pointer is None
+                    and name_one_manifest is None
+                    and name_one_chain is None
+                ):
+                    name_one_chain = self._name_one_manifest_chain(name_one)
             if (
                 name_one.functions
                 and name_one_pointer is None
                 and name_one_manifest is None
+                and name_one_chain is None
             ):
                 # same settled restriction as the literal-root branch
                 # above (not-yet-supported sweep #3) -- just reached via
@@ -818,6 +830,14 @@ class FilesReferenceFinder3(ReferenceFinder3):
             ]
 
         name_three = reference.name_three
+        if name_three is None and name_one_chain is not None:
+            return self._query_path_manifest_chain(
+                chain=name_one_chain,
+                reference=reference,
+                candidates=candidates,
+                partitioned=partitioned,
+                group_key=group_key,
+            )
         if name_three is None:
             if name_one_pointer is not None and name_one.name_two is not None:
                 # not yet supported -- a worksheet read means content
@@ -2209,6 +2229,107 @@ class FilesReferenceFinder3(ReferenceFinder3):
             return None
         return candidate
 
+    def _name_one_manifest_chain(self, name_one) -> "dict | None":
+        """the chain on a ':manifest()' after a path, e.g.
+        'APAC/*:manifest():first()', 'orders/:manifest():last()' (the '*'
+        implied, D40 c), 'APAC/:all():manifest():last()' or
+        ':name("two.csv"):manifest():yesterday()': the parts
+        _split_manifest_chain() gives. 6.13b: a ':manifest()' in name_one
+        "with a pointer, filter or range ... resolves to the selected
+        ... record(s)". The bare '$beta.files.:manifest():first()' did;
+        after a path it raised "does not support functions attached
+        directly to name_one" (gap logged reviewing #803; David,
+        2026-11-22: fix before release).
+
+        A peek, not a pop, as _name_one_manifest_call() is, so query()
+        and _extract_data() get the same answer. The ':manifest()' is in
+        name_one.functions (after _attach_trailing_manifest() for the
+        '/:manifest()' spelling) with at least one function beside it,
+        and the path has no pointer of its own. None for every other
+        shape, including the bare chain (_manifest_chain()) and a lone
+        ':manifest()' (_name_one_manifest_call()). A field that gives a
+        value is not claimed: 6.13b's case has "no field after it", and in
+        FILES name_one picks the file and name_three reads the fields (E2),
+        so 'APAC/*:manifest():last():time()' keeps raising with the dotted
+        form, 'APAC/*.:manifest():last():time()'. A gate (an argued field)
+        is a filter, and is claimed."""
+        if name_one is None:
+            raise ValueError("name_one cannot be None")
+        if not name_one.path or len(name_one.functions) < 2:
+            return None
+        calls = name_one.functions
+        if not all(isinstance(c, FunctionCall3) for c in calls):
+            return None
+        manifests = [c for c in calls if c.name == "manifest" and c.arg is None]
+        if len(manifests) != 1:
+            return None
+        for segment in name_one.path:
+            if isinstance(segment, FunctionCall3) and segment.name in (
+                *self.POINTER_NAMES,
+                "manifest",
+            ):
+                return None
+        others = [c for c in calls if c is not manifests[0]]
+        chain = self._split_manifest_chain(others=others)
+        if chain is None or chain["values"]:
+            return None
+        return chain
+
+    def _query_path_manifest_chain(
+        self,
+        *,
+        chain: dict,
+        reference: Reference3,
+        candidates: list,
+        partitioned: bool,
+        group_key,
+    ) -> ReferenceResults3:
+        """query() for a ':manifest()' chain after a path
+        (_name_one_manifest_chain()): the records of the versions the path
+        matched, the range first, then the gates, then the pointer, as for
+        the bare chain (6.28). The pointer picks in each group after a
+        grouping wildcard (4.2), as 'APAC/:all():last()' does, and in the
+        whole pool otherwise, as 'APAC/*.:last()' does. Each result is the
+        record's uuid with the named-file's manifest.json (5.7), as for
+        'APAC/*:manifest()'."""
+        if chain is None:
+            raise ValueError("chain cannot be None")
+        if candidates is None:
+            raise ValueError("candidates cannot be None")
+        if reference.name_one.name_two is not None:
+            raise ReferenceException3(
+                "FilesReferenceFinder3 does not yet support a ':manifest()' "
+                "chain in name_one combined with the '#worksheet' marker "
+                "(name_two): it resolves to manifest records, not sheet "
+                "content."
+            )
+        entries = self._apply_manifest_chain_ranges(
+            ranges=chain["ranges"], entries=candidates
+        )
+        for gate in chain["gates"]:
+            entries = self._filter_by_manifest_chain_gate(
+                reference=reference, call=gate, entries=entries
+            )
+        pointer = chain["pointer"]
+        if pointer is not None and partitioned:
+            entries = [
+                selected
+                for selected in (
+                    self._apply_pointer(pointer, group)
+                    for group in self._groups_of(
+                        candidates=entries, group_key=group_key
+                    )
+                )
+                if selected is not None
+            ]
+        elif pointer is not None:
+            selected = self._apply_pointer(pointer, entries)
+            entries = [] if selected is None else [selected]
+        path = self._root_manifest_path(reference.root_major)
+        return ReferenceResults3(
+            results=[ReferenceResult3(path=path, uuid=e["uuid"]) for e in entries]
+        )
+
     def _extract_gate_field_call(self, name_one) -> "Function3 | None":
         """pops a single GATE-able field-accessor function (e.g.
         ':type("csv")') out of `name_one.functions`, IN PLACE, when it
@@ -3198,25 +3319,43 @@ class FilesReferenceFinder3(ReferenceFinder3):
         others = [c for c in calls if c is not manifests[0]]
         if not others:
             return None
-        pointer_names = ("first", "last", "index")
-        range_names = ("from", "to", "before", "after")
-
-        def _is_range(call) -> bool:
-            # a range bound or a bare time window (compendium 6.27e),
-            # as CSVPATHS and RESULTS take beside ':manifest()'
-            if call.name in range_names:
-                return True
-            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
-            return function_cls is not None and issubclass(
-                function_cls, TimeWindowFunction3
-            )
-
         if (
             len(others) == 1
-            and not _is_range(others[0])
-            and (calls[0] is manifests[0] or others[0].name in pointer_names)
+            and not FilesReferenceFinder3._is_manifest_chain_range(others[0])
+            and (
+                calls[0] is manifests[0]
+                or others[0].name in FilesReferenceFinder3.POINTER_NAMES
+            )
         ):
             return None
+        return FilesReferenceFinder3._split_manifest_chain(others=others)
+
+    POINTER_NAMES = ("first", "last", "index")
+
+    @staticmethod
+    def _is_manifest_chain_range(call) -> bool:
+        """a range bound or a bare time window (compendium 6.27e), as
+        CSVPATHS and RESULTS take beside ':manifest()'"""
+        if call is None:
+            raise ValueError("call cannot be None")
+        if call.name in ("from", "to", "before", "after"):
+            return True
+        function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+        return function_cls is not None and issubclass(
+            function_cls, TimeWindowFunction3
+        )
+
+    @staticmethod
+    def _split_manifest_chain(*, others: list) -> "dict | None":
+        """the functions beside a ':manifest()', split into {"pointer",
+        "ranges", "gates", "values"} (see _manifest_chain()). None when one
+        of them is not a pointer, range or field. Raises for two pointers
+        or a field that does not read manifest.json. Shared by the bare
+        chain and the chain after a path (_name_one_manifest_chain())."""
+        if others is None:
+            raise ValueError("others cannot be None")
+        pointer_names = FilesReferenceFinder3.POINTER_NAMES
+        _is_range = FilesReferenceFinder3._is_manifest_chain_range
         pointers = []
         ranges = []
         fields = []
@@ -3613,6 +3752,20 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     values[-1].name
                 ),
                 entry=entry,
+            )
+        path_chain = None
+        if (
+            reference.name_three is None
+            and isinstance(reference.root_major, str)
+            and result.uuid is not None
+        ):
+            path_chain = self._name_one_manifest_chain(reference.name_one)
+        if path_chain is not None:
+            # a ':manifest()' chain after a path ('APAC/*:manifest():last()',
+            # 6.13b): the record query() selected. A value field is not
+            # claimed (_name_one_manifest_chain()), so there is none to read.
+            return self._find_manifest_entry_by_uuid(
+                self.source.file_manifest(reference.root_major), result.uuid
             )
         if (
             reference.name_three is None
