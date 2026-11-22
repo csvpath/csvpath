@@ -99,7 +99,7 @@ not provide the current datetime.
 
 ### :year()
 $acme.files.orders/:name(:year())/:last()
-$acme.files.orders/:from(:year(@the_year)).*
+$acme.files.orders/*.:from(:year(@the_year))
 
 ### :month()
 $acme.files.orders/:name(:month())/:last()
@@ -366,7 +366,7 @@ A function can point to a certain item to the exclusion of other items. Examples
 
 ### One pointer per reference context
 Two pointers can not cohabitate the same reference in the same context, such as a `name_one`. For e.g. the following are not legal:
-- $acme.files.:index(3):last()  - cannot specify the 4th item and the last item at the same time, even if the last item is 4th.
+- $acme.results.:index(3):last()  - cannot specify the 4th item and the last item at the same time, even if the last item is 4th.
 - $acme.results.orders:last().header_checks:manifest():errors() - cannot point to the manifest file and the errors file at the same time.
 
 ---
@@ -551,7 +551,7 @@ as `$alpha.results.beta/*:last()`
 #### A run of all 1-level templates starting `beta/`
 $alpha.results.beta/*:last()
 
-#### The manifest of the most recent run
+#### The manifest of the most recent run with no template
 $alpha.results.:manifest():last()
 
 #### The record of the most recent run in the results ledger manifest set
@@ -974,7 +974,7 @@ $acme.files.*.:yesterday():first()
 Note that `:yesterday()` is dynamic shorthand for a datetime
 
 #### Find the last `acme` version created after the 4th of July
-$acme.files.:flatten():after(:date("{:year()}-07-04_23-59-59")).:last()
+$acme.files.:flatten().:after(:date("{:year()}-07-04_23-59-59")):last()
 
 Note that the `name_three` pointer provides the actual version file
 path+uuid and, on `resolve()` bytes.
