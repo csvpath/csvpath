@@ -389,12 +389,10 @@ Given a named-file `acme`, to find the first registration in any location
 within `acme` that happened yesterday using `name_three` we do:
 $acme.files.:flatten().:yesterday():first()
 
-Alternatively, this simpler `name_one` version is nearly grammatically
-identical, but it does not yield the same information:
-`$acme.files.:flatten():yesterday():first()`. The difference is that this
-reference doesn't offer the path and bytes to the version selected.
-Instead, on `query()` it returns file home path+uuid, rather than file
-version+uuid. In both cases the UUID is the UUID of the registration.
+The undotted `$acme.files.:flatten():yesterday():first()` is not legal: in
+`files`, `name_one` picks the file home and `name_three` the version (E2,
+2026-11-02), so a time window or pointer that selects versions goes after
+the `.`.
 
 The first reference answers the question "what is the first version". The
 second answers the question "what is the first file". The difference is user
@@ -445,7 +443,7 @@ Typical `name_one` functions include:
 - `:all()`
 - `:name(...)`
 - `:flatten()`
-- `:group()`
+- `:groups()`
 - `:regex("2026-01")`
 
 #### 3.13
@@ -507,7 +505,7 @@ Expect the following references to have these results:
   - `named_paths/acme/group.csvpaths` + UUID `2fc1995b2...`
   - `named_paths/acme/group.csvpaths` + UUID `a8ab152c2...`
   - `named_paths/acme/group.csvpaths` + UUID `091cb1fed...`
-- `$acme.csvpaths.:date("2026-11-05"):after():first()` retrieves the 2nd version as `named_paths/acme/group.csvpaths` + UUID `a8ab152c2...`
+- `$acme.csvpaths.:after(:date("2026-11-05")):first()` retrieves the 2nd version as `named_paths/acme/group.csvpaths` + UUID `a8ab152c2...`
 
 Note that the finder's `query()` method with reference `$acme.csvpaths.*`
 returns the three results shown above; however, the `resolve()` method
@@ -728,8 +726,6 @@ The following are illustrative for both the templated datatypes, `files` and `re
 Note that the following unlikely references are legal and equivalent:
 - `$acme.files.*/:all()/*`
 - `$acme.files.*/*/*`
-- `$acme.files.:all()/*/:all()`
-- `$acme.files.:all()/:all()/:all()`
 
 
 ---
@@ -1350,7 +1346,7 @@ version, if found.
 
 The following two references both return a list of the registration
 fingerprints found in `acme`.
-`$acme.files.:fingerprint()`
+`$acme.files.:flatten().:fingerprint()`
 `$acme.files.:manifest():fingerprint()`
 
 The following two references search for the given fingerprint across all
@@ -1818,7 +1814,7 @@ What a pointer or value resolves to depends on where it sits and how it is used:
 #### 6.44
 - A pointer that uniquely identifies an item (file or directory) when used
   with an argument may also be used without an argument to retrieve the same
-  value as a field accessor. E.g. $acme.files.:first():uuid() returns a UUID
+  value as a field accessor. E.g. $acme.files.*.:first():uuid() returns a UUID
   value; whereas, $acme.files.:uuid("ab37-fef3...") returns a path to the item
   without resolving to a more specific value. Likewise :fingerprint().
 - Anywhere else, an argued `:uuid()` or `:fingerprint()` is a filter, the
