@@ -42,7 +42,22 @@ class FilesystemReferenceSource(ReferenceSource):
     #
     def file_manifest(self, name: str) -> list:
         self._check_name(name, "Named-file name")
-        return self.csvpaths.file_manager.get_manifest(name)
+        #
+        # a named-file with no manifest (never registered, or deleted) has
+        # no versions: [], as paths_manifest() gives for a missing group.
+        # "A reference query that doesn't find results does not raise"
+        # (David, 2026-11-22, D40 f; 5.3). FileManager.get_manifest()
+        # raises ValueError for it; only when the manifest file is really
+        # absent is that "no versions" -- any other ValueError (a manifest
+        # that is not a list) is re-raised.
+        #
+        try:
+            return self.csvpaths.file_manager.get_manifest(name)
+        except ValueError:
+            home = self.csvpaths.file_manager.named_file_home(name)
+            if Nos(Nos(home).join("manifest.json")).exists():
+                raise
+            return []
 
     def files_ledger(self) -> list | None:
         return self.csvpaths.file_manager.files_root_manifest

@@ -71,7 +71,10 @@ class SqlReferenceSource(FilesystemReferenceSource):
         if tracing:
             compiled = stmt.compile(dialect=self.engine.dialect)
             self._tracing.record(
-                sql=str(compiled), params=compiled.params, rows=len(rows), started=started
+                sql=str(compiled),
+                params=compiled.params,
+                rows=len(rows),
+                started=started,
             )
         return rows
 
@@ -148,10 +151,10 @@ class SqlReferenceSource(FilesystemReferenceSource):
             name=name,
         )
         #
-        # as FileManager.get_manifest does for a name with no manifest
+        # a name with no rows has no versions: [], as the filesystem source
+        # gives (David, 2026-11-22, D40 f: a query that finds nothing does
+        # not raise). It raised ValueError, mirroring FileManager.
         #
-        if len(manifest) == 0:
-            raise ValueError(f"No manifest for file named {name}")
         return manifest
 
     def files_ledger(self) -> list:

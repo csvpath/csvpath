@@ -302,8 +302,7 @@ def test_rows_with_no_lifecycle_are_not_seen(paths, tmp_path):
     assert _sql(paths).file_names() == []
     assert _sql(paths).paths_names() == []
     assert _sql(paths).paths_manifest("orders") == []
-    with pytest.raises(ValueError):
-        _sql(paths).file_manifest("orders")
+    assert _sql(paths).file_manifest("orders") == []
 
 
 # ===================
@@ -311,11 +310,10 @@ def test_rows_with_no_lifecycle_are_not_seen(paths, tmp_path):
 # ===================
 
 
-def test_a_missing_named_file_raises_as_the_filesystem_does(paths):
-    with pytest.raises(ValueError, match="No manifest for file named nope"):
-        _sql(paths).file_manifest("nope")
-    with pytest.raises(ValueError, match="No manifest for file named nope"):
-        _fs(paths).file_manifest("nope")
+def test_a_missing_named_file_is_empty_as_the_filesystem_gives(paths):
+    # D40 f: a query that finds nothing does not raise
+    assert _sql(paths).file_manifest("nope") == []
+    assert _fs(paths).file_manifest("nope") == []
 
 
 def test_a_missing_named_paths_is_empty_and_creates_nothing(paths):
@@ -334,8 +332,7 @@ def test_reads_are_scoped_to_the_configured_roots(paths, tmp_path):
     assert len(_sql(paths).files_ledger()) == 1
     assert len(_sql(paths).paths_ledger()) == 1
     assert _sql(other).file_names() == ["other"]
-    with pytest.raises(ValueError):
-        _sql(other).file_manifest("orders")
+    assert _sql(other).file_manifest("orders") == []
     rows = _sql(paths)._column(text("select count(*) from named_file"))
     assert rows == [2]
 
