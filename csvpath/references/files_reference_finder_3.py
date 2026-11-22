@@ -196,6 +196,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
         self._attach_trailing_manifest(
             name_one=reference.name_one, implies_star=False
         )
+        if reference.name_three is not None:
+            # '.*' is '.:all()' (gap review M); it raised "a literal
+            # name_three body of this type"
+            reference.name_three.star_body_as_all()
         root_major = reference.root_major
         if isinstance(root_major, Star3):
             status_chain = self._bare_status_gate_chain(reference.name_one)
@@ -1669,11 +1673,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # window -- only "neither a pointer, nor a field accessor,
             # nor :manifest(), nor a range/time-window" is still a
             # genuine "nothing to resolve" rejection.
+            # ':all()' alone is every version (compendium 4.4:
+            # '$*.files.:flatten().:all()' is "all 8 most-recent
+            # registrations"; gap review O); it raised here
             if (
                 field_call is None
                 and not has_manifest
                 and not has_range
                 and bare_time_window is None
+                and not any(f.name == "all" for f in built)
             ):
                 raise ReferenceException3(
                     "FilesReferenceFinder3 requires name_three to resolve to "

@@ -291,6 +291,17 @@ class NameThree3:
         if self._body is None and not self._functions:
             raise ValueError("NameThree3 must have a body, functions, or both")
 
+    def star_body_as_all(self) -> None:
+        """a '*' body is ':all()' (NRE: '.:name("orders.csv").*' and
+        '.:all()' "are equivalent"; compendium 4.2b: in name_three ':all()'
+        devolves to '*'): rewritten in place to the ':all()' form, which
+        the finders take. Leaves any other body alone. The parsed reference
+        then reads '.:all()' (str(), messages rebuilt from it); the
+        original text stays in the parser's own reference string."""
+        if isinstance(self._body, Star3):
+            self._body = None
+            self._functions.insert(0, FunctionCall3(name="all"))
+
     @property
     def body(self):
         return self._body

@@ -77,6 +77,8 @@ class FilesEstimator3:
         finder._attach_trailing_manifest(
             name_one=self.reference.name_one, implies_star=False
         )
+        if self.reference.name_three is not None:
+            self.reference.name_three.star_body_as_all()
         self.reads = []
         self.why = []
         self.would_raise = None
