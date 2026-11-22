@@ -16,7 +16,11 @@ from tests.references.cost.test_results_estimate_soundness_3 import (
     _measure,
     _problems,
 )
-from tests.references.test_files_wildcard_paths_3 import LAYOUT, layout  # noqa: F401
+from tests.references.test_files_wildcard_paths_3 import (  # noqa: F401
+    LAYOUT,
+    NAMES,
+    layout,
+)
 
 
 def _query(*, p, reference: str) -> list:
@@ -128,9 +132,9 @@ def test_a_star_root_is_the_literal_roots_together(layout, name_one):  # noqa: F
     p, _ = layout
     star = _query(p=p, reference=f"$*.files.{name_one}.*")
     literal = []
-    for name in ("acme", "alpha", "beta", "cappa", "delta"):
+    for name in NAMES:
         literal += _query(p=p, reference=f"${name}.files.{name_one}.*")
-    assert sorted(star) == sorted(literal)
+    assert star and sorted(star) == sorted(literal)
 
 
 def test_the_rewrite_is_stable_on_one_finder(layout):  # noqa: F811
