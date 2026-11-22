@@ -268,7 +268,7 @@ class ReferenceExpression3:
         right_kind = self._kind(self._right)
         if right_kind == self.PATHS:
             # paths/paths, or values(LHS)/paths(RHS) -- RHS defines the
-            # comparison basis either way: identity (path+uuid), never
+            # comparison basis either way: identity (path+uuid+identity), never
             # .data. LHS's own .data (if any) is preserved unchanged in
             # the output regardless -- only the comparison basis changes.
             return self._filter_by_identity(left_results, right_results, keep=keep)
@@ -470,15 +470,23 @@ class ReferenceExpression3:
         actually defines membership regardless of the left side's
         kind), so the comparison basis is identity: path+uuid together
         -- path alone is not always enough (e.g. CSVPATHS shares one
-        group.csvpath path across every version). `keep=True` is
+        group.csvpath path across every version) -- and the result's
+        identity: a CSVPATHS statement ('.first_id') or a FILES worksheet
+        ('#march'), which share their version's path and uuid. UNION's
+        dedupe already compares it (ReferenceResult3.__eq__, 7.7);
+        INTERSECT and SUBTRACT did not, so '$acme.csvpaths.:last().first_id
+        INTERSECT $acme.csvpaths.:last().second_id' kept first_id and
+        SUBTRACT gave [] (David, 2026-11-22: fix before release). A whole
+        version (identity None) is a different item from one of its
+        statements or worksheets, as it is for UNION. `keep=True` is
         INTERSECT (keep matches), `keep=False` is SUBTRACT (keep non-
         matches). The left side's own .data (if any) is preserved
         unchanged in the output regardless -- only the comparison basis
         changed, not the result shape."""
-        right_keys = {(item.path, item.uuid) for item in right.results}
+        right_keys = {(item.path, item.uuid, item.identity) for item in right.results}
         kept = []
         for item in left.deduplicated().results:
-            matched = (item.path, item.uuid) in right_keys
+            matched = (item.path, item.uuid, item.identity) in right_keys
             if matched == keep:
                 kept.append(item)
         return ReferenceResults3(results=kept)
