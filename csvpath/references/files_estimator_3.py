@@ -2,7 +2,7 @@ import re
 
 from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
-from .reference_3 import FunctionCall3, Star3
+from .reference_3 import FunctionCall3, Reference3, Star3
 from .reference_estimate_3 import (
     ESTIMATE,
     EXACT,
@@ -281,8 +281,14 @@ class FilesEstimator3:
             return
         if three is None and self.finder._is_bare_selector_reference(self.reference.name_one):
             # a bare ':fingerprint("…")'/':uuid("…")' selects versions, and
-            # each resolves to its file (6.19): at most every version in play
-            self._read(part=RESOLVE, kind="version_file", count=max(1, selected), basis=UPPER_BOUND, because="a bare selector's version")
+            # each resolves to its file (6.19). The ledger names each
+            # version's fingerprint and uuid, so count the live ones that
+            # match: identical content registered twice is two files, and
+            # resolve raises for more than one (5.3)
+            matches = self._bare_selector_ledger_matches(ledger=ledger, fallback=selected)
+            if matches > 1:
+                self.would_raise = f"may raise -- resolve: up to {matches} version files at once (compendium 5.3)"
+            self._read(part=RESOLVE, kind="version_file", count=max(1, matches), basis=UPPER_BOUND, because="a bare selector's version")
             return
         if three is None and not any(n in POINTERS for n in call_names):
             # a name_one result is the named-file, not a version: no file read
@@ -313,6 +319,33 @@ class FilesEstimator3:
             self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=1, basis=UPPER_BOUND, because="the version's entry")
         self._read(part=RESOLVE, kind="version_file", count=1, basis=UPPER_BOUND, because="the version's file")
         self.why.append("a version resolves to its file, one at a time")
+
+    def _bare_selector_ledger_matches(self, *, ledger: list, fallback: int) -> int:
+        """how many live versions in play carry a bare selector's value
+        (':fingerprint("…")' -> 'fingerprint', ':uuid("…")' -> 'uuid'),
+        from the ledger. `fallback` when the argument cannot be built here
+        (an unset @variable): query() raises for that itself."""
+        if ledger is None:
+            raise ValueError("ledger cannot be None")
+        call = self.reference.name_one.path[0]
+        key = ReferenceFunctionFactory.get_registered_class(call.name).KEY.get(Reference3.FILES)
+        try:
+            value = self.finder._build(call).arg
+        except ReferenceException3:
+            return fallback
+        root = self.reference.root_major
+        if isinstance(root, str):
+            names = {root}
+        else:
+            pattern = None if isinstance(root, Star3) else self.finder._build(root).pattern
+            names = set(self.finder._matching_names(self.finder._definition_names(), pattern))
+        return sum(
+            1
+            for entry in ledger
+            if entry.get(self.NAME_KEY) in names
+            and entry.get(key) == value
+            and str(entry.get("status") or "").lower() not in self.NOT_A_VERSION
+        )
 
     def _entries_by_name(self, ledger: list) -> dict:
         """every ledger entry per name, versions or not"""
@@ -461,6 +494,10 @@ class FilesEstimator3:
     def _possible_raise(self) -> "str | None":
         """FILES: a field with an argument attached to name_one selects or
         gates only where the finder takes it there"""
+        if self.finder._is_bare_selector_reference(self.reference.name_one):
+            # ':fingerprint("…")'/':uuid("…")' alone in name_one selects
+            # (6.19; #800)
+            return None
         for call in self._calls():
             cls = ReferenceFunctionFactory.get_registered_class(call.name)
             if cls is None or cls.SOURCE in (None, "clock") or call.arg is None:

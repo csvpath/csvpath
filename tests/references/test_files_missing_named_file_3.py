@@ -69,14 +69,9 @@ WELL_KNOWN = [
     ("$nope.files.:definition()", "definition.json"),
 ]
 
-# estimates that say "may raise" on a live name too (over-approximations the
-# contract allows): a bare argued selector, fixed with the 6.19 list form, and
-# the loose "several functions on name_one" rule
-SAYS_MAY_RAISE_ON_ANY_NAME = {
-    '$nope.files.:fingerprint("x")',
-    '$nope.files.:uuid("x")',
-    "$nope.files.:last():manifest()",
-}
+# an estimate that says "may raise" on a live name too (an over-approximation
+# the contract allows): the loose "several functions on name_one" rule
+SAYS_MAY_RAISE_ON_ANY_NAME = {"$nope.files.:last():manifest()"}
 
 
 @pytest.mark.parametrize("reference,filename", WELL_KNOWN)

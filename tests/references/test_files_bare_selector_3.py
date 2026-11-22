@@ -292,3 +292,40 @@ class TestEntryOwner:
             ReferenceRuntimeException3, match="no reference and no file_home"
         ):
             self._finder(p)._entry_owner(entry=entry, name="beta")
+
+
+# ===================
+# the estimate counts the matching versions (the argued form said "may
+# raise" on every name; it now does only when several versions match)
+# ===================
+
+
+@pytest.mark.parametrize("field", ["fingerprint", "uuid"])
+@pytest.mark.parametrize("root", ["$beta", "$*", "$:regex(/^b/)", '$:name("beta")'])
+def test_one_match_predicts_no_raise(layout, field, root):  # noqa: F811
+    p, _ = layout
+    reference = f'{root}.files.:{field}("{_an_entry(p, "beta", 1)[field]}")'
+    measured, raised = _measure(p, reference)
+    estimate = _finder(p=p, reference=reference).estimate()
+    assert raised is None
+    assert _problems(estimate, measured, raised) == []
+    assert not estimate.would_raise, estimate.would_raise
+
+
+@pytest.mark.parametrize("root", ["$dup", "$*"])
+def test_identical_content_predicts_the_raise(dup, root):
+    # 'dup' holds content A twice, 'twin' once: resolve raises (5.3)
+    reference = f'{root}.files.:fingerprint("{_fingerprint_a(dup)}")'
+    measured, raised = _measure(dup, reference)
+    estimate = _finder(p=dup, reference=reference).estimate()
+    assert raised is not None
+    assert estimate.would_raise and "version files at once" in estimate.would_raise
+    assert _problems(estimate, measured, raised) == []
+
+
+def test_a_variable_argument_is_counted(dup):
+    # '$twin' holds A once, '$dup' twice: the count must see the value
+    for root, raises in (("$twin", False), ("$dup", True)):
+        finder = _finder(p=dup, reference=f"{root}.files.:fingerprint(@fp)")
+        finder.set_variable("fp", value=_fingerprint_a(dup))
+        assert bool(finder.estimate().would_raise) is raises, root
