@@ -173,6 +173,27 @@ class FilesReferenceFinder3(ReferenceFinder3):
     def _definition_home(self, name: str) -> str:
         return self.csvpaths.file_manager.named_file_home(name)
 
+    @staticmethod
+    def _trailing_manifest_implies_star(name_one) -> bool:
+        """whether a ':manifest()' after a path implies a '*' (D40 c): when
+        the segment before it is a plain directory name or a '*'. The '/'
+        implies one level, as in RESULTS (David, 2026-11-22, D40 j):
+        'orders/:manifest()' -> 'orders/*:manifest()', and at any depth
+        '*/*/*/:manifest()' -> '*/*/*/*:manifest()', the registrations of
+        every 3-level template. A selector segment keeps its meaning
+        (':name("three.csv")/:manifest()' is that file home's records). A
+        file name with a dot cannot be a plain segment, so a plain one is a
+        directory."""
+        if name_one is None:
+            raise ValueError("name_one cannot be None")
+        path = name_one.path
+        return (
+            len(path) >= 2
+            and isinstance(path[-1], FunctionCall3)
+            and path[-1].name == "manifest"
+            and isinstance(path[-2], (str, Star3))
+        )
+
     def _definition_config(self, name: str):
         return self.csvpaths.file_manager.describer.get_config(name)
 
@@ -251,8 +272,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
         if log_results is not None:
             return log_results
         self._check_manifest_has_no_name_three(reference)
+        # 'orders/:manifest()' is the records of the registrations under
+        # orders/: a '*' is implied after the path (David, 2026-11-22, D40
+        # c; 3.9c). It read as 'orders:manifest()', empty on a normal layout.
         self._attach_trailing_manifest(
-            name_one=reference.name_one, implies_star=False
+            name_one=reference.name_one,
+            implies_star=self._trailing_manifest_implies_star(reference.name_one),
         )
         if reference.name_three is not None:
             # '.*' is '.:all()' (gap review M); it raised "a literal

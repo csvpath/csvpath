@@ -857,8 +857,12 @@ class ReferenceFinder3(ABC):
         segment" (name_one gap review D). `implies_star`: in RESULTS a
         ':manifest()' implies a '*', one manifest per run (3.9c), so the
         run slot is added, and 'customers/:manifest():first()' is NRE
-        662-663's 'customers/:first():manifest()'; in FILES it does not, so
-        'orders/:manifest()' is 'orders:manifest()' (3.9b). A bare
+        662-663's 'customers/:first():manifest()'. In FILES it does too
+        since 2026-11-22 (David, D40 c, j) after a directory or a '*':
+        'orders/:manifest()' is the manifest records of the registrations
+        under orders/, i.e. 'orders/*:manifest()'; it read as
+        'orders:manifest()' (FilesReferenceFinder3._trailing_manifest_
+        implies_star() decides). A bare
         ':manifest()', the whole name_one, keeps its own meaning. Mutates
         name_one in place, as _apply_implied_star() does."""
         if name_one is None:
