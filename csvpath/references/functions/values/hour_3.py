@@ -26,12 +26,12 @@ class Hour3(TimeWindowFunction3):
     )
     ROLE = Function3.VALUE
     DATATYPES = (Reference3.FILES, Reference3.CSVPATHS, Reference3.RESULTS)
-    # a time function to read the hour of (6.27g), or an hour. A 12-hour
-    # value cannot say am or pm, so 1-12 raise; 0 and 13-23 can only mean
-    # one hour, so ':hour(18)' is 18:00 (NRE 568, "since close of business
-    # yesterday", ':yesterday(:hour(18))'). Its value is still the 12-hour
-    # reading, 6, so in a path segment use ':hour_24(18)', whose value is
-    # 18: 'orders/:hour(18)' names the directory '6'.
+    # a time function to read the hour of (6.27g). ':hour()' is the
+    # 12-hour clock; an hour is set with ':hour_24(n)' (David, 2026-11-22,
+    # D40 h). So a number never sets an hour here: 1-12 cannot say am or
+    # pm, and 0 and 13-23 are not 12-hour values. int stays in ARG_TYPES so
+    # a number gets the message that points to ':hour_24()', not a type
+    # error. (Until 2026-11-22, 0 and 13-23 were taken as 24-hour values.)
     ARG_TYPES = (int, str, TimeWindowFunction3, Now3)
     COMPONENT = "hour"
     ARG_REQUIRED = False
@@ -58,12 +58,23 @@ class Hour3(TimeWindowFunction3):
             return
         if isinstance(arg, str) and arg.strip().isdigit():
             arg = int(arg.strip())
-        if isinstance(arg, int) and 1 <= arg <= 12:
+        if not isinstance(arg, int):
+            return
+        if 1 <= arg <= 12:
             raise ReferenceException3(
                 f":hour({arg}) is ambiguous: :hour() is the 12-hour clock, so "
                 f"{arg} could be am or pm. Use :hour_24({arg % 12}) or "
                 f":hour_24({arg % 12 + 12})."
             )
+        if arg == 0 or 13 <= arg <= 23:
+            raise ReferenceException3(
+                f":hour({arg}) does not set an hour: :hour() is the 12-hour "
+                f"clock. Use :hour_24({arg}) for a 24-hour hour."
+            )
+        raise ReferenceException3(
+            f":hour({arg}) does not set an hour, and {arg} is not an hour: "
+            ":hour() is the 12-hour clock; :hour_24() takes 0-23."
+        )
 
     def compute(self) -> int:
         return int(self.base_datetime().strftime("%I"))

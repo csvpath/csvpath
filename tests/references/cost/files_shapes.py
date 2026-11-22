@@ -240,7 +240,9 @@ SHAPES = [
     '$orders.files.orders/:name(:year(2026))',
     '$orders.files.orders/food.csv:year(2026)',
     '$orders.files.:flatten().:hour(18)',
+    '$orders.files.:flatten().:hour_24(18)',
     '$orders.files.:flatten().:from(:yesterday(:hour(18)))',
+    '$orders.files.:flatten().:from(:yesterday(:hour_24(18)))',
     '$orders.files.:flatten().:from(:month(13))',
     '$orders.files.:flatten().:yesterday("2026-01-02")',
 ]

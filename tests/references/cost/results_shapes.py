@@ -153,6 +153,7 @@ SHAPES = [
     '$validate_orders.results.:year(2026):last()',
     '$validate_orders.results.:year(2026)/*',
     '$validate_orders.results.:flatten():from(:yesterday(:hour(18))).*',
+    '$validate_orders.results.:flatten():from(:yesterday(:hour_24(18))).*',
     '$validate_orders.results.:flatten():yesterday("%A").*',
     '$validate_orders.results.:flatten():year(2026):completed(:false())',
     '$*.results.:flatten():day(:date("2026-08-14")).*',

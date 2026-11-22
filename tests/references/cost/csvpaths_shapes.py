@@ -162,5 +162,6 @@ SHAPES = [
     '$validate_orders.csvpaths.:from(:date("2026-01-01")):to(:year(2027))',
     '$validate_orders.csvpaths.:yesterday(:date("2026-08-15"))',
     '$validate_orders.csvpaths.:from(:yesterday(:hour(18)))',
+    '$validate_orders.csvpaths.:from(:yesterday(:hour_24(18)))',
     '$validate_orders.csvpaths.:month(13)',
 ]

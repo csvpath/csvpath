@@ -197,14 +197,29 @@ class TestExplicitComponent:
         ):
             Hour3(arg=hour).check_valid()
 
+    @pytest.mark.parametrize("hour", [-1, 24, 99])
+    def test_a_number_outside_the_day_is_not_an_hour(self, hour):
+        # no ':hour_24()' hint that would fail too (reviewer on #802)
+        with pytest.raises(ReferenceException3, match="is not an hour") as e:
+            Hour3(arg=hour).check_valid()
+        assert f":hour_24({hour})" not in str(e.value)
+
+    @pytest.mark.parametrize("hour", [0, 13, 18, 23, "18", " 18 "])
+    def test_a_24_hour_value_is_not_an_hour(self, hour):
+        # ':hour()' is the 12-hour clock; ':hour_24(n)' sets an hour (D40 h)
+        with pytest.raises(
+            ReferenceException3, match=r"does not set an hour.*Use :hour_24\(\d+\)"
+        ):
+            Hour3(arg=hour).check_valid()
+
     @pytest.mark.parametrize(
         "hour,start", [(18, "2026-01-04T18:00:00"), (0, "2026-01-04T00:00:00")]
     )
-    def test_0_and_13_to_23_are_unambiguous(self, hour, start):
-        # NRE 568 ':yesterday(:hour(18))'; the value stays the 12-hour reading
-        f = _valid(Hour3(arg=hour))
+    def test_hour_24_sets_the_hour(self, hour, start):
+        # NRE 568 ':yesterday(:hour_24(18))'
+        f = _valid(Hour243(arg=hour))
         assert f.start_datetime().isoformat() == start
-        assert f.compute() == int(datetime.fromisoformat(start).strftime("%I"))
+        assert f.compute() == hour
 
     @pytest.mark.parametrize(
         "function,value",
@@ -293,11 +308,10 @@ class TestRelativeDay:
         assert f.compute() == "2026-01-01"
         assert _window(f) == ("2026-01-01T00:00:00", "2026-01-01T23:59:59.999999")
 
-    @pytest.mark.parametrize("hour", [Hour243(arg=18), Hour3(arg=18)])
-    def test_yesterday_of_an_hour_starts_at_that_hour(self, hour):
+    def test_yesterday_of_an_hour_starts_at_that_hour(self):
         # NRE 568, "since close of business yesterday": from 18:00 to the
         # end of yesterday
-        f = _valid(Yesterday3(arg=_valid(hour)))
+        f = _valid(Yesterday3(arg=_valid(Hour243(arg=18))))
         assert f.compute() == "2026-01-03"
         assert _window(f) == ("2026-01-03T18:00:00", "2026-01-03T23:59:59.999999")
 
@@ -349,10 +363,14 @@ class TestResolvedValues:
         with pytest.raises(ReferenceRuntimeException3, match="format string"):
             f.start_datetime()
 
-    def test_a_resolved_12_hour_value_raises(self):
-        f = _valid(Hour3(arg=18))
-        f.arg = 6
-        with pytest.raises(ReferenceException3, match="ambiguous"):
+    @pytest.mark.parametrize(
+        "value,message", [(6, "ambiguous"), (18, "does not set an hour")]
+    )
+    def test_a_resolved_number_raises(self, value, message):
+        # an @variable resolves after check_valid(); base_datetime() checks it
+        f = _valid(Hour3(arg=_date("2026-01-02")))
+        f.arg = value
+        with pytest.raises(ReferenceException3, match=message):
             f.start_datetime()
 
 
@@ -407,7 +425,9 @@ class TestThroughAReference:
     @pytest.mark.parametrize("direction", ["from", "to", "before", "after"])
     def test_close_of_business_as_an_anchor(self, csvpaths, direction):
         # NRE 568 as written, with each direction (6.27b: the first moment)
-        built = _built(csvpaths, f"$acme.files.*.:{direction}(:yesterday(:hour(18)))")
+        built = _built(
+            csvpaths, f"$acme.files.*.:{direction}(:yesterday(:hour_24(18)))"
+        )
         assert built.arg.start_datetime() == datetime(2026, 1, 3, 18, 0)
 
     def test_a_variable_year(self, csvpaths):
@@ -518,6 +538,7 @@ VARIABLE_SHAPES = [
     "$validate_orders.results.:flatten():year(@bad).*",
     "$validate_orders.results.:flatten():hour(@h6).*",
     "$validate_orders.results.:flatten():from(:yesterday(:hour(@h18))).*",
+    "$validate_orders.results.:flatten():from(:yesterday(:hour_24(@h18))).*",
     "$validate_orders.results.:flatten():yesterday(@d).*",
     '$validate_orders.results.:flatten():yesterday("{@d}").*',
     "$validate_orders.results.:flatten():yesterday(@fmt).*",
@@ -567,6 +588,8 @@ def test_the_estimate_keeps_its_contract_with_variables(corpus, reference):
     [
         ("$acme.files.*.:year(@bad)", "a whole number"),
         ("$acme.files.*.:hour(@h6)", "ambiguous"),
+        ("$acme.files.*.:hour(@h18)", "does not set an hour"),
+        ('$acme.files.*.:hour("{@h18}")', "does not set an hour"),
         ("$acme.files.*.:yesterday(@d)", "format string"),
     ],
 )
