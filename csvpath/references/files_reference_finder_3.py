@@ -177,6 +177,52 @@ class FilesReferenceFinder3(ReferenceFinder3):
         return self.csvpaths.file_manager.describer.get_config(name)
 
     def query(self) -> ReferenceResults3:
+        return self._without_worksheets_on_non_workbooks(self._query())
+
+    def _without_worksheets_on_non_workbooks(
+        self, results: ReferenceResults3
+    ) -> ReferenceResults3:
+        """a '#worksheet' (name_two) on a file that has no worksheets, e.g.
+        a CSV file, does not match: the result is dropped and a warning is
+        logged (David, 2026-11-22, D40 d: "there is no worksheet in a CSV
+        file. We can log a warning and return nothing because no match" --
+        not a raise: the spec does not say raise, and future data file types
+        may relate to name_two in ways we cannot know). It raised at
+        resolve. A version result is judged by its own file, as resolve
+        judges it (XlsxReaderHelper.is_xlsx()); a file home result (uuid
+        None) was already judged by its versions where it was built (a home
+        named 'one.csv' can hold an .xlsx version)."""
+        if results is None:
+            raise ValueError("results cannot be None")
+        name_one = self.ref.parsed.name_one
+        if name_one is None or name_one.name_two is None:
+            return results
+        dropped = [
+            str(r.path)
+            for r in results.results
+            if r.uuid is not None and not XlsxReaderHelper.is_xlsx(str(r.path))
+        ]
+        if not dropped:
+            return results
+        self._warn_no_worksheet(worksheet=name_one.name_two, paths=dropped)
+        return ReferenceResults3(
+            results=[r for r in results.results if str(r.path) not in dropped],
+            ambiguous_content_read=results.ambiguous_content_read,
+        )
+
+    def _warn_no_worksheet(self, *, worksheet: str, paths: list) -> None:
+        """the D40 d warning: these files have no worksheets, so no match"""
+        if not paths:
+            raise ValueError("paths cannot be empty")
+        logger = getattr(self.csvpaths, "logger", None)
+        if logger is not None:
+            logger.warning(
+                f"Reference {self.ref.reference!r}: no worksheet "
+                f"{worksheet!r} in {len(paths)} file(s) that have no "
+                f"worksheets, e.g. {paths[0]!r}; they do not match"
+            )
+
+    def _query(self) -> ReferenceResults3:
         # the live entries are read at most once per call (_live_index())
         self._live_entries = None
         reference = self.ref.parsed
@@ -816,6 +862,21 @@ class FilesReferenceFinder3(ReferenceFinder3):
             for entry in candidates:
                 if entry["file_home"] not in file_homes:
                     file_homes.append(entry["file_home"])
+            # a file home with no workbook version has no worksheets: it does
+            # not match (D40 d; see _without_worksheets_on_non_workbooks())
+            without = [
+                home
+                for home in file_homes
+                if name_one.name_two is not None
+                and not any(
+                    XlsxReaderHelper.is_xlsx(str(e["file"]))
+                    for e in candidates
+                    if e["file_home"] == home
+                )
+            ]
+            if without:
+                self._warn_no_worksheet(worksheet=name_one.name_two, paths=without)
+                file_homes = [home for home in file_homes if home not in without]
             # with a '#worksheet' marker each file home carries it as its
             # identity: NRE '$acme.files.orders/:name("west coast.xlsx")#march'
             # -- "the reference result returned on query() is the typical

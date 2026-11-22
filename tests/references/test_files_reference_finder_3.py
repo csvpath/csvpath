@@ -439,9 +439,11 @@ class TestScopeLimits:
         # path (a wildcard path segment counts, same as :name("...")),
         # combined with a real version-selecting pointer. See
         # TestNameTwoWorksheetMarker below for actually resolving one.
-        finder = _finder(
-            '$alpha.files.*#sheet1.:last()', ALPHA_HOME, ALPHA_MANIFEST
-        )
+        # a workbook: a CSV has no worksheets and does not match (D40 d)
+        manifest = [
+            {"file": BOOK1_XLSX, "file_home": f"{ALPHA_HOME}/Book1.xlsx", "uuid": "u-1"}
+        ]
+        finder = _finder('$alpha.files.*#sheet1.:last()', ALPHA_HOME, manifest)
         results = finder.query()
         assert results.results[0].identity == "sheet1"
 
@@ -6748,14 +6750,16 @@ class TestNameTwoWorksheetMarker:
         ]
         assert [r.data for r in finder.resolve_from(results).results] == [None]
 
-    def test_worksheet_marker_rejects_a_non_xlsx_file(self):
-        results = _finder(
+    def test_worksheet_marker_on_a_non_xlsx_file_matches_nothing(self):
+        # D40 d (David, 2026-11-22): no worksheet in a CSV file -- a warning
+        # and no match, not a raise (it raised at resolve until then)
+        finder = _finder(
             '$alpha.files.:name("one.csv")#hello.:last()',
             ALPHA_HOME,
             ALPHA_MANIFEST,
         )
-        with pytest.raises(ReferenceException3):
-            results.resolve()
+        assert finder.query().results == []
+        assert finder.resolve().results == []
 
     def test_worksheet_marker_rejects_a_bare_marker_function(self):
         # ':all()' (or ':manifest()'/':flatten()'/etc.) occupies name_one's
@@ -6958,12 +6962,14 @@ class TestChoiceAsNameOnePathSegment:
         # gives the file home with the worksheet as its identity, so the
         # query succeeds: :choice() is recognized as path-building, same
         # as :name()/:regex() (the "literal path" guard would raise)
+        # one.csv has no workbook version, so it does not match (D40 d);
+        # the guard accepting :choice() is what this pins: no raise
         results = _finder(
             '$alpha.files.:choice("one.csv")#sheet1',
             ALPHA_HOME,
             ALPHA_MANIFEST,
         ).query()
-        assert [(r.uuid, r.identity) for r in results.results] == [(None, "sheet1")]
+        assert results.results == []
 
 
 def _entry_star_finder(reference: str) -> FilesReferenceFinder3:
