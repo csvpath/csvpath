@@ -310,6 +310,12 @@ named-entities or the events that happen within them; with a `:regex()` or
 implies a `*` in the case of the `results` datatype, there being one
 manifest file per run; however, in the case of `files`, and `csvpaths` the
 reference is to the entity's manifest file and no `*` is implied.
+- A `:manifest()` following a path in a `files` `name_one`, e.g.
+`$acme.files.orders/:manifest()`, is not standing alone: as in 6.13b, a
+`:manifest()` that is not bare points to registration records. It points
+to the manifest records of the registrations directly under that path,
+e.g. those made with a template like `orders/:filename`. A `*` is implied
+after the path.
 - `:definition()` in a named-file or named-paths group `name_one` always
 refers to the named-entity's sole definition file, which has no
 relationship to template path; therefore, a `*` is not implied.
@@ -1459,8 +1465,9 @@ values based on external conditions or arguments is:
 - :month_name() — str
 - :day() — int
 - :day_name() — str
-- :hour() — int
-- :hour_24() — int
+- :hour() — int, the 12-hour clock. It does not take an hour number;
+  set an hour with `:hour_24(n)`, e.g. `:yesterday(:hour_24(18))`
+- :hour_24() — int, the 24-hour clock
 - :minute() — int
 - :second() — int
 - :yesterday() — datetime or str

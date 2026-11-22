@@ -565,7 +565,7 @@ $alpha.results.:groups():last()
 ### Find runs by relative time
 
 #### Find errors in any named-result run since close of business yesterday
-$*.results.:flatten():from(:yesterday(:hour(18))).*:errors()
+$*.results.:flatten():from(:yesterday(:hour_24(18))).*:errors()
 
 ### Find errors from yesterday at a specific idchain of a csvpath with the `purchases` identity
 $acme.results.:flatten():yesterday().purchases:errors(:idchain("customer[0]id[0]"))
@@ -942,6 +942,10 @@ $acme.files.orders/:name("west coast.xlsx")#march
 Note that the reference result returned on `query()` is the typical path+uuid
 plus the name_two value
 
+A worksheet on a file that has no worksheets, such as a CSV file, does not
+match: the reference returns nothing and a warning is logged. It does not
+raise.
+
 ---
 
 ### Versions
@@ -1253,12 +1257,12 @@ does not error. Also note that if `header checks` is the first statement, the
 reference simply doesn't match and returns nothing; it doesn't error, and
 doesn't wrap the index.
 
-#### Three ways to get the csvpath statement with identity `company_names` and index 0
+#### Two ways to get the csvpath statement with identity `company_names` and index 0
 $acme.csvpaths.:last().company_names
-$acme.csvpaths.:last().0
 $acme.csvpaths.:last().:index(0)
 
-Note that the middle reference uses `0` as the identity. While logically and grammatically this `0` is not the index, practically speaking, it doesn't matter.
+Note that a statement is picked by its position with `:index(n)`. A bare `0`
+in name_three is read as an identity, not an index.
 
 ---
 
