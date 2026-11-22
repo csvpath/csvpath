@@ -197,7 +197,14 @@ class TestExplicitComponent:
         ):
             Hour3(arg=hour).check_valid()
 
-    @pytest.mark.parametrize("hour", [0, 13, 18, 23, "18"])
+    @pytest.mark.parametrize("hour", [-1, 24, 99])
+    def test_a_number_outside_the_day_is_not_an_hour(self, hour):
+        # no ':hour_24()' hint that would fail too (reviewer on #802)
+        with pytest.raises(ReferenceException3, match="is not an hour") as e:
+            Hour3(arg=hour).check_valid()
+        assert f":hour_24({hour})" not in str(e.value)
+
+    @pytest.mark.parametrize("hour", [0, 13, 18, 23, "18", " 18 "])
     def test_a_24_hour_value_is_not_an_hour(self, hour):
         # ':hour()' is the 12-hour clock; ':hour_24(n)' sets an hour (D40 h)
         with pytest.raises(
@@ -582,6 +589,7 @@ def test_the_estimate_keeps_its_contract_with_variables(corpus, reference):
         ("$acme.files.*.:year(@bad)", "a whole number"),
         ("$acme.files.*.:hour(@h6)", "ambiguous"),
         ("$acme.files.*.:hour(@h18)", "does not set an hour"),
+        ('$acme.files.*.:hour("{@h18}")', "does not set an hour"),
         ("$acme.files.*.:yesterday(@d)", "format string"),
     ],
 )

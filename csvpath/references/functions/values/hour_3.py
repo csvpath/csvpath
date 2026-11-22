@@ -66,9 +66,14 @@ class Hour3(TimeWindowFunction3):
                 f"{arg} could be am or pm. Use :hour_24({arg % 12}) or "
                 f":hour_24({arg % 12 + 12})."
             )
+        if arg == 0 or 13 <= arg <= 23:
+            raise ReferenceException3(
+                f":hour({arg}) does not set an hour: :hour() is the 12-hour "
+                f"clock. Use :hour_24({arg}) for a 24-hour hour."
+            )
         raise ReferenceException3(
-            f":hour({arg}) does not set an hour: :hour() is the 12-hour "
-            f"clock. Use :hour_24({arg}) for a 24-hour hour."
+            f":hour({arg}) does not set an hour, and {arg} is not an hour: "
+            ":hour() is the 12-hour clock; :hour_24() takes 0-23."
         )
 
     def compute(self) -> int:
