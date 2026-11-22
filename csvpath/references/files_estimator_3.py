@@ -590,10 +590,10 @@ class FilesEstimator3:
         # pattern that matches one live name (reviewer on #804)
         root = self.reference.root_major
         pattern = None if isinstance(root, Star3) else self.finder._build(root).pattern
-        n_names = len(self.finder._matching_names(self.finder._definition_names(), pattern))
+        live_names = len(self.finder._matching_names(self.finder._definition_names(), pattern))
         self._read(part=QUERY, kind="name_listing", count=1, basis=UPPER_BOUND, because=str(self.reference.root_major))
-        if n_names > 1:
-            self.would_raise = f"resolve: {n_names} {kind} files at once (compendium 5.3)"
+        if live_names > 1:
+            self.would_raise = f"resolve: {live_names} {kind} files at once (compendium 5.3)"
             return
         self._read(part=RESOLVE, kind=kind, count=1, basis=UPPER_BOUND, because=f":{bare}()")
 

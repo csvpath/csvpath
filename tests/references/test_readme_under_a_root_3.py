@@ -157,8 +157,8 @@ def pruned(tmp_path_factory):
             p.paths_manager.named_paths_home("gb", assure=False),
         ):
             readme = os.path.join(home, "README.md")
-            if os.path.exists(readme):
-                os.remove(readme)
+            assert os.path.exists(readme), readme
+            os.remove(readme)
         yield p
     finally:
         if previous is None:
