@@ -16,8 +16,8 @@ class DayRelativeFunction3(TimeWindowFunction3):
     moment, moved back DAYS_BACK days, to the end of that day. A whole-day
     argument gives the whole day (6.27g: "beginning at the first moment of
     2026-01-01"); a finer one keeps its time of day as the start, so
-    ':yesterday(:hour(18))' is yesterday from 18:00 on, and as an anchor
-    (':from(:yesterday(:hour(18)))', NRE 568, "since close of business
+    ':yesterday(:hour_24(18))' is yesterday from 18:00 on, and as an anchor
+    (':from(:yesterday(:hour_24(18)))', NRE 568, "since close of business
     yesterday") yesterday at 18:00. An argument coarser than a day
     (:year(), :month()) has no single day to move, so it raises.
 
