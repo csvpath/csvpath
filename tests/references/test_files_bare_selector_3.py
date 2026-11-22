@@ -301,7 +301,7 @@ class TestEntryOwner:
 
 
 @pytest.mark.parametrize("field", ["fingerprint", "uuid"])
-@pytest.mark.parametrize("root", ["$beta", "$*", "$:regex(/^b/)"])
+@pytest.mark.parametrize("root", ["$beta", "$*", "$:regex(/^b/)", '$:name("beta")'])
 def test_one_match_predicts_no_raise(layout, field, root):  # noqa: F811
     p, _ = layout
     reference = f'{root}.files.:{field}("{_an_entry(p, "beta", 1)[field]}")'
