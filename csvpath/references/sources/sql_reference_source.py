@@ -71,10 +71,7 @@ class SqlReferenceSource(FilesystemReferenceSource):
         if tracing:
             compiled = stmt.compile(dialect=self.engine.dialect)
             self._tracing.record(
-                sql=str(compiled),
-                params=compiled.params,
-                rows=len(rows),
-                started=started,
+                sql=str(compiled), params=compiled.params, rows=len(rows), started=started
             )
         return rows
 
