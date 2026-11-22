@@ -45,7 +45,7 @@ $acme.results.:having(:errors(:idchain("add[0]")))            S3; 200 runs, 800 
   why:     :having() by content reads candidates' errors.json during query; it
            stops at a run's first match, so 800 is the most
 
-$*.results.:flatten():from(:yesterday(:hour(18))).*:errors()  S3; 60 runs, 240 instances in the window
+$*.results.:flatten():from(:yesterday(:hour_24(18))).*:errors()  S3; 60 runs, 240 instances in the window
   would raise at resolve: several whole files (compendium 5.3)
   query 6:  1 ledger + 60 run listings + 240 instance manifests
   why:     '.*:errors()' selects 240 errors.json files; resolve reads one file's
