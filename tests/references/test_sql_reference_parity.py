@@ -155,6 +155,7 @@ def _ids(p: CsvPaths) -> dict:
 
 
 FILES = [
+    "$*.files.:readme()",
     "$orders.files.orders/:first()",
     "$orders.files.orders/:last()",
     "$orders.files.*/:last()",
@@ -253,6 +254,7 @@ FILES = [
 ]
 
 CSVPATHS = [
+    "$*.csvpaths.:readme()",
     "$acme.csvpaths.:all()",
     "$acme.csvpaths.:first()",
     "$acme.csvpaths.:last()",

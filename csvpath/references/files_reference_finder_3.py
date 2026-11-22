@@ -1270,6 +1270,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
             return self._query_definition_files(
                 names=self._matching_names(self._definition_names(), name_filter)
             )
+        if self._is_bare_pointer_reference(reference, "readme"):
+            # each live named-file's README.md (5.8; D40 g). Combinations
+            # were refused by _check_readme_is_alone() at query()'s start.
+            return self._query_readme_files(
+                names=self._matching_names(self._definition_names(), name_filter)
+            )
 
         # issue #438: the '*'-traversal counterpart to query()'s own
         # literal-root GATE extraction (line 394 there). ':type()'s GATE
@@ -3583,9 +3589,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 # reference does not look at root_major, and
                 # _query_star_traversal's own early METADATA_FILE branch
                 # sets result.path the same way for that shape (added
-                # 2026-08-27). ':readme()' added 2026-09-21 -- not wired
-                # into '*' traversal (no worked example demonstrates or
-                # requires it there; see the bucket list).
+                # 2026-08-27). ':readme()' added 2026-09-21; under a
+                # '*'/pattern root since 2026-11-22 (_query_readme_files,
+                # 5.8, D40 g).
                 return self._read_bare_metadata_file(
                     reference=reference, path=result.path
                 )

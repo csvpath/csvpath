@@ -526,8 +526,6 @@ class FilesEstimator3:
         path_names = self._path_function_names()
         if path_names[:1] == ["manifest"] and "all" in [c.name for c in self.reference.name_one.functions]:
             return "query: ':manifest():all()' is not supported; a bare ':manifest()' is every record (#710)"
-        if isinstance(root, FunctionCall3) and self.finder._is_bare_pointer_reference(self.reference, "readme"):
-            return "query: ':readme()' under a pattern root is not supported"
         three = self.reference.name_three
         functions = [c.name for c in self.reference.name_one.functions]
         selectors = POINTERS + ("all", "from", "to")
@@ -587,9 +585,15 @@ class FilesEstimator3:
         if literal:
             self._read(part=RESOLVE, kind=kind, count=1, basis=EXACT, because=f":{bare}()")
             return
+        # query() gives one file per LIVE name the root matches; the ledger
+        # also holds deleted ones, so counting it predicted a raise for a
+        # pattern that matches one live name (reviewer on #804)
+        root = self.reference.root_major
+        pattern = None if isinstance(root, Star3) else self.finder._build(root).pattern
+        live_names = len(self.finder._matching_names(self.finder._definition_names(), pattern))
         self._read(part=QUERY, kind="name_listing", count=1, basis=UPPER_BOUND, because=str(self.reference.root_major))
-        if n_names > 1:
-            self.would_raise = f"resolve: {n_names} {kind} files at once (compendium 5.3)"
+        if live_names > 1:
+            self.would_raise = f"resolve: {live_names} {kind} files at once (compendium 5.3)"
             return
         self._read(part=RESOLVE, kind=kind, count=1, basis=UPPER_BOUND, because=f":{bare}()")
 
