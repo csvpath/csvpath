@@ -60,6 +60,9 @@ class FilesEstimator3:
     NAME_KEY = "named_file_name"
     ROOT_CONFIG = "inputs_files_path"
     LEDGER_METHOD = "files_ledger"
+    # the source method listing the live names, for a literal root that is
+    # not live (D40 f); None uses the ledger's names instead
+    LIVE_NAMES_METHOD = "file_names"
     NOUN = "named-files"
     NOT_A_VERSION = ("failed",)
     DATATYPE = "files"
@@ -125,6 +128,25 @@ class FilesEstimator3:
             or []
         )
 
+    def _is_present(self, *, name: str, entries: dict) -> bool:
+        """whether a literal root can find versions: `name` is in the
+        ledger AND among the source's live names. The ledger alone missed a
+        named-file removed after registering (still in the ledger); the
+        live names alone missed a home folder with no manifest.json (an
+        interrupted registration, which the filesystem source lists)
+        (reviewer on #803, rounds 1 and 2). A datatype with no
+        LIVE_NAMES_METHOD uses the ledger only. The live names cost one
+        name listing in estimate(), a list call on a cloud backend."""
+        if not name:
+            raise ValueError("name cannot be None or empty")
+        if entries is None:
+            raise ValueError("entries cannot be None")
+        if name not in entries:
+            return False
+        if self.LIVE_NAMES_METHOD is None:
+            return True
+        return name in getattr(self.finder.source, self.LIVE_NAMES_METHOD)()
+
     def _versions_by_name(self, ledger: list) -> dict:
         by_name = {}
         for entry in ledger:
@@ -160,6 +182,18 @@ class FilesEstimator3:
         entries = self._entries_by_name(ledger)
         names = self._names_in_play(by_name)
         literal = isinstance(self.reference.root_major, str)
+        if literal and not self._is_present(name=self.reference.root_major, entries=entries):
+            # a named-file that is not live -- never registered, deleted
+            # (still in the ledger), or a home with no manifest.json (an
+            # interrupted registration; reviewer on #803) -- has no manifest: the
+            # query only checks for it, finds nothing and reads nothing (D40
+            # f), and a well-known file ('$nope.files.:readme()') is a path
+            # that resolves to None
+            self.why.append(f"no live named-file '{self.reference.root_major}': nothing to read")
+            if any(self._is_ledger_field(c) and c.arg is not None for c in self._calls()):
+                # a status/lifecycle gate looks in the ledger first
+                self._read(part=QUERY, kind="ledger", count=1, basis=UPPER_BOUND, because="a ledger field gate")
+            return
         n_names = len(names)
         all_names = len(by_name)
         records = len(ledger)
@@ -487,8 +521,8 @@ class FilesEstimator3:
     def _datatype_raise(self, ledger: list) -> "str | None":
         """FILES' own refusals"""
         root = self.reference.root_major
-        if isinstance(root, str) and root not in self._entries_by_name(ledger):
-            return f"query: no named-file '{root}' in the ledger"
+        # a named-file not in the ledger no longer raises: its query is
+        # empty (David, 2026-11-22, D40 f)
         path_names = self._path_function_names()
         if path_names[:1] == ["manifest"] and "all" in [c.name for c in self.reference.name_one.functions]:
             return "query: ':manifest():all()' is not supported; a bare ':manifest()' is every record (#710)"

@@ -42,7 +42,8 @@ class ReferenceSource(ABC):
     #
     @abstractmethod
     def file_manifest(self, name: str) -> list:
-        """the named-file's own manifest, in registration order"""
+        """the named-file's own manifest, in registration order; [] for a
+        named-file with no manifest (never registered, or deleted)"""
 
     @abstractmethod
     def files_ledger(self) -> list | None:

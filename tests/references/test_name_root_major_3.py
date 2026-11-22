@@ -180,13 +180,13 @@ def test_a_non_string_variable_is_its_string_form(corpus):
 
 
 def test_a_missing_name_behaves_as_its_plain_spelling(corpus):
-    # FILES raises for a missing named-file, CSVPATHS and RESULTS give [];
-    # an open question for David, unchanged here
-    with pytest.raises(ValueError) as plain:
-        _results(corpus, "$nope.files.:flatten()")
-    with pytest.raises(ValueError) as named:
-        _results(corpus, '$:name("nope").files.:flatten()')
-    assert str(plain.value) == str(named.value)
+    # every datatype gives [] for a missing name (David, 2026-11-22, D40 f;
+    # FILES raised ValueError until #803)
+    assert _results(corpus, "$nope.files.:flatten()") == []
+    assert _results(corpus, '$:name("nope").files.:flatten()') == []
+    assert _results(corpus, '$:name("nope").csvpaths.:last()') == _results(
+        corpus, "$nope.csvpaths.:last()"
+    )
     assert _results(corpus, '$:name("nope").results.:last()') == _results(
         corpus, "$nope.results.:last()"
     )
