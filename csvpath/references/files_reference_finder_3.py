@@ -589,11 +589,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     f"a bare ':{call.name}(...)' lookup with name_three -- "
                     "it already identifies one specific version on its own."
                 )
-            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
-            key = function_cls.KEY.get(Reference3.FILES)
-            manifest = self.source.file_manifest(root_major)
-            value = call.arg
-            matched = [e for e in manifest if e.get(key) == value]
+            matched = self._bare_selector_matches(call=call, names=[root_major])
             return ReferenceResults3(
                 results=[
                     ReferenceResult3(path=e["file"], uuid=e["uuid"]) for e in matched
@@ -1366,6 +1362,30 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 self.source.file_names(), name_filter
             ):
                 candidates.extend(self._all_candidates_for_name(name))
+        elif self._is_bare_selector_reference(name_one):
+            # a bare ':fingerprint("…")'/':uuid("…")' under '*', ':regex()'
+            # or ':choice()': compendium 6.19, "search for the given
+            # fingerprint across all named-files, returning the path+uuid
+            # to each matching version ... The first searches each live
+            # named-file in turn". It raised "field functions attached
+            # directly to name_one" (found checking the spec text, #799).
+            # The literal root's own branch does the same for one name.
+            call = name_one.path[0]
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    f"FilesReferenceFinder3 does not support combining "
+                    f"a bare ':{call.name}(...)' lookup with name_three -- "
+                    "it already identifies one specific version on its own."
+                )
+            matched = self._bare_selector_matches(
+                call=call,
+                names=self._matching_names(self.source.file_names(), name_filter),
+            )
+            return ReferenceResults3(
+                results=[
+                    ReferenceResult3(path=e["file"], uuid=e["uuid"]) for e in matched
+                ]
+            )
         elif self._bare_manifest_field_call(name_one) is not None:
             # ':manifest():uuid()' during '*' traversal -- added
             # 2026-08-28, David's own worked example ("get uuids from
@@ -2696,6 +2716,71 @@ class FilesReferenceFinder3(ReferenceFinder3):
             f"entry {entry.get('uuid')!r} (file_home {file_home!r})."
         )
 
+    def _bare_selector_matches(self, *, call: FunctionCall3, names: list) -> list:
+        """the manifest entries of `names` whose field (the selector's FILES
+        KEY) equals a bare ':fingerprint("…")'/':uuid("…")' selector's
+        argument, in name order then manifest order. The argument is built,
+        so an @variable or "{...}" resolves (the literal root read it raw
+        and matched nothing; reviewer on #800). An entry another named-file
+        owns is inconsistent framework data, raised and logged as a status
+        gate raises for it (D4, D31 c): see _entry_owner()."""
+        if call is None:
+            raise ValueError("call cannot be None")
+        if names is None:
+            raise ValueError("names cannot be None")
+        function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+        key = function_cls.KEY.get(Reference3.FILES)
+        value = self._build(call).arg
+        matched = []
+        for name in names:
+            for entry in self.source.file_manifest(name):
+                if entry.get(key) != value:
+                    continue
+                owner = self._entry_owner(entry=entry, name=name)
+                if owner != name:
+                    msg = (
+                        f"Version {entry.get('uuid')!r} is listed in named-file "
+                        f"{name!r}'s manifest but belongs to {owner!r}; the "
+                        "framework data is inconsistent."
+                    )
+                    logger = getattr(self.csvpaths, "logger", None)
+                    if logger is not None:
+                        logger.error(msg)
+                    raise ReferenceRuntimeException3(msg)
+                matched.append(entry)
+        return matched
+
+    def _entry_owner(self, *, entry: dict, name: str) -> "str | None":
+        """the named-file a manifest entry belongs to: the root of its own
+        'reference' ('$acme.files.<fingerprint>'), written at registration
+        and the same however the named-files root is spelled. A path
+        comparison misfired when the config spelled the root differently
+        from when the file was registered (relative vs absolute, case;
+        reviewer on #800). Only an entry with no 'reference' (older
+        manifests) falls back to whether its file home is under `name`'s
+        home; one with neither raises."""
+        if entry is None:
+            raise ValueError("entry cannot be None")
+        if not name:
+            raise ValueError("name cannot be None or empty")
+        # 'reference' is written by FileRegistrar (and the files listener)
+        # at registration as '$<named-file>.files.<fingerprint>'; a
+        # hand-edited one in another form would name a wrong owner
+        reference = entry.get("reference")
+        if isinstance(reference, str) and reference.startswith("$") and "." in reference:
+            return reference[1:].split(".", 1)[0]
+        file_home = entry.get("file_home")
+        if not file_home:
+            msg = f"manifest entry {entry.get('uuid')!r} has no reference and no file_home"
+            logger = getattr(self.csvpaths, "logger", None)
+            if logger is not None:
+                logger.error(msg)
+            raise ReferenceRuntimeException3(msg)
+        home_parts = pathu.parts(self.csvpaths.file_manager.named_file_home(name).rstrip("/"))
+        if pathu.parts(file_home)[: len(home_parts)] == home_parts:
+            return name
+        return None
+
     @staticmethod
     def _is_bare_all_reference(name_one) -> bool:
         """true when name_one's entire content is a single, argument-
@@ -3350,6 +3435,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # selects live versions (C1, 2026-11-01), so it resolves to the
             # version's bytes, as a version pointer does (David,
             # 2026-11-14). It raised "resolve_kind='metadata_field'".
+            return self._read_version_file(result.path)
+        if reference.name_three is None and self._is_bare_selector_reference(
+            reference.name_one
+        ):
+            # a bare ':fingerprint("…")'/':uuid("…")' selects one version
+            # ("returning the path+uuid to that version", 6.19), so it
+            # resolves to the version's bytes, as the status gate above
+            # does. It raised "resolve_kind='metadata_field'" (found
+            # checking the spec text, #799).
             return self._read_version_file(result.path)
         manifest_chain = None
         definition_calls = None

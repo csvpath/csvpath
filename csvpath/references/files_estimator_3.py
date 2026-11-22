@@ -245,6 +245,11 @@ class FilesEstimator3:
             return
         if self._version_costs(three=three, call_names=call_names, literal=literal, n_names=n_names, selected=selected):
             return
+        if three is None and self.finder._is_bare_selector_reference(self.reference.name_one):
+            # a bare ':fingerprint("…")'/':uuid("…")' selects versions, and
+            # each resolves to its file (6.19): at most every version in play
+            self._read(part=RESOLVE, kind="version_file", count=max(1, selected), basis=UPPER_BOUND, because="a bare selector's version")
+            return
         if three is None and not any(n in POINTERS for n in call_names):
             # a name_one result is the named-file, not a version: no file read
             return
