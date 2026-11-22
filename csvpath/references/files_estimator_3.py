@@ -81,12 +81,6 @@ class FilesEstimator3:
         finder._attach_trailing_manifest(
             name_one=self.reference.name_one, implies_star=False
         )
-        try:
-            # the bare ':fingerprint()' list (6.19); under '*' it raises
-            finder._normalize_bare_field_list(self.reference)
-            self._normalize_raise = None
-        except ReferenceException3 as e:
-            self._normalize_raise = f"query: {e}"
         if self.reference.name_three is not None:
             self.reference.name_three.star_body_as_all()
         self.reads = []
@@ -100,9 +94,6 @@ class FilesEstimator3:
         if root_problem is not None:
             # query() raises building the root, before it reads anything
             self.would_raise = f"query: {root_problem}"
-        elif self._normalize_raise is not None:
-            # a bare ':fingerprint()' list under '*' (6.19, D41)
-            self.would_raise = self._normalize_raise
         elif self.finder._bare_log_call(self.reference) is not None:
             if isinstance(self.reference.root_major, Star3):
                 self._read(part=RESOLVE, kind="log", count=1, basis=UPPER_BOUND, because=":log()")

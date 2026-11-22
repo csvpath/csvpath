@@ -104,7 +104,7 @@ def test_a_live_named_file_still_answers(layout):  # noqa: F811
     [
         ".files.:last().:last()",
         '.files.:status("x"):fingerprint()',
-        ".files.:uuid().:last()",
+        ".files.:fingerprint()",
     ],
 )
 def test_an_illegal_shape_raises_whether_or_not_the_name_exists(layout, shape):  # noqa: F811

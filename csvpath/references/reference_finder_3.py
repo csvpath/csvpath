@@ -875,14 +875,6 @@ class ReferenceFinder3(ABC):
             path.append(Star3())
         name_one.functions.insert(0, manifest)
 
-    def _normalize_bare_field_list(self, reference: Reference3) -> None:
-        """a datatype's rewrite of a bare, argument-less selector field in
-        name_one into the reference it is the same as, applied by query()
-        and by the estimator so both see one reference. None by default;
-        FILES overrides it (compendium 6.19)."""
-        if reference is None:
-            raise ValueError("reference cannot be None")
-
     @staticmethod
     def _reads_ledger_set(reference: Reference3) -> bool:
         """true when a traversal reference reaches the logical ledger set:

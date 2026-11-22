@@ -4321,22 +4321,14 @@ class TestBareFingerprintLookup:
         ).query()
         assert results.results == []
 
-    def test_bare_no_arg_is_the_fingerprint_list(self):
-        # compendium 6.19: '$acme.files.:fingerprint()' and
-        # '$acme.files.:manifest():fingerprint()' both return the list of
-        # registration fingerprints (D40 i; it raised until 2026-11-22)
-        bare = _finder(
-            "$finn.files.:fingerprint()", FINGERPRINT_HOME, FINGERPRINT_MANIFEST
-        ).query()
-        spelled = _finder(
-            "$finn.files.:manifest():fingerprint()",
-            FINGERPRINT_HOME,
-            FINGERPRINT_MANIFEST,
-        ).query()
-        assert [(str(r.path), r.uuid) for r in bare.results] == [
-            (str(r.path), r.uuid) for r in spelled.results
-        ]
-        assert bare.results
+    def test_bare_no_arg_is_not_recognized_here(self):
+        # no arg means there is no candidate to read the field off of at
+        # this position -- falls through to the ordinary "not yet
+        # supported" rejection, not a silent no-op.
+        with pytest.raises(ReferenceException3):
+            _finder(
+                "$finn.files.:fingerprint()", FINGERPRINT_HOME, FINGERPRINT_MANIFEST
+            ).query()
 
     def test_combined_with_name_three_is_rejected(self):
         # a fingerprint already identifies one specific version -- no
@@ -6478,17 +6470,13 @@ class TestDefinitionFieldAccessorFunctions:
         assert results.files == [pathu.resep(f"{RICH_HOME}/definition.json")]
         assert results.results[0].uuid is None
 
-    def test_bare_uuid_is_the_manifest_uuid_list(self):
-        # a bare ':uuid()' is the list of registration uuids, as
-        # ':manifest():uuid()' (6.19 by 6.44's "Likewise"; D40 i). It
-        # raised as needing a match until 2026-11-22. Other manifest-
-        # sourced fields still need one (they are not selectors).
-        bare = _finder("$rich.files.:uuid()", RICH_HOME, RICH_MANIFEST).query()
-        spelled = _finder(
-            "$rich.files.:manifest():uuid()", RICH_HOME, RICH_MANIFEST
-        ).query()
-        assert [r.uuid for r in bare.results] == [r.uuid for r in spelled.results]
-        assert bare.results
+    def test_bare_manifest_sourced_field_accessor_still_requires_a_match(self):
+        # contrast case: SOURCE == "manifest" field accessors (e.g.
+        # :uuid()) genuinely vary by which version matched, so they are
+        # NOT given the same bare treatment -- still requires :name(...)
+        # (or '*') to identify a real candidate.
+        with pytest.raises(ReferenceException3):
+            _finder("$rich.files.:uuid()", RICH_HOME, RICH_MANIFEST).query()
 
 
 class TestSourceSubFieldAccessorFunctions:

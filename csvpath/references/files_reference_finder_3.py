@@ -173,56 +173,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
     def _definition_home(self, name: str) -> str:
         return self.csvpaths.file_manager.named_file_home(name)
 
-    @staticmethod
-    def _bare_field_list_call(reference: Reference3) -> "FunctionCall3 | None":
-        """the call when name_one is exactly one argument-less selector
-        field -- ':fingerprint()', ':uuid()' (a SELECTOR_WHEN_ARGUED
-        function) -- with no name_two or name_three; else None"""
-        name_one = reference.name_one
-        if (
-            name_one.functions
-            or len(name_one.path) != 1
-            or name_one.name_two is not None
-            or reference.name_three is not None
-        ):
-            return None
-        call = name_one.path[0]
-        if not isinstance(call, FunctionCall3) or call.arg is not None:
-            return None
-        cls = ReferenceFunctionFactory.get_registered_class(call.name)
-        if cls is None or not getattr(cls, "SELECTOR_WHEN_ARGUED", False):
-            return None
-        return call
-
-    def _normalize_bare_field_list(self, reference: Reference3) -> None:
-        """compendium 6.19: "The following two references both return a
-        list of the registration fingerprints found in `acme`.
-        `$acme.files.:fingerprint()` `$acme.files.:manifest():fingerprint()`"
-        -- so on a named-file root the bare form is rewritten to the
-        ':manifest()' form; ':uuid()' likewise (6.44). It raised "field
-        functions attached directly to name_one" (David, 2026-11-22, D40
-        i). Under '*' or a pattern root the bare form is not specified:
-        ':manifest():fingerprint()' there reads the ledger set, deleted
-        named-files included (6.13b(i)), while the argued bare form under
-        '*' searches the live named-files (6.13b(iv)) -- so it raises,
-        naming both readings, rather than pick one (D41). Mutates name_one
-        in place, as _attach_trailing_manifest() does; idempotent."""
-        if reference is None:
-            raise ValueError("reference cannot be None")
-        call = self._bare_field_list_call(reference)
-        if call is None:
-            return
-        if not isinstance(reference.root_major, str):
-            raise ReferenceException3(
-                f"FilesReferenceFinder3 does not support a bare ':{call.name}()' "
-                "list under '*' or a pattern root: it is specified for one "
-                f"named-file ('$acme.files.:{call.name}()'). For every "
-                f"registration use '$*.files.:manifest():{call.name}()' (the "
-                "ledger, which includes deleted named-files)."
-            )
-        reference.name_one.path[0] = FunctionCall3(name="manifest")
-        reference.name_one.functions.insert(0, call)
-
     def _definition_config(self, name: str):
         return self.csvpaths.file_manager.describer.get_config(name)
 
@@ -246,7 +196,6 @@ class FilesReferenceFinder3(ReferenceFinder3):
         self._attach_trailing_manifest(
             name_one=reference.name_one, implies_star=False
         )
-        self._normalize_bare_field_list(reference)
         if reference.name_three is not None:
             # '.*' is '.:all()' (gap review M); it raised "a literal
             # name_three body of this type"
