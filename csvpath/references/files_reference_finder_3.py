@@ -1270,6 +1270,12 @@ class FilesReferenceFinder3(ReferenceFinder3):
             return self._query_definition_files(
                 names=self._matching_names(self._definition_names(), name_filter)
             )
+        if self._is_bare_pointer_reference(reference, "readme"):
+            # each live named-file's README.md (5.8; D40 g). Combinations
+            # were refused by _check_readme_is_alone() at query()'s start.
+            return self._query_readme_files(
+                names=self._matching_names(self._definition_names(), name_filter)
+            )
 
         # issue #438: the '*'-traversal counterpart to query()'s own
         # literal-root GATE extraction (line 394 there). ':type()'s GATE

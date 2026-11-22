@@ -1230,6 +1230,27 @@ class ReferenceFinder3(ABC):
             results=results, ambiguous_content_read=len(results) > 1
         )
 
+    def _query_readme_files(self, *, names: list) -> ReferenceResults3:
+        """query() for a bare ':readme()' over several entities ('*',
+        ':regex()', ':choice()'): each one's README.md, one result each,
+        as _query_definition_files() gives definition.json. Compendium
+        5.8: such a reference returns "the paths+uuid to the ... files on
+        query() but will raise an error on resolve()" -- resolving more
+        than one whole file at once (5.3) -- and a missing README.md
+        resolves to None (1113-1118). It raised at query until 2026-11-22
+        (David, D40 g)."""
+        if names is None:
+            raise ValueError("names cannot be None")
+        results = [
+            ReferenceResult3(
+                path=Nos(self._definition_home(name)).join("README.md"), uuid=None
+            )
+            for name in names
+        ]
+        return ReferenceResults3(
+            results=results, ambiguous_content_read=len(results) > 1
+        )
+
     def _definition_chain_data(
         self, *, reference: Reference3, calls: list, path: str
     ) -> object:

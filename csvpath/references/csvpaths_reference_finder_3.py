@@ -611,6 +611,11 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             return self._query_definition_files(
                 names=self._matching_names(self._definition_names(), name_filter)
             )
+        if self._is_bare_pointer_reference(reference, "readme"):
+            # each named-paths group's README.md (5.8; D40 g), as FILES
+            return self._query_readme_files(
+                names=self._matching_names(self._definition_names(), name_filter)
+            )
         # a plain pointer + :manifest() (e.g. ":last():manifest()") never
         # reaches this method at all -- query()'s own _pointer_before_
         # manifest() check above already claims that exact shape as

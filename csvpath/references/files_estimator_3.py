@@ -526,8 +526,6 @@ class FilesEstimator3:
         path_names = self._path_function_names()
         if path_names[:1] == ["manifest"] and "all" in [c.name for c in self.reference.name_one.functions]:
             return "query: ':manifest():all()' is not supported; a bare ':manifest()' is every record (#710)"
-        if isinstance(root, FunctionCall3) and self.finder._is_bare_pointer_reference(self.reference, "readme"):
-            return "query: ':readme()' under a pattern root is not supported"
         three = self.reference.name_three
         functions = [c.name for c in self.reference.name_one.functions]
         selectors = POINTERS + ("all", "from", "to")
