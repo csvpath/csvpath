@@ -364,12 +364,10 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
                 # replaces a hand-written "unrecognized" check (settled
                 # 2026-08-14) -- see _check_position()'s own docstring
                 # and _resolve_versions()'s equivalent check for
-                # name_one. Only :from()/:to() declare name_three as
-                # legal for csvpaths, so this rejects anything else
-                # (e.g. a literal identity's own function chain trying
-                # to add something other than a range) exactly as
-                # before, just via the shared mechanism instead of a
-                # local tuple.
+                # name_one. The ranges and, since gap review N, ':all()'
+                # and the statement pointers declare name_three as legal
+                # for csvpaths, so this rejects anything else (e.g. a
+                # field or ':having()') via the shared mechanism.
                 for f in built:
                     self._check_position(f, Reference3.NAME_THREE, Reference3.CSVPATHS)
                 # from_call/to_call here mean LOWER/UPPER bound, not

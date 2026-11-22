@@ -114,3 +114,93 @@ def test_the_estimate_keeps_its_contract(corpus, reference):
     finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=corpus)
     measured, raised = _measure(corpus, reference)
     assert _problems(finder.estimate(), measured, raised) == []
+
+
+# ===================
+# a group with more statements than the estimate assumes (reviewer on #798)
+# ===================
+
+import configparser  # noqa: E402
+
+SEP = "\n\n---- CSVPATH ----\n\n"
+
+
+@pytest.fixture(scope="module")
+def big(tmp_path_factory):
+    # one named-paths group with 7 statements; a config file with no cache
+    tmp = tmp_path_factory.mktemp("csvpaths_big_group")
+    config = configparser.RawConfigParser()
+    config.read(os.environ["CSVPATH_CONFIG_PATH"])
+    path = tmp / "config.ini"
+    for (section, key), value in {
+        ("config", "path"): str(path),
+        ("inputs", "files"): str(tmp / "named_files"),
+        ("inputs", "csvpaths"): str(tmp / "named_paths"),
+        ("results", "archive"): str(tmp / "archive"),
+        ("listeners", "groups"): "",
+        ("cache", "use_cache"): "no",
+    }.items():
+        if not config.has_section(section):
+            config.add_section(section)
+        config.set(section, key, value)
+    with open(path, "w", encoding="utf-8") as f:
+        config.write(f)
+    previous = os.environ.get("CSVPATH_CONFIG_PATH")
+    os.environ["CSVPATH_CONFIG_PATH"] = str(path)
+    try:
+        p = CsvPaths()
+        group = tmp / "big.csvpaths"
+        group.write_text(
+            SEP.join(f"~ id: s{n} ~ $[*][yes()]" for n in range(7)), encoding="utf-8"
+        )
+        p.paths_manager.add_named_paths_from_file(name="big", file_path=str(group))
+        yield p
+    finally:
+        if previous is None:
+            os.environ.pop("CSVPATH_CONFIG_PATH", None)
+        else:
+            os.environ["CSVPATH_CONFIG_PATH"] = previous
+
+
+class TestABigGroup:
+    def test_every_statement_in_declaration_order(self, big):
+        assert _identities(p=big, reference="$big.csvpaths.:last().:all()") == [
+            f"s{n}" for n in range(7)
+        ]
+        assert _identities(p=big, reference="$big.csvpaths.:last().:index(6)") == ["s6"]
+        assert _identities(
+            p=big, reference="$big.csvpaths.:last().:from(2):to(4):last()"
+        ) == ["s4"]
+        assert _identities(p=big, reference="$big.csvpaths.:last().:index(-8)") == []
+
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            "$big.csvpaths.:last().:all()",
+            "$big.csvpaths.:last().*",
+            "$big.csvpaths.:last().:from(0)",
+            "$*.csvpaths.:last().*",
+            "$big.csvpaths.:last().:last()",
+            "$big.csvpaths.:last().:index(6)",
+        ],
+    )
+    def test_the_estimate_keeps_its_contract(self, big, reference):
+        # every statement is an estimate (the ledger does not count them),
+        # not a bound of 4 per version
+        finder = ReferenceFinderFactory3.for_reference(
+            reference=reference, csvpaths=big
+        )
+        measured, raised = _measure(big, reference)
+        assert _problems(finder.estimate(), measured, raised) == []
+
+    def test_a_pointer_resolves_to_its_statement(self, big):
+        def data(reference):
+            finder = ReferenceFinderFactory3.for_reference(
+                reference=reference, csvpaths=big
+            )
+            return [r.data for r in finder.resolve_from(finder.query()).results]
+
+        assert data("$big.csvpaths.:last().:index(3)") == data(
+            "$big.csvpaths.:last().s3"
+        )
+        assert data("$big.csvpaths.:last().:last()") == data("$big.csvpaths.:last().s6")
