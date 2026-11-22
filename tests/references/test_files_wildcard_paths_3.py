@@ -207,6 +207,14 @@ class TestWhichPathsTheMatcherTakes:
 #
 NAMES = ("acme", "alpha", "beta", "cappa", "delta")
 
+
+def _every_file_is_a_workbook(monkeypatch) -> None:
+    """for tests of how a '#worksheet' rides through a path on this CSV
+    layout: a worksheet on a CSV does not match (D40 d)"""
+    from csvpath.util.xlsx.xlsx_reader_helper import XlsxReaderHelper
+
+    monkeypatch.setattr(XlsxReaderHelper, "is_xlsx", classmethod(lambda cls, path: True))
+
 LAYOUT = [
     ("alpha", "", "zero.csv", 1),
     ("alpha", "", "one.csv", 2),
@@ -488,10 +496,14 @@ class TestGroupedReferences:
         ],
     )
     def test_a_worksheet_applies_to_each_group_whatever_the_wildcard_position(
-        self, layout, reference
+        self, layout, reference, monkeypatch
     ):
         # one rule wherever the wildcard is in a path: until review one in
-        # the first segment raised and one later did not (reviewer on #787)
+        # the first segment raised and one later did not (reviewer on #787).
+        # The layout is CSVs, which have no worksheets and would not match
+        # (D40 d, test_files_worksheet_on_a_csv_3.py); this is about the
+        # grouping, so every file counts as a workbook here
+        _every_file_is_a_workbook(monkeypatch)
         p, _ = layout
         finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=p)
         results = finder.query().results
@@ -508,8 +520,10 @@ class TestGroupedReferences:
         ],
     )
     def test_a_function_first_in_a_longer_path_takes_a_worksheet(
-        self, layout, reference, count
+        self, layout, reference, count, monkeypatch
     ):
+        # about the path, not the file type: see the test above
+        _every_file_is_a_workbook(monkeypatch)
         p, _ = layout
         finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=p)
         results = finder.query().results
