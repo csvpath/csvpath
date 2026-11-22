@@ -1366,6 +1366,32 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 self.source.file_names(), name_filter
             ):
                 candidates.extend(self._all_candidates_for_name(name))
+        elif self._is_bare_selector_reference(name_one):
+            # a bare ':fingerprint("…")'/':uuid("…")' under '*', ':regex()'
+            # or ':choice()': compendium 6.19, "search for the given
+            # fingerprint across all named-files, returning the path+uuid
+            # to each matching version ... The first searches each live
+            # named-file in turn". It raised "field functions attached
+            # directly to name_one" (found checking the spec text, #799).
+            # The literal root's own branch does the same for one name.
+            call = name_one.path[0]
+            if reference.name_three is not None:
+                raise ReferenceException3(
+                    f"FilesReferenceFinder3 does not support combining "
+                    f"a bare ':{call.name}(...)' lookup with name_three -- "
+                    "it already identifies one specific version on its own."
+                )
+            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+            key = function_cls.KEY.get(Reference3.FILES)
+            value = self._build(call).arg
+            results = []
+            for name in self._matching_names(self.source.file_names(), name_filter):
+                for entry in self.source.file_manifest(name):
+                    if entry.get(key) == value:
+                        results.append(
+                            ReferenceResult3(path=entry["file"], uuid=entry["uuid"])
+                        )
+            return ReferenceResults3(results=results)
         elif self._bare_manifest_field_call(name_one) is not None:
             # ':manifest():uuid()' during '*' traversal -- added
             # 2026-08-28, David's own worked example ("get uuids from
@@ -3350,6 +3376,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
             # selects live versions (C1, 2026-11-01), so it resolves to the
             # version's bytes, as a version pointer does (David,
             # 2026-11-14). It raised "resolve_kind='metadata_field'".
+            return self._read_version_file(result.path)
+        if reference.name_three is None and self._is_bare_selector_reference(
+            reference.name_one
+        ):
+            # a bare ':fingerprint("…")'/':uuid("…")' selects one version
+            # ("returning the path+uuid to that version", 6.19), so it
+            # resolves to the version's bytes, as the status gate above
+            # does. It raised "resolve_kind='metadata_field'" (found
+            # checking the spec text, #799).
             return self._read_version_file(result.path)
         manifest_chain = None
         definition_calls = None
