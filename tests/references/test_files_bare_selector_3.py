@@ -324,7 +324,8 @@ def test_identical_content_predicts_the_raise(dup, root):
 
 
 def test_a_variable_argument_is_counted(dup):
-    finder = _finder(p=dup, reference="$twin.files.:fingerprint(@fp)")
-    finder.set_variable("fp", value=_fingerprint_a(dup))
-    estimate = finder.estimate()
-    assert not estimate.would_raise, estimate.would_raise
+    # '$twin' holds A once, '$dup' twice: the count must see the value
+    for root, raises in (("$twin", False), ("$dup", True)):
+        finder = _finder(p=dup, reference=f"{root}.files.:fingerprint(@fp)")
+        finder.set_variable("fp", value=_fingerprint_a(dup))
+        assert bool(finder.estimate().would_raise) is raises, root
