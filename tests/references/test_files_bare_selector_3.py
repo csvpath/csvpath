@@ -264,3 +264,31 @@ def test_a_root_spelled_differently_is_not_inconsistent(tmp_path_factory):
             os.environ.pop("CSVPATH_CONFIG_PATH", None)
         else:
             os.environ["CSVPATH_CONFIG_PATH"] = previous
+
+
+class TestEntryOwner:
+    # the fallback for an entry with no 'reference' (older manifests)
+    def _finder(self, p):
+        return ReferenceFinderFactory3.for_reference(
+            reference="$beta.files.*", csvpaths=p
+        )
+
+    def test_the_reference_names_the_owner(self, layout):  # noqa: F811
+        p, _ = layout
+        entry = dict(p.file_manager.get_manifest("beta")[0])
+        assert self._finder(p)._entry_owner(entry=entry, name="alpha") == "beta"
+
+    def test_without_a_reference_the_path_decides(self, layout):  # noqa: F811
+        p, _ = layout
+        entry = dict(p.file_manager.get_manifest("beta")[0])
+        entry.pop("reference")
+        assert self._finder(p)._entry_owner(entry=entry, name="beta") == "beta"
+        assert self._finder(p)._entry_owner(entry=entry, name="alpha") is None
+
+    def test_with_neither_it_raises(self, layout):  # noqa: F811
+        p, _ = layout
+        entry = {"uuid": "u"}
+        with pytest.raises(
+            ReferenceRuntimeException3, match="no reference and no file_home"
+        ):
+            self._finder(p)._entry_owner(entry=entry, name="beta")

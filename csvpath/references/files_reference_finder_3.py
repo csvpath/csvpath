@@ -2763,6 +2763,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
             raise ValueError("entry cannot be None")
         if not name:
             raise ValueError("name cannot be None or empty")
+        # 'reference' is written by FileRegistrar (and the files listener)
+        # at registration as '$<named-file>.files.<fingerprint>'; a
+        # hand-edited one in another form would name a wrong owner
         reference = entry.get("reference")
         if isinstance(reference, str) and reference.startswith("$") and "." in reference:
             return reference[1:].split(".", 1)[0]
