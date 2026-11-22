@@ -228,3 +228,39 @@ def test_a_uuid_in_two_manifests_raises(tmp_path_factory):
             os.environ.pop("CSVPATH_CONFIG_PATH", None)
         else:
             os.environ["CSVPATH_CONFIG_PATH"] = previous
+
+
+def test_a_root_spelled_differently_is_not_inconsistent(tmp_path_factory):
+    # a manifest keeps file_home as the root was spelled at registration;
+    # the same directory spelled another way (relative vs absolute, as a
+    # moved project or a changed cwd would give) must not look
+    # like another named-file's entry (reviewer on #800, round 2)
+    tmp = tmp_path_factory.mktemp("bare_selector_spelling")
+    previous = os.environ.get("CSVPATH_CONFIG_PATH")
+    os.environ["CSVPATH_CONFIG_PATH"] = _config_file(tmp)
+    try:
+        p = CsvPaths()
+        src = tmp / "src"
+        src.mkdir()
+        (src / "x.csv").write_text("id\n1\n", encoding="utf-8")
+        p.file_manager.add_named_file(name="one", path=str(src / "x.csv"))
+        path = os.path.join(p.file_manager.named_file_home("one"), "manifest.json")
+        with open(path, encoding="utf-8") as f:
+            manifest = json.load(f)
+        for entry in manifest:
+            # as if registered with a relative root and queried with an
+            # absolute one
+            entry["file_home"] = os.path.relpath(entry["file_home"])
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(manifest, f)
+        uuid = manifest[0]["uuid"]
+        for reference in (f'$one.files.:uuid("{uuid}")', f'$*.files.:uuid("{uuid}")'):
+            finder = ReferenceFinderFactory3.for_reference(
+                reference=reference, csvpaths=p
+            )
+            assert [r.uuid for r in finder.query().results] == [uuid]
+    finally:
+        if previous is None:
+            os.environ.pop("CSVPATH_CONFIG_PATH", None)
+        else:
+            os.environ["CSVPATH_CONFIG_PATH"] = previous

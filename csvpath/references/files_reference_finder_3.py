@@ -2721,10 +2721,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
         KEY) equals a bare ':fingerprint("…")'/':uuid("…")' selector's
         argument, in name order then manifest order. The argument is built,
         so an @variable or "{...}" resolves (the literal root read it raw
-        and matched nothing; reviewer on #800). An entry whose file home is
-        not under the named-file's own home is held by another named-file:
-        inconsistent framework data, raised and logged as a status gate
-        raises for it (D4, D31 c)."""
+        and matched nothing; reviewer on #800). An entry another named-file
+        owns is inconsistent framework data, raised and logged as a status
+        gate raises for it (D4, D31 c): see _entry_owner()."""
         if call is None:
             raise ValueError("call cannot be None")
         if names is None:
@@ -2734,16 +2733,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
         value = self._build(call).arg
         matched = []
         for name in names:
-            home_parts = pathu.parts(self.csvpaths.file_manager.named_file_home(name).rstrip("/"))
             for entry in self.source.file_manifest(name):
                 if entry.get(key) != value:
                     continue
-                if pathu.parts(entry["file_home"])[: len(home_parts)] != home_parts:
+                owner = self._entry_owner(entry=entry, name=name)
+                if owner != name:
                     msg = (
-                        f"Version {entry.get('uuid')!r} in named-file {name!r}'s "
-                        f"manifest has file home {entry['file_home']!r}, outside "
-                        f"{name!r}; a uuid in more than one named-file's manifest "
-                        "is inconsistent framework data."
+                        f"Version {entry.get('uuid')!r} is listed in named-file "
+                        f"{name!r}'s manifest but belongs to {owner!r}; the "
+                        "framework data is inconsistent."
                     )
                     logger = getattr(self.csvpaths, "logger", None)
                     if logger is not None:
@@ -2751,6 +2749,34 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     raise ReferenceRuntimeException3(msg)
                 matched.append(entry)
         return matched
+
+    def _entry_owner(self, *, entry: dict, name: str) -> "str | None":
+        """the named-file a manifest entry belongs to: the root of its own
+        'reference' ('$acme.files.<fingerprint>'), written at registration
+        and the same however the named-files root is spelled. A path
+        comparison misfired when the config spelled the root differently
+        from when the file was registered (relative vs absolute, case;
+        reviewer on #800). Only an entry with no 'reference' (older
+        manifests) falls back to whether its file home is under `name`'s
+        home; one with neither raises."""
+        if entry is None:
+            raise ValueError("entry cannot be None")
+        if not name:
+            raise ValueError("name cannot be None or empty")
+        reference = entry.get("reference")
+        if isinstance(reference, str) and reference.startswith("$") and "." in reference:
+            return reference[1:].split(".", 1)[0]
+        file_home = entry.get("file_home")
+        if not file_home:
+            msg = f"manifest entry {entry.get('uuid')!r} has no reference and no file_home"
+            logger = getattr(self.csvpaths, "logger", None)
+            if logger is not None:
+                logger.error(msg)
+            raise ReferenceRuntimeException3(msg)
+        home_parts = pathu.parts(self.csvpaths.file_manager.named_file_home(name).rstrip("/"))
+        if pathu.parts(file_home)[: len(home_parts)] == home_parts:
+            return name
+        return None
 
     @staticmethod
     def _is_bare_all_reference(name_one) -> bool:
