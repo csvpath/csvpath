@@ -6732,16 +6732,21 @@ class TestNameTwoWorksheetMarker:
         ).resolve()
         assert hello.results[0].data != world.results[0].data
 
-    def test_worksheet_marker_requires_a_pointer(self):
-        # no name_three pointer at all -- there is no single version to
-        # read a worksheet from.
+    def test_worksheet_marker_without_a_pointer_is_the_file_home(self):
+        # NRE '$acme.files.orders/:name("west coast.xlsx")#march': query
+        # gives the file home with the worksheet as its identity; a file
+        # home has no uuid and resolves to None, as without the marker
+        # (5.21). It raised "requires a version-selecting pointer" until
+        # the name_one gap review (item H).
         manifest = [
             {"file": BOOK1_XLSX, "file_home": f"{ALPHA_HOME}/Book1.xlsx", "uuid": "u-1"}
         ]
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$alpha.files.:name("Book1.xlsx")#hello', ALPHA_HOME, manifest
-            ).query()
+        finder = _finder('$alpha.files.:name("Book1.xlsx")#hello', ALPHA_HOME, manifest)
+        results = finder.query()
+        assert [(r.path, r.uuid, r.identity) for r in results.results] == [
+            (f"{ALPHA_HOME}/Book1.xlsx", None, "hello")
+        ]
+        assert [r.data for r in finder.resolve_from(results).results] == [None]
 
     def test_worksheet_marker_rejects_a_non_xlsx_file(self):
         results = _finder(
@@ -6949,17 +6954,16 @@ class TestChoiceAsNameOnePathSegment:
         # confirming the '#worksheet'-requires-literal-path guard
         # itself does not reject :choice() outright the way it would
         # an unrelated function).
-        with pytest.raises(ReferenceException3) as exc_info:
-            _finder(
-                '$alpha.files.:choice("one.csv")#sheet1',
-                ALPHA_HOME,
-                ALPHA_MANIFEST,
-            ).query()
-        # the raised error must be the "needs a pointer" one, not the
-        # "#worksheet only means anything against a literal path" one
-        # -- proving :choice() was correctly recognized as path-
-        # building, same as :name()/:regex().
-        assert "requires a version-selecting pointer" in str(exc_info.value)
+        # since the name_one gap review (item H) a marker with no pointer
+        # gives the file home with the worksheet as its identity, so the
+        # query succeeds: :choice() is recognized as path-building, same
+        # as :name()/:regex() (the "literal path" guard would raise)
+        results = _finder(
+            '$alpha.files.:choice("one.csv")#sheet1',
+            ALPHA_HOME,
+            ALPHA_MANIFEST,
+        ).query()
+        assert [(r.uuid, r.identity) for r in results.results] == [(None, "sheet1")]
 
 
 def _entry_star_finder(reference: str) -> FilesReferenceFinder3:

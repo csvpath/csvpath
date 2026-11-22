@@ -810,20 +810,24 @@ class FilesReferenceFinder3(ReferenceFinder3):
                         for c in candidates
                     ]
                 )
-            if name_one.name_two is not None:
-                raise ReferenceException3(
-                    "FilesReferenceFinder3 requires a version-selecting "
-                    "pointer (:first()/:last()/:index(n)) alongside the "
-                    "'#worksheet' marker (name_two) -- there is no single "
-                    "version to read a worksheet from otherwise."
-                )
             file_homes = []
             for entry in candidates:
                 if entry["file_home"] not in file_homes:
                     file_homes.append(entry["file_home"])
+            # with a '#worksheet' marker each file home carries it as its
+            # identity: NRE '$acme.files.orders/:name("west coast.xlsx")#march'
+            # -- "the reference result returned on query() is the typical
+            # path+uuid plus the name_two value". A file home has no uuid
+            # (NRE: "file homes have paths but not UUID") and resolves to
+            # None, as without the marker (5.21 "name_one, no pointer"); a
+            # version pointer in name_three reads the sheet. It raised
+            # "requires a version-selecting pointer" until the name_one gap
+            # review (item H).
             return ReferenceResults3(
                 results=[
-                    ReferenceResult3(path=file_home, uuid=None)
+                    ReferenceResult3(
+                        path=file_home, uuid=None, identity=name_one.name_two
+                    )
                     for file_home in file_homes
                 ]
             )
