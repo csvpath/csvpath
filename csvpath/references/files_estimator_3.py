@@ -60,6 +60,9 @@ class FilesEstimator3:
     NAME_KEY = "named_file_name"
     ROOT_CONFIG = "inputs_files_path"
     LEDGER_METHOD = "files_ledger"
+    # the source method listing the live names, for a literal root that is
+    # not live (D40 f); None uses the ledger's names instead
+    LIVE_NAMES_METHOD = "file_names"
     NOUN = "named-files"
     NOT_A_VERSION = ("failed",)
     DATATYPE = "files"
@@ -125,6 +128,17 @@ class FilesEstimator3:
             or []
         )
 
+    def _live_names(self, entries: dict) -> "list | dict":
+        """the names a literal root can find versions under: the source's
+        live names, so a named-file removed but still in the ledger counts
+        as missing (reviewer on #803), or the ledger's names when the
+        datatype sets no LIVE_NAMES_METHOD"""
+        if entries is None:
+            raise ValueError("entries cannot be None")
+        if self.LIVE_NAMES_METHOD is None:
+            return entries
+        return getattr(self.finder.source, self.LIVE_NAMES_METHOD)()
+
     def _versions_by_name(self, ledger: list) -> dict:
         by_name = {}
         for entry in ledger:
@@ -160,12 +174,13 @@ class FilesEstimator3:
         entries = self._entries_by_name(ledger)
         names = self._names_in_play(by_name)
         literal = isinstance(self.reference.root_major, str)
-        if literal and self.reference.root_major not in entries:
-            # a named-file that was never registered has no manifest: the
+        if literal and self.reference.root_major not in self._live_names(entries):
+            # a named-file that is not live -- never registered, or deleted
+            # (still in the ledger: reviewer on #803) -- has no manifest: the
             # query only checks for it, finds nothing and reads nothing (D40
             # f), and a well-known file ('$nope.files.:readme()') is a path
             # that resolves to None
-            self.why.append(f"no named-file '{self.reference.root_major}' in the ledger: nothing to read")
+            self.why.append(f"no live named-file '{self.reference.root_major}': nothing to read")
             if any(self._is_ledger_field(c) and c.arg is not None for c in self._calls()):
                 # a status/lifecycle gate looks in the ledger first
                 self._read(part=QUERY, kind="ledger", count=1, basis=UPPER_BOUND, because="a ledger field gate")

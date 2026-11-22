@@ -25,6 +25,8 @@ class CsvpathsEstimator3(FilesEstimator3):
     NAME_KEY = "named_paths_name"
     ROOT_CONFIG = "inputs_csvpaths_path"
     LEDGER_METHOD = "paths_ledger"
+    # a missing group is judged by the ledger, as before D40 f
+    LIVE_NAMES_METHOD = None
     NOUN = "named-paths groups"
     NOT_A_VERSION = ("unchanged",)
     DATATYPE = "csvpaths"

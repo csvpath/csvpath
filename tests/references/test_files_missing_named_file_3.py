@@ -5,7 +5,11 @@
 # "ValueError: No manifest for file named nope"; CSVPATHS and RESULTS
 # already gave [].
 #
+import os
+
 import pytest
+
+from csvpath import CsvPaths
 
 from csvpath.references.reference_exceptions_3 import ReferenceException3
 from csvpath.references.reference_finder_factory_3 import ReferenceFinderFactory3
@@ -13,7 +17,10 @@ from tests.references.cost.test_results_estimate_soundness_3 import (
     _measure,
     _problems,
 )
-from tests.references.test_files_wildcard_paths_3 import layout  # noqa: F401
+from tests.references.test_files_wildcard_paths_3 import (  # noqa: F401
+    _config_file,
+    layout,
+)
 
 EMPTY = [
     "$nope.files.:last()",
@@ -114,3 +121,55 @@ def test_an_illegal_shape_raises_whether_or_not_the_name_exists(layout, shape): 
             _finder(p=p, reference=root + shape).query()
         messages.append(str(e.value))
     assert messages[0] == messages[1]
+
+
+# ===================
+# a named-file registered, then removed: still in the ledger, no manifest
+# (reviewer on #803: the estimate charged an exact read that never happens)
+# ===================
+
+
+@pytest.fixture(scope="module")
+def removed(tmp_path_factory):
+    tmp = tmp_path_factory.mktemp("missing_named_file_removed")
+    previous = os.environ.get("CSVPATH_CONFIG_PATH")
+    os.environ["CSVPATH_CONFIG_PATH"] = _config_file(tmp)
+    try:
+        p = CsvPaths()
+        for name in ("keep", "gone"):
+            src = tmp / "src" / name
+            src.mkdir(parents=True)
+            (src / "x.csv").write_text("id\n1\n", encoding="utf-8")
+            p.file_manager.add_named_file(name=name, path=str(src / "x.csv"))
+        p.file_manager.remove_named_file("gone")
+        yield p
+    finally:
+        if previous is None:
+            os.environ.pop("CSVPATH_CONFIG_PATH", None)
+        else:
+            os.environ["CSVPATH_CONFIG_PATH"] = previous
+
+
+def _gone(reference: str) -> str:
+    return reference.replace("$nope", "$gone", 1)
+
+
+@pytest.mark.parametrize("reference", EMPTY)
+def test_a_removed_name_finds_nothing(removed, reference):
+    finder = _finder(p=removed, reference=_gone(reference))
+    selection = finder.query()
+    assert selection.results == []
+    assert finder.resolve_from(selection).results == []
+
+
+@pytest.mark.parametrize("reference", EMPTY + [r for r, _ in WELL_KNOWN])
+def test_a_removed_name_keeps_the_estimate_contract(removed, reference):
+    reference = _gone(reference)
+    measured, raised = _measure(removed, reference)
+    assert raised is None
+    estimate = _finder(p=removed, reference=reference).estimate()
+    assert _problems(estimate, measured, raised) == []
+
+
+def test_the_live_name_beside_it_still_answers(removed):
+    assert _finder(p=removed, reference="$keep.files.:all()").query().results
