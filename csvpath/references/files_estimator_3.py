@@ -585,6 +585,12 @@ class FilesEstimator3:
         if literal:
             self._read(part=RESOLVE, kind=kind, count=1, basis=EXACT, because=f":{bare}()")
             return
+        # query() gives one file per LIVE name the root matches; the ledger
+        # also holds deleted ones, so counting it predicted a raise for a
+        # pattern that matches one live name (reviewer on #804)
+        root = self.reference.root_major
+        pattern = None if isinstance(root, Star3) else self.finder._build(root).pattern
+        n_names = len(self.finder._matching_names(self.finder._definition_names(), pattern))
         self._read(part=QUERY, kind="name_listing", count=1, basis=UPPER_BOUND, because=str(self.reference.root_major))
         if n_names > 1:
             self.would_raise = f"resolve: {n_names} {kind} files at once (compendium 5.3)"

@@ -616,6 +616,15 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             return self._query_readme_files(
                 names=self._matching_names(self._definition_names(), name_filter)
             )
+        if self._name_one_contains_function(name_one, "readme"):
+            # the message FILES gives; the catch-all below read as if
+            # ':readme()' were not supported under '*' (reviewer on #804)
+            raise ReferenceException3(
+                "CsvpathsReferenceFinder3 does not support combining "
+                "':readme()' with anything else -- a named-paths group has "
+                "one README.md, so ':readme()' must be the entire, sole "
+                "content of name_one, with no name_three."
+            )
         # a plain pointer + :manifest() (e.g. ":last():manifest()") never
         # reaches this method at all -- query()'s own _pointer_before_
         # manifest() check above already claims that exact shape as
@@ -850,10 +859,9 @@ class CsvpathsReferenceFinder3(ReferenceFinder3):
             ):
                 # result.path is already the manifest.json/definition.json/
                 # README.md path itself (set by query()'s
-                # _query_well_known_file() branch above). ':readme()'
-                # added 2026-09-21 -- not wired into '*' traversal (no
-                # worked example demonstrates or requires it there; see
-                # the bucket list).
+                # _query_well_known_file() branch above), or by
+                # _query_readme_files() under a '*'/pattern root (5.8, D40
+                # g, 2026-11-22).
                 return self._read_bare_metadata_file(
                     reference=reference, path=result.path
                 )
