@@ -858,7 +858,7 @@ class ReferenceFinder3(ABC):
         ':manifest()' implies a '*', one manifest per run (3.9c), so the
         run slot is added, and 'customers/:manifest():first()' is NRE
         662-663's 'customers/:first():manifest()'. In FILES it does too
-        since 2026-11-22 (David, D40 c) after a plain directory segment:
+        since 2026-11-22 (David, D40 c, j) after a directory or a '*':
         'orders/:manifest()' is the manifest records of the registrations
         under orders/, i.e. 'orders/*:manifest()'; it read as
         'orders:manifest()' (FilesReferenceFinder3._trailing_manifest_

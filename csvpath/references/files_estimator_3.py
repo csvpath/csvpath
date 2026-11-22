@@ -60,7 +60,7 @@ class FilesEstimator3:
     NAME_KEY = "named_file_name"
     ROOT_CONFIG = "inputs_files_path"
     LEDGER_METHOD = "files_ledger"
-    # a ':manifest()' after a plain directory segment implies a '*' in
+    # a ':manifest()' after a directory or a '*' segment implies a '*' in
     # FILES (D40 c), as query() applies it; CSVPATHS keeps False
     TRAILING_MANIFEST_IMPLIES_STAR = True
     # the source method listing the live names, for a literal root that is

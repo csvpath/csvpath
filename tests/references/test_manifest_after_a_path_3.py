@@ -116,7 +116,9 @@ FILES_PAIRS = [
         '$beta.files.EMEA/:name("two.csv")/:manifest()',
         '$beta.files.EMEA/:name("two.csv"):manifest()',
     ),
-    ("$beta.files.EMEA/*/:manifest()", "$beta.files.EMEA/*:manifest()"),
+    # a "*" before the "/" is a directory level, as in RESULTS (D40 j)
+    ("$beta.files.*/:manifest()", "$beta.files.*/*:manifest()"),
+    ("$cappa.files.*/*/:manifest()", "$cappa.files.*/*/*:manifest()"),
 ]
 
 
@@ -138,7 +140,7 @@ class TestFiles:
         # (D38: read as a file home named 'orders/2026')
         p, _ = layout
         implied = _query(p, "$cappa.files.orders/2026/:manifest()")
-        assert implied and implied == _query(p, "$cappa.files.orders/2026/*/:manifest()")
+        assert implied and implied == _query(p, "$cappa.files.orders/2026/*:manifest()")
 
 
 @pytest.mark.parametrize("pair", RESULTS_PAIRS)
