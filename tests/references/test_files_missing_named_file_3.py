@@ -142,6 +142,8 @@ def removed(tmp_path_factory):
             (src / "x.csv").write_text("id\n1\n", encoding="utf-8")
             p.file_manager.add_named_file(name=name, path=str(src / "x.csv"))
         p.file_manager.remove_named_file("gone")
+        # an interrupted registration: a home folder, no manifest.json
+        os.makedirs(os.path.join(p.config.inputs_files_path, "half"))
         yield p
     finally:
         if previous is None:
@@ -150,21 +152,24 @@ def removed(tmp_path_factory):
             os.environ["CSVPATH_CONFIG_PATH"] = previous
 
 
-def _gone(reference: str) -> str:
-    return reference.replace("$nope", "$gone", 1)
+def _gone(reference: str, name: str = "gone") -> str:
+    return reference.replace("$nope", f"${name}", 1)
 
 
+@pytest.mark.parametrize("name", ["gone", "half"])
 @pytest.mark.parametrize("reference", EMPTY)
-def test_a_removed_name_finds_nothing(removed, reference):
-    finder = _finder(p=removed, reference=_gone(reference))
+def test_a_removed_name_finds_nothing(removed, reference, name):
+    finder = _finder(p=removed, reference=_gone(reference, name))
     selection = finder.query()
     assert selection.results == []
     assert finder.resolve_from(selection).results == []
 
 
+@pytest.mark.parametrize("name", ["gone", "half"])
 @pytest.mark.parametrize("reference", EMPTY + [r for r, _ in WELL_KNOWN])
-def test_a_removed_name_keeps_the_estimate_contract(removed, reference):
-    reference = _gone(reference)
+def test_a_removed_name_keeps_the_estimate_contract(removed, reference, name):
+    # 'half' is a home folder with no manifest.json (reviewer on #803)
+    reference = _gone(reference, name)
     measured, raised = _measure(removed, reference)
     assert raised is None
     estimate = _finder(p=removed, reference=reference).estimate()

@@ -128,16 +128,24 @@ class FilesEstimator3:
             or []
         )
 
-    def _live_names(self, entries: dict) -> "list | dict":
-        """the names a literal root can find versions under: the source's
-        live names, so a named-file removed but still in the ledger counts
-        as missing (reviewer on #803), or the ledger's names when the
-        datatype sets no LIVE_NAMES_METHOD"""
+    def _is_present(self, *, name: str, entries: dict) -> bool:
+        """whether a literal root can find versions: `name` is in the
+        ledger AND among the source's live names. The ledger alone missed a
+        named-file removed after registering (still in the ledger); the
+        live names alone missed a home folder with no manifest.json (an
+        interrupted registration, which the filesystem source lists)
+        (reviewer on #803, rounds 1 and 2). A datatype with no
+        LIVE_NAMES_METHOD uses the ledger only. The live names cost one
+        name listing in estimate(), a list call on a cloud backend."""
+        if not name:
+            raise ValueError("name cannot be None or empty")
         if entries is None:
             raise ValueError("entries cannot be None")
+        if name not in entries:
+            return False
         if self.LIVE_NAMES_METHOD is None:
-            return entries
-        return getattr(self.finder.source, self.LIVE_NAMES_METHOD)()
+            return True
+        return name in getattr(self.finder.source, self.LIVE_NAMES_METHOD)()
 
     def _versions_by_name(self, ledger: list) -> dict:
         by_name = {}
@@ -174,7 +182,7 @@ class FilesEstimator3:
         entries = self._entries_by_name(ledger)
         names = self._names_in_play(by_name)
         literal = isinstance(self.reference.root_major, str)
-        if literal and self.reference.root_major not in self._live_names(entries):
+        if literal and not self._is_present(name=self.reference.root_major, entries=entries):
             # a named-file that is not live -- never registered, or deleted
             # (still in the ledger: reviewer on #803) -- has no manifest: the
             # query only checks for it, finds nothing and reads nothing (D40
