@@ -2,7 +2,7 @@ from .csvpaths_reference_finder_3 import CsvpathsReferenceFinder3
 from .files_estimator_3 import FilesEstimator3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_3 import FunctionCall3, Star3
-from .reference_estimate_3 import RESOLVE, UPPER_BOUND
+from .reference_estimate_3 import ESTIMATE, RESOLVE, UPPER_BOUND
 
 #
 # The CSVPATHS cost estimate (references_v3_cost_estimates.md). It shares
@@ -63,8 +63,6 @@ class CsvpathsEstimator3(FilesEstimator3):
             return "query: ':all()' does not combine with a '*' name_one during '*' traversal"
         if not star and not any(isinstance(p, FunctionCall3) for p in name_one.path) and not name_one.functions:
             return "query: CSVPATHS name_one is a version-selecting function chain, not a literal"
-        if self.reference.name_three is not None and isinstance(self.reference.name_three.body, Star3):
-            return "query: CSVPATHS name_three is a statement identity, an index, or :from()/:to()"
         try:
             # the finder's own static check: a definition field beside a
             # version selector (it reads nothing)
@@ -115,18 +113,42 @@ class CsvpathsEstimator3(FilesEstimator3):
         # also relists the names and reads more manifests (measured up to
         # three per statement under a pattern root)
         statements = self._statements(three=three, selected=selected)
+        # a pointer or an identity is one statement per version, a bound;
+        # every statement (':all()', '*', a range) depends on how many each
+        # version has, which the ledger does not record, so it is an
+        # estimate, not a bound: a 7-statement group read 7 against a
+        # "bound" of 4 (reviewer on #798)
+        basis = UPPER_BOUND if self._one_statement_each(three) else ESTIMATE
+        if basis == ESTIMATE:
+            self.why.append("statements per version are not in the ledger; their reads are estimated")
         if literal:
-            self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=statements, basis=UPPER_BOUND, because=f".{three}")
+            self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=statements, basis=basis, because=f".{three}")
             return True
-        self._read(part=RESOLVE, kind="name_listing", count=statements, basis=UPPER_BOUND, because=f".{three}")
-        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=3 * statements, basis=UPPER_BOUND, because=f".{three}")
+        self._read(part=RESOLVE, kind="name_listing", count=statements, basis=basis, because=f".{three}")
+        self._read(part=RESOLVE, kind=self.MANIFEST_KIND, count=3 * statements, basis=basis, because=f".{three}")
         return True
+
+    @staticmethod
+    def _one_statement_each(three) -> bool:
+        """true when name_three picks at most one statement per version: a
+        literal identity or a statement pointer"""
+        names = [c.name for c in three.functions]
+        return three.body is not None or any(n in ("first", "last", "index") for n in names)
+
+    def _selected(self, *, calls: list, names: list, by_name: dict) -> int:
+        """the versions name_one selects. A name_three pointer picks a
+        STATEMENT within each version (gap review N), not a version, so
+        only name_one's functions count: '$x.csvpaths.*.:first()' is one
+        statement of every version, not one version."""
+        three = self.reference.name_three
+        three_calls = list(three.functions) if three is not None else []
+        own = [c for c in calls if not any(c is t for t in three_calls)]
+        return super()._selected(calls=own, names=names, by_name=by_name)
 
     def _statements(self, *, three, selected: int) -> int:
         # statements per version are not in the ledger: count a pointer or
         # an identity as one per version, anything else as a bound of the
         # versions' statement lists, estimated generously
-        names = [c.name for c in three.functions]
-        if three.body is not None or any(n in ("first", "last", "index") for n in names):
+        if self._one_statement_each(three):
             return selected
         return max(selected, 1) * 4

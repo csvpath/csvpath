@@ -256,7 +256,8 @@ class ReferenceFinder3(ABC):
 
     @staticmethod
     def _apply_pointer(pointer, candidates: list) -> dict | None:
-        """reduces a list of manifest-entry dicts to the one a pointer
+        """reduces a list -- manifest-entry dicts, or a CSVPATHS version's
+        statement identities (gap review N) -- to the one a pointer
         function selects -- :first()/:last()/:index(n) are plain list-
         position lookups (arrival/registration order is array order,
         confirmed against real manifests for both files and csvpaths),

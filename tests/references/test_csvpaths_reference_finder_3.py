@@ -851,14 +851,16 @@ class TestNameThreeRange:
                 "$ranger.csvpaths.:first().one:from(-1)", RANGE_MANIFEST
             ).query()
 
-    def test_an_unrecognized_function_on_name_three_is_rejected(self):
-        # anything other than a literal identity or ':from()'/':to()'
-        # is not yet supported on name_three -- e.g. a pointer riding
-        # alongside the range, which FILES allows but csvpaths does not.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                "$ranger.csvpaths.:first().:from(-2):last()", RANGE_MANIFEST
-            ).query()
+    def test_a_pointer_picks_from_the_range(self):
+        # a statement pointer in name_three picks from the range (6.28):
+        # the last statement of the last two is the last statement. It was
+        # rejected until the name_one gap review (item N).
+        ranged = _finder(
+            "$ranger.csvpaths.:first().:from(-2):last()", RANGE_MANIFEST
+        ).query()
+        last = _finder("$ranger.csvpaths.:first().:last()", RANGE_MANIFEST).query()
+        assert len(ranged.results) == 1
+        assert [r.identity for r in ranged.results] == [r.identity for r in last.results]
 
     def test_identity_mode_selects_the_inclusive_range_between_two_names(self):
         # added 2026-09-22, per normative_reference_examples.txt's own
@@ -3271,10 +3273,12 @@ class TestScopeLimits:
         with pytest.raises(ReferenceException3):
             finder.query()
 
-    def test_star_body_on_name_three_not_supported(self):
-        finder = _finder("$acme.csvpaths.:last().*")
-        with pytest.raises(ReferenceException3):
-            finder.query()
+    def test_star_body_on_name_three_is_all(self):
+        # NRE: '$acme.csvpaths.:last().:all()' and '.*' "are equivalent"
+        # (gap review N); it raised until then
+        star = _finder("$acme.csvpaths.:last().*").query()
+        every = _finder("$acme.csvpaths.:last().:all()").query()
+        assert [r.identity for r in star.results] == [r.identity for r in every.results]
 
     def test_metadata_kind_unreachable_via_a_real_reference(self):
         # :meta() is a real registered function (Meta3, RESOLVES_AS ==

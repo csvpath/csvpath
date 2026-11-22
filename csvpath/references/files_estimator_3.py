@@ -4,6 +4,7 @@ from .functions.function_3 import Function3
 from .functions.reference_function_factory_3 import ReferenceFunctionFactory
 from .reference_3 import FunctionCall3, Star3
 from .reference_estimate_3 import (
+    ESTIMATE,
     EXACT,
     QUERY,
     RESOLVE,
@@ -352,7 +353,8 @@ class FilesEstimator3:
             return
         self.would_raise = reason
         # where it raises is not estimated: every count becomes a bound
-        self.reads = [Read(part=r.part, kind=r.kind, count=r.count, basis=UPPER_BOUND, because=r.because) for r in self.reads]
+        # an estimate stays one: it is no bound to begin with (#798)
+        self.reads = [Read(part=r.part, kind=r.kind, count=r.count, basis=r.basis if r.basis == ESTIMATE else UPPER_BOUND, because=r.because) for r in self.reads]
 
     def _all_calls(self) -> list:
         name_one = self.reference.name_one

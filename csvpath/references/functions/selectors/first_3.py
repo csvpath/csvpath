@@ -11,7 +11,9 @@ class First3(Function3):
     ARG_REQUIRED = False
     POSITIONS = {
         Reference3.FILES: (Reference3.NAME_THREE,),
-        Reference3.CSVPATHS: (Reference3.NAME_ONE,),
+        # name_three: a statement of the version (gap review N; NRE
+        # '$acme.csvpaths.:last().:all()', '.:index(0)')
+        Reference3.CSVPATHS: (Reference3.NAME_ONE, Reference3.NAME_THREE),
         # RESULTS: name_one only -- name_three has no pointer concept of
         # its own (_name_three_selector recognizes a literal identity,
         # :all(), or ':from()'/':to()', never a pointer).
