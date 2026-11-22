@@ -54,8 +54,10 @@ class FilesReferenceFinder3(ReferenceFinder3):
     #    ':flatten()' (POOL) has no such restriction here, since
     #    root_major is always known at this position (unlike '*'
     #    traversal below). Any other function-valued segment (e.g.
-    #    :quarter()) and the "#worksheet" marker (name_two) are not yet
-    #    supported.
+    #    :quarter()) is not yet supported. The "#worksheet" marker
+    #    (name_two) applies to a version a pointer selects, and with no
+    #    name_three it rides on each file home as its identity (gap
+    #    review item H).
     #  - name_three, if present, must resolve to exactly one pointer
     #    function (:first()/:last()/:index(n)) -- matching the
     #    STRUCTURE table: name_one picks *which file*, name_three picks

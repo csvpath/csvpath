@@ -18,7 +18,7 @@ from tests.references.cost.test_results_estimate_soundness_3 import (
 from tests.references.test_files_wildcard_paths_3 import layout  # noqa: F401
 
 
-def _rows(p, reference: str) -> list:
+def _rows(*, p, reference: str) -> list:
     finder = ReferenceFinderFactory3.for_reference(reference=reference, csvpaths=p)
     return [(str(r.path), r.uuid, r.identity) for r in finder.query().results]
 
@@ -29,8 +29,8 @@ def _rows(p, reference: str) -> list:
 )
 def test_the_file_homes_with_the_worksheet_as_identity(layout, plain):  # noqa: F811
     p, _ = layout
-    without = _rows(p, plain)
-    with_marker = _rows(p, plain + "#march")
+    without = _rows(p=p, reference=plain)
+    with_marker = _rows(p=p, reference=plain + "#march")
     assert without and [(path, uuid) for path, uuid, _ in with_marker] == [
         (path, uuid) for path, uuid, _ in without
     ]
@@ -46,11 +46,11 @@ def test_resolve_is_none_as_for_a_file_home(layout):  # noqa: F811
     assert [r.data for r in finder.resolve_from(finder.query()).results] == [None]
 
 
-def test_a_pointer_still_reads_a_version(layout):  # noqa: F811
+def test_a_pointer_still_selects_a_version(layout):  # noqa: F811
     # the version, with the worksheet; reading it needs an XLSX file, and
     # these are CSVs, so resolve raises as before
     p, _ = layout
-    rows = _rows(p, '$beta.files.EMEA/:name("two.csv")#march.:last()')
+    rows = _rows(p=p, reference='$beta.files.EMEA/:name("two.csv")#march.:last()')
     assert len(rows) == 1 and rows[0][1] is not None and rows[0][2] == "march"
 
 
