@@ -589,11 +589,7 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     f"a bare ':{call.name}(...)' lookup with name_three -- "
                     "it already identifies one specific version on its own."
                 )
-            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
-            key = function_cls.KEY.get(Reference3.FILES)
-            manifest = self.source.file_manifest(root_major)
-            value = call.arg
-            matched = [e for e in manifest if e.get(key) == value]
+            matched = self._bare_selector_matches(call=call, names=[root_major])
             return ReferenceResults3(
                 results=[
                     ReferenceResult3(path=e["file"], uuid=e["uuid"]) for e in matched
@@ -1381,17 +1377,15 @@ class FilesReferenceFinder3(ReferenceFinder3):
                     f"a bare ':{call.name}(...)' lookup with name_three -- "
                     "it already identifies one specific version on its own."
                 )
-            function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
-            key = function_cls.KEY.get(Reference3.FILES)
-            value = self._build(call).arg
-            results = []
-            for name in self._matching_names(self.source.file_names(), name_filter):
-                for entry in self.source.file_manifest(name):
-                    if entry.get(key) == value:
-                        results.append(
-                            ReferenceResult3(path=entry["file"], uuid=entry["uuid"])
-                        )
-            return ReferenceResults3(results=results)
+            matched = self._bare_selector_matches(
+                call=call,
+                names=self._matching_names(self.source.file_names(), name_filter),
+            )
+            return ReferenceResults3(
+                results=[
+                    ReferenceResult3(path=e["file"], uuid=e["uuid"]) for e in matched
+                ]
+            )
         elif self._bare_manifest_field_call(name_one) is not None:
             # ':manifest():uuid()' during '*' traversal -- added
             # 2026-08-28, David's own worked example ("get uuids from
@@ -2721,6 +2715,42 @@ class FilesReferenceFinder3(ReferenceFinder3):
             f"FilesReferenceFinder3 found no named-file holding the manifest "
             f"entry {entry.get('uuid')!r} (file_home {file_home!r})."
         )
+
+    def _bare_selector_matches(self, *, call: FunctionCall3, names: list) -> list:
+        """the manifest entries of `names` whose field (the selector's FILES
+        KEY) equals a bare ':fingerprint("…")'/':uuid("…")' selector's
+        argument, in name order then manifest order. The argument is built,
+        so an @variable or "{...}" resolves (the literal root read it raw
+        and matched nothing; reviewer on #800). An entry whose file home is
+        not under the named-file's own home is held by another named-file:
+        inconsistent framework data, raised and logged as a status gate
+        raises for it (D4, D31 c)."""
+        if call is None:
+            raise ValueError("call cannot be None")
+        if names is None:
+            raise ValueError("names cannot be None")
+        function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
+        key = function_cls.KEY.get(Reference3.FILES)
+        value = self._build(call).arg
+        matched = []
+        for name in names:
+            home_parts = pathu.parts(self.csvpaths.file_manager.named_file_home(name).rstrip("/"))
+            for entry in self.source.file_manifest(name):
+                if entry.get(key) != value:
+                    continue
+                if pathu.parts(entry["file_home"])[: len(home_parts)] != home_parts:
+                    msg = (
+                        f"Version {entry.get('uuid')!r} in named-file {name!r}'s "
+                        f"manifest has file home {entry['file_home']!r}, outside "
+                        f"{name!r}; a uuid in more than one named-file's manifest "
+                        "is inconsistent framework data."
+                    )
+                    logger = getattr(self.csvpaths, "logger", None)
+                    if logger is not None:
+                        logger.error(msg)
+                    raise ReferenceRuntimeException3(msg)
+                matched.append(entry)
+        return matched
 
     @staticmethod
     def _is_bare_all_reference(name_one) -> bool:
