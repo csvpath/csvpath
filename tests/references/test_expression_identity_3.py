@@ -59,6 +59,7 @@ VERSION = "$acme.csvpaths.:last()"
 SHEET_A = '$books.files.:name("book.xlsx")#a.:last()'
 SHEET_B = '$books.files.:name("book.xlsx")#b.:last()'
 WORKBOOK = '$books.files.:name("book.xlsx").:last()'
+SHEET_A_UUID = '$books.files.:name("book.xlsx")#a.:last():uuid()'
 
 
 @pytest.mark.parametrize(
@@ -107,3 +108,28 @@ def test_intersect_and_subtract_partition_the_left_side(archive):
     dropped = _identities(archive, f"({EVERY} UNION {SHEET_A}) SUBTRACT {SECOND}")
     assert sorted(kept + dropped, key=str) == sorted(left, key=str)
     assert kept == ["second_id"]
+
+
+@pytest.mark.parametrize(
+    "expression,identities",
+    [
+        # values(LHS)/paths(RHS): the left side's own path, uuid and identity
+        (f"{SHEET_A_UUID} INTERSECT {SHEET_B}", []),
+        (f"{SHEET_A_UUID} SUBTRACT {SHEET_B}", ["a"]),
+        (f"{SHEET_A_UUID} INTERSECT {SHEET_A}", ["a"]),
+        # a :having() side is version-level (identity None), so it is not a
+        # statement of that version; name the statement on it to match
+        (f'{FIRST} INTERSECT $acme.csvpaths.:having("first_id"):last()', []),
+        (
+            f'{FIRST} INTERSECT $acme.csvpaths.:having("first_id"):last().first_id',
+            ["first_id"],
+        ),
+        # paths(LHS)/values(RHS) with a uuid-valued right side compares the
+        # left side's uuid with the value: a statement matches its version's
+        # uuid. A uuid value on the left is a version-level item.
+        (f"{FIRST} INTERSECT {VERSION}:uuid()", ["first_id"]),
+        (f"{VERSION}:uuid() INTERSECT {FIRST}", []),
+    ],
+)
+def test_the_other_comparisons(archive, expression, identities):
+    assert _identities(archive, expression) == identities
