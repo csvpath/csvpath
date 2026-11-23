@@ -12,6 +12,8 @@
 # each group (4.2). The result is the record, with the named-file's
 # manifest.json as its path (5.7), as for 'APAC/*:manifest()'.
 #
+import re
+
 import pytest
 
 from csvpath.references.reference_exceptions_3 import ReferenceException3
@@ -58,6 +60,15 @@ SAME_VERSION = [
     ("$beta.files.APAC/*:first():manifest()", "$beta.files.APAC/*.:first()"),
     # the '*' implied after the '/' (D40 c, j)
     ("$beta.files.APAC/:manifest():last()", "$beta.files.APAC/*.:last()"),
+    # ... or before the pointer: the implied star moves it out of the path,
+    # and it gave every record (reviewer on #808)
+    ("$beta.files.APAC/:last():manifest()", "$beta.files.APAC/*.:last()"),
+    ("$beta.files.APAC/:first():manifest()", "$beta.files.APAC/*.:first()"),
+    ("$beta.files.APAC/:from(1):manifest()", "$beta.files.APAC/*.:from(1)"),
+    (
+        "$acme.files.invoices/jan/:last():manifest()",
+        "$acme.files.invoices/jan/*.:last()",
+    ),
     ("$beta.files.*/:manifest():last()", "$beta.files.*/*.:last()"),
     (
         "$acme.files.invoices/jan/:manifest():first()",
@@ -88,6 +99,24 @@ SAME_VERSION = [
     (
         "$acme.files.shipments/:all()/*:manifest():last()",
         "$acme.files.shipments/:all()/*.:last()",
+    ),
+    # a range, a window or a gate in each group too, in group order (4.2,
+    # 4.4); a range counted in the whole pool (reviewer on #808)
+    ("$beta.files.APAC/:all():manifest():from(1)", "$beta.files.APAC/:all().:from(1)"),
+    ("$beta.files.:groups():manifest():to(0)", "$beta.files.:groups().:to(0)"),
+    ("$beta.files.:groups():manifest():to(1)", "$beta.files.:groups().:to(1)"),
+    (
+        "$beta.files.:groups():manifest():from(1):first()",
+        "$beta.files.:groups().:from(1):first()",
+    ),
+    (
+        "$acme.files.shipments/:all()/*:manifest():from(2)",
+        "$acme.files.shipments/:all()/*.:from(2)",
+    ),
+    ("$beta.files.APAC/:all():manifest():today()", "$beta.files.APAC/:all().:today()"),
+    (
+        '$beta.files.APAC/:all():manifest():type("csv")',
+        '$beta.files.APAC/:all().:type("csv")',
     ),
 ]
 
@@ -131,12 +160,13 @@ def test_a_range_counts_in_the_pool(layout):  # noqa: F811
     assert _query_uuids(p, "$beta.files.APAC/*:manifest():from(1)") == expected
 
 
-def test_a_window_reads_each_records_time(layout):  # noqa: F811
-    # the layout is registered as the test runs
+@pytest.mark.parametrize("window", ["today", "yesterday", "month", "year"])
+def test_a_window_keeps_what_the_name_three_window_keeps(layout, window):  # noqa: F811
+    # against the twin, not the clock, so it holds across midnight
     p, _ = layout
-    every = [e["uuid"] for e in _entries(p, name="beta", under="APAC")]
-    assert _query_uuids(p, "$beta.files.APAC/*:manifest():today()") == every
-    assert _query_uuids(p, "$beta.files.APAC/*:manifest():yesterday()") == []
+    assert _query_uuids(p, f"$beta.files.APAC/*:manifest():{window}()") == (
+        _query_uuids(p, f"$beta.files.APAC/*.:{window}()")
+    )
 
 
 #
@@ -150,6 +180,10 @@ def test_a_window_reads_each_records_time(layout):  # noqa: F811
         # the gate filters before the pointer picks, in either order (6.28)
         ('$beta.files.APAC/*:manifest():last():type("csv")', 1),
         ('$beta.files.APAC/*:manifest():type("xlsx"):last()', 0),
+        # the slash spelling: the gate is moved out of the path too
+        ('$beta.files.APAC/:type("xlsx"):manifest()', 0),
+        ('$beta.files.APAC/:type("csv"):manifest()', 3),
+        ('$beta.files.APAC/:type("csv"):manifest():last()', 1),
     ],
 )
 def test_a_gate_filters(layout, reference, count):  # noqa: F811
@@ -172,13 +206,28 @@ def test_a_field_after_it_goes_in_name_three(layout):  # noqa: F811
     p, _ = layout
     with pytest.raises(ReferenceException3, match=r"after a '\.'") as e:
         _finder(p=p, reference="$beta.files.APAC/*:manifest():last():time()").query()
-    suggested = str(e.value).rsplit("'", 2)[1]
+    suggested = re.search(r"after a '\.': '(.+)'$", str(e.value)).group(1)
     assert suggested == "APAC/*.:manifest():last():time()"
     values = [
         r.data
         for r in _finder(p=p, reference=f"$beta.files.{suggested}").resolve().results
     ]
     assert len(values) == 1 and isinstance(values[0], str)
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        "$beta.files.APAC/*:manifest():on_arrival()",
+        '$beta.files.APAC/*:manifest():on_arrival("x")',
+        "$beta.files.APAC/*:manifest():last():on_arrival()",
+    ],
+)
+def test_a_definition_field_gets_the_same_message(layout, reference):  # noqa: F811
+    # not claimed, so E2's message, as on main (reviewer on #808)
+    p, _ = layout
+    with pytest.raises(ReferenceException3, match=r"after a '\.'"):
+        _finder(p=p, reference=reference).query()
 
 
 def test_two_pointers_raise(layout):  # noqa: F811
