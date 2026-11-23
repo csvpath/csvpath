@@ -2277,7 +2277,11 @@ class FilesReferenceFinder3(ReferenceFinder3):
             if call.name in self.POINTER_NAMES or self._is_manifest_chain_range(call):
                 continue
             function_cls = ReferenceFunctionFactory.get_registered_class(call.name)
-            if call.arg is None or function_cls is None or function_cls.SOURCE != "manifest":
+            if (
+                call.arg is None
+                or function_cls is None
+                or function_cls.SOURCE != "manifest"
+            ):
                 # a value field, a definition field or anything else: not
                 # claimed, so the E2 message names the dotted form
                 # (reviewer on #808: ':on_arrival()' lost it)
@@ -2317,7 +2321,9 @@ class FilesReferenceFinder3(ReferenceFinder3):
                 "content."
             )
         if partitioned:
-            pools = self._groups_of(candidates=candidates, group_key=group_key)
+            # no groups is one empty pool, so a bad range still raises, as
+            # it does pooled (reviewer on #808)
+            pools = self._groups_of(candidates=candidates, group_key=group_key) or [[]]
         else:
             pools = [candidates]
         entries = []
@@ -2337,6 +2343,8 @@ class FilesReferenceFinder3(ReferenceFinder3):
         range first, then the gates, then the pointer (6.28)"""
         if chain is None:
             raise ValueError("chain cannot be None")
+        if reference is None:
+            raise ValueError("reference cannot be None")
         if entries is None:
             raise ValueError("entries cannot be None")
         entries = self._apply_manifest_chain_ranges(

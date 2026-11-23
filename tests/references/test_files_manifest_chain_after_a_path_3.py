@@ -230,6 +230,22 @@ def test_a_definition_field_gets_the_same_message(layout, reference):  # noqa: F
         _finder(p=p, reference=reference).query()
 
 
+@pytest.mark.parametrize(
+    "reference",
+    [
+        '$beta.files.LATAM/:all():manifest():from(:date("bad"))',
+        "$beta.files.LATAM/:all():manifest():today():yesterday()",
+        '$beta.files.LATAM/*:manifest():from(:date("bad"))',
+    ],
+)
+def test_a_bad_range_raises_with_nothing_to_select(layout, reference):  # noqa: F811
+    # no groups is one empty pool, so the range is still checked
+    # (reviewer on #808: it gave [])
+    p, _ = layout
+    with pytest.raises(ReferenceException3):
+        _finder(p=p, reference=reference).query()
+
+
 def test_two_pointers_raise(layout):  # noqa: F811
     p, _ = layout
     with pytest.raises(ReferenceException3, match="at most one pointer"):
@@ -288,6 +304,8 @@ def test_the_estimate_keeps_its_contract(layout, reference):  # noqa: F811
     [
         "$beta.files.APAC/*:manifest():last():time()",
         "$beta.files.APAC/*:manifest():first():last()",
+        '$beta.files.LATAM/:all():manifest():from(:date("bad"))',
+        "$beta.files.LATAM/:all():manifest():today():yesterday()",
     ],
 )
 def test_the_estimate_of_a_raise_keeps_its_contract(layout, reference):  # noqa: F811
