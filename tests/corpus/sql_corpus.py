@@ -13,7 +13,8 @@ The target gets:
 
 Re-running wipes and rebuilds data/ and rewrites config/config.ini. Every
 path in the config is absolute, so a moved or copied folder still points at
-the original: build a new one instead. Nothing else in the target is touched, and nothing in the repo is written:
+the original: build a new one instead. Nothing else in the target is
+touched, and nothing in the repo is written:
 assets.yaml and the source files are only read. It uses generate.py's own
 build_events() and run_events() (as test_corpus_under_shadow.py does), not
 generate.main(), which writes the committed tests/corpus/data/.
@@ -120,9 +121,20 @@ def check_target(target: "str | Path") -> Path:
     if len(resolved.parts) < 3 or resolved == home or _same(resolved, home):
         raise ValueError(f"Refusing {resolved}: too high up the file system")
     existing = _first_existing(resolved)
-    if any(_same(folder, repo) for folder in (existing, *existing.parents)):
+    if not existing.is_dir():
+        raise ValueError(f"Refusing {resolved}: {existing} is not a folder")
+    #
+    # by identity, and by spelling as a second guard in case samefile() fails
+    #
+    if (
+        resolved == repo
+        or repo in resolved.parents
+        or any(_same(folder, repo) for folder in (existing, *existing.parents))
+    ):
         raise ValueError(f"Refusing {resolved}: it is inside the repo {repo}")
-    if resolved.exists() and any(_same(resolved, folder) for folder in repo.parents):
+    if resolved in repo.parents or (
+        resolved.exists() and any(_same(resolved, folder) for folder in repo.parents)
+    ):
         raise ValueError(f"Refusing {resolved}: the repo {repo} is inside it")
     if resolved.exists():
         if not resolved.is_dir():
@@ -240,6 +252,8 @@ def _check_config_path(*, target: Path, path: Path) -> None:
         raise ValueError(f"Refusing to write in {folder}: not a folder in {target}")
     if path.exists() and not path.is_file():
         raise ValueError(f"Refusing to write {path}: it is not a file")
+    if path.exists() and path.stat().st_nlink > 1:
+        raise ValueError(f"Refusing to write {path}: it is hard-linked elsewhere")
 
 
 def _events() -> list:

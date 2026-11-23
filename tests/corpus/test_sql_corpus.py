@@ -153,6 +153,23 @@ def test_a_file_is_refused(tmp_path):
         sql_corpus.check_target(f)
 
 
+def test_a_target_under_a_file_is_refused(tmp_path):
+    (tmp_path / "afile").write_text("x")
+    with pytest.raises(ValueError, match="is not a folder"):
+        sql_corpus.check_target(tmp_path / "afile" / "sub")
+
+
+def test_a_hard_linked_config_is_refused_and_not_written_through(tmp_path):
+    outside = tmp_path / "outside.ini"
+    outside.write_text("PRECIOUS")
+    target = _marked(tmp_path / "t")
+    (target / "config").mkdir()
+    os.link(outside, target / "config" / "config.ini")
+    with pytest.raises(ValueError, match="hard-linked"):
+        sql_corpus.write_config(target=target, sql="on")
+    assert outside.read_text() == "PRECIOUS"
+
+
 def test_a_folder_with_something_in_it_is_refused(tmp_path):
     (tmp_path / "keep.txt").write_text("mine")
     with pytest.raises(ValueError, match="not empty"):
