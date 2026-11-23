@@ -11,15 +11,18 @@ The target gets:
                         database (data/csvpath-sqlite.db)
     .csvpath_sql_corpus a marker: this script only reuses a folder it made
 
-Re-running wipes and rebuilds data/ and rewrites config/config.ini. Nothing
-else in the target is touched, and nothing in the repo is written:
+Re-running wipes and rebuilds data/ and rewrites config/config.ini. Every
+path in the config is absolute, so a moved or copied folder still points at
+the original: build a new one instead. Nothing else in the target is touched, and nothing in the repo is written:
 assets.yaml and the source files are only read. It uses generate.py's own
 build_events() and run_events() (as test_corpus_under_shadow.py does), not
 generate.main(), which writes the committed tests/corpus/data/.
 
 Deletes are guarded (see check_target() and _wipe()): the target must be
 outside the repo, not an ancestor of it, not / or the home folder, not a
-symlink, and either new, empty, or marked by this script. Every path is
+symlink, and either new, empty, or marked by this script. The repo and the
+home folder are compared by identity, not spelling. data/ and .scratch/ must
+be real folders and config/ a real folder in the target; every path is
 checked before any is removed.
 
 At the end it checks the SQL tables have rows and that a few references
@@ -28,6 +31,7 @@ resolve the same with [references] sql off and on, and prints the CLI command.
 
 import argparse
 import os
+import shlex
 import shutil
 import sqlite3
 import sys
@@ -82,11 +86,29 @@ CHECKS = [
 ]
 
 
-def check_target(target) -> Path:
+def _same(a: Path, b: Path) -> bool:
+    """whether two paths are the same folder on disk. By identity, not by
+    spelling: on a case-insensitive file system '~/DEV/CSVPATH' is the repo
+    though realpath() keeps the case it is given (reviewer on #811)."""
+    try:
+        return os.path.samefile(a, b)
+    except OSError:
+        return False
+
+
+def _first_existing(path: Path) -> Path:
+    """path, or its nearest ancestor that exists"""
+    while not path.exists() and path != path.parent:
+        path = path.parent
+    return path
+
+
+def check_target(target: "str | Path") -> Path:
     """the resolved target folder, or ValueError if it is not safe to build
     in. Safe: outside the repo and not an ancestor of it, not / or the home
     folder or a folder directly under /, not a symlink, and either missing,
-    empty, or marked by this script."""
+    empty, or marked by this script. The repo and home are compared by
+    identity (_same()), so letter case or another spelling cannot get past."""
     if target is None or str(target).strip() == "":
         raise ValueError("A target folder is required")
     raw = Path(str(target)).expanduser()
@@ -95,11 +117,12 @@ def check_target(target) -> Path:
     resolved = Path(os.path.realpath(raw))
     home = Path(os.path.realpath(Path.home()))
     repo = Path(os.path.realpath(REPO_ROOT))
-    if resolved == home or len(resolved.parts) < 3:
+    if len(resolved.parts) < 3 or resolved == home or _same(resolved, home):
         raise ValueError(f"Refusing {resolved}: too high up the file system")
-    if resolved == repo or repo in resolved.parents:
+    existing = _first_existing(resolved)
+    if any(_same(folder, repo) for folder in (existing, *existing.parents)):
         raise ValueError(f"Refusing {resolved}: it is inside the repo {repo}")
-    if resolved in repo.parents:
+    if resolved.exists() and any(_same(resolved, folder) for folder in repo.parents):
         raise ValueError(f"Refusing {resolved}: the repo {repo} is inside it")
     if resolved.exists():
         if not resolved.is_dir():
@@ -123,7 +146,9 @@ def _is_marked(folder: Path) -> bool:
 
 def _wipe(*, target: Path) -> None:
     """removes the WIPED folders inside a checked target. Each is checked
-    before any is removed: a direct child of the target, not a symlink."""
+    before any is removed: a direct child of the target, not a symlink, a
+    folder. A file there raised NotADirectoryError after data/ was gone
+    (reviewer on #811)."""
     if target is None:
         raise ValueError("target cannot be None")
     if not _is_marked(target):
@@ -135,6 +160,8 @@ def _wipe(*, target: Path) -> None:
             raise ValueError(f"Refusing to wipe {path}: it is a symlink")
         if Path(os.path.realpath(path)).parent != target:
             raise ValueError(f"Refusing to wipe {path}: it leads out of {target}")
+        if path.exists() and not path.is_dir():
+            raise ValueError(f"Refusing to wipe {path}: it is not a folder")
         if path.exists():
             doomed.append(path)
     for path in doomed:
@@ -190,10 +217,29 @@ def write_config(*, target: Path, sql: str) -> Path:
     config.set("sql", "dialect", "sqlite")
     config.set("sql", "connection_string", f"sqlite:///{data / 'csvpath-sqlite.db'}")
     config.set("references", "sql", sql)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    _check_config_path(target=target, path=path)
+    path.parent.mkdir(exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         config.write(f)
     return path
+
+
+def _check_config_path(*, target: Path, path: Path) -> None:
+    """raises unless config/ and config/config.ini, if they exist, are a real
+    folder and file in the target: a symlink there would have the config
+    written over a file elsewhere (reviewer on #811)"""
+    if target is None or path is None:
+        raise ValueError("target and path are required")
+    folder = path.parent
+    for p in (folder, path):
+        if p.is_symlink():
+            raise ValueError(f"Refusing to write {p}: it is a symlink")
+    if folder.exists() and (
+        not folder.is_dir() or Path(os.path.realpath(folder)).parent != target
+    ):
+        raise ValueError(f"Refusing to write in {folder}: not a folder in {target}")
+    if path.exists() and not path.is_file():
+        raise ValueError(f"Refusing to write {path}: it is not a file")
 
 
 def _events() -> list:
@@ -262,7 +308,10 @@ def build(*, target, sql: str = "on") -> dict:
 
 
 def _compare(p: CsvPaths) -> list:
-    """the CHECKS that query differently with sql off and on"""
+    """the CHECKS that query differently with sql off and on, or that find
+    nothing, since empty agreeing with empty would show nothing"""
+    if p is None:
+        raise ValueError("p cannot be None")
     mode = p.config.references_sql
     differ = []
     try:
@@ -274,7 +323,7 @@ def _compare(p: CsvPaths) -> list:
                     reference=reference, csvpaths=p
                 )
                 seen.append([(str(r.path), r.uuid) for r in finder.query().results])
-            if seen[0] != seen[1]:
+            if seen[0] != seen[1] or not seen[0]:
                 differ.append(reference)
     finally:
         p.config.add_to_config(section="references", key="sql", value=mode)
@@ -282,6 +331,8 @@ def _compare(p: CsvPaths) -> list:
 
 
 def _table_counts(db: Path) -> dict:
+    if db is None:
+        raise ValueError("db cannot be None")
     if not db.is_file():
         raise ValueError(f"No SQLite database at {db}: the sql listeners wrote nothing")
     connection = sqlite3.connect(db)
@@ -305,8 +356,9 @@ def _cli_command() -> str:
     csvpath installed"""
     cli = Path(sys.executable).parent / "cli"
     if cli.is_file():
-        return str(cli)
-    return f'{sys.executable} -c "from csvpath.cli.cli import run; run()"'
+        return shlex.quote(str(cli))
+    python = shlex.quote(sys.executable)
+    return f'{python} -c "from csvpath.cli.cli import run; run()"'
 
 
 def main() -> int:
@@ -325,12 +377,17 @@ def main() -> int:
     for table, count in summary["tables"].items():
         print(f"  {table}: {count} rows")
     if summary["differ"]:
-        print(f"SQL off and on DIFFER for: {summary['differ']}", file=sys.stderr)
+        print(
+            f"SQL off and on DIFFER, or found nothing, for: {summary['differ']}",
+            file=sys.stderr,
+        )
         return 1
     print(f"SQL off and on agree on {len(CHECKS)} references.")
     print("\nRun the CLI from there:")
-    print(f"  cd {summary['target']}")
-    print(f"  CSVPATH_CONFIG_PATH={summary['config']} {_cli_command()}")
+    print(f"  cd {shlex.quote(str(summary['target']))}")
+    print(
+        f"  CSVPATH_CONFIG_PATH={shlex.quote(str(summary['config']))} {_cli_command()}"
+    )
     return 0
 
 
