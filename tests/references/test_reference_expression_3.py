@@ -226,6 +226,45 @@ class TestFilterByIdentity:
         result = ReferenceExpression3._filter_by_identity(left, right, keep=True)
         assert result.results == []
 
+    # a statement or worksheet shares its version's path and uuid; its
+    # identity tells it apart, as UNION's dedupe does (7.7; David,
+    # 2026-11-22). Matched on path+uuid alone until then.
+    def test_same_path_and_uuid_different_identity_does_not_match(self):
+        left = ReferenceResults3(
+            results=[ReferenceResult3(path="p1", uuid="u1", identity="first_id")]
+        )
+        right = ReferenceResults3(
+            results=[ReferenceResult3(path="p1", uuid="u1", identity="second_id")]
+        )
+        assert ReferenceExpression3._filter_by_identity(left, right, keep=True).results == []
+        kept = ReferenceExpression3._filter_by_identity(left, right, keep=False)
+        assert [r.identity for r in kept.results] == ["first_id"]
+
+    def test_same_identity_matches(self):
+        left = ReferenceResults3(
+            results=[
+                ReferenceResult3(path="p1", uuid="u1", identity="first_id"),
+                ReferenceResult3(path="p1", uuid="u1", identity="second_id"),
+            ]
+        )
+        right = ReferenceResults3(
+            results=[ReferenceResult3(path="p1", uuid="u1", identity="second_id")]
+        )
+        kept = ReferenceExpression3._filter_by_identity(left, right, keep=True)
+        assert [r.identity for r in kept.results] == ["second_id"]
+        removed = ReferenceExpression3._filter_by_identity(left, right, keep=False)
+        assert [r.identity for r in removed.results] == ["first_id"]
+
+    def test_a_whole_version_is_not_one_of_its_parts(self):
+        # identity None (the version) differs from a statement of it, as
+        # UNION keeps both
+        whole = ReferenceResults3(results=[ReferenceResult3(path="p1", uuid="u1")])
+        part = ReferenceResults3(
+            results=[ReferenceResult3(path="p1", uuid="u1", identity="first_id")]
+        )
+        assert ReferenceExpression3._filter_by_identity(whole, part, keep=True).results == []
+        assert ReferenceExpression3._filter_by_identity(part, whole, keep=True).results == []
+
 
 class TestFilterByNativeUuid:
     # paths(LHS)/values(RHS) where RHS's own accessor is uuid-valued --
