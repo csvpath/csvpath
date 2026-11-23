@@ -39,6 +39,28 @@ scratch. Only `assets.yaml` (and any new fixture it references under
 `assets/`) needs editing to grow the corpus; `data/` is always a derived
 artifact.
 
+## A private copy with SQL capture on
+
+`sql_corpus.py` builds the same corpus somewhere OUTSIDE the repo, with the
+sql listener group on, a SQLite database, and `[references] sql = on`, so
+you can explore references, and the SQL they run, in the CLI:
+
+```
+~/dev/csvpath/.venv/bin/python ~/dev/csvpath/tests/corpus/sql_corpus.py ~/dev/csvpath-sql-corpus
+```
+
+It prints the row count of each SQL table, checks that a few references
+resolve the same with SQL off and on, and prints the command that starts the
+CLI on that copy (under references: "show the SQL for a reference").
+`--sql shadow` sets shadow mode instead.
+
+Re-running rebuilds it from scratch: `data/` (with the database) is wiped
+and regenerated and `config/config.ini` is rewritten; other files in the
+folder are left alone. It never writes in the repo, and it refuses a folder
+inside the repo, one that holds the repo, the home folder, a symlink, or a
+non-empty folder it did not make (it leaves a `.csvpath_sql_corpus` marker).
+`test_sql_corpus.py` tests those guards and one real build.
+
 ## Validating reference-v3 against the corpus
 
 `test_normative_examples.py` runs real reference-v3 expressions (the
