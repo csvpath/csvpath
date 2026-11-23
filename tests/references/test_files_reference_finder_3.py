@@ -5292,16 +5292,20 @@ class TestNameOneNarrowedManifestCall:
             "u-one-2",
         }
 
-    def test_combined_with_a_pointer_is_still_rejected(self):
-        # untested/undecided combination -- no worked example asks
-        # for ':manifest()' alongside a pointer AND a narrowing
-        # prefix all at once in name_one.
-        with pytest.raises(ReferenceException3):
-            _finder(
-                '$alpha.files.:name("one.csv"):last():manifest()',
-                ALPHA_HOME,
-                ALPHA_MANIFEST,
-            ).query()
+    @pytest.mark.parametrize(
+        "reference",
+        [
+            '$alpha.files.:name("one.csv"):last():manifest()',
+            '$alpha.files.:name("one.csv"):manifest():last()',
+        ],
+    )
+    def test_combined_with_a_pointer_selects_the_record(self, reference):
+        # 6.13b: a ':manifest()' "with a pointer, filter or range ...
+        # resolves to the selected ... record(s)". This was rejected as
+        # undecided until David, 2026-11-22 (the pointer-after-a-path gap).
+        results = _finder(reference, ALPHA_HOME, ALPHA_MANIFEST).resolve()
+        assert [r.uuid for r in results.results] == ["u-one-2"]
+        assert results.results[0].data["uuid"] == "u-one-2"
 
     def test_combined_with_worksheet_marker_is_rejected(self):
         # a worksheet read means content (the sheet's own rows), not
